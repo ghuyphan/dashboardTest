@@ -1,31 +1,21 @@
 import { Component } from '@angular/core';
-
-// 1. IMPORT FormsModule & CommonModule
-// We need CommonModule for things like [ngClass] or [ngIf], it's good practice
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-
-// 2. IMPORT THE AuthService
 import { AuthService } from '../services/auth.service';
+import { ToastService } from '../services/toast.service'; // 1. Import ToastService
 
 @Component({
   selector: 'app-login',
-  
-  // 3. ADD 'standalone: true'
   standalone: true,
-  
-  // 4. ADD 'FormsModule' and 'CommonModule' TO THE 'imports' ARRAY
   imports: [
     FormsModule,
-    CommonModule 
+    CommonModule
   ],
-  
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
 
-  // 5. ADD COMPONENT LOGIC (PROPERTIES)
   public isLoading = false;
   public credentials = {
     username: '',
@@ -33,33 +23,31 @@ export class LoginComponent {
     remember: false
   };
 
-  // 6. INJECT THE AuthService in the constructor
-  constructor(private authService: AuthService) {}
+  // 2. Inject ToastService in the constructor
+  constructor(
+    private authService: AuthService,
+    private toastService: ToastService // Add this
+  ) {}
 
-  // 7. ADD COMPONENT LOGIC (SUBMIT METHOD)
   onSubmit() {
-    if (this.isLoading) return; // Prevent double-clicking
-    
+    if (this.isLoading) return;
     this.isLoading = true;
 
-    // Call the service to handle the logic
     this.authService.login(this.credentials).subscribe({
       next: (response) => {
-        // SUCCESS
         this.isLoading = false;
-        alert('✅ Đăng nhập thành công! Đang chuyển hướng...');
-        
-        // Store the token
+        // 3. Use ToastService for success message
+        this.toastService.showSuccess('✅ Đăng nhập thành công! Đang chuyển hướng...');
+
         localStorage.setItem('authToken', response.token);
         console.log('Token:', response.token);
-        
-        // Redirect
-        // window.location.href = '/dashboard';
+        // Redirect logic here
       },
       error: (err) => {
-        // ERROR
         this.isLoading = false;
-        alert('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        // 4. Use ToastService for error message
+        // Make error message potentially stay longer by setting duration to 0 (or omit duration for default)
+        this.toastService.showError('Tên đăng nhập hoặc mật khẩu không chính xác.', 0);
         console.error('Login failed', err);
       }
     });

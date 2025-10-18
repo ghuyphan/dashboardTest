@@ -1,0 +1,6 @@
+<div class="toast-container">
+  <div *ngFor="let toast of toasts$ | async" class="toast" [ngClass]="getToastClass(toast)">
+    <span class="toast-message">{{ toast.message }}</span>
+    <button class="toast-close-btn" (click)="closeToast(toast.id)" aria-label="Close">&times;</button>
+  </div>
+</div>
