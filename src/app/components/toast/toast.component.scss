@@ -1,67 +1,136 @@
+// Import FontAwesome if you want icons - make sure it's included in your project (e.g., in index.html or angular.json)
+/* @import '@fortawesome/fontawesome-free/css/all.min.css'; */ /* If needed */
+
 :host {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 1050;
   width: auto;
-  max-width: 350px;
-}
-
-.toast-container {
-  position: relative;
-  min-height: 60px;
+  max-width: 380px; // Slightly wider for potentially longer messages
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .toast {
-  position: absolute;
-  right: 0;
-  background-color: #333;
-  color: white;
-  padding: 15px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  // Apply styles similar to login-card
+  background: rgba(255, 255, 255, 0.9); // Slightly more opaque for readability
+  backdrop-filter: blur(15px); // Slightly less blur might be better for toasts
+  border-radius: 14px; // Match input fields/button radius
+  box-shadow: 0 8px 25px rgba(3, 132, 143, 0.18); // Adjusted shadow
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: var(--gray-800); // Default text color
+
+  // Layout and spacing
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  opacity: 0.95;
-  transition: all 0.3s ease;
-  min-width: 300px; // Ensures consistent width if needed
+  min-width: 320px; // Adjust min-width as needed
+  margin-bottom: 12px; // Space between toasts
+  transition: all 0.3s ease; // Keep transitions
+
+  // Add a subtle left border for type indication instead of full background
+  border-left: 5px solid transparent; // Base border
 
   &.toast-success {
-    background-color: #28a745;
+    border-left-color: #28a745;
+    // Optional: Add success icon color if using icons
+    // .toast-icon { color: #28a745; }
   }
 
   &.toast-error {
-    background-color: #dc3545;
+    border-left-color: #dc3545;
+    // .toast-icon { color: #dc3545; }
   }
 
   &.toast-info {
-    background-color: #17a2b8;
+    border-left-color: #17a2b8;
+    // .toast-icon { color: #17a2b8; }
   }
 
   &.toast-warning {
-    background-color: #ffc107;
-    color: #333;
+    border-left-color: #ffc107;
+    // .toast-icon { color: #ffc107; }
   }
 }
 
-.toast-message {
+// Optional: Add a container for icon + message if you plan to add icons
+.toast-content {
+  display: flex;
+  align-items: center;
   flex-grow: 1;
   margin-right: 15px;
+}
+
+// Optional: Icon styling
+/*
+.toast-icon {
+  font-size: 1.2rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+*/
+
+.toast-message {
+  flex-grow: 1;
+  font-size: 15px; // Match login card fonts
+  line-height: 1.5;
 }
 
 .toast-close-btn {
   background: none;
   border: none;
-  color: inherit;
-  font-size: 1.4rem;
+  color: var(--gray-300); // Lighter close button
+  font-size: 1.6rem; // Slightly larger
   font-weight: bold;
   line-height: 1;
-  opacity: 0.7;
+  opacity: 0.8;
   cursor: pointer;
   padding: 0 5px;
+  margin-left: 10px; // Ensure space from message
+  align-self: flex-start; // Align to top right
 
   &:hover {
     opacity: 1;
+    color: var(--gray-700); // Darken on hover
+  }
+}
+
+// --- Animations (Optional but recommended) ---
+.toast {
+  animation: toast-slide-in 0.35s ease forwards;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Optional: Add a fadeOut/slideOut animation class for removal
+.toast-fade-out {
+ animation: toast-slide-out 0.3s ease forwards;
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30px);
+    margin-bottom: -10px; // Collapse margin during removal
+    padding-top: 0;
+    padding-bottom: 0;
+    min-height: 0;
+    border-width: 0; // Hide borders
   }
 }
