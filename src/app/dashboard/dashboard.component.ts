@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,6 +12,7 @@ import { CommonModule } from '@angular/common';
 export class DashboardComponent {
   isMenuOpen = false;
 
+  authService = inject(AuthService);
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
     // Add logic here to show/hide sidebar if needed
