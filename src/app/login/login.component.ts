@@ -1,15 +1,18 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { AuthService } from '../services/auth.service';
-import { ToastService } from '../services/toast.service'; // 1. Import ToastService
+import { ToastService } from '../services/toast.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
     FormsModule,
-    CommonModule
+    CommonModule,
+    NgClass,
+    RouterLink
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
@@ -23,10 +26,13 @@ export class LoginComponent {
     remember: false
   };
 
+  public passwordVisible: boolean = false;
+  public passwordFieldType: string = 'password';
+
   // 2. Inject ToastService in the constructor
   constructor(
     private authService: AuthService,
-    private toastService: ToastService // Add this
+    private toastService: ToastService 
   ) {}
 
   onSubmit() {
@@ -39,8 +45,8 @@ export class LoginComponent {
         // 3. Use ToastService for success message
         this.toastService.showSuccess('✅ Đăng nhập thành công! Đang chuyển hướng...');
 
-        localStorage.setItem('authToken', response.token);
-        console.log('Token:', response.token);
+        localStorage.setItem('authToken', response.APIKey.access_token);
+        // console.log('Token:', response.APIKey.access_token);
         // Redirect logic here
       },
       error: (err) => {
@@ -51,5 +57,10 @@ export class LoginComponent {
         console.error('Login failed', err);
       }
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.passwordVisible = !this.passwordVisible;
+    this.passwordFieldType = this.passwordVisible ? 'text' : 'password';
   }
 }

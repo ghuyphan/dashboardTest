@@ -1,229 +1,304 @@
-/* Styles here are "scoped" and will 
+/* Styles here are "scoped" and will
   only apply to the login component.
   We are using SCSS nesting.
 */
 
 .login-card {
-    /* === UPDATED THIS LINE === */
+  width: 100%;
+  max-width: 600px; // Increased max-width
+  min-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(22px);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(3, 132, 143, 0.25);
+  padding: 48px 40px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+
+  // &:hover {
+  //     transform: translateY(-5px);
+  //     box-shadow: 0 16px 50px rgba(3, 132, 143, 0.32);
+  // }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    max-width: 600px;
-    min-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(22px);
-    border-radius: 24px;
-    box-shadow: 0 12px 40px rgba(3, 132, 143, 0.25);
-    padding: 48px 40px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    height: 6px;
+    background: linear-gradient(90deg, var(--light-teal), var(--dark-teal));
+  }
 
-    // &:hover {
-    //     transform: translateY(-5px);
-    //     box-shadow: 0 16px 50px rgba(3, 132, 143, 0.32);
+  .logo {
+    text-align: center;
+    margin-bottom: 36px;
+
+    .logo-image {
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      display: block;
+      margin: 0 auto 18px;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.06);
+      }
+    }
+
+    h1 {
+      font-weight: 700;
+      font-size: 30px;
+      color: var(--dark-teal);
+      margin-bottom: 6px;
+    }
+
+    p {
+      font-weight: 400;
+      font-size: 16px;
+      color: var(--gray-700);
+    }
+  }
+
+  .input-group {
+    margin-bottom: 24px;
+    position: relative; // Needed for absolute positioning of icons/button
+
+    label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--gray-700);
+    }
+
+    input {
+      width: 100%;
+      // Adjust padding: more on left for icon, more on right for toggle button
+      padding: 16px 48px 16px 48px; // Increased right padding
+      border: 1px solid var(--gray-300);
+      border-radius: 14px;
+      font-size: 16px;
+      background: rgba(248, 250, 252, 0.75);
+      transition: all 0.3s ease;
+      outline: none;
+
+      &:focus {
+        border-color: var(--dark-teal);
+        background: var(--white);
+        box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
+
+        // Style the static icon on focus
+        + .input-icon {
+          color: var(--dark-teal);
+        }
+      }
+
+      // Basic invalid state styling (optional)
+      &.is-invalid {
+        border-color: #dc3545;
+        &:focus {
+          box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+        }
+      }
+    }
+
+    // Styles for the static icons (user, lock)
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: calc(50% + 4px); // Adjust vertical alignment (label height / 2 approx)
+      transform: translateY(-50%);
+      color: var(--gray-300);
+      font-size: 18px;
+      transition: color 0.25s ease;
+      pointer-events: none;
+    }
+
+    // --- NEW STYLES for Toggle Button ---
+    .toggle-password {
+      position: absolute;
+      right: 1px; // Position inside the border
+      top: calc(50% + 4px); // Adjust vertical alignment like input-icon
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      padding: 0 16px; // Clickable area
+      cursor: pointer;
+      color: var(--gray-300);
+      font-size: 17px; // Adjust size as needed
+      line-height: 1; // Prevent button height affecting layout
+      height: calc(100% - 2px); // Fit within input height minus borders
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none; // Remove focus outline for button itself
+
+      &:hover,
+      &:focus {
+        color: var(--dark-teal); // Change color on hover/focus
+      }
+
+      // Ensure focus state on the icon is visible if button outline is none
+      &:focus > i {
+         // Optional: Add a subtle visual cue for focus on the icon
+         // Example: text-shadow: 0 0 2px var(--dark-teal);
+      }
+    }
+    // --- END NEW STYLES ---
+
+    // Optional: Validation message styling
+    .invalid-feedback {
+      color: #dc3545;
+      font-size: 0.875em; /* ~14px if base is 16px */
+      margin-top: 0.25rem;
+    }
+  }
+
+  .options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    font-size: 15px;
+  }
+
+  .remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gray-700);
+    cursor: pointer;
+
+    label {
+      cursor: pointer;
+      margin-bottom: 0;
+      font-weight: 400; // Reset weight if needed
+      font-size: 15px; // Ensure consistent size
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--dark-teal);
+      width: auto; // Override input full-width
+      padding: 0; // Reset padding for checkbox
+      margin-right: 4px; // Spacing
+      height: 16px; // Ensure consistent size
+      width: 16px;
+      vertical-align: middle; // Align better with text
+    }
+  }
+
+  .forgot {
+    color: var(--dark-teal);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s, text-decoration 0.2s;
+
+    &:hover {
+      color: #026a74;
+      text-decoration: underline;
+    }
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 17px 16px;
+    background: linear-gradient(135deg, var(--dark-teal), #026a74);
+    color: var(--white);
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.35s ease;
+    box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35);
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #026a74, #025d65);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(3, 132, 143, 0.42);
+    }
+
+    &:disabled {
+      opacity: 0.8;
+      cursor: not-allowed;
+      transform: none; // Ensure no transform when disabled
+      box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35); // Keep original shadow
+    }
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 32px 0;
+    color: var(--gray-300);
+    font-size: 15px;
+
+    &::before,
+    &::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid var(--gray-200); // Use a lighter gray
+    }
+
+    // span {
+    //   padding: 0 16px;
+    //   color: var(--gray-700);
     // }
+  }
 
-    &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 6px;
-        background: linear-gradient(90deg, var(--light-teal), var(--dark-teal));
+  .support {
+    text-align: center;
+    font-size: 15px;
+    color: var(--gray-700);
+    line-height: 1.6;
+
+    a {
+      color: var(--dark-teal);
+      text-decoration: none;
+      font-weight: 600;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
 
-    .logo {
-        text-align: center;
-        margin-bottom: 36px;
-
-        .logo-image {
-            width: 68px;
-            height: 68px;
-            border-radius: 18px;
-            display: block;
-            margin: 0 auto 18px;
-            object-fit: contain;
-            transition: transform 0.3s ease;
-
-            &:hover {
-                transform: scale(1.06);
-            }
-        }
-
-        h1 {
-            font-weight: 700;
-            font-size: 30px;
-            color: var(--dark-teal);
-            margin-bottom: 6px;
-        }
-
-        p {
-            font-weight: 400;
-            font-size: 16px;
-            color: var(--gray-700);
-        }
+    i {
+      margin-right: 6px;
+      font-size: 14px;
     }
-
-    .input-group {
-        margin-bottom: 24px;
-        position: relative;
-
-        label {
-            display: block;
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--gray-700);
-        }
-
-        input {
-            width: 100%;
-            padding: 16px 16px 16px 48px;
-            border: 1px solid var(--gray-300);
-            border-radius: 14px;
-            font-size: 16px;
-            background: rgba(248, 250, 252, 0.75);
-            transition: all 0.3s ease;
-            outline: none;
-
-            /* === VALIDATION BLOCK REMOVED === */
-
-            &:focus {
-                border-color: var(--dark-teal);
-                background: var(--white);
-                box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
-
-                &+i {
-                    color: var(--dark-teal);
-                }
-            }
-        }
-
-        i {
-            position: absolute;
-            left: 16px;
-            top: 43px;
-            color: var(--gray-300);
-            font-size: 18px;
-            transition: color 0.25s ease;
-            pointer-events: none;
-            aria-hidden: true;
-        }
-    }
-
-    .options {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 28px;
-        font-size: 15px;
-    }
-
-    .remember {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--gray-700);
-        cursor: pointer;
-
-        label {
-            cursor: pointer;
-            margin-bottom: 0;
-        }
-
-        input {
-            accent-color: var(--dark-teal);
-            width: auto; // Override input full-width
-        }
-    }
-
-    .forgot {
-        color: var(--dark-teal);
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.2s, text-decoration 0.2s;
-
-        &:hover {
-            color: #026a74;
-            text-decoration: underline;
-        }
-    }
-
-    .btn-login {
-        width: 100%;
-        padding: 17px 16px;
-        background: linear-gradient(135deg, var(--dark-teal), #026a74);
-        color: var(--white);
-        border: none;
-        border-radius: 14px;
-        font-size: 17px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.35s ease;
-        box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35);
-
-        &:hover:not(:disabled) {
-            background: linear-gradient(135deg, #026a74, #025d65);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(3, 132, 143, 0.42);
-        }
-
-        &:disabled {
-            opacity: 0.8;
-            cursor: not-allowed;
-            transform: none;
-        }
-    }
-
-    .divider {
-        display: flex;
-        align-items: center;
-        margin: 32px 0;
-        color: var(--gray-300);
-        font-size: 15px;
-
-        &::before,
-        &::after {
-            content: "";
-            flex: 1;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.85);
-        }
-
-        span {
-            padding: 0 16px;
-            color: rgba(0, 0, 0, 0.75);
-        }
-    }
-
-    .support {
-        text-align: center;
-        font-size: 15px;
-        color: var(--gray-700);
-        line-height: 1.6;
-
-        a {
-            color: var(--dark-teal);
-            text-decoration: none;
-            font-weight: 600;
-
-            &:hover {
-                text-decoration: underline;
-            }
-        }
-
-        i {
-            margin-right: 6px;
-            font-size: 14px;
-        }
-    }
+  }
 }
 
 // Responsive styles
 @media (max-width: 480px) {
-    .login-card {
-        padding: 36px 24px;
+  .login-card {
+    padding: 36px 24px;
+    min-width: unset; // Remove min-width on small screens
+  }
+
+  .input-group {
+    input {
+      padding: 14px 44px 14px 44px; // Adjust padding slightly for smaller screens
     }
+    .input-icon {
+      left: 14px;
+      font-size: 16px;
+    }
+    .toggle-password {
+      padding: 0 14px;
+      font-size: 16px;
+    }
+  }
+
+  .btn-login {
+    padding: 15px 16px;
+    font-size: 16px;
+  }
 }
