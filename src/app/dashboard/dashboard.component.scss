@@ -1,0 +1,132 @@
+/* Import FontAwesome if not globally available (it is in index.html) */
+/* @import '@fortawesome/fontawesome-free/css/all.min.css'; */
+
+:host {
+  display: block; // Ensures the component takes up block space
+  height: 100vh; // Make dashboard take full viewport height
+  width: 100vw;  // Make dashboard take full viewport width
+  display: flex; // Use flex for layout
+  flex-direction: column; // Stack header and main content vertically
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--gray-100); // Light background for dashboard area
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; // Space out items
+  padding: 10px 20px;
+  background-color: var(--white); // White header background
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 60px; // Fixed header height
+  flex-shrink: 0; // Prevent header from shrinking
+  position: relative; // Needed for absolute positioning of logo if required
+
+  .hamburger-menu {
+    background: none;
+    border: none;
+    font-size: 24px; // Adjust icon size
+    color: var(--dark-teal);
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    width: 40px; // Ensure button has a consistent width
+
+    &:hover {
+      color: #006E96; // Darker teal on hover
+    }
+  }
+
+  .logo-container {
+    // --- Centering Method 1: Absolute Positioning ---
+    position: absolute; // Take out of flow
+    left: 50%;          // Move left edge to center
+    transform: translateX(-50%); // Shift back by half its own width
+    display: flex;
+    align-items: center;
+    height: 100%; // Ensure it uses header height for vertical centering
+
+    // --- Centering Method 2: Flexbox with Spacers (comment out absolute above if using this) ---
+    // flex-grow: 1; // Allows it to take space, but need spacers on both sides
+    // display: flex;
+    // justify-content: center; // Center content horizontally within its container
+    // align-items: center;
+    // height: 100%;
+
+    .header-logo {
+      height: 40px; // Adjust logo size as needed
+      width: auto;
+      object-fit: contain;
+    }
+
+    h1 { // Optional text next to logo
+      font-size: 20px;
+      color: var(--dark-teal);
+      margin-left: 10px;
+      font-weight: 600;
+    }
+  }
+
+  // Spacer element used with Flexbox centering (Method 2)
+  .header-spacer {
+     width: 40px; // Match the width of the hamburger button for balance
+     flex-shrink: 0;
+  }
+}
+
+.dashboard-content {
+  flex-grow: 1; // Allows main content to fill remaining space
+  padding: 20px;
+  overflow-y: auto; // Add scroll if content exceeds viewport height
+}
+
+/* Basic Sidebar Styling (Optional) */
+/*
+.sidebar {
+  position: fixed; // Or absolute depending on layout needs
+  left: -250px; // Start off-screen
+  top: 60px; // Below the header
+  width: 250px;
+  height: calc(100vh - 60px); // Full height minus header
+  background-color: var(--gray-800);
+  color: var(--white);
+  padding: 20px;
+  transition: left 0.3s ease-in-out;
+  z-index: 100; // Ensure it's above content
+
+  &.open {
+    left: 0; // Slide in when open
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    li a {
+      color: var(--light-teal);
+      text-decoration: none;
+      display: block;
+      padding: 10px 0;
+      &:hover {
+        color: var(--white);
+      }
+    }
+  }
+}
+*/
+
+/* Adjust main content position if sidebar is fixed and open */
+/*
+.dashboard-container.sidebar-open .dashboard-content {
+  margin-left: 250px; // Push content over when sidebar is open
+  width: calc(100% - 250px);
+  transition: margin-left 0.3s ease-in-out;
+}
+*/

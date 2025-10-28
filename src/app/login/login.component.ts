@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule, NgClass } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -23,36 +23,32 @@ export class LoginComponent {
   public credentials = {
     username: '',
     password: '',
-    remember: false
+    remember: false // This value is bound from the checkbox in the HTML
   };
 
   public passwordVisible: boolean = false;
   public passwordFieldType: string = 'password';
 
-  // 2. Inject ToastService in the constructor
   constructor(
     private authService: AuthService,
-    private toastService: ToastService 
+    private toastService: ToastService,
+    private router: Router
   ) {}
 
   onSubmit() {
     if (this.isLoading) return;
     this.isLoading = true;
 
+    // The whole credentials object, including the 'remember' flag, is passed
     this.authService.login(this.credentials).subscribe({
       next: (response) => {
         this.isLoading = false;
-        // 3. Use ToastService for success message
         this.toastService.showSuccess('✅ Đăng nhập thành công! Đang chuyển hướng...');
-
-        localStorage.setItem('authToken', response.APIKey.access_token);
-        // console.log('Token:', response.APIKey.access_token);
-        // Redirect logic here
+        // AuthService handles token storage based on credentials.remember
+        this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading = false;
-        // 4. Use ToastService for error message
-        // Make error message potentially stay longer by setting duration to 0 (or omit duration for default)
         this.toastService.showError('Tên đăng nhập hoặc mật khẩu không chính xác.', 0);
         console.error('Login failed', err);
       }
