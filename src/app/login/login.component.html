@@ -10,22 +10,26 @@
 
     <div class="input-group">
       <label for="username">Tên tải khoản</label>
-      <input type="text" id="username" name="username" placeholder="ví dụ: nva001" autocomplete="username" required
-        [(ngModel)]="credentials.username" #usernameInput="ngModel"
-        [ngClass]="{ 'is-invalid': usernameInput.invalid && (usernameInput.dirty || usernameInput.touched) }" />
-      <i class="fas fa-user input-icon" aria-hidden="true"></i>
-    </div>
+      <div class="input-wrapper">
+        <input type="text" id="username" name="username" placeholder="ví dụ: nva001-pxl" autocomplete="username" required
+          [(ngModel)]="credentials.username" #usernameInput="ngModel"
+          [ngClass]="{ 'is-invalid': usernameInput.invalid && (usernameInput.dirty || usernameInput.touched) }" />
+        <i class="fas fa-user input-icon" aria-hidden="true"></i>
+      </div>
+      </div>
 
     <div class="input-group">
       <label for="password">Mật khẩu</label>
-      <input [type]="passwordFieldType" id="password" name="password" placeholder="••••••••"
-        autocomplete="current-password" required [(ngModel)]="credentials.password" #passwordInput="ngModel"
-        [ngClass]="{ 'is-invalid': passwordInput.invalid && (passwordInput.dirty || passwordInput.touched) }" />
-      <i class="fas fa-lock input-icon" aria-hidden="true"></i> <button type="button" class="toggle-password"
-        (click)="togglePasswordVisibility()" aria-label="Toggle password visibility">
-        <i class="fas" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
-      </button>
-    </div>
+      <div class="input-wrapper">
+        <input [type]="passwordFieldType" id="password" name="password" placeholder="••••••••"
+          autocomplete="current-password" required [(ngModel)]="credentials.password" #passwordInput="ngModel"
+          [ngClass]="{ 'is-invalid': passwordInput.invalid && (passwordInput.dirty || passwordInput.touched) }" />
+        <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+        <button type="button" class="toggle-password" (click)="togglePasswordVisibility()" aria-label="Toggle password visibility">
+          <i class="fas" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+        </button>
+      </div>
+      </div>
 
     <div class="options">
       <div class="remember">

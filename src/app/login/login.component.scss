@@ -19,11 +19,6 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
   transition: transform 0.35s ease, box-shadow 0.35s ease;
 
-  // &:hover {
-  //     transform: translateY(-5px);
-  //     box-shadow: 0 16px 50px rgba(3, 132, 143, 0.32);
-  // }
-
   &::before {
     content: "";
     position: absolute;
@@ -68,7 +63,7 @@
 
   .input-group {
     margin-bottom: 24px;
-    position: relative; // Needed for absolute positioning of icons/button
+    // position: relative; // Removed from here
 
     label {
       display: block;
@@ -78,24 +73,33 @@
       color: var(--gray-700);
     }
 
+    // --- NEW STYLES for input-wrapper ---
+    .input-wrapper {
+      position: relative; // Position context for icons
+      display: flex; // Use flexbox
+      align-items: center; // Vertically center items within this wrapper
+    }
+    // --- END NEW STYLES ---
+
     input {
       width: 100%;
       // Adjust padding: more on left for icon, more on right for toggle button
-      padding: 16px 48px 16px 48px; // Increased right padding
+      padding: 16px 48px 16px 48px;
       border: 1px solid var(--gray-300);
       border-radius: 14px;
       font-size: 16px;
       background: rgba(248, 250, 252, 0.75);
       transition: all 0.3s ease;
       outline: none;
+      box-sizing: border-box; // Ensure padding included in width
 
       &:focus {
         border-color: var(--dark-teal);
         background: var(--white);
         box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
 
-        // Style the static icon on focus
-        + .input-icon {
+        // Style the static icon on focus - target sibling icon within wrapper
+        ~ .input-icon {
           color: var(--dark-teal);
         }
       }
@@ -109,33 +113,30 @@
       }
     }
 
-    // Styles for the static icons (user, lock)
+    // --- ADJUSTED Icon Styles ---
     .input-icon {
       position: absolute;
       left: 16px;
-      top: calc(50% + 4px); // Adjust vertical alignment (label height / 2 approx)
-      transform: translateY(-50%);
+      // top and transform removed - alignment handled by flexbox on parent
       color: var(--gray-300);
       font-size: 18px;
       transition: color 0.25s ease;
-      pointer-events: none;
+      pointer-events: none; // Keep this
     }
 
-    // --- NEW STYLES for Toggle Button ---
     .toggle-password {
       position: absolute;
       right: 1px; // Position inside the border
-      top: calc(50% + 4px); // Adjust vertical alignment like input-icon
-      transform: translateY(-50%);
+      // top and transform removed - alignment handled by flexbox on parent
       background: none;
       border: none;
-      padding: 0 16px; // Clickable area
+      padding: 0 16px; // Adjust padding as needed for clickable area
       cursor: pointer;
       color: var(--gray-300);
       font-size: 17px; // Adjust size as needed
       line-height: 1; // Prevent button height affecting layout
-      height: calc(100% - 2px); // Fit within input height minus borders
-      display: flex;
+      height: 100%; // Make button height match wrapper for easier clicking
+      display: flex; // Use flex to center the <i> inside the <button>
       align-items: center;
       justify-content: center;
       outline: none; // Remove focus outline for button itself
@@ -151,7 +152,7 @@
          // Example: text-shadow: 0 0 2px var(--dark-teal);
       }
     }
-    // --- END NEW STYLES ---
+    // --- END ADJUSTED Icon Styles ---
 
     // Optional: Validation message styling
     .invalid-feedback {
@@ -286,7 +287,7 @@
   }
 
   .input-group {
-    input {
+    .input-wrapper input { // Target input inside wrapper
       padding: 14px 44px 14px 44px; // Adjust padding slightly for smaller screens
     }
     .input-icon {

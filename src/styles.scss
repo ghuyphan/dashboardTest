@@ -1,16 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
-/* Add this content to the file */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --light-teal: #b0d9d8;
-  --dark-teal: #03848F;
+  --light-teal: #9BDAD9; /* Updated from #b0d9d8 to Aqua Island */
+  --dark-teal: #00839B;  /* Updated from #03848F to Teal Blue */
   --white: #FFFFFF;
   --gray-100: #F8FAFC;
   --gray-200: #E2E8F0;
   --gray-300: #CBD5E1;
   --gray-700: #334155;
   --gray-800: #1E293B;
+  /* Consider adding Peacock Blue (#006E96) as another variable if needed */
+  /* --peacock-blue: #006E96; */
 }
 
 * {
@@ -21,7 +22,8 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, var(--light-teal) 0%, var(--dark-teal) 55%, #026a74 100%);
+  /* You might want to adjust this gradient to use the new variables */
+  background: linear-gradient(135deg, var(--light-teal) 0%, var(--dark-teal) 55%, #006E96 100%); /* Example adjustment, consider using Peacock Blue here */
   min-height: 100vh;
   display: flex;
   justify-content: center;
