@@ -9,31 +9,24 @@ import { environment } from '../../environments/environment.development';
 interface LoginResponse {
   APIKey: {
     access_token: string;
-    date_token?: string; // Optional 
-    expires_in?: string; // Optional
-    id_token?: string;   // Optional
-    token_type?: string; // Optional
+    date_token?: string;
+    expires_in?: string;
+    id_token?: string;
+    token_type?: string;
   };
   MaKetQua: number;
   ErrorMessage?: string
 }
 
-// Key for sessionStorage
+// Key for storage (can be the same for both)
 const TOKEN_STORAGE_KEY = 'authToken';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // --- Use your actual backend login URL ---
   private API_URL_LOGIN = environment.authUrl;
-  // --- Optional: Add your backend logout URL if it exists ---
-  // private API_URL_LOGOUT = '/api/auth/logout';
-
-  // --- In-memory storage for quick access, initialized from sessionStorage ---
   private accessToken: string | null = null;
-
-  // --- Reactive state for authentication status ---
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
@@ -41,33 +34,50 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    // --- Initialize state from sessionStorage ---
     this.loadTokenFromStorage();
   }
 
+  // --- Updated Method ---
   private loadTokenFromStorage(): void {
+    let storedToken: string | null = null;
+    let storageType = 'none';
+
     try {
-      // Safely access sessionStorage
-      const storedToken = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(TOKEN_STORAGE_KEY) : null;
+      // Check localStorage first
+      if (typeof localStorage !== 'undefined') {
+        storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (storedToken) {
+          storageType = 'localStorage';
+        }
+      }
+      // If not in localStorage, check sessionStorage
+      if (!storedToken && typeof sessionStorage !== 'undefined') {
+        storedToken = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+        if (storedToken) {
+          storageType = 'sessionStorage';
+        }
+      }
+
       if (storedToken) {
         this.accessToken = storedToken;
         this.isLoggedInSubject.next(true);
-        console.log('AuthService initialized: User is logged in (sessionStorage).');
+        console.log(`AuthService initialized: User is logged in (${storageType}).`);
       } else {
          this.isLoggedInSubject.next(false);
          console.log('AuthService initialized: User is logged out.');
       }
     } catch (e) {
-      console.error('Failed to access sessionStorage', e);
+      console.error('Failed to access web storage', e);
       this.accessToken = null;
       this.isLoggedInSubject.next(false);
     }
   }
 
+  // --- Updated Method ---
   /**
-   * Logs a user in. Stores token in memory and sessionStorage.
+   * Logs a user in. Stores token based on the 'remember' flag.
    */
-  login(credentials: any): Observable<LoginResponse> {
+  login(credentials: {username: string, password: string, remember: boolean}): Observable<LoginResponse> {
     const payload = {
       usernamE_: credentials.username,
       passworD_: credentials.password
@@ -78,17 +88,27 @@ export class AuthService {
     }).pipe(
       tap(response => {
         console.log('Login successful');
-        console.log(response.APIKey.access_token)
         this.accessToken = response.APIKey.access_token; // Store in memory
+
         try {
-          // --- Store token in sessionStorage ---
-           if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem(TOKEN_STORAGE_KEY, response.APIKey.access_token);
+          const storage = credentials.remember ? localStorage : sessionStorage;
+          const storageType = credentials.remember ? 'localStorage' : 'sessionStorage';
+
+          // Clear the other storage type to prevent potential conflicts
+          const otherStorage = credentials.remember ? sessionStorage : localStorage;
+          if (typeof otherStorage !== 'undefined') {
+            otherStorage.removeItem(TOKEN_STORAGE_KEY);
+          }
+
+          // Store token in the selected storage
+          if (typeof storage !== 'undefined') {
+            storage.setItem(TOKEN_STORAGE_KEY, response.APIKey.access_token);
+            console.log(`Token saved to ${storageType}.`);
           } else {
-             console.warn('sessionStorage is not available.');
+             console.warn(`${storageType} is not available.`);
           }
         } catch (e) {
-           console.error('Failed to save token to sessionStorage', e);
+           console.error('Failed to save token to web storage', e);
         }
         this.isLoggedInSubject.next(true);
       }),
@@ -97,52 +117,42 @@ export class AuthService {
   }
 
   /**
-   * Logs the user out. Clears in-memory token, sessionStorage, and state.
-   * Optionally calls backend logout.
+   * Logs the user out. Clears in-memory token, sessionStorage, localStorage, and state.
    */
   logout(): void {
-     // Optional: Call backend logout endpoint first
-     // this.http.post(this.API_URL_LOGOUT, {}).subscribe({
-     //   next: () => this.clearLocalAuthData(),
-     //   error: (err) => { console.error('Backend logout failed:', err); this.clearLocalAuthData(); }
-     // });
-     // If no backend logout needed:
      this.clearLocalAuthData();
   }
 
+  // --- Updated Method ---
   // Helper to clear local auth state and storage
   private clearLocalAuthData(): void {
     this.accessToken = null;
     try {
-      // --- Remove token from sessionStorage ---
+      // --- Remove token from BOTH storages ---
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY);
       }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+      }
     } catch (e) {
-      console.error('Failed to remove token from sessionStorage', e);
+      console.error('Failed to remove token from web storage', e);
     }
     this.isLoggedInSubject.next(false);
-    console.log('User logged out, state and sessionStorage cleared.');
-    this.router.navigate(['/login']); // Redirect to login (Ensure Router is imported and injected)
+    console.log('User logged out, state and web storage cleared.');
+    this.router.navigate(['/login']);
   }
 
-  /**
-   * Gets the current access token (reads from memory).
-   */
+
   getAccessToken(): string | null {
-    // Should already be loaded from storage on service init or set during login
     return this.accessToken;
   }
 
-  /**
-   * Basic error handler
-   */
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('AuthService Error:', error);
-    // Try to get a more specific message from the backend error response
     let errorMessage = error.error?.message || error.message || 'An unknown error occurred!';
 
-    // Default messages for common statuses if no specific message is available
     if (!error.error?.message && !error.message) {
         if (error.status === 0) {
             errorMessage = 'Network error or could not connect to the server.';
@@ -153,7 +163,6 @@ export class AuthService {
         }
     }
 
-    // Return an observable with a user-facing error message.
     return throwError(() => new Error(errorMessage));
   }
 }

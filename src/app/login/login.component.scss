@@ -5,7 +5,7 @@
 
 .login-card {
   width: 100%;
-  max-width: 600px; // Increased max-width
+  max-width: 400px; // Increased max-width
   min-width: 400px;
   margin-left: auto;
   margin-right: auto;
@@ -258,7 +258,9 @@
     font-size: 15px;
     color: var(--gray-700);
     line-height: 1.6;
-
+    a + a {
+      margin-left: 4px;
+    }
     a {
       color: var(--dark-teal);
       text-decoration: none;
