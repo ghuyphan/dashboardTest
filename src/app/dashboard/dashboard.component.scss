@@ -5,29 +5,98 @@
   display: block; // Ensures the component takes up block space
   height: 100vh; // Make dashboard take full viewport height
   width: 100vw;  // Make dashboard take full viewport width
-  display: flex; // Use flex for layout
-  flex-direction: column; // Stack header and main content vertically
+  overflow: hidden; // Prevent scrolling on the host itself
 }
 
 .dashboard-container {
   display: flex;
-  flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: var(--gray-100); // Light background for dashboard area
+  position: relative; // Context for sidebar positioning
+  transition: margin-left 0.3s ease-in-out; // Smooth transition for content shift
+  margin-left: 0; // Default state
 }
 
+// --- Sidebar Styles ---
+.sidebar {
+  position: fixed; // Fixed position, stays in place on scroll
+  left: -260px; // Start off-screen (adjust width + padding)
+  top: 0; // Align to top
+  width: 250px; // Sidebar width
+  height: 100vh; // Full viewport height
+  background-color: var(--gray-800); // Dark background
+  color: var(--gray-200); // Light text
+  padding: 20px 15px;
+  transition: left 0.3s ease-in-out; // Smooth slide animation
+  z-index: 1030; // High z-index to stay above content
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; // Add scroll if content exceeds height
+
+  &.open {
+    left: 0; // Slide in when open
+  }
+
+  nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    margin-top: 60px; // Add space below potential header area within sidebar
+
+    li a {
+      color: var(--gray-300); // Slightly lighter link color
+      text-decoration: none;
+      display: flex; // Use flex for icon alignment
+      align-items: center;
+      padding: 12px 10px; // Padding around links
+      border-radius: 6px; // Slightly rounded corners for links
+      margin-bottom: 8px; // Space between links
+      transition: background-color 0.2s ease, color 0.2s ease;
+
+      i {
+        margin-right: 12px; // Space between icon and text
+        width: 20px; // Fixed width for icons
+        text-align: center;
+        font-size: 1.1rem;
+      }
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1); // Subtle hover background
+        color: var(--white);
+      }
+    }
+  }
+}
+
+// --- Main Panel (Header + Content Area) ---
+.main-panel {
+  flex-grow: 1; // Take remaining space
+  display: flex;
+  flex-direction: column; // Stack header and content vertically
+  height: 100vh; // Full height
+  width: 100%; // Initially full width
+  background-color: var(--gray-100); // Light background for content area
+  transition: width 0.3s ease-in-out, margin-left 0.3s ease-in-out; // Smooth transition for width change
+}
+
+// Adjust main panel when sidebar is open
+.dashboard-container.sidebar-open .main-panel {
+  margin-left: 250px; // Push content over (matches sidebar width)
+  width: calc(100% - 250px); // Adjust width
+}
+
+
+// --- Header Styles ---
 .dashboard-header {
   display: flex;
   align-items: center;
   justify-content: space-between; // Space out items
-  padding: 10px 20px;
+  padding: 0 20px; // Vertical padding removed, use height
   background-color: var(--white); // White header background
   border-bottom: 1px solid var(--gray-200);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   height: 60px; // Fixed header height
   flex-shrink: 0; // Prevent header from shrinking
-  position: relative; // Needed for absolute positioning of logo if required
+  position: relative; // Needed for absolute positioning of logo
 
   .hamburger-menu {
     background: none;
@@ -45,7 +114,6 @@
   }
 
   .logo-container {
-    // --- Centering Method 1: Absolute Positioning ---
     position: absolute; // Take out of flow
     left: 50%;          // Move left edge to center
     transform: translateX(-50%); // Shift back by half its own width
@@ -53,80 +121,195 @@
     align-items: center;
     height: 100%; // Ensure it uses header height for vertical centering
 
-    // --- Centering Method 2: Flexbox with Spacers (comment out absolute above if using this) ---
-    // flex-grow: 1; // Allows it to take space, but need spacers on both sides
-    // display: flex;
-    // justify-content: center; // Center content horizontally within its container
-    // align-items: center;
-    // height: 100%;
-
     .header-logo {
       height: 40px; // Adjust logo size as needed
       width: auto;
       object-fit: contain;
     }
+  }
 
-    h1 { // Optional text next to logo
-      font-size: 20px;
-      color: var(--dark-teal);
-      margin-left: 10px;
-      font-weight: 600;
+  .header-user-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px; // Space between user info and logout button
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .user-icon {
+        font-size: 28px; // Larger user icon
+        color: var(--gray-700);
+      }
+
+      .user-details {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.3;
+
+        .username {
+          font-weight: 600;
+          font-size: 14px;
+          color: var(--gray-800);
+        }
+
+        .user-roles {
+          font-size: 12px;
+          color: var(--gray-700);
+          max-width: 150px; // Prevent long roles from breaking layout
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
     }
-  }
 
-  // Spacer element used with Flexbox centering (Method 2)
-  .header-spacer {
-     width: 40px; // Match the width of the hamburger button for balance
-     flex-shrink: 0;
-  }
-}
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--dark-teal);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: background-color 0.2s ease, color 0.2s ease;
 
-.dashboard-content {
-  flex-grow: 1; // Allows main content to fill remaining space
-  padding: 20px;
-  overflow-y: auto; // Add scroll if content exceeds viewport height
-}
+      i {
+        margin-right: 6px;
+      }
 
-/* Basic Sidebar Styling (Optional) */
-/*
-.sidebar {
-  position: fixed; // Or absolute depending on layout needs
-  left: -250px; // Start off-screen
-  top: 60px; // Below the header
-  width: 250px;
-  height: calc(100vh - 60px); // Full height minus header
-  background-color: var(--gray-800);
-  color: var(--white);
-  padding: 20px;
-  transition: left 0.3s ease-in-out;
-  z-index: 100; // Ensure it's above content
-
-  &.open {
-    left: 0; // Slide in when open
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    li a {
-      color: var(--light-teal);
-      text-decoration: none;
-      display: block;
-      padding: 10px 0;
       &:hover {
-        color: var(--white);
+        background-color: var(--gray-100);
+        color: #006E96;
       }
     }
   }
 }
-*/
 
-/* Adjust main content position if sidebar is fixed and open */
-/*
-.dashboard-container.sidebar-open .dashboard-content {
-  margin-left: 250px; // Push content over when sidebar is open
-  width: calc(100% - 250px);
-  transition: margin-left 0.3s ease-in-out;
+// --- Dashboard Content Area ---
+.dashboard-content {
+  flex-grow: 1; // Allows main content to fill remaining space
+  padding: 25px; // Add some padding
+  overflow-y: auto; // Add scroll if content exceeds viewport height
+
+  h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: var(--dark-teal);
+    font-weight: 600;
+  }
+
+  // --- Mock Widget Styles ---
+  .widget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); // Responsive grid
+    gap: 20px; // Space between widgets
+    margin-top: 20px;
+  }
+
+  .widget-card {
+    background-color: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--gray-200);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+       transform: translateY(-3px);
+       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    h3 {
+      font-size: 16px;
+      color: var(--gray-700);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .widget-data {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--dark-teal);
+      margin-bottom: 8px;
+
+      &.status-ok {
+        color: #28a745; // Green for OK status
+      }
+      &.status-warning {
+        color: #ffc107; // Yellow for warning
+      }
+       &.status-error {
+        color: #dc3545; // Red for error
+      }
+
+      i {
+         margin-right: 5px;
+      }
+    }
+
+    .widget-trend {
+        font-size: 13px;
+        color: #28a745; // Green for positive trend
+        i { margin-right: 4px; }
+    }
+    .widget-detail {
+       font-size: 13px;
+       color: var(--gray-700);
+       margin-top: 8px;
+        a {
+            color: var(--dark-teal);
+            text-decoration: none;
+            font-weight: 500;
+            &:hover { text-decoration: underline; }
+        }
+    }
+  }
 }
-*/
+
+
+// --- Responsive Adjustments ---
+@media (max-width: 768px) {
+  .dashboard-container.sidebar-open .main-panel {
+    margin-left: 0; // Sidebar overlays content on small screens
+    width: 100%;
+  }
+
+  .sidebar {
+     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15); // Slightly stronger shadow when overlaying
+  }
+
+  .dashboard-header {
+    .logo-container {
+        // Adjust if needed on smaller screens, maybe hide text
+    }
+
+    .header-user-controls {
+      gap: 10px;
+
+      .user-info {
+        gap: 8px;
+        .user-icon { font-size: 24px; }
+        .user-details {
+           .username { font-size: 13px; }
+           .user-roles { display: none; } // Hide roles on small screens to save space
+        }
+      }
+      .logout-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+         span { display: none; } // Optionally hide "Logout" text, keep icon
+         i { margin-right: 0; }
+      }
+    }
+  }
+
+   .dashboard-content {
+      padding: 15px;
+       h2 { font-size: 20px; }
+       .widget-grid { grid-template-columns: 1fr; } // Stack widgets vertically
+       .widget-card .widget-data { font-size: 24px; }
+   }
+}
