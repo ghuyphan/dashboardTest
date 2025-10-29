@@ -1,0 +1,144 @@
+/* These are the styles for the content of the home page,
+  MOVED from main-layout.component.scss
+*/
+h2 {
+  margin-bottom: 10px; // Reduced margin
+  font-size: 26px;
+  color: var(--gray-900, #212529); // Darker heading
+  font-weight: 600; // Slightly less bold
+}
+
+.welcome-message {
+  font-size: 1rem;
+  color: var(--gray-700);
+  margin-bottom: 25px;
+}
+
+// --- Widget Styles (Improved) ---
+.widget-grid {
+  display: grid;
+  // Responsive grid, aiming for ~250px min width
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 25px; // Increased gap
+}
+
+.widget-card {
+  background-color: var(--white);
+  padding: 25px; // More padding
+  border-radius: 8px; // Smaller radius
+  // Softer, more modern shadow
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  // Remove side borders, add colored top border
+  border: none;
+  border-top: 4px solid var(--gray-300); // Default border color
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex; // Use flexbox for layout
+  flex-direction: column; // Stack elements vertically
+  overflow: hidden; // Contain border top
+
+  &:hover {
+     transform: translateY(-4px);
+     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .widget-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      i { // Optional icon for the header
+          font-size: 1.25rem;
+          color: var(--gray-400); // Default icon color
+          margin-right: 12px;
+          transition: color 0.2s ease;
+      }
+      h3 {
+        font-size: 17px; // Slightly larger title
+        color: var(--gray-700);
+        font-weight: 600; // Bolder title
+        margin: 0; // Remove default margin
+      }
+  }
+
+  .widget-body {
+      flex-grow: 1; // Allow body to expand if needed
+      margin-bottom: 15px; // Space before footer/details
+  }
+
+  .widget-data {
+    font-size: 32px; // Larger data text
+    font-weight: 700; // Bold data
+    color: var(--gray-900);
+    margin-bottom: 10px;
+    line-height: 1.2;
+    transition: color 0.2s ease;
+
+    // Status colors remain the same
+    &.status-ok { 
+      color: var(--hm-green, #28a745); 
+      i {
+       margin-right: 8px;
+       font-size: 0.9em; // Slightly smaller than text
+       vertical-align: baseline;
+      }
+    }
+    &.status-warning { color: var(--hm-orange, #fd7e14); }
+    &.status-error { color: var(--hm-red, #dc3545); }
+  }
+
+  .widget-footer { // Renamed from detail/trend for clarity
+     font-size: 14px;
+     color: var(--gray-700);
+     margin-top: auto; // Push footer to bottom if card height varies
+
+      .widget-trend {
+          color: var(--hm-green, #28a745);
+          i { margin-right: 5px; }
+      }
+       .widget-trend.negative { // Add class for negative trends
+          color: var(--hm-red, #dc3545);
+      }
+
+      a {
+          color: var(--dark-teal);
+          text-decoration: none;
+          font-weight: 500; // Normal weight link
+          &:hover { text-decoration: underline; }
+      }
+  }
+  
+  // --- NEW Widget Color Themes ---
+  &.users {
+    border-top-color: var(--dark-teal);
+    .widget-header i { color: var(--dark-teal); }
+    .widget-data { color: var(--dark-teal); }
+  }
+
+  &.approvals {
+    $orange: var(--hm-orange, #fd7e14);
+    border-top-color: $orange;
+    .widget-header i { color: $orange; }
+    .widget-data { color: $orange; }
+  }
+
+  &.status {
+    $green: var(--hm-green, #28a745);
+    border-top-color: $green;
+    .widget-header i { color: $green; }
+  }
+
+  &.reports {
+    $blue: var(--hm-blue, #0d6efd);
+    border-top-color: $blue;
+    .widget-header i { color: $blue; }
+    .widget-data { color: $blue; }
+  }
+}
+
+// --- Responsive rules moved from layout ---
+@media (max-width: 768px) {
+  .widget-grid { grid-template-columns: 1fr; } // Force single column
+}
+
+@media (max-width: 480px) {
+  .widget-card { padding: 20px; }
+}

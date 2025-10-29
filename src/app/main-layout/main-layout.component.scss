@@ -1,0 +1,469 @@
+/* --- UPDATED DESIGN V5 --- */
+/*
+  - Combines the best of both designs:
+  - 1. Dark sidebar using var(--dark-teal)
+  - 2. Clean structure with user info at the bottom (from previous step)
+  - 3. Re-adds the white background to the logo so it stands out.
+*/
+
+:host {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--gray-100);
+}
+
+.dashboard-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+// --- Sidebar Styles ---
+.sidebar {
+  position: fixed;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  /* --- CHANGED: Back to dark teal --- */
+  background-color: var(--dark-teal);
+  color: var(--gray-200);
+  /* --- End Change --- */
+  padding: 25px 15px;
+  padding-top: 20px;
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+  z-index: 1030;
+  /* --- CHANGED: Back to shadow --- */
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+  border-right: none;
+  /* --- End Change --- */
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    padding: 0 10px 20px 10px;
+    margin-bottom: 20px;
+    /* --- CHANGED: Light border for dark bg --- */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+    .sidebar-logo {
+      height: 40px;
+      width: 40px;
+      margin-right: 12px;
+      border-radius: 10px;
+      /* --- CHANGED: Add white BG to make logo pop --- */
+      background-color: var(--white);
+      padding: 5px;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      /* --- CHANGED: White text --- */
+      color: var(--white);
+      margin: 0;
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity 0.2s ease-in-out;
+    }
+  }
+
+  /* --- Renamed for clarity --- */
+  .sidebar-nav {
+    flex-grow: 1; // This makes the nav grow, pushing footer to bottom
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        // Base styles for all links OR buttons
+        a, button {
+          /* --- CHANGED: Light text --- */
+          color: var(--gray-200);
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          padding: 14px 15px;
+          border-radius: 8px;
+          transition: background-color 0.2s ease, color 0.2s ease;
+          white-space: nowrap;
+          position: relative;
+          width: 100%;
+          background: none;
+          border: none;
+          font-family: inherit;
+          font-size: 15px;
+          font-weight: 400; // Regular weight
+          text-align: left;
+          cursor: pointer;
+          margin-bottom: 8px;
+
+          i {
+            margin-right: 15px;
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: margin 0.3s ease-in-out;
+          }
+
+          span {
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out 0.1s;
+            flex-grow: 1;
+          }
+
+          /* --- CHANGED: Hover for dark bg --- */
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--white);
+          }
+
+          /* --- ACTIVE LINK STYLE (Accent Border) --- */
+          &.active {
+            background-color: rgba(0, 0, 0, 0.25);
+            color: var(--white);
+            font-weight: 600;
+            box-shadow: none;
+
+            &::before {
+              content: '';
+              position: absolute;
+              left: 0;
+              top: 5px;
+              bottom: 5px;
+              width: 4px;
+              background-color: var(--light-teal);
+              border-radius: 0 4px 4px 0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Styles for collapsed state
+  &.collapsed {
+    width: 80px;
+
+    .sidebar-header {
+      padding-left: 5px;
+      padding-right: 5px;
+      justify-content: center;
+      .sidebar-logo { margin-right: 0; }
+      h2 { opacity: 0; width: 0; overflow: hidden; }
+    }
+
+    .sidebar-nav ul li {
+      a, button {
+        justify-content: center;
+        i { margin-right: 0; }
+        span { opacity: 0; width: 0; overflow: hidden; }
+        // Hide accent border when collapsed
+        &.active::before {
+          opacity: 0;
+        }
+      }
+      .submenu { display: none; }
+      .toggle-icon { display: none; }
+    }
+  }
+}
+
+// --- Main Panel (Header + Content Area) ---
+.main-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  background-color: var(--gray-100);
+  transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
+
+  &.collapsed {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+  }
+}
+
+// --- Header Styles ---
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 25px;
+  /* --- Clean white header --- */
+  background-color: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  box-shadow: none;
+  height: 65px;
+  flex-shrink: 0;
+  position: relative;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .hamburger-menu {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--gray-700);
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 15px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      background-color: var(--gray-100);
+      color: var(--dark-teal);
+    }
+  }
+
+  .header-right-controls {
+    // Placeholder for future icons
+  }
+}
+
+// --- Dashboard Content Area ---
+.dashboard-content {
+  flex-grow: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+
+// --- Responsive Adjustments ---
+@media (max-width: 992px) {
+  .main-panel {
+    margin-left: 0;
+    width: 100%;
+    transition: none;
+    &.collapsed {
+        margin-left: 0;
+        width: 100%;
+    }
+  }
+
+  .sidebar {
+     transform: translateX(-100%);
+     transition: transform 0.3s ease-in-out;
+     &.open {
+        transform: translateX(0);
+     }
+     &.collapsed {
+        transform: translateX(-100%);
+        width: 260px;
+        .sidebar-header h2, .sidebar-nav ul li a span, .sidebar-nav ul li button span { opacity: 1; width: auto; }
+        .sidebar-nav ul li a, .sidebar-nav ul li button { justify-content: flex-start; }
+        .sidebar-nav ul li a i, .sidebar-nav ul li button i { margin-right: 15px; }
+        .sidebar-footer {
+          .user-details { display: flex; }
+          .logout-btn span { display: inline; }
+        }
+     }
+  }
+
+  .dashboard-header {
+    padding: 0 15px;
+    .hamburger-menu { margin-right: 10px; }
+  }
+   .dashboard-content { padding: 20px; }
+}
+
+@media (max-width: 768px) {
+  // (No changes needed here anymore)
+}
+
+@media (max-width: 480px) {
+    .sidebar { width: 240px; }
+    .dashboard-header { height: 60px; }
+    .dashboard-content { padding: 15px; }
+}
+
+// --- STYLES FOR SUB-MENUS (Dark Theme) ---
+.sidebar-nav ul li {
+  &.has-submenu {
+    button {
+      &.active, &[aria-expanded="true"] {
+        background-color: rgba(0, 0, 0, 0.25);
+        color: var(--white);
+        font-weight: 600;
+        // Remove accent border from parent
+        &::before {
+          display: none;
+        }
+      }
+
+      .toggle-icon {
+        font-size: 0.8em;
+        margin-left: auto;
+        padding: 0 5px;
+        color: var(--gray-300);
+        transition: transform 0.2s ease-in-out;
+      }
+    }
+    
+    &.open {
+      > button .toggle-icon {
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  .submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px 0;
+    
+    li {
+      a {
+        padding-left: 47px;
+        font-size: 0.9em;
+        color: var(--gray-300);
+        margin-bottom: 4px;
+
+        &.active {
+          color: var(--white); // Active child is white text
+          background-color: transparent;
+          font-weight: 500;
+
+          // Child accent border
+          &::before {
+            content: '';
+            position: absolute;
+            width: 3px;
+            left: 25px;
+            top: 5px;
+            bottom: 5px;
+            background-color: var(--light-teal);
+            border-radius: 4px;
+          }
+        }
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.2);
+          color: var(--white);
+        }
+        
+        i {
+          font-size: 1em;
+          margin-right: 10px;
+          width: 22px;
+        }
+      }
+    }
+  }
+}
+
+/* --- STYLES FOR SIDEBAR FOOTER (Dark Theme) --- */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 15px 10px;
+  /* --- CHANGED: Light border --- */
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      /* --- CHANGED: Darker hover --- */
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .user-icon {
+      font-size: 30px;
+      /* --- CHANGED: Use light accent color --- */
+      color: var(--light-teal);
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+
+      .username {
+        font-weight: 600;
+        font-size: 14px;
+        /* --- CHANGED: White text --- */
+        color: var(--white);
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+
+      .user-roles {
+        font-size: 12px;
+        /* --- CHANGED: Light gray text --- */
+        color: var(--gray-300);
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+    }
+  }
+
+  .logout-btn {
+    /* --- CHANGED: Subtle button, becomes danger on hover --- */
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
+    color: var(--gray-200);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      margin-right: 8px;
+    }
+
+    &:hover {
+      background-color: var(--hm-red, #dc3545);
+      border-color: var(--hm-red, #dc3545);
+      color: var(--white);
+    }
+  }
+}
+
+// Collapsed state for the footer
+.sidebar.collapsed {
+  .sidebar-footer {
+    padding: 10px 5px;
+
+    .user-info {
+      justify-content: center;
+      .user-details {
+        display: none;
+      }
+    }
+    
+    .logout-btn {
+      padding: 8px;
+      span { display: none; }
+      i { margin-right: 0; }
+    }
+  }
+}

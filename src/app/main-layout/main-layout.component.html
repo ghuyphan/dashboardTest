@@ -1,0 +1,83 @@
+<div class="dashboard-container">
+  
+  <aside class="sidebar" [ngClass]="{ 'collapsed': !isSidebarOpen, 'open': 'isSidebarOpen' }">
+    
+    <div class="sidebar-header">
+      <img
+        src="HMSG.ico"
+        alt="Logo Hoan My Saigon"
+        class="sidebar-logo"
+      >
+      <h2>Hoàn Mỹ Portal</h2>
+    </div>
+
+    <nav class="sidebar-nav" role="navigation">
+      <ul>
+        <ng-container *ngFor="let item of navItems">
+          <li *ngIf="hasRole(item.roles)" 
+              [class.has-submenu]="item.children"
+              [class.open]="item.isOpen">
+
+            <ng-container *ngIf="item.children; else regularLink">
+              <button (click)="toggleSubmenu(item, $event)" [attr.aria-expanded]="item.isOpen">
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+                <i class="fas fa-chevron-right toggle-icon"></i>
+              </button>
+              
+              <ul class="submenu" *ngIf="item.isOpen">
+                <ng-container *ngFor="let child of item.children">
+                  <li *ngIf="hasRole(child.roles)">
+                    <a [routerLink]="child.link" routerLinkActive="active">
+                      <i [class]="child.icon"></i>
+                      <span>{{ child.label }}</span>
+                    </a>
+                  </li>
+                </ng-container>
+              </ul>
+            </ng-container>
+
+            <ng-template #regularLink>
+              <a [routerLink]="item.link" routerLinkActive="active">
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            </ng-template>
+
+          </li>
+        </ng-container>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info" *ngIf="currentUser">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <div class="user-details">
+          <span class="username">{{ currentUser.username }}</span>
+          <span class="user-roles">{{ rolesDisplay }}</span>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()" aria-label="Logout">
+        <i class="fas fa-sign-out-alt" aria-hidden="true"></i> 
+        <span>Đăng xuất</span>
+      </button>
+    </div>
+
+  </aside> <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
+    
+    <header class="dashboard-header">
+      <div class="header-left">
+        <button class="hamburger-menu" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+      
+      <div class="header-right-controls">
+        </div>
+    </header>
+
+    <main class="dashboard-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div> </div>

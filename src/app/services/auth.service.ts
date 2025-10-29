@@ -14,7 +14,7 @@ interface LoginResponse {
     id_token?: string;
     token_type?: string;
   };
-  MaKetQua: number; // Application-level status code (Not checked in tap operator below)
+  MaKetQua: number; // Mã trạng thái ứng dụng
   ErrorMessage?: string;
   // UserInfo?: { roles: string[] }; // Alternative place roles might appear later
 }
@@ -79,7 +79,7 @@ export class AuthService {
 
   /**
    * Logs a user in. Stores token and roles based on the 'remember' flag.
-   * Relies on HTTP 2xx status code for success determination.
+   * Checks 'MaKetQua' in the response body for success determination.
    */
   login(credentials: {username: string, password: string, remember: boolean}): Observable<LoginResponse> {
     const payload = {
@@ -91,40 +91,62 @@ export class AuthService {
       headers: { 'Content-Type': 'application/json' },
     }).pipe(
       tap(response => {
-        // --- Assume success based on HTTP 2xx status ---
-        console.log('Login successful (HTTP 2xx received)');
-        this.accessToken = response.APIKey.access_token; // Store in memory
+        // --- CHECK APPLICATION-LEVEL STATUS CODE ---
+        if (response.MaKetQua === 200) {
+          // SUCCESS (MaKetQua = 200)
+          console.log('Login successful (MaKetQua: 200)');
+          this.accessToken = response.APIKey.access_token; // Store in memory
 
-        // --- Extract and Store Roles (Gracefully handle absence) ---
-        // ** ADJUST THIS based on where roles are in your actual API response **
-        const rolesFromApi = response.APIKey.roles || []; // Use roles if present, otherwise default to []
-        // const rolesFromApi = response.UserInfo?.roles || []; // Alternative example
-        this.setUserRoles(rolesFromApi); // Set roles (will be [] if none provided)
-        // Store token and roles
-        try {
-          const storage = credentials.remember ? localStorage : sessionStorage;
-          const storageType = credentials.remember ? 'localStorage' : 'sessionStorage';
-          const otherStorage = credentials.remember ? sessionStorage : localStorage;
+          // --- Extract and Store Roles (Gracefully handle absence) ---
+          const rolesFromApi = response.APIKey.roles || [];
+          this.setUserRoles(rolesFromApi); // Set roles
 
-          if (typeof otherStorage !== 'undefined') {
-            otherStorage.removeItem(TOKEN_STORAGE_KEY);
-            otherStorage.removeItem(ROLES_STORAGE_KEY);
+          // Store token and roles
+          try {
+            const storage = credentials.remember ? localStorage : sessionStorage;
+            const storageType = credentials.remember ? 'localStorage' : 'sessionStorage';
+            const otherStorage = credentials.remember ? sessionStorage : localStorage;
+
+            if (typeof otherStorage !== 'undefined') {
+              otherStorage.removeItem(TOKEN_STORAGE_KEY);
+              otherStorage.removeItem(ROLES_STORAGE_KEY);
+            }
+
+            if (typeof storage !== 'undefined') {
+              storage.setItem(TOKEN_STORAGE_KEY, response.APIKey.access_token);
+              storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(this.userRoles)); // Store roles
+              console.log(`Token and roles saved to ${storageType}.`);
+            } else {
+               console.warn(`${storageType} is not available.`);
+            }
+          } catch (e) {
+             console.error('Failed to save auth data to web storage', e);
           }
 
-          if (typeof storage !== 'undefined') {
-            storage.setItem(TOKEN_STORAGE_KEY, response.APIKey.access_token);
-            storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(this.userRoles)); // Store roles
-            console.log(`Token and roles saved to ${storageType}.`);
-          } else {
-             console.warn(`${storageType} is not available.`);
+          this.isLoggedInSubject.next(true); // Update login status
+
+        } else {
+          // --- APPLICATION-LEVEL ERROR (e.g., MaKetQua 100, 101) ---
+          let errorMessage = response.ErrorMessage; // Use API message if provided
+          if (!errorMessage) {
+            // Use custom messages based on MaKetQua
+            switch (response.MaKetQua) {
+              case 100:
+                errorMessage = 'User, Pass không được để trống';
+                break;
+              case 101:
+                errorMessage = 'User, Pass không đúng';
+                break;
+              default:
+                errorMessage = `Login failed with application code: ${response.MaKetQua}`;
+            }
           }
-        } catch (e) {
-           console.error('Failed to save auth data to web storage', e);
+          console.error('Login failed (Application Error):', errorMessage);
+          // Throw an error to be caught by catchError and propagated to the component
+          throw new Error(errorMessage);
         }
-
-        this.isLoggedInSubject.next(true); // Update login status
       }),
-      catchError(this.handleError) // Handles HTTP errors (non-2xx statuses)
+      catchError(this.handleError) // Handles HTTP errors AND errors thrown from tap
     );
   }
 
@@ -249,30 +271,36 @@ export class AuthService {
   // --- End Role Management ---
 
   /**
-   * Handles HTTP errors (non-2xx responses).
+   * Handles HTTP errors (non-2xx) or Application errors (thrown from tap).
    */
-  private handleError(error: HttpErrorResponse): Observable<never> {
-    console.error('AuthService Error:', error);
+  private handleError(error: HttpErrorResponse | Error): Observable<never> {
+    let errorMessage: string;
 
-    // Prioritize error message from the response body if available
-    // Check if error.error exists and has a message property, otherwise use error.message
-    let errorMessage = (error.error && typeof error.error === 'object' && error.error.message)
-                       ? error.error.message
-                       : (error.message || 'An unknown error occurred!');
+    if (error instanceof HttpErrorResponse) {
+      // --- HTTP Error Logic (non-2xx) ---
+      console.error('AuthService HTTP Error:', error);
 
+      // Prioritize error message from the response body if available
+      errorMessage = (error.error && typeof error.error === 'object' && error.error.message)
+                     ? error.error.message
+                     : (error.message || 'An unknown error occurred!');
 
-    // Fallback messages based on HTTP status if no specific message is found
-    if (errorMessage === 'An unknown error occurred!' || !error.error?.message) {
-        if (error.status === 0 || error.status === -1) {
-            errorMessage = 'Network error or could not connect to the server.';
-        } else if (error.status === 401) {
-            errorMessage = 'Authentication failed. Please check your credentials.';
-        // Removed specific 400 check related to MaKetQua
-        } else if (error.status === 400) {
-            errorMessage = 'Invalid request. Please check your input.';
-        } else if (error.status >= 500) {
-            errorMessage = 'Server error. Please try again later.';
-        }
+      // Fallback messages based on HTTP status
+      if (errorMessage === 'An unknown error occurred!' || !error.error?.message) {
+          if (error.status === 0 || error.status === -1) {
+              errorMessage = 'Network error or could not connect to the server.';
+          } else if (error.status === 401) {
+              errorMessage = 'Authentication failed. Please check your credentials.';
+          } else if (error.status === 400) {
+              errorMessage = 'Invalid request. Please check your input.';
+          } else if (error.status >= 500) {
+              errorMessage = 'Server error. Please try again later.';
+          }
+      }
+    } else {
+      // --- Application Error Logic (thrown from tap) ---
+      console.error('AuthService App Error:', error.message);
+      errorMessage = error.message; // Use the message we threw (e.g., 'User, Pass không đúng')
     }
 
     // Return an observable error with the processed message

@@ -45,7 +45,7 @@ export class LoginComponent {
         this.isLoading = false;
         this.toastService.showSuccess('✅ Đăng nhập thành công! Đang chuyển hướng...');
         // AuthService handles token storage based on credentials.remember
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/app']);
       },
       error: (err) => {
         this.isLoading = false;
