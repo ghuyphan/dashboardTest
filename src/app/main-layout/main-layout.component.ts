@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { 
+  Component, 
+  OnInit, 
+  OnDestroy, 
+  ElementRef, 
+  HostListener, 
+  ViewChild,
+  Renderer2,  
+  AfterViewInit 
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -22,7 +31,7 @@ interface NavItem {
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss'
 })
-export class MainLayoutComponent implements OnInit, OnDestroy {
+export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   isSidebarOpen = false;
   
   currentUser: User | null = null;
@@ -31,9 +40,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private userSubscription: Subscription | null = null;
 
   isUserMenuOpen: boolean = false;
+  isHeaderHidden: boolean = false; 
+  private lastScrollTop: number = 0; 
+  private scrollListener!: () => void; 
 
-  // Reference to the user menu container for click detection
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
+  @ViewChild('mainPanel') mainPanel!: ElementRef; 
 
   navItems: NavItem[] = [
     // --- Add your navigation items here ---
@@ -74,7 +86,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService, 
     private router: Router,
-    private el: ElementRef // Keep ElementRef for the component itself
+    private el: ElementRef, 
+    private renderer: Renderer2 
   ) {}
 
   ngOnInit(): void {
@@ -92,11 +105,29 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     window.addEventListener('resize', this.checkWindowSize.bind(this));
   }
 
+  ngAfterViewInit(): void {
+    // Attach scroll listener to the main panel for hide-on-scroll
+    if (this.mainPanel) {
+      this.scrollListener = this.renderer.listen(
+        this.mainPanel.nativeElement, 
+        'scroll', 
+        (event) => {
+          this.onMainPanelScroll(event);
+        }
+      );
+    }
+  }
+
   ngOnDestroy(): void {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
     window.removeEventListener('resize', this.checkWindowSize.bind(this));
+    
+    // Remove scroll listener
+    if (this.scrollListener) {
+      this.scrollListener();
+    }
   }
 
   private checkWindowSize(): void {
@@ -105,6 +136,24 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     } else {
       this.isSidebarOpen = false;
     }
+  }
+
+  /**
+   * Handles the scroll event on the main panel to show/hide the header.
+   */
+  private onMainPanelScroll(event: Event): void {
+    const scrollTop = (event.target as HTMLElement).scrollTop;
+    const headerHeight = 60; // Use the new header height
+
+    if (scrollTop > this.lastScrollTop && scrollTop > headerHeight) {
+      // Scrolling Down
+      this.isHeaderHidden = true;
+    } else if (scrollTop < this.lastScrollTop) {
+      // Scrolling Up
+      this.isHeaderHidden = false;
+    }
+
+    this.lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
   }
 
   formatRoles(roles: string[]): string {
@@ -148,7 +197,17 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     // Check if the click is outside the user menu container
-    if (this.userMenuContainer && !this.userMenuContainer.nativeElement.contains(event.target)) {
+    // And also ensure the click wasn't on the hamburger toggle
+    if (
+      this.userMenuContainer && 
+      !this.userMenuContainer.nativeElement.contains(event.target)
+    ) {
+      // Check if the click was on the sidebar toggle
+      const hamburger = this.el.nativeElement.querySelector('.hamburger-menu');
+      if (hamburger && hamburger.contains(event.target)) {
+        // If sidebar toggle was clicked, don't close user menu
+        return; 
+      }
       this.isUserMenuOpen = false;
     }
   }

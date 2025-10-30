@@ -9,6 +9,11 @@
         class="sidebar-logo"
       >
       <h2>Hoàn Mỹ Sài Gòn</h2>
+
+      <button class="sidebar-close-btn" (click)="toggleSidebar()" aria-label="Close sidebar">
+        <i class="fas fa-times"></i>
+      </button>
+
     </div>
 
     <nav class="sidebar-nav" role="navigation">
@@ -51,9 +56,12 @@
 
   </aside>
 
-  <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
+  <div class="sidebar-backdrop" [class.show]="isSidebarOpen" (click)="toggleSidebar()"></div>
+
+
+  <div class="main-panel" #mainPanel [ngClass]="{ 'collapsed': !isSidebarOpen }">
     
-    <header class="dashboard-header">
+    <header class="dashboard-header" [class.hidden]="isHeaderHidden">
       <div class="header-left">
         <button class="hamburger-menu" (click)="toggleSidebar()" aria-label="Toggle sidebar">
           <i class="fas fa-bars"></i>
@@ -78,13 +86,7 @@
                 <span class="username">{{ currentUser.username }}</span>
               </div>
 
-              <!-- <div class="all-profiles-btn-container">
-                <button class="all-profiles-btn" (click)="onSeeAllProfilesClick()">
-                  <i class="fas fa-users"></i>
-                  <span>See all profiles</span>
-                </button>
-              </div> -->
-            </div>
+              </div>
             
             <ul class="user-menu-items">
               <li>

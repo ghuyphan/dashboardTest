@@ -1,14 +1,15 @@
-// REMOVED: @use "sass:meta"; (This was causing the error)
-
 :host {
   display: block;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
   background-color: var(--gray-100);
+  --header-height: 60px; 
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 70px; 
 }
 
-// --- Keyframes for menu animation (Still here!) ---
+// --- Keyframes for menu animation ---
 @keyframes keyframes-slide-fade-down {
   from {
     opacity: 0;
@@ -32,10 +33,10 @@
 .sidebar {
   position: fixed;
   top: 0;
-  width: 260px;
+  width: var(--sidebar-width);
   height: 100vh;
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 16px;
   background-color: var(--dark-teal);
   color: var(--gray-200);
   padding: 0 15px 25px 15px;
@@ -51,11 +52,12 @@
   .sidebar-header {
     display: flex;
     align-items: center;
-    height: 65px; 
-    padding: 0 10px; 
+    height: var(--header-height); 
+    // padding: 0 10px; 
     margin-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box; 
+    position: relative; // For close button
 
     .sidebar-logo {
       height: 35px;
@@ -75,16 +77,37 @@
       opacity: 1;
       transition: opacity 0.2s ease-in-out;
     }
+
+    // NEW: Close button styles
+    .sidebar-close-btn {
+      display: none; // Hidden by default
+      background: none;
+      border: none;
+      color: var(--gray-200);
+      font-size: 20px;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 8px;
+      line-height: 1;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.2);
+        color: var(--white);
+      }
+    }
   }
 
   .sidebar-nav {
     flex-grow: 1; 
-
     ul {
       list-style: none;
       padding: 0;
       margin: 0;
-
       li {
         a, button {
           color: var(--gray-200);
@@ -105,7 +128,6 @@
           text-align: left;
           cursor: pointer;
           margin-bottom: 8px;
-
           i {
             margin-right: 15px;
             width: 22px;
@@ -113,18 +135,15 @@
             font-size: 1.1rem;
             transition: margin 0.3s ease-in-out;
           }
-
           span {
             opacity: 1;
             transition: opacity 0.2s ease-in-out 0.1s;
             flex-grow: 1;
           }
-
           &:hover {
             background-color: rgba(0, 0, 0, 0.2);
             color: var(--white);
           }
-
           &.active {
             background-color: rgba(0, 0, 0, 0.25);
             color: var(--white);
@@ -149,8 +168,7 @@
 
   // Styles for collapsed state
   &.collapsed {
-    width: 80px;
-
+    width: var(--sidebar-width-collapsed); 
     .sidebar-header {
       padding-left: 5px;
       padding-right: 5px;
@@ -158,7 +176,6 @@
       .sidebar-logo { margin-right: 0; }
       h2 { opacity: 0; width: 0; overflow: hidden; }
     }
-
     .sidebar-nav ul li {
       a, button {
         justify-content: center;
@@ -174,20 +191,26 @@
   }
 }
 
+// --- Sidebar backdrop for mobile ---
+.sidebar-backdrop {
+  display: none; // Hidden by default on desktop
+}
+
 // --- Main Panel (Header + Content Area) ---
 .main-panel {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  margin-left: 260px;
-  width: calc(100% - 260px);
+  height: 100vh; 
+  overflow-y: auto; 
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
   background-color: var(--gray-100);
   transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
 
   &.collapsed {
-    margin-left: 80px;
-    width: calc(100% - 80px);
+    margin-left: var(--sidebar-width-collapsed); 
+    width: calc(100% - var(--sidebar-width-collapsed)); 
   }
 }
 
@@ -200,16 +223,20 @@
   background-color: var(--white);
   border-bottom: 1px solid var(--gray-200);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  height: 65px;
+  height: var(--header-height); 
   flex-shrink: 0;
-  position: relative;
+  position: sticky; 
+  top: 0; 
   z-index: 1000; 
+  transition: transform 0.3s ease-in-out; 
 
+  &.hidden {
+    transform: translateY(-100%);
+  }
   .header-left {
     display: flex;
     align-items: center;
   }
-
   .hamburger-menu {
     background: none;
     border: none;
@@ -220,23 +247,20 @@
     margin-right: 15px;
     border-radius: 50%;
     transition: background-color 0.2s ease, color 0.2s ease;
-
     &:hover {
       background-color: var(--gray-100);
       color: var(--dark-teal);
     }
   }
-
-  // --- Styles for User Menu ---
   .header-right-controls {
     position: relative; 
     display: flex;
     align-items: center;
   }
 
+  // --- Styles for User Menu ---
   .user-menu {
     position: relative;
-
     .user-menu-toggle {
       background: none;
       border: none;
@@ -247,7 +271,6 @@
       align-items: center;
       justify-content: center;
       transition: background-color 0.2s ease;
-
       .header-avatar-img {
         width: 40px; 
         height: 40px;
@@ -255,106 +278,59 @@
         object-fit: cover;
         border: 1px solid var(--gray-200);
       }
-
       .chevron-icon {
         width: 20px;
         height: 20px;
         color: var(--gray-600);
         margin-left: 4px;
       }
-
-      &:hover {
-        background-color: var(--gray-100); 
-      }
-      
-      &:active {
-        transform: scale(0.98);
-      }
+      &:hover { background-color: var(--gray-100); }
+      &:active { transform: scale(0.98); }
     }
-
     .user-menu-dropdown {
       position: absolute;
       top: calc(100% + 12px); 
       right: 0;
-      background-color: var(--gray-100); // UPDATED: Gray background
+      background-color: var(--gray-100);
       border-radius: 8px;
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
       border: 1px solid var(--gray-200);
       width: 320px; 
       z-index: 1100;
       overflow: hidden;
-      padding: 8px; // Padding for the gray area
-      
+      padding: 8px;
       animation: keyframes-slide-fade-down 0.2s ease-out;
-
-      // NEW: White card section with shadow
       .dropdown-section-card {
         background-color: var(--white);
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); // Shadow from Image 2
-        margin-bottom: 8px; // Space between card and items
-        overflow: hidden; // To clip profile header hover
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 8px;
+        overflow: hidden;
       }
-
       .dropdown-profile-header {
         display: flex;
         align-items: center;
         padding: 12px;
-        border-radius: 8px 8px 0 0; // Rounded top corners
+        border-radius: 8px 8px 0 0;
         transition: background-color 0.2s ease;
         cursor: pointer;
-
         .dropdown-avatar-img {
           width: 44px;
           height: 44px;
           border-radius: 50%;
           margin-right: 12px;
         }
-
         .username {
           font-weight: 600;
           font-size: 16px;
           color: var(--gray-900);
         }
-
-        &:hover {
-          background-color: var(--gray-100); // Use global var
-        }
+        &:hover { background-color: var(--gray-100); }
       }
-      
-      .all-profiles-btn-container {
-        padding: 0 12px 12px 12px; // Padding at the bottom
-      }
-      .all-profiles-btn {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        padding: 10px 12px;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--gray-700);
-        background-color: var(--gray-100); // Use global var
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-
-        i {
-          color: var(--gray-600); // Use global var
-        }
-        
-        &:hover {
-          background-color: var(--gray-200); // Use global var
-        }
-      }
-
-      // MODIFIED: Items now sit on the gray background
       .user-menu-items {
         list-style: none;
-        padding: 0; // No padding, items will have it
+        padding: 0;
         margin: 0;
-
         li {
           button {
             display: flex;
@@ -371,55 +347,39 @@
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
             border-radius: 6px; 
-
             .menu-icon-bg {
               width: 36px;
               height: 36px;
               border-radius: 50%;
-              background-color: var(--gray-200); // Use global var
+              background-color: var(--gray-200);
               display: flex;
               align-items: center;
               justify-content: center;
               transition: background-color 0.2s ease;
-
               i {
                 font-size: 16px;
-                color: var(--gray-800); // Use global var
+                color: var(--gray-800);
                 margin: 0; 
                 width: auto; 
                 transition: color 0.2s ease;
               }
             }
-            
-            span {
-              line-height: 1;
-            }
-
+            span { line-height: 1; }
             &:hover {
-              background-color: var(--gray-200); // Use global var
-              color: var(--gray-900); // Darken text
+              background-color: var(--gray-200);
+              color: var(--gray-900);
               .menu-icon-bg {
-                background-color: var(--gray-300); // Darken icon bg
+                background-color: var(--gray-300);
               }
             }
           }
-          
-          &.logout-item {
-            margin: 0; 
-            padding: 0; 
-            border: none; 
-          }
-
+          &.logout-item { margin: 0; padding: 0; border: none; }
           .logout-btn {
             color: var(--hm-red, #dc3545); 
-            
             .menu-icon-bg {
               background-color: rgba(220, 53, 69, 0.1);
-              i {
-                color: var(--hm-red, #dc3545);
-              }
+              i { color: var(--hm-red, #dc3545); }
             }
-
             &:hover {
               background-color: rgba(220, 53, 69, 0.15); 
               color: var(--hm-red, #dc3545);
@@ -432,14 +392,12 @@
       }
     }
   }
-  // --- END: User Menu Styles ---
 }
 
 // --- Dashboard Content Area ---
 .dashboard-content {
   flex-grow: 1;
   padding: 30px;
-  overflow-y: auto;
 }
 
 
@@ -460,14 +418,42 @@
      transition: transform 0.3s ease-in-out;
      &.open {
         transform: translateX(0);
+        // Show close button when open on mobile
+        .sidebar-close-btn {
+          display: block;
+        }
      }
      &.collapsed {
         transform: translateX(-100%);
-        width: 260px;
-        .sidebar-header h2, .sidebar-nav ul li a span, .sidebar-nav ul li button span { opacity: 1; width: auto; }
+        width: var(--sidebar-width);
+        .sidebar-close-btn { display: none; } // Hide close btn
+        .sidebar-header h2 { opacity: 1; width: auto; }
         .sidebar-nav ul li a, .sidebar-nav ul li button { justify-content: flex-start; }
         .sidebar-nav ul li a i, .sidebar-nav ul li button i { margin-right: 15px; }
+        .sidebar-nav ul li a span, .sidebar-nav ul li button span { opacity: 1; width: auto; }
      }
+  }
+  
+  // UPDATED: Show backdrop and add blur/darken
+  .sidebar-backdrop {
+    display: block; // Make it active on mobile
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); // UPDATED: Darken
+    z-index: 1020; // Just below sidebar
+    opacity: 0;
+    visibility: hidden;
+    backdrop-filter: blur(4px); // NEW: Blur effect
+    -webkit-backdrop-filter: blur(4px); // NEW: Safari support
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+    }
   }
 
   .dashboard-header {
@@ -479,12 +465,14 @@
 
 @media (max-width: 480px) {
     .sidebar { width: 240px; }
-    .dashboard-header { height: 60px; }
+    .dashboard-header { height: var(--header-height); } 
     .dashboard-content { padding: 15px; }
     
     .dashboard-header .user-menu .user-menu-dropdown {
-      width: calc(100vw - 30px);
-      max-width: 320px;
+      width: calc(100vw - 30px); 
+      max-width: none; 
+      right: -15px; 
+      top: calc(100% + 10px);
     }
 }
 
@@ -500,7 +488,6 @@
           display: none;
         }
       }
-
       .toggle-icon {
         font-size: 0.8em;
         margin-left: auto;
@@ -510,24 +497,20 @@
       }
     }
   }
-
   .submenu {
     list-style: none;
     padding: 0;
     margin: 0 0 8px 0;
-    
     li {
       a {
         padding-left: 47px;
         font-size: 0.9em;
         color: var(--gray-300); 
         margin-bottom: 4px;
-
         &.active {
           color: var(--white); 
           background-color: transparent;
           font-weight: 500;
-
           &::before {
             content: '';
             position: absolute;
@@ -539,12 +522,10 @@
             border-radius: 4px;
           }
         }
-
         &:hover {
           background-color: rgba(0, 0, 0, 0.2);
           color: var(--white); 
         }
-        
         i {
           font-size: 1em;
           margin-right: 10px;
