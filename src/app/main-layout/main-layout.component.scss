@@ -1,11 +1,3 @@
-/* --- UPDATED DESIGN V5 --- */
-/*
-  - Combines the best of both designs:
-  - 1. Dark sidebar using var(--dark-teal)
-  - 2. Clean structure with user info at the bottom (from previous step)
-  - 3. Re-adds the white background to the logo so it stands out.
-*/
-
 :host {
   display: block;
   height: 100vh;
@@ -27,18 +19,14 @@
   top: 0;
   width: 260px;
   height: 100vh;
-  /* --- CHANGED: Back to dark teal --- */
   background-color: var(--dark-teal);
   color: var(--gray-200);
-  /* --- End Change --- */
   padding: 25px 15px;
   padding-top: 20px;
   transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
   z-index: 1030;
-  /* --- CHANGED: Back to shadow --- */
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
   border-right: none;
-  /* --- End Change --- */
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -49,7 +37,6 @@
     align-items: center;
     padding: 0 10px 20px 10px;
     margin-bottom: 20px;
-    /* --- CHANGED: Light border for dark bg --- */
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
     .sidebar-logo {
@@ -57,7 +44,6 @@
       width: 40px;
       margin-right: 12px;
       border-radius: 10px;
-      /* --- CHANGED: Add white BG to make logo pop --- */
       background-color: var(--white);
       padding: 5px;
     }
@@ -65,7 +51,6 @@
     h2 {
       font-size: 18px;
       font-weight: 600;
-      /* --- CHANGED: White text --- */
       color: var(--white);
       margin: 0;
       white-space: nowrap;
@@ -76,7 +61,7 @@
 
   /* --- Renamed for clarity --- */
   .sidebar-nav {
-    flex-grow: 1; // This makes the nav grow, pushing footer to bottom
+    flex-grow: 1; 
 
     ul {
       list-style: none;
@@ -84,9 +69,7 @@
       margin: 0;
 
       li {
-        // Base styles for all links OR buttons
         a, button {
-          /* --- CHANGED: Light text --- */
           color: var(--gray-200);
           text-decoration: none;
           display: flex;
@@ -101,7 +84,7 @@
           border: none;
           font-family: inherit;
           font-size: 15px;
-          font-weight: 400; // Regular weight
+          font-weight: 400; 
           text-align: left;
           cursor: pointer;
           margin-bottom: 8px;
@@ -120,13 +103,11 @@
             flex-grow: 1;
           }
 
-          /* --- CHANGED: Hover for dark bg --- */
           &:hover {
             background-color: rgba(0, 0, 0, 0.2);
             color: var(--white);
           }
 
-          /* --- ACTIVE LINK STYLE (Accent Border) --- */
           &.active {
             background-color: rgba(0, 0, 0, 0.25);
             color: var(--white);
@@ -200,7 +181,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 25px;
-  /* --- Clean white header --- */
   background-color: var(--white);
   border-bottom: 1px solid var(--gray-200);
   box-shadow: none;
@@ -231,7 +211,6 @@
   }
 
   .header-right-controls {
-    // Placeholder for future icons
   }
 }
 
@@ -310,13 +289,15 @@
         margin-left: auto;
         padding: 0 5px;
         color: var(--gray-300);
-        transition: transform 0.2s ease-in-out;
+        /* CHANGED: Removed 'transform' transition */
+        transition: color 0.2s ease-in-out;
       }
     }
     
     &.open {
       > button .toggle-icon {
-        transform: rotate(90deg);
+        /* CHANGED: Removed 'transform: rotate(90deg)' */
+        /* The icon class is now swapped in the HTML */
       }
     }
   }

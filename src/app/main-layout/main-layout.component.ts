@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { Subscription } from 'rxjs';
 
 // --- Interface for a Navigation Item ---
 interface NavItem {
@@ -13,6 +14,12 @@ interface NavItem {
   isOpen?: boolean; // Optional: To track sub-menu state
 }
 
+// Added a user interface (you can move this to a models file)
+interface AppUser {
+  username: string;
+  roles: string[];
+}
+
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -20,18 +27,17 @@ interface NavItem {
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss'
 })
-export class MainLayoutComponent implements OnInit {
+export class MainLayoutComponent implements OnInit, OnDestroy { 
 
-  isSidebarOpen = true;
-  currentUser: { username: string, roles: string[] } | null = null;
+  isSidebarOpen = false;
+  currentUser: AppUser | null = null; // Uses AppUser interface
   rolesDisplay = '';
 
-  // Mock user data - roles: ['Admin', 'Manager', 'User']
-  mockUser = {
-    username: 'ghuyphan',
-    roles: ['Admin', 'Manager', 'User']
-  };
+  // Added for cleaning up the subscription
+  private userSubscription: Subscription | undefined;
 
+  // REMOVED: Mock user data
+  
   // --- Data-driven navigation menu ---
   navItems: NavItem[] = [
     {
@@ -82,10 +88,21 @@ export class MainLayoutComponent implements OnInit {
   constructor(private authService: AuthService) { }
 
   ngOnInit(): void {
-    this.currentUser = this.mockUser; // Get user from auth service
+    // CHANGED: Explicitly typed 'user' as (user: AppUser | null) to fix TS7006
+    this.userSubscription = this.authService.currentUser$.subscribe((user: AppUser | null) => {
+      this.currentUser = user;
+      if (this.currentUser) {
+        this.rolesDisplay = this.currentUser.roles.join(', ');
+      } else {
+        this.rolesDisplay = ''; // Clear display if user is null (logged out)
+      }
+    });
+  }
 
-    if (this.currentUser) {
-      this.rolesDisplay = this.currentUser.roles.join(', ');
+  // Added ngOnDestroy to unsubscribe
+  ngOnDestroy(): void {
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
     }
   }
 

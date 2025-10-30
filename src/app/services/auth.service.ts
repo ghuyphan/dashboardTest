@@ -5,6 +5,8 @@ import { catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment.development';
 
+// --- INTERFACES ---
+
 interface LoginResponse {
   APIKey: {
     access_token: string;
@@ -16,12 +18,20 @@ interface LoginResponse {
   };
   MaKetQua: number; // Mã trạng thái ứng dụng
   ErrorMessage?: string;
-  // UserInfo?: { roles: string[] }; // Alternative place roles might appear later
 }
 
-// Key for storage
+// CHANGED: This interface matches the one in main-layout.component.ts
+// It represents the user object we will store.
+interface AppUser {
+  username: string;
+  roles: string[];
+}
+
+// --- STORAGE KEYS ---
 const TOKEN_STORAGE_KEY = 'authToken';
 const ROLES_STORAGE_KEY = 'userRoles';
+const USERNAME_STORAGE_KEY = 'username'; // CHANGED: Added key for username
+
 
 @Injectable({
   providedIn: 'root'
@@ -29,57 +39,77 @@ const ROLES_STORAGE_KEY = 'userRoles';
 export class AuthService {
   private API_URL_LOGIN = environment.authUrl;
   private accessToken: string | null = null;
-  private userRoles: string[] = []; // Array to store user roles/permissions
+  // private userRoles: string[] = []; // REMOVED: This is now part of currentUserSubject
+
+  // --- Observables for Auth State ---
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
+
+  // CHANGED: Added a BehaviorSubject to hold the full user object
+  private currentUserSubject = new BehaviorSubject<AppUser | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable(); // <-- THIS FIXES THE ERROR
 
   constructor(
     private http: HttpClient,
     private router: Router
   ) {
-    this.loadTokenFromStorage();
-    this.loadUserRoles(); // Load roles when service initializes
-    // Update login status based on whether the token is loaded
-    this.isLoggedInSubject.next(!!this.accessToken);
+    // CHANGED: Replaced old load methods with a single initializer
+    this.initializeUserFromStorage();
   }
 
   /**
-   * Loads the authentication token from localStorage or sessionStorage.
+   * CHANGED: New method to load all auth data from storage on init.
+   * This runs once when the service is created (e.g., on page refresh).
    */
-  private loadTokenFromStorage(): void {
+  private initializeUserFromStorage(): void {
     let storedToken: string | null = null;
-    let storageType = 'none';
+    let storedRolesJson: string | null = null;
+    let storedUsername: string | null = null;
+    let storage: Storage | undefined;
 
     try {
-      if (typeof localStorage !== 'undefined') {
-        storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-        if (storedToken) {
-          storageType = 'localStorage';
-        }
-      }
-      if (!storedToken && typeof sessionStorage !== 'undefined') {
-        storedToken = sessionStorage.getItem(TOKEN_STORAGE_KEY);
-        if (storedToken) {
-          storageType = 'sessionStorage';
-        }
+      // Check localStorage first (remembered)
+      if (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_STORAGE_KEY)) {
+        storage = localStorage;
+      } 
+      // Then check sessionStorage
+      else if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
+        storage = sessionStorage;
       }
 
-      if (storedToken) {
-        this.accessToken = storedToken;
-        console.log(`AuthService: Token loaded from ${storageType}.`);
-      } else {
-         this.accessToken = null;
-         console.log('AuthService: No token found in storage.');
+      if (storage) {
+        storedToken = storage.getItem(TOKEN_STORAGE_KEY);
+        storedRolesJson = storage.getItem(ROLES_STORAGE_KEY);
+        storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
+
+        // We need all three pieces of data to be valid
+        if (storedToken && storedRolesJson && storedUsername) {
+          this.accessToken = storedToken;
+          const roles: string[] = JSON.parse(storedRolesJson);
+          
+          const user: AppUser = {
+            username: storedUsername,
+            roles: roles
+          };
+          
+          this.currentUserSubject.next(user); // Set the current user
+          this.isLoggedInSubject.next(true); // Set login status
+          console.log(`AuthService: User '${user.username}' initialized from storage.`);
+          return;
+        }
       }
     } catch (e) {
-      console.error('Failed to access web storage for token', e);
-      this.accessToken = null;
+      console.error('Failed to initialize user from storage', e);
+      // Fall through to clear data
     }
+
+    // If we reach here, no valid session was found
+    this.clearLocalAuthData(false); // Clear storage without navigating
   }
+
 
   /**
    * Logs a user in. Stores token and roles based on the 'remember' flag.
-   * Checks 'MaKetQua' in the response body for success determination.
    */
   login(credentials: {username: string, password: string, remember: boolean}): Observable<LoginResponse> {
     const payload = {
@@ -91,93 +121,100 @@ export class AuthService {
       headers: { 'Content-Type': 'application/json' },
     }).pipe(
       tap(response => {
-        // --- CHECK APPLICATION-LEVEL STATUS CODE ---
         if (response.MaKetQua === 200) {
-          // SUCCESS (MaKetQua = 200)
           console.log('Login successful (MaKetQua: 200)');
-          this.accessToken = response.APIKey.access_token; // Store in memory
+          this.accessToken = response.APIKey.access_token;
 
-          // --- Extract and Store Roles (Gracefully handle absence) ---
           const rolesFromApi = response.APIKey.roles || [];
-          this.setUserRoles(rolesFromApi); // Set roles
 
-          // Store token and roles
+          // CHANGED: Create the AppUser object
+          const user: AppUser = {
+            username: credentials.username, // Get username from the form
+            roles: rolesFromApi
+          };
+
+          // Store token, roles, and username
           try {
             const storage = credentials.remember ? localStorage : sessionStorage;
             const storageType = credentials.remember ? 'localStorage' : 'sessionStorage';
             const otherStorage = credentials.remember ? sessionStorage : localStorage;
 
+            // Clear the other storage (if user switches from 'remember' to not)
             if (typeof otherStorage !== 'undefined') {
               otherStorage.removeItem(TOKEN_STORAGE_KEY);
               otherStorage.removeItem(ROLES_STORAGE_KEY);
+              otherStorage.removeItem(USERNAME_STORAGE_KEY);
             }
 
             if (typeof storage !== 'undefined') {
               storage.setItem(TOKEN_STORAGE_KEY, response.APIKey.access_token);
-              storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(this.userRoles)); // Store roles
-              console.log(`Token and roles saved to ${storageType}.`);
-            } else {
-               console.warn(`${storageType} is not available.`);
+              storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(user.roles));
+              storage.setItem(USERNAME_STORAGE_KEY, user.username); // <-- CHANGED: Store username
+              console.log(`Token, roles, and username saved to ${storageType}.`);
             }
           } catch (e) {
              console.error('Failed to save auth data to web storage', e);
           }
 
-          this.isLoggedInSubject.next(true); // Update login status
+          this.isLoggedInSubject.next(true);
+          this.currentUserSubject.next(user); // <-- CHANGED: Update the current user observable
 
         } else {
-          // --- APPLICATION-LEVEL ERROR (e.g., MaKetQua 100, 101) ---
-          let errorMessage = response.ErrorMessage; // Use API message if provided
+          // ... (Application-level error handling)
+          let errorMessage = response.ErrorMessage;
           if (!errorMessage) {
-            // Use custom messages based on MaKetQua
             switch (response.MaKetQua) {
-              case 100:
-                errorMessage = 'User, Pass không được để trống';
-                break;
-              case 101:
-                errorMessage = 'User, Pass không đúng';
-                break;
-              default:
-                errorMessage = `Login failed with application code: ${response.MaKetQua}`;
+              case 100: errorMessage = 'User, Pass không được để trống'; break;
+              case 101: errorMessage = 'User, Pass không đúng'; break;
+              default: errorMessage = `Login failed with application code: ${response.MaKetQua}`;
             }
           }
           console.error('Login failed (Application Error):', errorMessage);
-          // Throw an error to be caught by catchError and propagated to the component
           throw new Error(errorMessage);
         }
       }),
-      catchError(this.handleError) // Handles HTTP errors AND errors thrown from tap
+      catchError(this.handleError)
     );
   }
 
   /**
-   * Logs the user out. Clears in-memory data, sessionStorage, localStorage, and state.
+   * Logs the user out. Clears all data and navigates to login.
    */
   logout(): void {
-     this.clearLocalAuthData();
+     this.clearLocalAuthData(true); // Clear data and navigate
   }
 
   /**
    * Helper to clear all local authentication state and storage.
+   * CHANGED: Added 'navigate' parameter.
    */
-  private clearLocalAuthData(): void {
+  private clearLocalAuthData(navigate: boolean = true): void {
     this.accessToken = null;
-    this.clearUserRoles(); // Clear roles from memory and storage
+    
     try {
-      // Remove token from BOTH storages
+      // Remove data from BOTH storages
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+        sessionStorage.removeItem(ROLES_STORAGE_KEY);
+        sessionStorage.removeItem(USERNAME_STORAGE_KEY); // <-- CHANGED
       }
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(ROLES_STORAGE_KEY);
+        localStorage.removeItem(USERNAME_STORAGE_KEY); // <-- CHANGED
       }
     } catch (e) {
-      console.error('Failed to remove token from web storage', e);
+      console.error('Failed to remove auth data from web storage', e);
     }
-    this.isLoggedInSubject.next(false); // Set logged out state
+    
+    this.isLoggedInSubject.next(false);
+    this.currentUserSubject.next(null); // <-- CHANGED: Set current user to null
+    
     console.log('User logged out, state and web storage cleared.');
-    // Navigate after clearing state
-    this.router.navigate(['/login']);
+    
+    if (navigate) {
+      this.router.navigate(['/login']);
+    }
   }
 
   /**
@@ -189,86 +226,28 @@ export class AuthService {
 
   // --- Role Management Methods ---
 
-  /**
-   * Sets the user roles in memory and persists them to the appropriate storage.
-   */
-  setUserRoles(roles: string[]): void {
-    this.userRoles = roles || []; // Ensure it's always an array
-    console.log('User roles set:', this.userRoles);
-    try {
-      // Determine storage based on whether token is in localStorage (remembered) or sessionStorage
-      const tokenStorage = (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_STORAGE_KEY)) ? localStorage : sessionStorage;
-      const storageType = (tokenStorage === localStorage) ? 'localStorage' : 'sessionStorage';
-
-      if (typeof tokenStorage !== 'undefined') {
-        tokenStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(this.userRoles));
-        console.log(`Roles saved to ${storageType}.`);
-      }
-    } catch (e) {
-      console.error('Failed to save roles to web storage', e);
-    }
-  }
-
-  /**
-   * Loads user roles from storage (localStorage first, then sessionStorage).
-   * Should be called during service initialization.
-   */
-  loadUserRoles(): void {
-    let storedRolesJson: string | null = null;
-    let storageType = 'none';
-    try {
-      const tokenStorage = (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_STORAGE_KEY)) ? localStorage : sessionStorage;
-      storageType = (tokenStorage === localStorage) ? 'localStorage' : 'sessionStorage';
-
-       if (typeof tokenStorage !== 'undefined') {
-         storedRolesJson = tokenStorage.getItem(ROLES_STORAGE_KEY);
-       }
-
-      if (storedRolesJson) {
-        this.userRoles = JSON.parse(storedRolesJson);
-        console.log(`User roles loaded from ${storageType}:`, this.userRoles);
-      } else {
-        this.userRoles = []; // Default to empty array if nothing is stored
-         console.log(`No user roles found in ${storageType}.`);
-      }
-    } catch (e) {
-      console.error(`Failed to load/parse roles from ${storageType}`, e);
-      this.userRoles = []; // Default to empty array on error
-    }
-  }
+  // REMOVED: loadTokenFromStorage() - Handled by initializeUserFromStorage
+  // REMOVED: setUserRoles() - Handled by login
+  // REMOVED: loadUserRoles() - Handled by initializeUserFromStorage
+  // REMOVED: clearUserRoles() - Handled by clearLocalAuthData
 
   /**
    * Checks if the current user has the specified role.
+   * CHANGED: Reads from the currentUserSubject.
    */
   hasRole(role: string): boolean {
-    return this.userRoles.includes(role);
+    const currentUser = this.currentUserSubject.getValue();
+    return currentUser ? currentUser.roles.includes(role) : false;
   }
 
   /**
    * Gets a copy of the current user's roles.
+   * CHANGED: Reads from the currentUserSubject.
    */
   getUserRoles(): string[] {
-    return [...this.userRoles]; // Return a copy
+    const currentUser = this.currentUserSubject.getValue();
+    return currentUser ? [...currentUser.roles] : []; // Return a copy
   }
-
-  /**
-   * Clears user roles from memory and storage.
-   */
-  clearUserRoles(): void {
-    this.userRoles = [];
-    try {
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.removeItem(ROLES_STORAGE_KEY);
-      }
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(ROLES_STORAGE_KEY);
-      }
-      console.log('User roles cleared from memory and storage.');
-    } catch (e) {
-      console.error('Failed to remove roles from web storage', e);
-    }
-  }
-  // --- End Role Management ---
 
   /**
    * Handles HTTP errors (non-2xx) or Application errors (thrown from tap).
@@ -279,13 +258,10 @@ export class AuthService {
     if (error instanceof HttpErrorResponse) {
       // --- HTTP Error Logic (non-2xx) ---
       console.error('AuthService HTTP Error:', error);
-
-      // Prioritize error message from the response body if available
       errorMessage = (error.error && typeof error.error === 'object' && error.error.message)
                      ? error.error.message
                      : (error.message || 'An unknown error occurred!');
 
-      // Fallback messages based on HTTP status
       if (errorMessage === 'An unknown error occurred!' || !error.error?.message) {
           if (error.status === 0 || error.status === -1) {
               errorMessage = 'Network error or could not connect to the server.';
@@ -300,10 +276,9 @@ export class AuthService {
     } else {
       // --- Application Error Logic (thrown from tap) ---
       console.error('AuthService App Error:', error.message);
-      errorMessage = error.message; // Use the message we threw (e.g., 'User, Pass không đúng')
+      errorMessage = error.message; 
     }
 
-    // Return an observable error with the processed message
     return throwError(() => new Error(errorMessage));
   }
 }

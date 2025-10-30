@@ -1,6 +1,6 @@
 <div class="dashboard-container">
   
-  <aside class="sidebar" [ngClass]="{ 'collapsed': !isSidebarOpen, 'open': 'isSidebarOpen' }">
+  <aside class="sidebar" [ngClass]="{ 'collapsed': !isSidebarOpen, 'open': isSidebarOpen }">
     
     <div class="sidebar-header">
       <img
@@ -22,7 +22,7 @@
               <button (click)="toggleSubmenu(item, $event)" [attr.aria-expanded]="item.isOpen">
                 <i [class]="item.icon"></i>
                 <span>{{ item.label }}</span>
-                <i class="fas fa-chevron-right toggle-icon"></i>
+                <i class="fas toggle-icon" [ngClass]="item.isOpen ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
               </button>
               
               <ul class="submenu" *ngIf="item.isOpen">
@@ -63,7 +63,9 @@
       </button>
     </div>
 
-  </aside> <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
+  </aside>
+
+  <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
     
     <header class="dashboard-header">
       <div class="header-left">
@@ -80,4 +82,6 @@
       <router-outlet></router-outlet>
     </main>
 
-  </div> </div>
+  </div>
+
+</div>
