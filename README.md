@@ -82,6 +82,3 @@ ng generate directive|pipe|service|class|guard|interface|enum|module
 ## ℹ️ Further Help
 
 To get more help on the Angular CLI, use `ng help` or check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-
-```
-```
