@@ -1,60 +1,87 @@
-# HoanMyPortal
+# 🏥 Hoàn Mỹ Portal
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.18.
+This project serves as the central administrative dashboard for the Hoàn Mỹ Portal.
 
-## Development server
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 19.2.18.
 
-To start a local development server, run:
+---
+
+## 🛠️ Tech Stack
+
+* **Framework:** Angular 19.2.x
+* **Language:** TypeScript 5.7.x
+* **Styling:** SCSS
+* **Testing:** Karma & Jasmine
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have the [Node.js](https://nodejs.org/) (which includes npm) and the [Angular CLI](https://angular.dev/tools/cli) installed globally.
+
+```bash
+# Install the Angular CLI globally (if you don't have it)
+npm install -g @angular/cli
+````
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone [YOUR_REPOSITORY_URL]
+    ```
+2.  Navigate to the project directory:
+    ```bash
+    cd [PROJECT_DIRECTORY]
+    ```
+3.  Install NPM packages:
+    ```bash
+    npm install
+    ```
+
+-----
+
+## 🖥️ Development Server
+
+Run `ng serve` to start the development server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## 🏗️ Building the Project
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Run `ng build` to build the project. The build artifacts will be stored in the `dist/hoan-my-portal/` directory.
 
 ```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
+# For a development build
 ng build
+
+# For a production build
+ng build --configuration production
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 🧪 Running Unit Tests
 
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+## 🧩 Code Scaffolding
 
-For end-to-end (e2e) testing, run:
+Run `ng generate component component-name` to generate a new component. You can also use `ng generate` for other file types:
 
 ```bash
-ng e2e
+ng generate directive|pipe|service|class|guard|interface|enum|module
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## ℹ️ Further Help
 
-## Additional Resources
+To get more help on the Angular CLI, use `ng help` or check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-# dashboardTest
+```
+```

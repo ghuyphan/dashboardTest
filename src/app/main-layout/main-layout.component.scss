@@ -21,8 +21,8 @@
   height: 100vh;
   background-color: var(--dark-teal);
   color: var(--gray-200);
-  padding: 25px 15px;
-  padding-top: 20px;
+  /* CHANGED: Set padding-top to 0 to align header */
+  padding: 0 15px 25px 15px;
   transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
   z-index: 1030;
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
@@ -35,13 +35,18 @@
   .sidebar-header {
     display: flex;
     align-items: center;
-    padding: 0 10px 20px 10px;
+    /* CHANGED: Match dashboard-header height */
+    height: 65px; 
+    /* CHANGED: Removed uneven padding */
+    padding: 0 10px; 
     margin-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    /* ADDED: Ensures padding doesn't add to height */
+    box-sizing: border-box; 
 
     .sidebar-logo {
-      height: 40px;
-      width: 40px;
+      height: 35px;
+      width: 35px;
       margin-right: 12px;
       border-radius: 10px;
       background-color: var(--white);

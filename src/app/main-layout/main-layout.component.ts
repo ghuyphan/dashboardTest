@@ -8,10 +8,10 @@ import { Subscription } from 'rxjs';
 interface NavItem {
   label: string;
   icon: string;
-  link?: string; // Link is optional if it's just a parent toggle
-  roles?: string[]; // Optional: Roles that can see this link
-  children?: NavItem[]; // Optional: For sub-menus
-  isOpen?: boolean; // Optional: To track sub-menu state
+  link?: string;
+  roles?: string[]; 
+  children?: NavItem[]; 
+  isOpen?: boolean; 
 }
 
 // Added a user interface (you can move this to a models file)
@@ -30,30 +30,28 @@ interface AppUser {
 export class MainLayoutComponent implements OnInit, OnDestroy { 
 
   isSidebarOpen = false;
-  currentUser: AppUser | null = null; // Uses AppUser interface
+  currentUser: AppUser | null = null; 
   rolesDisplay = '';
 
   // Added for cleaning up the subscription
   private userSubscription: Subscription | undefined;
-
-  // REMOVED: Mock user data
   
   // --- Data-driven navigation menu ---
   navItems: NavItem[] = [
     {
-      label: 'Home',
+      label: 'Trang chủ',
       icon: 'fas fa-tachometer-alt',
       link: '/app/home'
       // No 'roles' property means everyone can see it
     },
     {
-      label: 'User Management',
+      label: 'Quản lý người dùng',
       icon: 'fas fa-users',
       link: '/app/users',
       roles: ['Admin'] // Only 'Admin' can see this
     },
     {
-      label: 'Reports',
+      label: 'Báo cáo',
       icon: 'fas fa-chart-bar',
       roles: ['Admin', 'Manager'], // Only 'Admin' and 'Manager' can see
       isOpen: false, // Default to closed
@@ -73,12 +71,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       ]
     },
     {
-      label: 'Settings',
+      label: 'Cài đặt',
       icon: 'fas fa-cog',
       link: '/app/settings'
     },
     {
-      label: 'Help',
+      label: 'Hỗ trợ',
       icon: 'fas fa-question-circle',
       link: '/app/help'
     }
@@ -88,7 +86,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   constructor(private authService: AuthService) { }
 
   ngOnInit(): void {
-    // CHANGED: Explicitly typed 'user' as (user: AppUser | null) to fix TS7006
     this.userSubscription = this.authService.currentUser$.subscribe((user: AppUser | null) => {
       this.currentUser = user;
       if (this.currentUser) {
