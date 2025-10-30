@@ -61,33 +61,53 @@
       </div>
       
       <div class="header-right-controls">
-        <div class="user-menu" *ngIf="currentUser">
+        <div class="user-menu" #userMenuContainer *ngIf="currentUser">
           
           <button class="user-menu-toggle" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen" aria-label="User menu">
-            <i class="fas fa-user-circle user-icon"></i>
+            <img src="assets/images/user-avatar.png" alt="User Avatar" class="header-avatar-img">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="chevron-icon">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
           </button>
 
           <div class="user-menu-dropdown" *ngIf="isUserMenuOpen">
-            <div class="user-menu-header">
-              <span class="username">{{ currentUser.username }}</span>
-              <span class="user-roles">{{ rolesDisplay }}</span>
+            
+            <div class="dropdown-section-card">
+              <div class="dropdown-profile-header">
+                <img src="assets/images/user-avatar.png" alt="User Avatar" class="dropdown-avatar-img">
+                <span class="username">{{ currentUser.username }}</span>
+              </div>
+
+              <!-- <div class="all-profiles-btn-container">
+                <button class="all-profiles-btn" (click)="onSeeAllProfilesClick()">
+                  <i class="fas fa-users"></i>
+                  <span>See all profiles</span>
+                </button>
+              </div> -->
             </div>
+            
             <ul class="user-menu-items">
               <li>
                 <button (click)="onSettingsClick()">
-                  <i class="fas fa-gear"></i>
-                  <span>Settings</span>
+                  <div class="menu-icon-bg">
+                    <i class="fas fa-gear"></i>
+                  </div>
+                  <span>Cài đặt</span>
                 </button>
               </li>
               <li>
                 <button (click)="onSupportClick()">
-                  <i class="fas fa-question-circle"></i>
-                  <span>Support</span>
+                  <div class="menu-icon-bg">
+                    <i class="fas fa-question-circle"></i>
+                  </div>
+                  <span>Hỗ trợ</span>
                 </button>
               </li>
               <li class="logout-item"> 
                 <button class="logout-btn" (click)="logout()">
-                  <i class="fas fa-sign-out-alt"></i>
+                  <div class="menu-icon-bg">
+                    <i class="fas fa-sign-out-alt"></i>
+                  </div>
                   <span>Đăng xuất</span>
                 </button>
               </li>

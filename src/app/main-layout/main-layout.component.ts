@@ -1,11 +1,9 @@
-import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-
-// --- ADDED ---
-import { User } from '../models/user.model'; // Import the new User model
+import { User } from '../models/user.model'; 
 
 // Define navigation item interface
 interface NavItem {
@@ -17,9 +15,6 @@ interface NavItem {
   isOpen?: boolean;
 }
 
-// --- REMOVED ---
-// The local 'AppUser' interface is no longer needed
-
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -30,13 +25,15 @@ interface NavItem {
 export class MainLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = false;
   
-  // CHANGED: Type updated to use the imported User model
   currentUser: User | null = null;
   
   rolesDisplay: string = '';
   private userSubscription: Subscription | null = null;
 
   isUserMenuOpen: boolean = false;
+
+  // Reference to the user menu container for click detection
+  @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
 
   navItems: NavItem[] = [
     // --- Add your navigation items here ---
@@ -77,7 +74,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService, 
     private router: Router,
-    private el: ElementRef 
+    private el: ElementRef // Keep ElementRef for the component itself
   ) {}
 
   ngOnInit(): void {
@@ -106,7 +103,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (window.innerWidth <= 992) {
       this.isSidebarOpen = false;
     } else {
-      this.isSidebarOpen = true;
+      this.isSidebarOpen = false;
     }
   }
 
@@ -139,6 +136,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+    this.isUserMenuOpen = false; // Close menu on logout
   }
 
   // --- Methods for new user menu in header ---
@@ -149,7 +147,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    if (!this.el.nativeElement.querySelector('.user-menu')?.contains(event.target)) {
+    // Check if the click is outside the user menu container
+    if (this.userMenuContainer && !this.userMenuContainer.nativeElement.contains(event.target)) {
       this.isUserMenuOpen = false;
     }
   }
@@ -164,5 +163,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     console.log('Support clicked');
     this.isUserMenuOpen = false; 
     // Example: this.router.navigate(['/support']);
+  }
+
+  // --- NEW METHOD ---
+  onSeeAllProfilesClick(): void {
+    console.log('See all profiles clicked');
+    this.isUserMenuOpen = false;
+    // Example: this.router.navigate(['/profiles']);
   }
 }

@@ -61,7 +61,7 @@
       height: 35px;
       width: 35px;
       margin-right: 12px;
-      border-radius: 10px;
+      border-radius: 100%;
       background-color: var(--white);
       padding: 5px;
     }
@@ -199,12 +199,11 @@
   padding: 0 25px;
   background-color: var(--white);
   border-bottom: 1px solid var(--gray-200);
-  /* Polished shadow */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   height: 65px;
   flex-shrink: 0;
   position: relative;
-  z-index: 1000; // Ensure header is above content
+  z-index: 1000; 
 
   .header-left {
     display: flex;
@@ -242,74 +241,118 @@
       background: none;
       border: none;
       cursor: pointer;
-      padding: 8px;
-      border-radius: 50%;
+      padding: 4px; 
+      border-radius: 50px; 
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.2s ease, transform 0.2s ease;
+      transition: background-color 0.2s ease;
 
-      .user-icon {
-        font-size: 28px;
-        color: var(--dark-teal); // Use global color
+      .header-avatar-img {
+        width: 40px; 
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--gray-200);
+      }
+
+      .chevron-icon {
+        width: 20px;
+        height: 20px;
+        color: var(--gray-600);
+        margin-left: 4px;
       }
 
       &:hover {
-        background-color: var(--gray-100); // Use global color
+        background-color: var(--gray-100); 
       }
       
-      // Add a subtle press effect
       &:active {
-        transform: scale(0.95);
+        transform: scale(0.98);
       }
     }
 
     .user-menu-dropdown {
       position: absolute;
-      top: calc(100% + 12px); // Increased gap slightly
+      top: calc(100% + 12px); 
       right: 0;
-      background-color: var(--white); // Use global color
+      background-color: var(--gray-100); // UPDATED: Gray background
       border-radius: 8px;
-      /* More pronounced shadow */
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-      border: 1px solid var(--gray-200); // Use global color
-      min-width: 240px;
+      border: 1px solid var(--gray-200);
+      width: 320px; 
       z-index: 1100;
       overflow: hidden;
+      padding: 8px; // Padding for the gray area
       
-      /* Animation */
-      // REMOVED: The problematic @include line
       animation: keyframes-slide-fade-down 0.2s ease-out;
 
-      .user-menu-header {
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--gray-200); // Use global color
+      // NEW: White card section with shadow
+      .dropdown-section-card {
+        background-color: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); // Shadow from Image 2
+        margin-bottom: 8px; // Space between card and items
+        overflow: hidden; // To clip profile header hover
+      }
+
+      .dropdown-profile-header {
         display: flex;
-        flex-direction: column;
-        line-height: 1.4;
-        /* Light background for separation */
-        background-color: var(--gray-50, #f8f9fa); // Use global color (with fallback)
+        align-items: center;
+        padding: 12px;
+        border-radius: 8px 8px 0 0; // Rounded top corners
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+
+        .dropdown-avatar-img {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          margin-right: 12px;
+        }
 
         .username {
           font-weight: 600;
-          font-size: 15px;
-          color: var(--gray-900); // Use global color
-          text-overflow: ellipsis;
-          overflow: hidden;
-          white-space: nowrap;
+          font-size: 16px;
+          color: var(--gray-900);
         }
-        .user-roles {
-          font-size: 13px;
-          color: var(--gray-600); // Use global color
-          text-overflow: ellipsis;
-          overflow: hidden;
-          white-space: nowrap;
+
+        &:hover {
+          background-color: var(--gray-100); // Use global var
+        }
+      }
+      
+      .all-profiles-btn-container {
+        padding: 0 12px 12px 12px; // Padding at the bottom
+      }
+      .all-profiles-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray-700);
+        background-color: var(--gray-100); // Use global var
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+
+        i {
+          color: var(--gray-600); // Use global var
+        }
+        
+        &:hover {
+          background-color: var(--gray-200); // Use global var
         }
       }
 
+      // MODIFIED: Items now sit on the gray background
       .user-menu-items {
         list-style: none;
-        padding: 8px; // Add padding around the list
+        padding: 0; // No padding, items will have it
         margin: 0;
 
         li {
@@ -317,49 +360,71 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 15px; // Adjusted padding
+            padding: 12px; 
             width: 100%;
             background: none;
             border: none;
             text-align: left;
-            font-size: 14px;
-            color: var(--gray-700); // Use global color
+            font-size: 15px;
+            font-weight: 500; 
+            color: var(--gray-800); 
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
-            border-radius: 6px; // Add rounded corners to items
+            border-radius: 6px; 
 
-            i {
-              width: 18px;
-              text-align: center;
-              font-size: 1.1em;
-              color: var(--gray-500); // Use global color
-              transition: color 0.2s ease;
+            .menu-icon-bg {
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background-color: var(--gray-200); // Use global var
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: background-color 0.2s ease;
+
+              i {
+                font-size: 16px;
+                color: var(--gray-800); // Use global var
+                margin: 0; 
+                width: auto; 
+                transition: color 0.2s ease;
+              }
+            }
+            
+            span {
+              line-height: 1;
             }
 
             &:hover {
-              background-color: var(--gray-100); // Use global color
-              color: var(--dark-teal); // Use global color
-              i {
-                color: var(--dark-teal); // Use global color
+              background-color: var(--gray-200); // Use global var
+              color: var(--gray-900); // Darken text
+              .menu-icon-bg {
+                background-color: var(--gray-300); // Darken icon bg
               }
             }
           }
           
-          /* Separator for logout */
           &.logout-item {
-            margin-top: 5px;
-            padding-top: 5px;
-            border-top: 1px solid var(--gray-200); // Use global color
+            margin: 0; 
+            padding: 0; 
+            border: none; 
           }
 
           .logout-btn {
-            color: var(--hm-red, #dc3545); // Use global color (with fallback)
+            color: var(--hm-red, #dc3545); 
             
-            &:hover {
-              background-color: rgba(220, 53, 69, 0.1); // Use rgba for transparent hover
-              color: var(--hm-red, #dc3545);
+            .menu-icon-bg {
+              background-color: rgba(220, 53, 69, 0.1);
               i {
                 color: var(--hm-red, #dc3545);
+              }
+            }
+
+            &:hover {
+              background-color: rgba(220, 53, 69, 0.15); 
+              color: var(--hm-red, #dc3545);
+              .menu-icon-bg {
+                background-color: rgba(220, 53, 69, 0.2);
               }
             }
           }
@@ -416,6 +481,11 @@
     .sidebar { width: 240px; }
     .dashboard-header { height: 60px; }
     .dashboard-content { padding: 15px; }
+    
+    .dashboard-header .user-menu .user-menu-dropdown {
+      width: calc(100vw - 30px);
+      max-width: 320px;
+    }
 }
 
 // --- STYLES FOR SUB-MENUS (Dark Theme) ---
@@ -435,7 +505,7 @@
         font-size: 0.8em;
         margin-left: auto;
         padding: 0 5px;
-        color: var(--gray-300); // Use global color
+        color: var(--gray-300); 
         transition: color 0.2s ease-in-out;
       }
     }
@@ -450,11 +520,11 @@
       a {
         padding-left: 47px;
         font-size: 0.9em;
-        color: var(--gray-300); // Use global color
+        color: var(--gray-300); 
         margin-bottom: 4px;
 
         &.active {
-          color: var(--white); // Use global color
+          color: var(--white); 
           background-color: transparent;
           font-weight: 500;
 
@@ -465,14 +535,14 @@
             left: 25px;
             top: 5px;
             bottom: 5px;
-            background-color: var(--light-teal); // Use global color
+            background-color: var(--light-teal); 
             border-radius: 4px;
           }
         }
 
         &:hover {
           background-color: rgba(0, 0, 0, 0.2);
-          color: var(--white); // Use global color
+          color: var(--white); 
         }
         
         i {
