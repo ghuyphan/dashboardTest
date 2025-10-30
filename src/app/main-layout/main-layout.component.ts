@@ -1,139 +1,168 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
-// --- Interface for a Navigation Item ---
+// --- ADDED ---
+import { User } from '../models/user.model'; // Import the new User model
+
+// Define navigation item interface
 interface NavItem {
   label: string;
   icon: string;
   link?: string;
-  roles?: string[]; 
-  children?: NavItem[]; 
-  isOpen?: boolean; 
+  roles: string[];
+  children?: NavItem[];
+  isOpen?: boolean;
 }
 
-// Added a user interface (you can move this to a models file)
-interface AppUser {
-  username: string;
-  roles: string[];
-}
+// --- REMOVED ---
+// The local 'AppUser' interface is no longer needed
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterOutlet, RouterModule],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss'
 })
-export class MainLayoutComponent implements OnInit, OnDestroy { 
-
+export class MainLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = false;
-  currentUser: AppUser | null = null; 
-  rolesDisplay = '';
-
-  // Added for cleaning up the subscription
-  private userSubscription: Subscription | undefined;
   
-  // --- Data-driven navigation menu ---
+  // CHANGED: Type updated to use the imported User model
+  currentUser: User | null = null;
+  
+  rolesDisplay: string = '';
+  private userSubscription: Subscription | null = null;
+
+  isUserMenuOpen: boolean = false;
+
   navItems: NavItem[] = [
+    // --- Add your navigation items here ---
     {
-      label: 'Trang chủ',
-      icon: 'fas fa-tachometer-alt',
-      link: '/app/home'
-      // No 'roles' property means everyone can see it
+      label: 'Home',
+      icon: 'fas fa-home',
+      link: '/home',
+      roles: []
     },
     {
-      label: 'Quản lý người dùng',
-      icon: 'fas fa-users',
-      link: '/app/users',
-      roles: ['Admin'] // Only 'Admin' can see this
-    },
-    {
-      label: 'Báo cáo',
-      icon: 'fas fa-chart-bar',
-      roles: ['Admin', 'Manager'], // Only 'Admin' and 'Manager' can see
-      isOpen: false, // Default to closed
+      label: 'Management',
+      icon: 'fas fa-cogs',
+      roles: ['Admin', 'SuperAdmin'],
+      isOpen: false,
       children: [
         {
-          label: 'Sales Reports',
-          icon: 'fas fa-chart-line', // Child icon
-          link: '/app/reports/sales',
-          roles: ['Admin', 'Manager'] // Roles can also be on children
+          label: 'User Admin',
+          icon: 'fas fa-users-cog',
+          link: '/admin/users',
+          roles: ['SuperAdmin']
         },
         {
-          label: 'User Reports',
-          icon: 'fas fa-user-chart', // Custom icon
-          link: '/app/reports/user',
-          roles: ['Admin'] // Only Admin can see this sub-item
+          label: 'System Settings',
+          icon: 'fas fa-tools',
+          link: '/admin/settings',
+          roles: ['Admin', 'SuperAdmin']
         }
       ]
     },
     {
-      label: 'Cài đặt',
-      icon: 'fas fa-cog',
-      link: '/app/settings'
-    },
-    {
-      label: 'Hỗ trợ',
-      icon: 'fas fa-question-circle',
-      link: '/app/help'
+      label: 'Profile',
+      icon: 'fas fa-user',
+      link: '/profile',
+      roles: ['User', 'Admin', 'SuperAdmin']
     }
   ];
 
-
-  constructor(private authService: AuthService) { }
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private el: ElementRef 
+  ) {}
 
   ngOnInit(): void {
-    this.userSubscription = this.authService.currentUser$.subscribe((user: AppUser | null) => {
+    // Subscribe to the auth service's currentUser$ observable
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      if (this.currentUser) {
-        this.rolesDisplay = this.currentUser.roles.join(', ');
+      if (user && user.roles) {
+        this.rolesDisplay = this.formatRoles(user.roles);
       } else {
-        this.rolesDisplay = ''; // Clear display if user is null (logged out)
+        this.rolesDisplay = '';
       }
     });
+
+    this.checkWindowSize();
+    window.addEventListener('resize', this.checkWindowSize.bind(this));
   }
 
-  // Added ngOnDestroy to unsubscribe
   ngOnDestroy(): void {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
+    window.removeEventListener('resize', this.checkWindowSize.bind(this));
   }
 
-  toggleSidebar() {
+  private checkWindowSize(): void {
+    if (window.innerWidth <= 992) {
+      this.isSidebarOpen = false;
+    } else {
+      this.isSidebarOpen = true;
+    }
+  }
+
+  formatRoles(roles: string[]): string {
+    // This logic should match the roles in your system
+    if (roles.includes('SuperAdmin')) return 'Super Admin';
+    if (roles.includes('Admin')) return 'Admin';
+    if (roles.includes('User')) return 'User';
+    return roles.join(', ');
+  }
+
+  /**
+   * Checks if the current user has at least one of the required roles
+   */
+  hasRole(roles: string[]): boolean {
+    if (!this.currentUser || !this.currentUser.roles) {
+      return false;
+    }
+    return roles.some(role => this.currentUser!.roles.includes(role));
+  }
+
+  toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
-  logout() {
+  toggleSubmenu(item: NavItem, event: Event): void {
+    event.preventDefault();
+    item.isOpen = !item.isOpen;
+  }
+
+  logout(): void {
     this.authService.logout();
   }
 
-  // --- UPDATED FUNCTION SIGNATURE ---
-  /**
-   * Checks if the current user has at least one of the specified roles.
-   * @param allowedRoles A string, array of strings, or undefined.
-   */
-  hasRole(allowedRoles: string | string[] | undefined): boolean {
-    if (!this.currentUser) {
-      return false;
-    }
-    
-    // If no roles are specified for the item (it's undefined or empty), 
-    // it's visible to everyone.
-    if (!allowedRoles || allowedRoles.length === 0) {
-      return true;
-    }
+  // --- Methods for new user menu in header ---
 
-    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-    return this.currentUser.roles.some(userRole => roles.includes(userRole));
+  toggleUserMenu(): void {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
   }
 
-  // --- Function to toggle sub-menus ---
-  toggleSubmenu(item: NavItem, event: Event): void {
-    event.preventDefault(); // Prevent navigation on parent click
-    item.isOpen = !item.isOpen;
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.el.nativeElement.querySelector('.user-menu')?.contains(event.target)) {
+      this.isUserMenuOpen = false;
+    }
+  }
+
+  onSettingsClick(): void {
+    console.log('Settings clicked');
+    this.isUserMenuOpen = false; 
+    // Example: this.router.navigate(['/settings']);
+  }
+
+  onSupportClick(): void {
+    console.log('Support clicked');
+    this.isUserMenuOpen = false; 
+    // Example: this.router.navigate(['/support']);
   }
 }

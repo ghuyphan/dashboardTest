@@ -8,7 +8,7 @@
         alt="Logo Hoan My Saigon"
         class="sidebar-logo"
       >
-      <h2>Hoàn Mỹ Portal</h2>
+      <h2>Hoàn Mỹ Sài Gòn</h2>
     </div>
 
     <nav class="sidebar-nav" role="navigation">
@@ -49,20 +49,6 @@
       </ul>
     </nav>
 
-    <div class="sidebar-footer">
-      <div class="user-info" *ngIf="currentUser">
-        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-        <div class="user-details">
-          <span class="username">{{ currentUser.username }}</span>
-          <span class="user-roles">{{ rolesDisplay }}</span>
-        </div>
-      </div>
-      <button class="logout-btn" (click)="logout()" aria-label="Logout">
-        <i class="fas fa-sign-out-alt" aria-hidden="true"></i> 
-        <span>Đăng xuất</span>
-      </button>
-    </div>
-
   </aside>
 
   <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
@@ -75,7 +61,41 @@
       </div>
       
       <div class="header-right-controls">
+        <div class="user-menu" *ngIf="currentUser">
+          
+          <button class="user-menu-toggle" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen" aria-label="User menu">
+            <i class="fas fa-user-circle user-icon"></i>
+          </button>
+
+          <div class="user-menu-dropdown" *ngIf="isUserMenuOpen">
+            <div class="user-menu-header">
+              <span class="username">{{ currentUser.username }}</span>
+              <span class="user-roles">{{ rolesDisplay }}</span>
+            </div>
+            <ul class="user-menu-items">
+              <li>
+                <button (click)="onSettingsClick()">
+                  <i class="fas fa-gear"></i>
+                  <span>Settings</span>
+                </button>
+              </li>
+              <li>
+                <button (click)="onSupportClick()">
+                  <i class="fas fa-question-circle"></i>
+                  <span>Support</span>
+                </button>
+              </li>
+              <li class="logout-item"> 
+                <button class="logout-btn" (click)="logout()">
+                  <i class="fas fa-sign-out-alt"></i>
+                  <span>Đăng xuất</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
         </div>
+      </div>
     </header>
 
     <main class="dashboard-content">

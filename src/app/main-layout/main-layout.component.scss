@@ -1,3 +1,5 @@
+// REMOVED: @use "sass:meta"; (This was causing the error)
+
 :host {
   display: block;
   height: 100vh;
@@ -5,6 +7,19 @@
   overflow: hidden;
   background-color: var(--gray-100);
 }
+
+// --- Keyframes for menu animation (Still here!) ---
+@keyframes keyframes-slide-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 
 .dashboard-container {
   display: flex;
@@ -19,9 +34,10 @@
   top: 0;
   width: 260px;
   height: 100vh;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
   background-color: var(--dark-teal);
   color: var(--gray-200);
-  /* CHANGED: Set padding-top to 0 to align header */
   padding: 0 15px 25px 15px;
   transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
   z-index: 1030;
@@ -35,13 +51,10 @@
   .sidebar-header {
     display: flex;
     align-items: center;
-    /* CHANGED: Match dashboard-header height */
     height: 65px; 
-    /* CHANGED: Removed uneven padding */
     padding: 0 10px; 
     margin-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    /* ADDED: Ensures padding doesn't add to height */
     box-sizing: border-box; 
 
     .sidebar-logo {
@@ -64,7 +77,6 @@
     }
   }
 
-  /* --- Renamed for clarity --- */
   .sidebar-nav {
     flex-grow: 1; 
 
@@ -152,7 +164,6 @@
         justify-content: center;
         i { margin-right: 0; }
         span { opacity: 0; width: 0; overflow: hidden; }
-        // Hide accent border when collapsed
         &.active::before {
           opacity: 0;
         }
@@ -188,10 +199,12 @@
   padding: 0 25px;
   background-color: var(--white);
   border-bottom: 1px solid var(--gray-200);
-  box-shadow: none;
+  /* Polished shadow */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   height: 65px;
   flex-shrink: 0;
   position: relative;
+  z-index: 1000; // Ensure header is above content
 
   .header-left {
     display: flex;
@@ -215,8 +228,146 @@
     }
   }
 
+  // --- Styles for User Menu ---
   .header-right-controls {
+    position: relative; 
+    display: flex;
+    align-items: center;
   }
+
+  .user-menu {
+    position: relative;
+
+    .user-menu-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+
+      .user-icon {
+        font-size: 28px;
+        color: var(--dark-teal); // Use global color
+      }
+
+      &:hover {
+        background-color: var(--gray-100); // Use global color
+      }
+      
+      // Add a subtle press effect
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+
+    .user-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 12px); // Increased gap slightly
+      right: 0;
+      background-color: var(--white); // Use global color
+      border-radius: 8px;
+      /* More pronounced shadow */
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--gray-200); // Use global color
+      min-width: 240px;
+      z-index: 1100;
+      overflow: hidden;
+      
+      /* Animation */
+      // REMOVED: The problematic @include line
+      animation: keyframes-slide-fade-down 0.2s ease-out;
+
+      .user-menu-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--gray-200); // Use global color
+        display: flex;
+        flex-direction: column;
+        line-height: 1.4;
+        /* Light background for separation */
+        background-color: var(--gray-50, #f8f9fa); // Use global color (with fallback)
+
+        .username {
+          font-weight: 600;
+          font-size: 15px;
+          color: var(--gray-900); // Use global color
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+        .user-roles {
+          font-size: 13px;
+          color: var(--gray-600); // Use global color
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+      }
+
+      .user-menu-items {
+        list-style: none;
+        padding: 8px; // Add padding around the list
+        margin: 0;
+
+        li {
+          button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 15px; // Adjusted padding
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            font-size: 14px;
+            color: var(--gray-700); // Use global color
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border-radius: 6px; // Add rounded corners to items
+
+            i {
+              width: 18px;
+              text-align: center;
+              font-size: 1.1em;
+              color: var(--gray-500); // Use global color
+              transition: color 0.2s ease;
+            }
+
+            &:hover {
+              background-color: var(--gray-100); // Use global color
+              color: var(--dark-teal); // Use global color
+              i {
+                color: var(--dark-teal); // Use global color
+              }
+            }
+          }
+          
+          /* Separator for logout */
+          &.logout-item {
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid var(--gray-200); // Use global color
+          }
+
+          .logout-btn {
+            color: var(--hm-red, #dc3545); // Use global color (with fallback)
+            
+            &:hover {
+              background-color: rgba(220, 53, 69, 0.1); // Use rgba for transparent hover
+              color: var(--hm-red, #dc3545);
+              i {
+                color: var(--hm-red, #dc3545);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // --- END: User Menu Styles ---
 }
 
 // --- Dashboard Content Area ---
@@ -251,10 +402,6 @@
         .sidebar-header h2, .sidebar-nav ul li a span, .sidebar-nav ul li button span { opacity: 1; width: auto; }
         .sidebar-nav ul li a, .sidebar-nav ul li button { justify-content: flex-start; }
         .sidebar-nav ul li a i, .sidebar-nav ul li button i { margin-right: 15px; }
-        .sidebar-footer {
-          .user-details { display: flex; }
-          .logout-btn span { display: inline; }
-        }
      }
   }
 
@@ -263,10 +410,6 @@
     .hamburger-menu { margin-right: 10px; }
   }
    .dashboard-content { padding: 20px; }
-}
-
-@media (max-width: 768px) {
-  // (No changes needed here anymore)
 }
 
 @media (max-width: 480px) {
@@ -283,7 +426,6 @@
         background-color: rgba(0, 0, 0, 0.25);
         color: var(--white);
         font-weight: 600;
-        // Remove accent border from parent
         &::before {
           display: none;
         }
@@ -293,16 +435,8 @@
         font-size: 0.8em;
         margin-left: auto;
         padding: 0 5px;
-        color: var(--gray-300);
-        /* CHANGED: Removed 'transform' transition */
+        color: var(--gray-300); // Use global color
         transition: color 0.2s ease-in-out;
-      }
-    }
-    
-    &.open {
-      > button .toggle-icon {
-        /* CHANGED: Removed 'transform: rotate(90deg)' */
-        /* The icon class is now swapped in the HTML */
       }
     }
   }
@@ -316,15 +450,14 @@
       a {
         padding-left: 47px;
         font-size: 0.9em;
-        color: var(--gray-300);
+        color: var(--gray-300); // Use global color
         margin-bottom: 4px;
 
         &.active {
-          color: var(--white); // Active child is white text
+          color: var(--white); // Use global color
           background-color: transparent;
           font-weight: 500;
 
-          // Child accent border
           &::before {
             content: '';
             position: absolute;
@@ -332,14 +465,14 @@
             left: 25px;
             top: 5px;
             bottom: 5px;
-            background-color: var(--light-teal);
+            background-color: var(--light-teal); // Use global color
             border-radius: 4px;
           }
         }
 
         &:hover {
           background-color: rgba(0, 0, 0, 0.2);
-          color: var(--white);
+          color: var(--white); // Use global color
         }
         
         i {
@@ -348,108 +481,6 @@
           width: 22px;
         }
       }
-    }
-  }
-}
-
-/* --- STYLES FOR SIDEBAR FOOTER (Dark Theme) --- */
-.sidebar-footer {
-  margin-top: auto;
-  padding: 15px 10px;
-  /* --- CHANGED: Light border --- */
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 5px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-
-    &:hover {
-      /* --- CHANGED: Darker hover --- */
-      background-color: rgba(0, 0, 0, 0.2);
-    }
-
-    .user-icon {
-      font-size: 30px;
-      /* --- CHANGED: Use light accent color --- */
-      color: var(--light-teal);
-    }
-
-    .user-details {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.3;
-      white-space: nowrap;
-      overflow: hidden;
-
-      .username {
-        font-weight: 600;
-        font-size: 14px;
-        /* --- CHANGED: White text --- */
-        color: var(--white);
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-
-      .user-roles {
-        font-size: 12px;
-        /* --- CHANGED: Light gray text --- */
-        color: var(--gray-300);
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-    }
-  }
-
-  .logout-btn {
-    /* --- CHANGED: Subtle button, becomes danger on hover --- */
-    background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid transparent;
-    color: var(--gray-200);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 8px 15px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    width: 100%;
-    margin-top: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    i {
-      margin-right: 8px;
-    }
-
-    &:hover {
-      background-color: var(--hm-red, #dc3545);
-      border-color: var(--hm-red, #dc3545);
-      color: var(--white);
-    }
-  }
-}
-
-// Collapsed state for the footer
-.sidebar.collapsed {
-  .sidebar-footer {
-    padding: 10px 5px;
-
-    .user-info {
-      justify-content: center;
-      .user-details {
-        display: none;
-      }
-    }
-    
-    .logout-btn {
-      padding: 8px;
-      span { display: none; }
-      i { margin-right: 0; }
     }
   }
 }
