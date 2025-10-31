@@ -13,13 +13,14 @@ import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model'; 
+import { HasPermissionDirective } from '../directives/has-permission.directive'; // <-- NEW: Import directive
 
-// Define navigation item interface
+// Define navigation item interface (UPDATED)
 interface NavItem {
   label: string;
   icon: string;
   link?: string;
-  roles: string[];
+  permissions: string[]; // <-- CHANGED: from 'roles' to 'permissions'
   children?: NavItem[];
   isOpen?: boolean;
 }
@@ -27,7 +28,12 @@ interface NavItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterModule],
+  imports: [
+    CommonModule, 
+    RouterOutlet, 
+    RouterModule,
+    HasPermissionDirective // <-- NEW: Add directive to imports
+  ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss'
 })
@@ -47,39 +53,40 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
   @ViewChild('mainPanel') mainPanel!: ElementRef; 
 
+  // --- UPDATED: navItems array now uses 'permissions' ---
   navItems: NavItem[] = [
-    // --- Add your navigation items here ---
     {
       label: 'Home',
       icon: 'fas fa-home',
-      link: '/home',
-      roles: []
+      link: '/app/home', // Note: Make sure links align with app.routes.ts ('/app/home')
+      permissions: [] // Empty array = visible to all logged-in users
     },
     {
       label: 'Management',
       icon: 'fas fa-cogs',
-      roles: ['Admin', 'SuperAdmin'],
+      // Parent is visible if user has AT LEAST ONE of the child permissions
+      permissions: ['CAN_MANAGE_USERS', 'CAN_VIEW_SETTINGS'], 
       isOpen: false,
       children: [
         {
           label: 'User Admin',
           icon: 'fas fa-users-cog',
-          link: '/admin/users',
-          roles: ['SuperAdmin']
+          link: '/app/users', // Example link
+          permissions: ['CAN_MANAGE_USERS'] // Specific permission
         },
         {
           label: 'System Settings',
           icon: 'fas fa-tools',
-          link: '/admin/settings',
-          roles: ['Admin', 'SuperAdmin']
+          link: '/app/settings', // Example link
+          permissions: ['CAN_VIEW_SETTINGS'] // Specific permission
         }
       ]
     },
     {
       label: 'Profile',
       icon: 'fas fa-user',
-      link: '/profile',
-      roles: ['User', 'Admin', 'SuperAdmin']
+      link: '/app/profile', // Example link
+      permissions: [] // Visible to all
     }
   ];
 
@@ -164,15 +171,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     return roles.join(', ');
   }
 
-  /**
-   * Checks if the current user has at least one of the required roles
-   */
-  hasRole(roles: string[]): boolean {
-    if (!this.currentUser || !this.currentUser.roles) {
-      return false;
-    }
-    return roles.some(role => this.currentUser!.roles.includes(role));
-  }
+  // --- REMOVED ---
+  // The 'hasRole' method is no longer needed.
+  // The HasPermissionDirective handles the display logic in the template.
 
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
@@ -215,7 +216,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   onSettingsClick(): void {
     console.log('Settings clicked');
     this.isUserMenuOpen = false; 
-    // Example: this.router.navigate(['/settings']);
+    // Example: this.router.navigate(['/app/settings']);
   }
 
   onSupportClick(): void {

@@ -35,14 +35,12 @@
   top: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  border-top-right-radius: 16px;
-  border-bottom-right-radius: 16px;
-  background-color: var(--dark-teal);
+  background-color: '#f8f8f7';
   color: var(--gray-200);
   padding: 0 15px 25px 15px;
-  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+  transition: transform 0.25s ease-in-out, width 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
   z-index: 1030;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 1px 0 1px rgba(0, 0, 0, 0.15);
   border-right: none;
   overflow-y: auto;
   overflow-x: hidden;
@@ -206,7 +204,7 @@
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
   background-color: var(--gray-100);
-  transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
+  transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
 
   &.collapsed {
     margin-left: var(--sidebar-width-collapsed); 
@@ -240,10 +238,10 @@
   .hamburger-menu {
     background: none;
     border: none;
-    font-size: 22px;
+    font-size: 20px; // <-- UPDATED (from 22px)
     color: var(--gray-700);
     cursor: pointer;
-    padding: 8px;
+    padding: 6px; // <-- UPDATED (from 8px)
     margin-right: 15px;
     border-radius: 50%;
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -415,7 +413,7 @@
 
   .sidebar {
      transform: translateX(-100%);
-     transition: transform 0.3s ease-in-out;
+     transition: transform 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
      &.open {
         transform: translateX(0);
         // Show close button when open on mobile
@@ -448,7 +446,7 @@
     visibility: hidden;
     backdrop-filter: blur(4px); // NEW: Blur effect
     -webkit-backdrop-filter: blur(4px); // NEW: Safari support
-    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
 
     &.show {
       opacity: 1;

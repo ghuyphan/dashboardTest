@@ -1,5 +1,6 @@
-import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Directive, Input, TemplateRef, ViewContainerRef, OnDestroy } from '@angular/core';
 import { AuthService } from '../services/auth.service'; // Adjust path if needed
+import { Subscription } from 'rxjs'; // Import Subscription
 
 /**
  * A structural directive to easily show/hide elements based on permissions.
@@ -11,18 +12,21 @@ import { AuthService } from '../services/auth.service'; // Adjust path if needed
   selector: '[appHasPermission]',
   standalone: true // Make it a standalone directive
 })
-export class HasPermissionDirective {
+export class HasPermissionDirective implements OnDestroy { // Implement OnDestroy
   private hasView = false;
   private requiredPermissions: string[] = [];
+  private authSubscription: Subscription; // Store the subscription
 
   constructor(
     private templateRef: TemplateRef<unknown>,
     private viewContainer: ViewContainerRef,
     private authService: AuthService
   ) {
-    // You could also subscribe to currentUser$ to make it dynamic
-    // if permissions could change *during* a session, but
-    // for most login-based permissions, this is simpler.
+    // Subscribe to permission changes
+    this.authSubscription = this.authService.currentUser$.subscribe(user => {
+      // Re-evaluate the view whenever the user object changes
+      this.updateView(user?.permissions || []);
+    });
   }
 
   @Input() set appHasPermission(permission: string | string[] | undefined) {
@@ -31,15 +35,19 @@ export class HasPermissionDirective {
     } else {
       this.requiredPermissions = Array.isArray(permission) ? permission : [permission];
     }
-    this.updateView();
+    // Trigger an update when the input property changes
+    this.updateView(this.authService.getUserPermissions());
   }
 
-  private updateView(): void {
+  private updateView(userPermissions: string[]): void {
     // Check if user has AT LEAST ONE of the required permissions
     // To check if they have ALL, change .some() to .every()
-    const hasPermission = this.requiredPermissions.some(
-      p => this.authService.hasPermission(p)
-    );
+    
+    // Also check for empty array (meaning "visible to all")
+    const hasPermission = this.requiredPermissions.length === 0 || 
+      this.requiredPermissions.some(
+        p => userPermissions.includes(p)
+      );
 
     if (hasPermission && !this.hasView) {
       // User has permission, add the element to the DOM
@@ -49,6 +57,13 @@ export class HasPermissionDirective {
       // User does not have permission, remove the element from the DOM
       this.viewContainer.clear();
       this.hasView = false;
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up the subscription to prevent memory leaks
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
     }
   }
 }

@@ -19,7 +19,7 @@
     <nav class="sidebar-nav" role="navigation">
       <ul>
         <ng-container *ngFor="let item of navItems">
-          <li *ngIf="hasRole(item.roles)" 
+          <li *appHasPermission="item.permissions" 
               [class.has-submenu]="item.children"
               [class.open]="item.isOpen">
 
@@ -32,7 +32,7 @@
               
               <ul class="submenu" *ngIf="item.isOpen">
                 <ng-container *ngFor="let child of item.children">
-                  <li *ngIf="hasRole(child.roles)">
+                  <li *appHasPermission="child.permissions">
                     <a [routerLink]="child.link" routerLinkActive="active">
                       <i [class]="child.icon"></i>
                       <span>{{ child.label }}</span>

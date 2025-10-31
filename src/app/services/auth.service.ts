@@ -277,8 +277,8 @@ export class AuthService {
       if (errorMessage === 'An unknown error occurred!' || !error.error?.message) {
          if (error.status === 0 || error.status === -1) {
              errorMessage = 'Network error or could not connect to the server.';
-         } else if (error.status === 401) {
-             errorMessage = 'Authentication failed. Please check your credentials.';
+        //  } else if (error.status === 401) {
+        //      errorMessage = 'Authentication failed. Please check your credentials.';
          } else if (error.status === 400) {
              errorMessage = 'Invalid request. Please check your input.';
          } else if (error.status >= 500) {
