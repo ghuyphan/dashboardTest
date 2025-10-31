@@ -4,13 +4,14 @@ import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment.development';
-import { User } from '../models/user.model'; // Import the new User model
+import { User } from '../models/user.model'; // Import the updated User model
 
 // --- INTERFACES ---
 interface LoginResponse {
   APIKey: {
     access_token: string;
     roles?: string[];
+    permissions?: string[]; // CHANGED: Expect permissions from API
     date_token?: string;
     expires_in?: string;
     id_token?: string;
@@ -24,6 +25,7 @@ interface LoginResponse {
 const TOKEN_STORAGE_KEY = 'authToken';
 const ROLES_STORAGE_KEY = 'userRoles';
 const USERNAME_STORAGE_KEY = 'username';
+const PERMISSIONS_STORAGE_KEY = 'userPermissions'; // NEW: Storage key for permissions
 
 
 @Injectable({
@@ -37,7 +39,7 @@ export class AuthService {
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
-  // CHANGED: This now uses the imported 'User' model
+  // This now uses the updated 'User' model
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -55,6 +57,7 @@ export class AuthService {
     let storedToken: string | null = null;
     let storedRolesJson: string | null = null;
     let storedUsername: string | null = null;
+    let storedPermissionsJson: string | null = null; // NEW
     let storage: Storage | undefined;
 
     try {
@@ -69,15 +72,19 @@ export class AuthService {
         storedToken = storage.getItem(TOKEN_STORAGE_KEY);
         storedRolesJson = storage.getItem(ROLES_STORAGE_KEY);
         storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
+        storedPermissionsJson = storage.getItem(PERMISSIONS_STORAGE_KEY); // NEW
 
-        if (storedToken && storedRolesJson && storedUsername) {
+        // CHANGED: Check for permissions as well
+        if (storedToken && storedRolesJson && storedUsername && storedPermissionsJson) {
           this.accessToken = storedToken;
           const roles: string[] = JSON.parse(storedRolesJson);
+          const permissions: string[] = JSON.parse(storedPermissionsJson); // NEW
           
-          // CHANGED: Use the imported 'User' model
+          // Use the updated 'User' model
           const user: User = {
             username: storedUsername,
-            roles: roles
+            roles: roles,
+            permissions: permissions // NEW
           };
           
           this.currentUserSubject.next(user); // Set the current user
@@ -113,14 +120,16 @@ export class AuthService {
           this.accessToken = response.APIKey.access_token;
 
           const rolesFromApi = response.APIKey.roles || [];
+          const permissionsFromApi = response.APIKey.permissions || []; // NEW
 
-          // CHANGED: Create the User object using the imported model
+          // CHANGED: Create the User object with permissions
           const user: User = {
             username: credentials.username, // Get username from the form
-            roles: rolesFromApi
+            roles: rolesFromApi,
+            permissions: permissionsFromApi // NEW
           };
 
-          // Store token, roles, and username
+          // Store token, roles, username, and permissions
           try {
             const storage = credentials.remember ? localStorage : sessionStorage;
             const storageType = credentials.remember ? 'localStorage' : 'sessionStorage';
@@ -131,6 +140,7 @@ export class AuthService {
               otherStorage.removeItem(TOKEN_STORAGE_KEY);
               otherStorage.removeItem(ROLES_STORAGE_KEY);
               otherStorage.removeItem(USERNAME_STORAGE_KEY);
+              otherStorage.removeItem(PERMISSIONS_STORAGE_KEY); // NEW
             }
 
             // Set items in the chosen storage
@@ -138,7 +148,8 @@ export class AuthService {
               storage.setItem(TOKEN_STORAGE_KEY, response.APIKey.access_token);
               storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(user.roles));
               storage.setItem(USERNAME_STORAGE_KEY, user.username);
-              console.log(`Token, roles, and username saved to ${storageType}.`);
+              storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions)); // NEW
+              console.log(`Token, roles, username, and permissions saved to ${storageType}.`);
             }
           } catch (e) {
              console.error('Failed to save auth data to web storage', e);
@@ -184,11 +195,13 @@ export class AuthService {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY);
         sessionStorage.removeItem(ROLES_STORAGE_KEY);
         sessionStorage.removeItem(USERNAME_STORAGE_KEY);
+        sessionStorage.removeItem(PERMISSIONS_STORAGE_KEY); // NEW
       }
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
         localStorage.removeItem(ROLES_STORAGE_KEY);
         localStorage.removeItem(USERNAME_STORAGE_KEY);
+        localStorage.removeItem(PERMISSIONS_STORAGE_KEY); // NEW
       }
     } catch (e) {
       console.error('Failed to remove auth data from web storage', e);
@@ -211,10 +224,11 @@ export class AuthService {
     return this.accessToken;
   }
 
-  // --- Role Management Methods ---
+  // --- Role & Permission Management Methods ---
 
   /**
    * Checks if the current user has the specified role.
+   * (We keep this for display or simple grouping)
    */
   hasRole(role: string): boolean {
     const currentUser = this.currentUserSubject.getValue();
@@ -227,6 +241,24 @@ export class AuthService {
   getUserRoles(): string[] {
     const currentUser = this.currentUserSubject.getValue();
     return currentUser ? [...currentUser.roles] : []; // Return a copy
+  }
+
+  /**
+   * NEW: Checks if the current user has the specified permission.
+   * This is the primary method we will use for security checks.
+   */
+  hasPermission(permission: string): boolean {
+    const currentUser = this.currentUserSubject.getValue();
+    // Check if the user has this specific permission
+    return currentUser ? currentUser.permissions.includes(permission) : false;
+  }
+  
+  /**
+   * NEW: Gets a copy of the current user's permissions.
+   */
+  getUserPermissions(): string[] {
+    const currentUser = this.currentUserSubject.getValue();
+    return currentUser ? [...currentUser.permissions] : []; // Return a copy
   }
 
   /**

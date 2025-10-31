@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { authGuard } from './guards/auth.guard';
+import { permissionGuard } from './guards/permission.guard'; // NEW: Import the new guard
 
 // --- IMPORT YOUR NEW AND RENAMED COMPONENTS ---
 import { MainLayoutComponent } from './main-layout/main-layout.component';
@@ -20,13 +21,38 @@ export const routes: Routes = [
   {
     path: 'app', // The new URL prefix (e.g., /app/home)
     component: MainLayoutComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard], // This guard checks if the user is LOGGED IN
     children: [
       { path: 'home', component: HomeComponent },
       
       // --- Add your future child routes here ---
-      // { path: 'users', component: UserManagementComponent },
-      // { path: 'reports', component: ReportsComponent },
+      
+      // EXAMPLE 1: A route for managing users
+      // This route can only be activated if the user is:
+      // 1. Logged in (checked by authGuard on parent)
+      // 2. Has the 'CAN_MANAGE_USERS' permission (checked by permissionGuard)
+      /*
+      { 
+        path: 'users', 
+        component: UserManagementComponent,
+        canActivate: [permissionGuard], // NEW: Add the permission guard
+        data: {
+          permission: 'CAN_MANAGE_USERS' // NEW: Define the required permission
+        }
+      },
+      */
+
+      // EXAMPLE 2: A route for viewing reports
+      /*
+      { 
+        path: 'reports', 
+        component: ReportsComponent,
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'CAN_VIEW_REPORTS'
+        }
+      },
+      */
       
       // If the user goes to /app, redirect them to /app/home
       { path: '', redirectTo: 'home', pathMatch: 'full' }
