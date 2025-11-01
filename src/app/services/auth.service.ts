@@ -26,16 +26,16 @@ interface LoginResponse {
     id_user: string;
     user_name: string;
     ten_nhan_vien: string; // The API response still uses this key
-    nhom_chuc_danh: string;
+    nhom_chuc_danh: string; // *** We will use this for ROLES ***
   };
 }
 
-// Response from the SECOND call (/user-permissions/{userId})
-// !! This is still an assumption. Please confirm with your backend team !!
-interface PermissionResponse {
-  roles: string[];
-  permissions: { PERMISSION: string }[];
+// --- FIX 1: Interface for the actual permission object ---
+// This matches what your backend sends: { PERMISSION: "..." }
+interface PermissionObject {
+  PERMISSION: string;
 }
+// We no longer need the incorrect `PermissionResponse` interface.
 
 
 // --- STORAGE KEYS ---
@@ -43,7 +43,7 @@ const TOKEN_STORAGE_KEY = 'authToken';
 const ROLES_STORAGE_KEY = 'userRoles';
 const USERNAME_STORAGE_KEY = 'username';
 const PERMISSIONS_STORAGE_KEY = 'userPermissions';
-const FULLNAME_STORAGE_KEY = 'userFullName'; // CHANGED: Using English key
+const FULLNAME_STORAGE_KEY = 'userFullName';
 
 
 @Injectable({
@@ -51,7 +51,7 @@ const FULLNAME_STORAGE_KEY = 'userFullName'; // CHANGED: Using English key
 })
 export class AuthService {
   private API_URL_LOGIN = environment.authUrl;
-  private API_URL_PERMISSIONS_BASE = environment.permissionsUrl; // NEW: Base URL
+  private API_URL_PERMISSIONS_BASE = environment.permissionsUrl;
 
   private accessToken: string | null = null;
 
@@ -77,7 +77,7 @@ export class AuthService {
     let storedRolesJson: string | null = null;
     let storedUsername: string | null = null;
     let storedPermissionsJson: string | null = null;
-    let storedFullName: string | null = null; // NEW
+    let storedFullName: string | null = null;
     let storage: Storage | undefined;
 
     try {
@@ -94,19 +94,20 @@ export class AuthService {
         console.log(storedRolesJson)
         storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
         storedPermissionsJson = storage.getItem(PERMISSIONS_STORAGE_KEY);
-        storedFullName = storage.getItem(FULLNAME_STORAGE_KEY); // NEW
+        storedFullName = storage.getItem(FULLNAME_STORAGE_KEY);
 
         if (storedToken && storedRolesJson && storedUsername && storedPermissionsJson && storedFullName) {
           this.accessToken = storedToken;
           const roles: string[] = JSON.parse(storedRolesJson);
+          
+          // *** This parse is correct, as we save it as string[] below ***
           const permissions: string[] = JSON.parse(storedPermissionsJson);
 
-          // CHANGED: Map to English model
           const user: User = {
             username: storedUsername,
             roles: roles,
             permissions: permissions,
-            fullName: storedFullName // NEW
+            fullName: storedFullName
           };
 
           this.currentUserSubject.next(user);
@@ -140,7 +141,6 @@ export class AuthService {
       // --- STEP 1: Handle Login Response ---
       switchMap(loginResponse => {
 
-        // --- START OF MODIFICATION ---
         // Handle specific error codes from the API
         if (loginResponse.MaKetQua !== 200) {
           let errorMessage: string;
@@ -158,21 +158,17 @@ export class AuthService {
               errorMessage = 'Tài khoản đã bị khóa do nhập sai mật khẩu quá 5 lần.';
               break;
             default:
-              // Use the error message from API if available, or a generic one
               errorMessage = loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
           }
           console.error(`Login failed (API MaKetQua: ${loginResponse.MaKetQua}):`, errorMessage);
-          // Throw an error with the specific, user-friendly message
           return throwError(() => new Error(errorMessage));
         }
-        // --- END OF MODIFICATION ---
 
         console.log('Login successful, fetching permissions...');
         this.accessToken = loginResponse.APIKey.access_token;
         const storage = credentials.remember ? localStorage : sessionStorage;
         this.clearOtherStorage(credentials.remember);
 
-        // Save the token NOW. The interceptor will need it for the next call.
         try {
           storage.setItem(TOKEN_STORAGE_KEY, loginResponse.APIKey.access_token);
         } catch (e) {
@@ -180,39 +176,45 @@ export class AuthService {
         }
 
         // --- STEP 2: Chain to Permission Call ---
-
-        // CHANGED: Get userId from the first response
         const userId = loginResponse.UserInfo.id_user;
         if (!userId) {
           return throwError(() => new Error('Login response did not include a user ID.'));
         }
 
-        // CHANGED: Construct the new URL with the userId
         const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
 
+        // --- FIX 2: Expect an array of PermissionObject, not PermissionResponse ---
         // The interceptor will automatically add the token for this request
-        return this.http.get<PermissionResponse>(permissionsUrl).pipe(
+        return this.http.get<PermissionObject[]>(permissionsUrl).pipe(
           // Combine the results from BOTH calls
-          map(permissionResponse => {
-            return { loginResponse, permissionResponse };
+          map(permissionArray => {
+            // 'permissionArray' is the response: [{PERMISSION: "..."}, ...]
+            return { loginResponse, permissionArray };
           })
         );
       }),
       // --- STEP 3: Handle Combined Successful Responses ---
       tap(combinedData => {
-        const { loginResponse, permissionResponse } = combinedData;
+        // --- FIX 3: Use the correct variable names from the map step ---
+        const { loginResponse, permissionArray } = combinedData;
         const { UserInfo } = loginResponse;
 
-        const rolesFromApi = permissionResponse.roles || [];
-        const permissionsFromApiObjects = permissionResponse.permissions || [];
+        // --- FIX 4: Get roles from the *first* call (UserInfo) ---
+        // We assume 'nhom_chuc_danh' is the role. Put it in an array.
+        const rolesFromApi = UserInfo.nhom_chuc_danh ? [UserInfo.nhom_chuc_danh] : [];
+
+        // --- FIX 5: Map the permissionArray directly ---
+        // 'permissionArray' is the [{PERMISSION: "..."}, ...]
+        // If the array is null or undefined, default to an empty array.
+        const permissionsFromApiObjects = permissionArray || [];
         const permissionsFromApi = permissionsFromApiObjects.map(p => p.PERMISSION);
 
-        // CHANGED: Build the User object with the English model
+        // Build the User object
         const user: User = {
-          username: UserInfo.user_name,           // From FIRST call
-          fullName: UserInfo.ten_nhan_vien,      // From FIRST call (mapped)
-          roles: rolesFromApi,                 // From SECOND call
-          permissions: permissionsFromApi        // From SECOND call
+          username: UserInfo.user_name,       // From FIRST call
+          fullName: UserInfo.ten_nhan_vien,     // From FIRST call (mapped)
+          roles: rolesFromApi,              // From FIRST call (mapped)
+          permissions: permissionsFromApi     // From SECOND call (transformed)
         };
 
         // 3. Save ALL remaining user data to storage
@@ -220,8 +222,9 @@ export class AuthService {
         try {
           // Token was already saved.
           storage.setItem(USERNAME_STORAGE_KEY, user.username);
-          storage.setItem(FULLNAME_STORAGE_KEY, user.fullName || ''); // CHANGED
+          storage.setItem(FULLNAME_STORAGE_KEY, user.fullName || '');
           storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(user.roles));
+          // We save the TRANSFORMED string array
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
           console.log(`Token, roles, username, full name, and permissions saved.`);
         } catch (e) {
@@ -234,10 +237,7 @@ export class AuthService {
       }),
 
       // --- STEP 4: Handle ANY Error ---
-      // --- THIS IS THE FIX ---
-      // We use an arrow function to ensure 'this' context is preserved
       catchError(error => this.handleError(error))
-      // ---------------------
     );
   }
 
@@ -252,7 +252,7 @@ export class AuthService {
         otherStorage.removeItem(ROLES_STORAGE_KEY);
         otherStorage.removeItem(USERNAME_STORAGE_KEY);
         otherStorage.removeItem(PERMISSIONS_STORAGE_KEY);
-        otherStorage.removeItem(FULLNAME_STORAGE_KEY); // CHANGED
+        otherStorage.removeItem(FULLNAME_STORAGE_KEY);
       }
     } catch (e) {
       console.error('Failed to clear other web storage', e);
@@ -280,14 +280,14 @@ export class AuthService {
         sessionStorage.removeItem(ROLES_STORAGE_KEY);
         sessionStorage.removeItem(USERNAME_STORAGE_KEY);
         sessionStorage.removeItem(PERMISSIONS_STORAGE_KEY);
-        sessionStorage.removeItem(FULLNAME_STORAGE_KEY); // CHANGED
+        sessionStorage.removeItem(FULLNAME_STORAGE_KEY);
       }
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
         localStorage.removeItem(ROLES_STORAGE_KEY);
         localStorage.removeItem(USERNAME_STORAGE_KEY);
         localStorage.removeItem(PERMISSIONS_STORAGE_KEY);
-        localStorage.removeItem(FULLNAME_STORAGE_KEY); // CHANGED
+        localStorage.removeItem(FULLNAME_STORAGE_KEY);
       }
     } catch (e) {
       console.error('Failed to remove auth data from web storage', e);
@@ -397,15 +397,15 @@ export class AuthService {
 
       if (errorMessage === 'An unknown error occurred!' || !errorMessage) {
          if (error.status === 0 || error.status === -1) {
-             errorMessage = 'Network error or could not connect to the server.';
+            errorMessage = 'Network error or could not connect to the server.';
          } else if (error.status === 401) {
-             errorMessage = 'Authentication failed or session expired. Please log in again.';
+            errorMessage = 'Authentication failed or session expired. Please log in again.';
          } else if (error.status === 403) {
-             errorMessage = 'You do not have permission to perform this action.';
+            errorMessage = 'You do not have permission to perform this action.';
          } else if (error.status === 400) {
-             errorMessage = 'Invalid request. Please check your input.';
+            errorMessage = 'Invalid request. Please check your input.';
          } else if (error.status >= 500) {
-             errorMessage = 'Server error. Please try again later.';
+            errorMessage = 'Server error. Please try again later.';
          }
       }
     } else {
