@@ -730,14 +730,35 @@
 }
 
 .toggle-icon {
-  font-size: 1rem;
-  margin-left: auto;
-  padding: 0 5px;
-  color: var(--gray-500);
-  transition: 
-    color var(--transition-fast) ease,
-    transform var(--transition-fast) var(--transition-smooth);
-  flex-shrink: 0;
+  margin-left: auto; // Pushes icon to the right
+  transition: transform 0.25s ease-in-out;
+
+  &.rotated {
+    transform: rotate(90deg);
+  }
+}
+
+/* This animates the submenu dropdown */
+ul.submenu {
+  overflow: hidden;
+  max-height: 0;
+  /* Adjust timing and curve as you like */
+  transition: max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &.open {
+    /* Set this to a value larger than your submenu will ever be */
+    max-height: 500px; 
+    transition: max-height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  /* Add back any padding/margin you had */
+  padding-left: 2rem; 
+  list-style: none;
+  margin: 0;
+  
+  a {
+    /* Your existing styles for submenu links */
+  }
 }
 
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] .toggle-icon {

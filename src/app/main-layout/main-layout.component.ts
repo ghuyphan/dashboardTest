@@ -17,14 +17,13 @@ import {
   ActivatedRoute 
 } from '@angular/router';
 import { Subscription } from 'rxjs';
-// *** 1. IMPORT startWith ***
 import { filter, map, mergeMap, startWith } from 'rxjs/operators'; 
-// *** END 1. ***
 
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model'; 
 import { HasPermissionDirective } from '../directives/has-permission.directive';
-import { NavItem, navItems } from './nav-items.config'; 
+// *** FIX 3.1: Rename the import to avoid name collision ***
+import { NavItem, navItems as navItemsConfig } from './nav-items.config'; 
 
 @Component({
   selector: 'app-main-layout',
@@ -55,7 +54,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
   @ViewChild('mainPanel') mainPanel!: ElementRef; 
 
-  navItems: NavItem[] = navItems;
+  // *** FIX 3.2: Declare as empty. We will populate this in ngOnInit ***
+  navItems: NavItem[] = [];
 
   currentScreenName: string = 'LOADING TITLE...'; // Default value
 
@@ -68,6 +68,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    // *** FIX 3.3: Initialize the component's navItems with a deep copy ***
+    // This prevents mutating the original config file and ensures
+    // state is reset every time the component loads.
+    this.navItems = navItemsConfig.map(item => ({
+      ...item, // Shallow copy top-level properties
+      // Deep copy children array to be safe
+      children: item.children ? item.children.map(child => ({...child})) : undefined
+    }));
+
+
     // 1. Subscribe to get User Info
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
@@ -83,11 +93,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     // 2. Subscribe to Router Events for Screen Title
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
-      // *** 2. ADD startWith(null) ***
-      // This forces the pipe to run once immediately on load,
-      // in addition to running on every future NavigationEnd event.
       startWith(null), 
-      // *** END 2. ***
       map(() => this.activatedRoute),
       map(route => {
         while (route.firstChild) {
@@ -101,8 +107,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
       
       console.log('Router data object:', data); 
 
-      // Look for a 'title' in the route's data object
-      // It will find { title: 'Trang chủ' } from app.routes.ts
       this.currentScreenName = data['title'] || 'Dashboard'; // Fallback
     });
 
