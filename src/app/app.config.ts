@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
-import { authInterceptor } from './interceptors/auth.interceptor'; // <-- Import your interceptor
+import { authInterceptor } from './interceptors/auth.interceptor'; // <-- This import will now work
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -11,7 +11,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       // Registers your functional interceptor with HttpClient
-      withInterceptors([authInterceptor]) // <-- Provide it here
+      withInterceptors([authInterceptor]) // <-- This is correct
     )
   ]
 };

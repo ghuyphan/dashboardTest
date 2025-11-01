@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-import { catchError, tap, switchMap, map } from 'rxjs/operators'; 
+import { catchError, tap, switchMap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment.development';
 import { User } from '../models/user.model'; // Import the updated User model
@@ -13,7 +13,7 @@ interface LoginResponse {
   MaKetQua: number;
   TenKetQua?: string;
   ErrorMessage?: string;
-  
+
   APIKey: {
     access_token: string;
     id_token?: string;
@@ -21,7 +21,7 @@ interface LoginResponse {
     expires_in?: string;
     token_type?: string;
   };
-  
+
   UserInfo: {
     id_user: string;
     user_name: string;
@@ -52,7 +52,7 @@ const FULLNAME_STORAGE_KEY = 'userFullName'; // CHANGED: Using English key
 export class AuthService {
   private API_URL_LOGIN = environment.authUrl;
   private API_URL_PERMISSIONS_BASE = environment.permissionsUrl; // NEW: Base URL
-  
+
   private accessToken: string | null = null;
 
   // --- Observables for Auth State ---
@@ -83,7 +83,7 @@ export class AuthService {
     try {
       if (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_STORAGE_KEY)) {
         storage = localStorage;
-      } 
+      }
       else if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
         storage = sessionStorage;
       }
@@ -99,7 +99,7 @@ export class AuthService {
           this.accessToken = storedToken;
           const roles: string[] = JSON.parse(storedRolesJson);
           const permissions: string[] = JSON.parse(storedPermissionsJson);
-          
+
           // CHANGED: Map to English model
           const user: User = {
             username: storedUsername,
@@ -107,7 +107,7 @@ export class AuthService {
             permissions: permissions,
             fullName: storedFullName // NEW
           };
-          
+
           this.currentUserSubject.next(user);
           this.isLoggedInSubject.next(true);
           console.log(`AuthService: User '${user.username}' initialized from storage.`);
@@ -147,7 +147,7 @@ export class AuthService {
         console.log('Login successful, fetching permissions...');
         this.accessToken = loginResponse.APIKey.access_token;
         const storage = credentials.remember ? localStorage : sessionStorage;
-        this.clearOtherStorage(credentials.remember); 
+        this.clearOtherStorage(credentials.remember);
 
         // Save the token NOW. The interceptor will need it for the next call.
         try {
@@ -157,7 +157,7 @@ export class AuthService {
         }
 
         // --- STEP 2: Chain to Permission Call ---
-        
+
         // CHANGED: Get userId from the first response
         const userId = loginResponse.UserInfo.id_user;
         if (!userId) {
@@ -166,7 +166,7 @@ export class AuthService {
 
         // CHANGED: Construct the new URL with the userId
         const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
-        
+
         // The interceptor will automatically add the token for this request
         return this.http.get<PermissionResponse>(permissionsUrl).pipe(
           // Combine the results from BOTH calls
@@ -209,8 +209,12 @@ export class AuthService {
         this.isLoggedInSubject.next(true);
         this.currentUserSubject.next(user);
       }),
+
       // --- STEP 4: Handle ANY Error ---
-      catchError(this.handleError) 
+      // --- THIS IS THE FIX ---
+      // We use an arrow function to ensure 'this' context is preserved
+      catchError(error => this.handleError(error))
+      // ---------------------
     );
   }
 
@@ -245,7 +249,7 @@ export class AuthService {
    */
   private clearLocalAuthData(navigate: boolean = true): void {
     this.accessToken = null;
-    
+
     try {
       // Remove data from BOTH storages
       if (typeof sessionStorage !== 'undefined') {
@@ -265,12 +269,12 @@ export class AuthService {
     } catch (e) {
       console.error('Failed to remove auth data from web storage', e);
     }
-    
+
     this.isLoggedInSubject.next(false);
     this.currentUserSubject.next(null); // Set current user to null
-    
+
     console.log('User logged out, state and web storage cleared.');
-    
+
     if (navigate) {
       this.router.navigate(['/login']);
     }
@@ -283,7 +287,7 @@ export class AuthService {
     if (this.accessToken) {
       return this.accessToken;
     }
-    
+
     try {
       let token = (typeof localStorage !== 'undefined') ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
       if (!token) {
@@ -322,7 +326,7 @@ export class AuthService {
     const currentUser = this.currentUserSubject.getValue();
     return currentUser ? currentUser.permissions.includes(permission) : false;
   }
-  
+
   /**
    * Gets a copy of the current user's permissions.
    */
@@ -345,7 +349,7 @@ export class AuthService {
     if (!permissionString) {
       return false;
     }
-    
+
     const actions = permissionString.split('_');
     return actions.includes(action);
   }
@@ -384,12 +388,12 @@ export class AuthService {
     } else {
       // --- Application Error Logic (thrown from switchMap) ---
       console.error('AuthService App Error:', error.message);
-      errorMessage = error.message; 
+      errorMessage = error.message;
     }
 
     // Clear all data on auth failure, just in case
-    this.clearLocalAuthData(false); 
-    
+    this.clearLocalAuthData(false);
+
     return throwError(() => new Error(errorMessage));
   }
 }

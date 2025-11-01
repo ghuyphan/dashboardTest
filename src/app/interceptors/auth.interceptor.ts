@@ -1,52 +1,35 @@
 import { inject } from '@angular/core';
-import {
-  HttpRequest,
-  HttpHandlerFn,
-  HttpEvent,
-  HttpInterceptorFn,
-  HttpErrorResponse
-} from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpInterceptorFn } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.development';
 
-/**
- * Functional HTTP Interceptor to add Authorization header and handle 401 errors.
- */
-export const authInterceptor: HttpInterceptorFn = (
-  req: HttpRequest<any>,
-  next: HttpHandlerFn
-): Observable<HttpEvent<any>> => {
-
-  // Inject AuthService using Angular's inject function
+// This is now an exported const (a function), not a class
+export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  
+  // We use inject() here instead of a constructor
   const authService = inject(AuthService);
-  const accessToken = authService.getAccessToken();
-  const loginUrl = environment.authUrl; // <-- Get login URL
+  const loginUrl = environment.authUrl;
 
-  // --- THIS IS THE FIX ---
-  // Only add the token if it exists AND the request is NOT for the login URL
-  if (accessToken && !req.url.startsWith(loginUrl)) {
-    req = req.clone({
+  // Check if the request is for the login endpoint.
+  // If it is, skip all logic and just send the request.
+  if (request.url.includes(loginUrl)) {
+    return next(request);
+  }
+
+  // For ALL OTHER requests, get the token and attach it.
+  const token = authService.getAccessToken();
+
+  console.log(`Intercepting request to ${request.url}. Token: ${token}`);
+
+  if (token) {
+    // We have to clone the request here
+    const clonedRequest = request.clone({
       setHeaders: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${token}`
       }
     });
+    return next(clonedRequest);
   }
-  // --- END OF FIX ---
 
-  // Handle the request and catch errors
-  return next(req).pipe( // Pass the potentially cloned req
-    catchError((error: HttpErrorResponse) => {
-
-      // This 401 check is correct
-      if (error.status === 401 && !req.url.includes(loginUrl)) {
-        console.error('Unauthorized request (401). Logging out user via interceptor.');
-        authService.logout(); // Trigger logout in AuthService
-      }
-
-      // For any other errors, re-throw them to be handled elsewhere
-      return throwError(() => error);
-    })
-  );
+  return next(request);
 };
