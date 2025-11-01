@@ -387,7 +387,7 @@
 .dashboard-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between; // *** UPDATED ***
   padding: 0 20px;
   background-color: var(--white);
   height: var(--header-height);
@@ -408,6 +408,17 @@
 .header-left-controls {
   display: flex;
   align-items: center;
+  gap: 16px; // *** NEW: Adds space between button and title ***
+}
+
+/* === NEW: Header Title Style === */
+.header-title {
+  display: block;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-800);
+  white-space: nowrap;
 }
 
 /* === NEW: Mobile Toggle Styles === */
@@ -507,7 +518,7 @@
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  background-color: var(--desert-storm);
+  background-color: var(--gray-100);
   border-radius: 12px;
   box-shadow: 
     0 10px 40px rgba(0, 0, 0, 0.1),
@@ -899,7 +910,7 @@
 
   .dashboard-header {
     padding: 0 15px;
-    justify-content: space-between; /* === UPDATED: Mobile Header Layout === */
+    justify-content: space-between; 
   }
 
   /* === NEW: Show mobile toggle === */
@@ -907,6 +918,11 @@
     display: flex; 
     align-items: center;
     justify-content: center;
+  }
+
+  /* === NEW: Hide desktop title on mobile === */
+  .header-title {
+    display: none;
   }
 
   .dashboard-content {
@@ -940,7 +956,7 @@
 .sidebar-nav ul li button:focus-visible,
 .user-menu-toggle:focus-visible,
 .user-menu-items li button:focus-visible,
-.mobile-sidebar-toggle:focus-visible { /* === NEW === */
+.mobile-sidebar-toggle:focus-visible { 
   outline: 2px solid var(--light-teal);
   outline-offset: 2px;
 }

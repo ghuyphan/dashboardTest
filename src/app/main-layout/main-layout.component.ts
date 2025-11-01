@@ -9,15 +9,22 @@ import {
   AfterViewInit 
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule, RouterOutlet } from '@angular/router';
+// *** NEW IMPORTS ***
+import { 
+  Router, 
+  RouterModule, 
+  RouterOutlet, 
+  NavigationEnd, // To know when navigation finishes
+  ActivatedRoute // To get info about the current route
+} from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter, map, mergeMap } from 'rxjs/operators'; // *** NEW IMPORT ***
+// *** END NEW IMPORTS ***
+
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model'; 
 import { HasPermissionDirective } from '../directives/has-permission.directive';
-// --- NEW: Import the config file ---
 import { NavItem, navItems } from './nav-items.config'; 
-
-// --- REMOVED: Local NavItem interface definition ---
 
 @Component({
   selector: 'app-main-layout',
@@ -37,7 +44,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   currentUser: User | null = null;
   
   rolesDisplay: string = '';
-  userInitials: string = ''; // Property for user initials
+  userInitials: string = ''; 
   private userSubscription: Subscription | null = null;
 
   isUserMenuOpen: boolean = false;
@@ -48,37 +55,63 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
   @ViewChild('mainPanel') mainPanel!: ElementRef; 
 
-  // --- UPDATED: Use the imported navItems ---
   navItems: NavItem[] = navItems;
 
-  // --- REMOVED: The large navItems array definition ---
+  // *** THIS IS THE ONLY CHANGE ***
+  currentScreenName: string = 'LOADING TITLE...'; // Changed from 'Dashboard'
+  // *** END OF CHANGE ***
 
   constructor(
     private authService: AuthService, 
-    private router: Router,
     private el: ElementRef, 
-    private renderer: Renderer2 
+    private renderer: Renderer2,
+    // *** NEW: INJECT ROUTER AND ACTIVATEDROUTE ***
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    // Subscribe to the auth service's currentUser$ observable
+    // 1. Subscribe to get User Info
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user && user.roles) {
         this.rolesDisplay = this.formatRoles(user.roles);
-        this.userInitials = this.getInitials(user.username); // Use username for initials
+        this.userInitials = this.getInitials(user.username);
       } else {
         this.rolesDisplay = '';
         this.userInitials = '';
       }
     });
 
+    // *** NEW: 2. Subscribe to Router Events for Screen Title ***
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => this.activatedRoute),
+      map(route => {
+        while (route.firstChild) {
+          route = route.firstChild;
+        }
+        return route;
+      }),
+      filter(route => route.outlet === 'primary'),
+      mergeMap(route => route.data)
+    ).subscribe((data: any) => {
+      
+      // *** THE DEBUG LINE ***
+      console.log('Router data object:', data); 
+
+      // Look for a 'title' in the route's data object
+      this.currentScreenName = data['title'] || 'Dashboard'; // Fallback
+    });
+    // *** END OF NEW ***
+
+    // 3. Check window size
     this.checkWindowSize();
     window.addEventListener('resize', this.checkWindowSize.bind(this));
   }
 
   ngAfterViewInit(): void {
-    // Attach scroll listener to the main panel for hide-on-scroll
+    // Attach scroll listener
     if (this.mainPanel) {
       this.scrollListener = this.renderer.listen(
         this.mainPanel.nativeElement, 
@@ -96,7 +129,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     window.removeEventListener('resize', this.checkWindowSize.bind(this));
     
-    // Remove scroll listener
     if (this.scrollListener) {
       this.scrollListener();
     }
@@ -110,12 +142,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  /**
-   * Handles the scroll event on the main panel to show/hide the header.
-   */
   private onMainPanelScroll(event: Event): void {
     const scrollTop = (event.target as HTMLElement).scrollTop;
-    const headerHeight = 60; // Use the new header height
+    const headerHeight = 60; 
 
     if (scrollTop > this.lastScrollTop && scrollTop > headerHeight) {
       // Scrolling Down
@@ -128,33 +157,22 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     this.lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
   }
 
-  /**
-   * *** IMPORTANT ***
-   * This function converts the role from the API (e.g., "KXĐ")
-   * into a user-friendly string.
-   */
   formatRoles(roles: string[]): string {
-    // Add your other roles here
-    if (roles.includes('KXĐ')) return 'Kế toán (KXĐ)'; // <-- UPDATE THIS FRIENDLY NAME
+    if (roles.includes('KXĐ')) return 'Kế toán (KXĐ)'; 
+    if (roles.includes('Bác Sĩ')) return 'Bác Sĩ'; // Added this from your log
     if (roles.includes('SuperAdmin')) return 'Super Admin';
     if (roles.includes('Admin')) return 'Admin';
     if (roles.includes('User')) return 'User';
-    
-    // Fallback if no match
     return roles.join(', ');
   }
 
-  // *** UPDATED THIS FUNCTION ***
-  // Helper function to get initials from username
   private getInitials(username: string): string {
     if (username && username.length >= 3) {
-      // New logic: Take 2nd and 3rd characters
       return username.substring(1, 3).toUpperCase();
     } else if (username && username.length > 0) {
-      // Fallback: Take first 2 characters
       return username.substring(0, 2).toUpperCase();
     }
-    return '??'; // Fallback
+    return '??'; 
   }
 
   toggleSidebar(): void {
@@ -168,10 +186,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   logout(): void {
     this.authService.logout();
-    this.isUserMenuOpen = false; // Close menu on logout
+    this.isUserMenuOpen = false; 
   }
-
-  // --- Methods for new user menu in header ---
 
   toggleUserMenu(): void {
     this.isUserMenuOpen = !this.isUserMenuOpen;
@@ -179,16 +195,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    // Check if the click is outside the user menu container
-    // And also ensure the click wasn't on the hamburger toggle
     if (
       this.userMenuContainer && 
       !this.userMenuContainer.nativeElement.contains(event.target)
     ) {
-      // Check if the click was on the sidebar toggle
-      const hamburger = this.el.nativeElement.querySelector('.mobile-sidebar-toggle'); // UPDATED this selector
+      const hamburger = this.el.nativeElement.querySelector('.mobile-sidebar-toggle'); // Correct selector
       if (hamburger && hamburger.contains(event.target)) {
-        // If mobile sidebar toggle was clicked, don't close user menu
         return; 
       }
       this.isUserMenuOpen = false;
@@ -198,19 +210,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   onSettingsClick(): void {
     console.log('Settings clicked');
     this.isUserMenuOpen = false; 
-    // Example: this.router.navigate(['/app/settings']);
   }
 
   onSupportClick(): void {
     console.log('Support clicked');
     this.isUserMenuOpen = false; 
-    // Example: this.router.navigate(['/support']);
   }
 
-  // --- NEW METHOD ---
   onSeeAllProfilesClick(): void {
     console.log('See all profiles clicked');
     this.isUserMenuOpen = false;
-    // Example: this.router.navigate(['/profiles']);
   }
 }
