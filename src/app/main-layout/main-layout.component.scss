@@ -51,7 +51,7 @@
     align-items: center;
     height: var(--header-height);
     margin-bottom: 15px; // Reduced margin
-    border-bottom: 1px solid var(--gray-200);
+    // border-bottom: 1px solid var(--gray-200);
     box-sizing: border-box;
     position: relative;
 
@@ -123,6 +123,7 @@
       li {
         a,
         button {
+          align-items: center;
           color: var(--gray-700);
           text-decoration: none;
           display: flex;
