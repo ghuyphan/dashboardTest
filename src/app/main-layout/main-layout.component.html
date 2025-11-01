@@ -62,6 +62,11 @@
     
     <header class="dashboard-header" [class.hidden]="isHeaderHidden">
       
+      <div class="header-left-controls">
+        <button class="mobile-sidebar-toggle" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
       <div class="header-right-controls">
         <div class="user-menu" #userMenuContainer *ngIf="currentUser">
           
@@ -86,7 +91,8 @@
                   <span class="username">{{ currentUser.fullName }}</span>
                   <span class="user-role">{{ rolesDisplay }}</span>
                 </div>
-                </div>
+
+              </div>
             </div>
             
             <ul class="user-menu-items">

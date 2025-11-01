@@ -405,9 +405,32 @@
   transform: translateY(-100%);
 }
 
-.header-left {
-  display: none;
+.header-left-controls {
+  display: flex;
+  align-items: center;
 }
+
+/* === NEW: Mobile Toggle Styles === */
+.mobile-sidebar-toggle {
+  display: none; // Hidden by default on desktop
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--gray-700);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: 
+    background-color var(--transition-fast) ease,
+    color var(--transition-fast) ease;
+  line-height: 1;
+}
+
+.mobile-sidebar-toggle:hover {
+  background-color: var(--gray-200);
+  color: var(--dark-teal);
+}
+/* === End of NEW === */
 
 .header-right-controls {
   position: relative;
@@ -484,7 +507,7 @@
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  background-color: var(--gray-100);
+  background-color: var(--desert-storm);
   border-radius: 12px;
   box-shadow: 
     0 10px 40px rgba(0, 0, 0, 0.1),
@@ -867,9 +890,6 @@
     visibility: hidden;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    transition: 
-      opacity 0.3s var(--transition-smooth),
-      visibility 0.3s var(--transition-smooth);
   }
 
   .sidebar-backdrop.show {
@@ -879,6 +899,14 @@
 
   .dashboard-header {
     padding: 0 15px;
+    justify-content: space-between; /* === UPDATED: Mobile Header Layout === */
+  }
+
+  /* === NEW: Show mobile toggle === */
+  .mobile-sidebar-toggle {
+    display: flex; 
+    align-items: center;
+    justify-content: center;
   }
 
   .dashboard-content {
@@ -911,7 +939,8 @@
 .sidebar-nav ul li a:focus-visible,
 .sidebar-nav ul li button:focus-visible,
 .user-menu-toggle:focus-visible,
-.user-menu-items li button:focus-visible {
+.user-menu-items li button:focus-visible,
+.mobile-sidebar-toggle:focus-visible { /* === NEW === */
   outline: 2px solid var(--light-teal);
   outline-offset: 2px;
 }

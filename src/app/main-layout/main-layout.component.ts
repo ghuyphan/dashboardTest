@@ -37,7 +37,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   currentUser: User | null = null;
   
   rolesDisplay: string = '';
-  userInitials: string = ''; // NEW: Property for user initials
+  userInitials: string = ''; // Property for user initials
   private userSubscription: Subscription | null = null;
 
   isUserMenuOpen: boolean = false;
@@ -62,7 +62,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     // Subscribe to the auth service's currentUser$ observable
-    // UPDATED: Also get user initials
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user && user.roles) {
@@ -129,20 +128,31 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     this.lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
   }
 
+  /**
+   * *** IMPORTANT ***
+   * This function converts the role from the API (e.g., "KXĐ")
+   * into a user-friendly string.
+   */
   formatRoles(roles: string[]): string {
-    // This logic should match the roles in your system
+    // Add your other roles here
+    if (roles.includes('KXĐ')) return 'Kế toán (KXĐ)'; // <-- UPDATE THIS FRIENDLY NAME
     if (roles.includes('SuperAdmin')) return 'Super Admin';
     if (roles.includes('Admin')) return 'Admin';
     if (roles.includes('User')) return 'User';
+    
+    // Fallback if no match
     return roles.join(', ');
   }
 
-  // NEW: Helper function to get initials from username
+  // *** UPDATED THIS FUNCTION ***
+  // Helper function to get initials from username
   private getInitials(username: string): string {
-    if (username && username.length >= 2) {
+    if (username && username.length >= 3) {
+      // New logic: Take 2nd and 3rd characters
       return username.substring(1, 3).toUpperCase();
-    } else if (username && username.length === 1) {
-      return username.toUpperCase();
+    } else if (username && username.length > 0) {
+      // Fallback: Take first 2 characters
+      return username.substring(0, 2).toUpperCase();
     }
     return '??'; // Fallback
   }
@@ -176,9 +186,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
       !this.userMenuContainer.nativeElement.contains(event.target)
     ) {
       // Check if the click was on the sidebar toggle
-      const hamburger = this.el.nativeElement.querySelector('.hamburger-menu');
+      const hamburger = this.el.nativeElement.querySelector('.mobile-sidebar-toggle'); // UPDATED this selector
       if (hamburger && hamburger.contains(event.target)) {
-        // If sidebar toggle was clicked, don't close user menu
+        // If mobile sidebar toggle was clicked, don't close user menu
         return; 
       }
       this.isUserMenuOpen = false;
