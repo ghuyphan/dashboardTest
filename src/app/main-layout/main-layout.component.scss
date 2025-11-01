@@ -4,9 +4,9 @@
   width: 100vw;
   overflow: hidden;
   background-color: var(--gray-100);
-  --header-height: 60px; 
-  --sidebar-width: 260px;
-  --sidebar-width-collapsed: 70px; 
+  --header-height: 50px; // Slightly reduced header height
+  --sidebar-width: 240px; // Slightly reduced sidebar width
+  --sidebar-width-collapsed: 60px; // Reduced collapsed width for squarer icons
 }
 
 // --- Keyframes for menu animation ---
@@ -21,7 +21,6 @@
   }
 }
 
-
 .dashboard-container {
   display: flex;
   height: 100%;
@@ -35,12 +34,12 @@
   top: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background-color: '#f8f8f7';
-  color: var(--gray-200);
-  padding: 0 15px 25px 15px;
-  transition: transform 0.25s ease-in-out, width 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
+  background-color: var(--desert-storm);
+  color: var(--gray-700);
+  padding: 0 10px 15px 10px; // Reduced overall sidebar padding
+  transition: transform 0.25s ease-in-out, width 0.25s ease-in-out;
   z-index: 1030;
-  box-shadow: 1px 0 1px rgba(0, 0, 0, 0.15);
+  box-shadow: 1px 0 1px var(--gray-200);
   border-right: none;
   overflow-y: auto;
   overflow-x: hidden;
@@ -50,69 +49,85 @@
   .sidebar-header {
     display: flex;
     align-items: center;
-    height: var(--header-height); 
-    // padding: 0 10px; 
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-sizing: border-box; 
-    position: relative; // For close button
+    height: var(--header-height);
+    margin-bottom: 15px; // Reduced margin
+    border-bottom: 1px solid var(--gray-200);
+    box-sizing: border-box;
+    position: relative;
+
+    .sidebar-logo-wrapper { // New wrapper for logo and toggle
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      position: relative; // For absolute positioning of toggle icon
+    }
 
     .sidebar-logo {
-      height: 35px;
-      width: 35px;
-      margin-right: 12px;
+      height: 30px; // Slightly smaller logo
+      width: 30px;
+      margin-right: 10px; // Adjusted margin
       border-radius: 100%;
       background-color: var(--white);
       padding: 5px;
+      border: 1px solid var(--gray-200);
+      transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+      display: flex; // To center content if logo is an icon
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     h2 {
-      font-size: 18px;
+      font-size: 17px; // Slightly smaller font
       font-weight: 600;
-      color: var(--white);
+      color: var(--gray-800);
       margin: 0;
       white-space: nowrap;
       opacity: 1;
       transition: opacity 0.2s ease-in-out;
     }
 
-    // NEW: Close button styles
-    .sidebar-close-btn {
-      display: none; // Hidden by default
+    .sidebar-toggle-btn { // New toggle button, replacing hamburger
       background: none;
       border: none;
-      color: var(--gray-200);
-      font-size: 20px;
-      position: absolute;
-      right: 10px;
+      font-size: 18px; // Adjusted font size for icon
+      color: var(--gray-700);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+      line-height: 1; // Ensures consistent icon size
+      position: absolute; // Positioned within sidebar-header
+      right: 5px; // Adjusted for new padding
       top: 50%;
       transform: translateY(-50%);
-      padding: 8px;
-      line-height: 1;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background-color 0.2s ease, color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.2);
-        color: var(--white);
+        background-color: var(--gray-200);
+        color: var(--dark-teal);
       }
     }
   }
 
   .sidebar-nav {
-    flex-grow: 1; 
+    flex-grow: 1;
     ul {
       list-style: none;
       padding: 0;
       margin: 0;
       li {
-        a, button {
-          color: var(--gray-200);
+        a,
+        button {
+          color: var(--gray-700);
           text-decoration: none;
           display: flex;
           align-items: center;
-          padding: 14px 15px;
+          padding: 12px 10px; // Reduced padding
           border-radius: 8px;
           transition: background-color 0.2s ease, color 0.2s ease;
           white-space: nowrap;
@@ -121,16 +136,16 @@
           background: none;
           border: none;
           font-family: inherit;
-          font-size: 15px;
-          font-weight: 400; 
+          font-size: 14px; // Slightly smaller font
+          font-weight: 400;
           text-align: left;
           cursor: pointer;
-          margin-bottom: 8px;
+          margin-bottom: 6px; // Reduced margin
           i {
-            margin-right: 15px;
-            width: 22px;
+            margin-right: 12px; // Reduced margin
+            width: 20px; // Slightly smaller icon area
             text-align: center;
-            font-size: 1.1rem;
+            font-size: 1rem;
             transition: margin 0.3s ease-in-out;
           }
           span {
@@ -139,12 +154,12 @@
             flex-grow: 1;
           }
           &:hover {
-            background-color: rgba(0, 0, 0, 0.2);
-            color: var(--white);
+            background-color: var(--gray-200);
+            color: var(--gray-800);
           }
           &.active {
-            background-color: rgba(0, 0, 0, 0.25);
-            color: var(--white);
+            background-color: var(--gray-200);
+            color: var(--gray-800);
             font-weight: 600;
             box-shadow: none;
 
@@ -166,25 +181,114 @@
 
   // Styles for collapsed state
   &.collapsed {
-    width: var(--sidebar-width-collapsed); 
+    width: var(--sidebar-width-collapsed);
     .sidebar-header {
-      padding-left: 5px;
-      padding-right: 5px;
+      padding: 0;
       justify-content: center;
-      .sidebar-logo { margin-right: 0; }
-      h2 { opacity: 0; width: 0; overflow: hidden; }
-    }
-    .sidebar-nav ul li {
-      a, button {
+      border-bottom: none; // No border when collapsed for cleaner look
+
+      .sidebar-logo-wrapper {
         justify-content: center;
-        i { margin-right: 0; }
-        span { opacity: 0; width: 0; overflow: hidden; }
-        &.active::before {
+        overflow: hidden; // Hide overflow during hover transition
+        position: relative; // Ensure logo and toggle are positioned correctly
+        width: 100%;
+        height: 100%;
+
+        .sidebar-logo {
+          margin-right: 0;
+          height: 40px; // Larger logo when collapsed
+          width: 40px;
+          border-radius: 6px; // Square corners for collapsed logo
+          opacity: 1;
+          transform: scale(1);
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          background-color: var(--gray-100); // Neutral background
+          border: none; // Remove border
+          padding: 0; // Remove padding
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem; // Adjust logo icon size if it's an icon
+
+          img { // If logo is an image
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+          }
+        }
+
+        .sidebar-toggle-btn {
           opacity: 0;
+          visibility: hidden;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          height: 40px; // Square button
+          width: 40px;
+          border-radius: 6px; // Square button
+          color: var(--gray-800); // Icon color
+          background-color: var(--gray-100); // Background color
+          font-size: 1.3rem; // Larger icon for toggle
+        }
+
+        &:hover {
+          .sidebar-logo {
+            opacity: 0;
+            visibility: hidden;
+          }
+          .sidebar-toggle-btn {
+            opacity: 1;
+            visibility: visible;
+          }
         }
       }
-      .submenu { display: none; }
-      .toggle-icon { display: none; }
+
+      h2 {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+      }
+    }
+
+    .sidebar-nav ul li {
+      a,
+      button {
+        width: 40px; // Make item square
+        height: 40px; // Make item square
+        padding: 0; // Remove padding for direct icon centering
+        margin: 0 auto 6px auto; // Center and provide vertical spacing
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 6px; // Square corners
+
+        i {
+          margin-right: 0;
+          width: auto;
+        }
+        span {
+          opacity: 0;
+          width: 0;
+          overflow: hidden;
+        }
+        &.active {
+          background-color: var(--gray-200); // Use a subtle background
+          color: var(--gray-800); // Ensure active icon color is good
+          &::before {
+            display: none; // No left border in collapsed state
+          }
+        }
+      }
+      .submenu {
+        display: none;
+      }
+      .toggle-icon {
+        display: none;
+      }
     }
   }
 }
@@ -199,16 +303,16 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh; 
-  overflow-y: auto; 
+  height: 100vh;
+  overflow-y: auto;
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
-  background-color: var(--gray-100);
-  transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
+  background-color: var(--white);
+  transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out;
 
   &.collapsed {
-    margin-left: var(--sidebar-width-collapsed); 
-    width: calc(100% - var(--sidebar-width-collapsed)); 
+    margin-left: var(--sidebar-width-collapsed);
+    width: calc(100% - var(--sidebar-width-collapsed));
   }
 }
 
@@ -216,42 +320,28 @@
 .dashboard-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 25px;
+  justify-content: flex-end; // Align items to the right as hamburger is gone
+  padding: 0 20px; // Reduced padding
   background-color: var(--white);
-  border-bottom: 1px solid var(--gray-200);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  height: var(--header-height); 
+  // border-bottom: none; // Already removed
+  // box-shadow: none; // Already removed
+  height: var(--header-height);
   flex-shrink: 0;
-  position: sticky; 
-  top: 0; 
-  z-index: 1000; 
-  transition: transform 0.3s ease-in-out; 
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
 
   &.hidden {
     transform: translateY(-100%);
   }
+
   .header-left {
-    display: flex;
-    align-items: center;
+    display: none; // No hamburger in header
   }
-  .hamburger-menu {
-    background: none;
-    border: none;
-    font-size: 20px; // <-- UPDATED (from 22px)
-    color: var(--gray-700);
-    cursor: pointer;
-    padding: 6px; // <-- UPDATED (from 8px)
-    margin-right: 15px;
-    border-radius: 50%;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    &:hover {
-      background-color: var(--gray-100);
-      color: var(--dark-teal);
-    }
-  }
+
   .header-right-controls {
-    position: relative; 
+    position: relative;
     display: flex;
     align-items: center;
   }
@@ -263,37 +353,41 @@
       background: none;
       border: none;
       cursor: pointer;
-      padding: 4px; 
-      border-radius: 50px; 
+      padding: 4px;
+      border-radius: 50px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background-color 0.2s ease;
       .header-avatar-img {
-        width: 40px; 
-        height: 40px;
+        width: 36px; // Slightly smaller avatar
+        height: 36px;
         border-radius: 50%;
         object-fit: cover;
         border: 1px solid var(--gray-200);
       }
       .chevron-icon {
-        width: 20px;
-        height: 20px;
+        width: 18px; // Slightly smaller chevron
+        height: 18px;
         color: var(--gray-600);
         margin-left: 4px;
       }
-      &:hover { background-color: var(--gray-100); }
-      &:active { transform: scale(0.98); }
+      &:hover {
+        background-color: var(--gray-100);
+      }
+      &:active {
+        transform: scale(0.98);
+      }
     }
     .user-menu-dropdown {
       position: absolute;
-      top: calc(100% + 12px); 
+      top: calc(100% + 10px); // Adjusted for smaller header height
       right: 0;
       background-color: var(--gray-100);
       border-radius: 8px;
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
       border: 1px solid var(--gray-200);
-      width: 320px; 
+      width: 320px;
       z-index: 1100;
       overflow: hidden;
       padding: 8px;
@@ -308,22 +402,24 @@
       .dropdown-profile-header {
         display: flex;
         align-items: center;
-        padding: 12px;
+        padding: 10px; // Reduced padding
         border-radius: 8px 8px 0 0;
         transition: background-color 0.2s ease;
         cursor: pointer;
         .dropdown-avatar-img {
-          width: 44px;
-          height: 44px;
+          width: 40px; // Slightly smaller avatar
+          height: 40px;
           border-radius: 50%;
-          margin-right: 12px;
+          margin-right: 10px; // Reduced margin
         }
         .username {
           font-weight: 600;
-          font-size: 16px;
+          font-size: 15px; // Slightly smaller font
           color: var(--gray-900);
         }
-        &:hover { background-color: var(--gray-100); }
+        &:hover {
+          background-color: var(--gray-100);
+        }
       }
       .user-menu-items {
         list-style: none;
@@ -333,21 +429,21 @@
           button {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px; 
+            gap: 10px; // Reduced gap
+            padding: 10px; // Reduced padding
             width: 100%;
             background: none;
             border: none;
             text-align: left;
-            font-size: 15px;
-            font-weight: 500; 
-            color: var(--gray-800); 
+            font-size: 14px; // Reduced font size
+            font-weight: 500;
+            color: var(--gray-800);
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
-            border-radius: 6px; 
+            border-radius: 6px;
             .menu-icon-bg {
-              width: 36px;
-              height: 36px;
+              width: 32px; // Reduced icon background size
+              height: 32px;
               border-radius: 50%;
               background-color: var(--gray-200);
               display: flex;
@@ -355,14 +451,16 @@
               justify-content: center;
               transition: background-color 0.2s ease;
               i {
-                font-size: 16px;
+                font-size: 15px; // Reduced icon size
                 color: var(--gray-800);
-                margin: 0; 
-                width: auto; 
+                margin: 0;
+                width: auto;
                 transition: color 0.2s ease;
               }
             }
-            span { line-height: 1; }
+            span {
+              line-height: 1;
+            }
             &:hover {
               background-color: var(--gray-200);
               color: var(--gray-900);
@@ -371,15 +469,21 @@
               }
             }
           }
-          &.logout-item { margin: 0; padding: 0; border: none; }
+          &.logout-item {
+            margin: 0;
+            padding: 0;
+            border: none;
+          }
           .logout-btn {
-            color: var(--hm-red, #dc3545); 
+            color: var(--hm-red, #dc3545);
             .menu-icon-bg {
               background-color: rgba(220, 53, 69, 0.1);
-              i { color: var(--hm-red, #dc3545); }
+              i {
+                color: var(--hm-red, #dc3545);
+              }
             }
             &:hover {
-              background-color: rgba(220, 53, 69, 0.15); 
+              background-color: rgba(220, 53, 69, 0.15);
               color: var(--hm-red, #dc3545);
               .menu-icon-bg {
                 background-color: rgba(220, 53, 69, 0.2);
@@ -395,9 +499,8 @@
 // --- Dashboard Content Area ---
 .dashboard-content {
   flex-grow: 1;
-  padding: 30px;
+  padding: 20px; // Reduced padding
 }
-
 
 // --- Responsive Adjustments ---
 @media (max-width: 992px) {
@@ -406,47 +509,73 @@
     width: 100%;
     transition: none;
     &.collapsed {
-        margin-left: 0;
-        width: 100%;
+      margin-left: 0;
+      width: 100%;
     }
   }
 
   .sidebar {
-     transform: translateX(-100%);
-     transition: transform 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
-     &.open {
-        transform: translateX(0);
-        // Show close button when open on mobile
-        .sidebar-close-btn {
-          display: block;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-in-out;
+    &.open {
+      transform: translateX(0);
+      .sidebar-header .sidebar-close-btn { // Keep mobile close button
+        display: block;
+      }
+    }
+    &.collapsed { // Ensure collapsed state also works on mobile if sidebar is forced open
+      transform: translateX(-100%);
+      width: var(--sidebar-width); // Revert to full width when collapsed on mobile
+      .sidebar-header .sidebar-close-btn {
+        display: none;
+      }
+      .sidebar-header .sidebar-logo-wrapper {
+        .sidebar-logo { // Ensure logo is visible on mobile if sidebar is open but *meant* to be collapsed
+          opacity: 1;
+          visibility: visible;
+          transform: none; // Remove collapsed logo transforms
+          position: static;
         }
-     }
-     &.collapsed {
-        transform: translateX(-100%);
-        width: var(--sidebar-width);
-        .sidebar-close-btn { display: none; } // Hide close btn
-        .sidebar-header h2 { opacity: 1; width: auto; }
-        .sidebar-nav ul li a, .sidebar-nav ul li button { justify-content: flex-start; }
-        .sidebar-nav ul li a i, .sidebar-nav ul li button i { margin-right: 15px; }
-        .sidebar-nav ul li a span, .sidebar-nav ul li button span { opacity: 1; width: auto; }
-     }
+        .sidebar-toggle-btn {
+          opacity: 0; // Hide toggle on mobile
+          visibility: hidden;
+        }
+      }
+      .sidebar-nav ul li a,
+      .sidebar-nav ul li button {
+        justify-content: flex-start;
+        width: 100%; // Revert to full width on mobile
+        height: auto; // Revert to auto height
+        padding: 12px 10px; // Revert to expanded padding
+        margin: 0 0 6px 0; // Revert margin
+        border-radius: 8px; // Revert border-radius
+      }
+      .sidebar-nav ul li a i,
+      .sidebar-nav ul li button i {
+        margin-right: 12px;
+      }
+      .sidebar-nav ul li a span,
+      .sidebar-nav ul li button span {
+        opacity: 1;
+        width: auto;
+      }
+    }
   }
-  
-  // UPDATED: Show backdrop and add blur/darken
+
   .sidebar-backdrop {
-    display: block; // Make it active on mobile
+    display: block;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); // UPDATED: Darken
-    z-index: 1020; // Just below sidebar
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1020;
     opacity: 0;
     visibility: hidden;
-    backdrop-filter: blur(4px); // NEW: Blur effect
-    -webkit-backdrop-filter: blur(4px); // NEW: Safari support
-    transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out; // <-- UPDATED (from 0.3s)
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out;
 
     &.show {
       opacity: 1;
@@ -456,31 +585,39 @@
 
   .dashboard-header {
     padding: 0 15px;
-    .hamburger-menu { margin-right: 10px; }
   }
-   .dashboard-content { padding: 20px; }
+  .dashboard-content {
+    padding: 15px;
+  }
 }
 
 @media (max-width: 480px) {
-    .sidebar { width: 240px; }
-    .dashboard-header { height: var(--header-height); } 
-    .dashboard-content { padding: 15px; }
-    
-    .dashboard-header .user-menu .user-menu-dropdown {
-      width: calc(100vw - 30px); 
-      max-width: none; 
-      right: -15px; 
-      top: calc(100% + 10px);
-    }
+  .sidebar {
+    width: 240px;
+  }
+  .dashboard-header {
+    height: var(--header-height);
+  }
+  .dashboard-content {
+    padding: 15px;
+  }
+
+  .dashboard-header .user-menu .user-menu-dropdown {
+    width: calc(100vw - 30px);
+    max-width: none;
+    right: -15px;
+    top: calc(100% + 10px);
+  }
 }
 
-// --- STYLES FOR SUB-MENUS (Dark Theme) ---
+// --- STYLES FOR SUB-MENUS (Light Theme) ---
 .sidebar-nav ul li {
   &.has-submenu {
     button {
-      &.active, &[aria-expanded="true"] {
-        background-color: rgba(0, 0, 0, 0.25);
-        color: var(--white);
+      &.active,
+      &[aria-expanded='true'] {
+        background-color: var(--gray-200);
+        color: var(--gray-800);
         font-weight: 600;
         &::before {
           display: none;
@@ -490,7 +627,7 @@
         font-size: 0.8em;
         margin-left: auto;
         padding: 0 5px;
-        color: var(--gray-300); 
+        color: var(--gray-500);
         transition: color 0.2s ease-in-out;
       }
     }
@@ -498,36 +635,36 @@
   .submenu {
     list-style: none;
     padding: 0;
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0; // Reduced margin
     li {
       a {
-        padding-left: 47px;
-        font-size: 0.9em;
-        color: var(--gray-300); 
-        margin-bottom: 4px;
+        padding-left: 42px; // Reduced padding
+        font-size: 0.85em; // Slightly smaller font
+        color: var(--gray-600);
+        margin-bottom: 3px; // Reduced margin
         &.active {
-          color: var(--white); 
+          color: var(--gray-800);
           background-color: transparent;
           font-weight: 500;
           &::before {
             content: '';
             position: absolute;
             width: 3px;
-            left: 25px;
+            left: 20px; // Adjusted for reduced padding
             top: 5px;
             bottom: 5px;
-            background-color: var(--light-teal); 
+            background-color: var(--light-teal);
             border-radius: 4px;
           }
         }
         &:hover {
-          background-color: rgba(0, 0, 0, 0.2);
-          color: var(--white); 
+          background-color: var(--gray-200);
+          color: var(--gray-800);
         }
         i {
-          font-size: 1em;
-          margin-right: 10px;
-          width: 22px;
+          font-size: 0.9em; // Slightly smaller icon
+          margin-right: 8px; // Reduced margin
+          width: 20px;
         }
       }
     }
