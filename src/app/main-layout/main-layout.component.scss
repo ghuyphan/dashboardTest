@@ -521,6 +521,7 @@
   border-radius: 50%;
   margin-right: 10px;
   transition: transform var(--transition-fast) var(--transition-spring);
+  border: var(--gray-100)
 }
 
 .dropdown-profile-header:hover .dropdown-avatar-img {

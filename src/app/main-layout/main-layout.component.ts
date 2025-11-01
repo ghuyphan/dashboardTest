@@ -57,26 +57,26 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   navItems: NavItem[] = [
     {
       label: 'Home',
-      icon: 'far fa-home',
+      icon: 'fas fa-home',
       link: '/app/home', // Note: Make sure links align with app.routes.ts ('/app/home')
       permissions: [] // Empty array = visible to all logged-in users
     },
     {
       label: 'Management',
-      icon: 'far fa-cogs',
+      icon: 'fas fa-cogs',
       // Parent is visible if user has AT LEAST ONE of the child permissions
       permissions: ['CAN_MANAGE_USERS', 'CAN_VIEW_SETTINGS'], 
       isOpen: false,
       children: [
         {
           label: 'User Admin',
-          icon: 'far fa-users-cog',
+          icon: 'fas fa-users-cog',
           link: '/app/users', // Example link
           permissions: ['CAN_MANAGE_USERS'] // Specific permission
         },
         {
           label: 'System Settings',
-          icon: 'far fa-tools',
+          icon: 'fas fa-tools',
           link: '/app/settings', // Example link
           permissions: ['CAN_VIEW_SETTINGS'] // Specific permission
         }
@@ -84,7 +84,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     },
     {
       label: 'Profile',
-      icon: 'far fa-user',
+      icon: 'fas fa-user',
       link: '/app/profile', // Example link
       permissions: [] // Visible to all
     }
