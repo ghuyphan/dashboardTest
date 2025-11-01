@@ -37,6 +37,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   currentUser: User | null = null;
   
   rolesDisplay: string = '';
+  userInitials: string = ''; // NEW: Property for user initials
   private userSubscription: Subscription | null = null;
 
   isUserMenuOpen: boolean = false;
@@ -61,12 +62,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     // Subscribe to the auth service's currentUser$ observable
+    // UPDATED: Also get user initials
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user && user.roles) {
         this.rolesDisplay = this.formatRoles(user.roles);
+        this.userInitials = this.getInitials(user.username); // Use username for initials
       } else {
         this.rolesDisplay = '';
+        this.userInitials = '';
       }
     });
 
@@ -131,6 +135,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     if (roles.includes('Admin')) return 'Admin';
     if (roles.includes('User')) return 'User';
     return roles.join(', ');
+  }
+
+  // NEW: Helper function to get initials from username
+  private getInitials(username: string): string {
+    if (username && username.length >= 2) {
+      return username.substring(1, 3).toUpperCase();
+    } else if (username && username.length === 1) {
+      return username.toUpperCase();
+    }
+    return '??'; // Fallback
   }
 
   toggleSidebar(): void {

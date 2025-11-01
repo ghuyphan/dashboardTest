@@ -66,7 +66,9 @@
         <div class="user-menu" #userMenuContainer *ngIf="currentUser">
           
           <button class="user-menu-toggle" (click)="toggleUserMenu()" [attr.aria-expanded]="isUserMenuOpen" aria-label="User menu">
-            <img src="assets/images/user-avatar.png" alt="User Avatar" class="header-avatar-img">
+            <div class="header-avatar-initials">
+              {{ userInitials }}
+            </div>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="chevron-icon">
               <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
@@ -76,9 +78,15 @@
             
             <div class="dropdown-section-card">
               <div class="dropdown-profile-header">
-                <img src="assets/images/user-avatar.png" alt="User Avatar" class="dropdown-avatar-img">
-                <span class="username">{{ currentUser.fullName }}</span>
-              </div>
+                <div class="dropdown-avatar-initials">
+                  {{ userInitials }}
+                </div>
+                
+                <div class="dropdown-profile-text">
+                  <span class="username">{{ currentUser.fullName }}</span>
+                  <span class="user-role">{{ rolesDisplay }}</span>
+                </div>
+                </div>
             </div>
             
             <ul class="user-menu-items">

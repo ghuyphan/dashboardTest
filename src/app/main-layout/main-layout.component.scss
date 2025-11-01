@@ -436,11 +436,18 @@
     transform var(--transition-fast) var(--transition-spring);
 }
 
-.header-avatar-img {
+/* NEW: Avatar with initials */
+.header-avatar-initials {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  object-fit: cover;
+  background-color: var(--light-teal);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
   border: 1px solid var(--gray-200);
   transition: 
     border-color var(--transition-fast) ease,
@@ -451,7 +458,7 @@
   background-color: var(--gray-100);
 }
 
-.user-menu-toggle:hover .header-avatar-img {
+.user-menu-toggle:hover .header-avatar-initials {
   border-color: var(--gray-300);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -515,23 +522,53 @@
   cursor: pointer;
 }
 
-.dropdown-avatar-img {
+/* NEW: Dropdown avatar with initials */
+.dropdown-avatar-initials {
   width: 40px;
   height: 40px;
+  min-width: 40px; 
   border-radius: 50%;
   margin-right: 10px;
+  background-color: var(--light-teal);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
   transition: transform var(--transition-fast) var(--transition-spring);
-  border: var(--gray-100)
+  border: 1px solid var(--gray-100);
 }
 
-.dropdown-profile-header:hover .dropdown-avatar-img {
+.dropdown-profile-header:hover .dropdown-avatar-initials {
   transform: scale(1.05);
+}
+
+/* NEW: Wrapper for username and role */
+.dropdown-profile-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  overflow: hidden; /* To truncate text if needed */
 }
 
 .username {
   font-weight: 600;
   font-size: 15px;
   color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* NEW: Style for user role */
+.user-role {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--gray-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dropdown-profile-header:hover {
