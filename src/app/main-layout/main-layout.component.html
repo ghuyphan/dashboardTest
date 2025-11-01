@@ -3,15 +3,16 @@
   <aside class="sidebar" [ngClass]="{ 'collapsed': !isSidebarOpen, 'open': isSidebarOpen }">
     
     <div class="sidebar-header">
-      <img
-        src="HMSG.ico"
-        alt="Logo Hoan My Saigon"
-        class="sidebar-logo"
-      >
-      <button class="sidebar-close-btn" (click)="toggleSidebar()" aria-label="Close sidebar">
-        <i class="fas fa-times"></i>
-      </button>
-
+      <div class="sidebar-logo-wrapper">
+        <img
+          src="HMSG.ico"
+          alt="Logo Hoan My Saigon"
+          class="sidebar-logo"
+        >
+        <button class="sidebar-toggle-btn" (click)="toggleSidebar()" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
     </div>
 
     <nav class="sidebar-nav" role="navigation">
@@ -60,11 +61,6 @@
   <div class="main-panel" #mainPanel [ngClass]="{ 'collapsed': !isSidebarOpen }">
     
     <header class="dashboard-header" [class.hidden]="isHeaderHidden">
-      <div class="header-left">
-        <button class="hamburger-menu" (click)="toggleSidebar()" aria-label="Toggle sidebar">
-          <i class="fas fa-bars"></i>
-        </button>
-      </div>
       
       <div class="header-right-controls">
         <div class="user-menu" #userMenuContainer *ngIf="currentUser">
@@ -83,8 +79,7 @@
                 <img src="assets/images/user-avatar.png" alt="User Avatar" class="dropdown-avatar-img">
                 <span class="username">{{ currentUser.username }}</span>
               </div>
-
-              </div>
+            </div>
             
             <ul class="user-menu-items">
               <li>
