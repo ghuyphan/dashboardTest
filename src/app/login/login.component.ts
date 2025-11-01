@@ -47,11 +47,18 @@ export class LoginComponent {
         // AuthService handles token storage based on credentials.remember
         this.router.navigate(['/app']);
       },
-      error: (err) => {
+      // --- START OF MODIFICATION ---
+      error: (err: Error) => { // Type the error as 'Error'
         this.isLoading = false;
-        this.toastService.showError('Tên đăng nhập hoặc mật khẩu không chính xác.', 0);
+        
+        // Display the specific error message from the authService
+        // 'err.message' sẽ là chuỗi lỗi chúng ta đã tạo trong auth.service
+        const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
+        this.toastService.showError(errorMessage, 0); 
+        
         console.error('Login failed', err);
       }
+      // --- END OF MODIFICATION ---
     });
   }
 

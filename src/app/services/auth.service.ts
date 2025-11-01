@@ -138,11 +138,33 @@ export class AuthService {
     }).pipe(
       // --- STEP 1: Handle Login Response ---
       switchMap(loginResponse => {
+
+        // --- START OF MODIFICATION ---
+        // Handle specific error codes from the API
         if (loginResponse.MaKetQua !== 200) {
-          let errorMessage = loginResponse.ErrorMessage || 'Login failed';
-          console.error('Login failed (Application Error):', errorMessage);
+          let errorMessage: string;
+          switch (loginResponse.MaKetQua) {
+            case 101:
+              errorMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+              break;
+            case 102:
+              errorMessage = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email.';
+              break;
+            case 103:
+              errorMessage = 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.';
+              break;
+            case 104:
+              errorMessage = 'Tài khoản đã bị khóa do nhập sai mật khẩu quá 5 lần.';
+              break;
+            default:
+              // Use the error message from API if available, or a generic one
+              errorMessage = loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
+          }
+          console.error(`Login failed (API MaKetQua: ${loginResponse.MaKetQua}):`, errorMessage);
+          // Throw an error with the specific, user-friendly message
           return throwError(() => new Error(errorMessage));
         }
+        // --- END OF MODIFICATION ---
 
         console.log('Login successful, fetching permissions...');
         this.accessToken = loginResponse.APIKey.access_token;
