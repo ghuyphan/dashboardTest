@@ -9,17 +9,17 @@ import {
   AfterViewInit 
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// *** NEW IMPORTS ***
 import { 
   Router, 
   RouterModule, 
   RouterOutlet, 
-  NavigationEnd, // To know when navigation finishes
-  ActivatedRoute // To get info about the current route
+  NavigationEnd, 
+  ActivatedRoute 
 } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { filter, map, mergeMap } from 'rxjs/operators'; // *** NEW IMPORT ***
-// *** END NEW IMPORTS ***
+// *** 1. IMPORT startWith ***
+import { filter, map, mergeMap, startWith } from 'rxjs/operators'; 
+// *** END 1. ***
 
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model'; 
@@ -57,15 +57,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   navItems: NavItem[] = navItems;
 
-  // *** THIS IS THE ONLY CHANGE ***
-  currentScreenName: string = 'LOADING TITLE...'; // Changed from 'Dashboard'
-  // *** END OF CHANGE ***
+  currentScreenName: string = 'LOADING TITLE...'; // Default value
 
   constructor(
     private authService: AuthService, 
     private el: ElementRef, 
     private renderer: Renderer2,
-    // *** NEW: INJECT ROUTER AND ACTIVATEDROUTE ***
     private router: Router,
     private activatedRoute: ActivatedRoute
   ) {}
@@ -83,9 +80,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // *** NEW: 2. Subscribe to Router Events for Screen Title ***
+    // 2. Subscribe to Router Events for Screen Title
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
+      // *** 2. ADD startWith(null) ***
+      // This forces the pipe to run once immediately on load,
+      // in addition to running on every future NavigationEnd event.
+      startWith(null), 
+      // *** END 2. ***
       map(() => this.activatedRoute),
       map(route => {
         while (route.firstChild) {
@@ -97,13 +99,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
       mergeMap(route => route.data)
     ).subscribe((data: any) => {
       
-      // *** THE DEBUG LINE ***
       console.log('Router data object:', data); 
 
       // Look for a 'title' in the route's data object
+      // It will find { title: 'Trang chủ' } from app.routes.ts
       this.currentScreenName = data['title'] || 'Dashboard'; // Fallback
     });
-    // *** END OF NEW ***
 
     // 3. Check window size
     this.checkWindowSize();
@@ -159,7 +160,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   formatRoles(roles: string[]): string {
     if (roles.includes('KXĐ')) return 'Kế toán (KXĐ)'; 
-    if (roles.includes('Bác Sĩ')) return 'Bác Sĩ'; // Added this from your log
+    if (roles.includes('Bác Sĩ')) return 'Bác Sĩ'; 
     if (roles.includes('SuperAdmin')) return 'Super Admin';
     if (roles.includes('Admin')) return 'Admin';
     if (roles.includes('User')) return 'User';
@@ -199,7 +200,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
       this.userMenuContainer && 
       !this.userMenuContainer.nativeElement.contains(event.target)
     ) {
-      const hamburger = this.el.nativeElement.querySelector('.mobile-sidebar-toggle'); // Correct selector
+      const hamburger = this.el.nativeElement.querySelector('.mobile-sidebar-toggle'); 
       if (hamburger && hamburger.contains(event.target)) {
         return; 
       }
