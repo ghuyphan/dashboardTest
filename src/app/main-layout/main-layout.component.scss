@@ -366,7 +366,7 @@ span {
                 color: var(--gray-900);
                 transform: translateX(2px);
                 &::before {
-                  background-color: var(--aqua-island);
+                  // background-color: var(--aqua-island);
                   transform: translateY(-50%) scale(1.3);
                 }
               }
