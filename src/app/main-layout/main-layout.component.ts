@@ -22,8 +22,7 @@ import { filter, map, mergeMap, startWith } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model'; 
 import { HasPermissionDirective } from '../directives/has-permission.directive';
-// *** FIX 3.1: Rename the import to avoid name collision ***
-import { NavItem, navItems as navItemsConfig } from './nav-items.config'; 
+import { NavItem } from '../models/nav-item.model'; 
 
 @Component({
   selector: 'app-main-layout',
@@ -45,6 +44,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   rolesDisplay: string = '';
   userInitials: string = ''; 
   private userSubscription: Subscription | null = null;
+  private navSubscription: Subscription | null = null; 
 
   isUserMenuOpen: boolean = false;
   isHeaderHidden: boolean = false; 
@@ -54,10 +54,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
   @ViewChild('mainPanel') mainPanel!: ElementRef; 
 
-  // *** FIX 3.2: Declare as empty. We will populate this in ngOnInit ***
-  navItems: NavItem[] = [];
+  // This will be populated by the authService
+  navItems: NavItem[] = []; 
 
-  currentScreenName: string = 'LOADING TITLE...'; // Default value
+  currentScreenName: string = 'LOADING TITLE...';
 
   constructor(
     private authService: AuthService, 
@@ -68,15 +68,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    // *** FIX 3.3: Initialize the component's navItems with a deep copy ***
-    // This prevents mutating the original config file and ensures
-    // state is reset every time the component loads.
-    this.navItems = navItemsConfig.map(item => ({
-      ...item, // Shallow copy top-level properties
-      // Deep copy children array to be safe
-      children: item.children ? item.children.map(child => ({...child})) : undefined
-    }));
-
+    // Subscribe to dynamic nav items
+    this.navSubscription = this.authService.navItems$.subscribe(items => {
+      // We need to make a deep copy to prevent state pollution
+      // when toggling the 'isOpen' property
+      this.navItems = this.deepCopyNavItems(items);
+    });
 
     // 1. Subscribe to get User Info
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
@@ -115,8 +112,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     window.addEventListener('resize', this.checkWindowSize.bind(this));
   }
 
+  private deepCopyNavItems(items: NavItem[]): NavItem[] {
+    return items.map(item => ({
+      ...item, 
+      children: item.children ? this.deepCopyNavItems(item.children) : undefined
+    }));
+  }
+
   ngAfterViewInit(): void {
-    // Attach scroll listener
     if (this.mainPanel) {
       this.scrollListener = this.renderer.listen(
         this.mainPanel.nativeElement, 
@@ -131,6 +134,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
+    }
+    if (this.navSubscription) { 
+      this.navSubscription.unsubscribe();
     }
     window.removeEventListener('resize', this.checkWindowSize.bind(this));
     
@@ -152,10 +158,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     const headerHeight = 60; 
 
     if (scrollTop > this.lastScrollTop && scrollTop > headerHeight) {
-      // Scrolling Down
       this.isHeaderHidden = true;
     } else if (scrollTop < this.lastScrollTop) {
-      // Scrolling Up
       this.isHeaderHidden = false;
     }
 
@@ -186,6 +190,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   toggleSubmenu(item: NavItem, event: Event): void {
     event.preventDefault();
+
+    // *** THIS IS THE NEW LOGIC ***
+    // If the sidebar is collapsed, open it.
+    if (!this.isSidebarOpen) {
+      this.isSidebarOpen = true;
+    }
+    
+    // Continue with the normal toggle
     item.isOpen = !item.isOpen;
   }
 

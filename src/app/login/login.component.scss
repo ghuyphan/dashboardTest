@@ -26,7 +26,7 @@
     left: 0;
     width: 100%;
     height: 6px;
-    background: linear-gradient(90deg, var(--light-teal), var(--dark-teal));
+    background: linear-gradient(90deg, var(--aqua-island), var(--teal-blue));
   }
 
   .logo {
@@ -50,7 +50,7 @@
     h1 {
       font-weight: 700;
       font-size: 30px;
-      color: var(--dark-teal);
+      color: var(--teal-blue);
       margin-bottom: 6px;
     }
 
@@ -94,13 +94,13 @@
       box-sizing: border-box; // Ensure padding included in width
 
       &:focus {
-        border-color: var(--dark-teal);
+        border-color: var(--teal-blue);
         background: var(--white);
         box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
 
         // Style the static icon on focus - target sibling icon within wrapper
         ~ .input-icon {
-          color: var(--dark-teal);
+          color: var(--teal-blue);
         }
       }
 
@@ -143,13 +143,13 @@
 
       &:hover,
       &:focus {
-        color: var(--dark-teal); // Change color on hover/focus
+        color: var(--teal-blue); // Change color on hover/focus
       }
 
       // Ensure focus state on the icon is visible if button outline is none
       &:focus > i {
          // Optional: Add a subtle visual cue for focus on the icon
-         // Example: text-shadow: 0 0 2px var(--dark-teal);
+         // Example: text-shadow: 0 0 2px var(--teal-blue);
       }
     }
     // --- END ADJUSTED Icon Styles ---
@@ -185,7 +185,7 @@
     }
 
     input[type="checkbox"] {
-      accent-color: var(--dark-teal);
+      accent-color: var(--teal-blue);
       width: auto; // Override input full-width
       padding: 0; // Reset padding for checkbox
       margin-right: 4px; // Spacing
@@ -196,7 +196,7 @@
   }
 
   .forgot {
-    color: var(--dark-teal);
+    color: var(--teal-blue);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.2s, text-decoration 0.2s;
@@ -210,7 +210,7 @@
   .btn-login {
     width: 100%;
     padding: 17px 16px;
-    background: linear-gradient(135deg, var(--dark-teal), #026a74);
+    background: linear-gradient(135deg, var(--teal-blue), #026a74);
     color: var(--white);
     border: none;
     border-radius: 14px;
@@ -263,7 +263,7 @@
       margin-left: 4px;
     }
     a {
-      color: var(--dark-teal);
+      color: var(--teal-blue);
       text-decoration: none;
       font-weight: 600;
 

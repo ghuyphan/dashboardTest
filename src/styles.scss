@@ -1,17 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --light-teal: #9BDAD9;
-  --dark-teal: #00839B; 
+  /* --- Brand Palette (from image) --- */
+  /* Primary */
+  --aqua-island: #9BDAD9;
+  --teal-blue: #00839B;
+  --peacock-blue: #006E96;
+
+  /* Secondary */
+  --desert-storm: #F8F8F7;
+  --pale-aqua: #9CD4E6;
+  --deep-sapphire: #082567;
+  --dawn-pink: #F5F1ED;
+  --peppermint: #E6F5E9;
+  --dark-gray: #4A4A4A;
+
+
+  /* --- Functional Palette (existing) --- */
   --white: #FFFFFF;
-  --gray-100: #F8FAFC;
+  --gray-100: #F8FAFC; /* Note: Very similar to --desert-storm */
   --gray-200: #E2E8F0;
   --gray-300: #CBD5E1;
   --gray-700: #334155;
   --gray-800: #1E293B;
-  --desert-storm: #f8f8f7;
-  /* Consider adding Peacock Blue (#006E96) as another variable if needed */
-  --peacock-blue: #006E96;
 }
 
 * {
@@ -22,11 +33,13 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, var(--light-teal) 0%, var(--dark-teal) 55%, var(--peacock-blue) 100%); /* Example adjustment, consider using Peacock Blue here */
+  background: linear-gradient(135deg, var(--aqua-island) 0%, var(--teal-blue) 55%, var(--peacock-blue) 100%);
+  /* Example adjustment, consider using Peacock Blue here */
+  height: 100vh; /* Was min-height: 100vh */
+  overflow: hidden; /* Prevents scrolling on body element */
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  // padding: 20px;
   color: var(--gray-800);
 }

@@ -4,7 +4,8 @@ import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { catchError, tap, switchMap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment.development';
-import { User } from '../models/user.model'; // Import the updated User model
+import { User } from '../models/user.model';
+import { NavItem } from '../models/nav-item.model'; // Make sure you created this file
 
 // --- INTERFACES ---
 
@@ -30,12 +31,17 @@ interface LoginResponse {
   };
 }
 
-// --- FIX 1: Interface for the actual permission object ---
-// This matches what your backend sends: { PERMISSION: "..." }
-interface PermissionObject {
-  PERMISSION: string;
+// Interface for the NEW permission API response
+interface ApiPermissionNode {
+  ID: string;
+  PARENT_ID: string;
+  LABEL: string;
+  LINK: string | null;
+  ICON: string;
+  PERMISSION: string; // This key exists but we mainly use PERMISSIONS
+  PERMISSIONS: string[]; // This is the array we need
+  ORDER: number;
 }
-// We no longer need the incorrect `PermissionResponse` interface.
 
 
 // --- STORAGE KEYS ---
@@ -44,6 +50,7 @@ const ROLES_STORAGE_KEY = 'userRoles';
 const USERNAME_STORAGE_KEY = 'username';
 const PERMISSIONS_STORAGE_KEY = 'userPermissions';
 const FULLNAME_STORAGE_KEY = 'userFullName';
+const NAV_ITEMS_STORAGE_KEY = 'userNavItems'; // Key for storing the nav tree
 
 
 @Injectable({
@@ -62,6 +69,10 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
+  // Observable for dynamic navigation items
+  private navItemsSubject = new BehaviorSubject<NavItem[]>([]);
+  public navItems$ = this.navItemsSubject.asObservable();
+
   constructor(
     private http: HttpClient,
     private router: Router
@@ -78,6 +89,7 @@ export class AuthService {
     let storedUsername: string | null = null;
     let storedPermissionsJson: string | null = null;
     let storedFullName: string | null = null;
+    let storedNavItemsJson: string | null = null; // For nav items
     let storage: Storage | undefined;
 
     try {
@@ -91,17 +103,17 @@ export class AuthService {
       if (storage) {
         storedToken = storage.getItem(TOKEN_STORAGE_KEY);
         storedRolesJson = storage.getItem(ROLES_STORAGE_KEY);
-        console.log(storedRolesJson)
         storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
         storedPermissionsJson = storage.getItem(PERMISSIONS_STORAGE_KEY);
         storedFullName = storage.getItem(FULLNAME_STORAGE_KEY);
+        storedNavItemsJson = storage.getItem(NAV_ITEMS_STORAGE_KEY); // Get nav items
 
-        if (storedToken && storedRolesJson && storedUsername && storedPermissionsJson && storedFullName) {
+        // Check for all required data
+        if (storedToken && storedRolesJson && storedUsername && storedPermissionsJson && storedFullName && storedNavItemsJson) {
           this.accessToken = storedToken;
           const roles: string[] = JSON.parse(storedRolesJson);
-          
-          // *** This parse is correct, as we save it as string[] below ***
           const permissions: string[] = JSON.parse(storedPermissionsJson);
+          const navItems: NavItem[] = JSON.parse(storedNavItemsJson); // Parse nav items
 
           const user: User = {
             username: storedUsername,
@@ -111,8 +123,9 @@ export class AuthService {
           };
 
           this.currentUserSubject.next(user);
+          this.navItemsSubject.next(navItems); // Emit nav items
           this.isLoggedInSubject.next(true);
-          console.log(`AuthService: User '${user.username}' initialized from storage.`);
+          console.log(`AuthService: User '${user.username}' and NavItems initialized from storage.`);
           return;
         }
       }
@@ -120,6 +133,7 @@ export class AuthService {
       console.error('Failed to initialize user from storage', e);
     }
 
+    // If any part fails, clear everything
     this.clearLocalAuthData(false);
   }
 
@@ -127,7 +141,7 @@ export class AuthService {
   /**
    * Logs a user in by making TWO sequential API calls.
    * 1. Calls /login to get the token and userId.
-   * 2. Calls /user-permissions/{userId} to get roles and permissions.
+   * 2. Calls /user-permissions/{userId} to get roles, permissions, and nav structure.
    */
   login(credentials: {username: string, password: string, remember: boolean}): Observable<any> {
     const payload = {
@@ -141,30 +155,21 @@ export class AuthService {
       // --- STEP 1: Handle Login Response ---
       switchMap(loginResponse => {
 
-        // Handle specific error codes from the API
+        // *** UPDATED LOGIC: Use API messages instead of hard-coded switch ***
         if (loginResponse.MaKetQua !== 200) {
-          let errorMessage: string;
-          switch (loginResponse.MaKetQua) {
-            case 101:
-              errorMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác.';
-              break;
-            case 102:
-              errorMessage = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email.';
-              break;
-            case 103:
-              errorMessage = 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.';
-              break;
-            case 104:
-              errorMessage = 'Tài khoản đã bị khóa do nhập sai mật khẩu quá 5 lần.';
-              break;
-            default:
-              errorMessage = loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
-          }
+          // Use TenKetQua first, then ErrorMessage, then a generic fallback.
+          const errorMessage = loginResponse.TenKetQua || loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
+          
           console.error(`Login failed (API MaKetQua: ${loginResponse.MaKetQua}):`, errorMessage);
           return throwError(() => new Error(errorMessage));
         }
+        
+        // *** NEW: Log the success message from the API ***
+        console.log(`Login successful (API MaKetQua: 200): ${loginResponse.TenKetQua || 'Success'}`);
+        console.log('Fetching permissions...');
 
-        console.log('Login successful, fetching permissions...');
+        // --- END OF UPDATES ---
+
         this.accessToken = loginResponse.APIKey.access_token;
         const storage = credentials.remember ? localStorage : sessionStorage;
         this.clearOtherStorage(credentials.remember);
@@ -183,57 +188,57 @@ export class AuthService {
 
         const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
 
-        // --- FIX 2: Expect an array of PermissionObject, not PermissionResponse ---
-        // The interceptor will automatically add the token for this request
-        return this.http.get<PermissionObject[]>(permissionsUrl).pipe(
+        // Expect an array of the new ApiPermissionNode interface
+        return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
           // Combine the results from BOTH calls
-          map(permissionArray => {
-            // 'permissionArray' is the response: [{PERMISSION: "..."}, ...]
-            return { loginResponse, permissionArray };
+          map(permissionNodeArray => {
+            // 'permissionNodeArray' is the response: [{..., PERMISSIONS: [...]}, ...]
+            return { loginResponse, permissionNodeArray };
           })
         );
       }),
       // --- STEP 3: Handle Combined Successful Responses ---
       tap(combinedData => {
-        // --- FIX 3: Use the correct variable names from the map step ---
-        const { loginResponse, permissionArray } = combinedData;
+        const { loginResponse, permissionNodeArray } = combinedData;
         const { UserInfo } = loginResponse;
 
-        // --- FIX 4: Get roles from the *first* call (UserInfo) ---
-        // We assume 'nhom_chuc_danh' is the role. Put it in an array.
+        // --- Get roles from the *first* call (UserInfo) ---
         const rolesFromApi = UserInfo.nhom_chuc_danh ? [UserInfo.nhom_chuc_danh] : [];
 
-        // --- FIX 5: Map the permissionArray directly ---
-        // 'permissionArray' is the [{PERMISSION: "..."}, ...]
-        // If the array is null or undefined, default to an empty array.
-        const permissionsFromApiObjects = permissionArray || [];
-        const permissionsFromApi = permissionsFromApiObjects.map(p => p.PERMISSION);
+        // --- Map the permissionNodeArray to get flat permissions list ---
+        const allPermissionArrays = (permissionNodeArray || []).map(node => node.PERMISSIONS || []);
+        const flatPermissions = allPermissionArrays.flat();
+        const permissionsFromApi = [...new Set(flatPermissions)]; // Get only unique permissions
 
-        // Build the User object
+        // --- Build the User object ---
         const user: User = {
           username: UserInfo.user_name,       // From FIRST call
           fullName: UserInfo.ten_nhan_vien,     // From FIRST call (mapped)
           roles: rolesFromApi,              // From FIRST call (mapped)
           permissions: permissionsFromApi     // From SECOND call (transformed)
         };
+        
+        // --- Build the dynamic nav tree from the same API response ---
+        const navTree = this.buildNavTree(permissionNodeArray || []);
 
-        // 3. Save ALL remaining user data to storage
+        // --- Save ALL user data to storage ---
         const storage = credentials.remember ? localStorage : sessionStorage;
         try {
           // Token was already saved.
           storage.setItem(USERNAME_STORAGE_KEY, user.username);
           storage.setItem(FULLNAME_STORAGE_KEY, user.fullName || '');
           storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(user.roles));
-          // We save the TRANSFORMED string array
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
-          console.log(`Token, roles, username, full name, and permissions saved.`);
+          storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree)); // Save nav tree
+          console.log(`Token, roles, username, full name, permissions, and nav items saved.`);
         } catch (e) {
            console.error('Failed to save full user auth data to web storage', e);
         }
 
-        // 4. Set global auth state
+        // --- Set global auth state ---
         this.isLoggedInSubject.next(true);
         this.currentUserSubject.next(user);
+        this.navItemsSubject.next(navTree); // Emit new nav tree
       }),
 
       // --- STEP 4: Handle ANY Error ---
@@ -253,6 +258,7 @@ export class AuthService {
         otherStorage.removeItem(USERNAME_STORAGE_KEY);
         otherStorage.removeItem(PERMISSIONS_STORAGE_KEY);
         otherStorage.removeItem(FULLNAME_STORAGE_KEY);
+        otherStorage.removeItem(NAV_ITEMS_STORAGE_KEY); // Clear nav items
       }
     } catch (e) {
       console.error('Failed to clear other web storage', e);
@@ -281,6 +287,7 @@ export class AuthService {
         sessionStorage.removeItem(USERNAME_STORAGE_KEY);
         sessionStorage.removeItem(PERMISSIONS_STORAGE_KEY);
         sessionStorage.removeItem(FULLNAME_STORAGE_KEY);
+        sessionStorage.removeItem(NAV_ITEMS_STORAGE_KEY); // Clear nav items
       }
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -288,6 +295,7 @@ export class AuthService {
         localStorage.removeItem(USERNAME_STORAGE_KEY);
         localStorage.removeItem(PERMISSIONS_STORAGE_KEY);
         localStorage.removeItem(FULLNAME_STORAGE_KEY);
+        localStorage.removeItem(NAV_ITEMS_STORAGE_KEY); // Clear nav items
       }
     } catch (e) {
       console.error('Failed to remove auth data from web storage', e);
@@ -295,6 +303,7 @@ export class AuthService {
 
     this.isLoggedInSubject.next(false);
     this.currentUserSubject.next(null); // Set current user to null
+    this.navItemsSubject.next([]); // Clear nav items subject
 
     console.log('User logged out, state and web storage cleared.');
 
@@ -324,7 +333,6 @@ export class AuthService {
   }
 
   // --- Role & Permission Management Methods ---
-  // (No changes needed in the methods below)
 
   /**
    * Checks if the current user has the specified role.
@@ -377,6 +385,41 @@ export class AuthService {
     return actions.includes(action);
   }
 
+  
+  /**
+   * Recursively builds the navigation tree from the flat API response.
+   * @param nodes The flat list of ApiPermissionNode from the server
+   * @param parentId The ID of the parent to start from (default "0" for root)
+   * @returns A nested array of NavItem
+   */
+  private buildNavTree(nodes: ApiPermissionNode[], parentId: string = "0"): NavItem[] {
+    const tree: NavItem[] = [];
+
+    // Get direct children of the current parentId and sort them
+    const children = nodes
+      .filter(node => node.PARENT_ID === parentId)
+      .sort((a, b) => a.ORDER - b.ORDER);
+
+    for (const node of children) {
+      // Recursively find children of the current node
+      const childrenOfNode = this.buildNavTree(nodes, node.ID);
+      
+      // Map the API node to the frontend NavItem
+      const navItem: NavItem = {
+        label: node.LABEL,
+        icon: node.ICON,
+        link: node.LINK,
+        permissions: node.PERMISSIONS || [], // Ensure it's always an array
+        isOpen: false, // Default state
+        children: childrenOfNode.length > 0 ? childrenOfNode : undefined
+      };
+      
+      tree.push(navItem);
+    }
+    
+    return tree;
+  }
+
 
   /**
    * Handles HTTP errors or Application errors.
@@ -410,6 +453,7 @@ export class AuthService {
       }
     } else {
       // --- Application Error Logic (thrown from switchMap) ---
+      // This is where the error from our `throwError(() => new Error(errorMessage))` in login() will be caught.
       console.error('AuthService App Error:', error.message);
       errorMessage = error.message;
     }
