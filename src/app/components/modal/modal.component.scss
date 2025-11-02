@@ -1,0 +1,102 @@
+// Base styles for the modal, inspired by your toast component
+
+:host {
+  // The :host isn't strictly needed here, but good for consistency
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1040; // Just under the toast
+  
+  // Backdrop style
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px); // Soft blur for the background
+
+  // Centering
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  // Animation
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+.modal-content {
+  // Steal the glassmorphism style from your toast
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(3, 132, 143, 0.22); // Slightly larger shadow
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: var(--gray-800);
+  
+  width: auto;
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+
+  // Animation
+  animation: modal-slide-in 0.25s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; // Prevent header from shrinking
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-close-btn {
+  // Copied from your toast-close-btn
+  background: none;
+  border: none;
+  color: var(--gray-300);
+  font-size: 1.8rem; // Larger for a modal
+  font-weight: bold;
+  line-height: 1;
+  opacity: 0.8;
+  cursor: pointer;
+  padding: 0 5px;
+
+  &:hover {
+    opacity: 1;
+    color: var(--gray-700);
+  }
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto; // Allow body to scroll if content is too tall
+}
+
+// --- Animations ---
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

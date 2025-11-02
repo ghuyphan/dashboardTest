@@ -776,7 +776,7 @@
   padding-top: 6px;
   padding-bottom: 6px;
   margin-bottom: 6px;
-  margin-left: 15px !important; /* <-- ADDED !important AND SET TO 15px */
+  margin-left: 10px !important; /* <-- ADDED !important AND SET TO 15px */
 }
 
 /* --- Submenu Item (LI) --- */
@@ -804,7 +804,7 @@
   transform: translateY(-50%);
   width: 4px;
   height: 4px;
-  background-color: var(--gray-400);
+  // background-color: var(--gray-400);
   border-radius: 50%;
   transition: all var(--transition-fast) ease;
 }

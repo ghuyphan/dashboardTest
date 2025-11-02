@@ -1,0 +1,18 @@
+<div *ngIf="modalState$ | async as options" class="modal-backdrop" (click)="onBackdropClick()">
+
+  <div class="modal-content" (click)="onModalContentClick($event)">
+
+    <div class="modal-header">
+      <h3 *ngIf="options.title" class="modal-title">{{ options.title }}</h3>
+      
+      <button *ngIf="!options.hideCloseButton" class="modal-close-btn" (click)="closeModal()" aria-label="Close">
+        &times;
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <ng-template #modalContentHost></ng-template>
+    </div>
+
+    </div>
+</div>
