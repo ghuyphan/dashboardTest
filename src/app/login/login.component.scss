@@ -9,14 +9,15 @@
   min-width: 400px;
   margin-left: auto;
   margin-right: auto;
-  background: rgba(255, 255, 255, 0.88);
+  /* Using rgba with --white would require an RGB version, so we keep this custom for the glass effect */
+  background: rgba(255, 255, 255, 0.88); 
   backdrop-filter: blur(22px);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(3, 132, 143, 0.25);
-  padding: 48px 40px;
+  border-radius: var(--spacing-lg); /* 24px */
+  box-shadow: 0 12px 40px rgba(3, 132, 143, 0.25); /* Custom shadow */
+  padding: var(--spacing-xxl) 40px; /* 48px 40px */
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--border-width) solid rgba(255, 255, 255, 0.5); /* Custom white-alpha border */
   transition: transform 0.35s ease, box-shadow 0.35s ease;
 
   &::before {
@@ -31,12 +32,12 @@
 
   .logo {
     text-align: center;
-    margin-bottom: 36px;
+    margin-bottom: 36px; /* Custom value */
 
     .logo-image {
       width: 68px;
       height: 68px;
-      border-radius: 18px;
+      border-radius: 18px; /* Custom value */
       display: block;
       margin: 0 auto 18px;
       object-fit: contain;
@@ -48,28 +49,28 @@
     }
 
     h1 {
-      font-weight: 700;
-      font-size: 30px;
+      font-weight: var(--font-weight-bold);
+      font-size: 1.875rem; /* 30px */
       color: var(--teal-blue);
-      margin-bottom: 6px;
+      margin-bottom: 6px; /* Custom value */
     }
 
     p {
-      font-weight: 400;
-      font-size: 16px;
+      font-weight: var(--font-weight-normal);
+      font-size: var(--font-size-base); /* 16px */
       color: var(--gray-700);
     }
   }
 
   .input-group {
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-lg); /* 24px */
     // position: relative; // Removed from here
 
     label {
       display: block;
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-size: 15px; /* Custom value */
+      font-weight: 600; /* Custom value */
+      margin-bottom: var(--spacing-sm); /* 8px */
       color: var(--gray-700);
     }
 
@@ -84,11 +85,11 @@
     input {
       width: 100%;
       // Adjust padding: more on left for icon, more on right for toggle button
-      padding: 16px 48px 16px 48px;
-      border: 1px solid var(--gray-300);
-      border-radius: 14px;
-      font-size: 16px;
-      background: rgba(248, 250, 252, 0.75);
+      padding: var(--spacing-md) var(--spacing-xxl); /* 16px 48px */
+      border: var(--border-width) solid var(--gray-300);
+      border-radius: 14px; /* Custom value */
+      font-size: var(--font-size-base); /* 16px */
+      background: rgba(248, 250, 252, 0.75); /* --gray-100 with alpha */
       transition: all 0.3s ease;
       outline: none;
       box-sizing: border-box; // Ensure padding included in width
@@ -96,7 +97,7 @@
       &:focus {
         border-color: var(--teal-blue);
         background: var(--white);
-        box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
+        box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2); /* Custom shadow */
 
         // Style the static icon on focus - target sibling icon within wrapper
         ~ .input-icon {
@@ -106,9 +107,9 @@
 
       // Basic invalid state styling (optional)
       &.is-invalid {
-        border-color: #dc3545;
+        border-color: var(--color-danger);
         &:focus {
-          box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+          box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); /* Custom shadow */
         }
       }
     }
@@ -116,10 +117,10 @@
     // --- ADJUSTED Icon Styles ---
     .input-icon {
       position: absolute;
-      left: 16px;
+      left: var(--spacing-md); /* 16px */
       // top and transform removed - alignment handled by flexbox on parent
       color: var(--gray-300);
-      font-size: 18px;
+      font-size: 18px; /* Custom value */
       transition: color 0.25s ease;
       pointer-events: none; // Keep this
     }
@@ -130,7 +131,7 @@
       // top and transform removed - alignment handled by flexbox on parent
       background: none;
       border: none;
-      padding: 0 16px; // Adjust padding as needed for clickable area
+      padding: 0 var(--spacing-md); /* 0 16px */
       cursor: pointer;
       color: var(--gray-300);
       font-size: 17px; // Adjust size as needed
@@ -156,9 +157,9 @@
 
     // Optional: Validation message styling
     .invalid-feedback {
-      color: #dc3545;
+      color: var(--color-danger);
       font-size: 0.875em; /* ~14px if base is 16px */
-      margin-top: 0.25rem;
+      margin-top: var(--spacing-xs); /* 4px */
     }
   }
 
@@ -166,21 +167,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 28px;
-    font-size: 15px;
+    margin-bottom: 28px; /* Custom value */
+    font-size: 15px; /* Custom value */
   }
 
   .remember {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm); /* 8px */
     color: var(--gray-700);
     cursor: pointer;
 
     label {
       cursor: pointer;
       margin-bottom: 0;
-      font-weight: 400; // Reset weight if needed
+      font-weight: var(--font-weight-normal); // Reset weight if needed
       font-size: 15px; // Ensure consistent size
     }
 
@@ -188,9 +189,9 @@
       accent-color: var(--teal-blue);
       width: auto; // Override input full-width
       padding: 0; // Reset padding for checkbox
-      margin-right: 4px; // Spacing
-      height: 16px; // Ensure consistent size
-      width: 16px;
+      margin-right: var(--spacing-xs); /* 4px */
+      height: var(--spacing-md); /* 16px */
+      width: var(--spacing-md); /* 16px */
       vertical-align: middle; // Align better with text
     }
   }
@@ -198,32 +199,32 @@
   .forgot {
     color: var(--teal-blue);
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 600; /* Custom value */
     transition: color 0.2s, text-decoration 0.2s;
 
     &:hover {
-      color: #026a74;
+      color: var(--peacock-blue); /* Using token for hover */
       text-decoration: underline;
     }
   }
 
   .btn-login {
     width: 100%;
-    padding: 17px 16px;
-    background: linear-gradient(135deg, var(--teal-blue), #026a74);
+    padding: 17px var(--spacing-md); /* 17px 16px */
+    background: linear-gradient(135deg, var(--teal-blue), #026a74); /* Custom gradient */
     color: var(--white);
     border: none;
-    border-radius: 14px;
-    font-size: 17px;
-    font-weight: 600;
+    border-radius: 14px; /* Custom value */
+    font-size: 17px; /* Custom value */
+    font-weight: 600; /* Custom value */
     cursor: pointer;
     transition: all 0.35s ease;
-    box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35);
+    box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35); /* Custom shadow */
 
     &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #026a74, #025d65);
+      background: linear-gradient(135deg, #026a74, #025d65); /* Custom gradient */
       transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(3, 132, 143, 0.42);
+      box-shadow: 0 8px 24px rgba(3, 132, 143, 0.42); /* Custom shadow */
     }
 
     &:disabled {
@@ -237,35 +238,35 @@
   .divider {
     display: flex;
     align-items: center;
-    margin: 32px 0;
+    margin: var(--spacing-xl) 0; /* 32px 0 */
     color: var(--gray-300);
-    font-size: 15px;
+    font-size: 15px; /* Custom value */
 
     &::before,
     &::after {
       content: "";
       flex: 1;
-      border-bottom: 1px solid var(--gray-200); // Use a lighter gray
+      border-bottom: var(--border-width) solid var(--gray-200);
     }
 
     // span {
-    //   padding: 0 16px;
+    //   padding: 0 var(--spacing-md); /* 0 16px */
     //   color: var(--gray-700);
     // }
   }
 
   .support {
     text-align: center;
-    font-size: 15px;
+    font-size: 15px; /* Custom value */
     color: var(--gray-700);
     line-height: 1.6;
     a + a {
-      margin-left: 4px;
+      margin-left: var(--spacing-xs); /* 4px */
     }
     a {
       color: var(--teal-blue);
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 600; /* Custom value */
 
       &:hover {
         text-decoration: underline;
@@ -273,8 +274,8 @@
     }
 
     i {
-      margin-right: 6px;
-      font-size: 14px;
+      margin-right: 6px; /* Custom value */
+      font-size: 14px; /* Custom value */
     }
   }
 }
@@ -282,7 +283,7 @@
 // Responsive styles
 @media (max-width: 480px) {
   .login-card {
-    padding: 36px 24px;
+    padding: 36px var(--spacing-lg); /* 36px 24px */
     min-width: unset; // Remove min-width on small screens
   }
 
@@ -292,16 +293,16 @@
     }
     .input-icon {
       left: 14px;
-      font-size: 16px;
+      font-size: var(--font-size-base); /* 16px */
     }
     .toggle-password {
       padding: 0 14px;
-      font-size: 16px;
+      font-size: var(--font-size-base); /* 16px */
     }
   }
 
   .btn-login {
-    padding: 15px 16px;
-    font-size: 16px;
+    padding: 15px var(--spacing-md); /* 15px 16px */
+    font-size: var(--font-size-base); /* 16px */
   }
 }

@@ -715,14 +715,21 @@
 
 /* --- Parent Button Styling --- */
 
-/* Style the parent button when its submenu is open */
+/* Remove the highlight when submenu is just open */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] {
-  background-color: var(--gray-200);
-  color: var(--gray-800);
-  font-weight: 500;
+  background-color: transparent;
+  color: var(--gray-700);
+  font-weight: 400;
 }
 
-/* Hide the blue "active" line for parent buttons */
+/* Only highlight when the parent button itself is active */
+.sidebar-nav ul li.has-submenu button.active {
+  background-color: var(--gray-200);
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
+/* Hide the blue "active" line for parent buttons (only show on child items) */
 .sidebar-nav ul li.has-submenu button.active::before,
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {
   display: none;
@@ -769,6 +776,7 @@
   padding-top: 6px;
   padding-bottom: 6px;
   margin-bottom: 6px;
+  margin-left: 15px !important; /* <-- ADDED !important AND SET TO 15px */
 }
 
 /* --- Submenu Item (LI) --- */
@@ -778,7 +786,7 @@
 
 /* --- Submenu Link (A) --- */
 .submenu li a {
-  padding: 10px 10px 10px 28px;
+  padding: 10px 10px 10px 20px;
   font-size: 13px;
   color: var(--gray-700);
   margin: 2px 0;

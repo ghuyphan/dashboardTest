@@ -1,34 +1,301 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* --- Brand Palette (from image) --- */
-  /* Primary */
+  /* =================================================================== */
+  /* 1. COLOR PALETTE                                                    */
+  /* =================================================================== */
+
+  /* --- Brand Palette (Primary) --- */
+  /* Used in main-layout */
   --aqua-island: #9BDAD9;
   --teal-blue: #00839B;
   --peacock-blue: #006E96;
+  
+  /* Alias for the color used in main-layout's hover states */
+  --dark-teal: var(--teal-blue); 
 
-  /* Secondary */
-  --desert-storm: #F8F8F7;
+  /* --- Brand Palette (Secondary) --- */
+  /* Used in main-layout */
+  --desert-storm: #F8F8F7; 
+  --white: #FFFFFF;
+
+  /* Other brand colors */
   --pale-aqua: #9CD4E6;
   --deep-sapphire: #082567;
   --dawn-pink: #F5F1ED;
   --peppermint: #E6F5E9;
   --dark-gray: #4A4A4A;
 
-
-  /* --- Functional Palette (existing) --- */
-  --white: #FFFFFF;
-  --gray-100: #F8FAFC; /* Note: Very similar to --desert-storm */
+  /* --- Functional Palette (Grays) --- */
+  /* All of these are used in main-layout */
+  --gray-100: #F8FAFC;
   --gray-200: #E2E8F0;
   --gray-300: #CBD5E1;
+  --gray-400: #94A3B8; /* Interpolated value, used in submenu */
+  --gray-500: #64748B;
+  --gray-600: #475569; /* Interpolated value, used for chevron */
   --gray-700: #334155;
   --gray-800: #1E293B;
+  --gray-900: #0F172A;
+  
+  /* --- Semantic Colors --- */
+  /* Using the --hm-red from main-layout for danger */
+  --color-danger: #dc3545; 
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-info: var(--teal-blue);
+
+  /* --- Charting Palette (Tints/Shades) --- */
+  --teal-blue-light: #66B9C9;
+  --teal-blue-dark: #005E70;
+  --peacock-blue-light: #66A9C5;
+  --peacock-blue-dark: #004D6A;
+  --aqua-island-light: #CDECEB;
+  --aqua-island-dark: #70B4B3;
+  --deep-sapphire-light: #5A6DA3;
+
+  /* =================================================================== */
+  /* 2. TYPOGRAPHY                                                       */
+  /* =================================================================== */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-base: 1rem; /* 16px */
+  --line-height-base: 1.5;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* =================================================================== */
+  /* 3. LAYOUT & SPACING                                                 */
+  /* =================================================================== */
+  
+  /* --- App Layout (from main-layout) --- */
+  --header-height: 50px;
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 60px;
+
+  /* --- General Spacing --- */
+  --spacing-xs: 0.25rem;  /* 4px */
+  --spacing-sm: 0.5rem;   /* 8px */
+  --spacing-md: 1rem;     /* 16px */
+  --spacing-lg: 1.5rem;   /* 24px */
+  --spacing-xl: 2rem;     /* 32px */
+  --spacing-xxl: 3rem;    /* 48px */
+
+  /* =================================================================== */
+  /* 4. BORDERS & SHADOWS                                                */
+  /* =================================================================== */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 0.75rem;
+  --border-radius-full: 9999px;
+
+  --border-width: 1px;
+  --border-color: var(--gray-200);
+
+  --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* =================================================================== */
+  /* 5. TRANSITIONS (from main-layout)                                   */
+  /* =================================================================== */
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-duration: 0.3s;
+  --transition-fast: 0.2s;
 }
 
-* {
+/* =================================================================== */
+/* 6. GLOBAL RESETS & BASE STYLES                                      */
+/* =================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  font-family: var(--font-family-sans);
+  line-height: var(--line-height-base);
+}
+
+body {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-base);
+  color: var(--gray-700);
+  /* Use a neutral brand color for the background */
+  background-color: var(--gray-100); /* Changed to gray-100 to match main-layout */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  /* Use a primary brand color for headings */
+  color: var(--peacock-blue);
+}
+
+h1 { font-size: 2.25rem; } /* 36px */
+h2 { font-size: 1.875rem; } /* 30px */
+h3 { font-size: 1.5rem; } /* 24px */
+h4 { font-size: 1.25rem; } /* 20px */
+
+p {
+  margin-bottom: var(--spacing-md);
+}
+
+a {
+  color: var(--teal-blue);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  color: var(--peacock-blue);
+}
+
+/* =================================================================== */
+/* 7. COMPONENT STYLES: TABLE                                          */
+/* =================================================================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background-color: var(--white);
+  box-shadow: var(--box-shadow-md);
+  border-radius: var(--border-radius-md);
+  overflow: hidden; /* For border-radius to work on <thead> */
+}
+
+table th,
+table td {
+  padding: var(--spacing-md);
+  line-height: var(--line-height-base);
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+table thead th {
+  /* Branded table header */
+  background-color: var(--teal-blue);
+  color: var(--white);
+  font-weight: var(--font-weight-medium);
+  font-size: 0.875rem; /* 14px */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: var(--border-width) solid var(--teal-blue-dark);
+}
+
+table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table tbody tr:nth-child(even) {
+  /* Use a subtle striping color */
+  background-color: var(--gray-100);
+}
+
+table tbody tr:hover {
+  /* Use a light brand color for hover */
+  background-color: var(--aqua-island-light);
+}
+
+/* =================================================================== */
+/* 8. COMPONENT STYLES: CHART                                          */
+/* =================================================================== */
+
+/* NOTE: You cannot style the chart *data* (bars, lines) with CSS.
+   You must pass the CSS variables to your JavaScript chart library 
+   (like Chart.js, D3, etc.) in its configuration object.
+
+   EXAMPLE (Chart.js):
+   -------------------
+   const chartColors = [
+     'var(--teal-blue)',
+     'var(--aqua-island)',
+     'var(--peacock-blue)',
+     'var(--deep-sapphire)',
+     'var(--pale-aqua)',
+     'var(--teal-blue-light)',
+     'var(--peacock-blue-light)'
+   ];
+
+   new Chart(ctx, {
+     type: 'bar',
+     data: {
+       datasets: [{
+         backgroundColor: chartColors,
+         borderColor: chartColors,
+         ...
+       }]
+     }
+   });
+*/
+
+/* Use this class on the <div> wrapper around your <canvas> 
+   to give it a nice "card" appearance.
+*/
+.chart-container {
+  background-color: var(--white);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow-md);
+}
+
+/* =================================================================== */
+/* 9. COMPONENT STYLES: BUTTON                                         */
+/* =================================================================== */
+.btn {
+  display: inline-block;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-base);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+  background-color: var(--teal-blue);
+  color: var(--white);
+}
+.btn-primary:hover {
+  background-color: var(--peacock-blue);
+  color: var(--white);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.btn-secondary {
+  background-color: var(--aqua-island);
+  color: var(--gray-800);
+}
+.btn-secondary:hover {
+  background-color: var(--aqua-island-dark);
+  color: var(--gray-900);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--teal-blue);
+  border-color: var(--teal-blue);
+}
+.btn-ghost:hover {
+  background-color: var(--teal-blue-light);
+  color: var(--teal-blue-dark);
 }
 
 body {
