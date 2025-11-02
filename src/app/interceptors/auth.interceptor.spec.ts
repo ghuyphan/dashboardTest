@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor'; // Import the functional interceptor
 import { AuthService } from '../services/auth.service'; // Import the service it depends on
-import { environment } from '../../environments/environment'; // Import environment for login URL
+import { environment } from '../../environments/environment.development'; // Import environment for login URL
 
 // --- Mock AuthService ---
 // Use Partial<AuthService> for easier mocking if needed, or define specific methods.
