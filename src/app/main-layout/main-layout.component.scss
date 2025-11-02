@@ -67,8 +67,7 @@
     width var(--transition-duration) var(--transition-smooth),
     padding var(--transition-duration) var(--transition-smooth);
   z-index: 1030;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
-  border-right: 1px solid transparent;
+box-shadow: 0.5px 0 0 0 var(--gray-300);
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
