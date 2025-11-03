@@ -1,65 +1,69 @@
-/* Basic styling for a sticky footer bar.
-  It sticks to the bottom of its container (the .main-panel).
+/*
+  Action footer bar, styled to be consistent with global styles.
+  It sticks to the bottom of its scrolling container (e.g., .main-panel).
 */
 .action-footer-container {
   position: sticky;
   bottom: 0;
   width: 100%;
-  background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
-  padding: 12px 24px;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+  background-color: var(--white);
+  border-top: var(--border-width) solid var(--border-color);
+  
+  /* Using 0.75rem (12px) and var(--spacing-lg) (24px) */
+  padding: 0.75rem var(--spacing-lg);
+  
+  /* Using a modified upward shadow consistent with global shadow softness */
+  box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.05);
   z-index: 100;
   display: flex;
-  justify-content: flex-end; /* Aligns buttons to the right */
-  gap: 0.5rem; /* Space between buttons */
+  
+  /* Aligns buttons to the left */
+  justify-content: flex-start; 
+
+  /* --- COMPATIBILITY FIX --- */
+  /* Replaced 'gap' with 'margin-right' for better browser support. */
+  /* We use ::ng-deep to style the buttons inside <ng-content>. */
+
+  /* Add space to the right of every button */
+  & ::ng-deep .btn {
+    margin-right: var(--spacing-sm);
+  }
+
+  /* Remove space from the very last button */
+  & ::ng-deep .btn:last-child {
+    margin-right: 0;
+  }
 }
 
-/* Simple button styling.
-  You can (and should) replace these with your project's button styles.
+/* NOTE: .btn, .btn-primary, and .btn-secondary are intentionally REMOVED.
+  They will now correctly inherit from src/styles.scss, 
+  ensuring they use the project's --teal-blue and --aqua-island theme colors.
 */
-.btn {
-  display: inline-block;
-  font-weight: 500;
-  text-align: center;
-  vertical-align: middle;
-  cursor: pointer;
-  user-select: none;
-  background-color: transparent;
-  border: 1px solid transparent;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  border-radius: 0.25rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
 
-.mr-1 {
-  margin-right: 0.25rem;
-}
-
-/* Example button colors */
-.btn-primary {
-  color: #fff;
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-.btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
+/* A danger button, styled to match the theme of the other buttons.
+  This can be moved to styles.scss if used globally.
+*/
 .btn-danger {
-  color: #fff;
-  background-color: #dc3545;
-  border-color: #dc3545;
+  color: var(--white);
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+
+  &:hover {
+    // Since no --color-danger-dark variable exists, we manually darken it
+    background-color: #b02a37; 
+    border-color: #a72a38;
+  }
 }
 
-.btn:disabled {
-  background-color: #e9ecef;
-  color: #6c757d;
+/* Styling for a disabled button, using global gray variables.
+  This will apply to any .btn element with the [disabled] attribute.
+*/
+.btn:disabled,
+.btn.disabled {
+  background-color: var(--gray-200);
+  color: var(--gray-500);
+  border-color: var(--gray-200);
   cursor: not-allowed;
   opacity: 0.65;
-  border-color: #e9ecef;
+  box-shadow: none;
 }

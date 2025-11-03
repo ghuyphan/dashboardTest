@@ -36,7 +36,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         icon: 'fas fa-print',
         action: () => this.onPrint(),
         // This will ONLY appear if you have this permission
-        permission: 'report.bed_usage.print'
+        permission: 'QLThietBi.DMThietBi.RCREATE'
       },
       {
         label: 'Disabled Button',

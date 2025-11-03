@@ -1,3 +1,4 @@
+// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
@@ -80,21 +81,27 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    this.initializeUserFromStorage();
+    // --- START OF FIX ---
+    // DO NOT CALL INITIALIZATION LOGIC HERE
+    // this.initializeUserFromStorage(); // <-- REMOVED
+    // --- END OF FIX ---
   }
 
   /**
-   * *** UPDATED: Loads partial user from storage and fetches fresh permissions. ***
+   * *** UPDATED: This is now the main public init method for APP_INITIALIZER ***
    */
-  private initializeUserFromStorage(): void {
+  public init(): Observable<any> { // <-- MADE PUBLIC, RETURNS OBSERVABLE
     let storedToken: string | null = null;
     let storedRolesJson: string | null = null;
     let storedUsername: string | null = null;
     let storedFullName: string | null = null;
-    let storedUserId: string | null = null; // *** ADDED ***
+    let storedUserId: string | null = null;
+    let storedPermissionsJson: string | null = null;
+    let storedNavItemsJson: string | null = null;
     let storage: Storage | undefined;
 
     try {
+      // *** This logic checks both storages ***
       if (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_STORAGE_KEY)) {
         storage = localStorage;
       }
@@ -107,34 +114,44 @@ export class AuthService {
         storedRolesJson = storage.getItem(ROLES_STORAGE_KEY);
         storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
         storedFullName = storage.getItem(FULLNAME_STORAGE_KEY);
-        storedUserId = storage.getItem(USER_ID_STORAGE_KEY); // *** ADDED ***
+        storedUserId = storage.getItem(USER_ID_STORAGE_KEY);
+        storedPermissionsJson = storage.getItem(PERMISSIONS_STORAGE_KEY);
+        storedNavItemsJson = storage.getItem(NAV_ITEMS_STORAGE_KEY);
 
-        // *** UPDATED: Check for core user data, not permissions/nav ***
-        if (storedToken && storedRolesJson && storedUsername && storedFullName && storedUserId) {
+
+        // *** UPDATED: Check for ALL required user data ***
+        if (storedToken && storedRolesJson && storedUsername && storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) {
           this.accessToken = storedToken;
+          
           const roles: string[] = JSON.parse(storedRolesJson);
-
-          // Build *partial* user (permissions will come from API)
+          const permissions: string[] = JSON.parse(storedPermissionsJson);
+          const navItems: NavItem[] = JSON.parse(storedNavItemsJson);
+          
+          // Build *full* user from storage
           const user: User = {
             username: storedUsername,
             roles: roles,
-            permissions: [], // Will be populated by fetch
+            permissions: permissions, // Use stored permissions
             fullName: storedFullName
           };
 
-          this.currentUserSubject.next(user); // Emit partial user for UI
+          this.currentUserSubject.next(user); // Emit full user
+          this.navItemsSubject.next(navItems); // Emit stored nav
           this.isLoggedInSubject.next(true);
 
           console.log(`AuthService: User '${user.username}' initialized from storage. Fetching fresh permissions...`);
 
-          // *** NEW: Always fetch fresh permissions on load ***
-          this.fetchAndSetPermissions(storedUserId, storage).subscribe({
-            error: (err) => {
+          // --- START OF FIX ---
+          // Return the observable so the APP_INITIALIZER can wait for it.
+          return this.fetchAndSetPermissions(storedUserId, storage).pipe(
+            catchError((err) => {
+              // If the background refresh fails, log out.
               console.error("Failed to refresh permissions on init, logging out.", err);
-              this.logout(); // If permissions fail (e.g., 401), log out
-            }
-          });
-          return;
+              this.logout();
+              return of(null); // Return a successful observable to finish init
+            })
+          );
+          // --- END OF FIX ---
         }
       }
     } catch (e) {
@@ -143,6 +160,7 @@ export class AuthService {
 
     // If any part fails, clear everything
     this.clearLocalAuthData(false);
+    return of(null); // <-- Must return an observable for the initializer
   }
 
 
@@ -155,7 +173,7 @@ export class AuthService {
       passworD_: credentials.password
     };
 
-    // *** UPDATED: Get storage type at the start ***
+    // *** This logic selects the storage based on the "remember" flag ***
     const storage = credentials.remember ? localStorage : sessionStorage;
     this.clearOtherStorage(credentials.remember);
 
@@ -201,12 +219,11 @@ export class AuthService {
         }
 
         // *** UPDATED: Call the reusable fetchAndSetPermissions function ***
-        // This replaces the old http.get().map().tap() chain
         return this.fetchAndSetPermissions(userId, storage);
       }),
 
       // --- STEP 3: Handle ANY Error ---
-      catchError(error => this.handleError(error))
+      catchError(error => this.handleError(error, true)) // Pass flag for login error
     );
   }
 
@@ -218,8 +235,11 @@ export class AuthService {
     
     return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
       tap(permissionNodeArray => {
-        // --- Get roles from storage (already set during login/init) ---
-        const currentUser = this.currentUserSubject.getValue();
+        // --- Get user info from storage (or current state) ---
+        // Read from storage as source of truth for init/login
+        const storedUsername = storage.getItem(USERNAME_STORAGE_KEY) || 'Unknown';
+        const storedFullName = storage.getItem(FULLNAME_STORAGE_KEY) || '';
+        const storedRoles = JSON.parse(storage.getItem(ROLES_STORAGE_KEY) || '[]');
         
         // --- Map the permissionNodeArray to get flat permissions list ---
         const allPermissionArrays = (permissionNodeArray || []).map(node => node.PERMISSIONS || []);
@@ -228,9 +248,9 @@ export class AuthService {
 
         // --- Build the User object (updating the partial user) ---
         const user: User = {
-          username: currentUser?.username || 'Unknown',
-          fullName: currentUser?.fullName || '',
-          roles: currentUser?.roles || [],
+          username: storedUsername,
+          fullName: storedFullName,
+          roles: storedRoles,
           permissions: permissionsFromApi // *** ADDED FRESH PERMISSIONS ***
         };
         
@@ -290,7 +310,7 @@ export class AuthService {
     this.accessToken = null;
 
     try {
-      // Remove data from BOTH storages
+      // *** This logic clears BOTH storages ***
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY);
         sessionStorage.removeItem(ROLES_STORAGE_KEY);
@@ -333,6 +353,7 @@ export class AuthService {
     }
 
     try {
+      // *** This logic also checks both storages ***
       let token = (typeof localStorage !== 'undefined') ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
       if (!token) {
         token = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(TOKEN_STORAGE_KEY) : null;
@@ -438,7 +459,7 @@ export class AuthService {
   /**
    * Handles HTTP errors or Application errors.
    */
-  private handleError(error: HttpErrorResponse | Error): Observable<never> {
+  private handleError(error: HttpErrorResponse | Error, isLoginError: boolean = false): Observable<never> {
     let errorMessage: string;
 
     if (error instanceof HttpErrorResponse) {
@@ -472,8 +493,14 @@ export class AuthService {
       errorMessage = error.message;
     }
 
-    // Clear all data on auth failure, just in case
-    this.clearLocalAuthData(false);
+    // --- START OF MODIFICATION ---
+    // Only clear data if it's a login error (e.g., bad credentials)
+    // or a critical app error. Do NOT clear data on a failed refresh (401)
+    // as that is handled by the init subscriber.
+    if (isLoginError) {
+      this.clearLocalAuthData(false);
+    }
+    // --- END OF MODIFICATION ---
 
     return throwError(() => new Error(errorMessage));
   }

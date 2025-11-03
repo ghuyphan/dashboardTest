@@ -4,6 +4,8 @@
   width: 100vw;
   overflow: hidden;
   background-color: var(--gray-100);
+  
+  // Local variables matching global theme
   --header-height: 50px;
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 60px;
@@ -17,7 +19,7 @@
 @keyframes slideDownFade {
   from {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translateY(-0.75rem);
   }
   to {
     opacity: 1;
@@ -62,12 +64,11 @@
   height: 100vh;
   background-color: var(--desert-storm);
   color: var(--gray-700);
-  padding: 0 10px 15px 10px;
+  padding: 0 0.625rem var(--spacing-md) 0.625rem;
   transition: transform var(--transition-duration) var(--transition-smooth),
-    width var(--transition-duration) var(--transition-smooth),
-    padding var(--transition-duration) var(--transition-smooth);
+    width var(--transition-duration) var(--transition-smooth);
   z-index: 1030;
-box-shadow: 0.5px 0 0 0 var(--gray-300);
+  box-shadow: var(--border-width) 0 0 0 var(--border-color);
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -76,14 +77,14 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
 
   // --- Custom Scrollbar ---
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 0.375rem;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--gray-300);
-    border-radius: 3px;
+    border-radius: var(--border-radius-sm);
     transition: background var(--transition-fast) ease;
     &:hover {
       background: var(--gray-400);
@@ -95,10 +96,11 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
     display: flex;
     align-items: center;
     height: var(--header-height);
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-md);
     box-sizing: border-box;
     position: relative;
-    padding: 0 5px;
+    padding: 0 var(--spacing-xs);
+    flex-shrink: 0; // Prevent header from shrinking
 
     .sidebar-logo-wrapper {
       display: flex;
@@ -110,21 +112,21 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
     }
 
     .sidebar-logo {
-      height: 36px;
-      width: 36px;
-      min-width: 36px;
+      height: 2.25rem;
+      width: 2.25rem;
+      min-width: 2.25rem;
       border-radius: 50%;
       background-color: var(--white);
-      padding: 5px;
-      border: 1px solid var(--gray-200);
+      padding: var(--spacing-xs);
+      border: var(--border-width) solid var(--border-color);
       transition: opacity var(--transition-fast) var(--transition-smooth),
         box-shadow var(--transition-fast) ease;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      margin-right: 10px;
+      box-shadow: var(--box-shadow-sm);
+      margin-right: 0.625rem;
 
       img {
         max-width: 100%;
@@ -134,7 +136,7 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
     }
 
     h2 {
-      font-size: 17px;
+      font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-800);
       margin: 0;
@@ -147,10 +149,10 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
     .sidebar-toggle-btn {
       background: none;
       border: none;
-      font-size: 18px;
+      font-size: 1.125rem;
       color: var(--gray-700);
       cursor: pointer;
-      padding: 8px;
+      padding: var(--spacing-sm);
       border-radius: 50%;
       transition: background-color var(--transition-fast) ease,
         color var(--transition-fast) ease,
@@ -163,7 +165,7 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
       margin-left: auto;
 
       &:hover {
-        background-color: var(--gray-200);
+        // background-color: var(--gray-200);
         color: var(--dark-teal);
         transform: scale(1.1);
       }
@@ -176,6 +178,8 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
   // --- Sidebar Navigation ---
   .sidebar-nav {
     flex-grow: 1;
+    overflow-y: auto; // Allow nav to scroll independently
+    overflow-x: hidden;
 
     ul {
       list-style: none;
@@ -190,8 +194,8 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
           color: var(--gray-700);
           text-decoration: none;
           display: flex;
-          padding: 12px 10px;
-          border-radius: 8px;
+          padding: 0.75rem 0.625rem;
+          border-radius: var(--border-radius-md);
           transition: background-color var(--transition-fast) ease,
             color var(--transition-fast) ease,
             transform var(--transition-fast) ease;
@@ -201,42 +205,41 @@ box-shadow: 0.5px 0 0 0 var(--gray-300);
           background: none;
           border: none;
           font-family: inherit;
-          font-size: 14px;
-          font-weight: 400;
+          font-size: 0.875rem;
+          font-weight: var(--font-weight-normal);
           text-align: left;
           cursor: pointer;
-          margin-bottom: 6px;
+          margin-bottom: 0.25rem; // Reduced from 0.375rem
 
-          // *** FIX APPLIED HERE ***
           // General icons
           i:not(.toggle-icon) {
-            margin-right: 12px;
-            min-width: 20px;
-            width: 20px;
+            margin-right: 0.75rem;
+            min-width: 1.25rem;
+            width: 1.25rem;
             text-align: center;
-            font-size: 1rem;
+            font-size: var(--font-size-base);
             transition: transform var(--transition-fast) var(--transition-spring);
             flex-shrink: 0;
           }
 
-span {
+          span {
             flex-grow: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             transition: opacity var(--transition-duration) var(--transition-smooth);
-
-            // Add these lines for the fade-out effect
             mask-image: linear-gradient(to right, black calc(100% - 50px), transparent 100%);
             -webkit-mask-image: linear-gradient(to right, black calc(100% - 50px), transparent 100%);
           }
 
+          // Default hover state - always show background
           &:hover {
-            background-color: var(--gray-200);
+            // background-color: var(--gray-200);
             color: var(--gray-800);
-            transform: translateX(2px);
+            transform: translateX(0.25rem); // Slightly reduced from 4px
           }
+          
           &:active {
-            transform: translateX(2px) scale(0.98);
+            transform: translateX(0.25rem) scale(0.98);
           }
 
           // Active state for direct links (not submenu toggles)
@@ -250,11 +253,17 @@ span {
               content: '';
               position: absolute;
               left: 0;
-              top: 5px;
-              bottom: 5px;
-              width: 4px;
+              top: var(--spacing-xs);
+              bottom: var(--spacing-xs);
+              width: var(--spacing-xs);
               background-color: var(--aqua-island);
-              border-radius: 0 4px 4px 0;
+              border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+            }
+            
+            // Keep consistent hover on active items
+            &:hover {
+              // background-color: var(--gray-200);
+              transform: translateX(0.25rem);
             }
           }
         }
@@ -262,14 +271,20 @@ span {
         // --- Submenu Parent Styling ---
         &.has-submenu {
           button {
-            // Remove highlight when submenu is just open
+            // Remove special styling when submenu is just open
             &[aria-expanded='true'] {
               background-color: transparent;
               color: var(--gray-700);
-              font-weight: 400;
+              font-weight: var(--font-weight-normal);
+              
+              // But still show hover
+              &:hover {
+                // background-color: var(--gray-200);
+                color: var(--gray-800);
+              }
             }
 
-            // Only highlight when the parent button *itself* is active
+            // Only highlight when the parent button itself is active
             &.active {
               background-color: var(--gray-200);
               color: var(--gray-800);
@@ -287,10 +302,10 @@ span {
         // --- Submenu Arrow Icon ---
         .toggle-icon {
           margin-left: auto;
-          margin-right: 0 !important; // Keep !important if needed, but scss might fix it
+          margin-right: 0 !important;
           font-size: 0.7rem;
-          width: 1em !important; // Keep !important if needed
-          min-width: 1em !important; // Keep !important if needed
+          width: 1em !important;
+          min-width: 1em !important;
           height: 1em;
           transition: transform var(--transition-duration) var(--transition-smooth);
           flex-shrink: 0;
@@ -309,21 +324,19 @@ span {
           max-height: 0;
           overflow: hidden;
           transition: max-height var(--transition-duration) var(--transition-smooth),
-            opacity var(--transition-fast) ease;
+            opacity var(--transition-duration) ease,
+            margin var(--transition-duration) var(--transition-smooth);
           opacity: 0;
           position: relative;
-          margin-top: 4px;
-          // padding-left: 20px;
           border-left: 2px solid var(--gray-300);
-          margin-left: 20px;
+          margin-left: 1.25rem;
 
           &.open {
             max-height: 500px;
             opacity: 1;
-            // padding-top: 6px;
-            // padding-bottom: 6px;
-            margin-bottom: 6px;
-            margin-left: 15px; // Set to 15px as per your comment and removed !important
+            margin-bottom: 0.25rem; // Reduced from 0.375rem
+            margin-top: 0.25rem; // Added top margin for spacing
+            margin-left: 0.9375rem;
           }
 
           // --- Submenu Items ---
@@ -331,19 +344,19 @@ span {
             position: relative;
 
             a {
-              padding: 10px 10px 10px 15px;
-              font-size: 13px;
+              padding: 0.625rem 0.625rem 0.625rem 0.9375rem;
+              font-size: 0.8125rem;
               color: var(--gray-700);
-              margin: 2px 0;
-              border-radius: 6px;
+              margin: 0.125rem 0;
+              border-radius: 0.375rem;
               position: relative;
-              font-weight: 400;
+              font-weight: var(--font-weight-normal);
 
               i {
                 font-size: 0.9em;
-                margin-right: 10px;
-                min-width: 18px;
-                width: 18px;
+                margin-right: 0.625rem;
+                min-width: 1.125rem;
+                width: 1.125rem;
                 text-align: center;
               }
 
@@ -351,21 +364,20 @@ span {
               &::before {
                 content: '';
                 position: absolute;
-                left: 4px;
+                left: var(--spacing-xs);
                 top: 50%;
                 transform: translateY(-50%);
-                width: 4px;
-                height: 4px;
+                width: var(--spacing-xs);
+                height: var(--spacing-xs);
                 border-radius: 50%;
                 transition: all var(--transition-fast) ease;
               }
 
               &:hover {
-                background-color: var(--gray-100);
+                // background-color: var(--gray-100);
                 color: var(--gray-900);
-                transform: translateX(2px);
+                transform: translateX(0.25rem); // Consistent with parent
                 &::before {
-                  // background-color: var(--aqua-island);
                   transform: translateY(-50%) scale(1.3);
                 }
               }
@@ -373,12 +385,18 @@ span {
               &.active {
                 color: var(--gray-900);
                 background-color: var(--gray-200);
-                font-weight: 500;
+                font-weight: var(--font-weight-medium);
                 &::before {
                   background-color: var(--aqua-island);
-                  width: 6px;
-                  height: 6px;
+                  width: 0.375rem;
+                  height: 0.375rem;
                   box-shadow: 0 0 0 3px rgba(64, 153, 153, 0.2);
+                }
+                
+                // Consistent hover on active submenu items
+                &:hover {
+                  // background-color: var(--gray-200);
+                  transform: translateX(0.25rem);
                 }
               }
             }
@@ -391,8 +409,8 @@ span {
   // --- Collapsed State ---
   &.collapsed {
     width: var(--sidebar-width-collapsed);
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-left: var(--spacing-xs);
+    padding-right: var(--spacing-xs);
 
     .sidebar-header {
       padding: 0;
@@ -436,16 +454,17 @@ span {
         li {
           a,
           button {
-            width: 40px;
-            height: 40px;
+            width: 2.5rem;
+            height: 2.5rem;
             padding: 0;
-            margin: 0 auto 6px auto;
+            margin: 0 auto 0.25rem auto; // Consistent margin
             display: flex;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: var(--border-radius-md);
 
             &:hover {
               transform: scale(1.05);
+              // background-color: var(--gray-200); // Ensure background shows
             }
 
             i:not(.toggle-icon) {
@@ -469,7 +488,7 @@ span {
           }
 
           .toggle-icon {
-            display: none !important; // This !important is likely needed
+            display: none !important;
           }
         }
       }
@@ -489,12 +508,12 @@ span {
     &.collapsed {
       transform: translateX(-100%);
       width: var(--sidebar-width);
-      padding-left: 10px;
-      padding-right: 10px;
+      padding-left: 0.625rem;
+      padding-right: 0.625rem;
 
       .sidebar-header {
         justify-content: flex-start;
-        padding: 0 5px;
+        padding: 0 var(--spacing-xs);
 
         h2 {
           opacity: 1;
@@ -523,7 +542,7 @@ span {
         }
 
         .sidebar-logo {
-          margin-right: 10px;
+          margin-right: 0.625rem;
         }
       }
 
@@ -535,11 +554,11 @@ span {
               justify-content: flex-start;
               width: 100%;
               height: auto;
-              padding: 12px 10px;
-              margin: 0 0 6px 0;
+              padding: 0.75rem 0.625rem;
+              margin: 0 0 0.25rem 0; // Consistent margin
 
               i:not(.toggle-icon) {
-                margin-right: 12px;
+                margin-right: 0.75rem;
               }
 
               span {
@@ -550,7 +569,7 @@ span {
             }
 
             .toggle-icon {
-              display: flex !important; // This !important is likely needed
+              display: flex !important;
             }
           }
         }
@@ -559,7 +578,7 @@ span {
   }
   
   @media (max-width: 480px) {
-    width: 240px;
+    width: var(--sidebar-width);
   }
 }
 
@@ -579,6 +598,8 @@ span {
     visibility: hidden;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
+    transition: opacity var(--transition-duration) var(--transition-smooth),
+      visibility var(--transition-duration) var(--transition-smooth);
 
     &.show {
       opacity: 1;
@@ -621,7 +642,7 @@ span {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 var(--spacing-lg);
   background-color: var(--white);
   height: var(--header-height);
   flex-shrink: 0;
@@ -639,12 +660,12 @@ span {
   .header-left-controls {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--spacing-md);
 
     .header-title {
       display: block;
       margin: 0;
-      font-size: 18px;
+      font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-800);
       white-space: nowrap;
@@ -659,10 +680,10 @@ span {
     display: none;
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 1.25rem;
     color: var(--gray-700);
     cursor: pointer;
-    padding: 8px;
+    padding: var(--spacing-sm);
     border-radius: 50%;
     transition: background-color var(--transition-fast) ease,
       color var(--transition-fast) ease;
@@ -691,11 +712,11 @@ span {
     position: relative;
 
     .user-menu-toggle {
-      border: 1px solid var(--gray-200);
+      border: var(--border-width) solid var(--border-color);
       background-color: var(--desert-storm);
       cursor: pointer;
-      padding: 4px;
-      border-radius: 50px;
+      padding: var(--spacing-xs);
+      border-radius: var(--border-radius-full);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -703,8 +724,8 @@ span {
         transform var(--transition-fast) var(--transition-spring);
 
       .header-avatar-initials {
-        width: 36px;
-        height: 36px;
+        width: 2.25rem;
+        height: 2.25rem;
         border-radius: 50%;
         background-color: var(--aqua-island);
         color: var(--white);
@@ -712,8 +733,8 @@ span {
         align-items: center;
         justify-content: center;
         font-weight: 600;
-        font-size: 14px;
-        border: 1px solid var(--gray-200);
+        font-size: 0.875rem;
+        border: var(--border-width) solid var(--border-color);
         transition: border-color var(--transition-fast) ease,
           box-shadow var(--transition-fast) ease;
       }
@@ -722,7 +743,7 @@ span {
         background-color: var(--gray-100);
         .header-avatar-initials {
           border-color: var(--gray-300);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--box-shadow-md);
         }
       }
 
@@ -731,10 +752,10 @@ span {
       }
 
       .chevron-icon {
-        width: 18px;
-        height: 18px;
+        width: 1.125rem;
+        height: 1.125rem;
         color: var(--gray-600);
-        margin-left: 4px;
+        margin-left: var(--spacing-xs);
         transition: transform var(--transition-fast) var(--transition-smooth);
       }
 
@@ -746,32 +767,31 @@ span {
     // --- User Menu Dropdown ---
     .user-menu-dropdown {
       position: absolute;
-      top: calc(100% + 10px);
+      top: calc(100% + var(--spacing-sm));
       right: 0;
       background-color: var(--gray-100);
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1),
-        0 2px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--gray-200);
-      width: 320px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--box-shadow-lg);
+      border: var(--border-width) solid var(--border-color);
+      width: 20rem;
       z-index: 1100;
       overflow: hidden;
-      padding: 8px;
+      padding: var(--spacing-sm);
       animation: slideDownFade 0.25s var(--transition-smooth);
       transform-origin: top right;
       
       @media (max-width: 480px) {
-        width: calc(100vw - 30px);
+        width: calc(100vw - var(--spacing-xl));
         max-width: none;
-        right: -15px;
-        top: calc(100% + 10px);
+        right: calc(var(--spacing-md) * -1);
+        top: calc(100% + var(--spacing-sm));
       }
 
       .dropdown-section-card {
         background-color: var(--white);
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-        margin-bottom: 8px;
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--box-shadow-sm);
+        margin-bottom: var(--spacing-sm);
         overflow: hidden;
         transition: box-shadow var(--transition-fast) ease;
         &:last-child {
@@ -782,27 +802,27 @@ span {
       .dropdown-profile-header {
         display: flex;
         align-items: center;
-        padding: 10px;
-        border-radius: 8px 8px 0 0;
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
         transition: background-color var(--transition-fast) ease,
           transform var(--transition-fast) ease;
         cursor: pointer;
 
         .dropdown-avatar-initials {
-          width: 40px;
-          height: 40px;
-          min-width: 40px;
+          width: 2.5rem;
+          height: 2.5rem;
+          min-width: 2.5rem;
           border-radius: 50%;
-          margin-right: 10px;
+          margin-right: var(--spacing-sm);
           background-color: var(--aqua-island);
           color: var(--white);
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 600;
-          font-size: 16px;
+          font-size: var(--font-size-base);
           transition: transform var(--transition-fast) var(--transition-spring);
-          border: 1px solid var(--gray-100);
+          border: var(--border-width) solid var(--gray-100);
         }
 
         &:hover {
@@ -823,15 +843,15 @@ span {
 
           .username {
             font-weight: 600;
-            font-size: 15px;
+            font-size: 0.9375rem;
             color: var(--gray-900);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
           }
           .user-role {
-            font-size: 13px;
-            font-weight: 400;
+            font-size: 0.8125rem;
+            font-weight: var(--font-weight-normal);
             color: var(--gray-700);
             white-space: nowrap;
             overflow: hidden;
@@ -849,25 +869,25 @@ span {
           button {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
             width: 100%;
             background: none;
             border: none;
             text-align: left;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 0.875rem;
+            font-weight: var(--font-weight-medium);
             color: var(--gray-800);
             cursor: pointer;
             transition: background-color var(--transition-fast) ease,
               color var(--transition-fast) ease,
               transform var(--transition-fast) ease;
-            border-radius: 6px;
+            border-radius: var(--border-radius-sm);
 
             .menu-icon-bg {
-              width: 32px;
-              height: 32px;
-              min-width: 32px;
+              width: var(--spacing-xl);
+              height: var(--spacing-xl);
+              min-width: var(--spacing-xl);
               border-radius: 50%;
               background-color: var(--gray-200);
               display: flex;
@@ -877,7 +897,7 @@ span {
                 transform var(--transition-fast) var(--transition-spring);
 
               i {
-                font-size: 15px;
+                font-size: 0.9375rem;
                 color: var(--gray-800);
                 margin: 0;
                 width: auto;
@@ -891,16 +911,17 @@ span {
             }
 
             &:hover {
-              background-color: var(--gray-200);
+              // background-color: var(--gray-200);
               color: var(--gray-900);
-              transform: translateX(2px);
+              // transform: translateX(var(--spacing-xs);
+              transform: translateX(var(--spacing-xs));
               .menu-icon-bg {
                 background-color: var(--gray-300);
                 transform: scale(1.1);
               }
             }
             &:active {
-              transform: translateX(2px) scale(0.98);
+              transform: translateX(var(--spacing-xs)) scale(0.98);
             }
           }
 
@@ -910,16 +931,16 @@ span {
             border: none;
 
             .logout-btn {
-              color: var(--hm-red, #dc3545);
+              color: var(--color-danger);
               .menu-icon-bg {
                 background-color: rgba(220, 53, 69, 0.1);
                 i {
-                  color: var(--hm-red, #dc3545);
+                  color: var(--color-danger);
                 }
               }
               &:hover {
-                background-color: rgba(220, 53, 69, 0.1);
-                color: var(--hm-red, #dc3545);
+                // background-color: rgba(220, 53, 69, 0.1);
+                color: var(--color-danger);
                 .menu-icon-bg {
                   background-color: rgba(220, 53, 69, 0.2);
                 }
@@ -933,13 +954,13 @@ span {
 
   // --- Mobile Header Tweaks ---
   @media (max-width: 992px) {
-    padding: 0 15px;
+    padding: 0 var(--spacing-md);
     justify-content: space-between; 
     
     // Centered Title
     &::before {
       content: 'HMSG Dashboard';
-      font-size: 18px;
+      font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-800);
       position: absolute;
@@ -959,15 +980,15 @@ span {
 // ========== DASHBOARD CONTENT ==========
 .dashboard-content {
   flex-grow: 1;
-  padding: 12px 24px;
+  padding: 0.75rem var(--spacing-lg);
   animation: scaleIn 0.3s var(--transition-smooth);
   
   @media (max-width: 992px) {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   @media (max-width: 480px) {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
 }
 
