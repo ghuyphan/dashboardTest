@@ -23,6 +23,7 @@ import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model'; 
 import { HasPermissionDirective } from '../directives/has-permission.directive';
 import { NavItem } from '../models/nav-item.model'; 
+import { ActionFooterComponent } from '../components/action-footer/action-footer.component'; // <-- 1. IMPORT
 
 @Component({
   selector: 'app-main-layout',
@@ -31,7 +32,8 @@ import { NavItem } from '../models/nav-item.model';
     CommonModule, 
     RouterOutlet, 
     RouterModule,
-    HasPermissionDirective
+    HasPermissionDirective,
+    ActionFooterComponent // <-- 2. ADD TO IMPORTS
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss'

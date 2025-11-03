@@ -1,0 +1,20 @@
+<div class="action-footer-container" *ngIf="actions$ | async as actions">
+  <div class="action-buttons">
+    
+    <ng-container *ngFor="let action of actions">
+    
+      <button 
+        *appHasPermission="action.permission"
+        type="button" 
+        class="btn {{ action.className || 'btn-secondary' }}"
+        [disabled]="action.disabled"
+        (click)="executeAction(action)">
+        
+        <i *ngIf="action.icon" class="{{ action.icon }} mr-1"></i>
+        {{ action.label }}
+      </button>
+
+    </ng-container>
+
+  </div>
+</div>
