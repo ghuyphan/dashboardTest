@@ -4,8 +4,10 @@
   width: 100vw;
   overflow: hidden;
   background-color: var(--gray-100);
-  
-  /* Local variables matching global theme */
+
+  /* Local variables are fine, as they are used by
+    the component's own styles below.
+  */
   --header-height: 50px;
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 60px;
@@ -13,38 +15,6 @@
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
-}
-
-/* ========== KEYFRAME ANIMATIONS ========== */
-@keyframes slideDownFade {
-  from {
-    opacity: 0;
-    transform: translateY(-0.75rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
 }
 
 /* ========== DASHBOARD CONTAINER ========== */
@@ -74,7 +44,7 @@
   display: flex;
   flex-direction: column;
   will-change: transform, width;
-  
+
   /* Prevent text wrapping during collapse */
   * {
     white-space: nowrap;
@@ -112,16 +82,21 @@
   flex-shrink: 0;
   transition: padding var(--transition-duration) var(--transition-smooth),
     justify-content var(--transition-duration) var(--transition-smooth);
+  justify-content: flex-start;
+  /* Keep items aligned left */
 }
 
 .sidebar-logo-wrapper {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  /* Keep logo aligned left */
   width: 100%;
   height: 100%;
   position: relative;
-  transition: justify-content var(--transition-duration) var(--transition-smooth);
+  /* MODIFIED: Added 'padding' to the transition */
+  transition: justify-content var(--transition-duration) var(--transition-smooth),
+    padding var(--transition-duration) var(--transition-smooth);
 }
 
 .sidebar-logo {
@@ -157,8 +132,9 @@
   white-space: nowrap;
   flex: 1;
   min-width: 0;
-  transition: opacity var(--transition-duration) var(--transition-smooth),
-    transform var(--transition-duration) var(--transition-smooth);
+  /* MODIFIED: Use --transition-fast to fade out quicker than the container */
+  transition: opacity var(--transition-fast) var(--transition-smooth),
+    transform var(--transition-fast) var(--transition-smooth);
 }
 
 .sidebar-toggle-btn {
@@ -231,6 +207,8 @@
   text-align: left;
   cursor: pointer;
   margin-bottom: 0.25rem;
+  /* MODIFIED: Explicitly set base alignment */
+  justify-content: flex-start;
 }
 
 /* General icons */
@@ -335,7 +313,7 @@
 }
 
 /* --- Arrow Rotation --- */
-.sidebar-nav ul li.open > button .toggle-icon {
+.sidebar-nav ul li.open>button .toggle-icon {
   transform: rotate(180deg);
 }
 
@@ -428,14 +406,13 @@
 
 /* --- Collapsed State --- */
 .sidebar.collapsed {
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
   width: var(--sidebar-width-collapsed);
-  padding-left: var(--spacing-xs);
-  padding-right: var(--spacing-xs);
 }
 
 .sidebar.collapsed .sidebar-header {
   padding: 0;
-  justify-content: center;
 }
 
 .sidebar.collapsed .sidebar-header h2 {
@@ -456,7 +433,8 @@
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper {
-  justify-content: center;
+  padding-left: 0.125rem;
+  /* 2px - THE CENTERING FIX */
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
@@ -480,10 +458,11 @@
   padding: 0;
   margin: 0 auto 0.25rem auto;
   display: flex;
-  justify-content: center;
   align-items: center;
   border-radius: var(--border-radius-md);
   overflow: hidden;
+  padding-left: 0.7rem;
+  /* 11.2px - THE CENTERING FIX */
 }
 
 .sidebar.collapsed .sidebar-nav ul li a:hover,
@@ -563,6 +542,8 @@
 
   .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper {
     justify-content: flex-start;
+    padding-left: 0;
+    /* Reset padding for mobile */
   }
 
   .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
@@ -583,6 +564,7 @@
     width: 100%;
     height: auto;
     padding: 0.75rem 0.625rem;
+    /* Reset padding for mobile */
     margin: 0 0 0.25rem 0;
   }
 
@@ -1046,104 +1028,4 @@
   .dashboard-content {
     padding: var(--spacing-md);
   }
-}
-
-/* ========== ACCESSIBILITY & FOCUS STATES ========== */
-.sidebar-nav ul li a:focus-visible,
-.sidebar-nav ul li button:focus-visible,
-.user-menu-toggle:focus-visible,
-.user-menu-items li button:focus-visible,
-.mobile-sidebar-toggle:focus-visible {
-  outline: 2px solid var(--aqua-island);
-  outline-offset: 2px;
-}
-
-/* ========== LOADING STATES ========== */
-.loading-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--gray-200) 0%,
-    var(--gray-300) 50%,
-    var(--gray-200) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* ========== ACTION FOOTER BAR ========== */
-.action-footer-container {
-  position: sticky;
-  bottom: 0;
-  width: 100%;
-  background-color: var(--white);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.04);
-  z-index: 100;
-  display: flex;
-  justify-content: flex-start;
-}
-
-@media (max-width: 767px) {
-  .action-footer-container {
-    padding: var(--spacing-xs) var(--spacing-md);
-    justify-content: center;
-  }
-}
-
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-}
-
-@media (max-width: 767px) {
-  .action-buttons {
-    justify-content: center;
-  }
-}
-
-/* Styling for buttons within the footer */
-:host ::ng-deep .btn {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 0.875rem;
-  transition: transform 0.2s var(--transition-smooth),
-    box-shadow 0.2s var(--transition-smooth);
-}
-
-:host ::ng-deep .btn:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: var(--box-shadow-md);
-}
-
-:host ::ng-deep .btn:not(:disabled):active {
-  transform: translateY(0);
-  box-shadow: var(--box-shadow-sm);
-}
-
-:host ::ng-deep .btn:focus-visible {
-  outline: 2px solid var(--aqua-island);
-  outline-offset: 2px;
-  box-shadow: var(--box-shadow-md);
-}
-
-.btn-danger {
-  color: var(--white);
-  background-color: var(--color-danger);
-  border-color: var(--color-danger);
-}
-
-.btn-danger:hover {
-  background-color: #b02a37;
-  border-color: #a72a38;
-}
-
-.btn:disabled,
-.btn.disabled {
-  background-color: var(--gray-200);
-  color: var(--gray-500);
-  border-color: var(--gray-200);
-  cursor: not-allowed;
-  opacity: 0.65;
-  box-shadow: none;
-  transform: none;
 }

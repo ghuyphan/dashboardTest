@@ -6,16 +6,12 @@
   /* =================================================================== */
 
   /* --- Brand Palette (Primary) --- */
-  /* Used in main-layout */
   --aqua-island: #9BDAD9;
   --teal-blue: #00839B;
   --peacock-blue: #006E96;
-  
-  /* Alias for the color used in main-layout's hover states */
   --dark-teal: var(--teal-blue); 
 
   /* --- Brand Palette (Secondary) --- */
-  /* Used in main-layout */
   --desert-storm: #F8F8F7; 
   --white: #FFFFFF;
 
@@ -27,19 +23,17 @@
   --dark-gray: #4A4A4A;
 
   /* --- Functional Palette (Grays) --- */
-  /* All of these are used in main-layout */
   --gray-100: #F8FAFC;
   --gray-200: #E2E8F0;
   --gray-300: #CBD5E1;
-  --gray-400: #94A3B8; /* Interpolated value, used in submenu */
+  --gray-400: #94A3B8;
   --gray-500: #64748B;
-  --gray-600: #475569; /* Interpolated value, used for chevron */
+  --gray-600: #475569;
   --gray-700: #334155;
   --gray-800: #1E293B;
   --gray-900: #0F172A;
   
   /* --- Semantic Colors --- */
-  /* Using the --hm-red from main-layout for danger */
   --color-danger: #dc3545; 
   --color-success: #16A34A;
   --color-warning: #F59E0B;
@@ -68,7 +62,6 @@
   /* 3. LAYOUT & SPACING                                                 */
   /* =================================================================== */
   
-  /* --- App Layout (from main-layout) --- */
   --header-height: 50px;
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 60px;
@@ -97,7 +90,7 @@
   --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
   /* =================================================================== */
-  /* 5. TRANSITIONS (from main-layout)                                   */
+  /* 5. TRANSITIONS                                                      */
   /* =================================================================== */
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -122,14 +115,14 @@ html {
   line-height: var(--line-height-base);
 }
 
+/* THIS IS THE CORRECT BODY STYLE FOR THE APP */
 body {
   font-family: var(--font-family-sans);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-base);
   color: var(--gray-700);
-  /* Use a neutral brand color for the background */
-  background-color: var(--gray-100); /* Changed to gray-100 to match main-layout */
+  background-color: var(--gray-100); 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -138,7 +131,6 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  /* Use a primary brand color for headings */
   color: var(--peacock-blue);
 }
 
@@ -170,7 +162,7 @@ table {
   background-color: var(--white);
   box-shadow: var(--box-shadow-md);
   border-radius: var(--border-radius-md);
-  overflow: hidden; /* For border-radius to work on <thead> */
+  overflow: hidden; 
 }
 
 table th,
@@ -181,7 +173,6 @@ table td {
 }
 
 table thead th {
-  /* Branded table header */
   background-color: var(--teal-blue);
   color: var(--white);
   font-weight: var(--font-weight-medium);
@@ -200,50 +191,16 @@ table tbody tr:last-child td {
 }
 
 table tbody tr:nth-child(even) {
-  /* Use a subtle striping color */
   background-color: var(--gray-100);
 }
 
 table tbody tr:hover {
-  /* Use a light brand color for hover */
   background-color: var(--aqua-island-light);
 }
 
 /* =================================================================== */
 /* 8. COMPONENT STYLES: CHART                                          */
 /* =================================================================== */
-
-/* NOTE: You cannot style the chart *data* (bars, lines) with CSS.
-   You must pass the CSS variables to your JavaScript chart library 
-   (like Chart.js, D3, etc.) in its configuration object.
-
-   EXAMPLE (Chart.js):
-   -------------------
-   const chartColors = [
-     'var(--teal-blue)',
-     'var(--aqua-island)',
-     'var(--peacock-blue)',
-     'var(--deep-sapphire)',
-     'var(--pale-aqua)',
-     'var(--teal-blue-light)',
-     'var(--peacock-blue-light)'
-   ];
-
-   new Chart(ctx, {
-     type: 'bar',
-     data: {
-       datasets: [{
-         backgroundColor: chartColors,
-         borderColor: chartColors,
-         ...
-       }]
-     }
-   });
-*/
-
-/* Use this class on the <div> wrapper around your <canvas> 
-   to give it a nice "card" appearance.
-*/
 .chart-container {
   background-color: var(--white);
   padding: var(--spacing-lg);
@@ -298,15 +255,137 @@ table tbody tr:hover {
   color: var(--teal-blue-dark);
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, var(--aqua-island) 0%, var(--teal-blue) 55%, var(--peacock-blue) 100%);
-  /* Example adjustment, consider using Peacock Blue here */
-  height: 100vh; /* Was min-height: 100vh */
-  overflow: hidden; /* Prevents scrolling on body element */
-  min-height: 100vh;
+/* =================================================================== */
+/* 10. GLOBALLY MOVED STYLES (from main-layout & action-footer)        */
+/* =================================================================== */
+
+/* ========== KEYFRAME ANIMATIONS ========== */
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* ========== ACCESSIBILITY & FOCUS STATES ========== */
+.sidebar-nav ul li a:focus-visible,
+.sidebar-nav ul li button:focus-visible,
+.user-menu-toggle:focus-visible,
+.user-menu-items li button:focus-visible,
+.mobile-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--aqua-island);
+  outline-offset: 2px;
+}
+
+/* ========== LOADING STATES ========== */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--gray-200) 0%,
+    var(--gray-300) 50%,
+    var(--gray-200) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ========== ACTION FOOTER BAR ========== */
+/* These styles are for the app-action-footer component */
+.action-footer-container {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  background-color: var(--white);
+  padding: var(--spacing-sm) var(--spacing-lg); 
+  box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.04);
+  z-index: 100;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--gray-800);
+  justify-content: flex-start;
+
+  @media (max-width: 767px) {
+    padding: var(--spacing-xs) var(--spacing-md); 
+    justify-content: center;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: var(--spacing-sm); 
+
+  @media (max-width: 767px) {
+    justify-content: center;
+  }
+}
+
+/* We target app-action-footer globally.
+  This is a bit unusual, but it solves the budget problem.
+*/
+app-action-footer .btn {
+  padding: var(--spacing-xs) var(--spacing-sm); 
+  font-size: 0.875rem; 
+  transition: transform 0.2s var(--transition-smooth),
+    box-shadow 0.2s var(--transition-smooth);
+
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-md); 
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: var(--box-shadow-sm);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--aqua-island);
+    outline-offset: 2px;
+    box-shadow: var(--box-shadow-md);
+  }
+}
+
+app-action-footer .btn-danger {
+  color: var(--white);
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+
+  &:hover {
+    background-color: #b02a37;
+    border-color: #a72a38;
+  }
+}
+
+app-action-footer .btn:disabled,
+app-action-footer .btn.disabled {
+  background-color: var(--gray-200);
+  color: var(--gray-500);
+  border-color: var(--gray-200);
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+  transform: none; 
 }

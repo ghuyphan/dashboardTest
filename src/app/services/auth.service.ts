@@ -81,10 +81,6 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    // --- START OF FIX ---
-    // DO NOT CALL INITIALIZATION LOGIC HERE
-    // this.initializeUserFromStorage(); // <-- REMOVED
-    // --- END OF FIX ---
   }
 
   /**
@@ -188,10 +184,6 @@ export class AuthService {
           console.error(`Login failed (API MaKetQua: ${loginResponse.MaKetQua}):`, errorMessage);
           return throwError(() => new Error(errorMessage));
         }
-
-        console.log(`Login successful (API MaKetQua: 200): ${loginResponse.TenKetQua || 'Success'}`);
-        console.log('Fetching permissions...');
-
         this.accessToken = loginResponse.APIKey.access_token;
 
         try {
