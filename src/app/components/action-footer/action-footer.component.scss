@@ -7,57 +7,92 @@
   bottom: 0;
   width: 100%;
   background-color: var(--white);
-  border-top: var(--border-width) solid var(--border-color);
-  
-  /* Using 0.75rem (12px) and var(--spacing-lg) (24px) */
-  padding: 0.75rem var(--spacing-lg);
-  
-  /* Using a modified upward shadow consistent with global shadow softness */
-  box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /*
+    SLEEKER VERSION:
+    - Reduced padding (from 0.75rem) to make the bar thinner.
+    - Made the shadow even more subtle and tight.
+  */
+  padding: var(--spacing-sm) var(--spacing-lg); /* 8px 24px */
+  box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.04); /* Tighter, fainter shadow */
+
   z-index: 100;
   display: flex;
-  
-  /* Aligns buttons to the left */
-  justify-content: flex-start; 
+  justify-content: flex-start;
 
-  /* --- COMPATIBILITY FIX --- */
-  /* Replaced 'gap' with 'margin-right' for better browser support. */
-  /* We use ::ng-deep to style the buttons inside <ng-content>. */
-
-  /* Add space to the right of every button */
-  & ::ng-deep .btn {
-    margin-right: var(--spacing-sm);
-  }
-
-  /* Remove space from the very last button */
-  & ::ng-deep .btn:last-child {
-    margin-right: 0;
+  @media (max-width: 767px) {
+    /*
+      SLEEKER MOBILE:
+      - Further reduced padding (from --spacing-sm).
+    */
+    padding: var(--spacing-xs) var(--spacing-md); /* 4px 16px */
+    justify-content: center;
   }
 }
 
-/* NOTE: .btn, .btn-primary, and .btn-secondary are intentionally REMOVED.
-  They will now correctly inherit from src/styles.scss, 
-  ensuring they use the project's --teal-blue and --aqua-island theme colors.
-*/
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to stack */
+  gap: var(--spacing-sm); /* 8px gap */
 
-/* A danger button, styled to match the theme of the other buttons.
-  This can be moved to styles.scss if used globally.
+  @media (max-width: 767px) {
+    justify-content: center;
+  }
+}
+
+/*
+  Styling for buttons within the footer
 */
+:host ::ng-deep .btn {
+  /*
+    COMPACT BUTTONS:
+    - Overriding global .btn styles to be smaller *by default* inside this component.
+    - This is the main change to make the footer feel "compact".
+  */
+  padding: var(--spacing-xs) var(--spacing-sm); /* e.g., 4px 8px */
+  font-size: 0.875rem; /* 14px */
+
+  // Smooth transition for hover effects
+  transition: transform 0.2s var(--transition-smooth),
+    box-shadow 0.2s var(--transition-smooth);
+
+  /* Consistent hover/focus "lift" effect */
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-md); /* Use global shadow */
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0); // Reset on click
+    box-shadow: var(--box-shadow-sm);
+  }
+
+  // Consistent focus state, matching main-layout.scss
+  &:focus-visible {
+    outline: 2px solid var(--aqua-island);
+    outline-offset: 2px;
+    box-shadow: var(--box-shadow-md);
+  }
+
+  /*
+    NOTE: The mobile media query for buttons is no longer needed,
+    as our new base style is already compact.
+  */
+}
+
+/* A danger button, styled to match the theme of the other buttons. */
 .btn-danger {
   color: var(--white);
   background-color: var(--color-danger);
   border-color: var(--color-danger);
 
   &:hover {
-    // Since no --color-danger-dark variable exists, we manually darken it
-    background-color: #b02a37; 
+    background-color: #b02a37;
     border-color: #a72a38;
   }
 }
 
-/* Styling for a disabled button, using global gray variables.
-  This will apply to any .btn element with the [disabled] attribute.
-*/
+/* Styling for a disabled button, using global gray variables. */
 .btn:disabled,
 .btn.disabled {
   background-color: var(--gray-200);
@@ -66,4 +101,5 @@
   cursor: not-allowed;
   opacity: 0.65;
   box-shadow: none;
+  transform: none; // Ensure disabled buttons don't lift
 }

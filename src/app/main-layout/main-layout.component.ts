@@ -169,7 +169,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   formatRoles(roles: string[]): string {
-    if (roles.includes('KXĐ')) return 'Kế toán (KXĐ)'; 
+    if (roles.includes('KXĐ')) return 'Không Xác Định'; 
     if (roles.includes('Bác Sĩ')) return 'Bác Sĩ'; 
     if (roles.includes('SuperAdmin')) return 'Super Admin';
     if (roles.includes('Admin')) return 'Admin';

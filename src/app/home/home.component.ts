@@ -24,15 +24,15 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Define your test buttons
     const testActions: FooterAction[] = [
       {
-        label: 'Save (Test Permission)',
+        label: 'Save',
         icon: 'fas fa-save',
         action: () => this.onSave(),
         // This will ONLY appear if you have this permission
-        permission: 'equipment.catalog.create', 
+        permission: 'QLThietBi.DMThietBi.RCREATE', 
         className: 'btn-primary'
       },
       {
-        label: 'Print (Test Permission)',
+        label: 'Print',
         icon: 'fas fa-print',
         action: () => this.onPrint(),
         // This will ONLY appear if you have this permission
@@ -49,7 +49,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         icon: 'fas fa-trash',
         action: () => this.onDelete(),
         // This button should NOT appear, as the permission is fake
-        permission: 'a.permission.that.does.not.exist',
+        permission: 'QLThietBi.DMThietBi.RCREATE',
         className: 'btn-danger'
       }
     ];
