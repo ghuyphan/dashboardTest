@@ -82,6 +82,7 @@
             <button
               (click)="toggleSubmenu(item, $event)"
               [attr.aria-expanded]="item.isOpen"
+              [attr.data-tooltip]="item.label"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
@@ -91,7 +92,11 @@
             <ul class="submenu" [class.open]="item.isOpen">
               <ng-container *ngFor="let child of item.children">
                 <li *appHasPermission="child.permissions">
-                  <a [routerLink]="child.link" routerLinkActive="active">
+                  <a
+                    [routerLink]="child.link"
+                    routerLinkActive="active"
+                    [attr.data-tooltip]="child.label"
+                  >
                     <i [class]="child.icon"></i>
                     <span>{{ child.label }}</span>
                   </a>
@@ -101,7 +106,11 @@
           </ng-container>
 
           <ng-template #regularLink>
-            <a [routerLink]="item.link" routerLinkActive="active">
+            <a
+              [routerLink]="item.link"
+              routerLinkActive="active"
+              [attr.data-tooltip]="item.label"
+            >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
             </a>
