@@ -27,7 +27,7 @@
   z-index: 1030;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
   overflow-y: auto;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */ /* <-- REMOVED FOR FIX #4 (Allow tooltips when open) */
   display: flex;
   flex-direction: column;
   will-change: transform, width;
@@ -157,7 +157,7 @@
 .sidebar-nav {
   flex-grow: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */ /* <-- REMOVED FOR FIX #4 (Allow tooltips when open) */
 }
 
 .sidebar-nav ul {
@@ -165,6 +165,15 @@
   padding: 0;
   margin: 0;
 }
+
+/* --- Parent Nav Item <li> --- */
+.sidebar-nav ul li {
+  /* This is crucial for positioning the fly-out
+     submenu relative to the parent item.
+  */
+  position: relative;
+}
+
 
 /* --- Regular Links & Submenu Toggles --- */
 .sidebar-nav ul li a,
@@ -313,12 +322,12 @@
   flex-shrink: 0;
 }
 
-/* --- Arrow Rotation --- */
+/* --- Arrow Rotation (for Accordion) --- */
 .sidebar-nav ul li.open > button .toggle-icon {
   transform: rotate(180deg);
 }
 
-/* --- Submenu Container --- */
+/* --- Submenu Container (ACCORDION default) --- */
 .submenu {
   list-style: none;
   padding: 0;
@@ -339,36 +348,27 @@
   opacity: 1;
   margin-bottom: 0.25rem;
   margin-top: 0.25rem;
+  
+  /* TOOLTIP FIX: Allow tooltips to be visible */
+  overflow: visible;
 }
 
-/* --- Submenu Items --- */
+/* --- Submenu Items (ACCORDION default) --- */
 .submenu li {
   position: relative;
 }
 
 .submenu li a {
-  /* --- ALL STYLES BELOW ARE CHANGED FOR CONSISTENCY --- */
-
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
-
-  /* Match parent font size (14px) */
   font-size: 0.875rem;
   color: var(--gray-700);
-
-  /* Match parent margin (4px bottom) */
   margin: 0 0 0.25rem 0;
-
-  border-radius: 0.375rem; /* Can keep this slightly smaller radius */
+  border-radius: 0.375rem;
   position: relative;
-
-  /* Match parent font weight */
   font-weight: var(--font-weight-normal);
-
-  /* (Inherit flex properties from parent rules) */
 }
 
 .submenu li a i {
-  /* Match parent icon styling */
   font-size: var(--font-size-base);
   margin-right: 0.75rem;
   min-width: 1.25rem;
@@ -378,34 +378,25 @@
   transition: transform var(--transition-fast) var(--transition-spring);
 }
 
-/* Subtle left border indicator - NO LONGER NEEDED */
 .submenu li a::before {
   display: none; /* Removed the dot */
 }
 
 .submenu li a:hover {
-  /* Hover state matches parent */
   background-color: var(--gray-200);
   color: var(--gray-900);
 }
 
-/* Pop effect for submenu icons (matches parent) */
 .submenu li a:hover i {
   transform: scale(1.15);
 }
 
 .submenu li a.active {
-  /* Active state matches parent */
   color: var(--gray-900);
   background-color: var(--gray-200);
-  font-weight: 600; /* Match active parent font-weight */
+  font-weight: 600;
 }
 
-/*
- * === MODIFICATION FOR PROBLEM 1 ===
- * Re-introduce the active line for consistency
- * with main menu items.
- */
 .submenu li a.active::before {
   content: '';
   position: absolute;
@@ -418,21 +409,32 @@
   display: block;
 }
 
-/* Consistent hover on active submenu items */
 .submenu li a.active:hover {
   background-color: var(--gray-200);
 }
 
-/* Keep pop effect on active submenu hover */
 .submenu li a.active:hover i {
   transform: scale(1.15);
 }
 
-/* --- Collapsed State --- */
+
+/* * ====================================
+ * === COLLAPSED STATE STYLES
+ * ====================================
+*/
+
 .sidebar.collapsed {
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   width: var(--sidebar-width-collapsed);
+
+  /* FIX FOR TOOLTIP AND FLY-OUT CLIPPING */
+  overflow: visible;
+}
+
+/* FIX FOR TOOLTIP AND FLY-OUT CLIPPING */
+.sidebar.collapsed .sidebar-nav {
+  overflow: visible;
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -478,11 +480,7 @@
   margin-right: 0;
 }
 
-/*
- * === MODIFICATION FOR PROBLEM 2 ===
- * Removed 'overflow: hidden;' which was
- * clipping the tooltips.
- */
+/* Parent items when collapsed */
 .sidebar.collapsed .sidebar-nav ul li a,
 .sidebar.collapsed .sidebar-nav ul li button {
   width: 2.5rem;
@@ -492,7 +490,6 @@
   display: flex;
   align-items: center;
   border-radius: var(--border-radius-md);
-  /* overflow: hidden; */ /* <-- REMOVED THIS LINE */
   padding-left: 0.7rem;
   /* 11.2px - THE CENTERING FIX */
 }
@@ -507,7 +504,6 @@
 .sidebar.collapsed .sidebar-nav ul li button i:not(.toggle-icon) {
   margin: 0;
   font-size: 1.1rem;
-  /* Remove the individual icon transform for collapsed state */
   transform: none;
   transition: font-size var(--transition-fast) var(--transition-smooth);
 }
@@ -525,22 +521,97 @@
   display: none;
 }
 
-.sidebar.collapsed .sidebar-nav ul li .submenu {
-  display: none;
-  max-height: 0 !important;
-  opacity: 0 !important;
-}
-
+/* Hide accordion chevron */
 .sidebar.collapsed .sidebar-nav ul li .toggle-icon {
   display: none !important;
   opacity: 0 !important;
 }
+
+/* * ADDED FOR FIX #3: 
+ * Show text for items inside the fly-out menu by
+ * overriding the general 'span' rule above.
+*/
+.sidebar.collapsed .sidebar-nav ul li .submenu li a span {
+  opacity: 1;
+  transform: none;
+  position: static;
+  pointer-events: auto;
+}
+
+
+/* * ===========================================
+ * === Collapsed State FLY-OUT Overrides
+ * ===========================================
+*/
+
+.sidebar.collapsed .sidebar-nav ul li .submenu {
+  /* Fly-out positioning */
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 0.5rem !important; // Override accordion margin
+  
+  /* Appearance */
+  min-width: 220px;
+  background-color: var(--desert-storm);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow-lg);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-sm);
+  z-index: 1031;
+
+  /* Overrides for accordion styles */
+  max-height: none !important; // Override accordion
+  overflow: visible !important; // Override accordion
+  border-left: none !important; // Override accordion
+  
+  /* Animation */
+  opacity: 0;
+  visibility: hidden;
+  
+  /* BUG FIX: Add a transition-delay. */
+  transition: opacity var(--transition-fast) ease var(--transition-fast),
+    visibility var(--transition-fast) ease var(--transition-fast);
+}
+
+.sidebar.collapsed .sidebar-nav ul li .submenu.open {
+  opacity: 1;
+  visibility: visible;
+  margin-bottom: 0; // Override accordion margin
+  margin-top: 0; // Override accordion margin
+}
+
+/*
+  This ensures that items *inside* the fly-out
+  look just like the items in the accordion,
+  which is what you wanted ("item name inside along the icon").
+*/
+.sidebar.collapsed .sidebar-nav ul li .submenu li a {
+  /* These styles are identical to the default .submenu li a styles */
+  padding: 0.75rem 0.625rem 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  margin: 0 0 0.25rem 0;
+  font-weight: var(--font-weight-normal);
+}
+
+.sidebar.collapsed .sidebar-nav ul li .submenu li a i {
+  /* These styles are identical to the default .submenu li a i styles */
+  font-size: var(--font-size-base);
+  margin-right: 0.75rem;
+  min-width: 1.25rem;
+  width: 1.25rem;
+  transform: scale(1);
+}
+
 
 /* --- Mobile (Responsive) Overrides --- */
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s var(--transition-smooth);
+    overflow-x: hidden; /* Re-apply for mobile sliding */
+    overflow-y: auto;
   }
 
   .sidebar.open {
@@ -553,6 +624,49 @@
     width: var(--sidebar-width);
     padding-left: 0.625rem;
     padding-right: 0.625rem;
+    overflow-x: hidden; /* Re-apply for mobile sliding */
+    overflow-y: auto;
+  }
+
+  /* On mobile, we DON'T want fly-outs.
+     The default accordion styles (.submenu) are correct.
+     We just need to make sure the fly-out override
+     styles are reset.
+  */
+  .sidebar.collapsed .sidebar-nav ul li .submenu {
+    /* Reset all fly-out styles */
+    position: relative;
+    left: auto;
+    top: auto;
+    margin-left: 0.5rem !important;
+    min-width: 0;
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    z-index: 1;
+
+    /* Re-apply accordion styles */
+    max-height: 0 !important;
+    overflow: hidden !important;
+    border-left: 2px solid var(--gray-300) !important;
+    opacity: 0;
+    visibility: visible;
+    
+    /* Remove the fly-out transition delay */
+    transition: max-height var(--transition-duration) var(--transition-smooth),
+      opacity var(--transition-duration) ease,
+      margin var(--transition-duration) var(--transition-smooth);
+  }
+  
+  .sidebar.collapsed .sidebar-nav ul li .submenu.open {
+    /* Re-apply accordion open styles */
+    opacity: 1;
+    max-height: 500px;
+    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+    
+    /* TOOLTIP FIX: Re-apply visible overflow */
+    overflow: visible !important;
   }
 
   .sidebar.collapsed .sidebar-header {
@@ -578,7 +692,6 @@
   .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper {
     justify-content: flex-start;
     padding-left: 0;
-    /* Reset padding for mobile */
   }
 
   .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
@@ -602,21 +715,16 @@
     width: 100%;
     height: auto;
     padding: 0.75rem 0.625rem;
-    /* Reset padding for mobile */
     margin: 0 0 0.25rem 0;
   }
 
-  /* On mobile, the sidebar is never in the "icon-only" collapsed state.
-    It's either fully open or fully hidden.
-    So, we must re-apply the icon transform rules here.
-  */
   .sidebar.collapsed .sidebar-nav ul li a i:not(.toggle-icon),
   .sidebar.collapsed .sidebar-nav ul li button i:not(.toggle-icon) {
     margin-right: 0.75rem;
-    font-size: var(--font-size-base); /* Reset font size */
-    transform: scale(1); /* Reset transform */
+    font-size: var(--font-size-base);
+    transform: scale(1);
     transition: font-size var(--transition-fast) var(--transition-smooth),
-      transform var(--transition-fast) var(--transition-spring); /* Reset transition */
+      transform var(--transition-fast) var(--transition-spring);
   }
 
   .sidebar.collapsed .sidebar-nav ul li a span,
@@ -632,10 +740,8 @@
     opacity: 1 !important;
   }
 
-  /* --- CHANGED --- */
-  /* Make sure submenu links are correct on mobile-collapsed view */
   .sidebar.collapsed .submenu li a {
-    padding: 0.75rem 0.625rem 0.75rem 1.25rem; /* Re-apply new padding */
+    padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   }
 }
 
@@ -647,49 +753,50 @@
 
 /* ========== CUSTOM TOOLTIP STYLES ========== */
 
-/*
-  This targets any button or link in the nav that has our custom
-  data-tooltip attribute, giving it a base to position from.
-*/
 .sidebar-nav ul li a[data-tooltip],
 .sidebar-nav ul li button[data-tooltip] {
   position: relative;
 }
 
 /*
-  This creates the tooltip pseudo-element.
-  It's hidden by default and only appears on hover
-  WHEN the sidebar is collapsed.
+  GLOBAL TOOLTIP STYLES
+  These now apply in *all* states (expanded, collapsed, accordion)
 */
-.sidebar.collapsed .sidebar-nav ul li a[data-tooltip]::after,
-.sidebar.collapsed .sidebar-nav ul li button[data-tooltip]::after {
-  content: attr(data-tooltip); /* Pulls text from the attribute */
+.sidebar-nav ul li a[data-tooltip]::after,
+.sidebar-nav ul li button[data-tooltip]::after {
+  content: attr(data-tooltip);
   position: absolute;
   left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  margin-left: 12px; /* Space from icon */
-  background-color: var(--gray-800, #333); /* Dark background */
-  color: var(--white, #fff); /* Light text */
-  padding: 0.35rem 0.75rem; /* Nice padding */
-  border-radius: var(--border-radius-md, 6px); /* Rounded corners */
-  font-size: 0.875rem; /* 14px */
+  margin-left: 12px;
+  background-color: var(--gray-800, #333);
+  color: var(--white, #fff);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--border-radius-md, 6px);
+  font-size: 0.875rem;
   font-weight: 500;
-  white-space: nowrap; /* Keep it on one line */
-  z-index: 1050; /* Ensure it's on top */
-
-  /* Fade-in animation */
+  white-space: nowrap;
+  z-index: 1050;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition: opacity 0.2s ease 0.1s, visibility 0.2s ease 0.1s; /* Added delay */
+}
+
+/* Show tooltip on hover (global) */
+.sidebar-nav ul li a[data-tooltip]:hover::after,
+.sidebar-nav ul li button[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 /*
-  This shows the tooltip on hover.
+  This specific rule hides the tooltip when the sidebar is
+  collapsed BUT a fly-out menu is open.
+  (Prevents the parent tooltip from covering the fly-out).
 */
-.sidebar.collapsed .sidebar-nav ul li a[data-tooltip]:hover::after,
-.sidebar.collapsed .sidebar-nav ul li button[data-tooltip]:hover::after {
-  opacity: 1;
-  visibility: visible;
+.sidebar.collapsed .sidebar-nav ul li.open > button[data-tooltip]:hover::after {
+  opacity: 0;
+  visibility: hidden;
 }

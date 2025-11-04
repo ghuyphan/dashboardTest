@@ -16,6 +16,12 @@
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
+
+  /* * === ADD THIS ===
+   * Define your footer's height as a variable.
+   * Adjust this value to match your footer's actual height.
+   */
+  --footer-height: 55px;
 }
 
 /* ========== DASHBOARD CONTAINER ========== */
@@ -108,49 +114,60 @@
 }
 
 /*
- * === MODIFIED STYLES ===
- * Animate max-height to collapse the element
- * and allow the layout to reflow.
+ * === SOLUTION STYLES (app-header) ===
+ * This styles the <app-header> tag.
  */
 app-header {
   flex-shrink: 0; /* Prevent it from shrinking */
+  transform: translateY(0);
   z-index: 1010; /* Keep it above content */
 
-  /* === MODIFICATION === */
-  max-height: var(--header-height); /* Set a max-height */
-  overflow: hidden; /* Hide content when collapsing */
-  transition: max-height var(--transition-fast) var(--transition-smooth);
+  /* * === MODIFICATION ===
+   * Animate both the 'transform' and 'margin-bottom' properties.
+   */
+  transition: transform var(--transition-duration) var(--transition-smooth),
+    margin-bottom var(--transition-duration) var(--transition-smooth);
 
   &.hidden {
-    max-height: 0; /* Animate to 0 */
+    transform: translateY(-100%);
+
+    /* * === MODIFICATION ===
+     * Add a negative margin-bottom equal to the header's height
+     * to pull the content area up, removing the blank space.
+     */
+    margin-bottom: calc(var(--header-height) * -1);
   }
 }
 
 /*
- * === MODIFIED STYLES ===
- * Animate max-height, padding, and border
- * to fully collapse the footer.
+ * === SOLUTION STYLES (app-action-footer) ===
+ * This styles the <app-action-footer> tag.
  */
 :host ::ng-deep app-action-footer {
   display: block; /* Ensure it behaves like a block element */
   flex-shrink: 0; /* Prevent it from shrinking */
+
+  /* Visual styling */
   background-color: var(--white);
   border-top: 1px solid var(--gray-200);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
-  z-index: 1000; /* Keep it above scrolled content if needed */
+  z-index: 1000;
 
-  /* === MODIFICATION === */
-  max-height: 100px; /* Set a value larger than the footer's content */
-  overflow: hidden;
-  transition: max-height var(--transition-fast) var(--transition-smooth),
-    padding-top var(--transition-fast) var(--transition-smooth),
-    padding-bottom var(--transition-fast) var(--transition-smooth),
-    border-width var(--transition-fast) var(--transition-smooth);
+  transform: translateY(0);
+
+  /* * === MODIFICATION ===
+   * Animate both the 'transform' and 'margin-top' properties.
+   */
+  transition: transform var(--transition-duration) var(--transition-smooth),
+    margin-top var(--transition-duration) var(--transition-smooth);
 
   &.hidden {
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-width: 0;
+    transform: translateY(100%);
+
+    /* * === MODIFICATION ===
+     * Add a negative margin-top equal to the footer's height
+     * to collapse its space.
+     */
+    margin-top: calc(var(--footer-height) * -1);
   }
 }

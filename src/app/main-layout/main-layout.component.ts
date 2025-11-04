@@ -2,10 +2,6 @@ import {
   Component,
   OnInit,
   OnDestroy,
-  // ElementRef, <--- REMOVE
-  // ViewChild, <--- REMOVE
-  // Renderer2, <--- REMOVE
-  // AfterViewInit <--- REMOVE
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -43,7 +39,7 @@ import { HeaderComponent } from '../components/header/header.component';
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
 })
-export class MainLayoutComponent implements OnInit, OnDestroy { // <--- REMOVE AfterViewInit
+export class MainLayoutComponent implements OnInit, OnDestroy {
   isSidebarOpen = false;
 
   currentUser: User | null = null;
@@ -54,17 +50,20 @@ export class MainLayoutComponent implements OnInit, OnDestroy { // <--- REMOVE A
 
   isHeaderHidden: boolean = false;
   isFooterHidden: boolean = false;
+  
+  // --- OPTIMIZED SCROLL LOGIC PROPERTIES ---
   private lastScrollTop: number = 0;
-  // private scrollListener!: () => void; <--- REMOVE
-
-  // @ViewChild('mainPanel') mainPanel!: ElementRef; <--- REMOVE
+  private lastScrollTime: number = Date.now();
+  private isScrollingDown: boolean = false;
+  private rafPending: boolean = false;
+  private accumulatedScroll: number = 0;
+  // --- END OF OPTIMIZED SCROLL LOGIC PROPERTIES ---
 
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
 
   constructor(
     private authService: AuthService,
-    // private renderer: Renderer2, <--- REMOVE
     private router: Router,
     private activatedRoute: ActivatedRoute
   ) {}
@@ -119,18 +118,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy { // <--- REMOVE A
     }));
   }
 
-  // ngAfterViewInit(): void { <--- REMOVE THIS ENTIRE METHOD
-  //   if (this.mainPanel) {
-  //     this.scrollListener = this.renderer.listen(
-  //       this.mainPanel.nativeElement,
-  //       'scroll',
-  //       event => {
-  //         this.onMainPanelScroll(event);
-  //       }
-  //     );
-  //   }
-  // }
-
   ngOnDestroy(): void {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
@@ -139,10 +126,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy { // <--- REMOVE A
       this.navSubscription.unsubscribe();
     }
     window.removeEventListener('resize', this.checkWindowSize.bind(this));
-
-    // if (this.scrollListener) { <--- REMOVE THIS BLOCK
-    //   this.scrollListener();
-    // }
   }
 
   private checkWindowSize(): void {
@@ -153,23 +136,85 @@ export class MainLayoutComponent implements OnInit, OnDestroy { // <--- REMOVE A
     }
   }
 
-  // RENAME THIS METHOD
+  // --- START OF OPTIMIZED SCROLL LOGIC ---
   public onContentScroll(event: Event): void {
-    const scrollTop = (event.target as HTMLElement).scrollTop;
-    const headerHeight = 60; // You can also get this dynamically
-
-    if (scrollTop > this.lastScrollTop && scrollTop > headerHeight) {
-      // Scrolling down - hide header and footer
-      this.isHeaderHidden = true;
-      this.isFooterHidden = true;
-    } else if (scrollTop < this.lastScrollTop) {
-      // Scrolling up - show header and footer
-      this.isHeaderHidden = false;
-      this.isFooterHidden = false;
+    // Queue up scroll handling with RAF
+    if (!this.rafPending) {
+      this.rafPending = true;
+      requestAnimationFrame(() => {
+        this.processScroll(event);
+        this.rafPending = false;
+      });
     }
-
-    this.lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
   }
+
+  private processScroll(event: Event): void {
+    const element = event.target as HTMLElement;
+    const scrollTop = element.scrollTop;
+    const scrollHeight = element.scrollHeight;
+    const clientHeight = element.clientHeight;
+    const currentTime = Date.now();
+    
+    // Calculate boundaries
+    const isAtTop = scrollTop <= 50;
+    const isAtBottom = (scrollHeight - scrollTop - clientHeight) <= 50;
+    
+    // Always show at boundaries
+    if (isAtTop || isAtBottom) {
+      if (this.isHeaderHidden || this.isFooterHidden) {
+        this.isHeaderHidden = false;
+        this.isFooterHidden = false;
+      }
+      this.lastScrollTop = scrollTop;
+      this.lastScrollTime = currentTime;
+      this.accumulatedScroll = 0;
+      return;
+    }
+    
+    // Calculate scroll delta
+    const scrollDelta = scrollTop - this.lastScrollTop;
+    
+    // Ignore minimal movements
+    if (Math.abs(scrollDelta) < 3) {
+      return;
+    }
+    
+    // Track direction
+    const scrollingDown = scrollDelta > 0;
+    
+    // Detect direction change
+    if (scrollingDown !== this.isScrollingDown) {
+      this.isScrollingDown = scrollingDown;
+      this.accumulatedScroll = 0; // Reset accumulator on direction change
+    }
+    
+    // Accumulate scroll distance
+    this.accumulatedScroll += Math.abs(scrollDelta);
+    
+    // Require 30px accumulated scroll before triggering change
+    if (this.accumulatedScroll >= 30) {
+      if (scrollingDown) {
+        // Hide when scrolling down
+        if (!this.isHeaderHidden) {
+          this.isHeaderHidden = true;
+          this.isFooterHidden = true;
+        }
+      } else {
+        // Show when scrolling up
+        if (this.isHeaderHidden) {
+          this.isHeaderHidden = false;
+          this.isFooterHidden = false;
+        }
+      }
+      
+      // Reset accumulator after action
+      this.accumulatedScroll = 0;
+    }
+    
+    this.lastScrollTop = scrollTop;
+    this.lastScrollTime = currentTime;
+  }
+  // --- END OF OPTIMIZED SCROLL LOGIC ---
 
   private getInitials(username: string): string {
     if (username && username.length >= 3) {
