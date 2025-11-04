@@ -158,6 +158,7 @@
 /* --- Parent Nav Item <li> --- */
 .sidebar-nav ul li {
   position: relative;
+  overflow: visible;
 }
 
 .sidebar:not(.collapsed) .sidebar-nav ul li:hover {
@@ -486,6 +487,8 @@
 
 /*
 * This rule *only* hides the spans on the *top-level* items.
+* The '>' combinators are crucial. They prevent this rule
+* from applying to spans deep inside a .submenu.
 */
 .sidebar.collapsed .sidebar-nav > ul > li > a > span,
 .sidebar.collapsed .sidebar-nav > ul > li > button > span {
@@ -495,17 +498,17 @@
   pointer-events: none;
 }
 
-/*
-* ==========================================================
-* === THIS IS THE FIX ===
-* This selector is now more specific and *will win* the CSS war.
-* ==========================================================
-*/
-.sidebar.collapsed .sidebar-nav > ul > li > .submenu > li > a > span {
+/* CRITICAL FIX: Ensure submenu spans remain visible in flyout */
+.sidebar.collapsed .sidebar-nav > ul > li .submenu a > span {
   opacity: 1 !important;
   transform: none !important;
   position: static !important;
   pointer-events: auto !important;
+}
+
+/* Allow overflow for flyout parent buttons when collapsed */
+.sidebar.collapsed .sidebar-nav > ul > li.has-submenu > button {
+  overflow: visible;
 }
 
 .sidebar.collapsed .sidebar-nav ul li a.active::before,
@@ -542,8 +545,6 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  /* transition: opacity var(--transition-fast) ease,
-    visibility var(--transition-fast) ease; */
 }
 
 .sidebar.collapsed .sidebar-nav ul li .submenu.open {
@@ -688,6 +689,10 @@
       transform var(--transition-fast) var(--transition-spring);
   }
 
+  /*
+  * This rule specifically overrides the desktop hiding rule
+  * when in collapsed mobile view (which is the accordion)
+  */
   .sidebar.collapsed .sidebar-nav ul li a span,
   .sidebar.collapsed .sidebar-nav ul li button span {
     opacity: 1;
@@ -746,10 +751,6 @@
 .sidebar-nav ul li button[data-tooltip]:hover::after {
   opacity: 1;
   visibility: visible;
-}
-
-.sidebar:not(.collapsed) .submenu li a[data-tooltip]::after {
-  /* Removed display:none to fix tooltip bug */
 }
 
 /* Hide tooltips for items *inside* the flyout menu */
