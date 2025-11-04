@@ -27,7 +27,7 @@
   z-index: 1030;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
   overflow-y: auto;
-  /* overflow-x: hidden; */ /* <-- REMOVED FOR FIX #4 (Allow tooltips when open) */
+  /* overflow-x: hidden; */ /* <-- Correctly removed to allow tooltips */
   display: flex;
   flex-direction: column;
   will-change: transform, width;
@@ -157,7 +157,7 @@
 .sidebar-nav {
   flex-grow: 1;
   overflow-y: auto;
-  /* overflow-x: hidden; */ /* <-- REMOVED FOR FIX #4 (Allow tooltips when open) */
+  /* overflow-x: hidden; */ /* <-- Correctly removed to allow tooltips */
 }
 
 .sidebar-nav ul {
@@ -172,6 +172,16 @@
      submenu relative to the parent item.
   */
   position: relative;
+}
+
+/*
+ * --- TOOLTIP FIX ---
+ * This lifts the entire <li> on hover,
+ * ensuring its child tooltip renders *above*
+ * sibling <li> elements.
+*/
+.sidebar:not(.collapsed) .sidebar-nav ul li:hover {
+  z-index: 10;
 }
 
 
@@ -490,8 +500,9 @@
   display: flex;
   align-items: center;
   border-radius: var(--border-radius-md);
-  padding-left: 0.7rem;
-  /* 11.2px - THE CENTERING FIX */
+  /* POLISH 4: Better centering for icons */
+  justify-content: center;
+  /* padding-left: 0.7rem; */ /* <-- Removed 'magic number' */
 }
 
 .sidebar.collapsed .sidebar-nav ul li a:hover,
@@ -777,7 +788,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
-  z-index: 1050;
+  z-index: 1050; /* This makes it an overlay */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

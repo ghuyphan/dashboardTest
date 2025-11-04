@@ -3,16 +3,16 @@ import {
   Input,
   Output,
   EventEmitter,
-  ElementRef, // Import ElementRef
-  Renderer2, // Import Renderer2
-  NgZone, // Import NgZone
-  OnInit, // Import OnInit
-  OnDestroy, // Import OnDestroy
-  Inject, // Import Inject
-  OnChanges, // Import OnChanges
-  SimpleChanges, // Import SimpleChanges
+  ElementRef,
+  Renderer2,
+  NgZone,
+  OnInit,
+  OnDestroy,
+  Inject,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
-import { DOCUMENT, CommonModule } from '@angular/common'; // Import DOCUMENT
+import { DOCUMENT, CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
@@ -29,7 +29,11 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isOpen: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  private globalClickListener!: () => void; // For the click-outside listener
+  private globalClickListener!: () => void;
+
+  // POLISH 1: This Set *remembers* the accordion state,
+  // completely separate from the visible (fly-out) state.
+  private openAccordionItems = new Set<NavItem>();
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -39,25 +43,20 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    // Run the global listener outside Angular's zone for performance
+    // Click-outside listener (for fly-outs)
     this.zone.runOutsideAngular(() => {
       this.globalClickListener = this.renderer.listen(
         this.document,
         'click',
         (event: Event) => {
-          // Check if a fly-out is open (sidebar collapsed + an item is open)
           const aFlyoutIsOpen =
             !this.isOpen && this.navItems.some((item) => !!item.isOpen);
-
           if (aFlyoutIsOpen) {
-            // Check if the click was *outside* the sidebar component
             const clickedInside = this.el.nativeElement.contains(event.target);
-
             if (!clickedInside) {
-              // If outside, close all submenus and run back inside Angular's zone
-              // to trigger change detection.
               this.zone.run(() => {
-                this.closeAllSubmenus();
+                // This only closes *visible* fly-outs, it does not touch our memory.
+                this.hideAllSubmenus();
               });
             }
           }
@@ -67,33 +66,58 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Check if the 'isOpen' property is changing
+    // POLISH 2: This is the new, glitch-free transition logic
     if (changes['isOpen']) {
-      // THIS IS THE FIX for your scenario:
-      // When sidebar state changes, close all submenus
-      // to prevent an open accordion from instantly
-      // becoming an open fly-out.
-      if (!changes['isOpen'].firstChange) {
-        this.closeAllSubmenus();
+      if (changes['isOpen'].firstChange) {
+        return; // Don't run on initial load
+      }
+
+      const isNowOpen = changes['isOpen'].currentValue;
+
+      if (isNowOpen) {
+        // --- SIDEBAR IS EXPANDING ---
+        // 1. Hide any stray fly-outs that might be open
+        this.hideAllSubmenus();
+        // 2. Restore the accordion state from our memory
+        this.restoreAccordionState();
+      } else {
+        // --- SIDEBAR IS COLLAPSING ---
+        // 1. THIS IS THE FIX: We *only* hide the visible submenus.
+        //    Your accordion state is safely saved in 'openAccordionItems'.
+        //    This prevents the "flash" of the accordion trying to
+        //    animate into a fly-out.
+        this.hideAllSubmenus();
       }
     }
   }
 
   ngOnDestroy(): void {
-    // Clean up the global listener to prevent memory leaks
     if (this.globalClickListener) {
       this.globalClickListener();
     }
   }
 
   /**
-   * Closes all submenus.
+   * Hides all *visible* submenus (by setting item.isOpen = false).
+   * This does NOT affect the 'openAccordionItems' memory Set.
    */
-  closeAllSubmenus(excludeItem?: NavItem): void {
+  hideAllSubmenus(): void {
     this.navItems.forEach((item) => {
-      // Only close *other* items
-      if (item !== excludeItem && item.children) {
+      if (item.children) {
         item.isOpen = false;
+      }
+    });
+  }
+
+  /**
+   * Restores the visible 'item.isOpen' state
+   * using our 'openAccordionItems' memory Set.
+   */
+  restoreAccordionState(): void {
+    this.navItems.forEach((item) => {
+      if (item.children) {
+        // Restore the visible state from our memory
+        item.isOpen = this.openAccordionItems.has(item);
       }
     });
   }
@@ -103,24 +127,30 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Toggles a submenu item.
-   * - If sidebar is open, it functions as an accordion.
-   * - If sidebar is collapsed, it functions as a fly-out menu.
+   * Toggles a submenu item using our separated logic.
    */
   toggleSubmenu(item: NavItem, event: Event): void {
     event.preventDefault();
-    event.stopPropagation(); // Stop event from bubbling up
+    event.stopPropagation();
 
     if (this.isOpen) {
-      // --- SIDEBAR IS OPEN: Accordion behavior ---
-      // Just toggle the clicked item's state
-      item.isOpen = !item.isOpen;
+      // --- ACCORDION LOGIC ---
+      // We update our *memory* first.
+      if (this.openAccordionItems.has(item)) {
+        this.openAccordionItems.delete(item);
+      } else {
+        this.openAccordionItems.add(item);
+      }
+      // Then, we update the *visible* state.
+      item.isOpen = this.openAccordionItems.has(item);
     } else {
-      // --- SIDEBAR IS COLLAPSED: Fly-out behavior ---
-      // MODIFIED FOR FIX #1:
-      // Just toggle the item's state to allow multiple fly-outs.
-      // The click-outside listener (ngOnInit) will handle closing them all.
-      item.isOpen = !item.isOpen;
+      // --- FLY-OUT LOGIC ---
+      // This is purely visual and temporary. It does NOT touch the memory Set.
+      // This allows multiple fly-outs.
+      const isCurrentlyOpen = !!item.isOpen;
+      // Close other flyouts for a cleaner (one-at-a-time) experience
+      this.hideAllSubmenus();
+      item.isOpen = !isCurrentlyOpen;
     }
   }
 }
