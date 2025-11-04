@@ -78,15 +78,19 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         // --- SIDEBAR IS EXPANDING ---
         // 1. Hide any stray fly-outs that might be open
         this.hideAllSubmenus();
-        // 2. Restore the accordion state from our memory
-        this.restoreAccordionState();
+        // 2. Small delay, then restore the accordion state from our memory
+        setTimeout(() => {
+          this.restoreAccordionState();
+        }, 50); // Small delay to ensure CSS transitions work smoothly
       } else {
         // --- SIDEBAR IS COLLAPSING ---
-        // 1. THIS IS THE FIX: We *only* hide the visible submenus.
-        //    Your accordion state is safely saved in 'openAccordionItems'.
-        //    This prevents the "flash" of the accordion trying to
-        //    animate into a fly-out.
+        // 1. Immediately hide all visible submenus
+        //    This prevents the "flash" of accordion->flyout transition
         this.hideAllSubmenus();
+        
+        // 2. After the collapse animation completes, we can restore
+        //    the flyout state if needed (for when users re-hover)
+        //    The CSS transition-delay handles the smooth appearance
       }
     }
   }
