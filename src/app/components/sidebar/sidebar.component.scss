@@ -289,8 +289,9 @@
   font-weight: 600;
 }
 
+/* FIXED TYPO: .sidebar.nav -> .sidebar-nav */
 .sidebar-nav ul li.has-submenu button.active::before,
-.sidebar.nav ul li.has-submenu button[aria-expanded='true']::before {
+.sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {
   display: none;
 }
 
@@ -458,9 +459,9 @@
   margin-right: 0;
 }
 
-/* Parent items when collapsed */
-.sidebar.collapsed .sidebar-nav ul li a,
-.sidebar.collapsed .sidebar-nav ul li button {
+/* FIXED: Only apply icon dimensions to TOP-LEVEL items */
+.sidebar.collapsed .sidebar-nav > ul > li > a,
+.sidebar.collapsed .sidebar-nav > ul > li > button {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -471,14 +472,14 @@
   justify-content: center;
 }
 
-.sidebar.collapsed .sidebar-nav ul li a:hover,
-.sidebar.collapsed .sidebar-nav ul li button:hover {
+.sidebar.collapsed .sidebar-nav > ul > li > a:hover,
+.sidebar.collapsed .sidebar-nav > ul > li > button:hover {
   transform: scale(1.05);
   background-color: var(--gray-200);
 }
 
-.sidebar.collapsed .sidebar-nav ul li a i:not(.toggle-icon),
-.sidebar.collapsed .sidebar-nav ul li button i:not(.toggle-icon) {
+.sidebar.collapsed .sidebar-nav > ul > li > a i:not(.toggle-icon),
+.sidebar.collapsed .sidebar-nav > ul > li > button i:not(.toggle-icon) {
   margin: 0;
   font-size: 1.1rem;
   transform: none;
@@ -498,12 +499,16 @@
   pointer-events: none;
 }
 
-/* CRITICAL FIX: Ensure submenu spans remain visible in flyout */
-.sidebar.collapsed .sidebar-nav > ul > li .submenu a > span {
-  opacity: 1 !important;
-  transform: none !important;
-  position: static !important;
-  pointer-events: auto !important;
+/* FIXED: Properly show submenu labels in flyout */
+.sidebar.collapsed .sidebar-nav ul li .submenu li a {
+  width: auto !important;
+  height: auto !important;
+  white-space: nowrap !important;
+  padding: 0.75rem 0.625rem 0.75rem 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  margin: 0 0 0.25rem 0 !important;
 }
 
 /* Allow overflow for flyout parent buttons when collapsed */
@@ -538,7 +543,8 @@
   box-shadow: var(--box-shadow-lg);
   border: 1px solid var(--border-color);
   padding: var(--spacing-sm);
-  z-index: 1031;
+  /* FIXED: Higher z-index than tooltips (1050) */
+  z-index: 1051;
   max-height: none !important;
   overflow: visible !important;
   border-left: none !important;
@@ -553,18 +559,21 @@
   pointer-events: auto;
   margin-bottom: 0;
   margin-top: 0;
-  /* This transition was moved here to fix the flash bug */
-  transition: opacity var(--transition-fast) ease,
-    visibility var(--transition-fast) ease;
-  transition-delay: var(--transition-duration);
+ transition: 
+    opacity var(--transition-fast) var(--transition-spring),
+    visibility var(--transition-fast) ease,
+    transform var(--transition-fast) var(--transition-spring);
+  transition-delay: 0s !important;
 }
 
+/* FIXED: Ensure submenu text is visible */
 .sidebar.collapsed .sidebar-nav ul li .submenu li a {
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   font-size: 0.875rem;
   color: var(--gray-700);
   margin: 0 0 0.25rem 0;
   font-weight: var(--font-weight-normal);
+  white-space: nowrap;
 }
 
 .sidebar.collapsed .sidebar-nav ul li .submenu li a i {
@@ -624,7 +633,6 @@
     margin-bottom: 0.25rem;
     margin-top: 0.25rem;
     overflow: visible !important;
-    /* Reset desktop transitions */
     transition: max-height var(--transition-duration) var(--transition-smooth),
       opacity var(--transition-duration) ease,
       margin var(--transition-duration) var(--transition-smooth);
@@ -739,6 +747,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
+  /* FIXED: Must be lower than flyout z-index (1051) */
   z-index: 1050;
   opacity: 0;
   visibility: hidden;
@@ -758,7 +767,7 @@
   display: none;
 }
 
-.sidebar.collapsed .sidebar-nav ul li.open > button[data-tooltip]:hover::after {
-  opacity: 0;
-  visibility: hidden;
+/* FIXED: Hide tooltip when submenu is open */
+.sidebar.collapsed .sidebar-nav ul li.open > button[data-tooltip]::after {
+  display: none !important;
 }
