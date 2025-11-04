@@ -580,9 +580,15 @@
   opacity: 0;
   visibility: hidden;
   
-  /* BUG FIX: Add a transition-delay. */
-  transition: opacity var(--transition-fast) ease var(--transition-fast),
-    visibility var(--transition-fast) ease var(--transition-fast);
+  /*
+   * === BUG FIX #2 (FLASHING) ===
+   * The transition-delay MUST be equal to or longer than
+   * the sidebar's collapse animation (var(--transition-duration)).
+   * This prevents the fly-out from trying to appear *while*
+   * the sidebar is still collapsing.
+   */
+  transition: opacity var(--transition-fast) ease var(--transition-duration),
+    visibility var(--transition-fast) ease var(--transition-duration);
 }
 
 .sidebar.collapsed .sidebar-nav ul li .submenu.open {
