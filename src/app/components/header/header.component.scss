@@ -35,6 +35,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  min-width: 0; /* Added for flex text truncation */
 }
 
 .header-title {
@@ -346,24 +347,31 @@
     padding: 0 var(--spacing-md);
     justify-content: space-between;
   }
+  
+  .header-left-controls {
+    /* Allow left controls to shrink and truncate text */
+    flex: 1;
+    min-width: 0;
+  }
 
-  /* --- THIS IS THE NEW LOGIC --- */
+  /* --- THIS IS THE NEW LOGIC (ALIGNED LEFT) --- */
 
   /* 1. Show the REAL dynamic title on mobile */
   .header-title {
     display: block; /* <-- OVERRIDE the 'display: none' from above */
     
-    /* 2. Center the title */
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    /* 2. Align left (by removing absolute positioning) */
+    position: static;
+    transform: none;
     
     /* 3. Handle long titles gracefully */
-    /* (100% width - ~50px for hamburger - ~50px for user menu = 100px) */
-    max-width: calc(100vw - 120px); 
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    
+    /* Allow it to take up space but not push the right controls */
+    flex: 1;
+    min-width: 0; /* For ellipsis to work in flex */
   }
 
   /* 4. Hide the FAKE static 'HMSG Dashboard' title */
@@ -381,8 +389,8 @@
     display: none; /* Make sure it's hidden here too */
   }
 
-  .header-title {
-     /* Adjust max-width for very small screens if needed */
-     max-width: calc(100vw - 110px);
-  }
+  /* REMOVED .header-title max-width rule from here.
+    The rule from (max-width: 992px) will cascade down 
+    and handle truncation correctly.
+  */
 }

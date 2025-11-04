@@ -1,20 +1,17 @@
 <div class="action-footer-container" *ngIf="actions$ | async as actions">
   <div class="action-buttons">
-    
     <ng-container *ngFor="let action of actions">
-    
-      <button 
+      <button
         *appHasPermission="action.permission"
-        type="button" 
+        type="button"
         class="btn {{ action.className || 'btn-secondary' }}"
         [disabled]="action.disabled"
-        (click)="executeAction(action)">
-        
-        <i *ngIf="action.icon" class="{{ action.icon }} mr-1"></i>
-        {{ action.label }}
+        (click)="executeAction(action)"
+        [title]="action.label"
+      >
+        <i *ngIf="action.icon" class="{{ action.icon }}"></i>
+        <span class="btn-label">{{ action.label }}</span>
       </button>
-
     </ng-container>
-
   </div>
 </div>

@@ -26,10 +26,6 @@
   position: relative;
 }
 
-/* ALL .sidebar STYLES HAVE BEEN MOVED 
-  TO sidebar.component.scss
-*/
-
 /* ========== SIDEBAR BACKDROP ========== */
 .sidebar-backdrop {
   display: none;
@@ -65,7 +61,6 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
   background-color: var(--white);
@@ -91,15 +86,13 @@
   }
 }
 
-/* ALL .dashboard-header AND .user-menu STYLES HAVE BEEN MOVED 
-  TO header.component.scss
-*/
-
 /* ========== DASHBOARD CONTENT ========== */
 .dashboard-content {
   flex-grow: 1;
   padding: 0.75rem var(--spacing-lg);
   animation: scaleIn 0.3s var(--transition-smooth);
+  overflow-y: auto;
+  min-height: 0;
 }
 
 @media (max-width: 992px) {
@@ -111,5 +104,53 @@
 @media (max-width: 480px) {
   .dashboard-content {
     padding: var(--spacing-md);
+  }
+}
+
+/*
+ * === MODIFIED STYLES ===
+ * Animate max-height to collapse the element
+ * and allow the layout to reflow.
+ */
+app-header {
+  flex-shrink: 0; /* Prevent it from shrinking */
+  z-index: 1010; /* Keep it above content */
+
+  /* === MODIFICATION === */
+  max-height: var(--header-height); /* Set a max-height */
+  overflow: hidden; /* Hide content when collapsing */
+  transition: max-height var(--transition-fast) var(--transition-smooth);
+
+  &.hidden {
+    max-height: 0; /* Animate to 0 */
+  }
+}
+
+/*
+ * === MODIFIED STYLES ===
+ * Animate max-height, padding, and border
+ * to fully collapse the footer.
+ */
+:host ::ng-deep app-action-footer {
+  display: block; /* Ensure it behaves like a block element */
+  flex-shrink: 0; /* Prevent it from shrinking */
+  background-color: var(--white);
+  border-top: 1px solid var(--gray-200);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+  z-index: 1000; /* Keep it above scrolled content if needed */
+
+  /* === MODIFICATION === */
+  max-height: 100px; /* Set a value larger than the footer's content */
+  overflow: hidden;
+  transition: max-height var(--transition-fast) var(--transition-smooth),
+    padding-top var(--transition-fast) var(--transition-smooth),
+    padding-bottom var(--transition-fast) var(--transition-smooth),
+    border-width var(--transition-fast) var(--transition-smooth);
+
+  &.hidden {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
   }
 }

@@ -2,10 +2,10 @@ import {
   Component,
   OnInit,
   OnDestroy,
-  ElementRef,
-  ViewChild,
-  Renderer2,
-  AfterViewInit
+  // ElementRef, <--- REMOVE
+  // ViewChild, <--- REMOVE
+  // Renderer2, <--- REMOVE
+  // AfterViewInit <--- REMOVE
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -13,7 +13,7 @@ import {
   RouterModule,
   RouterOutlet,
   NavigationEnd,
-  ActivatedRoute
+  ActivatedRoute,
 } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter, map, mergeMap, startWith } from 'rxjs/operators';
@@ -37,13 +37,13 @@ import { HeaderComponent } from '../components/header/header.component';
     RouterModule,
     HasPermissionDirective,
     ActionFooterComponent,
-    SidebarComponent, // <-- 2. ADD
-    HeaderComponent   // <-- 3. ADD
+    SidebarComponent,
+    HeaderComponent,
   ],
   templateUrl: './main-layout.component.html',
-  styleUrl: './main-layout.component.scss'
+  styleUrl: './main-layout.component.scss',
 })
-export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MainLayoutComponent implements OnInit, OnDestroy { // <--- REMOVE AfterViewInit
   isSidebarOpen = false;
 
   currentUser: User | null = null;
@@ -52,20 +52,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   private userSubscription: Subscription | null = null;
   private navSubscription: Subscription | null = null;
 
-  // --- REMOVED USER MENU STATE ---
   isHeaderHidden: boolean = false;
+  isFooterHidden: boolean = false;
   private lastScrollTop: number = 0;
-  private scrollListener!: () => void;
+  // private scrollListener!: () => void; <--- REMOVE
 
-  // --- REMOVED userMenuContainer ---
-  @ViewChild('mainPanel') mainPanel!: ElementRef;
+  // @ViewChild('mainPanel') mainPanel!: ElementRef; <--- REMOVE
 
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
 
   constructor(
     private authService: AuthService,
-    private renderer: Renderer2,
+    // private renderer: Renderer2, <--- REMOVE
     private router: Router,
     private activatedRoute: ActivatedRoute
   ) {}
@@ -105,7 +104,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
       )
       .subscribe((data: any) => {
         console.log('Router data object:', data);
-        this.currentScreenName = data['title'] || 'Dashboard'; // Fallback
+        this.currentScreenName = data['title'] || 'Dashboard';
       });
 
     // 3. Check window size
@@ -116,21 +115,21 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
   private deepCopyNavItems(items: NavItem[]): NavItem[] {
     return items.map(item => ({
       ...item,
-      children: item.children ? this.deepCopyNavItems(item.children) : undefined
+      children: item.children ? this.deepCopyNavItems(item.children) : undefined,
     }));
   }
 
-  ngAfterViewInit(): void {
-    if (this.mainPanel) {
-      this.scrollListener = this.renderer.listen(
-        this.mainPanel.nativeElement,
-        'scroll',
-        event => {
-          this.onMainPanelScroll(event);
-        }
-      );
-    }
-  }
+  // ngAfterViewInit(): void { <--- REMOVE THIS ENTIRE METHOD
+  //   if (this.mainPanel) {
+  //     this.scrollListener = this.renderer.listen(
+  //       this.mainPanel.nativeElement,
+  //       'scroll',
+  //       event => {
+  //         this.onMainPanelScroll(event);
+  //       }
+  //     );
+  //   }
+  // }
 
   ngOnDestroy(): void {
     if (this.userSubscription) {
@@ -141,9 +140,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     window.removeEventListener('resize', this.checkWindowSize.bind(this));
 
-    if (this.scrollListener) {
-      this.scrollListener();
-    }
+    // if (this.scrollListener) { <--- REMOVE THIS BLOCK
+    //   this.scrollListener();
+    // }
   }
 
   private checkWindowSize(): void {
@@ -154,14 +153,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  private onMainPanelScroll(event: Event): void {
+  // RENAME THIS METHOD
+  public onContentScroll(event: Event): void {
     const scrollTop = (event.target as HTMLElement).scrollTop;
-    const headerHeight = 60;
+    const headerHeight = 60; // You can also get this dynamically
 
     if (scrollTop > this.lastScrollTop && scrollTop > headerHeight) {
+      // Scrolling down - hide header and footer
       this.isHeaderHidden = true;
+      this.isFooterHidden = true;
     } else if (scrollTop < this.lastScrollTop) {
+      // Scrolling up - show header and footer
       this.isHeaderHidden = false;
+      this.isFooterHidden = false;
     }
 
     this.lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;

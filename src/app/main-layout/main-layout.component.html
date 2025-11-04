@@ -11,7 +11,7 @@
     (click)="toggleSidebar()"
   ></div>
 
-  <div class="main-panel" #mainPanel [ngClass]="{ 'collapsed': !isSidebarOpen }">
+  <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
     <app-header
       [class.hidden]="isHeaderHidden"
       [currentUser]="currentUser"
@@ -22,9 +22,10 @@
       (logoutClicked)="logout()"
     ></app-header>
 
-    <main class="dashboard-content">
+    <main class="dashboard-content" (scroll)="onContentScroll($event)">
       <router-outlet></router-outlet>
     </main>
-    <app-action-footer></app-action-footer>
+    
+    <app-action-footer [class.hidden]="isFooterHidden"></app-action-footer>
   </div>
 </div>
