@@ -1,0 +1,113 @@
+<aside
+  class="sidebar"
+  [ngClass]="{ 'collapsed': !isOpen, 'open': isOpen }"
+>
+  <div class="sidebar-header">
+    <div class="sidebar-logo-wrapper">
+      <img
+        src="HMSG.ico"
+        alt="Logo Hoan My Saigon"
+        class="sidebar-logo"
+      />
+      <button
+        class="sidebar-toggle-btn"
+        (click)="onToggleSidebarClick()"
+        aria-label="Toggle sidebar"
+      >
+        <svg
+          width="1.2em"
+          height="1.2em"
+          viewBox="0 0 105 105"
+          xmlns="http://www.w3.org/2000/svg"
+          style="display: block"
+        >
+          <rect
+            y="10"
+            width="100"
+            height="80"
+            rx="15"
+            ry="15"
+            fill="currentColor"
+          />
+          <rect
+            x="10"
+            y="25"
+            width="25"
+            height="10"
+            rx="5"
+            ry="5"
+            fill="#fff"
+          />
+          <rect
+            x="10"
+            y="40"
+            width="25"
+            height="10"
+            rx="5"
+            ry="5"
+            fill="#fff"
+          />
+          <rect
+            x="10"
+            y="55"
+            width="25"
+            height="10"
+            rx="5"
+            ry="5"
+            fill="#fff"
+          />
+          <rect
+            x="42"
+            y="20"
+            width="50"
+            height="60"
+            rx="5"
+            ry="5"
+            fill="#fff"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" role="navigation">
+    <ul>
+      <ng-container *ngFor="let item of navItems">
+        <li
+          *appHasPermission="item.permissions"
+          [class.has-submenu]="item.children"
+          [class.open]="item.isOpen"
+        >
+          <ng-container *ngIf="item.children; else regularLink">
+            <button
+              (click)="toggleSubmenu(item, $event)"
+              [attr.aria-expanded]="item.isOpen"
+            >
+              <i [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+
+            <ul class="submenu" [class.open]="item.isOpen">
+              <ng-container *ngFor="let child of item.children">
+                <li *appHasPermission="child.permissions">
+                  <a [routerLink]="child.link" routerLinkActive="active">
+                    <i [class]="child.icon"></i>
+                    <span>{{ child.label }}</span>
+                  </a>
+                </li>
+              </ng-container>
+            </ul>
+          </ng-container>
+
+          <ng-template #regularLink>
+            <a [routerLink]="item.link" routerLinkActive="active">
+              <i [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+            </a>
+          </ng-template>
+        </li>
+      </ng-container>
+    </ul>
+  </nav>
+</aside>

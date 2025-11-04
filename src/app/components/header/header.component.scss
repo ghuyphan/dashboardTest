@@ -1,0 +1,388 @@
+:host {
+  /*
+  Variables copied from main-layout to ensure
+  this standalone component has access to them.
+  */
+  --header-height: 50px;
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-duration: 0.3s;
+  --transition-fast: 0.2s;
+}
+
+/* ========== HEADER STYLES ========== */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  background-color: var(--white);
+  height: var(--header-height);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: transform var(--transition-duration) var(--transition-smooth),
+    box-shadow var(--transition-fast) ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.dashboard-header.hidden {
+  transform: translateY(-100%);
+}
+
+.header-left-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.header-title {
+  display: block;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  white-space: nowrap;
+}
+
+@media (max-width: 992px) {
+  /* This is the rule that was hiding the real title. We will override it below. */
+  .header-title {
+    display: none;
+  }
+}
+
+.mobile-sidebar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--gray-700);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  transition: background-color var(--transition-fast) ease,
+    color var(--transition-fast) ease;
+  line-height: 1;
+}
+
+.mobile-sidebar-toggle:hover {
+  background-color: var(--gray-200);
+  color: var(--dark-teal);
+}
+
+@media (max-width: 992px) {
+  .mobile-sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.header-right-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* --- User Menu --- */
+.user-menu {
+  position: relative;
+}
+
+.user-menu-toggle {
+  border: var(--border-width) solid var(--border-color);
+  background-color: var(--desert-storm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast) ease,
+    transform var(--transition-fast) var(--transition-spring);
+}
+
+.header-avatar-initials {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: var(--aqua-island);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: var(--border-width) solid var(--border-color);
+  transition: border-color var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
+}
+
+.user-menu-toggle:hover {
+  background-color: var(--gray-100);
+}
+
+.user-menu-toggle:hover .header-avatar-initials {
+  border-color: var(--gray-300);
+  box-shadow: var(--box-shadow-md);
+}
+
+.user-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.chevron-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--gray-600);
+  margin-left: var(--spacing-xs);
+  transition: transform var(--transition-fast) var(--transition-smooth);
+}
+
+.user-menu-toggle[aria-expanded='true'] .chevron-icon {
+  transform: rotate(180deg);
+}
+
+/* --- User Menu Dropdown --- */
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + var(--spacing-sm));
+  right: 0;
+  background-color: var(--gray-100);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  border: var(--border-width) solid var(--border-color);
+  width: 20rem;
+  z-index: 1100;
+  overflow: hidden;
+  padding: var(--spacing-sm);
+  animation: slideDownFade 0.25s var(--transition-smooth);
+  transform-origin: top right;
+}
+
+@media (max-width: 480px) {
+  .user-menu-dropdown {
+    width: calc(100vw - var(--spacing-xl));
+    max-width: none;
+    right: calc(var(--spacing-md) * -1);
+    top: calc(100% + var(--spacing-sm));
+  }
+}
+
+.dropdown-section-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow-sm);
+  margin-bottom: var(--spacing-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast) ease;
+}
+
+.dropdown-section-card:last-child {
+  margin-bottom: 0;
+}
+
+.dropdown-profile-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  transition: background-color var(--transition-fast) ease,
+    transform var(--transition-fast) ease;
+  cursor: pointer;
+}
+
+.dropdown-avatar-initials {
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  border-radius: 50%;
+  margin-right: var(--spacing-sm);
+  background-color: var(--aqua-island);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  transition: transform var(--transition-fast) var(--transition-spring);
+  border: var(--border-width) solid var(--gray-100);
+}
+
+.dropdown-profile-header:hover {
+  background-color: var(--gray-100);
+}
+
+.dropdown-profile-header:hover .dropdown-avatar-initials {
+  transform: scale(1.05);
+}
+
+.dropdown-profile-header:active {
+  transform: scale(0.98);
+}
+
+.dropdown-profile-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.user-role {
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-normal);
+  color: var(--gray-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.user-menu-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.user-menu-items li button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-800);
+  cursor: pointer;
+  transition: background-color var(--transition-fast) ease,
+    color var(--transition-fast) ease,
+    transform var(--transition-fast) ease;
+  border-radius: var(--border-radius-sm);
+}
+
+.menu-icon-bg {
+  width: var(--spacing-xl);
+  height: var(--spacing-xl);
+  min-width: var(--spacing-xl);
+  border-radius: 50%;
+  background-color: var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast) ease,
+    transform var(--transition-fast) var(--transition-spring);
+}
+
+.menu-icon-bg i {
+  font-size: 0.9375rem;
+  color: var(--gray-800);
+  margin: 0;
+  width: auto;
+  transition: color var(--transition-fast) ease;
+}
+
+.user-menu-items li button span {
+  line-height: 1;
+  flex: 1;
+}
+
+.user-menu-items li button:hover {
+  background-color: var(--gray-200);
+  color: var(--gray-900);
+}
+
+.user-menu-items li button:hover .menu-icon-bg {
+  background-color: var(--gray-300);
+  transform: scale(1.1);
+}
+
+.user-menu-items li button:active {
+  transform: scale(0.98);
+}
+
+.user-menu-items li.logout-item {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.logout-btn {
+  color: var(--color-danger);
+}
+
+.logout-btn .menu-icon-bg {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.logout-btn .menu-icon-bg i {
+  color: var(--color-danger);
+}
+
+.logout-btn:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--color-danger);
+}
+
+.logout-btn:hover .menu-icon-bg {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+/* --- Mobile Header Tweaks --- */
+@media (max-width: 992px) {
+  .dashboard-header {
+    padding: 0 var(--spacing-md);
+    justify-content: space-between;
+  }
+
+  /* --- THIS IS THE NEW LOGIC --- */
+
+  /* 1. Show the REAL dynamic title on mobile */
+  .header-title {
+    display: block; /* <-- OVERRIDE the 'display: none' from above */
+    
+    /* 2. Center the title */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* 3. Handle long titles gracefully */
+    /* (100% width - ~50px for hamburger - ~50px for user menu = 100px) */
+    max-width: calc(100vw - 120px); 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 4. Hide the FAKE static 'HMSG Dashboard' title */
+  .dashboard-header::before {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header {
+    height: var(--header-height);
+  }
+
+  .dashboard-header::before {
+    display: none; /* Make sure it's hidden here too */
+  }
+
+  .header-title {
+     /* Adjust max-width for very small screens if needed */
+     max-width: calc(100vw - 110px);
+  }
+}
