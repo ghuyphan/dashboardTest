@@ -30,9 +30,6 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   @Output() toggleSidebar = new EventEmitter<void>();
 
   private globalClickListener!: () => void;
-
-  // POLISH 1: This Set *remembers* the accordion state,
-  // completely separate from the visible (fly-out) state.
   private openAccordionItems = new Set<NavItem>();
 
   constructor(
@@ -43,7 +40,6 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    // Click-outside listener (for fly-outs)
     this.zone.runOutsideAngular(() => {
       this.globalClickListener = this.renderer.listen(
         this.document,
@@ -55,7 +51,6 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
             const clickedInside = this.el.nativeElement.contains(event.target);
             if (!clickedInside) {
               this.zone.run(() => {
-                // This only closes *visible* fly-outs, it does not touch our memory.
                 this.hideAllSubmenus();
               });
             }
@@ -66,31 +61,18 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // POLISH 2: This is the new, glitch-free transition logic
     if (changes['isOpen']) {
       if (changes['isOpen'].firstChange) {
-        return; // Don't run on initial load
+        return;
       }
 
       const isNowOpen = changes['isOpen'].currentValue;
 
       if (isNowOpen) {
-        // --- SIDEBAR IS EXPANDING ---
-        // 1. Hide any stray fly-outs that might be open
         this.hideAllSubmenus();
-        // 2. Small delay, then restore the accordion state from our memory
-        setTimeout(() => {
-          this.restoreAccordionState();
-        }, 50); // Small delay to ensure CSS transitions work smoothly
+        this.restoreAccordionState();
       } else {
-        // --- SIDEBAR IS COLLAPSING ---
-        // 1. Immediately hide all visible submenus
-        //    This prevents the "flash" of accordion->flyout transition
         this.hideAllSubmenus();
-        
-        // 2. After the collapse animation completes, we can restore
-        //    the flyout state if needed (for when users re-hover)
-        //    The CSS transition-delay handles the smooth appearance
       }
     }
   }
@@ -101,10 +83,6 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  /**
-   * Hides all *visible* submenus (by setting item.isOpen = false).
-   * This does NOT affect the 'openAccordionItems' memory Set.
-   */
   hideAllSubmenus(): void {
     this.navItems.forEach((item) => {
       if (item.children) {
@@ -113,14 +91,9 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  /**
-   * Restores the visible 'item.isOpen' state
-   * using our 'openAccordionItems' memory Set.
-   */
   restoreAccordionState(): void {
     this.navItems.forEach((item) => {
       if (item.children) {
-        // Restore the visible state from our memory
         item.isOpen = this.openAccordionItems.has(item);
       }
     });
@@ -130,29 +103,19 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
     this.toggleSidebar.emit();
   }
 
-  /**
-   * Toggles a submenu item using our separated logic.
-   */
   toggleSubmenu(item: NavItem, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
 
     if (this.isOpen) {
-      // --- ACCORDION LOGIC ---
-      // We update our *memory* first.
       if (this.openAccordionItems.has(item)) {
         this.openAccordionItems.delete(item);
       } else {
         this.openAccordionItems.add(item);
       }
-      // Then, we update the *visible* state.
       item.isOpen = this.openAccordionItems.has(item);
     } else {
-      // --- FLY-OUT LOGIC ---
-      // This is purely visual and temporary. It does NOT touch the memory Set.
-      // This allows multiple fly-outs.
       const isCurrentlyOpen = !!item.isOpen;
-      // Close other flyouts for a cleaner (one-at-a-time) experience
       this.hideAllSubmenus();
       item.isOpen = !isCurrentlyOpen;
     }

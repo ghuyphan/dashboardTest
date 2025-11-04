@@ -1,8 +1,4 @@
 :host {
-  /*
-  Variables copied from main-layout to ensure
-  this standalone component has access to them.
-  */
   --header-height: 50px;
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 60px;
@@ -26,15 +22,11 @@
     width var(--transition-duration) var(--transition-smooth);
   z-index: 1030;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
-
-  /* --- FIX 1: This is now the ONLY scroll container --- */
-  overflow-y: auto;
-
+  overflow: visible;
   display: flex;
   flex-direction: column;
   will-change: transform, width;
 
-  /* Prevent text wrapping during collapse */
   * {
     white-space: nowrap;
   }
@@ -154,12 +146,6 @@
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   flex-grow: 1;
-
-  /*
-  * --- FIX 1 (Tooltip Bug) ---
-  * This is now 'visible' to allow tooltips
-  * to escape the container's bounds.
-  */
   overflow: visible;
 }
 
@@ -174,15 +160,9 @@
   position: relative;
 }
 
-/*
-  * --- TOOLTIP FIX ---
-  * Lifts the <li> on hover to ensure its tooltip
-  * renders *above* sibling <li> elements.
-*/
 .sidebar:not(.collapsed) .sidebar-nav ul li:hover {
   z-index: 10;
 }
-
 
 /* --- Regular Links & Submenu Toggles --- */
 .sidebar-nav ul li a,
@@ -291,29 +271,25 @@
 }
 
 /* --- Submenu Parent Styling --- */
-/* Remove special styling when submenu is just open */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] {
   background-color: transparent;
   color: var(--gray-700);
   font-weight: var(--font-weight-normal);
 }
 
-/* But still show hover */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']:hover {
   background-color: var(--gray-200);
   color: var(--gray-800);
 }
 
-/* Only highlight when the parent button itself is active */
 .sidebar-nav ul li.has-submenu button.active {
   background-color: var(--gray-200);
   color: var(--gray-800);
   font-weight: 600;
 }
 
-/* Hide the blue "active" line for parent buttons */
 .sidebar-nav ul li.has-submenu button.active::before,
-.sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {
+.sidebar.nav ul li.has-submenu button[aria-expanded='true']::before {
   display: none;
 }
 
@@ -356,8 +332,6 @@
   opacity: 1;
   margin-bottom: 0.25rem;
   margin-top: 0.25rem;
-
-  /* TOOLTIP FIX: Allow tooltips to be visible */
   overflow: visible;
 }
 
@@ -387,7 +361,7 @@
 }
 
 .submenu li a::before {
-  display: none; /* Removed the dot */
+  display: none;
 }
 
 .submenu li a:hover {
@@ -425,7 +399,6 @@
   transform: scale(1.15);
 }
 
-
 /* * ====================================
   * === COLLAPSED STATE STYLES
   * ====================================
@@ -435,12 +408,9 @@
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   width: var(--sidebar-width-collapsed);
-
-  /* FIX FOR TOOLTIP AND FLY-OUT CLIPPING */
   overflow: visible;
 }
 
-/* FIX FOR TOOLTIP AND FLY-OUT CLIPPING */
 .sidebar.collapsed .sidebar-nav {
   overflow: visible;
 }
@@ -468,7 +438,6 @@
 
 .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper {
   padding-left: 0.125rem;
-  /* 2px - THE CENTERING FIX */
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
@@ -516,9 +485,7 @@
 }
 
 /*
-* --- FIX 2 (Flyout Text Bug) ---
-* Use the direct child selector (>) to *only* hide
-* the spans on the *top-level* items.
+* This rule *only* hides the spans on the *top-level* items.
 */
 .sidebar.collapsed .sidebar-nav > ul > li > a > span,
 .sidebar.collapsed .sidebar-nav > ul > li > button > span {
@@ -529,11 +496,12 @@
 }
 
 /*
-* This rule *explicitly ensures* that spans *inside*
-* the flyout submenu ARE visible, winning the CSS war.
-* IMPORTANT: Using !important to override the absolute positioning above
+* ==========================================================
+* === THIS IS THE FIX ===
+* This selector is now more specific and *will win* the CSS war.
+* ==========================================================
 */
-.sidebar.collapsed .sidebar-nav ul li .submenu li a span {
+.sidebar.collapsed .sidebar-nav > ul > li > .submenu > li > a > span {
   opacity: 1 !important;
   transform: none !important;
   position: static !important;
@@ -551,20 +519,16 @@
   opacity: 0 !important;
 }
 
-
 /* * ===========================================
   * === Collapsed State FLY-OUT Overrides
   * ===========================================
 */
 
 .sidebar.collapsed .sidebar-nav ul li .submenu {
-  /* Fly-out positioning */
   position: absolute;
   left: 100%;
   top: 0;
-  margin-left: 0.5rem !important; // Override accordion margin
-
-  /* Appearance */
+  margin-left: 0.5rem !important;
   min-width: 220px;
   background-color: var(--desert-storm);
   border-radius: var(--border-radius-md);
@@ -572,43 +536,28 @@
   border: 1px solid var(--border-color);
   padding: var(--spacing-sm);
   z-index: 1031;
-
-  /* Overrides for accordion styles */
-  max-height: none !important; // Override accordion
-  overflow: visible !important; // Override accordion
-  border-left: none !important; // Override accordion
-
-  /* Animation */
+  max-height: none !important;
+  overflow: visible !important;
+  border-left: none !important;
   opacity: 0;
   visibility: hidden;
-  pointer-events: none; /* Prevent interaction when hidden */
-
-  /*
-    * This transition applies when CLOSING the flyout.
-    * The delay prevents it from appearing during sidebar collapse.
-    */
-  transition: opacity var(--transition-fast) ease,
-    visibility var(--transition-fast) ease;
+  pointer-events: none;
+  /* transition: opacity var(--transition-fast) ease,
+    visibility var(--transition-fast) ease; */
 }
 
 .sidebar.collapsed .sidebar-nav ul li .submenu.open {
   opacity: 1;
   visibility: visible;
-  pointer-events: auto; /* Re-enable interaction when open */
-  margin-bottom: 0; // Override accordion margin
-  margin-top: 0; // Override accordion margin
-  
-  /* 
-    * Add a delay when OPENING to smooth the transition
-    * from accordion to flyout during sidebar collapse
-    */
+  pointer-events: auto;
+  margin-bottom: 0;
+  margin-top: 0;
+  /* This transition was moved here to fix the flash bug */
+  transition: opacity var(--transition-fast) ease,
+    visibility var(--transition-fast) ease;
   transition-delay: var(--transition-duration);
 }
 
-/*
-  This ensures that items *inside* the fly-out
-  look just like the items in the accordion.
-*/
 .sidebar.collapsed .sidebar-nav ul li .submenu li a {
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   font-size: 0.875rem;
@@ -625,13 +574,12 @@
   transform: scale(1);
 }
 
-
 /* --- Mobile (Responsive) Overrides --- */
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s var(--transition-smooth);
-    overflow-x: hidden; /* Re-apply for mobile sliding */
+    overflow-x: hidden;
     overflow-y: auto;
   }
 
@@ -645,16 +593,11 @@
     width: var(--sidebar-width);
     padding-left: 0.625rem;
     padding-right: 0.625rem;
-    overflow-x: hidden; /* Re-apply for mobile sliding */
+    overflow-x: hidden;
     overflow-y: auto;
   }
 
-  /*
-    On mobile, we DON'T want fly-outs.
-    Reset to default accordion styles.
-  */
   .sidebar.collapsed .sidebar-nav ul li .submenu {
-    /* Reset all fly-out styles */
     position: relative;
     left: auto;
     top: auto;
@@ -664,36 +607,29 @@
     border: none;
     padding: 0;
     z-index: 1;
-
-    /* Re-apply accordion styles */
     max-height: 0 !important;
     overflow: hidden !important;
     border-left: 2px solid var(--gray-300) !important;
     opacity: 0;
     visibility: visible;
-
-    /* Remove the fly-out transition delay */
     transition: max-height var(--transition-duration) var(--transition-smooth),
       opacity var(--transition-duration) ease,
       margin var(--transition-duration) var(--transition-smooth);
   }
 
   .sidebar.collapsed .sidebar-nav ul li .submenu.open {
-    /* Re-apply accordion open styles */
     opacity: 1;
-    max-height: 500px;
+    max-height: 500px !important;
     margin-bottom: 0.25rem;
     margin-top: 0.25rem;
-
-    /* TOOLTIP FIX: Re-apply visible overflow */
     overflow: visible !important;
+    /* Reset desktop transitions */
+    transition: max-height var(--transition-duration) var(--transition-smooth),
+      opacity var(--transition-duration) ease,
+      margin var(--transition-duration) var(--transition-smooth);
+    transition-delay: 0s;
   }
 
-  /*
-    On mobile, the sidebar acts like it's
-    always "open" even when "collapsed" (hidden).
-    So, we reset all the "collapsed" styles.
-  */
   .sidebar.collapsed .sidebar-header {
     justify-content: flex-start;
     padding: 0 var(--spacing-xs);
@@ -730,7 +666,7 @@
     background-color: transparent;
   }
 
-  .sidebar.collapsed .sidebar-header .sidebar-logo {
+  .sidebar.collapsed .sidebar-header .logo {
     margin-right: 0.625rem;
   }
 
@@ -783,10 +719,6 @@
   position: relative;
 }
 
-/*
-  GLOBAL TOOLTIP STYLES
-  These now apply in *all* states (expanded, collapsed, accordion)
-*/
 .sidebar-nav ul li a[data-tooltip]::after,
 .sidebar-nav ul li button[data-tooltip]::after {
   content: attr(data-tooltip);
@@ -802,11 +734,11 @@
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
-  z-index: 1050; /* This makes it an overlay */
+  z-index: 1050;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease 0.1s, visibility 0.2s ease 0.1s; /* Added delay */
+  transition: opacity 0.2s ease 0.1s, visibility 0.2s ease 0.1s;
 }
 
 /* Show tooltip on hover (global) */
@@ -816,18 +748,15 @@
   visibility: visible;
 }
 
-/*
-  Hide tooltips for submenu items when sidebar is EXPANDED
-  (they don't need tooltips when text is visible)
-*/
 .sidebar:not(.collapsed) .submenu li a[data-tooltip]::after {
+  /* Removed display:none to fix tooltip bug */
+}
+
+/* Hide tooltips for items *inside* the flyout menu */
+.sidebar.collapsed .submenu li a[data-tooltip]::after {
   display: none;
 }
 
-/*
-  This hides the parent item's tooltip when the
-  fly-out menu is open (prevents overlap).
-*/
 .sidebar.collapsed .sidebar-nav ul li.open > button[data-tooltip]:hover::after {
   opacity: 0;
   visibility: hidden;
