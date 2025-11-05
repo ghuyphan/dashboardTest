@@ -97,8 +97,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/@angular/cdk/overlay.css"
+              "src/styles.scss"
             ],
             "scripts": []
           }

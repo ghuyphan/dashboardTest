@@ -16,17 +16,11 @@ import { DOCUMENT, CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
-import { TooltipDirective } from '../../directives/tooltip.directive'; // <-- IMPORT OUR NEW DIRECTIVE
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    HasPermissionDirective,
-    TooltipDirective, // <-- ADD IT HERE
-  ],
+  imports: [CommonModule, RouterModule, HasPermissionDirective],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
 })
@@ -51,10 +45,8 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
         this.document,
         'click',
         (event: Event) => {
-          // Close flyout if clicking outside sidebar
           const aFlyoutIsOpen =
             !this.isOpen && this.navItems.some((item) => !!item.isOpen);
-          
           if (aFlyoutIsOpen) {
             const clickedInside = this.el.nativeElement.contains(event.target);
             if (!clickedInside) {
@@ -73,15 +65,13 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
       if (changes['isOpen'].firstChange) {
         return;
       }
-      
+
       const isNowOpen = changes['isOpen'].currentValue;
 
       if (isNowOpen) {
-        // If sidebar is opening, close all submenus and restore accordion state
         this.hideAllSubmenus();
         this.restoreAccordionState();
       } else {
-        // If sidebar is closing, just close all submenus
         this.hideAllSubmenus();
       }
     }
@@ -118,28 +108,16 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
     event.stopPropagation();
 
     if (this.isOpen) {
-      // --- ACCORDION LOGIC (Sidebar Open) ---
-      const wasOpen = this.openAccordionItems.has(item);
-      if (wasOpen) {
+      if (this.openAccordionItems.has(item)) {
         this.openAccordionItems.delete(item);
       } else {
         this.openAccordionItems.add(item);
       }
-      item.isOpen = !wasOpen;
-
+      item.isOpen = this.openAccordionItems.has(item);
     } else {
-      // --- FLYOUT LOGIC (Sidebar Collapsed) ---
-      const wasOpen = item.isOpen;
-      // Close all other flyouts first
+      const isCurrentlyOpen = !!item.isOpen;
       this.hideAllSubmenus();
-      // Toggle the current item
-      item.isOpen = !wasOpen;
+      item.isOpen = !isCurrentlyOpen;
     }
-  }
-
-  // Helper to be called from the template when a link in the flyout is clicked
-  onFlyoutLinkClick(): void {
-    // This will bubble to the ul(click) and close
-    this.hideAllSubmenus();
   }
 }

@@ -82,20 +82,20 @@
             <button
               (click)="toggleSubmenu(item, $event)"
               [attr.aria-expanded]="item.isOpen"
-              [appTooltip]="isOpen ? '' : item.label"
-              [class.active]="item.isOpen"
+              [attr.data-tooltip]="item.label"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
 
-            <ul class="submenu" [class.open]="item.isOpen" (click)="onFlyoutLinkClick()">
+            <ul class="submenu" [class.open]="item.isOpen">
               <ng-container *ngFor="let child of item.children">
                 <li *appHasPermission="child.permissions">
                   <a
                     [routerLink]="child.link"
                     routerLinkActive="active"
+                    [attr.data-tooltip]="child.label"
                   >
                     <i [class]="child.icon"></i>
                     <span>{{ child.label }}</span>
@@ -109,7 +109,7 @@
             <a
               [routerLink]="item.link"
               routerLinkActive="active"
-              [appTooltip]="isOpen ? '' : item.label"
+              [attr.data-tooltip]="item.label"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
