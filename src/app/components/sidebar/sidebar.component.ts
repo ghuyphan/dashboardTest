@@ -3,18 +3,17 @@ import {
   Input,
   Output,
   EventEmitter,
-  ElementRef,
-  NgZone,
   OnChanges,
   SimpleChanges,
   ViewChild,
+  ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
 import { TooltipDirective } from '../../directives/tooltip.directive';
-import { FlyoutDirective } from '../../directives/flyout.directive'; // <-- ADDED
+import { FlyoutDirective } from '../../directives/flyout.directive';
 
 @Component({
   selector: 'app-sidebar',
@@ -24,31 +23,20 @@ import { FlyoutDirective } from '../../directives/flyout.directive'; // <-- ADDE
     RouterModule,
     HasPermissionDirective,
     TooltipDirective,
-    FlyoutDirective, // <-- ADDED
+    FlyoutDirective,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
 })
-export class SidebarComponent implements OnChanges { // <-- Removed OnInit, OnDestroy
+export class SidebarComponent implements OnChanges {
   @Input() navItems: NavItem[] = [];
   @Input() isOpen: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  // Get a reference to the new #navContent wrapper from the template
+  // Keep this reference to maintain DOM state
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
-  // private globalClickListener!: () => void; // <-- REMOVED
   private openAccordionItems = new Set<NavItem>();
-  private scrollPosition = 0; // <-- To store scroll position
-
-  constructor(
-    // @Inject(DOCUMENT) private document: Document, // <-- REMOVED
-    // private el: ElementRef, // <-- REMOVED
-    // private renderer: Renderer2, // <-- REMOVED
-    private zone: NgZone
-  ) {}
-
-  // ngOnInit(): void { ... } // <-- REMOVED
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']) {
@@ -59,28 +47,11 @@ export class SidebarComponent implements OnChanges { // <-- Removed OnInit, OnDe
       const isNowOpen = changes['isOpen'].currentValue;
 
       if (isNowOpen) {
-        this.hideAllSubmenus(); // Collapses all items
-        this.restoreAccordionState(); // Re-opens accordions based on state
+        this.hideAllSubmenus();
+        this.restoreAccordionState();
       } else {
-        // When collapsing, just collapse all accordions
         this.hideAllSubmenus();
       }
-
-      // Restore scroll position after view updates
-      // this.zone.runOutsideAngular(() => {
-      //   setTimeout(() => {
-      //     this.restoreScrollPosition();
-      //   }, 0);
-      // });
-    }
-  }
-
-  // ngOnDestroy(): void { ... } // <-- REMOVED
-
-  // Helper to restore scroll
-  private restoreScrollPosition(): void {
-    if (this.navContentEl) {
-      this.navContentEl.nativeElement.scrollTop = this.scrollPosition;
     }
   }
 
@@ -101,10 +72,6 @@ export class SidebarComponent implements OnChanges { // <-- Removed OnInit, OnDe
   }
 
   onToggleSidebarClick(): void {
-    // Save the scroll position *before* emitting the change
-    if (this.navContentEl) {
-      this.scrollPosition = this.navContentEl.nativeElement.scrollTop;
-    }
     this.toggleSidebar.emit();
   }
 
@@ -112,8 +79,6 @@ export class SidebarComponent implements OnChanges { // <-- Removed OnInit, OnDe
     event.preventDefault();
     event.stopPropagation();
 
-    // Flyout logic is now handled by the flyout.directive
-    // This function only manages accordion state (when sidebar is open)
     if (!this.isOpen) {
       return;
     }
@@ -123,7 +88,7 @@ export class SidebarComponent implements OnChanges { // <-- Removed OnInit, OnDe
     } else {
       this.openAccordionItems.add(item);
     }
-    // Update item.isOpen to match the accordion state
+    
     item.isOpen = this.openAccordionItems.has(item);
   }
 }

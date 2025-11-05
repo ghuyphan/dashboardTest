@@ -16,7 +16,7 @@ import { filter, map, mergeMap, startWith } from 'rxjs/operators';
 
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model';
-import { HasPermissionDirective } from '../directives/has-permission.directive';
+// import { HasPermissionDirective } from '../directives/has-permission.directive';
 import { NavItem } from '../models/nav-item.model';
 import { ActionFooterComponent } from '../components/action-footer/action-footer.component';
 
@@ -31,7 +31,7 @@ import { HeaderComponent } from '../components/header/header.component';
     CommonModule,
     RouterOutlet,
     RouterModule,
-    HasPermissionDirective,
+    // HasPermissionDirective,
     ActionFooterComponent,
     SidebarComponent,
     HeaderComponent,
