@@ -16,11 +16,17 @@ import { DOCUMENT, CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { TooltipDirective } from '../../directives/tooltip.directive'; // <-- IMPORT ADDED
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, HasPermissionDirective],
+  imports: [
+    CommonModule,
+    RouterModule,
+    HasPermissionDirective,
+    TooltipDirective, // <-- DIRECTIVE ADDED TO IMPORTS
+  ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
 })

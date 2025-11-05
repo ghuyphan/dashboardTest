@@ -82,7 +82,7 @@
             <button
               (click)="toggleSubmenu(item, $event)"
               [attr.aria-expanded]="item.isOpen"
-              [attr.data-tooltip]="item.label"
+              [appTooltip]="item.label"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
@@ -95,7 +95,7 @@
                   <a
                     [routerLink]="child.link"
                     routerLinkActive="active"
-                    [attr.data-tooltip]="child.label"
+                    [appTooltip]="child.label"
                   >
                     <i [class]="child.icon"></i>
                     <span>{{ child.label }}</span>
@@ -109,7 +109,7 @@
             <a
               [routerLink]="item.link"
               routerLinkActive="active"
-              [attr.data-tooltip]="item.label"
+              [appTooltip]="!isOpen ? item.label : ''"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
