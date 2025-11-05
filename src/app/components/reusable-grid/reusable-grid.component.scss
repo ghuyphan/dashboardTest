@@ -1,0 +1,63 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.grid-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+// --- START OF NEW STYLES ---
+
+// 1. Make rows clickable
+.grid-wrapper table tbody tr {
+  cursor: pointer;
+}
+
+// 2. Override padding to make rows smaller
+// We target the table inside our component to be more specific
+// than the global style.
+.grid-wrapper table th,
+.grid-wrapper table td {
+  // Use 8px vertical padding (sm) and 16px horizontal (md)
+  // This overrides 'var(--spacing-md)' from styles.scss
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+// 3. Add a style for the selected row
+.grid-wrapper table tbody tr.selected {
+  // Use your theme's colors
+  background-color: var(--aqua-island-light);
+  color: var(--peacock-blue);
+  font-weight: var(--font-weight-medium);
+}
+
+// Make hover effect darker than selected (or different)
+.grid-wrapper table tbody tr:hover {
+  background-color: var(--aqua-island);
+}
+
+// Ensure selected row keeps its color on hover
+.grid-wrapper table tbody tr.selected:hover {
+  background-color: var(--aqua-island-light);
+}
+
+// --- END OF NEW STYLES ---
+
+.no-data-message {
+  // Let's style this "empty" state using your variables
+  // from styles.scss
+
+  // Use panel/card styles
+  background-color: var(--white);
+  box-shadow: var(--box-shadow-md);
+  border-radius: var(--border-radius-md);
+  border: var(--border-width) solid var(--border-color);
+
+  // Use text styles
+  padding: var(--spacing-lg);
+  color: var(--gray-500);
+  text-align: center;
+  font-style: italic;
+}

@@ -7,31 +7,38 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 100vh;
-  overflow: auto; /* Allows scrolling on small screens */
-  padding: var(--spacing-md); /* Add some padding for small screens */
+  min-height: 100vh;
+  overflow: auto;
+  padding: clamp(12px, 3vw, var(--spacing-md));
   background: linear-gradient(135deg, var(--aqua-island) 0%, var(--teal-blue) 55%, var(--peacock-blue) 100%);
+  
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 }
 
 /* The rest of these styles are "scoped" and will
   only apply to elements inside the login component.
 */
 .login-card {
-  width: 100%;
-  max-width: 400px; // Increased max-width
-  min-width: 400px;
+  width: clamp(280px, 90vw, 400px);
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  /* Using rgba with --white would require an RGB version, so we keep this custom for the glass effect */
   background: rgba(255, 255, 255, 0.88); 
   backdrop-filter: blur(22px);
-  border-radius: var(--spacing-lg); /* 24px */
-  box-shadow: 0 12px 40px rgba(3, 132, 143, 0.25); /* Custom shadow */
-  padding: var(--spacing-xxl) 40px; /* 48px 40px */
+  border-radius: clamp(12px, 4vw, var(--spacing-lg));
+  box-shadow: 0 12px 40px rgba(3, 132, 143, 0.25);
+  padding: clamp(24px, 6vw, var(--spacing-xxl)) clamp(20px, 5vw, 40px);
   position: relative;
   overflow: hidden;
-  border: var(--border-width) solid rgba(255, 255, 255, 0.5); /* Custom white-alpha border */
+  border: var(--border-width) solid rgba(255, 255, 255, 0.5);
   transition: transform 0.35s ease, box-shadow 0.35s ease;
+  box-sizing: border-box;
 
   &::before {
     content: "";
@@ -39,20 +46,20 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 6px;
+    height: clamp(4px, 1.5vw, 6px);
     background: linear-gradient(90deg, var(--aqua-island), var(--teal-blue));
   }
 
   .logo {
     text-align: center;
-    margin-bottom: 36px; /* Custom value */
+    margin-bottom: clamp(24px, 6vw, 36px);
 
     .logo-image {
-      width: 68px;
-      height: 68px;
-      border-radius: 18px; /* Custom value */
+      width: clamp(52px, 15vw, 68px);
+      height: clamp(52px, 15vw, 68px);
+      border-radius: clamp(14px, 4vw, 18px);
       display: block;
-      margin: 0 auto 18px;
+      margin: 0 auto clamp(12px, 3vw, 18px);
       object-fit: contain;
       transition: transform 0.3s ease;
 
@@ -63,27 +70,30 @@
 
     h1 {
       font-weight: var(--font-weight-bold);
-      font-size: 1.875rem; /* 30px */
+      font-size: clamp(1.5rem, 5vw, 1.875rem);
       color: var(--teal-blue);
-      margin-bottom: 6px; /* Custom value */
+      margin-bottom: clamp(4px, 1vw, 6px);
+      transition: font-size 0.2s ease;
+      line-height: 1.2;
     }
 
     p {
       font-weight: var(--font-weight-normal);
-      font-size: var(--font-size-base); /* 16px */
+      font-size: clamp(0.875rem, 3.5vw, var(--font-size-base));
       color: var(--gray-700);
-      margin-bottom: 0; /* Fix extra space */
+      margin-bottom: 0;
+      line-height: 1.4;
     }
   }
 
   .input-group {
-    margin-bottom: var(--spacing-lg); /* 24px */
+    margin-bottom: clamp(16px, 4vw, var(--spacing-lg));
 
     label {
       display: block;
-      font-size: 15px; /* Custom value */
-      font-weight: 600; /* Custom value */
-      margin-bottom: var(--spacing-sm); /* 8px */
+      font-size: clamp(0.875rem, 3.5vw, 15px);
+      font-weight: 600;
+      margin-bottom: clamp(6px, 2vw, var(--spacing-sm));
       color: var(--gray-700);
     }
 
@@ -95,19 +105,20 @@
 
     input {
       width: 100%;
-      padding: var(--spacing-md) var(--spacing-xxl); /* 16px 48px */
+      padding: clamp(12px, 3vw, var(--spacing-md)) clamp(40px, 10vw, var(--spacing-xxl));
       border: var(--border-width) solid var(--gray-300);
-      border-radius: 14px; /* Custom value */
-      font-size: var(--font-size-base); /* 16px */
-      background: rgba(248, 250, 252, 0.75); /* --gray-100 with alpha */
+      border-radius: clamp(10px, 3vw, 14px);
+      font-size: clamp(0.875rem, 3.5vw, var(--font-size-base));
+      background: rgba(248, 250, 252, 0.75);
       transition: all 0.3s ease;
       outline: none;
-      box-sizing: border-box; 
+      box-sizing: border-box;
+      min-height: 44px; /* Ensures touch target size */
 
       &:focus {
         border-color: var(--teal-blue);
         background: var(--white);
-        box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2); /* Custom shadow */
+        box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
 
         ~ .input-icon {
           color: var(--teal-blue);
@@ -117,16 +128,16 @@
       &.is-invalid {
         border-color: var(--color-danger);
         &:focus {
-          box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); /* Custom shadow */
+          box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
         }
       }
     }
 
     .input-icon {
       position: absolute;
-      left: var(--spacing-md); /* 16px */
+      left: clamp(12px, 3vw, var(--spacing-md));
       color: var(--gray-300);
-      font-size: 18px; /* Custom value */
+      font-size: clamp(16px, 4vw, 18px);
       transition: color 0.25s ease;
       pointer-events: none; 
     }
@@ -136,32 +147,29 @@
       right: 1px; 
       background: none;
       border: none;
-      padding: 0 var(--spacing-md); /* 0 16px */
+      padding: 0 clamp(12px, 3vw, var(--spacing-md));
       cursor: pointer;
       color: var(--gray-300);
-      font-size: 17px; 
+      font-size: clamp(15px, 4vw, 17px);
       line-height: 1; 
+      min-height: 44px; /* Ensures touch target size */
       height: 100%; 
       display: flex; 
       align-items: center;
       justify-content: center;
       outline: none; 
+      transition: color 0.2s ease;
 
       &:hover,
       &:focus {
         color: var(--teal-blue); 
       }
-
-      &:focus > i {
-        /* Optional: Add a subtle visual cue for focus on the icon */
-        /* Example: text-shadow: 0 0 2px var(--teal-blue); */
-      }
     }
 
     .invalid-feedback {
       color: var(--color-danger);
-      font-size: 0.875em; /* ~14px if base is 16px */
-      margin-top: var(--spacing-xs); /* 4px */
+      font-size: clamp(0.75rem, 3vw, 0.875rem);
+      margin-top: clamp(2px, 1vw, var(--spacing-xs));
     }
   }
 
@@ -169,14 +177,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 28px; /* Custom value */
-    font-size: 15px; /* Custom value */
+    margin-bottom: clamp(20px, 5vw, 28px);
+    font-size: clamp(0.875rem, 3.5vw, 15px);
+    gap: clamp(8px, 2vw, 12px);
+    flex-wrap: wrap;
   }
 
   .remember {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm); /* 8px */
+    gap: clamp(6px, 2vw, var(--spacing-sm));
     color: var(--gray-700);
     cursor: pointer;
 
@@ -184,49 +194,52 @@
       cursor: pointer;
       margin-bottom: 0;
       font-weight: var(--font-weight-normal); 
-      font-size: 15px; 
+      font-size: clamp(0.875rem, 3.5vw, 15px);
+      white-space: nowrap;
     }
 
     input[type="checkbox"] {
       accent-color: var(--teal-blue);
-      width: auto; 
+      width: clamp(14px, 4vw, var(--spacing-md));
+      height: clamp(14px, 4vw, var(--spacing-md));
       padding: 0; 
-      margin-right: var(--spacing-xs); /* 4px */
-      height: var(--spacing-md); /* 16px */
-      width: var(--spacing-md); /* 16px */
-      vertical-align: middle; 
+      margin-right: clamp(2px, 1vw, var(--spacing-xs));
+      vertical-align: middle;
+      flex-shrink: 0;
     }
   }
 
   .forgot {
     color: var(--teal-blue);
     text-decoration: none;
-    font-weight: 600; /* Custom value */
+    font-weight: 600;
     transition: color 0.2s, text-decoration 0.2s;
+    white-space: nowrap;
 
     &:hover {
-      color: var(--peacock-blue); /* Using token for hover */
+      color: var(--peacock-blue);
       text-decoration: underline;
     }
   }
 
   .btn-login {
     width: 100%;
-    padding: 17px var(--spacing-md); /* 17px 16px */
-    background: linear-gradient(135deg, var(--teal-blue), #026a74); /* Custom gradient */
+    padding: clamp(14px, 4vw, 17px) var(--spacing-md);
+    background: linear-gradient(135deg, var(--teal-blue), #026a74);
     color: var(--white);
     border: none;
-    border-radius: 14px; /* Custom value */
-    font-size: 17px; /* Custom value */
-    font-weight: 600; /* Custom value */
+    border-radius: clamp(10px, 3vw, 14px);
+    font-size: clamp(0.9375rem, 4vw, 17px);
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.35s ease;
-    box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35); /* Custom shadow */
+    box-shadow: 0 5px 18px rgba(3, 132, 143, 0.35);
+    min-height: 44px; /* Ensures touch target size */
 
     &:hover:not(:disabled) {
-      background: linear-gradient(135deg, #026a74, #025d65); /* Custom gradient */
+      background: linear-gradient(135deg, #026a74, #025d65);
       transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(3, 132, 143, 0.42); /* Custom shadow */
+      box-shadow: 0 8px 24px rgba(3, 132, 143, 0.42);
     }
 
     &:disabled {
@@ -240,9 +253,10 @@
   .divider {
     display: flex;
     align-items: center;
-    margin: var(--spacing-xl) 0; /* 32px 0 */
+    margin: clamp(20px, 5vw, var(--spacing-xl)) 0;
     color: var(--gray-300);
-    font-size: 15px; /* Custom value */
+    font-size: clamp(0.875rem, 3.5vw, 15px);
+    gap: clamp(8px, 2vw, 12px);
 
     &::before,
     &::after {
@@ -254,16 +268,19 @@
 
   .support {
     text-align: center;
-    font-size: 15px; /* Custom value */
+    font-size: clamp(0.875rem, 3.5vw, 15px);
     color: var(--gray-700);
     line-height: 1.6;
+    
     a + a {
-      margin-left: var(--spacing-xs); /* 4px */
+      margin-left: clamp(2px, 1vw, var(--spacing-xs));
     }
+    
     a {
       color: var(--teal-blue);
       text-decoration: none;
-      font-weight: 600; /* Custom value */
+      font-weight: 600;
+      word-break: break-word;
 
       &:hover {
         text-decoration: underline;
@@ -271,35 +288,91 @@
     }
 
     i {
-      margin-right: 6px; /* Custom value */
-      font-size: 14px; /* Custom value */
+      margin-right: clamp(4px, 1.5vw, 6px);
+      font-size: clamp(12px, 3.5vw, 14px);
     }
   }
 }
 
-// Responsive styles
+/* Responsive styles - Fine-tuned breakpoints */
 @media (max-width: 480px) {
   .login-card {
-    padding: 36px var(--spacing-lg); /* 36px 24px */
-    min-width: unset; // Remove min-width on small screens
-  }
-
-  .input-group {
-    .input-wrapper input { // Target input inside wrapper
-      padding: 14px 44px 14px 44px; // Adjust padding slightly for smaller screens
-    }
-    .input-icon {
-      left: 14px;
-      font-size: var(--font-size-base); /* 16px */
-    }
-    .toggle-password {
-      padding: 0 14px;
-      font-size: var(--font-size-base); /* 16px */
+    .options {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-md);
     }
   }
+}
 
-  .btn-login {
-    padding: 15px var(--spacing-md); /* 15px 16px */
-    font-size: var(--font-size-base); /* 16px */
+@media (max-width: 360px) {
+  :host {
+    padding: 8px;
+  }
+
+  .login-card {
+    padding: 20px 16px;
+    
+    .logo {
+      margin-bottom: 20px;
+      
+      .logo-image {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 10px;
+      }
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .btn-login {
+      padding: 13px 12px;
+      font-size: 0.9375rem;
+    }
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  :host {
+    min-height: auto;
+    padding: 12px;
+  }
+
+  .login-card {
+    padding: 16px 24px;
+    
+    .logo {
+      margin-bottom: 16px;
+      
+      .logo-image {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
+      }
+      
+      h1 {
+        font-size: 1.25rem;
+        margin-bottom: 4px;
+      }
+      
+      p {
+        font-size: 0.875rem;
+      }
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .options {
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      margin: 16px 0;
+    }
   }
 }

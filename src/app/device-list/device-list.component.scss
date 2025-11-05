@@ -1,0 +1,11 @@
+// Use the spacing variables from your global theme
+//
+.page-container {
+//   padding: var(--spacing-lg);
+}
+
+// Give some space between the <p> and the grid
+p {
+  margin-bottom: var(--spacing-lg);
+  color: var(--gray-600);
+}

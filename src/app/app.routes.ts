@@ -7,8 +7,10 @@ import { permissionGuard } from './guards/permission.guard';
 // --- IMPORT YOUR NEW AND RENAMED COMPONENTS ---
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 import { HomeComponent } from './home/home.component';
-// Import other components as you create them
-// import { UserManagementComponent } from './user-management/user-management.component';
+
+// --- 1. IMPORT YOUR 'DEVICE LIST' COMPONENT ---
+import { DeviceListComponent } from './device-list/device-list.component';
+
 
 export const routes: Routes = [
   // Routes without the layout
@@ -29,18 +31,16 @@ export const routes: Routes = [
         data: { title: 'Trang chủ' } 
       },
       
-      // EXAMPLE 1: A route for managing users
-      /*
+      // --- 2. HERE IS THE ADJUSTED ROUTE ---
       { 
-        path: 'users', 
-        component: UserManagementComponent,
-        canActivate: [permissionGuard], 
+        path: 'equipment/catalog', // <-- CHANGED from 'devices'
+        component: DeviceListComponent,
+        // canActivate: [permissionGuard],
         data: {
-          permission: 'CAN_MANAGE_USERS', 
-          title: 'Quản lý người dùng' 
+          // permission: 'CAN_MANAGE_DEVICES',
+          title: 'Danh mục thiết bị' // <-- CHANGED title to match
         }
       },
-      */
 
       // EXAMPLE 2: A route for viewing reports
       /*

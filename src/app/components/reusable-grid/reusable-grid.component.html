@@ -1,0 +1,26 @@
+<div *ngIf="data && data.length > 0; else noData" class="grid-wrapper">
+  
+  <table>
+    <thead>
+      <tr>
+        <th *ngFor="let col of columns">
+          {{ col.label }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of data">
+        <td *ngFor="let col of columns">
+          {{ row[col.key] }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<ng-template #noData>
+  <div class="no-data-message">
+    No data to display.
+  </div>
+</ng-template>
