@@ -1,3 +1,14 @@
+/* ====================================
+  MAJOR REFACTORING NOTES:
+  1.  REMOVED all "FLY-OUT Overrides" for .sidebar.collapsed .submenu.
+      This is now handled by the CDK Overlay and the .sidebar-flyout-panel class.
+  2.  REMOVED all [data-tooltip] styles. This should be replaced with
+      a proper CDK-based tooltip directive to solve the same overflow problem.
+  3.  ADDED `overflow-y: auto` to `.sidebar-nav` to allow scrolling.
+      This is now safe to do because flyouts are in a portal.
+  ====================================
+*/
+
 :host {
   --header-height: 50px;
   --sidebar-width: 240px;
@@ -22,7 +33,7 @@
     width var(--transition-duration) var(--transition-smooth);
   z-index: 1030;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
-  overflow: visible;
+  overflow: visible; // Keep for header/logo, but nav will clip
   display: flex;
   flex-direction: column;
   will-change: transform, width;
@@ -146,7 +157,9 @@
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   flex-grow: 1;
-  overflow: visible;
+  overflow-y: auto; /* <-- ADDED: Allow nav to scroll independently */
+  overflow-x: hidden; /* <-- ADDED: Hide horizontal overflow */
+  padding-bottom: 1rem; /* Space for scrollbar */
 }
 
 .sidebar-nav ul {
@@ -158,7 +171,7 @@
 /* --- Parent Nav Item <li> --- */
 .sidebar-nav ul li {
   position: relative;
-  overflow: visible;
+  /* overflow: visible; */ /* <-- REMOVED: This was part of the hack */
 }
 
 .sidebar:not(.collapsed) .sidebar-nav ul li:hover {
@@ -289,7 +302,6 @@
   font-weight: 600;
 }
 
-/* FIXED TYPO: .sidebar.nav -> .sidebar-nav */
 .sidebar-nav ul li.has-submenu button.active::before,
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {
   display: none;
@@ -314,6 +326,7 @@
 }
 
 /* --- Submenu Container (ACCORDION default) --- */
+/* This now *only* applies to the accordion state (sidebar open) */
 .submenu {
   list-style: none;
   padding: 0;
@@ -334,7 +347,7 @@
   opacity: 1;
   margin-bottom: 0.25rem;
   margin-top: 0.25rem;
-  overflow: visible;
+  overflow: visible; /* OK for accordion items */
 }
 
 /* --- Submenu Items (ACCORDION default) --- */
@@ -410,11 +423,11 @@
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   width: var(--sidebar-width-collapsed);
-  overflow: visible;
+  overflow: visible; /* Required for the trigger button pop-out */
 }
 
 .sidebar.collapsed .sidebar-nav {
-  overflow: visible;
+  overflow: visible; /* Top-level nav should not scroll when collapsed */
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -459,7 +472,7 @@
   margin-right: 0;
 }
 
-/* FIXED: Only apply icon dimensions to TOP-LEVEL items */
+/* Apply icon dimensions to TOP-LEVEL items */
 .sidebar.collapsed .sidebar-nav > ul > li > a,
 .sidebar.collapsed .sidebar-nav > ul > li > button {
   width: 2.5rem;
@@ -488,8 +501,6 @@
 
 /*
 * This rule *only* hides the spans on the *top-level* items.
-* The '>' combinators are crucial. They prevent this rule
-* from applying to spans deep inside a .submenu.
 */
 .sidebar.collapsed .sidebar-nav > ul > li > a > span,
 .sidebar.collapsed .sidebar-nav > ul > li > button > span {
@@ -497,23 +508,6 @@
   transform: scale(0.8);
   position: absolute;
   pointer-events: none;
-}
-
-/* FIXED: Properly show submenu labels in flyout */
-.sidebar.collapsed .sidebar-nav ul li .submenu li a {
-  width: auto !important;
-  height: auto !important;
-  white-space: nowrap !important;
-  padding: 0.75rem 0.625rem 0.75rem 1.25rem !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  margin: 0 0 0.25rem 0 !important;
-}
-
-/* Allow overflow for flyout parent buttons when collapsed */
-.sidebar.collapsed .sidebar-nav > ul > li.has-submenu > button {
-  overflow: visible;
 }
 
 .sidebar.collapsed .sidebar-nav ul li a.active::before,
@@ -528,60 +522,87 @@
 }
 
 /* * ===========================================
-  * === Collapsed State FLY-OUT Overrides
+  * === Collapsed State FLY-OUT (CDK)
   * ===========================================
 */
 
-.sidebar.collapsed .sidebar-nav ul li .submenu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  margin-left: 0.5rem !important;
+/*
+ * These styles are applied GLOBALLY (in styles.scss or here)
+ * to the panel created by the CDK.
+ * Using :host ::ng-deep to pierce shadow DOM if this component
+ * has ViewEncapsulation.Emulated (default).
+*/
+:host ::ng-deep .sidebar-flyout-panel {
   min-width: 220px;
   background-color: var(--desert-storm);
   border-radius: var(--border-radius-md);
   box-shadow: var(--box-shadow-lg);
   border: 1px solid var(--border-color);
   padding: var(--spacing-sm);
-  /* FIXED: Higher z-index than tooltips (1050) */
-  z-index: 1051;
-  max-height: none !important;
-  overflow: visible !important;
-  border-left: none !important;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
+  z-index: 1051; // Ensure it's on top
 
-.sidebar.collapsed .sidebar-nav ul li .submenu.open {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  margin-bottom: 0;
-  margin-top: 0;
- transition: 
-    opacity var(--transition-fast) var(--transition-spring),
-    visibility var(--transition-fast) ease,
-    transform var(--transition-fast) var(--transition-spring);
-  transition-delay: 0s !important;
-}
+  // Styles for the <ul> inside the portal
+  .submenu {
+    max-height: none;
+    opacity: 1;
+    overflow: visible;
+    border-left: none;
+    margin: 0 !important;
+    max-height: 400px; // Example: constrain flyout height
+    overflow-y: auto; // And allow scrolling within flyout
+  }
 
-/* FIXED: Ensure submenu text is visible */
-.sidebar.collapsed .sidebar-nav ul li .submenu li a {
-  padding: 0.75rem 0.625rem 0.75rem 1.25rem;
-  font-size: 0.875rem;
-  color: var(--gray-700);
-  margin: 0 0 0.25rem 0;
-  font-weight: var(--font-weight-normal);
-  white-space: nowrap;
-}
+  // Copied from original .submenu li a styles
+  .submenu li a {
+    padding: 0.75rem 0.625rem 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    margin: 0 0 0.25rem 0;
+    border-radius: 0.375rem;
+    position: relative;
+    font-weight: var(--font-weight-normal);
+  }
 
-.sidebar.collapsed .sidebar-nav ul li .submenu li a i {
-  font-size: var(--font-size-base);
-  margin-right: 0.75rem;
-  min-width: 1.25rem;
-  width: 1.25rem;
-  transform: scale(1);
+  .submenu li a i {
+    font-size: var(--font-size-base);
+    margin-right: 0.75rem;
+    min-width: 1.25rem;
+    width: 1.25rem;
+    text-align: center;
+    transform: scale(1);
+    transition: transform var(--transition-fast) var(--transition-spring);
+  }
+
+  .submenu li a::before {
+    display: none;
+  }
+
+  .submenu li a:hover {
+    background-color: var(--gray-200);
+    color: var(--gray-900);
+  }
+
+  .submenu li a:hover i {
+    transform: scale(1.15);
+  }
+
+  .submenu li a.active {
+    color: var(--gray-900);
+    background-color: var(--gray-200);
+    font-weight: 600;
+  }
+
+  .submenu li a.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: var(--spacing-xs);
+    bottom: var(--spacing-xs);
+    width: var(--spacing-xs);
+    background-color: var(--aqua-island);
+    border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+    display: block;
+  }
 }
 
 /* --- Mobile (Responsive) Overrides --- */
@@ -598,6 +619,11 @@
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   }
 
+  /*
+   * In mobile view, 'collapsed' state is identical
+   * to accordion behavior, just hidden off-screen.
+   * Flyouts are disabled, and accordion is used.
+  */
   .sidebar.collapsed {
     transform: translateX(-100%);
     width: var(--sidebar-width);
@@ -607,6 +633,10 @@
     overflow-y: auto;
   }
 
+  /*
+   * Re-style the mobile-collapsed .submenu to be an accordion.
+   * This overrides any desktop flyout logic.
+  */
   .sidebar.collapsed .sidebar-nav ul li .submenu {
     position: relative;
     left: auto;
@@ -679,6 +709,10 @@
     margin-right: 0.625rem;
   }
 
+  /*
+   * Restore full-width items for mobile-collapsed
+   * (which is just the accordion)
+  */
   .sidebar.collapsed .sidebar-nav ul li a,
   .sidebar.collapsed .sidebar-nav ul li button {
     justify-content: flex-start;
@@ -709,6 +743,9 @@
     transform: none;
   }
 
+  /*
+   * Restore the accordion chevron for mobile-collapsed
+  */
   .sidebar.collapsed .sidebar-nav ul li .toggle-icon {
     display: flex !important;
     opacity: 1 !important;
@@ -725,49 +762,13 @@
   }
 }
 
-/* ========== CUSTOM TOOLTIP STYLES ========== */
-
-.sidebar-nav ul li a[data-tooltip],
-.sidebar-nav ul li button[data-tooltip] {
-  position: relative;
-}
-
-.sidebar-nav ul li a[data-tooltip]::after,
-.sidebar-nav ul li button[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 12px;
-  background-color: var(--gray-800, #333);
-  color: var(--white, #fff);
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--border-radius-md, 6px);
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  /* FIXED: Must be lower than flyout z-index (1051) */
-  z-index: 1050;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.2s ease 0.1s, visibility 0.2s ease 0.1s;
-}
-
-/* Show tooltip on hover (global) */
-.sidebar-nav ul li a[data-tooltip]:hover::after,
-.sidebar-nav ul li button[data-tooltip]:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Hide tooltips for items *inside* the flyout menu */
-.sidebar.collapsed .submenu li a[data-tooltip]::after {
-  display: none;
-}
-
-/* FIXED: Hide tooltip when submenu is open */
-.sidebar.collapsed .sidebar-nav ul li.open > button[data-tooltip]::after {
-  display: none !important;
-}
+/*
+  * ===========================================
+  * === TOOLTIP STYLES (REMOVED)
+  * ===========================================
+  * All [data-tooltip] CSS styles have been removed.
+  * They should be replaced by a dedicated tooltip directive
+  * (e.g., from Angular CDK, ngx-bootstrap, or custom)
+  * that uses the same CDK Overlay/Portal pattern to avoid
+  * being clipped by the sidebar's overflow context.
+*/
