@@ -335,3 +335,66 @@ table tbody tr:hover {
 .app-tooltip-container.show {
   opacity: 1;
 }
+
+/*
+ * Global styles for the sidebar flyout menu
+ * (Add this to the end of src/styles.scss)
+ */
+.sidebar-flyout-panel {
+  /* Use the sidebar's background color from your :root variables */
+  background-color: var(--sidebar-bg);
+  border-radius: 6px; /* Match your app's border-radius */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-left: 12px; /* A small gap from the sidebar icon */
+  overflow: hidden; /* Ensures border-radius clips content */
+}
+
+.flyout-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px; /* Padding inside the panel */
+  min-width: 200px; /* Give it a proper width */
+  font-size: 14px;
+
+  /* Style for the header (parent item) */
+  .flyout-header {
+    padding: 8px 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--sidebar-hover-bg); /* Use theme color */
+    margin-bottom: 8px;
+    white-space: nowrap;
+  }
+
+  /* Style for the child items */
+  .flyout-item a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 4px; /* Match your app's border-radius */
+    color: var(--text-secondary); /* Use secondary text color */
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
+
+    i {
+      width: 20px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    &:hover {
+      /* Use the sidebar's hover colors */
+      background-color: var(--sidebar-hover-bg);
+      color: var(--text-primary);
+    }
+
+    &.active {
+      /* Use the primary color for active links */
+      background-color: var(--primary-color);
+      color: #fff;
+      font-weight: 500;
+    }
+  }
+}

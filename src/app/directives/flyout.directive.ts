@@ -8,8 +8,8 @@ import {
   Inject,
   OnDestroy,
   OnInit,
-  Output, // <-- IMPORTED
-  EventEmitter, // <-- IMPORTED
+  Output,
+  EventEmitter,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
@@ -31,12 +31,17 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   /**
    * Emits the open (true) or closed (false) state.
    */
-  @Output() flyoutToggled = new EventEmitter<boolean>(); // <-- ADDED
+  @Output() flyoutToggled = new EventEmitter<boolean>();
 
   private globalClickListener!: () => void;
 
   private originalParent: Node | null = null;
   private nextSibling: Node | null = null;
+
+  /**
+   * Tracks the currently open flyout directive instance.
+   */
+  private static activeFlyout: FlyoutDirective | null = null; // <-- ADDED
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -69,7 +74,8 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     if (this.globalClickListener) {
       this.globalClickListener();
     }
-    this.closeFlyout();
+    // Ensure this flyout is closed and deregistered if destroyed
+    this.closeFlyout(); // <-- This will also handle clearing the static ref
   }
 
   @HostListener('click', ['$event'])
@@ -88,6 +94,16 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   }
 
   private openFlyout() {
+    // --- ADDED BLOCK: Close other flyouts ---
+    // If another flyout is open, close it first.
+    if (
+      FlyoutDirective.activeFlyout &&
+      FlyoutDirective.activeFlyout !== this
+    ) {
+      FlyoutDirective.activeFlyout.closeFlyout();
+    }
+    // --- END ADDED BLOCK ---
+
     if (!this.flyoutEnabled || !this.flyoutMenu || this.originalParent) {
       return;
     }
@@ -103,14 +119,16 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     const hostPos = this.el.nativeElement.getBoundingClientRect();
     const offset = 8; // 8px (0.5rem) gap, as per old CSS
     const top = hostPos.top;
-    const left = hostPos.right + offset; // <-- UPDATED
+    const left = hostPos.right + offset;
 
     this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
     this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
     this.renderer.setStyle(this.flyoutMenu, 'left', `${left}px`);
 
     this.renderer.addClass(this.flyoutMenu, 'open');
-    this.flyoutToggled.emit(true); // <-- ADDED
+    this.flyoutToggled.emit(true);
+
+    FlyoutDirective.activeFlyout = this; // <-- ADDED: Set this as the active flyout
   }
 
   private closeFlyout() {
@@ -136,6 +154,12 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     // 4. Clear state
     this.originalParent = null;
     this.nextSibling = null;
-    this.flyoutToggled.emit(false); // <-- ADDED
+    this.flyoutToggled.emit(false);
+
+    // --- ADDED BLOCK: Clear static reference ---
+    if (FlyoutDirective.activeFlyout === this) {
+      FlyoutDirective.activeFlyout = null;
+    }
+    // --- END ADDED BLOCK ---
   }
 }
