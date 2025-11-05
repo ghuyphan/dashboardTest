@@ -90,13 +90,13 @@
               *ngIf="item.children"
               [class.has-submenu]="true"
               [class.open]="item.isOpen"
-              [appFlyout]="submenuEl"
-              [flyoutEnabled]="!isOpen"
             >
               <button
                 (click)="toggleSubmenu(item, $event)"
                 [attr.aria-expanded]="item.isOpen"
                 [appTooltip]="item.label"
+                [appFlyout]="submenuEl"
+                [flyoutEnabled]="!isOpen"
               >
                 <i [class]="item.icon"></i>
                 <span>{{ item.label }}</span>
