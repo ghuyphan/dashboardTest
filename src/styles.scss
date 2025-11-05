@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import '@angular/cdk/overlay-prebuilt.css';
 
 :root {
   /* =================================================================== */
@@ -311,4 +312,26 @@ table tbody tr:hover {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* =================================================================== */
+/* 11. CUSTOM TOOLTIP STYLES                                           */
+/* =================================================================== */
+.app-tooltip-container {
+  position: fixed; /* Use fixed positioning to place relative to viewport */
+  background-color: var(--gray-800);
+  color: var(--white);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  box-shadow: var(--box-shadow-md);
+  z-index: 1052; /* On top of everything */
+  
+  /* Fade-in animation */
+  opacity: 0;
+  transition: opacity 0.15s var(--transition-smooth);
+}
+
+.app-tooltip-container.show {
+  opacity: 1;
 }

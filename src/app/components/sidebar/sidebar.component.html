@@ -1,20 +1,3 @@
-<ng-template #flyoutTemplate let-children>
-  <ul class="submenu" (click)="onFlyoutLinkClick()">
-    <ng-container *ngFor="let child of children">
-      <li *appHasPermission="child.permissions">
-        <a
-          [routerLink]="child.link"
-          routerLinkActive="active"
-          [attr.data-tooltip]="child.label"
-        >
-          <i [class]="child.icon"></i>
-          <span>{{ child.label }}</span>
-        </a>
-      </li>
-    </ng-container>
-  </ul>
-</ng-template>
-
 <aside
   class="sidebar"
   [ngClass]="{ 'collapsed': !isOpen, 'open': isOpen }"
@@ -99,21 +82,20 @@
             <button
               (click)="toggleSubmenu(item, $event)"
               [attr.aria-expanded]="item.isOpen"
-              [attr.data-tooltip]="item.label"
-              [class.active]="item.isOpen && !isOpen"
+              [appTooltip]="isOpen ? '' : item.label"
+              [class.active]="item.isOpen"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
               <i class="fas fa-chevron-down toggle-icon"></i>
             </button>
 
-            <ul class="submenu" [class.open]="item.isOpen && isOpen">
+            <ul class="submenu" [class.open]="item.isOpen" (click)="onFlyoutLinkClick()">
               <ng-container *ngFor="let child of item.children">
                 <li *appHasPermission="child.permissions">
                   <a
                     [routerLink]="child.link"
                     routerLinkActive="active"
-                    [attr.data-tooltip]="child.label"
                   >
                     <i [class]="child.icon"></i>
                     <span>{{ child.label }}</span>
@@ -127,7 +109,7 @@
             <a
               [routerLink]="item.link"
               routerLinkActive="active"
-              [attr.data-tooltip]="item.label"
+              [appTooltip]="isOpen ? '' : item.label"
             >
               <i [class]="item.icon"></i>
               <span>{{ item.label }}</span>
