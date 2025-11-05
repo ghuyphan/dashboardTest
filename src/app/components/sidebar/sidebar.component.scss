@@ -17,12 +17,12 @@
   height: 100vh;
   background-color: var(--desert-storm);
   color: var(--gray-700);
-  padding: 0 0.625rem var(--spacing-md) 0.625rem;
+  padding: 0 0.625rem var(--spacing-md) 0.625rem; /* <-- Kept padding */
   transition: transform var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
   z-index: 1030;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
-  overflow: visible;
+  overflow: visible; /* <-- IMPORTANT: Stays visible for flyouts */
   display: flex;
   flex-direction: column;
   will-change: transform, width;
@@ -32,24 +32,8 @@
   }
 }
 
-/* --- Custom Scrollbar --- */
-.sidebar::-webkit-scrollbar {
-  width: 0.375rem;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: var(--gray-300);
-  border-radius: var(--border-radius-sm);
-  transition: background var(--transition-fast) ease;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-400);
-}
+/* --- REMOVED Custom Scrollbar from .sidebar --- */
+/* The .sidebar-nav-content now handles scrolling */
 
 /* --- Sidebar Header --- */
 .sidebar-header {
@@ -66,6 +50,7 @@
   justify-content: flex-start;
 }
 
+/* ... (All sidebar-header, logo, and toggle-btn styles remain the same) ... */
 .sidebar-logo-wrapper {
   display: flex;
   align-items: center;
@@ -144,10 +129,66 @@
 }
 
 /* --- Sidebar Navigation --- */
-.sidebar-nav {
-  flex-grow: 1;
-  overflow: visible;
+
+/* NEW SCROLL CONTAINER:
+  This new wrapper handles the scrolling.
+*/
+.sidebar-nav-content {
+  flex-grow: 1; /* Takes up remaining space */
+  overflow-y: auto; /* Allows vertical scrolling */
+  overflow-x: hidden; /* Prevents horizontal scrolling */
+  height: 100%; /* Fix for some browsers */
+  position: relative;
+
+  /* CUSTOM SCROLLBAR STYLES:
+    - Reserves space to prevent layout jump
+    - Hides scrollbar by default (transparent)
+  */
+  scrollbar-gutter: stable; /* Reserves space for scrollbar */
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: transparent transparent; /* For Firefox */
+
+  &::-webkit-scrollbar {
+    width: 8px; /* Width of the scrollbar */
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent; /* No background on the track */
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent; /* Thumb is transparent by default */
+    border-radius: 4px;
+    transition: background-color var(--transition-fast) ease;
+  }
 }
+
+/* SHOW SCROLLBAR ON HOVER:
+  When the user hovers over the *entire sidebar*,
+  we make the scrollbar thumb visible.
+*/
+.sidebar:hover .sidebar-nav-content {
+  /* Show for Firefox */
+  scrollbar-color: var(--gray-300) transparent;
+
+  /* Show for Webkit (Chrome, Safari, etc) */
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+  }
+
+  /* Darken thumb when hovering the thumb itself */
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--gray-400);
+  }
+}
+
+/* This is no longer the main flex/scroll container */
+.sidebar-nav {
+  flex-grow: 0; /* <-- CHANGED */
+  overflow: visible; /* <-- Kept from original */
+}
+
+/* ... (All other .sidebar-nav ul, li, a, button, .submenu styles remain exactly the same) ... */
 
 .sidebar-nav ul {
   list-style: none;
@@ -289,7 +330,6 @@
   font-weight: 600;
 }
 
-/* FIXED TYPO: .sidebar.nav -> .sidebar-nav */
 .sidebar-nav ul li.has-submenu button.active::before,
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {
   display: none;
@@ -410,12 +450,30 @@
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   width: var(--sidebar-width-collapsed);
-  overflow: visible;
+  overflow: visible; /* <-- Kept visible for flyouts */
 }
 
+/* When collapsed, the scroll container shouldn't reserve gutter space */
+.sidebar.collapsed .sidebar-nav-content {
+  overflow-y: auto; /* ✅ Enables scrolling */
+  scrollbar-gutter: stable; /* Optional: preserves space to avoid layout shift */
+
+  /* Hide scrollbar visually */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.sidebar.collapsed .sidebar-nav-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* No change needed, this is fine */
 .sidebar.collapsed .sidebar-nav {
   overflow: visible;
 }
+
+/* ... (All other .collapsed styles remain the same) ... */
 
 .sidebar.collapsed .sidebar-header {
   padding: 0;
@@ -585,14 +643,23 @@
 }
 
 /* --- Mobile (Responsive) Overrides --- */
+/* All mobile overrides should work as intended,
+  as they override the collapsed flyout logic 
+  and revert to an accordion.
+*/
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s var(--transition-smooth);
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: hidden; /* <-- CHANGED */
   }
 
+  /* The scroll wrapper will handle scrolling */
+  .sidebar.open .sidebar-nav-content {
+    overflow-y: auto;
+  }
+  
   .sidebar.open {
     transform: translateX(0);
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
@@ -604,6 +671,11 @@
     padding-left: 0.625rem;
     padding-right: 0.625rem;
     overflow-x: hidden;
+    overflow-y: hidden; /* <-- CHANGED */
+  }
+
+  /* The scroll wrapper will handle scrolling */
+  .sidebar.collapsed .sidebar-nav-content {
     overflow-y: auto;
   }
 
@@ -639,6 +711,7 @@
     transition-delay: 0s;
   }
 
+  /* ... (All other mobile overrides remain the same) ... */
   .sidebar.collapsed .sidebar-header {
     justify-content: flex-start;
     padding: 0 var(--spacing-xs);

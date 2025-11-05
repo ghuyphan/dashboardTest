@@ -11,12 +11,13 @@ import {
   Inject,
   OnChanges,
   SimpleChanges,
+  ViewChild, // <-- ADDED
 } from '@angular/core';
 import { DOCUMENT, CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
-import { TooltipDirective } from '../../directives/tooltip.directive'; // <-- IMPORT ADDED
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 @Component({
   selector: 'app-sidebar',
@@ -25,7 +26,7 @@ import { TooltipDirective } from '../../directives/tooltip.directive'; // <-- IM
     CommonModule,
     RouterModule,
     HasPermissionDirective,
-    TooltipDirective, // <-- DIRECTIVE ADDED TO IMPORTS
+    TooltipDirective,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
@@ -35,8 +36,12 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isOpen: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
+  // Get a reference to the new #navContent wrapper from the template
+  @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
+
   private globalClickListener!: () => void;
   private openAccordionItems = new Set<NavItem>();
+  private scrollPosition = 0; // <-- ADDED: To store scroll position
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -80,12 +85,28 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
       } else {
         this.hideAllSubmenus();
       }
+
+      // ADDED: Restore scroll position after view updates
+      // Use setTimeout to push this to the end of the queue,
+      // after Angular has updated the DOM.
+      this.zone.runOutsideAngular(() => {
+        setTimeout(() => {
+          this.restoreScrollPosition();
+        }, 0);
+      });
     }
   }
 
   ngOnDestroy(): void {
     if (this.globalClickListener) {
       this.globalClickListener();
+    }
+  }
+
+  // ADDED: Helper to restore scroll
+  private restoreScrollPosition(): void {
+    if (this.navContentEl) {
+      this.navContentEl.nativeElement.scrollTop = this.scrollPosition;
     }
   }
 
@@ -106,6 +127,10 @@ export class SidebarComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onToggleSidebarClick(): void {
+    // ADDED: Save the scroll position *before* emitting the change
+    if (this.navContentEl) {
+      this.scrollPosition = this.navContentEl.nativeElement.scrollTop;
+    }
     this.toggleSidebar.emit();
   }
 

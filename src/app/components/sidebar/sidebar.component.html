@@ -70,53 +70,55 @@
     </div>
   </div>
 
-  <nav class="sidebar-nav" role="navigation">
-    <ul>
-      <ng-container *ngFor="let item of navItems">
-        <li
-          *appHasPermission="item.permissions"
-          [class.has-submenu]="item.children"
-          [class.open]="item.isOpen"
-        >
-          <ng-container *ngIf="item.children; else regularLink">
-            <button
-              (click)="toggleSubmenu(item, $event)"
-              [attr.aria-expanded]="item.isOpen"
-              [appTooltip]="item.label"
-            >
-              <i [class]="item.icon"></i>
-              <span>{{ item.label }}</span>
-              <i class="fas fa-chevron-down toggle-icon"></i>
-            </button>
+  <div class="sidebar-nav-content" #navContent>
+    <nav class="sidebar-nav" role="navigation">
+      <ul>
+        <ng-container *ngFor="let item of navItems">
+          <li
+            *appHasPermission="item.permissions"
+            [class.has-submenu]="item.children"
+            [class.open]="item.isOpen"
+          >
+            <ng-container *ngIf="item.children; else regularLink">
+              <button
+                (click)="toggleSubmenu(item, $event)"
+                [attr.aria-expanded]="item.isOpen"
+                [appTooltip]="item.label"
+              >
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+              </button>
 
-            <ul class="submenu" [class.open]="item.isOpen">
-              <ng-container *ngFor="let child of item.children">
-                <li *appHasPermission="child.permissions">
-                  <a
-                    [routerLink]="child.link"
-                    routerLinkActive="active"
-                    [appTooltip]="child.label"
-                  >
-                    <i [class]="child.icon"></i>
-                    <span>{{ child.label }}</span>
-                  </a>
-                </li>
-              </ng-container>
-            </ul>
-          </ng-container>
+              <ul class="submenu" [class.open]="item.isOpen">
+                <ng-container *ngFor="let child of item.children">
+                  <li *appHasPermission="child.permissions">
+                    <a
+                      [routerLink]="child.link"
+                      routerLinkActive="active"
+                      [appTooltip]="child.label"
+                    >
+                      <i [class]="child.icon"></i>
+                      <span>{{ child.label }}</span>
+                    </a>
+                  </li>
+                </ng-container>
+              </ul>
+            </ng-container>
 
-          <ng-template #regularLink>
-            <a
-              [routerLink]="item.link"
-              routerLinkActive="active"
-              [appTooltip]="!isOpen ? item.label : ''"
-            >
-              <i [class]="item.icon"></i>
-              <span>{{ item.label }}</span>
-            </a>
-          </ng-template>
-        </li>
-      </ng-container>
-    </ul>
-  </nav>
+            <ng-template #regularLink>
+              <a
+                [routerLink]="item.link"
+                routerLinkActive="active"
+                [appTooltip]="!isOpen ? item.label : ''"
+              >
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            </ng-template>
+          </li>
+        </ng-container>
+      </ul>
+    </nav>
+  </div>
 </aside>
