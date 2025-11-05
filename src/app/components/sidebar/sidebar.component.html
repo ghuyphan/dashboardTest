@@ -74,12 +74,25 @@
     <nav class="sidebar-nav" role="navigation">
       <ul>
         <ng-container *ngFor="let item of navItems">
-          <li
-            *appHasPermission="item.permissions"
-            [class.has-submenu]="item.children"
-            [class.open]="item.isOpen"
-          >
-            <ng-container *ngIf="item.children; else regularLink">
+          <ng-container *appHasPermission="item.permissions">
+            <li *ngIf="!item.children">
+              <a
+                [routerLink]="item.link"
+                routerLinkActive="active"
+                [appTooltip]="!isOpen ? item.label : ''"
+              >
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            </li>
+
+            <li
+              *ngIf="item.children"
+              [class.has-submenu]="true"
+              [class.open]="item.isOpen"
+              [appFlyout]="submenuEl"
+              [flyoutEnabled]="!isOpen"
+            >
               <button
                 (click)="toggleSubmenu(item, $event)"
                 [attr.aria-expanded]="item.isOpen"
@@ -90,7 +103,7 @@
                 <i class="fas fa-chevron-down toggle-icon"></i>
               </button>
 
-              <ul class="submenu" [class.open]="item.isOpen">
+              <ul class="submenu" [class.open]="item.isOpen" #submenuEl>
                 <ng-container *ngFor="let child of item.children">
                   <li *appHasPermission="child.permissions">
                     <a
@@ -104,19 +117,8 @@
                   </li>
                 </ng-container>
               </ul>
-            </ng-container>
-
-            <ng-template #regularLink>
-              <a
-                [routerLink]="item.link"
-                routerLinkActive="active"
-                [appTooltip]="!isOpen ? item.label : ''"
-              >
-                <i [class]="item.icon"></i>
-                <span>{{ item.label }}</span>
-              </a>
-            </ng-template>
-          </li>
+            </li>
+          </ng-container>
         </ng-container>
       </ul>
     </nav>

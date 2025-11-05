@@ -64,6 +64,29 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     }
   }
 
+  // --- ADDED: HostListener for click ---
+  @HostListener('click', ['$event'])
+  onClick(event: Event) {
+    // Only handle clicks if the flyout logic is enabled
+    if (!this.flyoutEnabled) {
+      return;
+    }
+
+    // Stop the click from doing anything else (like navigating)
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Toggle the flyout
+    if (this.isFlyoutOpen) {
+      this.closeFlyout();
+    } else {
+      // Note: This will also open on hover, but a click
+      // should be a definitive "open" action.
+      this.openFlyout();
+    }
+  }
+  // --- END: ADDED ---
+
   @HostListener('mouseenter')
   onMouseEnter() {
     this.openFlyout();
