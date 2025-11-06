@@ -6,7 +6,7 @@ import {
   OnChanges,
   SimpleChanges,
   ViewChild,
-  ElementRef
+  ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -37,6 +37,7 @@ export class SidebarComponent implements OnChanges {
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
   private openAccordionItems = new Set<NavItem>();
+  private lastScrollTop: number = 0; // Added
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']) {
@@ -47,9 +48,13 @@ export class SidebarComponent implements OnChanges {
       const isNowOpen = changes['isOpen'].currentValue;
 
       if (isNowOpen) {
-        this.hideAllSubmenus();
+        // === IS OPENING ===
+        this.hideAllSubmenus(); // Resets flyouts
         this.restoreAccordionState();
+        this.restoreScrollPosition(); // Added
       } else {
+        // === IS CLOSING ===
+        this.saveScrollPosition(); // Added
         this.hideAllSubmenus();
       }
     }
@@ -71,6 +76,28 @@ export class SidebarComponent implements OnChanges {
     });
   }
 
+  /**
+   * Added: Saves the current scroll position of the nav content.
+   */
+  private saveScrollPosition(): void {
+    if (this.navContentEl?.nativeElement) {
+      this.lastScrollTop = this.navContentEl.nativeElement.scrollTop;
+    }
+  }
+
+  /**
+   * Added: Restores the saved scroll position.
+   * Uses setTimeout to wait for the DOM to update (e.g., accordions to open)
+   * before setting the scroll position.
+   */
+  private restoreScrollPosition(): void {
+    setTimeout(() => {
+      if (this.navContentEl?.nativeElement) {
+        this.navContentEl.nativeElement.scrollTop = this.lastScrollTop;
+      }
+    }, 0);
+  }
+
   onToggleSidebarClick(): void {
     this.toggleSidebar.emit();
   }
@@ -88,7 +115,7 @@ export class SidebarComponent implements OnChanges {
     } else {
       this.openAccordionItems.add(item);
     }
-    
+
     item.isOpen = this.openAccordionItems.has(item);
   }
 }

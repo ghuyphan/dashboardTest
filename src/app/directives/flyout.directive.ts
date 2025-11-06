@@ -41,11 +41,11 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   /**
    * Tracks the currently open flyout directive instance.
    */
-  private static activeFlyout: FlyoutDirective | null = null; // <-- ADDED
+  private static activeFlyout: FlyoutDirective | null = null;
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
-    private el: ElementRef, // This is the host element (the <li>)
+    private el: ElementRef, // This is the host element (the <button>)
     private renderer: Renderer2,
     private zone: NgZone
   ) {}
@@ -74,8 +74,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     if (this.globalClickListener) {
       this.globalClickListener();
     }
-    // Ensure this flyout is closed and deregistered if destroyed
-    this.closeFlyout(); // <-- This will also handle clearing the static ref
+    this.closeFlyout();
   }
 
   @HostListener('click', ['$event'])
@@ -94,7 +93,6 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   }
 
   private openFlyout() {
-    // --- ADDED BLOCK: Close other flyouts ---
     // If another flyout is open, close it first.
     if (
       FlyoutDirective.activeFlyout &&
@@ -102,7 +100,6 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     ) {
       FlyoutDirective.activeFlyout.closeFlyout();
     }
-    // --- END ADDED BLOCK ---
 
     if (!this.flyoutEnabled || !this.flyoutMenu || this.originalParent) {
       return;
@@ -117,9 +114,20 @@ export class FlyoutDirective implements OnInit, OnDestroy {
 
     // 3. Position it
     const hostPos = this.el.nativeElement.getBoundingClientRect();
-    const offset = 8; // 8px (0.5rem) gap, as per old CSS
+    const offset = 8; // 8px (0.5rem) gap
+
+    // --- MODIFIED LOGIC ---
+    // Read the sidebar's collapsed width from the root CSS variable
+    const rootStyle = getComputedStyle(this.document.documentElement);
+    const collapsedWidth = parseFloat(
+      rootStyle.getPropertyValue('--sidebar-width-collapsed')
+    );
+
+    // Position relative to the host's top, but relative to the
+    // sidebar's static collapsed width.
     const top = hostPos.top;
-    const left = hostPos.right + offset;
+    const left = collapsedWidth + offset;
+    // --- END MODIFIED LOGIC ---
 
     this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
     this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
@@ -128,7 +136,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.renderer.addClass(this.flyoutMenu, 'open');
     this.flyoutToggled.emit(true);
 
-    FlyoutDirective.activeFlyout = this; // <-- ADDED: Set this as the active flyout
+    FlyoutDirective.activeFlyout = this;
   }
 
   private closeFlyout() {
@@ -156,10 +164,8 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.nextSibling = null;
     this.flyoutToggled.emit(false);
 
-    // --- ADDED BLOCK: Clear static reference ---
     if (FlyoutDirective.activeFlyout === this) {
       FlyoutDirective.activeFlyout = null;
     }
-    // --- END ADDED BLOCK ---
   }
 }
