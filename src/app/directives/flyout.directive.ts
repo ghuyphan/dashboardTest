@@ -34,6 +34,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   @Output() flyoutToggled = new EventEmitter<boolean>();
 
   private globalClickListener!: () => void;
+  private menuClickListener!: () => void; // <-- NEW: Listener for inside the menu
 
   private originalParent: Node | null = null;
   private nextSibling: Node | null = null;
@@ -52,6 +53,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.zone.runOutsideAngular(() => {
+      // This listener handles clicks OUTSIDE the menu
       this.globalClickListener = this.renderer.listen(
         this.document,
         'click',
@@ -74,7 +76,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     if (this.globalClickListener) {
       this.globalClickListener();
     }
-    this.closeFlyout();
+    this.closeFlyout(); // This will also clean up the menuClickListener
   }
 
   @HostListener('click', ['$event'])
@@ -116,18 +118,13 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     const hostPos = this.el.nativeElement.getBoundingClientRect();
     const offset = 8; // 8px (0.5rem) gap
 
-    // --- MODIFIED LOGIC ---
-    // Read the sidebar's collapsed width from the root CSS variable
     const rootStyle = getComputedStyle(this.document.documentElement);
     const collapsedWidth = parseFloat(
       rootStyle.getPropertyValue('--sidebar-width-collapsed')
     );
 
-    // Position relative to the host's top, but relative to the
-    // sidebar's static collapsed width.
     const top = hostPos.top;
     const left = collapsedWidth + offset;
-    // --- END MODIFIED LOGIC ---
 
     this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
     this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
@@ -137,12 +134,43 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.flyoutToggled.emit(true);
 
     FlyoutDirective.activeFlyout = this;
+
+    // --- NEW LOGIC ---
+    // Add a listener FOR THE MENU ITSELF to handle inner clicks
+    this.zone.runOutsideAngular(() => {
+      this.menuClickListener = this.renderer.listen(
+        this.flyoutMenu as HTMLElement,
+        'click',
+        (event: Event) => {
+          // Check if the click was on a link, button, or icon inside a button
+          const target = event.target as HTMLElement;
+          if (
+            target.tagName === 'A' ||
+            target.tagName === 'BUTTON' ||
+            target.closest('A') ||
+            target.closest('BUTTON')
+          ) {
+            this.zone.run(() => {
+              this.closeFlyout();
+            });
+          }
+        }
+      );
+    });
+    // --- END NEW LOGIC ---
   }
 
   private closeFlyout() {
     if (!this.originalParent || !this.flyoutMenu) {
       return;
     }
+
+    // --- NEW: Clean up the menu listener ---
+    if (this.menuClickListener) {
+      this.menuClickListener();
+      (this.menuClickListener as any) = null;
+    }
+    // --- END NEW ---
 
     // 1. Remove visibility class
     this.renderer.removeClass(this.flyoutMenu, 'open');

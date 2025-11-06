@@ -26,8 +26,6 @@ export const routes: Routes = [
       { 
         path: 'home', 
         component: HomeComponent,
-        // *** THIS IS THE FIX ***
-        // Changed 'Dashboard' back to 'Trang chủ'
         data: { title: 'Trang chủ' } 
       },
       
@@ -35,10 +33,11 @@ export const routes: Routes = [
       { 
         path: 'equipment/catalog', // <-- CHANGED from 'devices'
         component: DeviceListComponent,
-        // canActivate: [permissionGuard],
+        canActivate: [permissionGuard],
         data: {
-          // permission: 'CAN_MANAGE_DEVICES',
-          title: 'Danh mục thiết bị' // <-- CHANGED title to match
+          permission: 'QLThietBi.DMThietBi',
+          title: 'Danh mục thiết bị',
+          showSearchBar: true
         }
       },
 
