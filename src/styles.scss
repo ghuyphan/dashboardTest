@@ -192,52 +192,6 @@ a:hover {
 }
 
 /* =================================================================== */
-/* 7. COMPONENT STYLES: TABLE                                          */
-/* =================================================================== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  background-color: var(--white);
-  box-shadow: var(--box-shadow-md);
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-}
-
-table th,
-table td {
-  padding: var(--spacing-md);
-  line-height: var(--line-height-base);
-  border-bottom: var(--border-width) solid var(--border-color);
-}
-
-table thead th {
-  background-color: var(--teal-blue);
-  color: var(--white);
-  font-weight: var(--font-weight-medium);
-  font-size: 0.875rem; /* 14px */
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: var(--border-width) solid var(--teal-blue-dark);
-}
-
-table tbody tr {
-  transition: background-color 0.15s ease-in-out;
-}
-
-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-table tbody tr:nth-child(even) {
-  background-color: var(--gray-100);
-}
-
-table tbody tr:hover {
-  background-color: var(--aqua-island-light);
-}
-
-/* =================================================================== */
 /* 8. COMPONENT STYLES: CHART                                          */
 /* =================================================================== */
 .chart-container {

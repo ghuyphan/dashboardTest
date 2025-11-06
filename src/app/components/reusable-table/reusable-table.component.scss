@@ -1,3 +1,5 @@
+// reusable-table.component.scss
+
 :host {
   /*
     MODIFICATION: Make the host component fill the space
@@ -12,7 +14,7 @@
     display: block;
     width: 100%;
     border-radius: var(--border-radius-md);
-    
+
     /*
       MODIFICATION: This is the key.
       The container *inside* the component takes 100% height
@@ -20,7 +22,7 @@
     */
     height: 100%;
     overflow: auto; /* Enables scrolling for the sticky header */
-    
+
     background-color: var(--white);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
@@ -28,7 +30,12 @@
   table {
     width: 100%;
     background: transparent;
-    border-collapse: collapse;
+    /* THIS IS THE FIX:
+      'position: sticky' for table headers does not work 
+      with 'border-collapse: collapse;'.
+      Changing it to 'separate' resolves the issue.
+    */
+    border-collapse: separate;
   }
 
   /* Content wrappers for text truncation */
@@ -45,7 +52,7 @@
    Material Component Overrides
    ============================================ */
 :host ::ng-deep {
-  
+
   /* Header Cells */
   .mat-mdc-header-cell {
     background-color: var(--teal-blue) !important;
@@ -76,6 +83,22 @@
     .mat-sort-header-button {
       color: var(--white) !important;
       font-weight: inherit;
+      display: flex; /* Ensure proper alignment of content and arrow */
+      align-items: center;
+      justify-content: space-between; /* Push arrow to the right */
+    }
+
+    /* Style the default sort arrow */
+    .mat-sort-header-arrow {
+      color: var(--white) !important; /* Ensure arrow is white */
+      opacity: 0.6; /* Default state is semi-transparent */
+      transition: opacity 0.2s ease;
+      margin-left: 8px; /* Space between text and arrow */
+    }
+
+    /* Style the sort arrow when sorted */
+    &.mat-sort-header-sorted .mat-sort-header-arrow {
+      opacity: 1; /* Make fully opaque when sorted */
     }
 
     &.mat-sort-header-sorted,
@@ -83,44 +106,6 @@
       background-color: var(--teal-blue-dark) !important;
     }
   }
-
-  /*
-    MODIFICATION: Font Awesome Sort Icons
-  */
-
-  .mat-sort-header-arrow {
-    display: none !important;
-  }
-
-  .mat-sort-header-button::after {
-    font-family: "Font Awesome 5 Free"; /* Or "Font Awesome 6 Free" if you use FA6 */
-    font-weight: 900; /* For solid icons */
-    content: "\f0dc"; /* fa-sort */
-    font-size: 0.9em;
-    margin-left: 8px;
-    opacity: 0.6;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    display: inline-block;
-    
-    /*
-      MODIFICATION: This is the fix for the invisible icon.
-      It forces it to inherit the header's white color.
-    */
-    color: inherit; 
-  }
-
-  .mat-sort-header-sorted[aria-sort="ascending"] .mat-sort-header-button::after {
-    content: "\f0de"; /* fa-sort-up */
-    opacity: 1;
-  }
-
-  .mat-sort-header-sorted[aria-sort="descending"] .mat-sort-header-button::after {
-    content: "\f0dd"; /* fa-sort-down */
-    opacity: 1;
-  }
-  
-  /* End of Sort Icon Modification */
-
 
   /* Data Cells */
   .mat-mdc-cell {
@@ -138,7 +123,7 @@
   /* ============================================
      Row Styles & States
      ============================================ */
-  
+
   .mat-mdc-row {
     transition: background-color 0.15s ease, transform 0.1s ease;
 
@@ -154,7 +139,7 @@
       }
       &:hover {
         background-color: var(--aqua-island-light) !important;
-        transform: translateX(2px);
+        // transform: translateX(2px);
       }
       &:active {
         transform: scale(0.998);
@@ -166,7 +151,7 @@
 
         &:hover {
           background-color: var(--aqua-island) !important;
-          transform: translateX(2px);
+          // transform: translateX(2px);
         }
       }
     }

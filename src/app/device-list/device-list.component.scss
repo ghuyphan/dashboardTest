@@ -44,7 +44,6 @@ p {
   flex: 1; // <-- CRITICAL: Makes table take all available space
   min-height: 0; // <-- CRITICAL: Prevents flexbox overflow
   display: flex; /* Required for child height inheritance */
-  overflow: hidden; /* Prevent overflow leaks */
 }
 
 // Make the loading message centered and fill the space
