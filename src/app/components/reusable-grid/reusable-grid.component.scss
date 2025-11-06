@@ -3,97 +3,155 @@
   width: 100%;
 }
 
-.grid-wrapper {
+// --- NEW STYLES ---
+
+// Main container
+.grid-container {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  overflow-x: auto;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  overflow: hidden; // Clip corners
+  box-shadow: var(--box-shadow-md);
+  background-color: var(--white);
 }
 
-// 1. Make rows clickable
-.grid-wrapper table tbody tr {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+// Wrapper for the header table
+.grid-header-wrapper {
+  overflow-x: hidden; // Synced by JS, hide scrollbar
 }
 
-// 2. Override padding
-.grid-wrapper table th,
-.grid-wrapper table td {
-  padding: var(--spacing-sm) var(--spacing-md);
+// Wrapper for the body (virtual scroller)
+.grid-body-wrapper {
+  overflow-x: auto; // This drives horizontal scrolling
+  overflow-y: hidden; // Viewport handles vertical
+  -webkit-overflow-scrolling: touch;
 }
 
-// === NEW HEADER STYLE ===
-.grid-wrapper table thead th {
+// CDK Viewport
+.virtual-viewport {
+  height: 100%;
+  width: 100%;
+}
+
+// Common table styles
+.header-table,
+.data-table {
+  width: 100%;
+  table-layout: fixed; // ESSENTIAL for resizing
+  border-collapse: collapse;
+}
+
+// --- MODIFIED HEADER STYLES ---
+.header-table thead th {
+  // Original styles
   background-color: var(--teal-blue);
   color: var(--white);
   font-weight: var(--font-weight-medium);
   text-align: left;
-  border-bottom: var(--border-width) solid var(--border-color);
-  user-select: none; // Prevent text selection on click
+  user-select: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+
+  // New styles for resizing
+  position: relative; // For resizer
+  overflow: hidden; // Clip text
 }
 
-// --- START OF NEW SORTING STYLES ---
+// Wrapper for header text to enable ellipsis
+.header-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-// Style for headers that can be clicked
-.grid-wrapper table thead th.sortable {
+// --- MODIFIED SORTING STYLES ---
+
+// Sorting styles now target the .header-content
+.header-table thead th.sortable {
   cursor: pointer;
-  transition: filter 0.2s ease; // Use filter for transition
-  position: relative; // For positioning the arrow
+  transition: filter 0.2s ease;
+}
+.header-table thead th.sortable:hover {
+  filter: brightness(1.2);
 }
 
-// === MODIFIED: Use brightness filter for hover on dark bg ===
-.grid-wrapper table thead th.sortable:hover {
-  filter: brightness(1.2); // Brighten the header on hover
-}
-
-// Add an arrow AFTER the text
-.grid-wrapper table thead th.sortable::after {
+// Sorting arrows (moved to ::after on the content)
+.header-table thead th.sortable .header-content::after {
   content: '';
   display: inline-block;
   margin-left: 0.5rem;
   font-size: 0.8em;
 }
-
-// "Unsorted" state arrow (both up and down)
-.grid-wrapper table thead th.sortable:not(.sorted-asc):not(.sorted-desc)::after {
+.header-table thead th.sortable:not(.sorted-asc):not(.sorted-desc)
+  .header-content::after {
   content: '▲▼';
-  opacity: 0.5; // Made slightly more visible
+  opacity: 0.5;
 }
-
-// "Sorted Ascending" state
-.grid-wrapper table thead th.sorted-asc::after {
+.header-table thead th.sorted-asc .header-content::after {
   content: '▲';
   opacity: 1;
-  color: var(--white); // === MODIFIED: Show on dark bg
+  color: var(--white);
 }
-
-// "Sorted Descending" state
-.grid-wrapper table thead th.sorted-desc::after {
+.header-table thead th.sorted-desc .header-content::after {
   content: '▼';
   opacity: 1;
-  color: var(--white); // === MODIFIED: Show on dark bg
+  color: var(--white);
 }
 
-// --- END OF NEW SORTING STYLES ---
+// --- NEW RESIZER STYLES ---
 
-// 3. Selected row style
-.grid-wrapper table tbody tr.selected {
-  background-color: var(--aqua-island-light);
-  color: var(--peacock-blue);
-  // === REMOVED to prevent layout shift ===
-  // font-weight: var(--font-weight-medium);
+.resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px; // Make it a bit wider for easier grabbing
+  height: 100%;
+  cursor: col-resize;
+  z-index: 1;
+  // background: rgba(0, 0, 0, 0.1); // Uncomment to debug
 }
 
-// Hover state
-.grid-wrapper table tbody tr:hover {
+// Change cursor when resizing
+.grid-container.resizing {
+  cursor: col-resize;
+}
+
+// --- MODIFIED BODY/ROW STYLES ---
+
+.data-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+.data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.data-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  overflow: hidden; // Clip text
+}
+
+// Wrapper for cell text to enable ellipsis
+.cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table tbody tr:hover {
   background-color: var(--aqua-island);
 }
-
-// Selected hover state
-.grid-wrapper table tbody tr.selected:hover {
+.data-table tbody tr.selected {
+  background-color: var(--aqua-island-light);
+  color: var(--peacock-blue);
+}
+.data-table tbody tr.selected:hover {
   background-color: var(--aqua-island-light);
 }
 
-// --- END OF STYLES ---
-
+// --- NO DATA (Unchanged) ---
 .no-data-message {
   background-color: var(--white);
   box-shadow: var(--box-shadow-md);
