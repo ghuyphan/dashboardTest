@@ -8,54 +8,97 @@
   overflow-x: auto;
 }
 
-// --- START OF NEW STYLES ---
-
 // 1. Make rows clickable
 .grid-wrapper table tbody tr {
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-// 2. Override padding to make rows smaller
-// We target the table inside our component to be more specific
-// than the global style.
+// 2. Override padding
 .grid-wrapper table th,
 .grid-wrapper table td {
-  // Use 8px vertical padding (sm) and 16px horizontal (md)
-  // This overrides 'var(--spacing-md)' from styles.scss
   padding: var(--spacing-sm) var(--spacing-md);
 }
 
-// 3. Add a style for the selected row
-.grid-wrapper table tbody tr.selected {
-  // Use your theme's colors
-  background-color: var(--aqua-island-light);
-  color: var(--peacock-blue);
+// === NEW HEADER STYLE ===
+.grid-wrapper table thead th {
+  background-color: var(--teal-blue);
+  color: var(--white);
   font-weight: var(--font-weight-medium);
+  text-align: left;
+  border-bottom: var(--border-width) solid var(--border-color);
+  user-select: none; // Prevent text selection on click
 }
 
-// Make hover effect darker than selected (or different)
+// --- START OF NEW SORTING STYLES ---
+
+// Style for headers that can be clicked
+.grid-wrapper table thead th.sortable {
+  cursor: pointer;
+  transition: filter 0.2s ease; // Use filter for transition
+  position: relative; // For positioning the arrow
+}
+
+// === MODIFIED: Use brightness filter for hover on dark bg ===
+.grid-wrapper table thead th.sortable:hover {
+  filter: brightness(1.2); // Brighten the header on hover
+}
+
+// Add an arrow AFTER the text
+.grid-wrapper table thead th.sortable::after {
+  content: '';
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.8em;
+}
+
+// "Unsorted" state arrow (both up and down)
+.grid-wrapper table thead th.sortable:not(.sorted-asc):not(.sorted-desc)::after {
+  content: '▲▼';
+  opacity: 0.5; // Made slightly more visible
+}
+
+// "Sorted Ascending" state
+.grid-wrapper table thead th.sorted-asc::after {
+  content: '▲';
+  opacity: 1;
+  color: var(--white); // === MODIFIED: Show on dark bg
+}
+
+// "Sorted Descending" state
+.grid-wrapper table thead th.sorted-desc::after {
+  content: '▼';
+  opacity: 1;
+  color: var(--white); // === MODIFIED: Show on dark bg
+}
+
+// --- END OF NEW SORTING STYLES ---
+
+// 3. Selected row style
+.grid-wrapper table tbody tr.selected {
+  background-color: var(--aqua-island-light);
+  color: var(--peacock-blue);
+  // === REMOVED to prevent layout shift ===
+  // font-weight: var(--font-weight-medium);
+}
+
+// Hover state
 .grid-wrapper table tbody tr:hover {
   background-color: var(--aqua-island);
 }
 
-// Ensure selected row keeps its color on hover
+// Selected hover state
 .grid-wrapper table tbody tr.selected:hover {
   background-color: var(--aqua-island-light);
 }
 
-// --- END OF NEW STYLES ---
+// --- END OF STYLES ---
 
 .no-data-message {
-  // Let's style this "empty" state using your variables
-  // from styles.scss
-
-  // Use panel/card styles
   background-color: var(--white);
   box-shadow: var(--box-shadow-md);
   border-radius: var(--border-radius-md);
   border: var(--border-width) solid var(--border-color);
-
-  // Use text styles
   padding: var(--spacing-lg);
   color: var(--gray-500);
   text-align: center;

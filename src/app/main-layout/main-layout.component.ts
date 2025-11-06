@@ -1,8 +1,4 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   Router,
@@ -48,19 +44,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private userSubscription: Subscription | null = null;
   private navSubscription: Subscription | null = null;
 
-  isHeaderHidden: boolean = false;
-  isFooterHidden: boolean = false;
-  
-  // --- OPTIMIZED SCROLL LOGIC PROPERTIES ---
-  private lastScrollTop: number = 0;
-  private lastScrollTime: number = Date.now();
-  private isScrollingDown: boolean = false;
-  private rafPending: boolean = false;
-  private accumulatedScroll: number = 0;
-  // --- END OF OPTIMIZED SCROLL LOGIC PROPERTIES ---
+  // --- REMOVED SCROLL LOGIC PROPERTIES ---
+  // isHeaderHidden: boolean = false;
+  // isFooterHidden: boolean = false;
+  // private lastScrollTop: number = 0;
+  // ... (all other scroll properties removed)
 
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
+  
+  // --- NEW PROPERTIES FOR SEARCH ---
+  showSearchBar: boolean = false;
+  currentSearchTerm: string = '';
 
   constructor(
     private authService: AuthService,
@@ -90,7 +85,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        startWith(null),
+        startWith(null), // Emit current route data on init
         map(() => this.activatedRoute),
         map(route => {
           while (route.firstChild) {
@@ -104,6 +99,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       .subscribe((data: any) => {
         console.log('Router data object:', data);
         this.currentScreenName = data['title'] || 'Dashboard';
+        
+        // --- NEW: Show search bar based on route data ---
+        this.showSearchBar = data['showSearchBar'] === true;
+        
+        // --- NEW: Clear search term on navigation ---
+        if (!this.showSearchBar) {
+          this.currentSearchTerm = '';
+        }
       });
 
     // 3. Check window size
@@ -136,85 +139,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- START OF OPTIMIZED SCROLL LOGIC ---
-  public onContentScroll(event: Event): void {
-    // Queue up scroll handling with RAF
-    if (!this.rafPending) {
-      this.rafPending = true;
-      requestAnimationFrame(() => {
-        this.processScroll(event);
-        this.rafPending = false;
-      });
-    }
-  }
-
-  private processScroll(event: Event): void {
-    const element = event.target as HTMLElement;
-    const scrollTop = element.scrollTop;
-    const scrollHeight = element.scrollHeight;
-    const clientHeight = element.clientHeight;
-    const currentTime = Date.now();
-    
-    // Calculate boundaries
-    const isAtTop = scrollTop <= 50;
-    const isAtBottom = (scrollHeight - scrollTop - clientHeight) <= 50;
-    
-    // Always show at boundaries
-    if (isAtTop || isAtBottom) {
-      if (this.isHeaderHidden || this.isFooterHidden) {
-        this.isHeaderHidden = false;
-        this.isFooterHidden = false;
-      }
-      this.lastScrollTop = scrollTop;
-      this.lastScrollTime = currentTime;
-      this.accumulatedScroll = 0;
-      return;
-    }
-    
-    // Calculate scroll delta
-    const scrollDelta = scrollTop - this.lastScrollTop;
-    
-    // Ignore minimal movements
-    if (Math.abs(scrollDelta) < 3) {
-      return;
-    }
-    
-    // Track direction
-    const scrollingDown = scrollDelta > 0;
-    
-    // Detect direction change
-    if (scrollingDown !== this.isScrollingDown) {
-      this.isScrollingDown = scrollingDown;
-      this.accumulatedScroll = 0; // Reset accumulator on direction change
-    }
-    
-    // Accumulate scroll distance
-    this.accumulatedScroll += Math.abs(scrollDelta);
-    
-    // Require 30px accumulated scroll before triggering change
-    if (this.accumulatedScroll >= 30) {
-      if (scrollingDown) {
-        // Hide when scrolling down
-        if (!this.isHeaderHidden) {
-          this.isHeaderHidden = true;
-          this.isFooterHidden = true;
-        }
-      } else {
-        // Show when scrolling up
-        if (this.isHeaderHidden) {
-          this.isHeaderHidden = false;
-          this.isFooterHidden = false;
-        }
-      }
-      
-      // Reset accumulator after action
-      this.accumulatedScroll = 0;
-    }
-    
-    this.lastScrollTop = scrollTop;
-    this.lastScrollTime = currentTime;
-  }
-  // --- END OF OPTIMIZED SCROLL LOGIC ---
+  // --- REMOVED: onContentScroll() method ---
+  // --- REMOVED: processScroll() method ---
 
   private getInitials(username: string): string {
     if (username && username.length >= 3) {
@@ -231,5 +157,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  // --- NEW: Method to handle search output ---
+  onSearchTermChanged(term: string): void {
+    this.currentSearchTerm = term;
+    console.log('Search term in main-layout:', this.currentSearchTerm);
+    // You would typically pass this value to a service or child component
   }
 }

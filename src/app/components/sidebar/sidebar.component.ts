@@ -91,11 +91,15 @@ export class SidebarComponent implements OnChanges {
    * before setting the scroll position.
    */
   private restoreScrollPosition(): void {
+    // === MODIFIED ===
+    // Changed timeout from 0 to 50ms.
+    // This gives Angular time to re-render the accordions
+    // before we set the scroll position.
     setTimeout(() => {
       if (this.navContentEl?.nativeElement) {
         this.navContentEl.nativeElement.scrollTop = this.lastScrollTop;
       }
-    }, 0);
+    }, 50);
   }
 
   onToggleSidebarClick(): void {

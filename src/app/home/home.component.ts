@@ -21,41 +21,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   // 2. Use ngOnInit to set the actions for this page
   ngOnInit(): void {
     
-    // Define your test buttons
-    const testActions: FooterAction[] = [
-      {
-        label: 'Save',
-        icon: 'fas fa-save',
-        action: () => this.onSave(),
-        // This will ONLY appear if you have this permission
-        permission: 'QLThietBi.DMThietBi.RCREATE', 
-        className: 'btn-primary'
-      },
-      {
-        label: 'Print',
-        icon: 'fas fa-print',
-        action: () => this.onPrint(),
-        // This will ONLY appear if you have this permission
-        permission: 'QLThietBi.DMThietBi.RCREATE'
-      },
-      {
-        label: 'Disabled Button',
-        icon: 'fas fa-ban',
-        action: () => {}, // No action
-        disabled: true // This tests the [disabled] state
-      },
-      {
-        label: 'Delete (No Permission)',
-        icon: 'fas fa-trash',
-        action: () => this.onDelete(),
-        // This button should NOT appear, as the permission is fake
-        permission: 'QLThietBi.DMThietBi.RCREATE',
-        className: 'btn-danger'
-      }
-    ];
-
-    // 3. Send the actions to the service to show the footer
-    this.footerService.setActions(testActions);
   }
 
   // 4. IMPORTANT: Clear the actions when you leave the page

@@ -13,19 +13,20 @@
 
   <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
     <app-header
-      [class.hidden]="isHeaderHidden"
       [currentUser]="currentUser"
       [userInitials]="userInitials"
       [rolesDisplay]="rolesDisplay"
       [currentScreenName]="currentScreenName"
+      [showSearchBar]="showSearchBar" 
       (sidebarToggled)="toggleSidebar()"
       (logoutClicked)="logout()"
+      (searchChanged)="onSearchTermChanged($event)"
     ></app-header>
 
-    <main class="dashboard-content" (scroll)="onContentScroll($event)">
+    <main class="dashboard-content">
       <router-outlet></router-outlet>
     </main>
     
-    <app-action-footer [class.hidden]="isFooterHidden"></app-action-footer>
+    <app-action-footer></app-action-footer>
   </div>
 </div>

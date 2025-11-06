@@ -63,6 +63,19 @@
     <h2 class="header-title">{{ currentScreenName }}</h2>
   </div>
 
+  <div class="header-search-container" *ngIf="showSearchBar">
+    <div class="search-icon-wrapper">
+      <i class="fas fa-search search-icon"></i>
+    </div>
+    <input
+      type="text"
+      class="header-search-input"
+      placeholder="Tìm kiếm..."
+      [value]="searchTerm"
+      (input)="onSearchChange($event)"
+      aria-label="Search"
+    />
+  </div>
   <div class="header-right-controls">
     <div class="user-menu" #userMenuContainer *ngIf="currentUser">
       <button

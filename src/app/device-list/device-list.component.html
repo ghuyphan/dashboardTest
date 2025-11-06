@@ -1,7 +1,14 @@
 <div class="page-container">
-  <app-reusable-grid 
-    [columns]="deviceColumns" 
-    [data]="deviceData"
-    (rowSelected)="onDeviceSelected($event)">
-  </app-reusable-grid>
+  <div *ngIf="isLoading" class="loading-message">
+    Loading devices...
   </div>
+
+  <app-reusable-grid
+    *ngIf="!isLoading"
+    [columns]="deviceColumns"
+    [data]="deviceData"
+    (rowSelected)="onDeviceSelected($event)"
+    (sortChanged)="onSortChanged($event)"
+  >
+  </app-reusable-grid>
+</div>

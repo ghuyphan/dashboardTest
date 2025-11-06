@@ -38,10 +38,10 @@
   display: flex;
   align-items: center;
   height: var(--header-height);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   box-sizing: border-box;
   position: relative;
-  padding: 0 0.625rem;
+  padding: 0 0.85rem;
   flex-shrink: 0;
   transition: padding var(--transition-duration) var(--transition-smooth),
     justify-content var(--transition-duration) var(--transition-smooth);
@@ -221,14 +221,15 @@
   display: flex;
   padding: 0.75rem 0.625rem;
   border-radius: var(--border-radius-md);
+  
+  /* === OPTIMIZATION ===
+   * Removed 'padding', 'width', 'height', 'margin', 'justify-content'
+   * from the transition to prevent layout thrashing on collapse/expand.
+   */
   transition: background-color var(--transition-fast) ease,
     color var(--transition-fast) ease,
-    transform var(--transition-fast) ease,
-    padding var(--transition-duration) var(--transition-smooth),
-    width var(--transition-duration) var(--transition-smooth),
-    height var(--transition-duration) var(--transition-smooth),
-    margin var(--transition-duration) var(--transition-smooth),
-    justify-content var(--transition-duration) var(--transition-smooth);
+    transform var(--transition-fast) ease;
+
   white-space: nowrap;
   position: relative;
   width: 100%;
@@ -253,8 +254,12 @@
   font-size: var(--font-size-base);
   flex-shrink: 0;
   transform: scale(1);
-  transition: font-size var(--transition-fast) var(--transition-smooth),
-    transform var(--transition-fast) var(--transition-spring);
+
+  /* === OPTIMIZATION ===
+   * Removed 'font-size' from the transition.
+   * Animating font-size causes layout recalculation.
+   */
+  transition: transform var(--transition-fast) var(--transition-spring);
 }
 
 .sidebar-nav ul li a span,
@@ -262,6 +267,7 @@
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* This is already optimized! 'opacity' and 'transform' are fast. */
   transition: opacity var(--transition-fast) var(--transition-smooth),
     transform var(--transition-fast) var(--transition-smooth);
   transform-origin: left center;
@@ -532,7 +538,11 @@
   margin: 0;
   font-size: 1.1rem;
   transform: none;
-  transition: font-size var(--transition-fast) var(--transition-smooth);
+  /*
+   * The 'transition' property was already removed from this
+   * element via the optimization higher up, so the
+   * font-size change here will be instant (which is good).
+   */
 }
 
 /*
@@ -707,8 +717,10 @@
     margin-right: 0.75rem;
     font-size: var(--font-size-base);
     transform: scale(1);
-    transition: font-size var(--transition-fast) var(--transition-smooth),
-      transform var(--transition-fast) var(--transition-spring);
+    /*
+     * The 'transition' property was already removed from this
+     * element via the optimization higher up.
+     */
   }
 
   /*

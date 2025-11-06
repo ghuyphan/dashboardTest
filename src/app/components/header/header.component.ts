@@ -5,7 +5,7 @@ import {
   EventEmitter,
   ViewChild,
   ElementRef,
-  HostListener
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '../../models/user.model';
@@ -15,18 +15,22 @@ import { User } from '../../models/user.model';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
   @Input() currentUser: User | null = null;
   @Input() userInitials: string = '';
   @Input() rolesDisplay: string = '';
   @Input() currentScreenName: string = 'Dashboard';
+  @Input() showSearchBar: boolean = false; // <-- NEW
 
   @Output() sidebarToggled = new EventEmitter<void>();
   @Output() logoutClicked = new EventEmitter<void>();
+  @Output() searchChanged = new EventEmitter<string>(); // <-- NEW
 
   isUserMenuOpen: boolean = false;
+  searchTerm: string = ''; // <-- NEW
+
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
   @ViewChild('mobileToggle') mobileToggle!: ElementRef;
 
@@ -75,5 +79,12 @@ export class HeaderComponent {
   onSupportClick(): void {
     console.log('Support clicked');
     this.isUserMenuOpen = false;
+  }
+
+  // <-- NEW METHOD -->
+  onSearchChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchTerm = target.value;
+    this.searchChanged.emit(this.searchTerm);
   }
 }

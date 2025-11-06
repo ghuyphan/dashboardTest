@@ -22,20 +22,20 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  transition: transform var(--transition-duration) var(--transition-smooth),
-    box-shadow var(--transition-fast) ease;
+  /* MODIFIED: Removed transform transition */
+  transition: box-shadow var(--transition-fast) ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  gap: var(--spacing-md); /* NEW: Add gap between sections */
 }
 
-.dashboard-header.hidden {
-  transform: translateY(-100%);
-}
+/* REMOVED: .dashboard-header.hidden rule */
 
 .header-left-controls {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
   min-width: 0; /* Added for flex text truncation */
+  flex: 1; /* NEW: Allow to grow */
 }
 
 .header-title {
@@ -45,6 +45,8 @@
   font-weight: 600;
   color: var(--gray-800);
   white-space: nowrap;
+  overflow: hidden; /* NEW: Added for safety */
+  text-overflow: ellipsis; /* NEW: Added for safety */
 }
 
 @media (max-width: 992px) {
@@ -81,10 +83,66 @@
   }
 }
 
+/* --- NEW SEARCH STYLES --- */
+.header-search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background-color: var(--gray-100);
+  border-radius: var(--border-radius-md);
+  border: var(--border-width) solid var(--border-color);
+  flex: 2 1 auto; /* Grow more than left/right, but can shrink */
+  min-width: 0; /* Can shrink */
+  max-width: 450px;
+  transition: background-color var(--transition-fast) ease,
+    border-color var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
+
+  &:focus-within {
+    background-color: var(--white);
+    border-color: var(--dark-teal);
+    box-shadow: 0 0 0 2px rgba(30, 58, 107, 0.1);
+  }
+}
+
+.search-icon-wrapper {
+  padding: 0 var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-600);
+  line-height: 1;
+}
+
+.search-icon {
+  font-size: 0.875rem;
+  margin-top: 2px; /* Align better */
+}
+
+.header-search-input {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-900);
+  outline: none;
+
+  &::placeholder {
+    color: var(--gray-600);
+    font-weight: var(--font-weight-normal);
+  }
+}
+/* --- End Search --- */
+
 .header-right-controls {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: flex-end; /* NEW: Align items to the end */
+  flex: 1; /* NEW: Allow to grow */
+  min-width: 0;
 }
 
 /* --- User Menu --- */
@@ -346,12 +404,24 @@
   .dashboard-header {
     padding: 0 var(--spacing-md);
     justify-content: space-between;
+    gap: var(--spacing-sm); /* NEW: Reduce gap */
   }
-  
+
   .header-left-controls {
     /* Allow left controls to shrink and truncate text */
     flex: 1;
     min-width: 0;
+  }
+
+  /* --- NEW: HIDE SEARCH ON MOBILE --- */
+  .header-search-container {
+    display: none;
+  }
+
+  /* NEW: Stop right controls from growing */
+  .header-right-controls {
+    flex-grow: 0;
+    flex-basis: auto;
   }
 
   /* --- THIS IS THE NEW LOGIC (ALIGNED LEFT) --- */
@@ -359,16 +429,16 @@
   /* 1. Show the REAL dynamic title on mobile */
   .header-title {
     display: block; /* <-- OVERRIDE the 'display: none' from above */
-    
+
     /* 2. Align left (by removing absolute positioning) */
     position: static;
     transform: none;
-    
+
     /* 3. Handle long titles gracefully */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    
+
     /* Allow it to take up space but not push the right controls */
     flex: 1;
     min-width: 0; /* For ellipsis to work in flex */
