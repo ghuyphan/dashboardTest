@@ -1,108 +1,188 @@
-/* Use ::ng-deep to penetrate Angular Material's component encapsulation */
+:host {
+  .table-container {
+    display: block;
+    width: 100%;
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    background-color: var(--white);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
 
-/* Main container style, copied from .grid-container
-*/
-:host .table-container {
-  display: block; // Changed from flex
-  width: 100%;
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  overflow: hidden; // Clip corners
-  box-shadow: var(--box-shadow-md);
-  background-color: var(--white);
+  table {
+    width: 100%;
+    background: transparent;
+    border-collapse: collapse;
+  }
+
+  /* Content wrappers for text truncation */
+  .header-content,
+  .cell-content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
 }
 
-/* Make sure the table itself is full width */
-table {
-  width: 100%;
-}
-
-/*
-  Header cell styles, copied from .header-table thead th
-*/
-::ng-deep .mat-header-cell {
-  background-color: var(--teal-blue);
-  color: var(--white);
-  font-weight: var(--font-weight-medium);
-  text-align: left;
-  user-select: none;
-  padding: var(--spacing-sm) var(--spacing-md) !important;
+/* ============================================
+   Material Component Overrides
+   ============================================ */
+:host ::ng-deep {
   
-  // Override MatSort styles to match
-  .mat-sort-header-button {
+  /* Header Cells */
+  .mat-mdc-header-cell {
+    background-color: var(--teal-blue) !important;
     color: var(--white) !important;
+    font-weight: var(--font-weight-medium);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    user-select: none;
+    padding: var(--spacing-sm) var(--spacing-md) !important; /* Reduced vertical padding */
+    border-bottom: 2px solid var(--teal-blue-dark) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s ease;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    /* Sort button within header */
+    .mat-sort-header-button {
+      color: var(--white) !important;
+      font-weight: inherit;
+    }
+
+    /* Hover effect on sortable headers */
+    &.mat-sort-header-sorted,
+    &:hover {
+      background-color: var(--teal-blue-dark) !important;
+    }
   }
-}
 
-/*
-  Header arrow styles
-  We make the Material sort arrow white to match the header text.
-*/
-::ng-deep .mat-sort-header-arrow {
-  color: var(--white) !important;
-  opacity: 0.7;
-}
-::ng-deep .mat-sort-header-sorted .mat-sort-header-arrow {
-  opacity: 1;
-}
+  /* Sort Arrow Indicator */
+  .mat-sort-header-arrow {
+    color: var(--white) !important;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
 
-/*
-  Header & Cell content wrappers for text ellipsis
-  Copied from .header-content and .cell-content
-*/
-.header-content,
-.cell-content {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .mat-sort-header-sorted .mat-sort-header-arrow {
+    opacity: 1;
+  }
 
-/* Row styles, copied from .data-table tbody tr 
-*/
-::ng-deep .mat-row.clickable-row {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  border-bottom: var(--border-width) solid var(--border-color);
-
-  &:last-child {
+  /* Data Cells */
+  .mat-mdc-cell {
+    padding: var(--spacing-sm) var(--spacing-md) !important; /* Reduced vertical padding */
+    color: inherit;
     border-bottom: none;
+    border-right: 1px solid var(--border-color);
+    font-size: 0.875rem;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  /* ============================================
+     Row Styles & States
+     ============================================ */
+  
+  .mat-mdc-row {
+    transition: background-color 0.15s ease, transform 0.1s ease;
+
+    &.clickable-row {
+      cursor: pointer;
+      color: var(--gray-700);
+
+      /* Zebra Striping */
+      &:nth-child(odd) {
+        background-color: var(--white);
+      }
+
+      &:nth-child(even) {
+        background-color: var(--gray-100);
+      }
+
+      /* Hover State */
+      &:hover {
+        background-color: var(--aqua-island-light) !important;
+        transform: translateX(2px);
+      }
+
+      /* Active/Click State */
+      &:active {
+        transform: scale(0.998);
+      }
+
+      /* Selected State */
+      &.selected {
+        background-color: var(--aqua-island) !important;
+        color: var(--peacock-blue) !important;
+        box-shadow: inset 3px 0 0 var(--peacock-blue);
+
+        &:hover {
+          background-color: var(--aqua-island) !important;
+          transform: translateX(2px);
+        }
+      }
+    }
+
+    /* No Data Row */
+    &.mat-no-data-row {
+      background-color: var(--white);
+      cursor: default;
+
+      &:hover {
+        background-color: var(--white);
+      }
+
+      .mat-mdc-cell {
+        padding: var(--spacing-lg) var(--spacing-md) !important; /* Reduced from xl */
+        color: var(--gray-500);
+        text-align: center;
+        font-style: italic;
+        font-size: 0.9375rem;
+        border-bottom: none;
+        border-right: none;
+      }
+    }
+  }
+
+  /* Header Row - Reduced height */
+  .mat-mdc-header-row {
+    height: 40px; /* Reduced from 48px */
+  }
+
+  /* Data Row - Reduced height */
+  .mat-mdc-row {
+    height: 42px; /* Reduced from 52px */
+    border-bottom: 1px solid var(--border-color);
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 }
 
-/* Row hover styles, copied from .data-table tbody tr:hover 
-*/
-::ng-deep .mat-row.clickable-row:hover {
-  background-color: var(--aqua-island);
-}
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 768px) {
+  :host ::ng-deep {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: var(--spacing-xs) var(--spacing-sm) !important; /* Further reduced for mobile */
+      font-size: 0.8125rem;
+    }
 
-/* Selected row styles, copied from .data-table tbody tr.selected 
-*/
-::ng-deep .mat-row.clickable-row.selected {
-  background-color: var(--aqua-island-light);
-  color: var(--peacock-blue);
-}
-::ng-deep .mat-row.clickable-row.selected:hover {
-  background-color: var(--aqua-island-light);
-}
+    .mat-mdc-header-row {
+      height: 36px; /* Reduced from 44px */
+    }
 
-/*
-  Data cell styles, copied from .data-table td
-*/
-::ng-deep .mat-cell {
-  padding: var(--spacing-sm) var(--spacing-md) !important;
-  // This color is needed for the .selected style to apply
-  color: inherit; 
-}
-
-/*
-  No data row styles, copied from .no-data-message
-*/
-::ng-deep .mat-row.mat-no-data-row {
-  background-color: var(--white);
-}
-::ng-deep .mat-row.mat-no-data-row .mat-cell {
-  padding: var(--spacing-lg) !important;
-  color: var(--gray-500);
-  text-align: center;
-  font-style: italic;
+    .mat-mdc-row {
+      height: 38px; /* Reduced from 48px */
+    }
+  }
 }

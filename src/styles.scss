@@ -363,7 +363,7 @@ body > ul.submenu.open {
   list-style: none;
   margin: 0;
   // padding: 0.5rem;
-  background-color: var(--desert-storm); /* Use your app's variables */
+  background-color: var(--gray-100); /* Use your app's variables */
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* A bit stronger for a flyout */

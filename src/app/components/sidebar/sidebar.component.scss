@@ -16,7 +16,7 @@
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background-color: var(--desert-storm);
+  // background-color: var(--desert-storm);
   color: var(--gray-700);
   padding: 0 0 var(--spacing-md) 0;
   transition: transform var(--transition-duration) var(--transition-smooth),
@@ -235,7 +235,7 @@
   width: 100%;
   background: none;
   border: none;
-  font-family: inherit;
+  // font-family: inherit;
   font-size: 0.875rem;
   font-weight: var(--font-weight-normal);
   text-align: left;
