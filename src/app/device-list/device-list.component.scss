@@ -1,7 +1,36 @@
-.page-container {
-  height: 100%; // <-- CRITICAL: Must have 100% height
-  display: flex; // <-- CRITICAL: Must be flex
-  flex-direction: column; // <-- CRITICAL: Must be column
+/*
+  MODIFICATION: Apply flex layout to the host
+  to make it fill the available space (e.g., in the router outlet)
+*/
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent overflow */
+}
+
+/*
+  MODIFICATION: Make .page-content the main flex container
+*/
+.page-content {
+  height: 100%; // <-- CRITICAL
+  display: flex; // <-- CRITICAL
+  flex-direction: column; // <-- CRITICAL
+  flex: 1; // <-- NEW: Make it grow to fill :host
+  min-height: 0; // <-- NEW: Prevent overflow
+  overflow: hidden; /* CRITICAL: Prevents double scrollbars */
+}
+
+/*
+  MODIFICATION: Make the .grid-container fill the page-content
+  and hold the table or loading indicator.
+*/
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1; // <-- NEW: Make it grow
+  min-height: 0; // <-- NEW: Prevent overflow
+  overflow: hidden; /* CRITICAL */
 }
 
 p {
@@ -10,14 +39,16 @@ p {
 }
 
 // --- CRITICAL STYLES ---
-// These styles make the grid component fill the container
-:host ::ng-deep app-reusable-grid {
-  flex: 1; // <-- CRITICAL: Makes grid take all available space
+// This tells the table component to fill the .grid-container
+:host ::ng-deep app-reusable-table {
+  flex: 1; // <-- CRITICAL: Makes table take all available space
   min-height: 0; // <-- CRITICAL: Prevents flexbox overflow
+  display: flex; /* Required for child height inheritance */
+  overflow: hidden; /* Prevent overflow leaks */
 }
 
-// Make the loading message centered
-:host ::ng-deep .loading-message {
+// Make the loading message centered and fill the space
+.loading-indicator {
   flex: 1;
   display: flex;
   align-items: center;

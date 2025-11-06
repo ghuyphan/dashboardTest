@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 
-// --- Interfaces (unchanged) ---
+// --- Interfaces ---
 export interface GridColumn {
   key: string;
   label: string;
@@ -32,7 +32,7 @@ export interface SortChangedEvent {
   styleUrls: ['./reusable-table.component.scss'],
 })
 export class ReusableTableComponent implements OnChanges, AfterViewInit {
-  // --- Inputs & Outputs (unchanged) ---
+  // --- Inputs & Outputs ---
   @Input() data: any[] = [];
   @Input() columns: GridColumn[] = [];
   @Input() searchTerm: string = '';
@@ -43,7 +43,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   public dataSource = new MatTableDataSource<any>();
   public displayedColumns: string[] = [];
 
-  // --- NEW: To track selected row for styling ---
+  // --- To track selected row for styling ---
   public selectedRow: any | null = null;
 
   @ViewChild(MatSort) sort!: MatSort;

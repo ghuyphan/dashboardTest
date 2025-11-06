@@ -1,9 +1,26 @@
 :host {
+  /*
+    MODIFICATION: Make the host component fill the space
+    given to it by the parent (device-list).
+  */
+  display: block;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+
   .table-container {
     display: block;
     width: 100%;
     border-radius: var(--border-radius-md);
-    overflow: hidden;
+    
+    /*
+      MODIFICATION: This is the key.
+      The container *inside* the component takes 100% height
+      and becomes the scrollable element.
+    */
+    height: 100%;
+    overflow: auto; /* Enables scrolling for the sticky header */
+    
     background-color: var(--white);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
@@ -39,42 +56,75 @@
     letter-spacing: 0.05em;
     text-align: left;
     user-select: none;
-    padding: var(--spacing-sm) var(--spacing-md) !important; /* Reduced vertical padding */
+    padding: var(--spacing-sm) var(--spacing-md) !important;
     border-bottom: 2px solid var(--teal-blue-dark) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     transition: background-color 0.2s ease;
+
+    /*
+      MODIFICATION: position: sticky is required
+      for the 'sticky: true' in the HTML to work.
+    */
+    position: sticky;
+    top: 0;
+    z-index: 10;
 
     &:last-child {
       border-right: none;
     }
 
-    /* Sort button within header */
     .mat-sort-header-button {
       color: var(--white) !important;
       font-weight: inherit;
     }
 
-    /* Hover effect on sortable headers */
     &.mat-sort-header-sorted,
     &:hover {
       background-color: var(--teal-blue-dark) !important;
     }
   }
 
-  /* Sort Arrow Indicator */
+  /*
+    MODIFICATION: Font Awesome Sort Icons
+  */
+
   .mat-sort-header-arrow {
-    color: var(--white) !important;
-    opacity: 0.6;
-    transition: opacity 0.2s ease;
+    display: none !important;
   }
 
-  .mat-sort-header-sorted .mat-sort-header-arrow {
+  .mat-sort-header-button::after {
+    font-family: "Font Awesome 5 Free"; /* Or "Font Awesome 6 Free" if you use FA6 */
+    font-weight: 900; /* For solid icons */
+    content: "\f0dc"; /* fa-sort */
+    font-size: 0.9em;
+    margin-left: 8px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    display: inline-block;
+    
+    /*
+      MODIFICATION: This is the fix for the invisible icon.
+      It forces it to inherit the header's white color.
+    */
+    color: inherit; 
+  }
+
+  .mat-sort-header-sorted[aria-sort="ascending"] .mat-sort-header-button::after {
+    content: "\f0de"; /* fa-sort-up */
     opacity: 1;
   }
 
+  .mat-sort-header-sorted[aria-sort="descending"] .mat-sort-header-button::after {
+    content: "\f0dd"; /* fa-sort-down */
+    opacity: 1;
+  }
+  
+  /* End of Sort Icon Modification */
+
+
   /* Data Cells */
   .mat-mdc-cell {
-    padding: var(--spacing-sm) var(--spacing-md) !important; /* Reduced vertical padding */
+    padding: var(--spacing-sm) var(--spacing-md) !important;
     color: inherit;
     border-bottom: none;
     border-right: 1px solid var(--border-color);
@@ -96,27 +146,19 @@
       cursor: pointer;
       color: var(--gray-700);
 
-      /* Zebra Striping */
       &:nth-child(odd) {
         background-color: var(--white);
       }
-
       &:nth-child(even) {
         background-color: var(--gray-100);
       }
-
-      /* Hover State */
       &:hover {
         background-color: var(--aqua-island-light) !important;
         transform: translateX(2px);
       }
-
-      /* Active/Click State */
       &:active {
         transform: scale(0.998);
       }
-
-      /* Selected State */
       &.selected {
         background-color: var(--aqua-island) !important;
         color: var(--peacock-blue) !important;
@@ -129,7 +171,6 @@
       }
     }
 
-    /* No Data Row */
     &.mat-no-data-row {
       background-color: var(--white);
       cursor: default;
@@ -139,7 +180,7 @@
       }
 
       .mat-mdc-cell {
-        padding: var(--spacing-lg) var(--spacing-md) !important; /* Reduced from xl */
+        padding: var(--spacing-lg) var(--spacing-md) !important;
         color: var(--gray-500);
         text-align: center;
         font-style: italic;
@@ -150,14 +191,12 @@
     }
   }
 
-  /* Header Row - Reduced height */
   .mat-mdc-header-row {
-    height: 40px; /* Reduced from 48px */
+    height: 40px;
   }
 
-  /* Data Row - Reduced height */
   .mat-mdc-row {
-    height: 42px; /* Reduced from 52px */
+    height: 42px;
     border-bottom: 1px solid var(--border-color);
 
     &:last-child {
@@ -173,16 +212,16 @@
   :host ::ng-deep {
     .mat-mdc-header-cell,
     .mat-mdc-cell {
-      padding: var(--spacing-xs) var(--spacing-sm) !important; /* Further reduced for mobile */
+      padding: var(--spacing-xs) var(--spacing-sm) !important;
       font-size: 0.8125rem;
     }
 
     .mat-mdc-header-row {
-      height: 36px; /* Reduced from 44px */
+      height: 36px;
     }
 
     .mat-mdc-row {
-      height: 38px; /* Reduced from 48px */
+      height: 38px;
     }
   }
 }

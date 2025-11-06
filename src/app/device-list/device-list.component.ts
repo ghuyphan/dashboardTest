@@ -3,15 +3,12 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
-// --- CHANGED ---
-// Now importing from the new reusable-table component
 import {
-  ReusableTableComponent, // <-- Changed from ReusableGridComponent
+  ReusableTableComponent,
   GridColumn,
   SortChangedEvent,
   SortDirection,
 } from '../components/reusable-table/reusable-table.component';
-// --- END CHANGE ---
 
 import { FooterActionService } from '../services/footer-action.service';
 import { FooterAction } from '../models/footer-action.model';
@@ -21,9 +18,7 @@ import { environment } from '../../environments/environment.development';
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  // --- CHANGED ---
-  imports: [CommonModule, ReusableTableComponent], // <-- Changed from ReusableGridComponent
-  // --- END CHANGE ---
+  imports: [CommonModule, ReusableTableComponent],
   templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
 })
@@ -41,7 +36,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     { key: 'NgayTao', label: 'Ngày Tạo', sortable: true },
   ];
 
-  // --- SIMPLIFIED: Only one master list ---
+  // --- Only one master list ---
   public allDeviceData: any[] = []; // Master list from API
   public selectedDevice: any | null = null;
   public isLoading: boolean = false;
@@ -99,12 +94,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   public onSortChanged(sortEvent: SortChangedEvent): void {
     console.log('Sort Changed (Handled by Table):', sortEvent);
   }
-
-  /**
-   * --- REMOVED: updateDisplayData() ---
-   * MatTableDataSource in the reusable table now handles all
-   * filtering and sorting.
-   */
 
   public onDeviceSelected(device: any): void {
     this.selectedDevice = device;
