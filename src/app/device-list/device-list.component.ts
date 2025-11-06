@@ -3,26 +3,28 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
+// --- CHANGED ---
+// Now importing from the new reusable-table component
 import {
-  ReusableGridComponent,
+  ReusableTableComponent, // <-- Changed from ReusableGridComponent
   GridColumn,
   SortChangedEvent,
-  SortDirection
-} from '../components/reusable-grid/reusable-grid.component';
+  SortDirection,
+} from '../components/reusable-table/reusable-table.component';
+// --- END CHANGE ---
 
 import { FooterActionService } from '../services/footer-action.service';
 import { FooterAction } from '../models/footer-action.model';
-
-// --- 1. IMPORT THE NEW SEARCH SERVICE ---
 import { SearchService } from '../services/search.service';
-
 import { environment } from '../../environments/environment.development';
 
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  imports: [CommonModule, ReusableGridComponent],
-  templateUrl: 'device-list.component.html',
+  // --- CHANGED ---
+  imports: [CommonModule, ReusableTableComponent], // <-- Changed from ReusableGridComponent
+  // --- END CHANGE ---
+  templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
 })
 export class DeviceListComponent implements OnInit, OnDestroy {
@@ -39,41 +41,38 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     { key: 'NgayTao', label: 'Ngày Tạo', sortable: true },
   ];
 
-  // --- 2. Create two lists: one master, one for display ---
+  // --- SIMPLIFIED: Only one master list ---
   public allDeviceData: any[] = []; // Master list from API
-  public filteredDeviceData: any[] = []; // List to display in the grid
   public selectedDevice: any | null = null;
-
   public isLoading: boolean = false;
+
   private deviceSub: Subscription | null = null;
-  // --- 3. Add subscription for search ---
   private searchSub: Subscription | null = null;
 
-  // --- 4. Add properties to track current state ---
-  private currentSearchTerm: string = '';
-  private currentSort: { key: string; direction: SortDirection | '' } = { key: '', direction: '' };
+  // --- We just need to store the search term to pass to the grid ---
+  public currentSearchTerm: string = '';
 
   constructor(
     private footerService: FooterActionService,
     private http: HttpClient,
-    private searchService: SearchService // --- 5. INJECT THE SERVICE ---
-  ) { }
+    private searchService: SearchService
+  ) {}
 
   ngOnInit(): void {
     this.loadDevices();
     this.updateFooterActions();
 
-    // --- 6. Subscribe to search term changes ---
-    this.searchSub = this.searchService.searchTerm$.subscribe(term => {
-      this.currentSearchTerm = term.toLowerCase();
-      this.updateDisplayData();
+    // --- Subscribe to search term and just store it ---
+    this.searchSub = this.searchService.searchTerm$.subscribe((term) => {
+      this.currentSearchTerm = term;
+      // No need to call updateDisplayData()!
     });
   }
 
   ngOnDestroy(): void {
     this.footerService.clearActions();
     this.deviceSub?.unsubscribe();
-    this.searchSub?.unsubscribe(); // --- 7. Unsubscribe ---
+    this.searchSub?.unsubscribe();
   }
 
   private loadDevices(): void {
@@ -83,7 +82,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.deviceSub = this.http.get<any[]>(url).subscribe({
       next: (data) => {
         this.allDeviceData = data; // Set the master list
-        this.updateDisplayData(); // Update the display list
+        // No need to call updateDisplayData()!
         this.isLoading = false;
         console.log('Devices loaded:', data);
       },
@@ -94,58 +93,18 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- 8. onSortChanged now just updates state and calls updateDisplayData ---
+  /**
+   * The grid now handles sorting internally. We can just log this.
+   */
   public onSortChanged(sortEvent: SortChangedEvent): void {
-    this.currentSort = sortEvent;
-    this.updateDisplayData();
+    console.log('Sort Changed (Handled by Table):', sortEvent);
   }
 
   /**
-   * --- 9. NEW METHOD ---
-   * This central method applies filtering and sorting to the master list
-   * to generate the list for display.
+   * --- REMOVED: updateDisplayData() ---
+   * MatTableDataSource in the reusable table now handles all
+   * filtering and sorting.
    */
-  private updateDisplayData(): void {
-    // Start with the full list
-    let data = [...this.allDeviceData];
-
-    // 1. Apply Filter
-    if (this.currentSearchTerm) {
-      data = data.filter(device =>
-        // Add any fields you want to search here
-        (device.MaThietBi && device.MaThietBi.toLowerCase().includes(this.currentSearchTerm)) ||
-        (device.TenThietBi && device.TenThietBi.toLowerCase().includes(this.currentSearchTerm)) ||
-        (device.SerialNumber && device.SerialNumber.toLowerCase().includes(this.currentSearchTerm))
-      );
-    }
-
-    // 2. Apply Sort
-    const { key, direction } = this.currentSort;
-    if (key && direction) {
-      data.sort((a, b) => {
-        if (key === 'NgayTao') {
-          const dateA = new Date(a[key]).getTime();
-          const dateB = new Date(b[key]).getTime();
-          return direction === 'asc' ? dateA - dateB : dateB - dateA;
-        }
-
-        // Handle potentially null/undefined values
-        const valA = a[key] ?? '';
-        const valB = b[key] ?? '';
-
-        if (valA < valB) {
-          return direction === 'asc' ? -1 : 1;
-        }
-        if (valA > valB) {
-          return direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    // 3. Set the final list for the grid
-    this.filteredDeviceData = data;
-  }
 
   public onDeviceSelected(device: any): void {
     this.selectedDevice = device;
@@ -171,12 +130,13 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
-      }
+      },
     ];
 
     this.footerService.setActions(actions);
   }
 
+  // --- Action methods (unchanged) ---
   private onCreate(): void {
     console.log('Create action triggered');
   }
@@ -184,14 +144,5 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private onModify(): void {
     if (!this.selectedDevice) return;
     console.log('Modify action triggered for:', this.selectedDevice.TenThietBi);
-  }
-
-  private onSave(): void {
-    if (!this.selectedDevice) return;
-    console.log('Save action triggered for:', this.selectedDevice.TenThietBi);
-  }
-
-  private onPrint(): void {
-    console.log('Print action triggered');
   }
 }

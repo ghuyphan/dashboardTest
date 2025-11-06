@@ -1,0 +1,108 @@
+/* Use ::ng-deep to penetrate Angular Material's component encapsulation */
+
+/* Main container style, copied from .grid-container
+*/
+:host .table-container {
+  display: block; // Changed from flex
+  width: 100%;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  overflow: hidden; // Clip corners
+  box-shadow: var(--box-shadow-md);
+  background-color: var(--white);
+}
+
+/* Make sure the table itself is full width */
+table {
+  width: 100%;
+}
+
+/*
+  Header cell styles, copied from .header-table thead th
+*/
+::ng-deep .mat-header-cell {
+  background-color: var(--teal-blue);
+  color: var(--white);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  user-select: none;
+  padding: var(--spacing-sm) var(--spacing-md) !important;
+  
+  // Override MatSort styles to match
+  .mat-sort-header-button {
+    color: var(--white) !important;
+  }
+}
+
+/*
+  Header arrow styles
+  We make the Material sort arrow white to match the header text.
+*/
+::ng-deep .mat-sort-header-arrow {
+  color: var(--white) !important;
+  opacity: 0.7;
+}
+::ng-deep .mat-sort-header-sorted .mat-sort-header-arrow {
+  opacity: 1;
+}
+
+/*
+  Header & Cell content wrappers for text ellipsis
+  Copied from .header-content and .cell-content
+*/
+.header-content,
+.cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Row styles, copied from .data-table tbody tr 
+*/
+::ng-deep .mat-row.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: var(--border-width) solid var(--border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+/* Row hover styles, copied from .data-table tbody tr:hover 
+*/
+::ng-deep .mat-row.clickable-row:hover {
+  background-color: var(--aqua-island);
+}
+
+/* Selected row styles, copied from .data-table tbody tr.selected 
+*/
+::ng-deep .mat-row.clickable-row.selected {
+  background-color: var(--aqua-island-light);
+  color: var(--peacock-blue);
+}
+::ng-deep .mat-row.clickable-row.selected:hover {
+  background-color: var(--aqua-island-light);
+}
+
+/*
+  Data cell styles, copied from .data-table td
+*/
+::ng-deep .mat-cell {
+  padding: var(--spacing-sm) var(--spacing-md) !important;
+  // This color is needed for the .selected style to apply
+  color: inherit; 
+}
+
+/*
+  No data row styles, copied from .no-data-message
+*/
+::ng-deep .mat-row.mat-no-data-row {
+  background-color: var(--white);
+}
+::ng-deep .mat-row.mat-no-data-row .mat-cell {
+  padding: var(--spacing-lg) !important;
+  color: var(--gray-500);
+  text-align: center;
+  font-style: italic;
+}

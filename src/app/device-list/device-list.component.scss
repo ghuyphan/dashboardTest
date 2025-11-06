@@ -1,11 +1,27 @@
-// Use the spacing variables from your global theme
-//
 .page-container {
-  // padding: var(--spacing-sm);
+  height: 100%; // <-- CRITICAL: Must have 100% height
+  display: flex; // <-- CRITICAL: Must be flex
+  flex-direction: column; // <-- CRITICAL: Must be column
 }
 
-// Give some space between the <p> and the grid
 p {
   margin-bottom: var(--spacing-lg);
   color: var(--gray-600);
+}
+
+// --- CRITICAL STYLES ---
+// These styles make the grid component fill the container
+:host ::ng-deep app-reusable-grid {
+  flex: 1; // <-- CRITICAL: Makes grid take all available space
+  min-height: 0; // <-- CRITICAL: Prevents flexbox overflow
+}
+
+// Make the loading message centered
+:host ::ng-deep .loading-message {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  color: var(--gray-500);
 }

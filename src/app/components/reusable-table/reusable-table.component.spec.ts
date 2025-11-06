@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ReusableGridComponent } from './reusable-grid.component';
+import { ReusableTableComponent } from './reusable-table.component';
 
-describe('ReusableGridComponent', () => {
-  let component: ReusableGridComponent;
-  let fixture: ComponentFixture<ReusableGridComponent>;
+describe('ReusableTableComponent', () => {
+  let component: ReusableTableComponent;
+  let fixture: ComponentFixture<ReusableTableComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ReusableGridComponent]
+      imports: [ReusableTableComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ReusableGridComponent);
+    fixture = TestBed.createComponent(ReusableTableComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
