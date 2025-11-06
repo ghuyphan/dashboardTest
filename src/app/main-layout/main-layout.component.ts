@@ -12,13 +12,14 @@ import { filter, map, mergeMap, startWith } from 'rxjs/operators';
 
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model';
-// import { HasPermissionDirective } from '../directives/has-permission.directive';
 import { NavItem } from '../models/nav-item.model';
 import { ActionFooterComponent } from '../components/action-footer/action-footer.component';
 
-// --- 1. IMPORT NEW COMPONENTS ---
 import { SidebarComponent } from '../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../components/header/header.component';
+
+// --- 1. IMPORT THE NEW SEARCH SERVICE ---
+import { SearchService } from '../services/search.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -27,7 +28,6 @@ import { HeaderComponent } from '../components/header/header.component';
     CommonModule,
     RouterOutlet,
     RouterModule,
-    // HasPermissionDirective,
     ActionFooterComponent,
     SidebarComponent,
     HeaderComponent,
@@ -44,23 +44,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private userSubscription: Subscription | null = null;
   private navSubscription: Subscription | null = null;
 
-  // --- REMOVED SCROLL LOGIC PROPERTIES ---
-  // isHeaderHidden: boolean = false;
-  // isFooterHidden: boolean = false;
-  // private lastScrollTop: number = 0;
-  // ... (all other scroll properties removed)
-
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
   
-  // --- NEW PROPERTIES FOR SEARCH ---
   showSearchBar: boolean = false;
-  currentSearchTerm: string = '';
+  // --- 2. REMOVE currentSearchTerm ---
+  // currentSearchTerm: string = '';
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private searchService: SearchService // --- 3. INJECT THE SERVICE ---
   ) {}
 
   ngOnInit(): void {
@@ -100,12 +95,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         console.log('Router data object:', data);
         this.currentScreenName = data['title'] || 'Dashboard';
         
-        // --- NEW: Show search bar based on route data ---
         this.showSearchBar = data['showSearchBar'] === true;
         
-        // --- NEW: Clear search term on navigation ---
+        // --- 4. Clear search term using the service ---
         if (!this.showSearchBar) {
-          this.currentSearchTerm = '';
+          this.searchService.setSearchTerm('');
         }
       });
 
@@ -139,9 +133,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- REMOVED: onContentScroll() method ---
-  // --- REMOVED: processScroll() method ---
-
   private getInitials(username: string): string {
     if (username && username.length >= 3) {
       return username.substring(1, 3).toUpperCase();
@@ -159,10 +150,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
-  // --- NEW: Method to handle search output ---
+  // --- 5. Update handler to use the service ---
   onSearchTermChanged(term: string): void {
-    this.currentSearchTerm = term;
-    console.log('Search term in main-layout:', this.currentSearchTerm);
-    // You would typically pass this value to a service or child component
+    this.searchService.setSearchTerm(term);
   }
 }

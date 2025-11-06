@@ -3,18 +3,19 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
-// Import your reusable grid and new types
 import {
   ReusableGridComponent,
   GridColumn,
   SortChangedEvent,
+  SortDirection
 } from '../components/reusable-grid/reusable-grid.component';
 
-// IMPORT THE FOOTER SERVICE AND MODEL
 import { FooterActionService } from '../services/footer-action.service';
 import { FooterAction } from '../models/footer-action.model';
 
-// IMPORT THE ENVIRONMENT
+// --- 1. IMPORT THE NEW SEARCH SERVICE ---
+import { SearchService } from '../services/search.service';
+
 import { environment } from '../../environments/environment.development';
 
 @Component({
@@ -26,7 +27,6 @@ import { environment } from '../../environments/environment.development';
 })
 export class DeviceListComponent implements OnInit, OnDestroy {
   // --- Grid Properties ---
-  // === MODIFIED: Translated labels to Vietnamese ===
   public deviceColumns: GridColumn[] = [
     { key: 'MaThietBi', label: 'Mã Thiết Bị', sortable: true },
     { key: 'TenThietBi', label: 'Tên Thiết Bị', sortable: true },
@@ -39,36 +39,51 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     { key: 'NgayTao', label: 'Ngày Tạo', sortable: true },
   ];
 
-  public deviceData: any[] = [];
+  // --- 2. Create two lists: one master, one for display ---
+  public allDeviceData: any[] = []; // Master list from API
+  public filteredDeviceData: any[] = []; // List to display in the grid
   public selectedDevice: any | null = null;
 
-  // --- NEW: Loading and Subscription Management ---
   public isLoading: boolean = false;
   private deviceSub: Subscription | null = null;
+  // --- 3. Add subscription for search ---
+  private searchSub: Subscription | null = null;
+
+  // --- 4. Add properties to track current state ---
+  private currentSearchTerm: string = '';
+  private currentSort: { key: string; direction: SortDirection | '' } = { key: '', direction: '' };
 
   constructor(
     private footerService: FooterActionService,
-    private http: HttpClient // <-- Inject HttpClient
-  ) {}
+    private http: HttpClient,
+    private searchService: SearchService // --- 5. INJECT THE SERVICE ---
+  ) { }
 
   ngOnInit(): void {
-    this.loadDevices(); // <-- Call the API
+    this.loadDevices();
     this.updateFooterActions();
+
+    // --- 6. Subscribe to search term changes ---
+    this.searchSub = this.searchService.searchTerm$.subscribe(term => {
+      this.currentSearchTerm = term.toLowerCase();
+      this.updateDisplayData();
+    });
   }
 
   ngOnDestroy(): void {
     this.footerService.clearActions();
-    this.deviceSub?.unsubscribe(); // <-- Unsubscribe
+    this.deviceSub?.unsubscribe();
+    this.searchSub?.unsubscribe(); // --- 7. Unsubscribe ---
   }
 
-  // --- Method to fetch data from the API ---
   private loadDevices(): void {
     this.isLoading = true;
-    const url = environment.equipmentCatUrl; // Get URL from environment
+    const url = environment.equipmentCatUrl;
 
     this.deviceSub = this.http.get<any[]>(url).subscribe({
       next: (data) => {
-        this.deviceData = data;
+        this.allDeviceData = data; // Set the master list
+        this.updateDisplayData(); // Update the display list
         this.isLoading = false;
         console.log('Devices loaded:', data);
       },
@@ -79,47 +94,65 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- Method to handle sorting from the grid ---
+  // --- 8. onSortChanged now just updates state and calls updateDisplayData ---
   public onSortChanged(sortEvent: SortChangedEvent): void {
-    const { key, direction } = sortEvent;
-
-    this.deviceData.sort((a, b) => {
-      // Special handling for date sorting
-      if (key === 'NgayTao') {
-        const dateA = new Date(a[key]).getTime();
-        const dateB = new Date(b[key]).getTime();
-        return direction === 'asc' ? dateA - dateB : dateB - dateA;
-      }
-
-      // Standard string/number sort
-      if (a[key] < b[key]) {
-        return direction === 'asc' ? -1 : 1;
-      }
-      if (a[key] > b[key]) {
-        return direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    // Create a new array copy to trigger Angular's change detection
-    this.deviceData = [...this.deviceData];
+    this.currentSort = sortEvent;
+    this.updateDisplayData();
   }
 
   /**
-   * Called from the grid component when a row is clicked.
-   * @param device The device object from the selected row
+   * --- 9. NEW METHOD ---
+   * This central method applies filtering and sorting to the master list
+   * to generate the list for display.
    */
+  private updateDisplayData(): void {
+    // Start with the full list
+    let data = [...this.allDeviceData];
+
+    // 1. Apply Filter
+    if (this.currentSearchTerm) {
+      data = data.filter(device =>
+        // Add any fields you want to search here
+        (device.MaThietBi && device.MaThietBi.toLowerCase().includes(this.currentSearchTerm)) ||
+        (device.TenThietBi && device.TenThietBi.toLowerCase().includes(this.currentSearchTerm)) ||
+        (device.SerialNumber && device.SerialNumber.toLowerCase().includes(this.currentSearchTerm))
+      );
+    }
+
+    // 2. Apply Sort
+    const { key, direction } = this.currentSort;
+    if (key && direction) {
+      data.sort((a, b) => {
+        if (key === 'NgayTao') {
+          const dateA = new Date(a[key]).getTime();
+          const dateB = new Date(b[key]).getTime();
+          return direction === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+
+        // Handle potentially null/undefined values
+        const valA = a[key] ?? '';
+        const valB = b[key] ?? '';
+
+        if (valA < valB) {
+          return direction === 'asc' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    // 3. Set the final list for the grid
+    this.filteredDeviceData = data;
+  }
+
   public onDeviceSelected(device: any): void {
     this.selectedDevice = device;
     console.log('Selected device:', this.selectedDevice);
-
-    // Re-build the footer actions now that we have a selection
     this.updateFooterActions();
   }
 
-  /**
-   * Defines and sets the footer buttons.
-   */
   private updateFooterActions(): void {
     const isRowSelected = this.selectedDevice !== null;
 
@@ -144,27 +177,21 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.footerService.setActions(actions);
   }
 
-  // --- ACTION HANDLER METHODS ---
-
   private onCreate(): void {
     console.log('Create action triggered');
-    // TODO: Add your logic to open a new form or modal
   }
 
   private onModify(): void {
-    if (!this.selectedDevice) return; // Guard clause
+    if (!this.selectedDevice) return;
     console.log('Modify action triggered for:', this.selectedDevice.TenThietBi);
-    // TODO: Add your logic to modify the selected item
   }
 
   private onSave(): void {
-    if (!this.selectedDevice) return; // Guard clause
+    if (!this.selectedDevice) return;
     console.log('Save action triggered for:', this.selectedDevice.TenThietBi);
-    // TODO: Add your logic to save data
   }
 
   private onPrint(): void {
     console.log('Print action triggered');
-    // TODO: Add your logic to print the grid
   }
 }

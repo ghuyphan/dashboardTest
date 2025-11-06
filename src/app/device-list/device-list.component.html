@@ -6,7 +6,7 @@
   <app-reusable-grid
     *ngIf="!isLoading"
     [columns]="deviceColumns"
-    [data]="deviceData"
+    [data]="filteredDeviceData"
     (rowSelected)="onDeviceSelected($event)"
     (sortChanged)="onSortChanged($event)"
   >
