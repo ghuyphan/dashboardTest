@@ -40,7 +40,7 @@ import { HeaderComponent } from '../components/header/header.component';
   styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
-  isSidebarOpen = true; // <-- Set default to true
+  isSidebarOpen = false;
 
   currentUser: User | null = null;
   rolesDisplay: string = '';
@@ -61,9 +61,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
-
-  // --- FIX 1: Add a property to track view state ---
-  private isMobileView = false;
 
   constructor(
     private authService: AuthService,
@@ -109,10 +106,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.currentScreenName = data['title'] || 'Dashboard';
       });
 
-    // --- FIX 2: Update window size logic ---
-    this.isMobileView = window.innerWidth <= 992;
-    this.checkWindowSize(); // Call once to set initial state
-    window.addEventListener('resize', this.onResize.bind(this));
+    // 3. Check window size
+    this.checkWindowSize();
+    window.addEventListener('resize', this.checkWindowSize.bind(this));
   }
 
   private deepCopyNavItems(items: NavItem[]): NavItem[] {
@@ -129,30 +125,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (this.navSubscription) {
       this.navSubscription.unsubscribe();
     }
-    // --- FIX 3: Remove the old listener ---
-    window.removeEventListener('resize', this.onResize.bind(this));
+    window.removeEventListener('resize', this.checkWindowSize.bind(this));
   }
 
-  // --- FIX 4: Add a debounced resize handler ---
-  private onResize(): void {
-    const wasMobile = this.isMobileView;
-    this.isMobileView = window.innerWidth <= 992;
-
-    // Only run checkWindowSize if the view state *changes*
-    // (i.e., we cross the 992px breakpoint)
-    if (wasMobile !== this.isMobileView) {
-      this.checkWindowSize();
-    }
-  }
-
-  // --- FIX 5: Update the checkWindowSize logic ---
   private checkWindowSize(): void {
-    if (this.isMobileView) {
-      // Switched to mobile view
+    if (window.innerWidth <= 992) {
       this.isSidebarOpen = false;
     } else {
-      // Switched to desktop view
-      this.isSidebarOpen = true; // Open by default on desktop
+      this.isSidebarOpen = false;
     }
   }
 
