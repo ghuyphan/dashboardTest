@@ -6,6 +6,7 @@
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
+  --scrollbar-width: 8px; /* Critical addition */
 }
 
 /* ========== SIDEBAR STYLES ========== */
@@ -17,7 +18,6 @@
   height: 100vh;
   background-color: var(--desert-storm);
   color: var(--gray-700);
-  // MODIFIED: Removed left/right padding. Kept bottom padding.
   padding: 0 0 var(--spacing-md) 0;
   transition: transform var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
@@ -41,7 +41,6 @@
   margin-bottom: var(--spacing-md);
   box-sizing: border-box;
   position: relative;
-  // MODIFIED: Added horizontal padding removed from .sidebar
   padding: 0 0.625rem;
   flex-shrink: 0;
   transition: padding var(--transition-duration) var(--transition-smooth),
@@ -129,60 +128,71 @@
 /* --- Sidebar Navigation Content (Scrollable Area) --- */
 .sidebar-nav-content {
   flex-grow: 1;
-  min-height: 0; // Ensures flex-grow works correctly for scrolling
+  min-height: 0;
+  position: relative; /* Critical for proper overlay */
 
-  // Enable scrolling ONLY on desktop
+  /* DESKTOP SCROLLBAR FIXES */
   @media (min-width: 992.01px) {
-    // MODIFIED: Always scrollable (in both open and closed states)
+    scrollbar-gutter: stable both-edges; /* Reserve space on both sides */
     overflow-y: auto;
     overflow-x: hidden;
-
-    // --- Custom Scrollbar (Overlay, Hover-only) ---
-
-    // Firefox: Set to transparent by default
+    
+    /* Firefox scrollbar */
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
-
-    // WebKit (Chrome, Safari, Edge)
+    
+    /* WebKit scrollbar */
     &::-webkit-scrollbar {
-      width: 8px;
+      width: var(--scrollbar-width);
+      position: absolute; /* Overlay mode */
     }
-
+    
     &::-webkit-scrollbar-track {
       background: transparent;
     }
-
+    
     &::-webkit-scrollbar-thumb {
-      background-color: transparent; // Hidden by default
+      background-color: transparent;
       border-radius: 4px;
-      border: 2px solid transparent; // Creates "padding"
+      border: 2px solid transparent;
       background-clip: padding-box;
-      transition: background-color var(--transition-fast) ease;
+      min-height: 40px;
     }
   }
 }
 
-// Show scrollbar on OPEN sidebar hover (Desktop only)
+/* DESKTOP SCROLLBAR BEHAVIOR */
 @media (min-width: 992.01px) {
-  // MODIFIED: Added :not(.collapsed) to the hover rule
-  .sidebar:not(.collapsed):hover .sidebar-nav-content {
-    scrollbar-color: var(--gray-400) transparent; // Show for Fx
-  }
-
+  /* Show scrollbar only when expanded sidebar is hovered */
   .sidebar:not(.collapsed):hover .sidebar-nav-content::-webkit-scrollbar-thumb {
-    background-color: var(--gray-400); // Show for WebKit
+    background-color: var(--gray-400);
   }
-
-  // Darken thumb on its own hover
-  .sidebar .sidebar-nav-content::-webkit-scrollbar-thumb:hover {
-    background-color: var(--gray-500);
+  
+  .sidebar:not(.collapsed):hover .sidebar-nav-content {
+    scrollbar-color: var(--gray-400) transparent;
+  }
+  
+  /* Critical fixes for collapsed state */
+  .sidebar.collapsed .sidebar-nav-content {
+    /* Counteract reserved gutter space */
+    margin-right: calc(-1 * var(--scrollbar-width));
+    padding-right: var(--scrollbar-width);
+    
+    /* Hide scrollbar completely in collapsed state */
+    &::-webkit-scrollbar-thumb {
+      background-color: transparent !important;
+    }
+  }
+  
+  /* Ensure inner nav doesn't overflow */
+  .sidebar.collapsed .sidebar-nav {
+    padding-right: var(--scrollbar-width) !important;
   }
 }
 
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   overflow: visible;
-  // MODIFIED: Added horizontal padding removed from .sidebar
   padding: 0 0.625rem;
 }
 
@@ -444,23 +454,18 @@
 */
 
 .sidebar.collapsed {
-  // MODIFIED: Removed left/right padding
   padding-left: 0;
   padding-right: 0;
   width: var(--sidebar-width-collapsed);
   overflow: visible;
-
-  // MODIFIED: Removed the @media block that set overflow-y: hidden
 }
 
 .sidebar.collapsed .sidebar-nav {
   overflow: visible;
-  // MODIFIED: Add padding for collapsed state
-  padding: 0 0.625rem;
+  padding: 0;
 }
 
 .sidebar.collapsed .sidebar-header {
-  // MODIFIED: Added padding for collapsed state
   padding: 0 0.625rem;
 }
 
@@ -482,7 +487,6 @@
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper {
-  // MODIFIED: Reset padding for centered logo
   padding-left: 0;
   justify-content: center;
 }
@@ -587,8 +591,7 @@
     transform: translateX(-100%);
     transition: transform 0.3s var(--transition-smooth);
     overflow-x: hidden;
-    overflow-y: auto; // Mobile scrolling is on the whole sidebar
-    // MODIFIED: Add padding back for mobile
+    overflow-y: auto;
     padding: 0 0.625rem var(--spacing-md) 0.625rem;
   }
 
@@ -600,19 +603,16 @@
   .sidebar.collapsed {
     transform: translateX(-100%);
     width: var(--sidebar-width);
-    // MODIFIED: Add padding back for mobile
     padding-left: 0.625rem;
     padding-right: 0.625rem;
     overflow-x: hidden;
-    overflow-y: auto; // Mobile scrolling is on the whole sidebar
+    overflow-y: auto;
   }
   
-  // MODIFIED: Reset padding for mobile
   .sidebar-header {
     padding: 0 var(--spacing-xs);
   }
 
-  // MODIFIED: Reset padding for mobile
   .sidebar-nav {
     padding: 0;
   }
@@ -651,7 +651,6 @@
 
   .sidebar.collapsed .sidebar-header {
     justify-content: flex-start;
-    // MODIFIED: Reset padding for mobile
     padding: 0 var(--spacing-xs);
   }
 
@@ -691,7 +690,7 @@
   }
 
   .sidebar.collapsed .sidebar-nav {
-     padding: 0; // MODIFIED: Reset padding for mobile
+     padding: 0;
   }
 
   .sidebar.collapsed .sidebar-nav ul li a,
