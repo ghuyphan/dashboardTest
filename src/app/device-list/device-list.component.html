@@ -1,18 +1,13 @@
 <div class="page-content">
   <div class="grid-container">
     
-    <div *ngIf="isLoading" class="loading-indicator">
-      Loading devices...
-    </div>
-
     <app-reusable-table
-      *ngIf="!isLoading"
       [data]="allDeviceData"
       [columns]="deviceColumns"
       [searchTerm]="currentSearchTerm"
+      [isLoading]="isLoading" 
       (rowClick)="onDeviceSelected($event)"
       (sortChanged)="onSortChanged($event)"
     ></app-reusable-table>
-
-  </div>
+    </div>
 </div>

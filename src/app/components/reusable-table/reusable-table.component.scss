@@ -1,51 +1,67 @@
 // reusable-table.component.scss
 
 :host {
-  /*
-    MODIFICATION: Make the host component fill the space
-    given to it by the parent (device-list).
-  */
-  display: block;
+  /* Ensure the component itself always tries to fill its parent */
+  display: flex;
+  flex-direction: column;
   height: 100%;
   width: 100%;
   overflow: hidden;
+  min-height: 0; /* Critical for nested flex scrolling */
+}
 
-  .table-container {
-    display: block;
-    width: 100%;
-    border-radius: var(--border-radius-md);
+.reusable-table-wrapper {
+  /* FLEX FIX: Make this wrapper grow to fill the :host */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Critical for nested flex scrolling */
+  
+  position: relative;
+  background-color: var(--white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow-sm);
+  overflow: hidden;
+}
 
-    /*
-      MODIFICATION: This is the key.
-      The container *inside* the component takes 100% height
-      and becomes the scrollable element.
-    */
-    height: 100%;
-    overflow: auto; /* Enables scrolling for the sticky header */
+.loading-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 56px; /* Approximate height of paginator to not cover it, or remove bottom to cover all */
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(1px);
+}
 
-    background-color: var(--white);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
+.table-container {
+  /* FLEX FIX: This container now grows to fill the wrapper minus paginator */
+  flex: 1;
+  overflow: auto;
+  min-height: 0; /* Critical for nested flex scrolling */
 
   table {
     width: 100%;
     background: transparent;
-    /* THIS IS THE FIX:
-      'position: sticky' for table headers does not work 
-      with 'border-collapse: collapse;'.
-      Changing it to 'separate' resolves the issue.
-    */
     border-collapse: separate;
+    border-spacing: 0;
   }
+}
 
-  /* Content wrappers for text truncation */
-  .header-content,
-  .cell-content {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: block;
-  }
+/* Content wrappers for text truncation */
+.header-content,
+.cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  /* Max-width is needed for ellipsis to work in some flex scenarios, 
+     adjust as needed or use max-width: 100% if parent constrains it enough */
+  max-width: 200px; 
 }
 
 /* ============================================
@@ -58,50 +74,32 @@
     background-color: var(--teal-blue) !important;
     color: var(--white) !important;
     font-weight: var(--font-weight-medium);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    text-align: left;
-    user-select: none;
     padding: var(--spacing-sm) var(--spacing-md) !important;
-    border-bottom: 2px solid var(--teal-blue-dark) !important;
+    border-bottom: none !important;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background-color 0.2s ease;
+    white-space: nowrap;
 
-    /*
-      MODIFICATION: position: sticky is required
-      for the 'sticky: true' in the HTML to work.
-    */
     position: sticky;
     top: 0;
     z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 
     &:last-child {
       border-right: none;
     }
 
-    .mat-sort-header-button {
-      color: var(--white) !important;
-      font-weight: inherit;
-      display: flex; /* Ensure proper alignment of content and arrow */
-      align-items: center;
-      justify-content: space-between; /* Push arrow to the right */
-    }
-
-    /* Style the default sort arrow */
     .mat-sort-header-arrow {
-      color: var(--white) !important; /* Ensure arrow is white */
-      opacity: 0.6; /* Default state is semi-transparent */
-      transition: opacity 0.2s ease;
-      margin-left: 8px; /* Space between text and arrow */
+      color: var(--white) !important;
+      opacity: 0.6 !important;
     }
 
-    /* Style the sort arrow when sorted */
     &.mat-sort-header-sorted .mat-sort-header-arrow {
-      opacity: 1; /* Make fully opaque when sorted */
+      opacity: 1 !important;
     }
 
-    &.mat-sort-header-sorted,
     &:hover {
       background-color: var(--teal-blue-dark) !important;
     }
@@ -109,104 +107,104 @@
 
   /* Data Cells */
   .mat-mdc-cell {
-    padding: var(--spacing-sm) var(--spacing-md) !important;
-    color: inherit;
-    border-bottom: none;
-    border-right: 1px solid var(--border-color);
+    padding: 0 var(--spacing-md) !important;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-200);
     font-size: 0.875rem;
-
-    &:last-child {
-      border-right: none;
+    
+    &:first-of-type {
+      padding-left: var(--spacing-lg) !important;
+    }
+    &:last-of-type {
+      padding-right: var(--spacing-lg) !important;
     }
   }
 
   /* ============================================
      Row Styles & States
      ============================================ */
-
   .mat-mdc-row {
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    height: 48px;
+    transition: all 0.2s var(--transition-smooth);
 
     &.clickable-row {
       cursor: pointer;
-      color: var(--gray-700);
 
-      &:nth-child(odd) {
-        background-color: var(--white);
-      }
-      &:nth-child(even) {
-        background-color: var(--gray-100);
-      }
       &:hover {
-        background-color: var(--aqua-island-light) !important;
-        // transform: translateX(2px);
+        background-color: var(--gray-100) !important; 
+        transform: translateY(-1px);
+        box-shadow: var(--box-shadow-sm);
+        position: relative;
+        z-index: 1;
       }
+
       &:active {
         transform: scale(0.998);
+        background-color: var(--gray-200) !important;
       }
-      &.selected {
-        background-color: var(--aqua-island) !important;
-        color: var(--peacock-blue) !important;
-        box-shadow: inset 3px 0 0 var(--peacock-blue);
 
-        &:hover {
-          background-color: var(--aqua-island) !important;
-          // transform: translateX(2px);
+      &.selected {
+        background-color: var(--peppermint) !important;
+        box-shadow: inset 4px 0 0 var(--teal-blue);
+        
+        .mat-mdc-cell {
+           color: var(--teal-blue-dark) !important;
+           font-weight: var(--font-weight-medium);
         }
       }
     }
-
-    &.mat-no-data-row {
-      background-color: var(--white);
-      cursor: default;
-
-      &:hover {
-        background-color: var(--white);
-      }
-
-      .mat-mdc-cell {
-        padding: var(--spacing-lg) var(--spacing-md) !important;
-        color: var(--gray-500);
-        text-align: center;
-        font-style: italic;
-        font-size: 0.9375rem;
-        border-bottom: none;
-        border-right: none;
-      }
-    }
   }
 
-  .mat-mdc-header-row {
-    height: 40px;
-  }
-
-  .mat-mdc-row {
-    height: 42px;
-    border-bottom: 1px solid var(--border-color);
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-}
-
-/* ============================================
-   Responsive Adjustments
-   ============================================ */
-@media (max-width: 768px) {
-  :host ::ng-deep {
-    .mat-mdc-header-cell,
+  /* ============================================
+     Empty State Styles
+     ============================================ */
+  .mat-no-data-row {
     .mat-mdc-cell {
-      padding: var(--spacing-xs) var(--spacing-sm) !important;
-      font-size: 0.8125rem;
+      border-bottom: none;
+      padding: var(--spacing-xl) !important;
+    }
+  }
+
+  .no-data-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-400);
+    padding: var(--spacing-xxl) 0;
+
+    .no-data-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: var(--spacing-md);
+      opacity: 0.5;
     }
 
-    .mat-mdc-header-row {
-      height: 36px;
+    .no-data-text {
+      font-size: 1rem;
+      margin: 0;
     }
+  }
 
-    .mat-mdc-row {
-      height: 38px;
+  /* ============================================
+     Paginator Overrides
+     ============================================ */
+  .mat-mdc-paginator {
+    /* Ensure paginator doesn't shrink */
+    flex-shrink: 0;
+    border-top: 1px solid var(--gray-200);
+    background-color: var(--white);
+
+    .mat-mdc-paginator-container {
+      padding: 0 var(--spacing-md);
+      min-height: 56px;
+    }
+    
+    .mat-mdc-paginator-page-size-label,
+    .mat-mdc-paginator-range-label {
+       color: var(--gray-600);
+       font-family: var(--font-family-sans);
     }
   }
 }
