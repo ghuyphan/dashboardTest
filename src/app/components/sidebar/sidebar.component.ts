@@ -7,6 +7,7 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
+  HostBinding, // <-- 1. IMPORT THIS
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -33,11 +34,30 @@ export class SidebarComponent implements OnChanges {
   @Input() isOpen: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
+  // --- 2. ADD THESE HOSTBINDINGS ---
+  // This binds these classes to the <app-sidebar> element itself
+  // BEFORE ngClass can run, fixing the race condition.
+  @HostBinding('class.sidebar')
+  get isSidebar() {
+    return true; // Always apply the .sidebar class
+  }
+
+  @HostBinding('class.collapsed')
+  get isCollapsed() {
+    return !this.isOpen; // Apply .collapsed if NOT open
+  }
+
+  @HostBinding('class.open')
+  get isSidebarOpen() {
+    return this.isOpen; // Apply .open if open
+  }
+  // --- END OF ADDITIONS ---
+
   // Keep this reference to maintain DOM state
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
   private openAccordionItems = new Set<NavItem>();
-  private lastScrollTop: number = 0; // Added
+  private lastScrollTop: number = 0;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']) {
@@ -49,17 +69,19 @@ export class SidebarComponent implements OnChanges {
 
       if (isNowOpen) {
         // === IS OPENING ===
-        this.hideAllSubmenus(); // Resets flyouts
+        this.hideAllSubmenus();
         this.restoreAccordionState();
-        this.restoreScrollPosition(); // Added
+        this.restoreScrollPosition();
       } else {
         // === IS CLOSING ===
-        this.saveScrollPosition(); // Added
+        this.saveScrollPosition();
         this.hideAllSubmenus();
       }
     }
   }
 
+  // ... (rest of your component.ts file is unchanged) ...
+  
   hideAllSubmenus(): void {
     this.navItems.forEach((item) => {
       if (item.children) {
@@ -76,25 +98,13 @@ export class SidebarComponent implements OnChanges {
     });
   }
 
-  /**
-   * Added: Saves the current scroll position of the nav content.
-   */
   private saveScrollPosition(): void {
     if (this.navContentEl?.nativeElement) {
       this.lastScrollTop = this.navContentEl.nativeElement.scrollTop;
     }
   }
 
-  /**
-   * Added: Restores the saved scroll position.
-   * Uses setTimeout to wait for the DOM to update (e.g., accordions to open)
-   * before setting the scroll position.
-   */
   private restoreScrollPosition(): void {
-    // === MODIFIED ===
-    // Changed timeout from 0 to 50ms.
-    // This gives Angular time to re-render the accordions
-    // before we set the scroll position.
     setTimeout(() => {
       if (this.navContentEl?.nativeElement) {
         this.navContentEl.nativeElement.scrollTop = this.lastScrollTop;

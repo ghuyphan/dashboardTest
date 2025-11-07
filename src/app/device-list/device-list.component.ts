@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+// CHANGED: Imported AfterViewInit
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -21,7 +22,8 @@ import { environment } from '../../environments/environment.development';
   templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
 })
-export class DeviceListComponent implements OnInit, OnDestroy {
+// CHANGED: Implemented AfterViewInit
+export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   // --- 1. Grid Properties UPDATED ---
   public deviceColumns: GridColumn[] = [
     { key: 'Id', label: 'ID', sortable: true },
@@ -60,7 +62,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadDevices();
+    // this.loadDevices(); // <-- MOVED from here
     this.updateFooterActions();
 
     // --- Subscribe to search term and just store it ---
@@ -68,6 +70,16 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       this.currentSearchTerm = term;
       // The reusable-table handles filtering now
     });
+  }
+
+  // +++ MODIFIED: ngAfterViewInit lifecycle hook +++
+  ngAfterViewInit(): void {
+    // We wrap this in setTimeout to push it to the *next*
+    // JavaScript tick, after the current change detection
+    // cycle has completed. This prevents the NG0100 error.
+    setTimeout(() => {
+      this.loadDevices();
+    }, 0);
   }
 
   ngOnDestroy(): void {

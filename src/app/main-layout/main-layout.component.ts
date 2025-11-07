@@ -59,6 +59,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    console.log('--- ngOnInit CALLED ---'); // <-- ADD THIS
+    console.log('At start of ngOnInit, isSidebarOpen =', this.isSidebarOpen); // <-- ADD THIS
     // Subscribe to dynamic nav items
     this.navSubscription = this.authService.navItems$.subscribe(items => {
       this.navItems = this.deepCopyNavItems(items);

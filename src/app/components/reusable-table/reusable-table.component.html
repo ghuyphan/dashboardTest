@@ -27,8 +27,6 @@
           <div class="header-content" [appTooltip]="col.label">
             {{ col.label }}
             <span *ngIf="col.sortable" class="sort-indicator">
-              <mat-icon *ngIf="sortState.active === col.key && sortState.direction === 'asc'" class="sort-icon">arrow_upward</mat-icon>
-              <mat-icon *ngIf="sortState.active === col.key && sortState.direction === 'desc'" class="sort-icon">arrow_downward</mat-icon>
             </span>
           </div>
         </th>
