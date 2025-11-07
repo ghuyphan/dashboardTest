@@ -24,7 +24,15 @@
     ></app-header>
 
     <main class="dashboard-content">
-      <router-outlet></router-outlet>
+      <div *ngIf="isContentLoaded; else loading" class="content-fade-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+
+      <ng-template #loading>
+        <div class="initial-loading-spinner">
+          <p>Loading...</p> 
+        </div>
+      </ng-template>
     </main>
     
     <app-action-footer></app-action-footer>

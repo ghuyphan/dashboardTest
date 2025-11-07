@@ -342,6 +342,16 @@
   font-weight: 600;
 }
 
+/* * **** 2. ADD THIS NEW RULE ****
+ * When a child route is active, the <li> gets '.active-parent'.
+ * This rule styles the button inside that <li>.
+*/
+.sidebar-nav ul li.active-parent > button {
+  background-color: var(--gray-200);
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
 /* FIXED TYPO: .sidebar.nav -> .sidebar-nav */
 .sidebar-nav ul li.has-submenu button.active::before,
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {

@@ -51,6 +51,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   // --- 2. REMOVE currentSearchTerm ---
   // currentSearchTerm: string = '';
 
+  // **** ADDITION 1: Add isContentLoaded property ****
+  isContentLoaded = false;
+
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -59,8 +62,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('--- ngOnInit CALLED ---'); // <-- ADD THIS
-    console.log('At start of ngOnInit, isSidebarOpen =', this.isSidebarOpen); // <-- ADD THIS
+    console.log('--- ngOnInit CALLED ---'); 
+    console.log('At start of ngOnInit, isSidebarOpen =', this.isSidebarOpen); 
     // Subscribe to dynamic nav items
     this.navSubscription = this.authService.navItems$.subscribe(items => {
       this.navItems = this.deepCopyNavItems(items);
@@ -108,6 +111,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     // 3. Check window size
     this.checkWindowSize();
     window.addEventListener('resize', this.checkWindowSize.bind(this));
+
+    // **** ADDITION 2: Add the delay ****
+    // This pushes the rendering of the router-outlet to the next
+    // browser task, allowing layout animations to complete first.
+    setTimeout(() => {
+      this.isContentLoaded = true;
+    }, 50); // 50ms is a safe bet
   }
 
   private deepCopyNavItems(items: NavItem[]): NavItem[] {

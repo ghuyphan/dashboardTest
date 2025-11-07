@@ -27,7 +27,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 56px; /* Approximate height of paginator to not cover it */
+  bottom: 40px; /* Updated to match new paginator height */
   right: 0;
   background: rgba(255, 255, 255, 0.92);
   z-index: 50;
@@ -101,8 +101,9 @@
     border-bottom: none !important;
     border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
     white-space: nowrap;
-    height: 36px !important; /* Reduced height */
-    min-height: 36px !important;
+    height: 32px !important; /* Further reduced height */
+    min-height: 32px !important;
+    line-height: 32px !important; /* Match height for vertical centering */
 
     position: sticky;
     top: 0;
@@ -140,6 +141,12 @@
     &:hover {
       background-color: var(--teal-blue-dark) !important;
     }
+  }
+
+  /* CRITICAL: Target the header row itself to reduce height */
+  .mat-mdc-header-row {
+    height: 32px !important; /* Match header cell height */
+    min-height: 32px !important;
   }
 
   /* COMPACT DATA CELLS */
@@ -259,22 +266,25 @@
   }
 
   /* ============================================
-      Compact Paginator Overrides
+      Compact Paginator Overrides - REDUCED HEIGHT
      ============================================ */
   .mat-mdc-paginator {
     flex-shrink: 0;
     background-color: var(--white) !important;
-    height: 48px !important; /* Reduced height */
+    height: 40px !important; /* Further reduced height from 48px */
+    min-height: 40px !important;
 
     .mat-mdc-paginator-container {
-      padding: 0 var(--spacing-sm) !important;
-      min-height: 48px !important;
-      height: 48px !important;
+      padding: 0 var(--spacing-xs) !important;
+      min-height: 40px !important;
+      height: 40px !important;
+      display: flex !important;
+      align-items: center !important;
     }
 
     .mat-mdc-paginator-page-size,
     .mat-mdc-paginator-range-label {
-      margin: 0 var(--spacing-sm) !important;
+      margin: 0 var(--spacing-xs) !important;
     }
 
     .mat-mdc-paginator-page-size-label,
@@ -288,22 +298,26 @@
 
     .mat-mdc-form-field {
       .mat-mdc-text-field-wrapper {
-        padding: 0 6px !important;
-        height: 32px !important;
+        padding: 0 4px !important;
+        height: 28px !important; /* Reduced from 32px */
         border-radius: var(--border-radius-sm) !important;
       }
 
       .mat-mdc-form-field-infix {
-        padding-top: 4px !important;
-        padding-bottom: 4px !important;
-        min-height: 32px !important;
+        padding-top: 2px !important; /* Reduced padding */
+        padding-bottom: 2px !important;
+        min-height: 28px !important;
+      }
+
+      .mat-mdc-form-field-subscript-wrapper {
+        display: none !important; /* Hide subscript to save space */
       }
     }
 
     .mat-mdc-icon-button {
-      width: 32px !important;
-      height: 32px !important;
-      padding: 4px !important;
+      width: 28px !important; /* Reduced from 32px */
+      height: 28px !important;
+      padding: 2px !important;
 
       .mat-icon {
         font-size: 18px !important;
@@ -318,6 +332,13 @@
 
     .mat-mdc-select-panel {
       font-family: var(--font-family-sans) !important;
+    }
+
+    /* Adjust spacing between paginator elements */
+    .mat-mdc-paginator-range-actions {
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
     }
   }
 

@@ -93,7 +93,9 @@
 .dashboard-content {
   flex-grow: 1;
   padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
-  animation: scaleIn 0.3s var(--transition-smooth);
+  
+  // **** MODIFICATION: Removed animation from here ****
+  // animation: scaleIn 0.3s var(--transition-smooth); 
 
   /* FIXED: This is now the SINGLE scroll container */
   overflow-y: auto;
@@ -105,6 +107,37 @@
   /* FIXED: Account for header and footer heights */
   height: calc(100% - var(--header-height) - var(--footer-height));
 }
+
+// **** ADDITION 1: Styles for the new content wrapper ****
+.content-fade-wrapper {
+  height: 100%; // Ensure it fills the parent
+  // This animation plays *after* the content is rendered
+  animation: contentFadeIn 0.4s var(--transition-smooth) both;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// **** ADDITION 2: Styles for the loading spinner ****
+.initial-loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%; // Fill the .dashboard-content area
+  padding: 40px;
+  font-size: 1.2rem;
+  color: var(--gray-500);
+}
+
 
 @media (max-width: 992px) {
   .dashboard-content {

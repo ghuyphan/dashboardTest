@@ -1,5 +1,5 @@
 <aside
-  class="sidebar"
+  class="sidebar collapsed"
   [ngClass]="{ 'collapsed': !isOpen, 'open': isOpen }"
 >
   <div class="sidebar-header">
@@ -90,6 +90,7 @@
               *ngIf="item.children"
               [class.has-submenu]="true"
               [class.open]="item.isOpen"
+              routerLinkActive="active-parent"
             >
               <button
                 (click)="toggleSubmenu(item, $event)"

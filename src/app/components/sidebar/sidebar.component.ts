@@ -7,8 +7,7 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
-  HostBinding, // <-- 1. IMPORT THIS
-} from '@angular/core';
+} from '@angular/core'; // <-- 1. REMOVED HostBinding
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
@@ -34,24 +33,7 @@ export class SidebarComponent implements OnChanges {
   @Input() isOpen: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  // --- 2. ADD THESE HOSTBINDINGS ---
-  // This binds these classes to the <app-sidebar> element itself
-  // BEFORE ngClass can run, fixing the race condition.
-  @HostBinding('class.sidebar')
-  get isSidebar() {
-    return true; // Always apply the .sidebar class
-  }
-
-  @HostBinding('class.collapsed')
-  get isCollapsed() {
-    return !this.isOpen; // Apply .collapsed if NOT open
-  }
-
-  @HostBinding('class.open')
-  get isSidebarOpen() {
-    return this.isOpen; // Apply .open if open
-  }
-  // --- END OF ADDITIONS ---
+  // --- 2. REMOVED ALL @HostBinding BLOCKS ---
 
   // Keep this reference to maintain DOM state
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
@@ -81,7 +63,7 @@ export class SidebarComponent implements OnChanges {
   }
 
   // ... (rest of your component.ts file is unchanged) ...
-  
+
   hideAllSubmenus(): void {
     this.navItems.forEach((item) => {
       if (item.children) {
