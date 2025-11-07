@@ -1,0 +1,261 @@
+/* three-row page layout: 100vh */
+.page-container {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Current Date & Time Display */
+.current-datetime {
+  text-align: right;
+  font-size: 16px;
+  font-weight: 300;
+  margin: 12px 0 8px 16px;
+  padding: 4px 0;
+  color: rgb(5, 65, 80);
+}
+
+/* Widget Cards Section (Row 2 - auto height) */
+.widget-section {
+  padding: 12px 16px;
+}
+
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  max-width: min(1200px, 92vw);
+  margin: 0 auto;
+}
+
+.widget-card {
+  aspect-ratio: 1/0.75;
+  background-color: var(--white, #fff);
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-top: 3px solid var(--gray-300, #dee2e6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  i {
+    font-size: 1rem;
+    color: var(--gray-500, #6c757d);
+    margin-bottom: 4px;
+  }
+
+  h3 {
+    font-size: 13px;
+    color: var(--gray-700, #495057);
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
+  }
+
+  .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gray-900, #212529);
+    margin: 0 0 3px 0;
+    line-height: 1;
+  }
+
+  .caption {
+    font-size: 11px;
+    color: var(--gray-600, #6c757d);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  // Color themes for different card types (matched with chart bed status colors)
+  // Card 1: Occupancy Rate (distinct metric color)
+  &:nth-child(1) {
+    border-top-color: #aa69c5;
+    i { color: #8e44ad; }
+  }
+
+  // Card 2: Total Beds (distinct metric color)
+  &:nth-child(2) {
+    border-top-color: #e67e22;
+    i { color: #e67e22; }
+  }
+
+  // Card 3: In Treatment (Đang Điều Trị) - matches chart color
+  &:nth-child(3) {
+    border-top-color: #005E70;
+    i { color: #005E70; }
+  }
+
+  // Card 4: Vacant Beds (Giường Trống) - matches chart color
+  &:nth-child(4) {
+    border-top-color: #73cddf;
+    i { color: #73cddf; }
+  }
+
+  // Card 5: Booked (Đã Book) - matches chart color
+  &:nth-child(5) {
+    border-top-color: #f1c40f;
+    i { color: #f1c40f; }
+  }
+
+  // Card 6: Awaiting Discharge (Chờ Xuất Viện) - matches chart color
+  &:nth-child(6) {
+    border-top-color: #66A9C5;
+    i { color: #66A9C5; }
+  }
+
+  // Card 7: Not Ready (Chưa Sẵn Sàng) - matches chart color
+  &:nth-child(7) {
+    border-top-color: #95a5a6;
+    i { color: #95a5a6; }
+  }
+
+  // Card 8: Rented Out (Đang Thuê) - matches chart color
+  &:nth-child(8) {
+    border-top-color: #75b190ff;
+    i { color: #75b190ff; }   
+  } 
+}
+
+/* Chart Section (Row 3 - fills remaining space) */
+.chart-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 20px 20px;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 100%;
+  max-width: min(1400px, 92vw);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+  background-color: var(--white, #fff);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .widget-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+
+  .chart-container {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .widget-section {
+    padding: 12px 16px;
+  }
+
+  .widget-grid {
+    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .widget-card {
+    h3 {
+      font-size: 13px;
+    }
+
+    .value {
+      font-size: 26px;
+    }
+
+    .caption {
+      font-size: 11px;
+    }
+  }
+
+  .chart-section {
+    padding: 0 16px 16px;
+  }
+
+  .chart-container {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .widget-grid {
+    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .widget-card {
+    padding: 10px;
+
+    h3 {
+      font-size: 12px;
+    }
+
+    .value {
+      font-size: 24px;
+    }
+  }
+
+  .chart-container {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .widget-section {
+    padding: 10px;
+  }
+
+  .widget-grid {
+    gap: 6px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .widget-card {
+    padding: 8px;
+
+    i {
+      font-size: 0.9rem;
+    }
+
+    h3 {
+      font-size: 11px;
+    }
+
+    .value {
+      font-size: 20px;
+    }
+
+    .caption {
+      font-size: 10px;
+    }
+  }
+
+  .chart-section {
+    padding: 0 10px 10px;
+  }
+
+  .chart-container {
+    padding: 8px;
+    border-radius: 6px;
+  }
+}

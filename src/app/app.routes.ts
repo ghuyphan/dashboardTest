@@ -10,6 +10,7 @@ import { HomeComponent } from './home/home.component';
 
 // --- 1. IMPORT YOUR 'DEVICE LIST' COMPONENT ---
 import { DeviceListComponent } from './device-list/device-list.component';
+import { BedUsageComponent } from './bed-usage/bed-usage.component';
 
 
 export const routes: Routes = [
@@ -37,6 +38,17 @@ export const routes: Routes = [
         data: {
           permission: 'QLThietBi.DMThietBi',
           title: 'Danh mục thiết bị',
+          showSearchBar: true
+        }
+      },
+
+            { 
+        path: 'reports/bed-usage', // <-- CHANGED from 'devices'
+        component: BedUsageComponent,
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.CongSuatGiuongBenh',
+          title: 'Công suất giường bệnh',
           showSearchBar: true
         }
       },
