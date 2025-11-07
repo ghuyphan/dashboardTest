@@ -1,5 +1,3 @@
-// reusable-table.component.scss
-
 :host {
   /* Ensure the component itself always tries to fill its parent */
   display: flex;
@@ -20,7 +18,7 @@
   position: relative;
   background-color: var(--white);
   border-radius: var(--border-radius-md);
-  box-shadow: var(--box-shadow-sm);
+  box-shadow: none; /* Removed shadow as requested */
   overflow: hidden;
 }
 
@@ -65,19 +63,20 @@
 }
 
 /* ============================================
-   Material Component Overrides
+    Material Component Overrides
    ============================================ */
 :host ::ng-deep {
 
   /* Header Cells */
   .mat-mdc-header-cell {
+    
     background-color: var(--teal-blue) !important;
     color: var(--white) !important;
     font-weight: var(--font-weight-medium);
     font-size: 0.8125rem;
-    text-transform: uppercase;
+    // text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: var(--spacing-sm) var(--spacing-md) !important;
+    padding: var(--spacing-xs) var(--spacing-md) !important;
     border-bottom: none !important;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
@@ -121,10 +120,10 @@
   }
 
   /* ============================================
-     Row Styles & States
+      Row Styles & States
      ============================================ */
   .mat-mdc-row {
-    height: 48px;
+    height: 36px;
     transition: all 0.2s var(--transition-smooth);
 
     &.clickable-row {
@@ -156,7 +155,7 @@
   }
 
   /* ============================================
-     Empty State Styles
+      Empty State Styles
      ============================================ */
   .mat-no-data-row {
     .mat-mdc-cell {
@@ -188,23 +187,53 @@
   }
 
   /* ============================================
-     Paginator Overrides
+      Compact Paginator Overrides
      ============================================ */
   .mat-mdc-paginator {
-    /* Ensure paginator doesn't shrink */
     flex-shrink: 0;
-    border-top: 1px solid var(--gray-200);
+    border-top: none; /* Removed border as requested */
     background-color: var(--white);
 
+    // The main container for the paginator controls
     .mat-mdc-paginator-container {
-      padding: 0 var(--spacing-md);
-      min-height: 56px;
+      padding: 0 var(--spacing-sm) !important; // Reduce side padding
+      min-height: 40px !important;            // Force a smaller height (default is 56px)
     }
-    
+
+    // Reduce font size for text labels
     .mat-mdc-paginator-page-size-label,
-    .mat-mdc-paginator-range-label {
-       color: var(--gray-600);
-       font-family: var(--font-family-sans);
+    .mat-mdc-paginator-range-label,
+    .mat-mdc-select-value-text {
+       color: var(--gray-600) !important;
+       font-family: var(--font-family-sans) !important;
+       font-size: 0.75rem !important; // 12px
+    }
+
+    // Compact the "Items per page" dropdown
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        padding: 0 4px !important;
+        height: 28px !important; // Smaller height for the select box
+      }
+
+      .mat-mdc-form-field-infix {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        min-height: 28px !important;
+      }
+    }
+
+    // Make navigation buttons (arrows) smaller
+    .mat-mdc-icon-button {
+      width: 32px !important;
+      height: 32px !important;
+      padding: 6px !important; // Adjust padding to center the smaller icon
+
+      .mat-icon {
+        font-size: 20px !important; // Smaller icon size
+        width: 20px !important;
+        height: 20px !important;
+      }
     }
   }
 }

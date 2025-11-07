@@ -126,11 +126,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private checkWindowSize(): void {
-    if (window.innerWidth <= 992) {
       this.isSidebarOpen = false;
-    } else {
-      this.isSidebarOpen = false;
-    }
   }
 
   private getInitials(username: string): string {

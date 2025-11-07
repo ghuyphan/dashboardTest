@@ -91,7 +91,7 @@
 /* ========== DASHBOARD CONTENT ========== */
 .dashboard-content {
   flex-grow: 1;
-  padding: 0.75rem var(--spacing-lg);
+padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
   animation: scaleIn 0.3s var(--transition-smooth);
   
   /* FIXED: This is now the SINGLE scroll container */
@@ -151,7 +151,7 @@ app-header {
 :host ::ng-deep app-action-footer {
   display: block; /* Ensure it behaves like a block element */
   flex-shrink: 0; /* Prevent it from shrinking */
-  height: var(--footer-height); /* FIXED: Explicit height */
+  // height: var(--footer-height); /* FIXED: Explicit height */
 
   /* Visual styling */
   background-color: var(--white);
