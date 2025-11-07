@@ -62,7 +62,8 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  height: 100%; /* FIXED: Changed from 100vh to 100% */
+  height: 100%;
+  /* FIXED: Changed from 100vh to 100% */
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
   background-color: var(--white);
@@ -91,16 +92,16 @@
 /* ========== DASHBOARD CONTENT ========== */
 .dashboard-content {
   flex-grow: 1;
-padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
+  padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
   animation: scaleIn 0.3s var(--transition-smooth);
-  
+
   /* FIXED: This is now the SINGLE scroll container */
   overflow-y: auto;
   min-height: 0;
-  
+
   /* FIXED: Create positioning context for sticky elements */
   position: relative;
-  
+
   /* FIXED: Account for header and footer heights */
   height: calc(100% - var(--header-height) - var(--footer-height));
 }
@@ -122,10 +123,13 @@ padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
  * This styles the <app-header> tag.
  */
 app-header {
-  flex-shrink: 0; /* Prevent it from shrinking */
-  height: var(--header-height); /* FIXED: Explicit height */
+  flex-shrink: 0;
+  /* Prevent it from shrinking */
+  height: var(--header-height);
+  /* FIXED: Explicit height */
   transform: translateY(0);
-  z-index: 1010; /* Keep it above content */
+  z-index: 1010;
+  /* Keep it above content */
 
   /* * === MODIFICATION ===
    * Animate both the 'transform' and 'margin-bottom' properties.
@@ -149,8 +153,10 @@ app-header {
  * This styles the <app-action-footer> tag.
  */
 :host ::ng-deep app-action-footer {
-  display: block; /* Ensure it behaves like a block element */
-  flex-shrink: 0; /* Prevent it from shrinking */
+  display: block;
+  /* Ensure it behaves like a block element */
+  flex-shrink: 0;
+  /* Prevent it from shrinking */
   // height: var(--footer-height); /* FIXED: Explicit height */
 
   /* Visual styling */

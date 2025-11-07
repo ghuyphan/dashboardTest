@@ -1,15 +1,19 @@
 <div class="reusable-table-wrapper">
   
-  <div class="loading-shade" *ngIf="isLoading">
-    <mat-spinner diameter="40"></mat-spinner>
+  <div class="loading-shade" *ngIf="isLoadingWithDelay">
+    <div class="loading-content">
+      <mat-spinner diameter="32"></mat-spinner>
+      <div *ngIf="showLoadingText" class="loading-text">Đang tải dữ liệu...</div>
+    </div>
   </div>
 
-  <div class="table-container">
+  <div class="table-container" #tableContainer>
     <table
       mat-table
       [dataSource]="dataSource"
       matSort
       (matSortChange)="onMatSortChange($event)"
+      class="compact-table"
     >
       <ng-container *ngFor="let col of columns" [matColumnDef]="col.key">
         
@@ -18,13 +22,18 @@
           *matHeaderCellDef
           [mat-sort-header]="col.key"
           [disabled]="!col.sortable"
+          class="compact-header"
         >
           <div class="header-content" [appTooltip]="col.label">
             {{ col.label }}
+            <span *ngIf="col.sortable" class="sort-indicator">
+              <mat-icon *ngIf="sortState.active === col.key && sortState.direction === 'asc'" class="sort-icon">arrow_upward</mat-icon>
+              <mat-icon *ngIf="sortState.active === col.key && sortState.direction === 'desc'" class="sort-icon">arrow_downward</mat-icon>
+            </span>
           </div>
         </th>
         
-        <td mat-cell *matCellDef="let element">
+        <td mat-cell *matCellDef="let element" class="compact-cell">
           <div class="cell-content" [appTooltip]="element[col.key]">
             {{ element[col.key] }}
           </div>
@@ -32,7 +41,7 @@
 
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="compact-header-row"></tr>
       
       <tr
         mat-row
@@ -45,10 +54,14 @@
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell no-data-cell" [attr.colspan]="displayedColumns.length">
           <div class="no-data-container">
-            <mat-icon class="no-data-icon">inbox</mat-icon>
-            <p class="no-data-text">
-              {{ searchTerm ? 'Không tìm thấy kết quả phù hợp "' + searchTerm + '"' : 'Không có dữ liệu' }}
-            </p>
+            <div class="no-data-icon-container">
+              <mat-icon class="no-data-icon">inbox</mat-icon>
+            </div>
+            <p class="no-data-text">{{ getEmptyStateMessage() }}</p>
+            <button *ngIf="searchTerm" class="reset-btn" (click)="clearSearch()">
+              <mat-icon>refresh</mat-icon>
+              Đặt lại tìm kiếm
+            </button>
           </div>
         </td>
       </tr>
@@ -58,9 +71,11 @@
   <mat-paginator
     [pageSize]="pageSize"
     [pageSizeOptions]="pageSizeOptions"
+    [length]="dataSource.data.length"
+    (page)="onPageChange($event)"
     showFirstLastButtons
     aria-label="Select page of results"
-    class="sticky-paginator"
+    class="compact-paginator"
   >
   </mat-paginator>
 </div>

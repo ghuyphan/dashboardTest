@@ -33,13 +33,13 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     { key: 'Model', label: 'Model', sortable: true },
     { key: 'SerialNumber', label: 'Serial Number', sortable: true },
     { key: 'ViTri', label: 'Vị Trí', sortable: true },
-    { key: 'TrangThai_Id', label: 'ID Trạng Thái', sortable: true },
+    // { key: 'TrangThai_Id', label: 'ID Trạng Thái', sortable: true },
     { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true },
     { key: 'LoaiThietBi_Id', label: 'ID Loại TB', sortable: true },
-    { key: 'NguoiTao_Id', label: 'ID Người Tạo', sortable: true },
+    // { key: 'NguoiTao_Id', label: 'ID Người Tạo', sortable: true },
     { key: 'NguoiTao', label: 'Người Tạo', sortable: true },
     { key: 'NgayTao', label: 'Ngày Tạo', sortable: true }, // Will be formatted to dd/mm/yyyy
-    { key: 'HL', label: 'HL', sortable: true },
+    // { key: 'HL', label: 'HL', sortable: true },
   ];
 
   // --- Only one master list ---
