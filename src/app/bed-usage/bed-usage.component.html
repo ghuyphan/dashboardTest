@@ -13,10 +13,19 @@
     </div>
 
     <div class="chart-wrapper">
-      <h2 class="chart-title">Công Suất Sử Dụng Giường Bệnh Toàn Viện</h2>
-      <h5 class="chart-last-updated" *ngIf="currentDateTime">
-        Last Updated: {{ currentDateTime }}
-      </h5>
+
+      <div class="chart-header-row">
+        <h2 class="chart-title">Công Suất Sử Dụng Giường Bệnh Toàn Viện</h2>
+
+        <div class="refresh-control" (click)="loadData()" [class.loading]="isLoading">
+          <div class="refresh-icon">
+            <i class="fas" [ngClass]="{'fa-sync': !isLoading, 'fa-spinner fa-spin': isLoading}"></i>
+          </div>
+          <span class="refresh-text" *ngIf="currentDateTime">
+            Last Updated: {{ currentDateTime }}
+          </span>
+        </div>
+      </div>
       <div #chartContainer class="chart-container-inner"></div>
     </div>
   </div>

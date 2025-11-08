@@ -14,6 +14,13 @@
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-lg);
   }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
 }
 
 /* Styles based on your home.component.scss .widget-icon-wrapper */
@@ -28,6 +35,20 @@
 
   i {
     font-size: 20px;
+    
+    @media (max-width: 768px) {
+      font-size: 18px;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    margin-bottom: var(--spacing-xs);
   }
 }
 
@@ -37,20 +58,30 @@
   overflow: hidden;
 
   .widget-value {
-    font-size: 28px;
+    font-size: clamp(20px, 4vw, 28px);
     font-weight: 600;
     color: var(--gray-900);
     margin: 0;
     line-height: 1.1;
+
+    @media (max-width: 768px) {
+      font-size: clamp(18px, 5vw, 24px);
+    }
   }
 
   .widget-title {
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     color: var(--gray-600);
     margin: 0;
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    @media (max-width: 768px) {
+      font-size: clamp(10px, 2.5vw, 12px);
+      white-space: normal;
+      text-align: center;
+    }
   }
 }

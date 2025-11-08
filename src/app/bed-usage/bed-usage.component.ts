@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs/operators'; 
 
 // --- ECHARTS IMPORTS ---
 import * as echarts from 'echarts/core';
@@ -89,6 +90,7 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   private dataRefreshInterval?: ReturnType<typeof setInterval>;
 
   currentDateTime: string = '';
+  public isLoading: boolean = false; 
 
   widgetData: WidgetData[] = [
     { id: 'occupancyRate', title: 'Công Suất Sử Dụng', value: '0,00%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: PEACOCK_BLUE_COLOR },
@@ -159,7 +161,10 @@ export class BedUsageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadData(): void {
+  public loadData(): void {
+    if (this.isLoading) return; 
+    this.isLoading = true;
+
     const apiUrl = environment.bedUsageUrl;
     const getTimestamp = () => new Date().toLocaleString('vi-VN', { 
       day: '2-digit', 
@@ -169,15 +174,24 @@ export class BedUsageComponent implements OnInit, OnDestroy {
       minute: '2-digit' 
     });
 
-    this.http.get<ApiResponseData[]>(apiUrl).subscribe({
+    this.http.get<ApiResponseData[]>(apiUrl).pipe(
+      finalize(() => { 
+        this.isLoading = false;
+        this.currentDateTime = getTimestamp();
+      })
+    ).subscribe({
       next: (rawData) => {
         const chartData = this.transformApiData(rawData);
+
+        // Sort the data alphabetically by Vietnamese name to prevent "swapping"
+        chartData.sort((a, b) => a.viName.localeCompare(b.viName));
+        
         this.calculateAndUpdateWidgets(rawData);
         const option = this.buildOption(chartData);
+
         if (this.chartInstance) {
           this.chartInstance.setOption(option, true);
         }
-        this.currentDateTime = getTimestamp();
       },
       error: (error) => {
         console.error('Error loading bed utilization data:', error);
@@ -185,7 +199,6 @@ export class BedUsageComponent implements OnInit, OnDestroy {
           this.chartInstance.clear();
         }
         this.resetWidgetsToZero();
-        this.currentDateTime = getTimestamp();
       }
     });
   }
@@ -290,7 +303,12 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
-    const xAxisData = data.map(item => item.viName);
+    
+    // === 1. MODIFIED THIS LINE ===
+    // Create two-line labels. E.g. "Khoa Cấp Cứu\n(Emergency)"
+    const xAxisData = data.map(item => 
+      item.enName ? `${item.viName}\n(${item.enName})` : item.viName
+    );
 
     const series = this.bedStatusSeries.map(config => ({
       name: config.name,
@@ -321,11 +339,14 @@ export class BedUsageComponent implements OnInit, OnDestroy {
     }));
 
     return {
-      // 👇 GLOBAL TEXT STYLE FOR CONSISTENT FONT
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         fontSize: 12
       },
+      animation: true,
+      animationDurationUpdate: 300, 
+      animationEasingUpdate: 'cubicInOut', 
+      
       color: this.bedStatusSeries.map(s => s.color),
       tooltip: {
         trigger: 'axis',
@@ -334,8 +355,10 @@ export class BedUsageComponent implements OnInit, OnDestroy {
         },
         formatter: (params: any) => {
           if (!params || params.length === 0) return '';
+          // This still works because 'data' (the function param) is sorted
+          // and has the original, clean 'viName' and 'enName'.
           const dataIndex = params[0].dataIndex;
-          const item = data[dataIndex];
+          const item = data[dataIndex]; 
           let result = `<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px; font-family: ${GLOBAL_FONT_FAMILY};">${item.viName}</div>`;
           result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
           let total = 0;
@@ -363,7 +386,6 @@ export class BedUsageComponent implements OnInit, OnDestroy {
         itemGap: 8,
         textStyle: {
           fontSize: 10
-          // fontFamily inherited from root textStyle
         },
         backgroundColor: 'rgba(255, 255, 255, 0.85)',
         borderRadius: 4,
@@ -371,23 +393,26 @@ export class BedUsageComponent implements OnInit, OnDestroy {
           fontFamily: GLOBAL_FONT_FAMILY
         }
       },
+      // === 2. MODIFIED THIS BLOCK ===
       grid: {
         left: '5%',
         right: '5%',
-        top: '8%',    // Reduced from 30px
-        bottom: '10%', // Reduced from '8%'
+        top: '8%',
+        bottom: '18%', // Increased from 10% to make room for 2-line labels
         containLabel: true
       },
       xAxis: {
         type: 'category',
-        data: xAxisData,
+        data: xAxisData, // This now contains the two-line labels
+        // === 3. MODIFIED THIS BLOCK ===
         axisLabel: {
           interval: 0,
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: 'bold',
           overflow: 'break',
           hideOverlap: true,
-          margin: 3
+          margin: 5,
+          lineHeight: 11 // Added for better spacing of 2-line labels
         },
         axisTick: {
           alignWithLabel: true,

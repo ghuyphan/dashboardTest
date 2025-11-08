@@ -41,25 +41,26 @@ html {
 
 :root {
   /* =================================================================== */
-  /* 1. COLOR PALETTE                                                    */
+  /* 1. COLOR PALETTE (Refined from 'Vote for Safety' image)           */
   /* =================================================================== */
 
-  /* --- Brand Palette (Primary) --- */
-  --aqua-island: #9BDAD9;
-  --teal-blue: #00839B;
-  --peacock-blue: #006E96;
-  --dark-teal: var(--teal-blue);
+  /* --- Primary Brand Teals (from BG, Logos, Text) --- */
+  --brand-teal-dark: #005A70;     /* Darkest text, pants, logos, wave */
+  --brand-teal-primary: #00AECB;  /* Main background & logo color */
+  --brand-teal-light: #52C3D7;    /* Mid-tone background swirl */
+  --brand-teal-pale: #9ADAE0;     /* Lightest heart outline & swirl */
 
-  /* --- Brand Palette (Secondary) --- */
-  --desert-storm: #F8F8F7;
-  --white: #FFFFFF;
+  /* --- Accent Colors (from Characters & UI) --- */
+  --accent-beige-light: #FDECC8;  /* Thumbs-up icon */
+  --accent-beige-dark: #F9B88A;   /* Thumbs-up shadow */
+  --accent-orange: #F89C5B;       /* Character pants */
+  --accent-red: #E87070;          /* Character shirt (woman on left) */
+  --accent-blue-pale: #CDEBF0;    /* Character shirt & heart inner bg */
 
-  /* Other brand colors */
-  --pale-aqua: #9CD4E6;
-  --deep-sapphire: #082567;
-  --dawn-pink: #F5F1ED;
-  --peppermint: #E6F5E9;
-  --dark-gray: #4A4A4A;
+  /* --- Neutrals --- */
+  --neutral-white: #FFFFFF;
+  --neutral-gray-dark: #4A4A4A;   /* Character pants */
+  --neutral-gray-bg: #F8F8F7;     /* --desert-storm */
 
   /* --- Functional Palette (Grays) --- */
   --gray-100: #F8FAFC;
@@ -76,16 +77,19 @@ html {
   --color-danger: #dc3545;
   --color-success: #16A34A;
   --color-warning: #F59E0B;
-  --color-info: var(--teal-blue);
+  --color-info: var(--brand-teal-primary); /* UPDATED */
 
-  /* --- Charting Palette (Tints/Shades) --- */
-  --teal-blue-light: #66B9C9;
-  --teal-blue-dark: #005E70;
-  --peacock-blue-light: #66A9C5;
-  --peacock-blue-dark: #004D6A;
-  --aqua-island-light: #CDECEB;
-  --aqua-island-dark: #70B4B3;
-  --deep-sapphire-light: #5A6DA3;
+  /* --- Charting Palette (Semantic use) --- */
+  /* Uses the colors defined above for charting */
+  --chart-color-1: var(--brand-teal-primary);
+  --chart-color-2: var(--brand-teal-dark);
+  --chart-color-3: var(--accent-beige-light);
+  --chart-color-4: var(--brand-teal-light);
+  --chart-color-5: var(--accent-orange);
+  --chart-color-6: var(--accent-blue-pale);
+  --chart-color-7: var(--accent-red);
+  --chart-color-8: var(--neutral-gray-dark);
+
 
   /* =================================================================== */
   /* 2. TYPOGRAPHY                                                       */
@@ -170,7 +174,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  color: var(--peacock-blue);
+  color: var(--brand-teal-dark); /* UPDATED */
 }
 
 h1 { font-size: 2.25rem; } /* 36px */
@@ -183,19 +187,19 @@ p {
 }
 
 a {
-  color: var(--teal-blue);
+  color: var(--brand-teal-primary); /* UPDATED */
   text-decoration: none;
 }
 a:hover {
   text-decoration: underline;
-  color: var(--peacock-blue);
+  color: var(--brand-teal-dark); /* UPDATED */
 }
 
 /* =================================================================== */
 /* 8. COMPONENT STYLES: CHART                                          */
 /* =================================================================== */
 .chart-container {
-  background-color: var(--white);
+  background-color: var(--neutral-white); /* UPDATED */
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-md);
   box-shadow: var(--box-shadow-md);
@@ -219,33 +223,34 @@ a:hover {
 }
 
 .btn-primary {
-  background-color: var(--teal-blue);
-  color: var(--white);
+  background-color: var(--brand-teal-primary); /* UPDATED */
+  color: var(--neutral-white);
 }
 .btn-primary:hover {
-  background-color: var(--peacock-blue);
-  color: var(--white);
+  background-color: var(--brand-teal-dark); /* UPDATED */
+  color: var(--neutral-white);
   box-shadow: var(--box-shadow-sm);
 }
 
 .btn-secondary {
-  background-color: var(--aqua-island);
-  color: var(--gray-800);
+  background-color: var(--brand-teal-pale); /* UPDATED */
+  color: var(--brand-teal-dark); /* Changed for better contrast */
 }
 .btn-secondary:hover {
-  background-color: var(--aqua-island-dark);
-  color: var(--gray-900);
+  background-color: #70B4B3; /* Darker version of --brand-teal-pale */
+  color: var(--brand-teal-dark);
   box-shadow: var(--box-shadow-sm);
 }
 
 .btn-ghost {
   background-color: transparent;
-  color: var(--teal-blue);
-  border-color: var(--teal-blue);
+  color: var(--brand-teal-primary); /* UPDATED */
+  border-color: var(--brand-teal-primary); /* UPDATED */
 }
 .btn-ghost:hover {
-  background-color: var(--teal-blue-light);
-  color: var(--teal-blue-dark);
+  background-color: var(--accent-blue-pale); /* UPDATED */
+  color: var(--brand-teal-dark); /* UPDATED */
+  border-color: var(--accent-blue-pale); /* UPDATED */
 }
 
 /* =================================================================== */
@@ -290,7 +295,7 @@ a:hover {
 .user-menu-toggle:focus-visible,
 .user-menu-items li button:focus-visible,
 .mobile-sidebar-toggle:focus-visible {
-  outline: 2px solid var(--aqua-island);
+  outline: 2px solid var(--brand-teal-pale); /* UPDATED */
   outline-offset: 2px;
 }
 
@@ -312,7 +317,7 @@ a:hover {
 .app-tooltip-container {
   position: fixed; /* Use fixed positioning to place relative to viewport */
   background-color: var(--gray-800);
-  color: var(--white);
+  color: var(--neutral-white); /* UPDATED */
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--border-radius-sm);
   font-size: 0.875rem;
@@ -420,7 +425,7 @@ body > ul.submenu.open {
       top: var(--spacing-xs);
       bottom: var(--spacing-xs);
       width: var(--spacing-xs);
-      background-color: var(--aqua-island);
+      background-color: var(--brand-teal-pale); /* UPDATED */
       border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
       display: block;
     }

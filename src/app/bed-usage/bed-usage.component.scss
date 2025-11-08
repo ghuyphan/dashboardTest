@@ -1,13 +1,14 @@
 .page-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; // Full viewport height
+  height: 100%;
+  /* Was 100vh. This makes it fit the parent container. */
   overflow: hidden;
 }
 
 .page-content {
   flex-grow: 1;
-  overflow-y: auto;
+  /* Removed 'overflow-y: auto;' */
   display: flex;
   flex-direction: column;
   padding: 0 var(--spacing-xs);
@@ -31,40 +32,110 @@
   display: flex;
   flex-direction: column;
   min-height: 0; // Allow it to shrink if needed
-  margin-top: 16px;
+  margin-top: var(--spacing-xl);
   height: 0; // This helps the flex-grow work correctly
 
+  // === 1. ADDED THIS NEW WRAPPER STYLE ===
+  .chart-header-row {
+    position: relative; // Establish positioning context
+    display: flex;
+    justify-content: center; // Center the title
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--spacing-xs); // Moves margin from title to here
+  }
+
   .chart-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: bold;
     font-family: var(--font-family-sans);
     color: var(--peacock-blue);
     text-align: center;
-    padding: 0;
+    padding: 0 var(--spacing-sm); // Add padding
     flex-shrink: 0;
     margin: 0;
-    margin-bottom: var(--spacing-xs);
+    // REMOVED: margin-bottom
+
+    // Add padding to prevent long titles from overlapping the button
+    padding-left: 40px;
+    padding-right: 40px;
   }
 
-  .chart-last-updated {
-    margin: 0;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--gray-600);
-    text-align: center;
+  .refresh-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: fit-content;
+    min-height: 28px;
+
+    // === 2. MODIFIED: Switched from margin to absolute positioning ===
+    position: absolute; // Position independently
+    right: 0; // Pin to the right
+    top: 50%; // Center vertically
+    transform: translateY(-50%); // ...
+    // REMOVED: margin: 0 auto;
+    // === END MODIFICATION ===
+
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-full);
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
     flex-shrink: 0;
+
+    .refresh-icon {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      transition: color 0.2s ease;
+    }
+
+    .refresh-text {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      white-space: nowrap;
+
+      max-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      margin-left: 0;
+      transition: max-width 0.3s ease, opacity 0.2s ease 0.1s, visibility 0.3s ease, margin-left 0.3s ease;
+    }
+
+    &:hover:not(.loading) {
+      background-color: var(--gray-100);
+
+      .refresh-icon {
+        color: var(--peacock-blue);
+      }
+
+      .refresh-text {
+        max-width: 200px;
+        opacity: 1;
+        visibility: visible;
+        margin-left: var(--spacing-xs);
+      }
+    }
+
+    &.loading {
+      cursor: not-allowed;
+
+      .refresh-icon {
+        color: var(--peacock-blue);
+      }
+    }
   }
 
   .chart-container-inner {
     width: 100%;
     height: 100%; // Take full height of its container
     min-height: 200px; // Minimum height to prevent collapse
-    max-height: 500px;
+    /* Removed 'max-height: 500px;' */
     background-color: var(--white);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--box-shadow-md);
     padding: var(--spacing-sm);
-    margin-top: var(--spacing-md);
     display: flex;
     align-items: stretch;
     justify-content: stretch;
@@ -76,14 +147,17 @@
   .page-content {
     padding: var(--spacing-sm);
   }
+
   .widget-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-xs);
   }
+
   .chart-wrapper {
     .chart-title {
       font-size: 1rem;
     }
+
     .chart-container-inner {
       min-height: 180px;
     }
@@ -94,10 +168,12 @@
   .page-content {
     padding: var(--spacing-xs);
   }
+
   .widget-grid {
     gap: var(--spacing-xs);
     grid-template-columns: repeat(2, 1fr);
   }
+
   .chart-wrapper {
     .chart-container-inner {
       min-height: 160px;
