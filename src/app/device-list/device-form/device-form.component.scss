@@ -1,7 +1,11 @@
-/* Basic form styling */
+/* --- STYLING UPDATED FOR CONSISTENCY & RESPONSIVENESS --- */
+
 .device-form-container {
-  padding: 1rem;
-  min-width: 500px;
+  /* CHANGED: Removed min-width and added a flexible width */
+  width: 100%;
+  max-width: 600px; /* Set a max width for desktop */
+  // padding: 1rem;
+  box-sizing: border-box;
 }
 
 .form-body {
@@ -11,6 +15,7 @@
 /* 2-column grid layout for the form */
 .form-grid {
   display: grid;
+  /* CHANGED: Use 1fr 1fr for desktop */
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
@@ -28,51 +33,104 @@
 .form-group label {
   font-weight: 600;
   margin-bottom: 0.25rem;
+  /* CHANGED: Use theme variable */
+  color: var(--gray-700);
 }
 
 .form-control {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box; /* Important for padding to work nicely */
+  padding: 0.5rem 0.75rem; /* CHANGED: Added more padding */
+  border-radius: 6px; /* CHANGED: Use theme radius */
+  box-sizing: border-box; 
+  
+  /* CHANGED: Use theme variables */
+  border: 1px solid var(--gray-300);
+  background-color: var(--gray-50);
+  color: var(--gray-800);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* CHANGED: Added focus styles */
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-color-light);
 }
 
 /* Validation styling */
 .form-control.is-invalid {
-  border-color: #dc3545;
+  /* CHANGED: Use theme variable */
+  border-color: var(--danger-color);
+}
+.form-control.is-invalid:focus {
+  /* CHANGED: Use theme variable */
+  box-shadow: 0 0 0 3px var(--danger-color-light);
 }
 .invalid-feedback {
-  color: #dc3545;
+  /* CHANGED: Use theme variable */
+  color: var(--danger-color);
   font-size: 0.875em;
   margin-top: 0.25rem;
 }
 
-/* Action buttons at the bottom */
+/* Action buttons at the.bottom */
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #eee;
+  /* CHANGED: Use theme variable */
+  border-top: 1px solid var(--gray-200);
 }
 
-/* Basic button styling (you probably have global styles) */
+/* Basic button styling (you probably have global styles) 
+  UPDATED to use theme variables
+*/
 .btn {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px; /* CHANGED: Use theme radius */
   cursor: pointer;
+  font-weight: 600; /* CHANGED: Added weight */
+  transition: background-color 0.2s ease;
 }
 .btn-secondary {
-  background-color: #6c757d;
+  /* CHANGED: Use theme variables */
+  background-color: var(--gray-500);
   color: white;
 }
+.btn-secondary:hover {
+  background-color: var(--gray-600);
+}
+
 .btn-primary {
-  background-color: #007bff;
+  /* CHANGED: Use theme variables */
+  background-color: var(--teal-blue);
   color: white;
 }
+.btn-primary:hover {
+  background-color: var(--primary-color-dark);
+}
+
 .btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+/* +++ ADDED: Media query for responsiveness +++ */
+@media (max-width: 600px) {
+  .form-grid {
+    /* Stack to a single column on small screens */
+    grid-template-columns: 1fr;
+  }
+
+  .device-form-container {
+    /* Use less padding on mobile to save space */
+    padding: 1rem 0.5rem;
+  }
+
+  /* CHANGED: Also update modal body padding at this breakpoint */
+  :host ::ng-deep .modal-body {
+    padding: 1rem 0.5rem;
+  }
 }
