@@ -5,7 +5,8 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { AsyncPipe, NgIf } from '@angular/common';
+// CHANGED: Imported NgClass
+import { AsyncPipe, NgIf, NgClass } from '@angular/common';
 import { Observable, Subscription } from 'rxjs';
 import { ModalService } from '../../services/modal.service';
 import { ModalOptions } from '../../models/modal-options.model';
@@ -13,7 +14,8 @@ import { ModalOptions } from '../../models/modal-options.model';
 @Component({
   selector: 'app-modal',
   standalone: true,
-  imports: [AsyncPipe, NgIf],
+  // CHANGED: Added NgClass to the imports array
+  imports: [AsyncPipe, NgIf, NgClass],
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
@@ -86,8 +88,16 @@ export class ModalComponent implements OnInit, OnDestroy {
 
   /**
    * Closes the modal when the backdrop is clicked.
+   * CHANGED: Now accepts options to check disableBackdropClose.
    */
-  onBackdropClick(): void {
+  onBackdropClick(options: ModalOptions): void {
+    // Check if the options (from the *ngIf) are defined
+    // and if backdrop closing is explicitly disabled
+    if (options && options.disableBackdropClose) {
+      return; // Do nothing
+    }
+    
+    // Otherwise, close the modal
     this.closeModal();
   }
 

@@ -8,23 +8,28 @@ import {
   ReusableTableComponent,
   GridColumn,
   SortChangedEvent,
-} from '../components/reusable-table/reusable-table.component'; // No SortDirection needed here
+} from '../components/reusable-table/reusable-table.component'; 
 
 import { FooterActionService } from '../services/footer-action.service';
 import { FooterAction } from '../models/footer-action.model';
 import { SearchService } from '../services/search.service';
 import { environment } from '../../environments/environment.development';
 
+// +++ 1. IMPORT THE MODAL SERVICE AND FORM COMPONENT +++
+import { ModalService } from '../services/modal.service';
+import { DeviceFormComponent } from './device-form/device-form.component';
+
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  imports: [CommonModule, ReusableTableComponent],
+  // +++ 2. IMPORT THE FORM COMPONENT +++
+  // (It's standalone, so it just needs to be in the imports array)
+  imports: [CommonModule, ReusableTableComponent, DeviceFormComponent],
   templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
 })
-// CHANGED: Implemented AfterViewInit
 export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
-  // --- 1. Grid Properties UPDATED ---
+  // --- Grid Properties (Unchanged) ---
   public deviceColumns: GridColumn[] = [
     { key: 'Id', label: 'ID', sortable: true },
     { key: 'Ma', label: 'Mã', sortable: true },
@@ -35,48 +40,35 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     { key: 'Model', label: 'Model', sortable: true },
     { key: 'SerialNumber', label: 'Serial Number', sortable: true },
     { key: 'ViTri', label: 'Vị Trí', sortable: true },
-    // { key: 'TrangThai_Id', label: 'ID Trạng Thái', sortable: true },
     { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true },
     { key: 'LoaiThietBi_Id', label: 'ID Loại TB', sortable: true },
-    // { key: 'NguoiTao_Id', label: 'ID Người Tạo', sortable: true },
     { key: 'NguoiTao', label: 'Người Tạo', sortable: true },
-    { key: 'NgayTao', label: 'Ngày Tạo', sortable: true }, // Will be formatted to dd/mm/yyyy
-    // { key: 'HL', label: 'HL', sortable: true },
+    { key: 'NgayTao', label: 'Ngày Tạo', sortable: true },
   ];
 
-  // --- Only one master list ---
-  public allDeviceData: any[] = []; // Master list from API
+  public allDeviceData: any[] = []; 
   public selectedDevice: any | null = null;
   public isLoading: boolean = false;
-
   private deviceSub: Subscription | null = null;
   private searchSub: Subscription | null = null;
-
-  // --- We just need to store the search term to pass to the grid ---
   public currentSearchTerm: string = '';
 
   constructor(
     private footerService: FooterActionService,
     private http: HttpClient,
-    private searchService: SearchService
+    private searchService: SearchService,
+    // +++ 3. INJECT THE MODAL SERVICE +++
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
-    // this.loadDevices(); // <-- MOVED from here
     this.updateFooterActions();
-
-    // --- Subscribe to search term and just store it ---
     this.searchSub = this.searchService.searchTerm$.subscribe((term) => {
       this.currentSearchTerm = term;
-      // The reusable-table handles filtering now
     });
   }
 
-  // +++ MODIFIED: ngAfterViewInit lifecycle hook +++
   ngAfterViewInit(): void {
-    // We wrap this in setTimeout to push it to the *next*
-    // JavaScript tick, after the current change detection
-    // cycle has completed. This prevents the NG0100 error.
     setTimeout(() => {
       this.loadDevices();
     }, 0);
@@ -88,46 +80,32 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.searchSub?.unsubscribe();
   }
 
-  // --- 2. Helper function to format date ---
-  /**
-   * Formats an ISO date string (or any valid Date input) to "dd/mm/yyyy".
-   * @param dateString The date string to format.
-   * @returns The formatted date or an empty string if input is invalid.
-   */
   private formatDate(dateString: string): string {
-    if (!dateString) {
-      return '';
-    }
+    if (!dateString) return '';
     try {
       const date = new Date(dateString);
-      // Ghetto-guard against invalid dates
-      if (isNaN(date.getTime())) {
-        return '';
-      }
+      if (isNaN(date.getTime())) return '';
       const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
     } catch (error) {
       console.error('Error formatting date:', dateString, error);
-      return dateString; // return original string on error
+      return dateString;
     }
   }
 
-  // --- 3. loadDevices() MODIFIED to format the date ---
   private loadDevices(): void {
     this.isLoading = true;
     const url = environment.equipmentCatUrl;
 
     this.deviceSub = this.http.get<any[]>(url).subscribe({
       next: (data) => {
-        // Map the data to format the 'NgayTao' field
-        const formattedData = data.map(device => ({
+        const formattedData = data.map((device) => ({
           ...device,
-          NgayTao: this.formatDate(device.NgayTao)
+          NgayTao: this.formatDate(device.NgayTao),
         }));
-
-        this.allDeviceData = formattedData; // Set the master list with formatted data
+        this.allDeviceData = formattedData;
         this.isLoading = false;
         console.log('Devices loaded and formatted:', formattedData);
       },
@@ -138,10 +116,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  /**
-   * The grid now handles sorting internally via MatSort.
-   * We just pass this event up if needed, but no internal logic required.
-   */
   public onSortChanged(sortEvent: SortChangedEvent): void {
     console.log('Sort Changed (Handled by Table):', sortEvent);
   }
@@ -154,35 +128,85 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private updateFooterActions(): void {
     const isRowSelected = this.selectedDevice !== null;
-
     const actions: FooterAction[] = [
       {
         label: 'Tạo mới',
         icon: 'fas fa-plus',
-        action: () => this.onCreate(),
+        action: () => this.onCreate(), // <-- Changed to call our new method
         permission: 'QLThietBi.DMThietBi.RCREATE',
         className: 'btn-primary',
       },
       {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
-        action: () => this.onModify(),
+        action: () => this.onModify(), // <-- Changed to call our new method
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
       },
     ];
-
     this.footerService.setActions(actions);
   }
 
-  // --- Action methods (unchanged) ---
+  // --- +++ ACTION METHODS (MODIFIED) +++ ---
+  
+  /**
+   * Opens the modal in "Create" mode.
+   */
   private onCreate(): void {
     console.log('Create action triggered');
+    
+    // Use the ModalService to open the form
+    this.modalService
+      .open(DeviceFormComponent, {
+        title: 'Tạo mới Thiết bị', // This title is used by app-modal
+        context: {
+          device: null, // Pass null to indicate "Create" mode
+          title: 'Tạo mới Thiết bị' // The form can use this if it wants
+        },
+      })
+      .subscribe((result) => {
+        // This code runs *after* the modal is closed
+        if (result) {
+          // 'result' is the new device object passed from modalService.close(savedDevice)
+          console.log('Modal closed with new device:', result);
+          // For simplicity, just reload the whole list.
+          // In a real app, you might just add the new row to allDeviceData.
+          this.loadDevices();
+        } else {
+          // Modal was cancelled
+          console.log('Create modal was cancelled');
+        }
+      });
   }
 
+  /**
+   * Opens the modal in "Edit" mode.
+   */
   private onModify(): void {
     if (!this.selectedDevice) return;
-    console.log('Modify action triggered for:', this.selectedDevice.TenThietBi);
+    console.log('Modify action triggered for:', this.selectedDevice.Ten);
+
+    // Use the ModalService to open the form
+    this.modalService
+      .open(DeviceFormComponent, {
+        title: `Sửa Thiết bị: ${this.selectedDevice.Ten}`,
+        context: {
+          device: this.selectedDevice, // Pass the selected device
+          title: 'Sửa Thiết bị'
+        },
+      })
+      .subscribe((result) => {
+        // This code runs *after* the modal is closed
+        if (result) {
+          // 'result' is the updated device object
+          console.log('Modal closed with updated device:', result);
+          // Reload the list to see changes
+          this.loadDevices();
+        } else {
+          // Modal was cancelled
+          console.log('Modify modal was cancelled');
+        }
+      });
   }
 }
