@@ -49,7 +49,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.CongSuatGiuongBenh',
           title: 'Công suất giường bệnh',
-          showSearchBar: true
+          showSearchBar: false
         }
       },
 

@@ -1,4 +1,14 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, inject, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  ViewChild,
+  inject,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
@@ -12,7 +22,8 @@ import {
   TitleComponent,
   TooltipComponent,
   GridComponent,
-  LegendComponent
+  LegendComponent,
+  DataZoomComponent, // 1. IMPORTED DataZoom
 } from 'echarts/components';
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
 import { environment } from '../../environments/environment.development';
@@ -23,19 +34,19 @@ echarts.use([
   TitleComponent,
   TooltipComponent,
   GridComponent,
-  LegendComponent
+  LegendComponent,
+  DataZoomComponent, // 2. ADDED DataZoom
 ]);
 
 type EChartsOption = EChartsCoreOption;
 
 // --- STYLING CONSTANTS ---
-const GLOBAL_FONT_FAMILY = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+const GLOBAL_FONT_FAMILY =
+  'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 // --- Helper: Read CSS custom property ---
 function getCssVar(name: string): string {
-  return getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
 // --- INTERFACES ---
@@ -85,12 +96,15 @@ interface WidgetData {
   standalone: true,
   imports: [CommonModule, WidgetCardComponent],
   templateUrl: './bed-usage.component.html',
-  styleUrl: './bed-usage.component.scss'
+  styleUrl: './bed-usage.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush, // 3. ADDED OnPush
 })
-export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef<HTMLDivElement>;
+export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 4. ADDED AfterViewInit
+  @ViewChild('chartContainer', { static: true })
+  chartContainer!: ElementRef<HTMLDivElement>;
 
   private http = inject(HttpClient);
+  private cd = inject(ChangeDetectorRef); // 5. INJECTED ChangeDetectorRef
   private chartInstance?: EChartsType;
   private resizeListener?: () => void;
   private dataRefreshInterval?: ReturnType<typeof setInterval>;
@@ -98,20 +112,40 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   currentDateTime: string = '';
   public isLoading: boolean = false;
 
-  // We’ll initialize these AFTER view init (to ensure CSS vars are available)
+  // 6. KEPT your isFirstLoad property
+  private isFirstLoad: boolean = true;
+
+  // 7. Data is now initialized in initColors()
   widgetData: WidgetData[] = [];
   private bedStatusSeries: BedStatusSeries[] = [];
+  
+  // 8. Cached CSS Vars - Using your defined chart colors
+  private chartColor1 = '';
+  private chartColor2 = '';
+  private chartColor3 = '';
+  private chartColor6 = '';
+  private chartColor7 = '';
+  private chartColor8 = '';
+  private chartColor9 = '';
+  private gray200 = '';
+  private gray300 = '';
+  private gray700 = '';
+  private gray800 = '';
+  private peacockBlue = '';
+  private white = '';
 
   ngOnInit(): void {
+    // 9. Initialize colors first to prevent "ExpressionChanged" error
+    this.initColors();
     this.loadData();
+
     this.dataRefreshInterval = setInterval(() => {
       this.loadData();
     }, 60000);
   }
 
+  // 10. ADDED ngAfterViewInit for chart init
   ngAfterViewInit(): void {
-    // Initialize chart and color-dependent data after DOM is ready
-    this.initColors();
     this.initChart();
     this.setupResizeListener();
   }
@@ -128,16 +162,14 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // 11. ADDED initColors() to use CSS variables
   private initColors(): void {
-    // Fetch all needed colors from :root
     const c = (name: string) => getCssVar(name);
 
+    // Initialize widget data with CSS variables
     this.widgetData = [
-      // --- Summary Widgets ---
       { id: 'occupancyRate', title: 'Công Suất Sử Dụng', value: '0,00%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: c('--chart-color-1') },
       { id: 'totalBeds', title: 'Tổng Số Giường', value: '0', caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: c('--chart-color-2') },
-      
-      // --- Status Widgets (Matching chart series order) ---
       { id: 'giuongTrong', title: 'Giường Trống', value: '0', caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: c('--chart-color-3') },
       { id: 'dangDieuTri', title: 'Đang Điều Trị', value: '0', caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: c('--chart-color-1') },
       { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: '0', caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: c('--chart-color-8') },
@@ -145,39 +177,50 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: '0', caption: 'Not Ready', icon: 'fas fa-tools', accentColor: c('--chart-color-7') }
     ];
 
+    // Initialize bed status series with CSS variables
     this.bedStatusSeries = [
-      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: c('--chart-color-3') },
-      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: c('--chart-color-1') },
-      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: c('--chart-color-8') },
-      { name: 'Đã book (Booked)', dataKey: 'daBook', color: c('--chart-color-6') },
-      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: c('--chart-color-7') },
-      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: c('--chart-color-9') }
+      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: c('--chart-color-3') }, // aqua-island
+      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: c('--chart-color-1') }, // teal-blue
+      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: c('--chart-color-8') }, // teal-midtone
+      { name: 'Đã book (Booked)', dataKey: 'daBook', color: c('--chart-color-6') }, // orange
+      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: c('--chart-color-7') }, // dark-gray
+      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: c('--chart-color-9') } // beige-midtone
     ];
+    
+    // Cache frequently used CSS variables
+    this.chartColor1 = c('--chart-color-1');
+    this.chartColor2 = c('--chart-color-2');
+    this.chartColor3 = c('--chart-color-3');
+    this.chartColor6 = c('--chart-color-6');
+    this.chartColor7 = c('--chart-color-7');
+    this.chartColor8 = c('--chart-color-8');
+    this.chartColor9 = c('--chart-color-9');
+    this.gray200 = c('--gray-200');
+    this.gray300 = c('--gray-300');
+    this.gray700 = c('--gray-700');
+    this.gray800 = c('--gray-800');
+    this.peacockBlue = c('--peacock-blue');
+    this.white = c('--white');
   }
 
   private initChart(): void {
     const container = this.chartContainer.nativeElement;
     this.chartInstance = echarts.init(container);
+
     setTimeout(() => {
-      if (this.chartInstance) {
-        this.chartInstance.resize();
-      }
+      this.chartInstance?.resize();
     }, 100);
   }
 
   private setupResizeListener(): void {
     this.resizeListener = () => {
-      if (this.chartInstance) {
-        this.chartInstance.resize();
-      }
+      this.chartInstance?.resize();
     };
     window.addEventListener('resize', this.resizeListener);
 
     if (typeof ResizeObserver !== 'undefined') {
       const resizeObserver = new ResizeObserver(() => {
-        if (this.chartInstance) {
-          this.chartInstance.resize();
-        }
+        this.chartInstance?.resize();
       });
       resizeObserver.observe(this.chartContainer.nativeElement);
     }
@@ -186,43 +229,57 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   public loadData(): void {
     if (this.isLoading) return;
     this.isLoading = true;
+    this.cd.markForCheck(); // 12. ADDED markForCheck
 
     const apiUrl = environment.bedUsageUrl;
-    const getTimestamp = () => new Date().toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const getTimestamp = () =>
+      new Date().toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
 
-    this.http.get<ApiResponseData[]>(apiUrl).pipe(
-      finalize(() => {
-        this.isLoading = false;
-        this.currentDateTime = getTimestamp();
-      })
-    ).subscribe({
-      next: (rawData) => {
-        const chartData = this.transformApiData(rawData);
-        chartData.sort((a, b) => a.viName.localeCompare(b.viName));
-        this.calculateAndUpdateWidgets(rawData);
-        const option = this.buildOption(chartData);
-        if (this.chartInstance) {
-          this.chartInstance.setOption(option, true);
-        }
-      },
-      error: (error) => {
-        console.error('Error loading bed utilization data:', error);
-        if (this.chartInstance) {
-          this.chartInstance.clear();
-        }
-        this.resetWidgetsToZero();
-      }
-    });
+    this.http
+      .get<ApiResponseData[]>(apiUrl)
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.currentDateTime = getTimestamp();
+          this.cd.markForCheck(); // 13. ADDED markForCheck
+        })
+      )
+      .subscribe({
+        next: (rawData) => {
+          const chartData = this.transformApiData(rawData);
+          // 14. Sort data for consistency
+          chartData.sort((a, b) => a.viName.localeCompare(b.viName));
+          
+          this.calculateAndUpdateWidgets(rawData);
+          const option = this.buildOption(chartData);
+
+          // === KEPT YOUR MODIFIED BLOCK ===
+          if (this.isFirstLoad) {
+            this.isFirstLoad = false;
+          } else {
+            option.animation = false;
+          }
+          // === END MODIFIED BLOCK ===
+
+          this.chartInstance?.setOption(option, true);
+        },
+        error: (error) => {
+          console.error('Error loading bed utilization data:', error);
+          this.chartInstance?.clear();
+          this.resetWidgetsToZero();
+          this.cd.markForCheck(); // 15. ADDED markForCheck
+        },
+      });
   }
 
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
-    return apiData.map(item => {
+    return apiData.map((item) => {
       const parts = this.parseDepartmentName(item.TenPhongBan);
       return {
         tenPhongBan: item.TenPhongBan,
@@ -234,61 +291,85 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         choXuatVien: item.ChoXuatVien,
         daBook: item.DaBook,
         chuaSanSang: item.ChuaSanSang,
-        choMuonGiuong: item.ChoMuonGiuong
+        choMuonGiuong: item.ChoMuonGiuong,
       };
     });
   }
 
-  private parseDepartmentName(fullName: string): { viName: string; enName: string } {
+  private parseDepartmentName(
+    fullName: string
+  ): { viName: string; enName: string } {
     const withoutTotal = fullName.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
     const parts = withoutTotal.split(/\s+-\s+/);
     if (parts.length >= 2) {
       return {
         viName: parts[0].trim(),
-        enName: parts.slice(1).join(' - ').trim()
+        enName: parts.slice(1).join(' - ').trim(),
       };
     }
     const match = withoutTotal.match(/^(.+?)\s+([A-Z][a-zA-Z\s&()]+)$/);
     if (match) {
       return {
         viName: match[1].trim(),
-        enName: match[2].trim()
+        enName: match[2].trim(),
       };
     }
     return {
       viName: withoutTotal,
-      enName: ''
+      enName: '',
     };
   }
 
   private updateWidgetValue(id: string, value: string) {
-    const widget = this.widgetData.find(w => w.id === id);
+    const widget = this.widgetData.find((w) => w.id === id);
     if (widget) {
       widget.value = value;
     }
   }
 
+  // 16. REPLACED with OPTIMIZED single-reduce function
   private calculateAndUpdateWidgets(apiData: ApiResponseData[]): void {
-    const giuongTrongTotal = apiData.reduce((sum, item) => sum + item.GiuongTrong, 0);
-    const dangDieuTriTotal = apiData.reduce((sum, item) => sum + item.DangSuDung, 0);
-    const choXuatVienTotal = apiData.reduce((sum, item) => sum + item.ChoXuatVien, 0);
-    const daBookTotal = apiData.reduce((sum, item) => sum + item.DaBook, 0);
-    const chuaSanSangTotal = apiData.reduce((sum, item) => sum + item.ChuaSanSang, 0);
-    const choMuonGiuongTotal = apiData.reduce((sum, item) => sum + item.ChoMuonGiuong, 0);
-    const totalBedsNumeric = apiData.reduce((sum, item) => sum + item.Tong, 0);
+    const totals = apiData.reduce(
+      (acc, item) => {
+        acc.giuongTrong += item.GiuongTrong;
+        acc.dangDieuTri += item.DangSuDung;
+        acc.choXuatVien += item.ChoXuatVien;
+        acc.daBook += item.DaBook;
+        acc.chuaSanSang += item.ChuaSanSang;
+        acc.choMuonGiuong += item.ChoMuonGiuong;
+        acc.totalBeds += item.Tong;
+        return acc;
+      },
+      {
+        giuongTrong: 0,
+        dangDieuTri: 0,
+        choXuatVien: 0,
+        daBook: 0,
+        chuaSanSang: 0,
+        choMuonGiuong: 0,
+        totalBeds: 0,
+      }
+    );
 
-    const occupiedBeds = dangDieuTriTotal + choXuatVienTotal + daBookTotal + chuaSanSangTotal + choMuonGiuongTotal;
+    const occupiedBeds =
+      totals.dangDieuTri +
+      totals.choXuatVien +
+      totals.daBook +
+      totals.chuaSanSang +
+      totals.choMuonGiuong;
+
     let occupancyRateStr = '0,00%';
-    if (totalBedsNumeric > 0) {
-      const rate = (occupiedBeds / totalBedsNumeric) * 100;
+    if (totals.totalBeds > 0) {
+      const rate = (occupiedBeds / totals.totalBeds) * 100;
       occupancyRateStr = this.formatPercentage(rate);
     }
-    this.updateWidgetValue('giuongTrong', this.formatNumber(giuongTrongTotal));
-    this.updateWidgetValue('dangDieuTri', this.formatNumber(dangDieuTriTotal));
-    this.updateWidgetValue('choXuatVien', this.formatNumber(choXuatVienTotal));
-    this.updateWidgetValue('daBook', this.formatNumber(daBookTotal));
-    this.updateWidgetValue('chuaSanSang', this.formatNumber(chuaSanSangTotal));
-    this.updateWidgetValue('totalBeds', this.formatNumber(totalBedsNumeric));
+
+    this.updateWidgetValue('giuongTrong', this.formatNumber(totals.giuongTrong));
+    this.updateWidgetValue('dangDieuTri', this.formatNumber(totals.dangDieuTri));
+    this.updateWidgetValue('choXuatVien', this.formatNumber(totals.choXuatVien));
+    this.updateWidgetValue('daBook', this.formatNumber(totals.daBook));
+    this.updateWidgetValue('chuaSanSang', this.formatNumber(totals.chuaSanSang));
+    this.updateWidgetValue('totalBeds', this.formatNumber(totals.totalBeds));
     this.updateWidgetValue('occupancyRate', occupancyRateStr);
   }
 
@@ -309,24 +390,25 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   private formatNumber(value: number): string {
     return new Intl.NumberFormat('vi-VN', {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   }
 
   private formatPercentage(value: number): string {
-    return new Intl.NumberFormat('vi-VN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value) + '%';
+    return (
+      new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value) + '%'
+    );
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
-    const xAxisData = data.map(item =>
+    // 17. Use both Vi and En names for x-axis
+    const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
-
-    // Ensure colors are up to date (in case of theme switch)
-    const currentColors = this.bedStatusSeries.map(s => s.color);
+    const currentColors = this.bedStatusSeries.map((s) => s.color);
 
     const series = this.bedStatusSeries.map((config, index) => ({
       name: config.name,
@@ -335,50 +417,45 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       barWidth: '35%',
       itemStyle: {
         color: config.color,
-        borderRadius: [4, 4, 0, 0],
+        borderRadius: [4, 4, 0, 0], // Rounded top corners
         borderColor: 'rgba(255, 255, 255, 0.3)',
-        borderWidth: 1
+        borderWidth: 1,
       },
       label: {
         show: true,
         position: 'inside' as const,
-        formatter: ({ value }: any) => (value && value >= 1) ? String(value) : '',
+        formatter: ({ value }: any) => (value && value >= 1 ? String(value) : ''),
         fontSize: 10,
         fontWeight: 600,
         color: '#fff',
         textBorderColor: 'rgba(0,0,0,.3)',
         textBorderWidth: 1,
-        distance: 0
+        distance: 0,
       },
       labelLayout: {
-        hideOverlap: true
+        hideOverlap: true,
       },
       emphasis: {
         focus: 'series' as const,
         itemStyle: {
-          borderColor: currentColors[0], // Use first color (Vacant) for emphasis border
+          borderColor: currentColors[0],
           borderWidth: 2,
           shadowBlur: 8,
-          shadowColor: 'rgba(0, 174, 203, 0.25)'
-        }
+          shadowColor: 'rgba(0, 174, 203, 0.25)',
+        },
       },
-      data: data.map(item => item[config.dataKey])
+      // Explicitly type 'item' as DepartmentChartData
+      data: data.map((item: DepartmentChartData) => item[config.dataKey]),
     }));
 
-    // Fetch gray tones for chart styling
-    const gray200 = getCssVar('--gray-200');
-    const gray300 = getCssVar('--gray-300');
-    const gray700 = getCssVar('--gray-700');
-    const gray800 = getCssVar('--gray-800');
-    const darkTeal = getCssVar('--peacock-blue');
-
     return {
-      backgroundColor: getCssVar('--white'),
+      backgroundColor: this.white,
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         fontSize: 12,
-        color: gray700
+        color: this.gray700,
       },
+      // 18. ADDED animation properties for your logic to work
       animation: true,
       animationDuration: 800,
       animationDurationUpdate: 300,
@@ -388,125 +465,98 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       tooltip: {
         trigger: 'axis',
         axisPointer: {
-          type: 'shadow',
+          type: 'shadow' as const,
           shadowStyle: {
-            color: 'rgba(0, 89, 112, 0.1)'
-          }
+            color: 'rgba(0, 89, 112, 0.1)',
+          },
         },
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: gray300,
-        borderWidth: 1,
-        borderRadius: 8,
-        textStyle: {
-          color: gray800,
-          fontFamily: GLOBAL_FONT_FAMILY,
-          fontSize: 13
-        },
-        padding: [10, 15],
-        extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);',
+        // 19. Using your preferred tooltip formatter
         formatter: (params: any) => {
           if (!params || params.length === 0) return '';
           const dataIndex = params[0].dataIndex;
           const item = data[dataIndex];
-          let result = `<div style="font-weight: 700; margin-bottom: 8px; font-size: 14px; font-family: ${GLOBAL_FONT_FAMILY}; color: ${darkTeal};">${item.viName}</div>`;
-          result += `<div style="margin-bottom: 10px; color: ${gray700}; font-family: ${GLOBAL_FONT_FAMILY}; font-size: 12px; font-style: italic;">${item.enName}</div>`;
-          let totalOccupied = 0;
+          let result = `<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px; font-family: ${GLOBAL_FONT_FAMILY};">${item.viName}</div>`;
+          result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
+          let total = 0;
           params.forEach((param: any) => {
             if (param.value > 0) {
-              totalOccupied += param.value;
-              result += `<div style="margin: 5px 0; font-family: ${GLOBAL_FONT_FAMILY}; display: flex; align-items: center; gap: 8px;">`;
-              result += `<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);"></span>`;
-              result += `<span style="flex: 1; font-size: 12px;">${param.seriesName}</span>`;
-              result += `<span style="font-weight: 600; color: ${gray800}; font-size: 12px;">${param.value}</span>`;
+              total += param.value;
+              result += `<div style="margin: 3px 0; font-family: ${GLOBAL_FONT_FAMILY};">`;
+              result += `${param.marker} ${param.seriesName}: <strong>${param.value}</strong>`;
               result += `</div>`;
             }
           });
-          result += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid ${gray200}; font-weight: 700; font-family: ${GLOBAL_FONT_FAMILY}; display: flex; justify-content: space-between; font-size: 13px;">`;
-          result += `<span style="color: ${gray700};">Tổng đang sử dụng:</span>`;
-          result += `<span style="color: ${getCssVar('--chart-color-1')};">${totalOccupied}</span>`;
-          result += `</div>`;
-          result += `<div style="display: flex; justify-content: space-between; font-size: 13px;">`;
-          result += `<span style="color: ${gray700};">Tổng số giường:</span>`;
-          result += `<span style="color: ${darkTeal}; font-weight: 700;">${item.totalBeds}</span>`;
+          result += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold; font-family: ${GLOBAL_FONT_FAMILY};">`;
+          result += `Tổng số giường: <strong>${item.totalBeds}</strong>`;
           result += `</div>`;
           return result;
-        }
+        },
       },
       legend: {
+        // 20. Using your preferred legend style
         data: this.bedStatusSeries.map(s => s.name),
         top: '2%',
         left: 'center',
         show: true,
         type: 'scroll',
         orient: 'horizontal',
-        itemGap: 15,
+        itemGap: 8,
         textStyle: {
-          fontSize: 11,
-          color: gray700
+          fontSize: 10
         },
-        icon: 'roundRect',
-        itemStyle: {
-          borderRadius: 4
-        },
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderColor: gray200,
-        borderWidth: 1,
-        borderRadius: 8
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        borderRadius: 4,
+        pageTextStyle: {
+          fontFamily: GLOBAL_FONT_FAMILY
+        }
       },
       grid: {
         left: '5%',
         right: '5%',
         top: '12%',
-        bottom: '22%',
-        containLabel: true
+        bottom: '28%', // 21. INCREASED bottom margin for DataZoom
+        containLabel: true,
       },
       xAxis: {
         type: 'category',
         data: xAxisData,
         axisLabel: {
           interval: 0,
-          fontSize: 11,
+          fontSize: 9,
           fontWeight: 'bold',
-          color: gray800,
           overflow: 'break',
           hideOverlap: true,
-          margin: 10,
-          lineHeight: 13,
-          padding: [4, 6],
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          borderRadius: 4,
-          borderColor: gray200,
-          borderWidth: 1
+          margin: 3
         },
         axisTick: {
           alignWithLabel: true,
           length: 5,
           lineStyle: {
-            color: gray300
-          }
+            color: this.gray300,
+          },
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: darkTeal,
-            width: 2
-          }
+            color: this.peacockBlue,
+            width: 2,
+          },
         },
         splitLine: {
-          show: false
-        }
+          show: false,
+        },
       },
       yAxis: {
         type: 'value',
         name: 'Tổng Số Giường\n(Total Beds)',
         nameLocation: 'middle',
-        nameGap: 45,
+        nameGap: 45, // 23. Using safer 45px gap
         nameRotate: 90,
         nameTextStyle: {
           fontSize: 12,
           fontWeight: 'bold',
-          color: gray800,
-          lineHeight: 16
+          color: this.gray800,
+          lineHeight: 16,
         },
         min: 0,
         max: 60,
@@ -514,33 +564,60 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         splitLine: {
           show: true,
           lineStyle: {
-            color: gray200,
+            color: this.gray200,
             width: 1,
-            type: 'dotted'
-          }
+            type: 'dotted',
+          },
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: gray700,
-            width: 1.5
-          }
+            color: this.gray700,
+            width: 1.5,
+          },
         },
         axisTick: {
           show: true,
           length: 4,
           lineStyle: {
-            color: gray700
-          }
+            color: this.gray700,
+          },
         },
         axisLabel: {
           fontSize: 11,
-          color: gray700,
-          margin: 10
-        }
+          color: this.gray700,
+          margin: 10,
+        },
       },
       series: series,
-      barCategoryGap: '30%'
+      barCategoryGap: '30%',
+      // 24. ADDED DataZoom configuration
+      dataZoom: [
+        {
+          type: 'slider',
+          xAxisIndex: 0,
+          filterMode: 'filter',
+          start: 0,
+          end: data.length > 10 ? 50 : 100,
+          bottom: 20,
+          height: 20,
+          handleIcon:
+            'path://M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z',
+          handleSize: '110%',
+          handleStyle: { color: '#fff', borderColor: '#aaa', borderWidth: 1, },
+          backgroundColor: '#f3f3f3',
+          dataBackground: { lineStyle: { color: this.gray200 }, areaStyle: { color: this.gray200 }, },
+          selectedDataBackground: { lineStyle: { color: this.peacockBlue }, areaStyle: { color: this.peacockBlue, opacity: 0.1 }, },
+          moveHandleStyle: { color: this.peacockBlue, opacity: 0.7, },
+        },
+        {
+          type: 'inside',
+          xAxisIndex: 0,
+          filterMode: 'filter',
+          start: 0,
+          end: data.length > 10 ? 50 : 100,
+        },
+      ],
     };
   }
 }
