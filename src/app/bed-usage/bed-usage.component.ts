@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, inject, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { finalize } from 'rxjs/operators'; 
+import { finalize } from 'rxjs/operators';
 
 // --- ECHARTS IMPORTS ---
 import * as echarts from 'echarts/core';
@@ -30,7 +30,13 @@ type EChartsOption = EChartsCoreOption;
 
 // --- STYLING CONSTANTS ---
 const GLOBAL_FONT_FAMILY = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-const PEACOCK_BLUE_COLOR = '#006E96'; // var(--peacock-blue)
+
+// --- Helper: Read CSS custom property ---
+function getCssVar(name: string): string {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+}
 
 // --- INTERFACES ---
 interface ApiResponseData {
@@ -81,7 +87,7 @@ interface WidgetData {
   templateUrl: './bed-usage.component.html',
   styleUrl: './bed-usage.component.scss'
 })
-export class BedUsageComponent implements OnInit, OnDestroy {
+export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef<HTMLDivElement>;
 
   private http = inject(HttpClient);
@@ -90,34 +96,24 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   private dataRefreshInterval?: ReturnType<typeof setInterval>;
 
   currentDateTime: string = '';
-  public isLoading: boolean = false; 
+  public isLoading: boolean = false;
 
-  widgetData: WidgetData[] = [
-    { id: 'occupancyRate', title: 'Công Suất Sử Dụng', value: '0,00%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: PEACOCK_BLUE_COLOR },
-    { id: 'totalBeds', title: 'Tổng Số Giường', value: '0', caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: PEACOCK_BLUE_COLOR },
-    { id: 'dangDieuTri', title: 'Đang Điều Trị', value: '0', caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: '#94A3B8' },
-    { id: 'giuongTrong', title: 'Giường Trống', value: '0', caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: '#94A3B8' },
-    { id: 'daBook', title: 'Đã Book', value: '0', caption: 'Booked Beds', icon: 'fas fa-bookmark', accentColor: '#F59E0B' },
-    { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: '0', caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: '#94A3B8' },
-    { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: '0', caption: 'Not Ready', icon: 'fas fa-tools', accentColor: '#94A3B8' }
-  ];
-
-  private bedStatusSeries: BedStatusSeries[] = [
-    { name: 'Giường trống', dataKey: 'giuongTrong', color: '#28A745' },
-    { name: 'Đang điều trị', dataKey: 'dangDieuTri', color: '#006E96' },
-    { name: 'Chờ xuất viện', dataKey: 'choXuatVien', color: '#66A9C5' },
-    { name: 'Đã book', dataKey: 'daBook', color: '#F59E0B' },
-    { name: 'Chưa sẵn sàng', dataKey: 'chuaSanSang', color: '#94A3B8' },
-    { name: 'Cho mượn giường', dataKey: 'choMuonGiuong', color: '#70B4B3' }
-  ];
+  // We’ll initialize these AFTER view init (to ensure CSS vars are available)
+  widgetData: WidgetData[] = [];
+  private bedStatusSeries: BedStatusSeries[] = [];
 
   ngOnInit(): void {
-    this.initChart();
     this.loadData();
-    this.setupResizeListener();
     this.dataRefreshInterval = setInterval(() => {
       this.loadData();
     }, 60000);
+  }
+
+  ngAfterViewInit(): void {
+    // Initialize chart and color-dependent data after DOM is ready
+    this.initColors();
+    this.initChart();
+    this.setupResizeListener();
   }
 
   ngOnDestroy(): void {
@@ -132,10 +128,36 @@ export class BedUsageComponent implements OnInit, OnDestroy {
     }
   }
 
+  private initColors(): void {
+    // Fetch all needed colors from :root
+    const c = (name: string) => getCssVar(name);
+
+    this.widgetData = [
+      // --- Summary Widgets ---
+      { id: 'occupancyRate', title: 'Công Suất Sử Dụng', value: '0,00%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: c('--chart-color-1') },
+      { id: 'totalBeds', title: 'Tổng Số Giường', value: '0', caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: c('--chart-color-2') },
+      
+      // --- Status Widgets (Matching chart series order) ---
+      { id: 'giuongTrong', title: 'Giường Trống', value: '0', caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: c('--chart-color-3') },
+      { id: 'dangDieuTri', title: 'Đang Điều Trị', value: '0', caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: c('--chart-color-1') },
+      { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: '0', caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: c('--chart-color-8') },
+      { id: 'daBook', title: 'Đã Book', value: '0', caption: 'Booked Beds', icon: 'fas fa-bookmark', accentColor: c('--chart-color-6') },
+      { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: '0', caption: 'Not Ready', icon: 'fas fa-tools', accentColor: c('--chart-color-7') }
+    ];
+
+    this.bedStatusSeries = [
+      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: c('--chart-color-3') },
+      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: c('--chart-color-1') },
+      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: c('--chart-color-8') },
+      { name: 'Đã book (Booked)', dataKey: 'daBook', color: c('--chart-color-6') },
+      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: c('--chart-color-7') },
+      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: c('--chart-color-9') }
+    ];
+  }
+
   private initChart(): void {
     const container = this.chartContainer.nativeElement;
     this.chartInstance = echarts.init(container);
-    
     setTimeout(() => {
       if (this.chartInstance) {
         this.chartInstance.resize();
@@ -150,7 +172,7 @@ export class BedUsageComponent implements OnInit, OnDestroy {
       }
     };
     window.addEventListener('resize', this.resizeListener);
-    
+
     if (typeof ResizeObserver !== 'undefined') {
       const resizeObserver = new ResizeObserver(() => {
         if (this.chartInstance) {
@@ -162,33 +184,29 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   }
 
   public loadData(): void {
-    if (this.isLoading) return; 
+    if (this.isLoading) return;
     this.isLoading = true;
 
     const apiUrl = environment.bedUsageUrl;
-    const getTimestamp = () => new Date().toLocaleString('vi-VN', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    const getTimestamp = () => new Date().toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
 
     this.http.get<ApiResponseData[]>(apiUrl).pipe(
-      finalize(() => { 
+      finalize(() => {
         this.isLoading = false;
         this.currentDateTime = getTimestamp();
       })
     ).subscribe({
       next: (rawData) => {
         const chartData = this.transformApiData(rawData);
-
-        // Sort the data alphabetically by Vietnamese name to prevent "swapping"
         chartData.sort((a, b) => a.viName.localeCompare(b.viName));
-        
         this.calculateAndUpdateWidgets(rawData);
         const option = this.buildOption(chartData);
-
         if (this.chartInstance) {
           this.chartInstance.setOption(option, true);
         }
@@ -303,29 +321,32 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
-    
-    // === 1. MODIFIED THIS LINE ===
-    // Create two-line labels. E.g. "Khoa Cấp Cứu\n(Emergency)"
-    const xAxisData = data.map(item => 
+    const xAxisData = data.map(item =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
 
-    const series = this.bedStatusSeries.map(config => ({
+    // Ensure colors are up to date (in case of theme switch)
+    const currentColors = this.bedStatusSeries.map(s => s.color);
+
+    const series = this.bedStatusSeries.map((config, index) => ({
       name: config.name,
       type: 'bar' as const,
       stack: 'beds',
-      barWidth: '40%',
+      barWidth: '35%',
       itemStyle: {
-        color: config.color
+        color: config.color,
+        borderRadius: [4, 4, 0, 0],
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderWidth: 1
       },
       label: {
         show: true,
         position: 'inside' as const,
         formatter: ({ value }: any) => (value && value >= 1) ? String(value) : '',
-        fontSize: 9,
+        fontSize: 10,
         fontWeight: 600,
         color: '#fff',
-        textBorderColor: 'rgba(0,0,0,.4)',
+        textBorderColor: 'rgba(0,0,0,.3)',
         textBorderWidth: 1,
         distance: 0
       },
@@ -333,45 +354,80 @@ export class BedUsageComponent implements OnInit, OnDestroy {
         hideOverlap: true
       },
       emphasis: {
-        focus: 'series' as const
+        focus: 'series' as const,
+        itemStyle: {
+          borderColor: currentColors[0], // Use first color (Vacant) for emphasis border
+          borderWidth: 2,
+          shadowBlur: 8,
+          shadowColor: 'rgba(0, 174, 203, 0.25)'
+        }
       },
       data: data.map(item => item[config.dataKey])
     }));
 
+    // Fetch gray tones for chart styling
+    const gray200 = getCssVar('--gray-200');
+    const gray300 = getCssVar('--gray-300');
+    const gray700 = getCssVar('--gray-700');
+    const gray800 = getCssVar('--gray-800');
+    const darkTeal = getCssVar('--peacock-blue');
+
     return {
+      backgroundColor: getCssVar('--white'),
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
-        fontSize: 12
+        fontSize: 12,
+        color: gray700
       },
       animation: true,
-      animationDurationUpdate: 300, 
-      animationEasingUpdate: 'cubicInOut', 
-      
-      color: this.bedStatusSeries.map(s => s.color),
+      animationDuration: 800,
+      animationDurationUpdate: 300,
+      animationEasingUpdate: 'cubicInOut',
+      animationEasing: 'quadraticInOut',
+      color: currentColors,
       tooltip: {
         trigger: 'axis',
         axisPointer: {
-          type: 'shadow' as const
+          type: 'shadow',
+          shadowStyle: {
+            color: 'rgba(0, 89, 112, 0.1)'
+          }
         },
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: gray300,
+        borderWidth: 1,
+        borderRadius: 8,
+        textStyle: {
+          color: gray800,
+          fontFamily: GLOBAL_FONT_FAMILY,
+          fontSize: 13
+        },
+        padding: [10, 15],
+        extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);',
         formatter: (params: any) => {
           if (!params || params.length === 0) return '';
-          // This still works because 'data' (the function param) is sorted
-          // and has the original, clean 'viName' and 'enName'.
           const dataIndex = params[0].dataIndex;
-          const item = data[dataIndex]; 
-          let result = `<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px; font-family: ${GLOBAL_FONT_FAMILY};">${item.viName}</div>`;
-          result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
-          let total = 0;
+          const item = data[dataIndex];
+          let result = `<div style="font-weight: 700; margin-bottom: 8px; font-size: 14px; font-family: ${GLOBAL_FONT_FAMILY}; color: ${darkTeal};">${item.viName}</div>`;
+          result += `<div style="margin-bottom: 10px; color: ${gray700}; font-family: ${GLOBAL_FONT_FAMILY}; font-size: 12px; font-style: italic;">${item.enName}</div>`;
+          let totalOccupied = 0;
           params.forEach((param: any) => {
             if (param.value > 0) {
-              total += param.value;
-              result += `<div style="margin: 3px 0; font-family: ${GLOBAL_FONT_FAMILY};">`;
-              result += `${param.marker} ${param.seriesName}: <strong>${param.value}</strong>`;
+              totalOccupied += param.value;
+              result += `<div style="margin: 5px 0; font-family: ${GLOBAL_FONT_FAMILY}; display: flex; align-items: center; gap: 8px;">`;
+              result += `<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);"></span>`;
+              result += `<span style="flex: 1; font-size: 12px;">${param.seriesName}</span>`;
+              result += `<span style="font-weight: 600; color: ${gray800}; font-size: 12px;">${param.value}</span>`;
               result += `</div>`;
             }
           });
-          result += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold; font-family: ${GLOBAL_FONT_FAMILY};">`;
-          result += `Tổng số giường: <strong>${item.totalBeds}</strong>`;
+          result += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid ${gray200}; font-weight: 700; font-family: ${GLOBAL_FONT_FAMILY}; display: flex; justify-content: space-between; font-size: 13px;">`;
+          result += `<span style="color: ${gray700};">Tổng đang sử dụng:</span>`;
+          result += `<span style="color: ${getCssVar('--chart-color-1')};">${totalOccupied}</span>`;
+          result += `</div>`;
+          result += `<div style="display: flex; justify-content: space-between; font-size: 13px;">`;
+          result += `<span style="color: ${gray700};">Tổng số giường:</span>`;
+          result += `<span style="color: ${darkTeal}; font-weight: 700;">${item.totalBeds}</span>`;
           result += `</div>`;
           return result;
         }
@@ -383,57 +439,74 @@ export class BedUsageComponent implements OnInit, OnDestroy {
         show: true,
         type: 'scroll',
         orient: 'horizontal',
-        itemGap: 8,
+        itemGap: 15,
         textStyle: {
-          fontSize: 10
+          fontSize: 11,
+          color: gray700
         },
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        borderRadius: 4,
-        pageTextStyle: {
-          fontFamily: GLOBAL_FONT_FAMILY
-        }
+        icon: 'roundRect',
+        itemStyle: {
+          borderRadius: 4
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderColor: gray200,
+        borderWidth: 1,
+        borderRadius: 8
       },
-      // === 2. MODIFIED THIS BLOCK ===
       grid: {
         left: '5%',
         right: '5%',
-        top: '8%',
-        bottom: '18%', // Increased from 10% to make room for 2-line labels
+        top: '12%',
+        bottom: '22%',
         containLabel: true
       },
       xAxis: {
         type: 'category',
-        data: xAxisData, // This now contains the two-line labels
-        // === 3. MODIFIED THIS BLOCK ===
+        data: xAxisData,
         axisLabel: {
           interval: 0,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 'bold',
+          color: gray800,
           overflow: 'break',
           hideOverlap: true,
-          margin: 5,
-          lineHeight: 11 // Added for better spacing of 2-line labels
+          margin: 10,
+          lineHeight: 13,
+          padding: [4, 6],
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: 4,
+          borderColor: gray200,
+          borderWidth: 1
         },
         axisTick: {
           alignWithLabel: true,
-          length: 3
+          length: 5,
+          lineStyle: {
+            color: gray300
+          }
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: '#2b2c50ff'
+            color: darkTeal,
+            width: 2
           }
+        },
+        splitLine: {
+          show: false
         }
       },
       yAxis: {
         type: 'value',
-        name: 'Tổng Số Giường',
+        name: 'Tổng Số Giường\n(Total Beds)',
         nameLocation: 'middle',
-        nameGap: 20,
+        nameGap: 45,
         nameRotate: 90,
         nameTextStyle: {
-          fontSize: 11,
-          fontWeight: 'bold'
+          fontSize: 12,
+          fontWeight: 'bold',
+          color: gray800,
+          lineHeight: 16
         },
         min: 0,
         max: 60,
@@ -441,20 +514,29 @@ export class BedUsageComponent implements OnInit, OnDestroy {
         splitLine: {
           show: true,
           lineStyle: {
-            color: '#e0e0e0',
-            width: 0.8,
-            type: 'solid'
+            color: gray200,
+            width: 1,
+            type: 'dotted'
           }
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: '#999'
+            color: gray700,
+            width: 1.5
+          }
+        },
+        axisTick: {
+          show: true,
+          length: 4,
+          lineStyle: {
+            color: gray700
           }
         },
         axisLabel: {
-          fontSize: 9,
-          margin: 1
+          fontSize: 11,
+          color: gray700,
+          margin: 10
         }
       },
       series: series,

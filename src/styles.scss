@@ -1,5 +1,5 @@
 // Custom Theming for Angular Material
-// For more information: https://material.angular.dev/guide/theming
+// For more information: https://material.angular.dev/guide/theming  
 @use '@angular/material' as mat;
 
 // Global height foundation for sticky headers
@@ -41,26 +41,27 @@ html {
 
 :root {
   /* =================================================================== */
-  /* 1. COLOR PALETTE (Refined from 'Vote for Safety' image)           */
+  /* 1. COLOR PALETTE                                                    */
   /* =================================================================== */
 
-  /* --- Primary Brand Teals (from BG, Logos, Text) --- */
-  --brand-teal-dark: #005A70;     /* Darkest text, pants, logos, wave */
-  --brand-teal-primary: #00AECB;  /* Main background & logo color */
-  --brand-teal-light: #52C3D7;    /* Mid-tone background swirl */
-  --brand-teal-pale: #9ADAE0;     /* Lightest heart outline & swirl */
+  /* --- Brand Palette (Primary) --- */
+  --aqua-island: #9ADAE0; /* Light teal swirl */
+  --teal-blue: #00AECB;   /* Main teal */
+  --peacock-blue: #005A70; /* Dark text/navigation */
+  --teal-midtone: #52C3D7; /* Mid-tone background swirl - NEW */
 
-  /* --- Accent Colors (from Characters & UI) --- */
-  --accent-beige-light: #FDECC8;  /* Thumbs-up icon */
-  --accent-beige-dark: #F9B88A;   /* Thumbs-up shadow */
-  --accent-orange: #F89C5B;       /* Character pants */
-  --accent-red: #E87070;          /* Character shirt (woman on left) */
-  --accent-blue-pale: #CDEBF0;    /* Character shirt & heart inner bg */
+  /* --- Brand Palette (Secondary) --- */
+  --desert-storm: #F8F8F7;
+  --white: #FFFFFF;
 
-  /* --- Neutrals --- */
-  --neutral-white: #FFFFFF;
-  --neutral-gray-dark: #4A4A4A;   /* Character pants */
-  --neutral-gray-bg: #F8F8F7;     /* --desert-storm */
+  /* --- Other Brand Colors --- */
+  --pale-aqua: #CDEBF0;    /* Light blue shirt */
+  --deep-sapphire: #082567;
+  --dawn-pink: #FDECC8;    /* Beige thumbs-up */
+  --beige-midtone: #F9B88A; /* Thumbs-up shadow - NEW */
+  --coral-red: #E87070;    /* Character shirt - NEW */
+  --peppermint: #E6F5E9;
+  --dark-gray: #4A4A4A;    /* Character pants */
 
   /* --- Functional Palette (Grays) --- */
   --gray-100: #F8FAFC;
@@ -77,19 +78,20 @@ html {
   --color-danger: #dc3545;
   --color-success: #16A34A;
   --color-warning: #F59E0B;
-  --color-info: var(--brand-teal-primary); /* UPDATED */
+  --color-info: var(--teal-blue);
+  --color-accent: var(--coral-red); /* NEW accent color */
 
-  /* --- Charting Palette (Semantic use) --- */
-  /* Uses the colors defined above for charting */
-  --chart-color-1: var(--brand-teal-primary);
-  --chart-color-2: var(--brand-teal-dark);
-  --chart-color-3: var(--accent-beige-light);
-  --chart-color-4: var(--brand-teal-light);
-  --chart-color-5: var(--accent-orange);
-  --chart-color-6: var(--accent-blue-pale);
-  --chart-color-7: var(--accent-red);
-  --chart-color-8: var(--neutral-gray-dark);
-
+  /* --- Charting Palette --- */
+  --chart-color-1: var(--teal-blue);      /* Main Teal */
+  --chart-color-2: var(--peacock-blue);   /* Dark Blue/Teal */
+  --chart-color-3: var(--aqua-island);    /* Light Teal Swirl */
+  --chart-color-4: var(--dawn-pink);      /* Beige Thumbs-Up */
+  --chart-color-5: var(--pale-aqua);      /* Light Blue Shirt */
+  --chart-color-6: #F89C5B;               /* Orange (from pants) */
+  --chart-color-7: var(--dark-gray);      /* Utility gray */
+  --chart-color-8: var(--teal-midtone);   /* Mid-tone teal swirl - NEW */
+  --chart-color-9: var(--beige-midtone);  /* Beige shadow - NEW */
+  --chart-color-10: var(--coral-red);     /* Red accent - NEW */
 
   /* =================================================================== */
   /* 2. TYPOGRAPHY                                                       */
@@ -174,7 +176,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  color: var(--brand-teal-dark); /* UPDATED */
+  color: var(--peacock-blue);
 }
 
 h1 { font-size: 2.25rem; } /* 36px */
@@ -187,19 +189,19 @@ p {
 }
 
 a {
-  color: var(--brand-teal-primary); /* UPDATED */
+  color: var(--teal-blue);
   text-decoration: none;
 }
 a:hover {
   text-decoration: underline;
-  color: var(--brand-teal-dark); /* UPDATED */
+  color: var(--peacock-blue);
 }
 
 /* =================================================================== */
 /* 8. COMPONENT STYLES: CHART                                          */
 /* =================================================================== */
 .chart-container {
-  background-color: var(--neutral-white); /* UPDATED */
+  background-color: var(--white);
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-md);
   box-shadow: var(--box-shadow-md);
@@ -223,34 +225,33 @@ a:hover {
 }
 
 .btn-primary {
-  background-color: var(--brand-teal-primary); /* UPDATED */
-  color: var(--neutral-white);
+  background-color: var(--teal-blue);
+  color: var(--white);
 }
 .btn-primary:hover {
-  background-color: var(--brand-teal-dark); /* UPDATED */
-  color: var(--neutral-white);
+  background-color: var(--peacock-blue);
+  color: var(--white);
   box-shadow: var(--box-shadow-sm);
 }
 
 .btn-secondary {
-  background-color: var(--brand-teal-pale); /* UPDATED */
-  color: var(--brand-teal-dark); /* Changed for better contrast */
+  background-color: var(--aqua-island);
+  color: var(--gray-800);
 }
 .btn-secondary:hover {
-  background-color: #70B4B3; /* Darker version of --brand-teal-pale */
-  color: var(--brand-teal-dark);
+  background-color: #70B4B3;
+  color: var(--gray-900);
   box-shadow: var(--box-shadow-sm);
 }
 
 .btn-ghost {
   background-color: transparent;
-  color: var(--brand-teal-primary); /* UPDATED */
-  border-color: var(--brand-teal-primary); /* UPDATED */
+  color: var(--teal-blue);
+  border-color: var(--teal-blue);
 }
 .btn-ghost:hover {
-  background-color: var(--accent-blue-pale); /* UPDATED */
-  color: var(--brand-teal-dark); /* UPDATED */
-  border-color: var(--accent-blue-pale); /* UPDATED */
+  background-color: #e0f7fa;
+  color: var(--peacock-blue);
 }
 
 /* =================================================================== */
@@ -295,7 +296,7 @@ a:hover {
 .user-menu-toggle:focus-visible,
 .user-menu-items li button:focus-visible,
 .mobile-sidebar-toggle:focus-visible {
-  outline: 2px solid var(--brand-teal-pale); /* UPDATED */
+  outline: 2px solid var(--aqua-island);
   outline-offset: 2px;
 }
 
@@ -315,16 +316,15 @@ a:hover {
 /* 11. CUSTOM TOOLTIP STYLES                                           */
 /* =================================================================== */
 .app-tooltip-container {
-  position: fixed; /* Use fixed positioning to place relative to viewport */
+  position: fixed;
   background-color: var(--gray-800);
-  color: var(--neutral-white); /* UPDATED */
+  color: var(--white);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--border-radius-sm);
   font-size: 0.875rem;
   box-shadow: var(--box-shadow-md);
-  z-index: 1052; /* On top of everything */
+  z-index: 1052;
 
-  /* Fade-in animation */
   opacity: 0;
   transition: opacity 0.15s var(--transition-smooth);
 }
@@ -337,33 +337,24 @@ a:hover {
  * ===========================================
  * === FLYOUT SUBMENU STYLES
  * ===========================================
- * These styles target the .submenu when the flyout.directive
- * has moved it to the <body> and added the .open class.
 */
 body > ul.submenu.open {
-  /* --- Base Flyout Container --- */
   list-style: none;
   margin: 0;
-  // padding: 0.5rem;
-  background-color: var(--gray-100); /* Use your app's variables */
+  background-color: var(--gray-100);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* A bit stronger for a flyout */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 220px;
-  z-index: 1040; /* Ensure it's above other content */
+  z-index: 1040;
   overflow: hidden;
 
-  /*
-   * --- Flyout Menu Items (Re-styling a/li elements) ---
-   * These rules from sidebar.component.scss MUST be redeclared
-   * here because they are no longer inside the component.
-  */
   li {
     list-style: none;
     margin: 0;
     padding: 0;
     width: 100%;
-    position: relative; /* Needed for the .active::before pseudo-element */
+    position: relative;
   }
 
   li a {
@@ -371,15 +362,14 @@ body > ul.submenu.open {
     align-items: center;
     white-space: nowrap;
     text-decoration: none;
-    padding: 0.75rem 0.75rem; /* Using your version */
-    margin: 0 0 0.25rem 0; /* <-- This applies margin to all items */
+    padding: 0.75rem 0.75rem;
+    margin: 0 0 0.25rem 0;
     font-size: 0.875rem;
-    border-radius: 0.375rem; /* Matches .submenu li a radius */
+    border-radius: 0.375rem;
     color: var(--gray-700);
     font-weight: var(--font-weight-normal);
     transition: background-color 0.2s ease, color 0.2s ease;
 
-    /* --- Icons in the flyout --- */
     i {
       font-size: var(--font-size-base);
       margin-right: 0.75rem;
@@ -389,19 +379,16 @@ body > ul.submenu.open {
       transition: transform 0.2s var(--transition-spring);
     }
 
-    /* --- Text span --- */
     span {
       flex-grow: 1;
       overflow: hidden;
       text-overflow: ellipsis;
-      /* Make sure span is visible (it's not hidden by a .collapsed rule) */
       opacity: 1;
       transform: none;
       position: static;
       pointer-events: auto;
     }
 
-    /* --- Hover/Active States --- */
     &:hover {
       background-color: var(--gray-200);
       color: var(--gray-900);
@@ -417,7 +404,6 @@ body > ul.submenu.open {
       font-weight: 600;
     }
 
-    /* --- Active link indicator --- */
     &.active::before {
       content: '';
       position: absolute;
@@ -425,17 +411,12 @@ body > ul.submenu.open {
       top: var(--spacing-xs);
       bottom: var(--spacing-xs);
       width: var(--spacing-xs);
-      background-color: var(--brand-teal-pale); /* UPDATED */
+      background-color: var(--aqua-island);
       border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
       display: block;
     }
   }
 
-  /*
-   * --- ADDED RULE ---
-   * This targets the <a> inside the *last* <li>
-   * and removes the bottom margin.
-  */
   li:last-child a {
     margin-bottom: 0;
   }
