@@ -14,6 +14,7 @@
       matSort
       (matSortChange)="onMatSortChange($event)"
       class="compact-table"
+      [trackBy]="trackByFn" 
     >
       <ng-container *ngFor="let col of columns" [matColumnDef]="col.key">
         

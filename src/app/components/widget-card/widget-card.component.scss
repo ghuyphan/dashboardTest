@@ -1,0 +1,56 @@
+/* Styles based directly on your home.component.scss .widget-card-home */
+.widget-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-md);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: all 0.2s ease-in-out;
+  border-left: none; /* Removed the old border-left */
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-lg);
+  }
+}
+
+/* Styles based on your home.component.scss .widget-icon-wrapper */
+.widget-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  i {
+    font-size: 20px;
+  }
+}
+
+/* Styles based on your home.component.scss .widget-content */
+.widget-content {
+  flex-grow: 1;
+  overflow: hidden;
+
+  .widget-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+    line-height: 1.1;
+  }
+
+  .widget-title {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin: 0;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

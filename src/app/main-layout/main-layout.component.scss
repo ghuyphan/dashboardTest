@@ -69,6 +69,30 @@
   background-color: var(--white);
   transition: margin-left var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
+
+  /*
+   * =================================
+   * === PERFORMANCE OPTIMIZATIONS ===
+   * =================================
+   */
+
+  /**
+   * 1. HINT 1: ISOLATE LAYOUT
+   * This tells the browser to isolate this element's layout.
+   * When 'margin-left' animates, the browser will NOT recalculate the
+   * layout of the children (like your big table or chart).
+   * This is a massive performance win.
+   */
+  contain: layout;
+
+  /**
+   * 2. HINT 2: PROMOTE TO GPU
+   * This tells the browser that 'margin-left' and 'width' are
+   * *about* to animate. The browser will promote this element to
+   * its own "compositor layer" (running on the GPU), so the
+   * animation doesn't block the main thread.
+   */
+  will-change: margin-left, width;
 }
 
 .main-panel.collapsed {
@@ -81,6 +105,10 @@
     margin-left: 0;
     width: 100%;
     transition: none;
+    
+    /* Reset hints on mobile where animation is disabled */
+    contain: none;
+    will-change: auto;
   }
 
   .main-panel.collapsed {
@@ -112,17 +140,30 @@
 .content-fade-wrapper {
   height: 100%; // Ensure it fills the parent
   // This animation plays *after* the content is rendered
-  animation: contentFadeIn 0.4s var(--transition-smooth) both;
+
+  /* * =================================
+   * === MODIFICATION ===
+   * =================================
+   *
+   * Changed animation to use your project's CSS variables
+   * for duration (0.3s) and easing to match the sidebar.
+   */
+  animation: contentFadeIn var(--transition-duration) var(--transition-smooth) both;
 }
 
 @keyframes contentFadeIn {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    /* * Using a very subtle scale transform.
+     * Unlike 'translateY', 'scale' does not affect the
+     * element's "box" size, so it won't cause the 
+     * scrollbar to flash.
+     */
+    transform: scale(0.995);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
@@ -152,9 +193,9 @@
 }
 
 /*
- * === SOLUTION STYLES (app-header) ===
- * This styles the <app-header> tag.
- */
+  * === SOLUTION STYLES (app-header) ===
+  * This styles the <app-header> tag.
+  */
 app-header {
   flex-shrink: 0;
   /* Prevent it from shrinking */
@@ -165,8 +206,8 @@ app-header {
   /* Keep it above content */
 
   /* * === MODIFICATION ===
-   * Animate both the 'transform' and 'margin-bottom' properties.
-   */
+    * Animate both the 'transform' and 'margin-bottom' properties.
+    */
   transition: transform var(--transition-duration) var(--transition-smooth),
     margin-bottom var(--transition-duration) var(--transition-smooth);
 
@@ -174,17 +215,17 @@ app-header {
     transform: translateY(-100%);
 
     /* * === MODIFICATION ===
-     * Add a negative margin-bottom equal to the header's height
-     * to pull the content area up, removing the blank space.
-     */
+      * Add a negative margin-bottom equal to the header's height
+      * to pull the content area up, removing the blank space.
+      */
     margin-bottom: calc(var(--header-height) * -1);
   }
 }
 
 /*
- * === SOLUTION STYLES (app-action-footer) ===
- * This styles the <app-action-footer> tag.
- */
+  * === SOLUTION STYLES (app-action-footer) ===
+  * This styles the <app-action-footer> tag.
+  */
 :host ::ng-deep app-action-footer {
   display: block;
   /* Ensure it behaves like a block element */
@@ -201,8 +242,8 @@ app-header {
   transform: translateY(0);
 
   /* * === MODIFICATION ===
-   * Animate both the 'transform' and 'margin-top' properties.
-   */
+    * Animate both the 'transform' and 'margin-top' properties.
+    */
   transition: transform var(--transition-duration) var(--transition-smooth),
     margin-top var(--transition-duration) var(--transition-smooth);
 
@@ -210,9 +251,9 @@ app-header {
     transform: translateY(100%);
 
     /* * === MODIFICATION ===
-     * Add a negative margin-top equal to the footer's height
-     * to collapse its space.
-     */
+      * Add a negative margin-top equal to the footer's height
+      * to collapse its space.
+      */
     margin-top: calc(var(--footer-height) * -1);
   }
 }

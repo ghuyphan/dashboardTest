@@ -83,6 +83,11 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   @Input() showLoadingText: boolean = true;
   @Input() emptyStateText: string = 'Không có dữ liệu';
   @Input() noResultsText: string = 'Không tìm thấy kết quả phù hợp';
+  
+  // --- CHANGED: Added trackByField input ---
+  // Defaults to 'Id', which is common. 
+  // You can set this to another unique key via [trackByField]="'someOtherKey'"
+  @Input() trackByField: string = 'Id';
 
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
@@ -249,5 +254,16 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     return this.searchTerm 
       ? `${this.noResultsText} "${this.searchTerm}"`
       : this.emptyStateText;
+  }
+
+  // --- CHANGED: Added trackBy function ---
+  /**
+   * TrackBy function for the table.
+   * This improves performance by telling Angular how to identify
+   * unique rows, preventing unnecessary re-rendering.
+   * Using an arrow function preserves the 'this' context.
+   */
+  public trackByFn = (index: number, item: any): any => {
+    return item[this.trackByField] || index;
   }
 }

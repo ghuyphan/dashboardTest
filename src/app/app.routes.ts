@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { authGuard } from './guards/auth.guard';
-import { permissionGuard } from './guards/permission.guard'; 
+import { permissionGuard } from './guards/permission.guard';
 
 // --- IMPORT YOUR NEW AND RENAMED COMPONENTS ---
 import { MainLayoutComponent } from './main-layout/main-layout.component';
@@ -20,18 +20,18 @@ export const routes: Routes = [
 
   // --- NEW Application Layout Route ---
   {
-    path: 'app', 
+    path: 'app',
     component: MainLayoutComponent,
-    canActivate: [authGuard], 
+    canActivate: [authGuard],
     children: [
-      { 
-        path: 'home', 
+      {
+        path: 'home',
         component: HomeComponent,
-        data: { title: 'Trang chủ' } 
+        data: { title: 'Trang chủ' }
       },
-      
+
       // --- 2. HERE IS THE ADJUSTED ROUTE ---
-      { 
+      {
         path: 'equipment/catalog', // <-- CHANGED from 'devices'
         component: DeviceListComponent,
         canActivate: [permissionGuard],
@@ -42,7 +42,7 @@ export const routes: Routes = [
         }
       },
 
-            { 
+      {
         path: 'reports/bed-usage', // <-- CHANGED from 'devices'
         component: BedUsageComponent,
         canActivate: [permissionGuard],
@@ -65,7 +65,7 @@ export const routes: Routes = [
         }
       },
       */
-      
+
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },

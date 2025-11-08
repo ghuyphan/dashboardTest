@@ -1,68 +1,28 @@
 <div class="page-container">
-  <!--  Continuously updating Time & Date (Row 1) -->
-  <h4 class="current-datetime">Reload(af 60s): {{ currentDateTime }}</h4>
-  <!-- Widget Cards Section (Row 2) -->
-  <div class="widget-section">
-    <div class="widget-grid">
-      <div class="widget-card" role="region" aria-labelledby="widget-occupied">
-        <i class="fas fa-chart-pie" aria-hidden="true"></i>
-        <h3 id="widget-occupied">Công Suất Sử Dụng</h3>
-        <p class="value">{{ occupancyRate }}</p>
-        <p class="caption">Occupancy Rate</p>
-      </div>
-
-      <div class="widget-card" role="region" aria-labelledby="widget-total-beds">
-        <i class="fas fa-hospital" aria-hidden="true"></i>
-        <h3 id="widget-total-beds">Tổng Số Giường</h3>
-        <p class="value">{{ totalBeds }}</p>
-        <p class="caption">Total Beds</p>
-      </div>
-
-      <div class="widget-card" role="region" aria-labelledby="widget-treatment-title">
-        <i class="fas fa-user-injured" aria-hidden="true"></i>
-        <h3 id="widget-treatment-title">Đang Điều Trị</h3>
-        <p class="value">{{ bedStatusTotals.dangDieuTri }}</p>
-        <p class="caption">In Treatment</p>
-      </div>
-
-      <div class="widget-card" role="region" aria-labelledby="widget-vacant-title">
-        <i class="fas fa-check-circle" aria-hidden="true"></i>
-        <h3 id="widget-vacant-title">Giường Trống</h3>
-        <p class="value">{{ bedStatusTotals.giuongTrong }}</p>
-        <p class="caption">Vacant Beds</p>
-      </div>
-
-
-
-      <div class="widget-card" role="region" aria-labelledby="widget-booked-title">
-        <i class="fas fa-bookmark" aria-hidden="true"></i>
-        <h3 id="widget-booked-title">Đã Book</h3>
-        <p class="value">{{ bedStatusTotals.daBook }}</p>
-        <p class="caption">Booked Beds</p>
-      </div>
-
-
-      <div class="widget-card" role="region" aria-labelledby="widget-discharge-title">
-        <i class="fas fa-door-open" aria-hidden="true"></i>
-        <h3 id="widget-discharge-title">Chờ Xuất Viện</h3>
-        <p class="value">{{ bedStatusTotals.choXuatVien }}</p>
-        <p class="caption">Awaiting Discharge</p>
-      </div>
-
-      <div class="widget-card" role="region" aria-labelledby="widget-notready-title">
-        <i class="fas fa-tools" aria-hidden="true"></i>
-        <h3 id="widget-notready-title">Chưa Sẵn Sàng</h3>
-        <p class="value">{{ bedStatusTotals.chuaSanSang }}</p>
-        <p class="caption">Not Ready</p>
-      </div>
-
+  <!-- <div class="page-header">
+    <div class="header-actions">
+      <h4 class="current-datetime">Reload(af 60s): {{ currentDateTime }}</h4>
     </div>
-  </div>
-  <!-- Chart Section (Row 3) -->
-  <div class="chart-section">
+  </div> -->
+
+  <div class="page-content">
+
+    <div class="widget-section">
+      <div class="widget-grid">
+        
+        <app-widget-card *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
+          [icon]="widget.icon"
+          [title]="widget.title"
+          [value]="widget.value"
+          [caption]="widget.caption"
+          [accentColor]="widget.accentColor">
+        </app-widget-card>
+      </div>
+    </div>
+
     <div class="chart-wrapper">
-      <div #chartContainer class="chart-container"></div>
+      <div #chartContainer class="chart-container-inner"></div>
     </div>
+    
   </div>
 </div>
-
