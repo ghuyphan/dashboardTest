@@ -1,3 +1,5 @@
+/* src/app/components/dynamic-form/dynamic-form.component.scss */
+
 /* All the form styling now lives in this one reusable component.
   This is just a copy of the styles from device-form.component.scss
 */
@@ -40,6 +42,14 @@
   color: var(--gray-700);
 }
 
+/* --- START OF FIX: Style for the asterisk --- */
+.required-asterisk {
+  color: var(--color-danger);
+  font-weight: bold;
+  margin-left: 2px;
+}
+/* --- END OF FIX --- */
+
 .form-control {
   width: 100%;
   padding: 0.5rem 0.75rem;
@@ -57,17 +67,20 @@
   box-shadow: 0 0 0 3px var(--primary-color-light);
 }
 
+/* --- START OF FIX: Corrected CSS variables --- */
 .form-control.is-invalid {
-  border-color: var(--danger-color);
+  border-color: var(--color-danger);
 }
 .form-control.is-invalid:focus {
-  box-shadow: 0 0 0 3px var(--danger-color-light);
+  /* Added the light red shadow */
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
 }
 .invalid-feedback {
-  color: var(--danger-color);
+  color: var(--color-danger);
   font-size: 0.875em;
   margin-top: 0.25rem;
 }
+/* --- END OF FIX --- */
 
 .form-actions {
   display: flex;

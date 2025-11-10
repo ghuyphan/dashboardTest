@@ -1,25 +1,23 @@
-<!-- This template is generic and renders any form config -->
 <div class="dynamic-form-container">
   <form [formGroup]="dynamicForm" (ngSubmit)="onSave()" novalidate>
     <div class="form-body">
       
       <div *ngIf="formConfig" class="dynamic-form-layout">
         
-        <!-- 1. OUTER LOOP: Iterate over each 'row' -->
         <div *ngFor="let row of formConfig.formRows" class="form-row">
           
-          <!-- 2. INNER LOOP: Iterate over controls *within* that row -->
           <div *ngFor="let control of row.controls"
                class="form-group"
                [ngClass]="control.cssClass"
                [style.flex-grow]="control.layout_flexGrow">
 
-            <label [for]="control.controlName">{{ control.label }}</label>
+            <label [for]="control.controlName">
+              {{ control.label }}
+              <span *ngIf="control.validators?.required" class="required-asterisk">*</span>
+              </label>
 
-            <!-- 3. Use ngSwitch to render the correct control type -->
             <div [ngSwitch]="control.controlType">
 
-              <!-- Case: 'text' input -->
               <input *ngSwitchCase="'text'"
                      [type]="'text'"
                      [id]="control.controlName"
@@ -29,7 +27,6 @@
                      [class.is-invalid]="isInvalid(control.controlName)"
               />
 
-              <!-- Case: 'dropdown' / 'select' -->
               <select *ngSwitchCase="'dropdown'"
                       [id]="control.controlName"
                       [formControlName]="control.controlName"
@@ -41,7 +38,6 @@
                 </option>
               </select>
 
-              <!-- Case: 'textarea' -->
               <textarea *ngSwitchCase="'textarea'"
                         [id]="control.controlName"
                         [formControlName]="control.controlName"
@@ -51,19 +47,16 @@
                         [class.is-invalid]="isInvalid(control.controlName)">
               </textarea>
               
-              <!-- Case: 'checkbox' -->
               <div *ngSwitchCase="'checkbox'" class="checkbox-wrapper">
                  <input type="checkbox"
                         [id]="control.controlName"
                         [formControlName]="control.controlName"
                         class="form-check-input"
                   />
-                  <!-- The main <label> already covers checkboxes -->
-              </div>
+                  </div>
 
             </div>
 
-            <!-- 4. Dynamic Validation Messages -->
             <div *ngIf="isInvalid(control.controlName)" class="invalid-feedback">
               {{ getErrorMessage(control) }}
             </div>
@@ -73,7 +66,6 @@
       </div>
     </div>
 
-    <!-- These buttons are part of the reusable component -->
     <div class="form-actions">
       <button
         type="button"

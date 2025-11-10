@@ -1,59 +1,87 @@
 /* src/app/components/confirmation-modal/confirmation-modal.component.scss */
+
 :host {
   display: block;
   width: 100%;
 }
 
 .confirm-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
 }
 
 .confirm-title {
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.25rem; /* 20px */
+  font-weight: var(--font-weight-bold); /* 700 */
+  color: var(--gray-800);
   margin: 0;
+  line-height: 1.3;
 }
 
 .confirm-body {
-  padding: 24px 20px;
-  font-size: 1rem;
+  padding: var(--spacing-lg); /* 24px */
+  font-size: var(--font-size-base); /* 16px */
   color: var(--gray-700);
+  line-height: 1.6;
+
+  p {
+    margin-bottom: 0; /* Remove default paragraph margin */
+  }
 }
 
 .confirm-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 20px;
-  background-color: #f9f9f9;
-  border-top: 1px solid #e0e0e0;
-  border-bottom-left-radius: 14px;
-  border-bottom-right-radius: 14px;
+  gap: var(--spacing-sm); /* 8px */
+  padding: var(--spacing-md) var(--spacing-lg); /* 16px 24px */
+  background-color: var(--gray-100); /* Use light gray for footer */
+  border-top: var(--border-width) solid var(--gray-200);
+  /* Removed border-radius, this is handled by the parent app-modal */
 }
 
-/* Basic Button Styles (adjust to your design system) */
+/* Button styles based on global .btn but defined here
+  to be self-contained and match dynamic-form/action-footer
+*/
 .btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
+  display: inline-block;
+  padding: 0.6rem 1.1rem; /* Slightly larger for modals */
+  border: var(--border-width) solid transparent;
+  border-radius: var(--border-radius-md); /* 8px */
+  font-size: 0.875rem; /* 14px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  line-height: 1.4;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
+  text-align: center;
+
+  &:focus-visible {
+    outline: 2px solid var(--aqua-island);
+    outline-offset: 2px;
+  }
 }
 
 .btn-secondary {
-  background-color: #e0e0e0;
-  color: #333;
-  &:hover {
-    background-color: #c9c9c9;
+  background-color: var(--white);
+  color: var(--gray-800);
+  border-color: var(--gray-300);
+
+  &:hover:not(:disabled) {
+    background-color: var(--gray-100);
+    border-color: var(--gray-400);
   }
 }
 
 .btn-danger {
-  background-color: #d9534f;
-  color: white;
-  &:hover {
-    background-color: #c9302c;
+  background-color: var(--color-danger);
+  color: var(--white);
+  border-color: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    background-color: #c9302c; /* Darken danger color */
+    border-color: #b02a37;
   }
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }

@@ -32,7 +32,7 @@ import { ConfirmationModalComponent } from '../../components/confirmation-modal/
 export class DeviceFormComponent implements OnInit {
   // --- Data passed in from the modal context ---
   @Input() device: any | null = null;
-  @Input() title: string = 'Device Form';
+  @Input() title: string = 'Biểu Mẫu Thiết Bị';
 
   // --- NEW: This will be injected by ModalComponent ---
   public modalRef?: ModalRef;
@@ -97,13 +97,13 @@ export class DeviceFormComponent implements OnInit {
     // Is dirty, so open the confirmation modal
     return this.modalService
       .open(ConfirmationModalComponent, {
-        title: 'Unsaved Changes',
+        title: 'Thay đổi chưa lưu',
         disableBackdropClose: true, // Prevent closing this one
         context: {
           message:
-            'You have unsaved changes. Are you sure you want to discard them?',
-          confirmText: 'Discard Changes',
-          cancelText: 'Keep Editing',
+            'Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn hủy bỏ chúng không?',
+          confirmText: 'Hủy bỏ thay đổi',
+          cancelText: 'Tiếp tục chỉnh sửa',
         },
       })
       .pipe(
@@ -160,7 +160,7 @@ export class DeviceFormComponent implements OnInit {
             {
               controlName: 'SerialNumber',
               controlType: 'text',
-              label: 'Serial Number',
+              label: 'Số Serial',
               value: deviceData.SerialNumber || '',
               validators: {},
               layout_flexGrow: 1,
