@@ -1,5 +1,9 @@
+<div *ngIf="isLoading" class="form-loading-spinner">
+  <span>Đang tải...</span>
+</div>
+
 <app-dynamic-form
-  *ngIf="formConfig"
+  *ngIf="!isLoading && formConfig"
   [formConfig]="formConfig"
   [isLoading]="isLoading"
   (formSubmitted)="onSave($event)"

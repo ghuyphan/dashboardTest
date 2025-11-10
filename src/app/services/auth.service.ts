@@ -124,6 +124,7 @@ export class AuthService {
           
           // Build *full* user from storage
           const user: User = {
+            id: storedUserId,
             username: storedUsername,
             roles: roles,
             permissions: permissions, // Use stored permissions
@@ -231,6 +232,7 @@ export class AuthService {
         const storedUsername = storage.getItem(USERNAME_STORAGE_KEY) || 'Unknown';
         const storedFullName = storage.getItem(FULLNAME_STORAGE_KEY) || '';
         const storedRoles = JSON.parse(storage.getItem(ROLES_STORAGE_KEY) || '[]');
+       const storedUserId = storage.getItem(USER_ID_STORAGE_KEY) || '0';
         
         // --- Map the permissionNodeArray to get flat permissions list ---
         const allPermissionArrays = (permissionNodeArray || []).map(node => node.PERMISSIONS || []);
@@ -239,6 +241,7 @@ export class AuthService {
 
         // --- Build the User object (updating the partial user) ---
         const user: User = {
+          id: storedUserId,
           username: storedUsername,
           fullName: storedFullName,
           roles: storedRoles,
@@ -494,5 +497,14 @@ export class AuthService {
     // --- END OF MODIFICATION ---
 
     return throwError(() => new Error(errorMessage));
+  }
+  
+  /**
+   * *** ADD THIS NEW HELPER METHOD ***
+   * Gets the ID of the currently logged-in user.
+   */
+  public getUserId(): string | null {
+    const user = this.currentUserSubject.getValue();
+    return user ? user.id : null;
   }
 }

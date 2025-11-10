@@ -1,25 +1,18 @@
-// --- CHANGED: Import ViewChild ---
+// src/app/device-list/device-form/device-form.component.ts
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-// --- CHANGED: Import Observable, of, filter, switchMap ---
-import { Observable, of } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
-// --- CHANGED: Import ModalService (it was removed, we need it back) ---
 import { ModalService } from '../../services/modal.service';
 import { environment } from '../../../environments/environment.development';
-
 import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
-
-// --- NEW: Import the ModalRef ---
 import { ModalRef } from '../../models/modal-ref.model';
-
-// --- NEW: Import the Confirmation Modal ---
-// (You must create this component as shown in the previous step)
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
-
-// Assume you have a toast service for notifications
+import { DropdownDataService, DropdownOption } from '../../services/dropdown-data.service';
+// --- 1. IMPORT AuthService ---
+import { AuthService } from '../../services/auth.service'; 
 // import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -30,76 +23,59 @@ import { ConfirmationModalComponent } from '../../components/confirmation-modal/
   styleUrl: './device-form.component.scss',
 })
 export class DeviceFormComponent implements OnInit {
-  // --- Data passed in from the modal context ---
   @Input() device: any | null = null;
   @Input() title: string = 'Biểu Mẫu Thiết Bị';
 
-  // --- NEW: This will be injected by ModalComponent ---
   public modalRef?: ModalRef;
 
-  // --- NEW: ViewChild to get the dynamic form instance ---
   @ViewChild(DynamicFormComponent)
   private dynamicForm!: DynamicFormComponent;
 
   public formConfig: any | null = null;
-  public isLoading: boolean = false;
+  public isLoading: boolean = true; 
 
-  private deviceTypes: any[] = [
-    { key: null, value: '-- Chọn loại --' },
-    { key: 1, value: 'Máy thở' },
-    { key: 2, value: 'Monitor' },
-    { key: 3, value: 'Bơm tiêm điện' },
-  ];
-  private deviceStatuses: any[] = [
-    { key: 'Sẵn sàng', value: 'Sẵn sàng' },
-    { key: 'Đang sử dụng', value: 'Đang sử dụng' },
-    { key: 'Bảo trì', value: 'Bảo trì' },
-  ];
-
+  // --- 2. INJECT AuthService ---
   constructor(
-    // --- CHANGED: Re-inject ModalService ---
     private modalService: ModalService,
-    private http: HttpClient
+    private http: HttpClient,
+    private dropdownService: DropdownDataService,
+    private authService: AuthService 
     // private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
-    this.buildFormConfig();
+    this.isLoading = true;
+    forkJoin([
+      this.dropdownService.getDeviceTypes(),
+      this.dropdownService.getDeviceStatuses()
+    ]).pipe(
+      finalize(() => this.isLoading = false)
+    ).subscribe(
+      ([deviceTypes, deviceStatuses]) => {
+        this.buildFormConfig(deviceTypes, deviceStatuses);
+      },
+      (error) => {
+        console.error('Failed to load form dropdown data', error);
+        // this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
+        this.modalRef?.close(); 
+      }
+    );
 
-    // --- NEW: Set up the canClose guard ---
-    // (This requires the ModalRef model to be updated first)
     if (this.modalRef) {
       this.modalRef.canClose = () => this.canDeactivate();
     }
   }
 
-  /**
-   * --- NEW: Guard to check if the modal can be closed ---
-   * This is called by ModalRef.close()
-   */
   private canDeactivate(): Observable<boolean> {
-    
-    // --- VUI LÒNG SỬA DÒNG NÀY ---
-    //
-    // Thay 'form' bằng tên biến FormGroup trong file 'DynamicFormComponent' của bạn.
-    // Ví dụ, nếu tên biến là 'public mainForm: FormGroup',
-    // hãy thay 'this.dynamicForm?.form?.dirty' thành 'this.dynamicForm?.mainForm?.dirty'
-    //
     const isDirty = this.dynamicForm?.dynamicForm?.dirty || false;
-    //
-    // --- KẾT THÚC SỬA ---
-
-
     if (!isDirty) {
-      return of(true); // Not dirty, allow closing
+      return of(true);
     }
-
-    // Is dirty, so open the confirmation modal
     return this.modalService
       .open(ConfirmationModalComponent, {
         title: 'Thay đổi chưa lưu',
-        disableBackdropClose: true, // Prevent closing this one
-        size: 'sm', // <-- FIX: Specify the small size
+        disableBackdropClose: true,
+        size: 'sm',
         context: {
           message:
             'Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn hủy bỏ chúng không?',
@@ -107,29 +83,31 @@ export class DeviceFormComponent implements OnInit {
           cancelText: 'Tiếp tục chỉnh sửa',
         },
       })
-      .pipe(
-        // The confirmation modal returns true (Discard) or false (Keep Editing)
-        switchMap((result) => of(!!result)) // Coerce to boolean
-      );
+      .pipe(switchMap((result) => of(!!result)));
   }
 
   /**
-   * --- This method *builds the JSON config* ---
-   * (No changes needed in this method)
+   * --- 3. UPDATED to include all fields from your JSON ---
    */
-  private buildFormConfig(): void {
+  private buildFormConfig(
+    deviceTypes: DropdownOption[],
+    deviceStatuses: DropdownOption[]
+  ): void {
     const isEditMode = !!this.device;
-    const deviceData = this.device || {}; // Use empty object if creating
+    const deviceData = this.device || {};
+
+    // Find the default status ID for "Sẵn sàng"
+    const defaultStatusId = deviceStatuses.find(s => s.value === 'Sẵn sàng')?.key || null;
 
     this.formConfig = {
-      // We don't need formTitle, modal service handles that.
       entityId: isEditMode ? deviceData.Id : null,
       saveUrl: environment.equipmentCatUrl,
       formRows: [
+        // --- Row 1: Ma, Ten ---
         {
           controls: [
             {
-              controlName: 'Ma',
+              controlName: 'Ma', // Matches "Ma"
               controlType: 'text',
               label: 'Mã thiết bị',
               value: deviceData.Ma || '',
@@ -138,7 +116,7 @@ export class DeviceFormComponent implements OnInit {
               layout_flexGrow: 1,
             },
             {
-              controlName: 'Ten',
+              controlName: 'Ten', // Matches "Ten"
               controlType: 'text',
               label: 'Tên thiết bị',
               value: deviceData.Ten || '',
@@ -148,10 +126,11 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
+        // --- Row 2: Model, SerialNumber ---
         {
           controls: [
             {
-              controlName: 'Model',
+              controlName: 'Model', // Matches "Model"
               controlType: 'text',
               label: 'Model',
               value: deviceData.Model || '',
@@ -159,7 +138,7 @@ export class DeviceFormComponent implements OnInit {
               layout_flexGrow: 1,
             },
             {
-              controlName: 'SerialNumber',
+              controlName: 'SerialNumber', // Matches "SerialNumber"
               controlType: 'text',
               label: 'Số Serial',
               value: deviceData.SerialNumber || '',
@@ -168,36 +147,90 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
+        // --- Row 3: CategoryID, TrangThai ---
         {
           controls: [
             {
-              controlName: 'LoaiThietBi_Id',
+              controlName: 'CategoryID', // Matches "CategoryID"
               controlType: 'dropdown',
               label: 'Loại thiết bị',
-              value: deviceData.LoaiThietBi_Id || null,
+              value: deviceData.CategoryID || null,
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn loại thiết bị.' },
-              options: this.deviceTypes, // Use the data from this component
+              options: deviceTypes,
               layout_flexGrow: 1,
             },
             {
-              controlName: 'TrangThai_Ten',
+              controlName: 'TrangThai', // Matches "TrangThai" (ID)
               controlType: 'dropdown',
               label: 'Trạng thái',
-              value: deviceData.TrangThai_Ten || 'Sẵn sàng',
+              value: deviceData.TrangThai || defaultStatusId, // Bind to ID
               validators: { required: true },
-              options: this.deviceStatuses, // Use the data from this component
+              options: deviceStatuses, // Already mapped to { key: ID, value: TEN }
               layout_flexGrow: 1,
             },
           ],
         },
+         // --- Row 4: DeviceName, ViTri ---
         {
           controls: [
             {
-              controlName: 'ViTri',
-              controlType: 'textarea', // Changed from text for more space
+              controlName: 'DeviceName', // Matches "DeviceName"
+              controlType: 'text',
+              label: 'Tên máy (Host name)',
+              value: deviceData.DeviceName || '',
+              validators: {},
+              layout_flexGrow: 1,
+            },
+            {
+              controlName: 'ViTri', // Matches "ViTri"
+              controlType: 'text',
               label: 'Vị trí',
               value: deviceData.ViTri || '',
+              validators: {},
+              layout_flexGrow: 1,
+            },
+          ],
+        },
+        // --- Row 5: Dates (as text for now) ---
+        {
+          controls: [
+            {
+              controlName: 'NgayMua',
+              controlType: 'text', // Use 'date' if you add that type to DynamicForm
+              label: 'Ngày mua',
+              placeholder: 'DD/MM/YYYY',
+              value: deviceData.NgayMua || '', // Needs date formatting if not string
+              validators: {},
+              layout_flexGrow: 1,
+            },
+            {
+              controlName: 'NgayHetHanBH',
+              controlType: 'text', // Use 'date'
+              label: 'Ngày hết hạn BH',
+              placeholder: 'DD/MM/YYYY',
+              value: deviceData.NgayHetHanBH || '', // Needs date formatting
+              validators: {},
+              layout_flexGrow: 1,
+            },
+            {
+              controlName: 'GiaMua',
+              controlType: 'text', // Use 'number'
+              label: 'Giá mua',
+              value: deviceData.GiaMua || null,
+              validators: {},
+              layout_flexGrow: 1,
+            }
+          ]
+        },
+        // --- Row 6: MoTa ---
+        {
+          controls: [
+            {
+              controlName: 'MoTa', // Matches "MoTa"
+              controlType: 'textarea',
+              label: 'Mô tả',
+              value: deviceData.MoTa || '',
               validators: {},
               layout_flexGrow: 1,
             },
@@ -208,28 +241,66 @@ export class DeviceFormComponent implements OnInit {
   }
 
   /**
-   * --- This is now an event handler ---
-   * It receives the form data from the dynamic component's output.
+   * --- 4. UPDATED to build the exact JSON payload ---
    */
   public onSave(formData: any): void {
     this.isLoading = true;
     const apiUrl = this.formConfig.saveUrl;
     const entityId = this.formConfig.entityId;
+    const currentUserId = this.authService.getUserId();
+
+    if (!currentUserId) {
+      // this.toastService.showError('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
+      console.error('User ID is missing, cannot save.');
+      this.isLoading = false;
+      return;
+    }
 
     let saveObservable;
 
     if (entityId) {
-      // --- Update (PUT) ---
-      const updateUrl = `${apiUrl}/${entityId}`;
-      saveObservable = this.http.put(updateUrl, {
+      // --- UPDATE (PUT) ---
+      // We merge the original device data with the new form data
+      // This preserves fields not in the form (like HL, NgayTao)
+      const updatePayload = {
         ...this.device,
         ...formData,
-      });
+        USER_: currentUserId 
+      };
+
+      // Clean up null/empty strings for date/number fields if needed
+      updatePayload.NgayMua = formData.NgayMua || null;
+      updatePayload.GiaMua = formData.GiaMua || null;
+      updatePayload.NgayHetHanBH = formData.NgayHetHanBH || null;
+      
+      const updateUrl = `${apiUrl}/${entityId}`;
+      saveObservable = this.http.put(updateUrl, updatePayload);
+
     } else {
-      // --- Create (POST) ---
-      saveObservable = this.http.post(apiUrl, formData);
+      // --- CREATE (POST) ---
+      // We create the payload from scratch to match your model
+      const createPayload = {
+        Id: 0,
+        Ma: formData.Ma,
+        Ten: formData.Ten,
+        SerialNumber: formData.SerialNumber || '',
+        Model: formData.Model || '',
+        TrangThai: formData.TrangThai, // This is the ID from the form
+        ViTri: formData.ViTri || '',
+        NgayMua: formData.NgayMua || null,
+        GiaMua: formData.GiaMua || null,
+        NgayHetHanBH: formData.NgayHetHanBH || null,
+        MoTa: formData.MoTa || '',
+        CategoryID: formData.CategoryID, // This is the ID from the form
+        DeviceName: formData.DeviceName || '',
+        USER_: currentUserId,
+        HL: 1.0 // Assuming HL is 1.0 for new records
+      };
+      
+      saveObservable = this.http.post(apiUrl, createPayload);
     }
 
+    // --- This part remains the same ---
     saveObservable
       .pipe(
         finalize(() => {
@@ -240,13 +311,10 @@ export class DeviceFormComponent implements OnInit {
         next: (savedDevice) => {
           // this.toastService.showSuccess('Lưu thành công!');
           console.log('Save successful', savedDevice);
-
-          // --- CHANGED: Use modalRef to close ---
-          // We override the guard here because we *know* we want to close
           if (this.modalRef) {
-            this.modalRef.canClose = () => true; // Force close
+            this.modalRef.canClose = () => true;
           }
-          this.modalRef?.close(savedDevice); // Close modal on success
+          this.modalRef?.close(savedDevice);
         },
         error: (err) => {
           // this.toastService.showError('Lưu thất bại!');
@@ -255,13 +323,7 @@ export class DeviceFormComponent implements OnInit {
       });
   }
 
-  /**
-   * --- This is also an event handler ---
-   * Closes the modal without saving.
-   * --- CHANGED: This will now automatically trigger the canDeactivate() guard ---
-   */
   public onCancel(): void {
-    // --- CHANGED: Use modalRef to close ---
-    this.modalRef?.close(); // No data means "cancel"
+    this.modalRef?.close();
   }
 }
