@@ -1,19 +1,21 @@
-import { Injectable, Type } from '@angular/core';
-// CHANGED: Added Subject
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+// src/app/services/modal.service.ts
+
+import { Injectable, Type, Injector } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
+
 import { ModalOptions } from '../models/modal-options.model';
+import { ModalRef, MODAL_OPTIONS } from '../models/modal-ref.model';
+import { ModalComponent } from '../components/modal/modal.component';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ModalService {
-  private modalSubject = new BehaviorSubject<ModalOptions | null>(null);
-  modalState$: Observable<ModalOptions | null> = this.modalSubject.asObservable();
-
-  // CHANGED: This subject handles the data returned on close
-  private modalCloseSubject: Subject<any> | null = null;
-
-  constructor() {}
+  
+  // Inject the CDK Overlay and Angular's Injector
+  constructor(private overlay: Overlay, private injector: Injector) {}
 
   /**
    * Opens the modal with a specified component and configuration.
@@ -25,33 +27,73 @@ export class ModalService {
   open(
     component: Type<any>,
     options?: Omit<ModalOptions, 'component'>
-  ): Observable<any> { // <-- CHANGED: Returns Observable
+  ): Observable<any> {
+    
+    // 1. Combine component and options
     const modalOptions: ModalOptions = {
       component,
       ...options,
     };
-    
-    // Create a new subject for this specific modal instance
-    this.modalCloseSubject = new Subject<any>();
-    this.modalSubject.next(modalOptions);
 
-    // Return the observable for the caller to subscribe to
-    return this.modalCloseSubject.asObservable();
+    // 2. Create the overlay
+    const overlayRef = this.createOverlay(modalOptions);
+
+    // 3. Create the ModalRef
+    const modalRef = new ModalRef(overlayRef);
+
+    // 4. Create the injector
+    const injector = this.createInjector(modalOptions, modalRef);
+
+    // 5. Create the portal
+    const portal = new ComponentPortal(ModalComponent, null, injector);
+
+    // 6. Attach the portal to the overlay
+    overlayRef.attach(portal);
+
+    // 7. Handle backdrop click to close
+    if (!modalOptions.disableBackdropClose) {
+      overlayRef.backdropClick().subscribe(() => {
+        modalRef.close();
+      });
+    }
+
+    // 8. Return the observable for the caller to subscribe to
+    return modalRef.afterClosed;
   }
 
   /**
-   * Closes the currently open modal and optionally passes data back.
-   *
-   * @param data The data to return to the caller of open()
+   * Creates the CDK Overlay configuration.
    */
-  close(data?: any): void { // <-- CHANGED: Accepts data
-    this.modalSubject.next(null);
+  private createOverlay(options: ModalOptions): OverlayRef {
+    const positionStrategy = this.overlay
+      .position()
+      .global()
+      .centerHorizontally()
+      .centerVertically();
 
-    // If a subject exists, emit the data and complete it
-    if (this.modalCloseSubject) {
-      this.modalCloseSubject.next(data);
-      this.modalCloseSubject.complete();
-      this.modalCloseSubject = null;
-    }
+    const overlayConfig = new OverlayConfig({
+      hasBackdrop: true,
+      // Use the same class as your old backdrop for consistent styling
+      backdropClass: 'modal-backdrop', 
+      // Add a panel class to remove default CDK padding/styles
+      panelClass: 'modal-panel', 
+      positionStrategy,
+    });
+
+    return this.overlay.create(overlayConfig);
+  }
+
+  /**
+   * Creates a custom injector to pass MODAL_OPTIONS and ModalRef
+   * into the ModalComponent.
+   */
+  private createInjector(options: ModalOptions, modalRef: ModalRef): Injector {
+    return Injector.create({
+      parent: this.injector,
+      providers: [
+        { provide: ModalRef, useValue: modalRef },
+        { provide: MODAL_OPTIONS, useValue: options },
+      ],
+    });
   }
 }

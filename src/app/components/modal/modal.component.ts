@@ -1,79 +1,65 @@
+// src/app/components/modal/modal.component.ts
+
 import {
   Component,
   ViewChild,
   ViewContainerRef,
-  OnDestroy,
-  OnInit,
+  Inject, // CHANGED: Import Inject
+  AfterViewInit, // CHANGED: Import AfterViewInit
 } from '@angular/core';
-// CHANGED: Imported NgClass
-import { AsyncPipe, NgIf, NgClass } from '@angular/common';
-import { Observable, Subscription } from 'rxjs';
-import { ModalService } from '../../services/modal.service';
+import { NgIf, NgClass } from '@angular/common'; // CHANGED: Removed AsyncPipe
 import { ModalOptions } from '../../models/modal-options.model';
+import { ModalRef, MODAL_OPTIONS } from '../../models/modal-ref.model'; // CHANGED: Import new refs
 
 @Component({
   selector: 'app-modal',
   standalone: true,
-  // CHANGED: Added NgClass to the imports array
-  imports: [AsyncPipe, NgIf, NgClass],
+  imports: [NgIf, NgClass], // CHANGED: Removed AsyncPipe
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
-export class ModalComponent implements OnInit, OnDestroy {
-  // ViewContainerRef to dynamically insert the modal content
-  @ViewChild('modalContentHost', { read: ViewContainerRef, static: false })
+export class ModalComponent implements AfterViewInit { // CHANGED: Removed OnInit, OnDestroy
+  
+  @ViewChild('modalContentHost', { read: ViewContainerRef, static: true }) // CHANGED: Set static: true
   modalContentHost!: ViewContainerRef;
 
-  modalState$: Observable<ModalOptions | null>;
-  private stateSubscription: Subscription | undefined;
+  // CHANGED: No more observable state. We get options via injection.
+  constructor(
+    private modalRef: ModalRef,
+    @Inject(MODAL_OPTIONS) public options: ModalOptions // Options are now public for the template
+  ) {}
 
-  constructor(private modalService: ModalService) {
-    this.modalState$ = this.modalService.modalState$;
-  }
-
-  ngOnInit(): void {
-    // We subscribe to the state to manually load/clear the component
-    this.stateSubscription = this.modalState$.subscribe(options => {
-      this.loadModalContent(options);
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.stateSubscription?.unsubscribe();
+  // CHANGED: Load content after the view is initialized
+  ngAfterViewInit(): void {
+    this.loadModalContent();
   }
 
   /**
-   * Dynamically loads the component specified in ModalOptions
-   * or clears the container if options are null.
+   * Dynamically loads the component specified in ModalOptions.
    */
-  private loadModalContent(options: ModalOptions | null): void {
-    // Ensure host is available (it might not be on first load if *ngIf is used in template)
-    if (!this.modalContentHost) {
-      // If host isn't ready, retry briefly.
-      // This can happen if the *ngIf in the template hasn't rendered the host yet.
-      // We check for `options` to avoid an infinite loop when closing.
-      if (options) {
-        setTimeout(() => this.loadModalContent(options), 0);
-      }
-      return;
-    }
+  private loadModalContent(): void { // CHANGED: No longer takes options argument
+    // Host is guaranteed to be ready in ngAfterViewInit with static: true
+    this.modalContentHost.clear(); 
 
-    this.modalContentHost.clear(); // Clear any previous component
-
-    if (options) {
+    if (this.options) {
       // 1. Create the component
-      const componentRef = this.modalContentHost.createComponent(options.component);
+      const componentRef = this.modalContentHost.createComponent(this.options.component);
 
       // 2. Pass context data (if any) to the component's instance
-      if (options.context) {
-        Object.assign(componentRef.instance, options.context);
+      if (this.options.context) {
+        Object.assign(componentRef.instance, this.options.context);
       }
+      
+      // 3. Inject the ModalRef into the dynamic component
+      // This allows the loaded component (e.g., a form) to close the modal
+      // Note: The loaded component must have: `public modalRef?: ModalRef;`
+      componentRef.instance.modalRef = this.modalRef;
 
-      // 3. (Optional but recommended) Listen for a 'closeModal' event from the injected component
-      // This allows the component to close itself (e.g., on form submit)
+      // 4. (Optional) Listen for a 'closeModal' event (your old pattern)
+      // We'll keep this for compatibility, but injecting ModalRef is better.
       if (componentRef.instance.closeModal) {
-        componentRef.instance.closeModal.subscribe(() => {
-          this.closeModal();
+        componentRef.instance.closeModal.subscribe((data: any) => {
+          this.closeModal(data);
         });
       }
     }
@@ -81,24 +67,10 @@ export class ModalComponent implements OnInit, OnDestroy {
 
   /**
    * Closes the modal by calling the service.
+   * CHANGED: Now passes data back via ModalRef.
    */
-  closeModal(): void {
-    this.modalService.close();
-  }
-
-  /**
-   * Closes the modal when the backdrop is clicked.
-   * CHANGED: Now accepts options to check disableBackdropClose.
-   */
-  onBackdropClick(options: ModalOptions): void {
-    // Check if the options (from the *ngIf) are defined
-    // and if backdrop closing is explicitly disabled
-    if (options && options.disableBackdropClose) {
-      return; // Do nothing
-    }
-    
-    // Otherwise, close the modal
-    this.closeModal();
+  closeModal(data?: any): void {
+    this.modalRef.close(data);
   }
 
   /**
@@ -108,4 +80,6 @@ export class ModalComponent implements OnInit, OnDestroy {
   onModalContentClick(event: Event): void {
     event.stopPropagation();
   }
+
+  // CHANGED: onBackdropClick() is removed. The service handles this now.
 }

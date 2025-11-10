@@ -2,11 +2,14 @@ import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
-import { ModalService } from '../../services/modal.service';
+// CHANGED: No longer import ModalService
+// import { ModalService } from '../../services/modal.service';
 import { environment } from '../../../environments/environment.development';
 
-// --- NEW: Import the dynamic form component ---
 import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
+
+// --- NEW: Import the ModalRef ---
+import { ModalRef } from '../../models/modal-ref.model';
 
 // Assume you have a toast service for notifications
 // import { ToastService } from '../../services/toast.service';
@@ -14,7 +17,6 @@ import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form
 @Component({
   selector: 'app-device-form',
   standalone: true,
-  // --- NEW: Import DynamicFormComponent here ---
   imports: [CommonModule, DynamicFormComponent],
   templateUrl: './device-form.component.html',
   styleUrl: './device-form.component.scss',
@@ -22,13 +24,14 @@ import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form
 export class DeviceFormComponent implements OnInit {
   // --- Data passed in from the modal context ---
   @Input() device: any | null = null;
-  @Input() title: string = 'Device Form'; // This is still useful for the modal title
+  @Input() title: string = 'Device Form';
 
-  // --- NEW: This will hold our generated config ---
+  // --- NEW: This will be injected by ModalComponent ---
+  public modalRef?: ModalRef;
+
   public formConfig: any | null = null;
   public isLoading: boolean = false;
 
-  // We still need these to build the config's options
   private deviceTypes: any[] = [
     { key: null, value: '-- Chọn loại --' },
     { key: 1, value: 'Máy thở' },
@@ -42,16 +45,12 @@ export class DeviceFormComponent implements OnInit {
   ];
 
   constructor(
-    private modalService: ModalService,
+    // --- CHANGED: Removed ModalService ---
     private http: HttpClient
     // private toastService: ToastService
-  ) {
-    // --- The constructor is now empty! ---
-  }
+  ) {}
 
   ngOnInit(): void {
-    // In ngOnInit, we build the config object
-    // In a real app, you might fetch deviceTypes/statuses from an API here
     this.buildFormConfig();
   }
 
@@ -179,7 +178,9 @@ export class DeviceFormComponent implements OnInit {
         next: (savedDevice) => {
           // this.toastService.showSuccess('Lưu thành công!');
           console.log('Save successful', savedDevice);
-          this.modalService.close(savedDevice); // Close modal on success
+          
+          // --- CHANGED: Use modalRef to close ---
+          this.modalRef?.close(savedDevice); // Close modal on success
         },
         error: (err) => {
           // this.toastService.showError('Lưu thất bại!');
@@ -193,6 +194,7 @@ export class DeviceFormComponent implements OnInit {
    * Closes the modal without saving.
    */
   public onCancel(): void {
-    this.modalService.close(); // No data means "cancel"
+    // --- CHANGED: Use modalRef to close ---
+    this.modalRef?.close(); // No data means "cancel"
   }
 }

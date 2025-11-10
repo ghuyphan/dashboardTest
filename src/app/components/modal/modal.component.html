@@ -1,19 +1,14 @@
-<ng-container *ngIf="modalState$ | async as options">
+<div class="modal-content" [ngClass]="options.size || 'md'" (click)="onModalContentClick($event)">
   
-  <div class="modal-backdrop" (click)="onBackdropClick(options)">
-    
-    <div class="modal-content" [ngClass]="options.size || 'md'" (click)="onModalContentClick($event)">
-      
-      <div class="modal-header" *ngIf="options.title">
-        <h5 class="modal-title">{{ options.title }}</h5>
-        <button type="button" class="close-btn" (click)="closeModal()">
-          &times; </button>
-      </div>
-
-      <div class="modal-body">
-        <ng-template #modalContentHost></ng-template>
-      </div>
-
-    </div>
+  <div class="modal-header" *ngIf="options.title">
+    <h5 class="modal-title">{{ options.title }}</h5>
+    <button type="button" class="close-btn" (click)="closeModal()">
+      &times;
+    </button>
   </div>
-</ng-container>
+
+  <div class="modal-body">
+    <ng-template #modalContentHost></ng-template>
+  </div>
+
+</div>
