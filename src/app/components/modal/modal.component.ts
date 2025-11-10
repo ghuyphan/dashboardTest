@@ -7,14 +7,12 @@ import {
   Inject, // CHANGED: Import Inject
   AfterViewInit, // CHANGED: Import AfterViewInit
 } from '@angular/core';
-import { NgIf, NgClass } from '@angular/common'; // CHANGED: Removed AsyncPipe
 import { ModalOptions } from '../../models/modal-options.model';
 import { ModalRef, MODAL_OPTIONS } from '../../models/modal-ref.model'; // CHANGED: Import new refs
 
 @Component({
   selector: 'app-modal',
   standalone: true,
-  imports: [NgIf, NgClass], // CHANGED: Removed AsyncPipe
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })

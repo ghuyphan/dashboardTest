@@ -523,8 +523,8 @@ body>ul.submenu.open {
 .app-modal-backdrop {
   // This is where the blur effect lives
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
-  will-change: backdrop-filter;
+  // backdrop-filter: blur(4px);
+  // will-change: backdrop-filter;
 
   // Use the new fade-in animation
   animation: modal-fade-in 0.2s ease-out;

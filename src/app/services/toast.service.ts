@@ -1,4 +1,3 @@
-// src/app/services/toast.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ToastMessage, ToastType } from '../models/toast-message.model';

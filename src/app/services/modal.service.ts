@@ -73,10 +73,8 @@ export class ModalService {
 
     const overlayConfig = new OverlayConfig({
       hasBackdrop: true,
-      // Use the same class as your old backdrop for consistent styling
-      backdropClass: 'modal-backdrop', 
-      // Add a panel class to remove default CDK padding/styles
-      panelClass: 'modal-panel', 
+      // CHANGED: This now matches your global styles.scss
+      panelClass: 'app-modal-panel', 
       positionStrategy,
     });
 

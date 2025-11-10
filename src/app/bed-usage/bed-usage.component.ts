@@ -8,48 +8,26 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 
-// --- ECHARTS IMPORTS ---
-import * as echarts from 'echarts/core';
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import { BarChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  DataZoomComponent, // 1. IMPORTED DataZoom
-} from 'echarts/components';
+import type * as echarts from 'echarts/core';
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
 import { environment } from '../../environments/environment.development';
 
-echarts.use([
-  CanvasRenderer,
-  BarChart,
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  DataZoomComponent, // 2. ADDED DataZoom
-]);
-
 type EChartsOption = EChartsCoreOption;
 
-// --- STYLING CONSTANTS ---
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-// --- Helper: Read CSS custom property ---
 function getCssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-// --- INTERFACES ---
 interface ApiResponseData {
   TenPhongBan: string;
   PhongBan_Id: number;
@@ -97,62 +75,78 @@ interface WidgetData {
   imports: [CommonModule, WidgetCardComponent],
   templateUrl: './bed-usage.component.html',
   styleUrl: './bed-usage.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush, // 3. ADDED OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 4. ADDED AfterViewInit
+export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('chartContainer', { static: true })
   chartContainer!: ElementRef<HTMLDivElement>;
 
   private http = inject(HttpClient);
-  private cd = inject(ChangeDetectorRef); // 5. INJECTED ChangeDetectorRef
+  private cd = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
+
+  private echarts?: typeof echarts;
   private chartInstance?: EChartsType;
   private resizeListener?: () => void;
+  private resizeObserver?: ResizeObserver;
   private dataRefreshInterval?: ReturnType<typeof setInterval>;
+  private intersectionObserver?: IntersectionObserver;
 
   currentDateTime: string = '';
   public isLoading: boolean = false;
+  private isChartVisible: boolean = false;
+  private isChartInitialized: boolean = false;
+  private pendingChartData?: DepartmentChartData[];
 
-  // 6. KEPT your isFirstLoad property
-  private isFirstLoad: boolean = true;
-
-  // 7. Data is now initialized in initColors()
   widgetData: WidgetData[] = [];
   private bedStatusSeries: BedStatusSeries[] = [];
   
-  // 8. Cached CSS Vars - Using your defined chart colors
-  private chartColor1 = '';
-  private chartColor2 = '';
-  private chartColor3 = '';
-  private chartColor6 = '';
-  private chartColor7 = '';
-  private chartColor8 = '';
-  private chartColor9 = '';
-  private gray200 = '';
-  private gray300 = '';
-  private gray700 = '';
-  private gray800 = '';
-  private peacockBlue = '';
-  private white = '';
+  // Cached CSS Vars
+  private cssVars = {
+    chartColor1: '',
+    chartColor2: '',
+    chartColor3: '',
+    chartColor6: '',
+    chartColor7: '',
+    chartColor8: '',
+    chartColor9: '',
+    gray200: '',
+    gray300: '',
+    gray700: '',
+    gray800: '',
+    peacockBlue: '',
+    white: '',
+  };
 
   ngOnInit(): void {
-    // 9. Initialize colors first to prevent "ExpressionChanged" error
     this.initColors();
+    // Start loading data immediately for widgets
     this.loadData();
-
-    this.dataRefreshInterval = setInterval(() => {
-      this.loadData();
-    }, 60000);
   }
 
-  // 10. ADDED ngAfterViewInit for chart init
-  ngAfterViewInit(): void {
-    this.initChart();
-    this.setupResizeListener();
+  async ngAfterViewInit(): Promise<void> {
+    // Set up Intersection Observer to detect when chart is visible
+    this.setupIntersectionObserver();
+    
+    // Setup refresh interval (runs outside Angular zone)
+    this.ngZone.runOutsideAngular(() => {
+      this.dataRefreshInterval = setInterval(() => {
+        this.ngZone.run(() => {
+          this.loadData();
+        });
+      }, 60000);
+    });
   }
 
   ngOnDestroy(): void {
     if (this.resizeListener) {
       window.removeEventListener('resize', this.resizeListener);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
     }
     if (this.chartInstance) {
       this.chartInstance.dispose();
@@ -162,11 +156,96 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
     }
   }
 
-  // 11. ADDED initColors() to use CSS variables
-  private initColors(): void {
-    const c = (name: string) => getCssVar(name);
+  private setupIntersectionObserver(): void {
+    if (typeof IntersectionObserver === 'undefined') {
+      // Fallback: initialize chart immediately if IntersectionObserver not supported
+      this.initializeChart();
+      return;
+    }
 
-    // Initialize widget data with CSS variables
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !this.isChartVisible) {
+            this.isChartVisible = true;
+            this.initializeChart();
+            // Optional: disconnect after first intersection to save resources
+            // this.intersectionObserver?.disconnect();
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '50px', // Start loading 50px before chart comes into view
+        threshold: 0.1,
+      }
+    );
+
+    this.intersectionObserver.observe(this.chartContainer.nativeElement);
+  }
+
+  private async initializeChart(): Promise<void> {
+    if (this.isChartInitialized) return;
+    
+    this.isChartInitialized = true;
+    
+    // Lazy load ECharts
+    await this.lazyLoadECharts();
+    
+    // Initialize chart instance
+    this.initChart();
+    
+    // Setup resize listeners
+    this.setupResizeListener();
+    
+    // If we have pending data, render it now
+    if (this.pendingChartData) {
+      this.renderChart(this.pendingChartData, true);
+      this.pendingChartData = undefined;
+    }
+  }
+
+  private async lazyLoadECharts(): Promise<void> {
+    try {
+      const [
+        echartsCore,
+        CanvasRenderer,
+        BarChart,
+        TitleComponent,
+        TooltipComponent,
+        GridComponent,
+        LegendComponent,
+        DataZoomComponent,
+      ] = await Promise.all([
+        import('echarts/core'),
+        import('echarts/renderers'),
+        import('echarts/charts'),
+        import('echarts/components'),
+        import('echarts/components'),
+        import('echarts/components'),
+        import('echarts/components'),
+        import('echarts/components'),
+      ]);
+
+      this.echarts = echartsCore;
+
+      this.echarts.use([
+        CanvasRenderer.CanvasRenderer,
+        BarChart.BarChart,
+        TitleComponent.TitleComponent,
+        TooltipComponent.TooltipComponent,
+        GridComponent.GridComponent,
+        LegendComponent.LegendComponent,
+        DataZoomComponent.DataZoomComponent,
+      ]);
+    } catch (error) {
+      console.error('Error lazy-loading ECharts', error);
+    }
+  }
+
+  private initColors(): void {
+    const c = getCssVar;
+
     this.widgetData = [
       { id: 'occupancyRate', title: 'Công Suất Sử Dụng', value: '0,00%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: c('--chart-color-1') },
       { id: 'totalBeds', title: 'Tổng Số Giường', value: '0', caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: c('--chart-color-2') },
@@ -177,59 +256,84 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
       { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: '0', caption: 'Not Ready', icon: 'fas fa-tools', accentColor: c('--chart-color-7') }
     ];
 
-    // Initialize bed status series with CSS variables
     this.bedStatusSeries = [
-      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: c('--chart-color-3') }, // aqua-island
-      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: c('--chart-color-1') }, // teal-blue
-      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: c('--chart-color-8') }, // teal-midtone
-      { name: 'Đã book (Booked)', dataKey: 'daBook', color: c('--chart-color-6') }, // orange
-      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: c('--chart-color-7') }, // dark-gray
-      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: c('--chart-color-9') } // beige-midtone
+      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: c('--chart-color-3') },
+      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: c('--chart-color-1') },
+      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: c('--chart-color-8') },
+      { name: 'Đã book (Booked)', dataKey: 'daBook', color: c('--chart-color-6') },
+      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: c('--chart-color-7') },
+      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: c('--chart-color-9') }
     ];
     
-    // Cache frequently used CSS variables
-    this.chartColor1 = c('--chart-color-1');
-    this.chartColor2 = c('--chart-color-2');
-    this.chartColor3 = c('--chart-color-3');
-    this.chartColor6 = c('--chart-color-6');
-    this.chartColor7 = c('--chart-color-7');
-    this.chartColor8 = c('--chart-color-8');
-    this.chartColor9 = c('--chart-color-9');
-    this.gray200 = c('--gray-200');
-    this.gray300 = c('--gray-300');
-    this.gray700 = c('--gray-700');
-    this.gray800 = c('--gray-800');
-    this.peacockBlue = c('--peacock-blue');
-    this.white = c('--white');
+    // Cache CSS variables
+    this.cssVars = {
+      chartColor1: c('--chart-color-1'),
+      chartColor2: c('--chart-color-2'),
+      chartColor3: c('--chart-color-3'),
+      chartColor6: c('--chart-color-6'),
+      chartColor7: c('--chart-color-7'),
+      chartColor8: c('--chart-color-8'),
+      chartColor9: c('--chart-color-9'),
+      gray200: c('--gray-200'),
+      gray300: c('--gray-300'),
+      gray700: c('--gray-700'),
+      gray800: c('--gray-800'),
+      peacockBlue: c('--peacock-blue'),
+      white: c('--white'),
+    };
   }
 
   private initChart(): void {
+    if (!this.echarts) {
+      console.error('ECharts has not been loaded');
+      return;
+    }
+    
     const container = this.chartContainer.nativeElement;
-    this.chartInstance = echarts.init(container);
+    
+    this.ngZone.runOutsideAngular(() => {
+      this.chartInstance = this.echarts!.init(container, undefined, {
+        renderer: 'canvas',
+        useDirtyRect: true, // Performance optimization
+      });
+    });
 
-    setTimeout(() => {
-      this.chartInstance?.resize();
-    }, 100);
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.chartInstance?.resize();
+      }, 100);
+    });
   }
 
   private setupResizeListener(): void {
-    this.resizeListener = () => {
-      this.chartInstance?.resize();
-    };
-    window.addEventListener('resize', this.resizeListener);
+    this.ngZone.runOutsideAngular(() => {
+      // Debounced resize handler
+      let resizeTimeout: any;
+      this.resizeListener = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          this.chartInstance?.resize();
+        }, 150);
+      };
+      window.addEventListener('resize', this.resizeListener, { passive: true });
 
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(() => {
-        this.chartInstance?.resize();
-      });
-      resizeObserver.observe(this.chartContainer.nativeElement);
-    }
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(() => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            this.chartInstance?.resize();
+          }, 150);
+        });
+        this.resizeObserver.observe(this.chartContainer.nativeElement);
+      }
+    });
   }
 
   public loadData(): void {
     if (this.isLoading) return;
+    
     this.isLoading = true;
-    this.cd.markForCheck(); // 12. ADDED markForCheck
+    this.cd.markForCheck();
 
     const apiUrl = environment.bedUsageUrl;
     const getTimestamp = () =>
@@ -247,35 +351,49 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         finalize(() => {
           this.isLoading = false;
           this.currentDateTime = getTimestamp();
-          this.cd.markForCheck(); // 13. ADDED markForCheck
+          this.cd.markForCheck();
         })
       )
       .subscribe({
         next: (rawData) => {
+          // Update widgets immediately (fast, no blocking)
+          this.calculateAndUpdateWidgets(rawData);
+          
+          // Transform and sort data
           const chartData = this.transformApiData(rawData);
-          // 14. Sort data for consistency
           chartData.sort((a, b) => a.viName.localeCompare(b.viName));
           
-          this.calculateAndUpdateWidgets(rawData);
-          const option = this.buildOption(chartData);
-
-          // === KEPT YOUR MODIFIED BLOCK ===
-          if (this.isFirstLoad) {
-            this.isFirstLoad = false;
+          // If chart is visible and initialized, render immediately
+          // Otherwise, store for later rendering
+          if (this.isChartInitialized && this.chartInstance) {
+            this.renderChart(chartData, true);
           } else {
-            option.animation = false;
+            this.pendingChartData = chartData;
           }
-          // === END MODIFIED BLOCK ===
-
-          this.chartInstance?.setOption(option, true);
+          
+          this.cd.markForCheck();
         },
         error: (error) => {
           console.error('Error loading bed utilization data:', error);
           this.chartInstance?.clear();
           this.resetWidgetsToZero();
-          this.cd.markForCheck(); // 15. ADDED markForCheck
+          this.cd.markForCheck();
         },
       });
+  }
+
+  private renderChart(chartData: DepartmentChartData[], enableAnimation: boolean): void {
+    const option = this.buildOption(chartData);
+    
+    // Enable animation for updates, disable for initial render
+    option.animation = enableAnimation;
+    
+    // Use requestAnimationFrame for smooth rendering
+    this.ngZone.runOutsideAngular(() => {
+      requestAnimationFrame(() => {
+        this.chartInstance?.setOption(option, true);
+      });
+    });
   }
 
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
@@ -296,17 +414,17 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
     });
   }
 
-  private parseDepartmentName(
-    fullName: string
-  ): { viName: string; enName: string } {
+  private parseDepartmentName(fullName: string): { viName: string; enName: string } {
     const withoutTotal = fullName.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
     const parts = withoutTotal.split(/\s+-\s+/);
+    
     if (parts.length >= 2) {
       return {
         viName: parts[0].trim(),
         enName: parts.slice(1).join(' - ').trim(),
       };
     }
+    
     const match = withoutTotal.match(/^(.+?)\s+([A-Z][a-zA-Z\s&()]+)$/);
     if (match) {
       return {
@@ -314,20 +432,20 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         enName: match[2].trim(),
       };
     }
+    
     return {
       viName: withoutTotal,
       enName: '',
     };
   }
 
-  private updateWidgetValue(id: string, value: string) {
+  private updateWidgetValue(id: string, value: string): void {
     const widget = this.widgetData.find((w) => w.id === id);
     if (widget) {
       widget.value = value;
     }
   }
 
-  // 16. REPLACED with OPTIMIZED single-reduce function
   private calculateAndUpdateWidgets(apiData: ApiResponseData[]): void {
     const totals = apiData.reduce(
       (acc, item) => {
@@ -404,20 +522,19 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
-    // 17. Use both Vi and En names for x-axis
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
     const currentColors = this.bedStatusSeries.map((s) => s.color);
 
-    const series = this.bedStatusSeries.map((config, index) => ({
+    const series = this.bedStatusSeries.map((config) => ({
       name: config.name,
       type: 'bar' as const,
       stack: 'beds',
       barWidth: '35%',
       itemStyle: {
         color: config.color,
-        borderRadius: [4, 4, 0, 0], // Rounded top corners
+        borderRadius: [4, 4, 0, 0],
         borderColor: 'rgba(255, 255, 255, 0.3)',
         borderWidth: 1,
       },
@@ -444,18 +561,16 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
           shadowColor: 'rgba(0, 174, 203, 0.25)',
         },
       },
-      // Explicitly type 'item' as DepartmentChartData
       data: data.map((item: DepartmentChartData) => item[config.dataKey]),
     }));
 
     return {
-      backgroundColor: this.white,
+      backgroundColor: this.cssVars.white,
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         fontSize: 12,
-        color: this.gray700,
+        color: this.cssVars.gray700,
       },
-      // 18. ADDED animation properties for your logic to work
       animation: true,
       animationDuration: 800,
       animationDurationUpdate: 300,
@@ -470,17 +585,14 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
             color: 'rgba(0, 89, 112, 0.1)',
           },
         },
-        // 19. Using your preferred tooltip formatter
         formatter: (params: any) => {
           if (!params || params.length === 0) return '';
           const dataIndex = params[0].dataIndex;
           const item = data[dataIndex];
           let result = `<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px; font-family: ${GLOBAL_FONT_FAMILY};">${item.viName}</div>`;
           result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
-          let total = 0;
           params.forEach((param: any) => {
             if (param.value > 0) {
-              total += param.value;
               result += `<div style="margin: 3px 0; font-family: ${GLOBAL_FONT_FAMILY};">`;
               result += `${param.marker} ${param.seriesName}: <strong>${param.value}</strong>`;
               result += `</div>`;
@@ -493,7 +605,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         },
       },
       legend: {
-        // 20. Using your preferred legend style
         data: this.bedStatusSeries.map(s => s.name),
         top: '2%',
         left: 'center',
@@ -514,7 +625,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         left: '5%',
         right: '5%',
         top: '12%',
-        bottom: '28%', // 21. INCREASED bottom margin for DataZoom
+        bottom: '28%',
         containLabel: true,
       },
       xAxis: {
@@ -532,13 +643,13 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
           alignWithLabel: true,
           length: 5,
           lineStyle: {
-            color: this.gray300,
+            color: this.cssVars.gray300,
           },
         },
         axisLine: {
           show: true,
           lineStyle: {
-            color: this.peacockBlue,
+            color: this.cssVars.peacockBlue,
             width: 2,
           },
         },
@@ -550,12 +661,12 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         type: 'value',
         name: 'Tổng Số Giường\n(Total Beds)',
         nameLocation: 'middle',
-        nameGap: 45, // 23. Using safer 45px gap
+        nameGap: 45,
         nameRotate: 90,
         nameTextStyle: {
           fontSize: 12,
           fontWeight: 'bold',
-          color: this.gray800,
+          color: this.cssVars.gray800,
           lineHeight: 16,
         },
         min: 0,
@@ -564,7 +675,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         splitLine: {
           show: true,
           lineStyle: {
-            color: this.gray200,
+            color: this.cssVars.gray200,
             width: 1,
             type: 'dotted',
           },
@@ -572,7 +683,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
         axisLine: {
           show: true,
           lineStyle: {
-            color: this.gray700,
+            color: this.cssVars.gray700,
             width: 1.5,
           },
         },
@@ -580,18 +691,17 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
           show: true,
           length: 4,
           lineStyle: {
-            color: this.gray700,
+            color: this.cssVars.gray700,
           },
         },
         axisLabel: {
           fontSize: 11,
-          color: this.gray700,
+          color: this.cssVars.gray700,
           margin: 10,
         },
       },
       series: series,
       barCategoryGap: '30%',
-      // 24. ADDED DataZoom configuration
       dataZoom: [
         {
           type: 'slider',
@@ -602,13 +712,19 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit { // 
           bottom: 20,
           height: 20,
           handleIcon:
-            'path://M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z',
+            'path://M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z',
           handleSize: '110%',
-          handleStyle: { color: '#fff', borderColor: '#aaa', borderWidth: 1, },
+          handleStyle: { color: '#fff', borderColor: '#aaa', borderWidth: 1 },
           backgroundColor: '#f3f3f3',
-          dataBackground: { lineStyle: { color: this.gray200 }, areaStyle: { color: this.gray200 }, },
-          selectedDataBackground: { lineStyle: { color: this.peacockBlue }, areaStyle: { color: this.peacockBlue, opacity: 0.1 }, },
-          moveHandleStyle: { color: this.peacockBlue, opacity: 0.7, },
+          dataBackground: { 
+            lineStyle: { color: this.cssVars.gray200 }, 
+            areaStyle: { color: this.cssVars.gray200 } 
+          },
+          selectedDataBackground: { 
+            lineStyle: { color: this.cssVars.peacockBlue }, 
+            areaStyle: { color: this.cssVars.peacockBlue, opacity: 0.1 } 
+          },
+          moveHandleStyle: { color: this.cssVars.peacockBlue, opacity: 0.7 },
         },
         {
           type: 'inside',

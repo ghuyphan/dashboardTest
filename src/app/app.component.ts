@@ -4,14 +4,12 @@ import { Component } from '@angular/core';
 // import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { RouterOutlet } from '@angular/router';
 import { ToastComponent } from './components/toast/toast.component';
-import { ModalComponent } from './components/modal/modal.component';
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     RouterOutlet,
-    ToastComponent,
-    ModalComponent
+    ToastComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
