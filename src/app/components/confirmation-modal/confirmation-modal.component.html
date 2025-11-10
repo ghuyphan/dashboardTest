@@ -1,0 +1,14 @@
+<div class="confirm-header">
+  <h2 class="confirm-title">{{ title }}</h2>
+</div>
+<div class="confirm-body">
+  <p>{{ message }}</p>
+</div>
+<div class="confirm-footer">
+  <button type="button" class="btn btn-secondary" (click)="onCancel()">
+    {{ cancelText }}
+  </button>
+  <button type="button" class="btn btn-danger" (click)="onConfirm()">
+    {{ confirmText }}
+  </button>
+</div>

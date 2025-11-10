@@ -501,3 +501,45 @@ body>ul.submenu.open {
     margin-bottom: 0;
   }
 }
+
+/*
+ * ===========================================
+ * === MODAL OVERLAY STYLES (NEW)
+ * ===========================================
+*/
+
+// Keyframe for modal fade-in
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+// This is the CDK backdrop element (class from modal.service.ts)
+.app-modal-backdrop {
+  // This is where the blur effect lives
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  will-change: backdrop-filter;
+
+  // Use the new fade-in animation
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+// This is the CDK panel (the "container" for your modal content)
+.app-modal-panel {
+  // Reset all default CDK panel styles so our
+  // .modal-content component's styles can take over.
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  
+  // Ensure the panel itself can participate in the fade
+  // (helps with components that might animate *in* as well)
+  animation: modal-fade-in 0.2s ease-out;
+}

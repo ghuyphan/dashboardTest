@@ -1,15 +1,23 @@
-import { Component, Input, OnInit } from '@angular/core';
+// --- CHANGED: Import ViewChild ---
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
-// CHANGED: No longer import ModalService
-// import { ModalService } from '../../services/modal.service';
+// --- CHANGED: Import Observable, of, filter, switchMap ---
+import { Observable, of } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
+
+// --- CHANGED: Import ModalService (it was removed, we need it back) ---
+import { ModalService } from '../../services/modal.service';
 import { environment } from '../../../environments/environment.development';
 
 import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
 
 // --- NEW: Import the ModalRef ---
 import { ModalRef } from '../../models/modal-ref.model';
+
+// --- NEW: Import the Confirmation Modal ---
+// (You must create this component as shown in the previous step)
+import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 
 // Assume you have a toast service for notifications
 // import { ToastService } from '../../services/toast.service';
@@ -29,6 +37,10 @@ export class DeviceFormComponent implements OnInit {
   // --- NEW: This will be injected by ModalComponent ---
   public modalRef?: ModalRef;
 
+  // --- NEW: ViewChild to get the dynamic form instance ---
+  @ViewChild(DynamicFormComponent)
+  private dynamicForm!: DynamicFormComponent;
+
   public formConfig: any | null = null;
   public isLoading: boolean = false;
 
@@ -45,18 +57,64 @@ export class DeviceFormComponent implements OnInit {
   ];
 
   constructor(
-    // --- CHANGED: Removed ModalService ---
+    // --- CHANGED: Re-inject ModalService ---
+    private modalService: ModalService,
     private http: HttpClient
     // private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
     this.buildFormConfig();
+
+    // --- NEW: Set up the canClose guard ---
+    // (This requires the ModalRef model to be updated first)
+    if (this.modalRef) {
+      this.modalRef.canClose = () => this.canDeactivate();
+    }
   }
 
   /**
-   * --- NEW: This method *builds the JSON config* ---
-   * It maps your old hardcoded form to the new JSON structure.
+   * --- NEW: Guard to check if the modal can be closed ---
+   * This is called by ModalRef.close()
+   */
+  private canDeactivate(): Observable<boolean> {
+    
+    // --- VUI LÒNG SỬA DÒNG NÀY ---
+    //
+    // Thay 'form' bằng tên biến FormGroup trong file 'DynamicFormComponent' của bạn.
+    // Ví dụ, nếu tên biến là 'public mainForm: FormGroup',
+    // hãy thay 'this.dynamicForm?.form?.dirty' thành 'this.dynamicForm?.mainForm?.dirty'
+    //
+    const isDirty = this.dynamicForm?.dynamicForm?.dirty || false;
+    //
+    // --- KẾT THÚC SỬA ---
+
+
+    if (!isDirty) {
+      return of(true); // Not dirty, allow closing
+    }
+
+    // Is dirty, so open the confirmation modal
+    return this.modalService
+      .open(ConfirmationModalComponent, {
+        title: 'Unsaved Changes',
+        disableBackdropClose: true, // Prevent closing this one
+        context: {
+          message:
+            'You have unsaved changes. Are you sure you want to discard them?',
+          confirmText: 'Discard Changes',
+          cancelText: 'Keep Editing',
+        },
+      })
+      .pipe(
+        // The confirmation modal returns true (Discard) or false (Keep Editing)
+        switchMap((result) => of(!!result)) // Coerce to boolean
+      );
+  }
+
+  /**
+   * --- This method *builds the JSON config* ---
+   * (No changes needed in this method)
    */
   private buildFormConfig(): void {
     const isEditMode = !!this.device;
@@ -162,7 +220,10 @@ export class DeviceFormComponent implements OnInit {
     if (entityId) {
       // --- Update (PUT) ---
       const updateUrl = `${apiUrl}/${entityId}`;
-      saveObservable = this.http.put(updateUrl, { ...this.device, ...formData });
+      saveObservable = this.http.put(updateUrl, {
+        ...this.device,
+        ...formData,
+      });
     } else {
       // --- Create (POST) ---
       saveObservable = this.http.post(apiUrl, formData);
@@ -178,8 +239,12 @@ export class DeviceFormComponent implements OnInit {
         next: (savedDevice) => {
           // this.toastService.showSuccess('Lưu thành công!');
           console.log('Save successful', savedDevice);
-          
+
           // --- CHANGED: Use modalRef to close ---
+          // We override the guard here because we *know* we want to close
+          if (this.modalRef) {
+            this.modalRef.canClose = () => true; // Force close
+          }
           this.modalRef?.close(savedDevice); // Close modal on success
         },
         error: (err) => {
@@ -192,6 +257,7 @@ export class DeviceFormComponent implements OnInit {
   /**
    * --- This is also an event handler ---
    * Closes the modal without saving.
+   * --- CHANGED: This will now automatically trigger the canDeactivate() guard ---
    */
   public onCancel(): void {
     // --- CHANGED: Use modalRef to close ---

@@ -1,0 +1,59 @@
+/* src/app/components/confirmation-modal/confirmation-modal.component.scss */
+:host {
+  display: block;
+  width: 100%;
+}
+
+.confirm-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.confirm-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.confirm-body {
+  padding: 24px 20px;
+  font-size: 1rem;
+  color: var(--gray-700);
+}
+
+.confirm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+/* Basic Button Styles (adjust to your design system) */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary {
+  background-color: #e0e0e0;
+  color: #333;
+  &:hover {
+    background-color: #c9c9c9;
+  }
+}
+
+.btn-danger {
+  background-color: #d9534f;
+  color: white;
+  &:hover {
+    background-color: #c9302c;
+  }
+}

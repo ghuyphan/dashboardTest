@@ -1,14 +1,12 @@
-<div class="modal-content" [ngClass]="options.size || 'md'" (click)="onModalContentClick($event)">
+<div class="modal-content" (click)="onModalContentClick($event)">
   
-  <div class="modal-header" *ngIf="options.title">
-    <h5 class="modal-title">{{ options.title }}</h5>
-    <button type="button" class="close-btn" (click)="closeModal()">
-      &times;
-    </button>
+  <div class="modal-header">
+    <h2 class="modal-title">{{ options.title || 'Modal' }}</h2>
+    <button class="modal-close-btn" (click)="closeModal()">×</button>
   </div>
-
+  
   <div class="modal-body">
     <ng-template #modalContentHost></ng-template>
   </div>
 
-</div>
+  </div>
