@@ -12,7 +12,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject, Subscription, fromEvent } from 'rxjs';
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
@@ -85,7 +86,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   private cd = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
 
-  private echarts?: typeof echarts;
+  private echartsInstance?: typeof echarts;
   private chartInstance?: EChartsType;
   private resizeListener?: () => void;
   private resizeObserver?: ResizeObserver;
@@ -95,7 +96,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   currentDateTime: string = '';
   public isLoading: boolean = false;
   private isChartVisible: boolean = false;
-  private isChartInitialized: boolean = false;
+  public isChartInitialized: boolean = false;
   private pendingChartData?: DepartmentChartData[];
 
   widgetData: WidgetData[] = [];
@@ -118,27 +119,40 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     white: '',
   };
 
+  // Performance optimizations
+  private destroy$ = new Subject<void>();
+  private resizeSubject = new Subject<void>();
+  private chartResizeSubscription!: Subscription;
+  private visibilityChangeSubscription!: Subscription;
+
   ngOnInit(): void {
     this.initColors();
-    // Start loading data immediately for widgets
-    this.loadData();
+    // Defer initial data load to next tick to avoid blocking UI
+    Promise.resolve().then(() => this.loadData());
   }
 
-  async ngAfterViewInit(): Promise<void> {
-    // Set up Intersection Observer to detect when chart is visible
-    this.setupIntersectionObserver();
+  ngAfterViewInit(): void {
+    this.setupResizeHandling();
+    this.setupVisibilityHandling();
     
-    // Setup refresh interval (runs outside Angular zone)
-    this.ngZone.runOutsideAngular(() => {
-      this.dataRefreshInterval = setInterval(() => {
-        this.ngZone.run(() => {
-          this.loadData();
-        });
-      }, 60000);
-    });
+    // Defer heavy initialization
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(() => {
+        this.setupIntersectionObserver();
+        this.startRefreshInterval();
+      }, { timeout: 2000 });
+    } else {
+      setTimeout(() => {
+        this.setupIntersectionObserver();
+        this.startRefreshInterval();
+      }, 0);
+    }
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    
     if (this.resizeListener) {
       window.removeEventListener('resize', this.resizeListener);
     }
@@ -154,6 +168,52 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.dataRefreshInterval) {
       clearInterval(this.dataRefreshInterval);
     }
+    if (this.chartResizeSubscription) {
+      this.chartResizeSubscription.unsubscribe();
+    }
+    if (this.visibilityChangeSubscription) {
+      this.visibilityChangeSubscription.unsubscribe();
+    }
+  }
+
+  // OPTIMIZATION 1: Efficient resize handling with debouncing
+  private setupResizeHandling(): void {
+    this.chartResizeSubscription = this.resizeSubject.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.ngZone.runOutsideAngular(() => {
+        this.chartInstance?.resize();
+      });
+    });
+  }
+
+  // OPTIMIZATION: Trigger resize through subject
+  private triggerResize(): void {
+    this.resizeSubject.next();
+  }
+
+  // OPTIMIZATION 2: Page visibility API integration
+  private setupVisibilityHandling(): void {
+    this.visibilityChangeSubscription = fromEvent(document, 'visibilitychange')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!document.hidden && this.isChartInitialized && this.pendingChartData) {
+          this.renderChart(this.pendingChartData, false);
+          this.pendingChartData = undefined;
+        }
+      });
+  }
+
+  // OPTIMIZATION 3: Efficient refresh interval management
+  private startRefreshInterval(): void {
+    this.ngZone.runOutsideAngular(() => {
+      this.dataRefreshInterval = setInterval(() => {
+        // Only refresh when tab is visible
+        if (document.visibilityState === 'visible') {
+          this.ngZone.run(() => this.loadData());
+        }
+      }, 60000);
+    });
   }
 
   private setupIntersectionObserver(): void {
@@ -168,16 +228,21 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !this.isChartVisible) {
             this.isChartVisible = true;
-            this.initializeChart();
-            // Optional: disconnect after first intersection to save resources
-            // this.intersectionObserver?.disconnect();
+            this.intersectionObserver?.disconnect();
+            
+            // Schedule initialization during idle time
+            if (typeof requestIdleCallback !== 'undefined') {
+              requestIdleCallback(() => this.initializeChart(), { timeout: 2000 });
+            } else {
+              setTimeout(() => this.initializeChart(), 0);
+            }
           }
         });
       },
       {
         root: null,
-        rootMargin: '50px', // Start loading 50px before chart comes into view
-        threshold: 0.1,
+        rootMargin: '100px', // Start loading earlier
+        threshold: 0.01,
       }
     );
 
@@ -200,7 +265,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     
     // If we have pending data, render it now
     if (this.pendingChartData) {
-      this.renderChart(this.pendingChartData, true);
+      this.renderChart(this.pendingChartData, false);
       this.pendingChartData = undefined;
     }
   }
@@ -227,9 +292,9 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         import('echarts/components'),
       ]);
 
-      this.echarts = echartsCore;
+      this.echartsInstance = echartsCore;
 
-      this.echarts.use([
+      this.echartsInstance.use([
         CanvasRenderer.CanvasRenderer,
         BarChart.BarChart,
         TitleComponent.TitleComponent,
@@ -284,7 +349,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initChart(): void {
-    if (!this.echarts) {
+    if (!this.echartsInstance) {
       console.error('ECharts has not been loaded');
       return;
     }
@@ -292,7 +357,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     const container = this.chartContainer.nativeElement;
     
     this.ngZone.runOutsideAngular(() => {
-      this.chartInstance = this.echarts!.init(container, undefined, {
+      this.chartInstance = this.echartsInstance!.init(container, undefined, {
         renderer: 'canvas',
         useDirtyRect: true, // Performance optimization
       });
@@ -312,7 +377,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       this.resizeListener = () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-          this.chartInstance?.resize();
+          this.triggerResize();
         }, 150);
       };
       window.addEventListener('resize', this.resizeListener, { passive: true });
@@ -321,7 +386,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         this.resizeObserver = new ResizeObserver(() => {
           clearTimeout(resizeTimeout);
           resizeTimeout = setTimeout(() => {
-            this.chartInstance?.resize();
+            this.triggerResize();
           }, 150);
         });
         this.resizeObserver.observe(this.chartContainer.nativeElement);
@@ -333,7 +398,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isLoading) return;
     
     this.isLoading = true;
-    this.cd.markForCheck();
+    this.cd.markForCheck(); // Mark once to show spinner
 
     const apiUrl = environment.bedUsageUrl;
     const getTimestamp = () =>
@@ -349,40 +414,45 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       .get<ApiResponseData[]>(apiUrl)
       .pipe(
         finalize(() => {
+          // This runs *after* next() or error()
           this.isLoading = false;
           this.currentDateTime = getTimestamp();
-          this.cd.markForCheck();
-        })
+          this.cd.markForCheck(); // Mark once at the end to update everything
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (rawData) => {
           // Update widgets immediately (fast, no blocking)
           this.calculateAndUpdateWidgets(rawData);
           
-          // Transform and sort data
-          const chartData = this.transformApiData(rawData);
-          chartData.sort((a, b) => a.viName.localeCompare(b.viName));
-          
-          // If chart is visible and initialized, render immediately
-          // Otherwise, store for later rendering
-          if (this.isChartInitialized && this.chartInstance) {
-            this.renderChart(chartData, true);
-          } else {
-            this.pendingChartData = chartData;
-          }
-          
-          this.cd.markForCheck();
+          // Transform and sort data in next tick
+          Promise.resolve().then(() => {
+            const chartData = this.transformApiData(rawData);
+            chartData.sort((a, b) => a.viName.localeCompare(b.viName));
+            
+            // If chart is visible and initialized, render immediately
+            // Otherwise, store for later rendering
+            if (this.isChartInitialized && this.chartInstance) {
+              this.renderChart(chartData, true);
+            } else {
+              this.pendingChartData = chartData;
+            }
+          });
         },
         error: (error) => {
           console.error('Error loading bed utilization data:', error);
-          this.chartInstance?.clear();
+          if (this.chartInstance) {
+            this.chartInstance.clear();
+          }
           this.resetWidgetsToZero();
-          this.cd.markForCheck();
         },
       });
   }
 
   private renderChart(chartData: DepartmentChartData[], enableAnimation: boolean): void {
+    if (!this.chartInstance || !this.echartsInstance) return;
+    
     const option = this.buildOption(chartData);
     
     // Enable animation for updates, disable for initial render
@@ -391,7 +461,13 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     // Use requestAnimationFrame for smooth rendering
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
-        this.chartInstance?.setOption(option, true);
+        if (this.chartInstance) {
+          this.chartInstance.setOption(option, {
+            notMerge: false,
+            lazyUpdate: true,
+            silent: true
+          });
+        }
       });
     });
   }
@@ -446,28 +522,28 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // OPTIMIZATION 4: Web Worker-like data processing
   private calculateAndUpdateWidgets(apiData: ApiResponseData[]): void {
-    const totals = apiData.reduce(
-      (acc, item) => {
-        acc.giuongTrong += item.GiuongTrong;
-        acc.dangDieuTri += item.DangSuDung;
-        acc.choXuatVien += item.ChoXuatVien;
-        acc.daBook += item.DaBook;
-        acc.chuaSanSang += item.ChuaSanSang;
-        acc.choMuonGiuong += item.ChoMuonGiuong;
-        acc.totalBeds += item.Tong;
-        return acc;
-      },
-      {
-        giuongTrong: 0,
-        dangDieuTri: 0,
-        choXuatVien: 0,
-        daBook: 0,
-        chuaSanSang: 0,
-        choMuonGiuong: 0,
-        totalBeds: 0,
-      }
-    );
+    const totals = {
+      giuongTrong: 0,
+      dangDieuTri: 0,
+      choXuatVien: 0,
+      daBook: 0,
+      chuaSanSang: 0,
+      choMuonGiuong: 0,
+      totalBeds: 0,
+    };
+
+    // Manual loop instead of reduce for better performance
+    for (const item of apiData) {
+      totals.giuongTrong += item.GiuongTrong;
+      totals.dangDieuTri += item.DangSuDung;
+      totals.choXuatVien += item.ChoXuatVien;
+      totals.daBook += item.DaBook;
+      totals.chuaSanSang += item.ChuaSanSang;
+      totals.choMuonGiuong += item.ChoMuonGiuong;
+      totals.totalBeds += item.Tong;
+    }
 
     const occupiedBeds =
       totals.dangDieuTri +
@@ -482,13 +558,25 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       occupancyRateStr = this.formatPercentage(rate);
     }
 
-    this.updateWidgetValue('giuongTrong', this.formatNumber(totals.giuongTrong));
-    this.updateWidgetValue('dangDieuTri', this.formatNumber(totals.dangDieuTri));
-    this.updateWidgetValue('choXuatVien', this.formatNumber(totals.choXuatVien));
-    this.updateWidgetValue('daBook', this.formatNumber(totals.daBook));
-    this.updateWidgetValue('chuaSanSang', this.formatNumber(totals.chuaSanSang));
-    this.updateWidgetValue('totalBeds', this.formatNumber(totals.totalBeds));
-    this.updateWidgetValue('occupancyRate', occupancyRateStr);
+    // Batch update all widgets at once
+    const updates = {
+      occupancyRate: occupancyRateStr,
+      totalBeds: this.formatNumber(totals.totalBeds),
+      giuongTrong: this.formatNumber(totals.giuongTrong),
+      dangDieuTri: this.formatNumber(totals.dangDieuTri),
+      choXuatVien: this.formatNumber(totals.choXuatVien),
+      daBook: this.formatNumber(totals.daBook),
+      chuaSanSang: this.formatNumber(totals.chuaSanSang),
+    };
+
+    for (const widget of this.widgetData) {
+      if (updates.hasOwnProperty(widget.id)) {
+        widget.value = updates[widget.id as keyof typeof updates];
+      }
+    }
+    
+    // Single change detection mark
+    this.cd.markForCheck();
   }
 
   private resetWidgetsToZero(): void {
@@ -499,6 +587,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     this.updateWidgetValue('daBook', '0');
     this.updateWidgetValue('choXuatVien', '0');
     this.updateWidgetValue('chuaSanSang', '0');
+    this.cd.markForCheck();
   }
 
   trackByWidgetId(index: number, item: WidgetData): string {
@@ -534,26 +623,18 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       barWidth: '35%',
       itemStyle: {
         color: config.color,
-        borderRadius: [4, 4, 0, 0],
+        borderRadius: data.length > 25 ? 0 : [4, 4, 0, 0], // Disable border radius for large datasets
         borderColor: 'rgba(255, 255, 255, 0.3)',
         borderWidth: 1,
       },
       label: {
-        show: true,
-        position: 'inside' as const,
-        formatter: ({ value }: any) => (value && value >= 1 ? String(value) : ''),
-        fontSize: 10,
-        fontWeight: 600,
-        color: '#fff',
-        textBorderColor: 'rgba(0,0,0,.3)',
-        textBorderWidth: 1,
-        distance: 0,
+        show: false,
       },
       labelLayout: {
         hideOverlap: true,
       },
       emphasis: {
-        focus: 'series' as const,
+        focus: 'none' as const,
         itemStyle: {
           borderColor: currentColors[0],
           borderWidth: 2,
@@ -562,9 +643,16 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         },
       },
       data: data.map((item: DepartmentChartData) => item[config.dataKey]),
+      // Disable animations for large datasets
+      animation: data.length < 20 ? true : false,
     }));
 
     return {
+      // Critical performance optimizations
+      useDirtyRect: true,
+      progressive: 0,
+      progressiveThreshold: 5000,
+      
       backgroundColor: this.cssVars.white,
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
@@ -637,7 +725,8 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
           fontWeight: 'bold',
           overflow: 'break',
           hideOverlap: true,
-          margin: 3
+          margin: 3,
+          width: 80, // Constrain label width for performance
         },
         axisTick: {
           alignWithLabel: true,
@@ -707,6 +796,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
           type: 'slider',
           xAxisIndex: 0,
           filterMode: 'filter',
+          realtime: false, // Disable real-time update
           start: 0,
           end: data.length > 10 ? 50 : 100,
           bottom: 20,
@@ -725,6 +815,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
             areaStyle: { color: this.cssVars.peacockBlue, opacity: 0.1 } 
           },
           moveHandleStyle: { color: this.cssVars.peacockBlue, opacity: 0.7 },
+          animation: false,
         },
         {
           type: 'inside',
@@ -732,6 +823,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
           filterMode: 'filter',
           start: 0,
           end: data.length > 10 ? 50 : 100,
+          animation: false,
         },
       ],
     };

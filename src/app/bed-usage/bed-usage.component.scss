@@ -2,22 +2,28 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* Was 100vh. This makes it fit the parent container. */
   overflow: hidden;
 }
 
 .page-content {
   flex-grow: 1;
-  /* Removed 'overflow-y: auto;' */
   display: flex;
   flex-direction: column;
   padding: 0 var(--spacing-xs);
-  height: 0; // This allows flex-grow to work properly in some cases
+  height: 0;
 }
 
 .widget-section {
   padding-bottom: var(--spacing-md);
-  flex-shrink: 0; // Widgets don't shrink
+  flex-shrink: 0;
+}
+
+// Skeleton loading states
+.widget-skeleton {
+  background: var(--gray-100);
+  border-radius: var(--border-radius-md);
+  height: 80px;
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
 .widget-grid {
@@ -28,20 +34,20 @@
 }
 
 .chart-wrapper {
-  flex-grow: 1; // Chart wrapper takes remaining space
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; // Allow it to shrink if needed
+  min-height: 0;
   margin-top: var(--spacing-xl);
-  height: 0; // This helps the flex-grow work correctly
+  height: 0;
 
   .chart-header-row {
-    position: relative; // Establish positioning context
+    position: relative;
     display: flex;
-    justify-content: center; // Center the title
+    justify-content: center;
     align-items: center;
     width: 100%;
-    margin-bottom: var(--spacing-xs); // Moves margin from title to here
+    margin-bottom: var(--spacing-xs);
   }
 
   .chart-title {
@@ -50,16 +56,13 @@
     font-family: var(--font-family-sans);
     color: var(--peacock-blue);
     text-align: center;
-    padding: 0 var(--spacing-sm); // Add padding
+    padding: 0 var(--spacing-sm);
     flex-shrink: 0;
     margin: 0;
-    line-height: 1.2; // Added for multi-line
-
-    // Add padding to prevent long titles from overlapping the button
+    line-height: 1.2;
     padding-left: 40px;
     padding-right: 40px;
 
-    // === ADDED THIS NEW STYLE ===
     .chart-subtitle {
       font-size: 1rem;
       font-weight: 500;
@@ -76,12 +79,10 @@
     gap: var(--spacing-sm);
     width: fit-content;
     min-height: 28px;
-
-    position: absolute; // Position independently
-    right: 0; // Pin to the right
-    top: 50%; // Center vertically
-    transform: translateY(-50%); // ...
-
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--border-radius-full);
     background-color: transparent;
@@ -100,7 +101,6 @@
       font-weight: 500;
       color: var(--gray-600);
       white-space: nowrap;
-
       max-width: 0;
       opacity: 0;
       visibility: hidden;
@@ -132,16 +132,48 @@
     }
   }
 
+  // Chart skeleton loader
+  .chart-skeleton {
+    background-color: var(--white);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    height: 100%;
+    
+    .skeleton-header {
+      height: 24px;
+      background: var(--gray-100);
+      border-radius: 4px;
+      width: 60%;
+      align-self: center;
+    }
+    
+    .skeleton-chart {
+      flex: 1;
+      background: var(--gray-50);
+      border-radius: 4px;
+    }
+  }
+
   .chart-container-inner {
     width: 100%;
-    height: 100%; // Take full height of its container
-    min-height: 200px; // Minimum height to prevent collapse
+    height: 100%;
+    min-height: 300px;
     background-color: var(--white);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-sm);
     display: flex;
     align-items: stretch;
     justify-content: stretch;
+    
+    &.hidden {
+      visibility: hidden;
+      height: 0;
+      min-height: 0;
+      padding: 0;
+    }
   }
 }
 
@@ -160,14 +192,13 @@
     .chart-title {
       font-size: 1rem;
       
-      // === ADDED THIS ===
       .chart-subtitle {
         font-size: 0.875rem;
       }
     }
 
     .chart-container-inner {
-      min-height: 180px;
+      min-height: 250px;
     }
   }
 }
@@ -184,7 +215,14 @@
 
   .chart-wrapper {
     .chart-container-inner {
-      min-height: 160px;
+      min-height: 200px;
     }
   }
+}
+
+// Animation keyframes
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }

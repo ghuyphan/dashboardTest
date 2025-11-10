@@ -1,19 +1,27 @@
 <div class="page-container">
   <div class="page-content">
-    <div class="widget-section">
+    <!-- Widget Section with Skeleton Loading -->
+    <div class="widget-section" *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded">
       <div class="widget-grid">
-        <app-widget-card *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
-          [icon]="widget.icon"
-          [title]="widget.title"
-          [value]="widget.value"
-          [caption]="widget.caption"
-          [accentColor]="widget.accentColor">
-        </app-widget-card>
+        <div class="widget-skeleton" *ngFor="let i of [1,2,3,4,5,6,7]"></div>
       </div>
     </div>
+    
+    <ng-template #widgetsLoaded>
+      <div class="widget-section">
+        <div class="widget-grid">
+          <app-widget-card *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
+            [icon]="widget.icon"
+            [title]="widget.title"
+            [value]="widget.value"
+            [caption]="widget.caption"
+            [accentColor]="widget.accentColor">
+          </app-widget-card>
+        </div>
+      </div>
+    </ng-template>
 
     <div class="chart-wrapper">
-
       <div class="chart-header-row">
         <h2 class="chart-title">
           Tình Hình Sử Dụng Giường Bệnh Toàn Viện
@@ -29,7 +37,18 @@
           </span>
         </div>
       </div>
-      <div #chartContainer class="chart-container-inner"></div>
+      
+      <!-- Chart Skeleton Loader -->
+      <div *ngIf="isLoading && !isChartInitialized" class="chart-skeleton">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-chart"></div>
+      </div>
+      
+      <!-- Actual Chart Container -->
+      <div #chartContainer 
+           class="chart-container-inner"
+           [class.hidden]="isLoading && !isChartInitialized">
+      </div>
     </div>
   </div>
 </div>

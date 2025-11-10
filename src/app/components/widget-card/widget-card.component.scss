@@ -1,4 +1,3 @@
-/* Styles based directly on your home.component.scss .widget-card-home */
 .widget-card {
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
@@ -8,7 +7,7 @@
   align-items: center;
   gap: var(--spacing-md);
   transition: all 0.2s ease-in-out;
-  border-left: none; /* Removed the old border-left */
+  border-left: none;
 
   &:hover {
     transform: translateY(-2px);
@@ -23,7 +22,6 @@
   }
 }
 
-/* Styles based on your home.component.scss .widget-icon-wrapper */
 .widget-icon-wrapper {
   width: 48px;
   height: 48px;
@@ -52,7 +50,6 @@
   }
 }
 
-/* Styles based on your home.component.scss .widget-content */
 .widget-content {
   flex-grow: 1;
   overflow: hidden;
@@ -63,6 +60,7 @@
     color: var(--gray-900);
     margin: 0;
     line-height: 1.1;
+    font-feature-settings: "tnum"; // optional: better numeric alignment
 
     @media (max-width: 768px) {
       font-size: clamp(18px, 5vw, 24px);
@@ -77,7 +75,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-top: 2px; // Added small margin
+    margin-top: 2px;
 
     @media (max-width: 768px) {
       font-size: clamp(10px, 2.5vw, 12px);
@@ -86,10 +84,9 @@
     }
   }
 
-  // === ADDED THIS NEW STYLE BLOCK ===
   .widget-caption {
-    font-size: clamp(10px, 2vw, 12px); // Smaller than title
-    color: var(--gray-500); // Lighter than title
+    font-size: clamp(10px, 2vw, 12px);
+    color: var(--gray-500);
     margin: 0;
     line-height: 1.2;
     white-space: nowrap;
