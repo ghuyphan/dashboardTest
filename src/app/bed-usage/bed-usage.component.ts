@@ -29,6 +29,7 @@ function getCssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+// --- Interfaces (Unchanged) ---
 interface ApiResponseData {
   TenPhongBan: string;
   PhongBan_Id: number;
@@ -280,7 +281,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         TooltipComponent,
         GridComponent,
         LegendComponent,
-        DataZoomComponent,
+        // DataZoomComponent, // Removed to optimize
       ] = await Promise.all([
         import('echarts/core'),
         import('echarts/renderers'),
@@ -289,7 +290,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         import('echarts/components'),
         import('echarts/components'),
         import('echarts/components'),
-        import('echarts/components'),
+        // import('echarts/components'), // Removed to optimize
       ]);
 
       this.echartsInstance = echartsCore;
@@ -301,7 +302,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         TooltipComponent.TooltipComponent,
         GridComponent.GridComponent,
         LegendComponent.LegendComponent,
-        DataZoomComponent.DataZoomComponent,
+        // DataZoomComponent.DataZoomComponent, // Removed to optimize
       ]);
     } catch (error) {
       console.error('Error lazy-loading ECharts', error);
@@ -455,9 +456,13 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     
     const option = this.buildOption(chartData);
     
-    // Enable animation for updates, disable for initial render
-    option.animation = enableAnimation;
-    
+    // OPTIMIZATION: Disable all chart-level animations if large dataset or update
+    const isLargeDataset = chartData.length > 30; // Adjust threshold as needed
+    const shouldAnimate = enableAnimation && !isLargeDataset;
+    option.animation = shouldAnimate;
+    option.animationDuration = shouldAnimate ? 800 : 0;
+    option.animationDurationUpdate = shouldAnimate ? 300 : 0;
+
     // Use requestAnimationFrame for smooth rendering
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
@@ -611,6 +616,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
+    const isLargeDataset = data.length > 30; // Or your chosen threshold
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
@@ -623,7 +629,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       barWidth: '35%',
       itemStyle: {
         color: config.color,
-        borderRadius: data.length > 25 ? 0 : [4, 4, 0, 0], // Disable border radius for large datasets
+        borderRadius: isLargeDataset ? 0 : [4, 4, 0, 0], // Disable border radius for large datasets
         borderColor: 'rgba(255, 255, 255, 0.3)',
         borderWidth: 1,
       },
@@ -634,24 +640,24 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         hideOverlap: true,
       },
       emphasis: {
-        focus: 'none' as const,
-        itemStyle: {
-          borderColor: currentColors[0],
-          borderWidth: 2,
-          shadowBlur: 8,
-          shadowColor: 'rgba(0, 174, 203, 0.25)',
-        },
+        focus: 'none' as const, // Disable emphasis effects for performance
+        // itemStyle: {
+        //   borderColor: currentColors[0],
+        //   borderWidth: 2,
+        //   shadowBlur: 8, // Removed shadow for performance
+        //   shadowColor: 'rgba(0, 174, 203, 0.25)',
+        // },
       },
       data: data.map((item: DepartmentChartData) => item[config.dataKey]),
-      // Disable animations for large datasets
-      animation: data.length < 20 ? true : false,
+      // Disable series-level animations based on dataset size
+      animation: !isLargeDataset,
     }));
 
     return {
       // Critical performance optimizations
       useDirtyRect: true,
-      progressive: 0,
-      progressiveThreshold: 5000,
+      progressive: isLargeDataset ? 1000 : 0, // Enable progressive rendering for large datasets
+      progressiveThreshold: 3000, // Adjust threshold
       
       backgroundColor: this.cssVars.white,
       textStyle: {
@@ -659,11 +665,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         fontSize: 12,
         color: this.cssVars.gray700,
       },
-      animation: true,
-      animationDuration: 800,
-      animationDurationUpdate: 300,
-      animationEasingUpdate: 'cubicInOut',
-      animationEasing: 'quadraticInOut',
+      // Animation flags are now set in renderChart, not here
       color: currentColors,
       tooltip: {
         trigger: 'axis',
@@ -673,22 +675,21 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
             color: 'rgba(0, 89, 112, 0.1)',
           },
         },
+        // OPTIMIZATION: Simplified tooltip formatter for better performance
         formatter: (params: any) => {
           if (!params || params.length === 0) return '';
           const dataIndex = params[0].dataIndex;
           const item = data[dataIndex];
           let result = `<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px; font-family: ${GLOBAL_FONT_FAMILY};">${item.viName}</div>`;
-          result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
+          if (item.enName) {
+            result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
+          }
           params.forEach((param: any) => {
             if (param.value > 0) {
-              result += `<div style="margin: 3px 0; font-family: ${GLOBAL_FONT_FAMILY};">`;
-              result += `${param.marker} ${param.seriesName}: <strong>${param.value}</strong>`;
-              result += `</div>`;
+              result += `<div style="margin: 3px 0; font-family: ${GLOBAL_FONT_FAMILY};">${param.marker} ${param.seriesName}: <strong>${param.value}</strong></div>`;
             }
           });
-          result += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold; font-family: ${GLOBAL_FONT_FAMILY};">`;
-          result += `Tổng số giường: <strong>${item.totalBeds}</strong>`;
-          result += `</div>`;
+          result += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold; font-family: ${GLOBAL_FONT_FAMILY};">Tổng số giường: <strong>${item.totalBeds}</strong></div>`;
           return result;
         },
       },
@@ -720,8 +721,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         type: 'category',
         data: xAxisData,
         axisLabel: {
-          interval: 0,
-          fontSize: 9,
+          // OPTIMIZATION: Conditionally adjust axis labels based on data length
+          interval: isLargeDataset ? 'auto' : 0, // Auto-hide labels if large dataset
+          rotate: isLargeDataset ? 45 : 0, // Rotate labels if large dataset
+          fontSize: isLargeDataset ? 8 : 9, // Smaller font if large dataset
           fontWeight: 'bold',
           overflow: 'break',
           hideOverlap: true,
@@ -791,41 +794,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       series: series,
       barCategoryGap: '30%',
-      dataZoom: [
-        {
-          type: 'slider',
-          xAxisIndex: 0,
-          filterMode: 'filter',
-          realtime: false, // Disable real-time update
-          start: 0,
-          end: data.length > 10 ? 50 : 100,
-          bottom: 20,
-          height: 20,
-          handleIcon:
-            'path://M306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3C306.1,4.3,306.1,4.3,306.1,4.3z',
-          handleSize: '110%',
-          handleStyle: { color: '#fff', borderColor: '#aaa', borderWidth: 1 },
-          backgroundColor: '#f3f3f3',
-          dataBackground: { 
-            lineStyle: { color: this.cssVars.gray200 }, 
-            areaStyle: { color: this.cssVars.gray200 } 
-          },
-          selectedDataBackground: { 
-            lineStyle: { color: this.cssVars.peacockBlue }, 
-            areaStyle: { color: this.cssVars.peacockBlue, opacity: 0.1 } 
-          },
-          moveHandleStyle: { color: this.cssVars.peacockBlue, opacity: 0.7 },
-          animation: false,
-        },
-        {
-          type: 'inside',
-          xAxisIndex: 0,
-          filterMode: 'filter',
-          start: 0,
-          end: data.length > 10 ? 50 : 100,
-          animation: false,
-        },
-      ],
     };
   }
 }

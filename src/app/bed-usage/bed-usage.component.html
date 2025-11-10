@@ -1,6 +1,5 @@
 <div class="page-container">
   <div class="page-content">
-    <!-- Widget Section with Skeleton Loading -->
     <div class="widget-section" *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded">
       <div class="widget-grid">
         <div class="widget-skeleton" *ngFor="let i of [1,2,3,4,5,6,7]"></div>
@@ -10,7 +9,8 @@
     <ng-template #widgetsLoaded>
       <div class="widget-section">
         <div class="widget-grid">
-          <app-widget-card *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
+          <app-widget-card 
+            *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
             [icon]="widget.icon"
             [title]="widget.title"
             [value]="widget.value"
@@ -28,7 +28,15 @@
           <span class="chart-subtitle">Overall Hospital Bed Occupancy Status</span>
         </h2>
 
-        <div class="refresh-control" (click)="loadData()" [class.loading]="isLoading">
+        <div 
+          class="refresh-control" 
+          (click)="loadData()" 
+          [class.loading]="isLoading"
+          [attr.aria-label]="isLoading ? 'Loading data' : 'Refresh data'"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="loadData()"
+          (keydown.space)="loadData()">
           <div class="refresh-icon">
             <i class="fas" [ngClass]="{'fa-sync': !isLoading, 'fa-spinner fa-spin': isLoading}"></i>
           </div>
@@ -38,16 +46,12 @@
         </div>
       </div>
       
-      <!-- Chart Skeleton Loader -->
-      <div *ngIf="isLoading && !isChartInitialized" class="chart-skeleton">
-        <div class="skeleton-header"></div>
-        <div class="skeleton-chart"></div>
-      </div>
-      
-      <!-- Actual Chart Container -->
-      <div #chartContainer 
-           class="chart-container-inner"
-           [class.hidden]="isLoading && !isChartInitialized">
+      <div 
+        #chartContainer 
+        class="chart-container-inner"
+        [attr.aria-busy]="isLoading"
+        role="img"
+        [attr.aria-label]="isChartInitialized ? 'Bed usage chart' : 'Loading chart'">
       </div>
     </div>
   </div>
