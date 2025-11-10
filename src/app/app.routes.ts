@@ -6,11 +6,11 @@ import { permissionGuard } from './guards/permission.guard';
 
 // --- IMPORT YOUR NEW AND RENAMED COMPONENTS ---
 import { MainLayoutComponent } from './main-layout/main-layout.component';
-import { HomeComponent } from './home/home.component';
 
-// --- 1. IMPORT YOUR 'DEVICE LIST' COMPONENT ---
-import { DeviceListComponent } from './device-list/device-list.component';
-import { BedUsageComponent } from './bed-usage/bed-usage.component';
+// --- 1. REMOVE THESE IMPORTS. THEY WILL BE LAZY-LOADED. ---
+// import { HomeComponent } from './home/home.component';
+// import { DeviceListComponent } from './device-list/device-list.component';
+// import { BedUsageComponent } from './bed-usage/bed-usage.component';
 
 
 export const routes: Routes = [
@@ -26,14 +26,17 @@ export const routes: Routes = [
     children: [
       {
         path: 'home',
-        component: HomeComponent,
+        // --- 2. USE loadComponent INSTEAD ---
+        loadComponent: () => 
+          import('./home/home.component').then(m => m.HomeComponent),
         data: { title: 'Trang chủ' }
       },
 
-      // --- 2. HERE IS THE ADJUSTED ROUTE ---
       {
-        path: 'equipment/catalog', // <-- CHANGED from 'devices'
-        component: DeviceListComponent,
+        path: 'equipment/catalog',
+        // --- 2. USE loadComponent INSTEAD ---
+        loadComponent: () => 
+          import('./device-list/device-list.component').then(m => m.DeviceListComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'QLThietBi.DMThietBi',
@@ -43,8 +46,10 @@ export const routes: Routes = [
       },
 
       {
-        path: 'reports/bed-usage', // <-- CHANGED from 'devices'
-        component: BedUsageComponent,
+        path: 'reports/bed-usage',
+        // --- 2. USE loadComponent INSTEAD ---
+        loadComponent: () => 
+          import('./bed-usage/bed-usage.component').then(m => m.BedUsageComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'BaoCao.CongSuatGiuongBenh',

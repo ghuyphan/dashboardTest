@@ -1,0 +1,107 @@
+/* All the form styling now lives in this one reusable component.
+  This is just a copy of the styles from device-form.component.scss
+*/
+
+/* --- Dynamic Row Layout --- */
+.form-row {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 1rem; 
+  margin-bottom: 1rem; 
+}
+
+/* --- Custom field highlighting --- */
+.form-group.field-highlight .form-control {
+  /* Using your variables */
+  border-color: var(--primary-color);
+  background-color: var(--primary-color-light);
+}
+
+.dynamic-form-container {
+  width: 100%;
+  max-width: 600px;
+  box-sizing: border-box;
+}
+
+.form-body {
+  padding-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 200px;
+  flex-shrink: 1;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--gray-700);
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  box-sizing: border-box;
+  border: 1px solid var(--gray-300);
+  background-color: var(--gray-50);
+  color: var(--gray-800);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-color-light);
+}
+
+.form-control.is-invalid {
+  border-color: var(--danger-color);
+}
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px var(--danger-color-light);
+}
+.invalid-feedback {
+  color: var(--danger-color);
+  font-size: 0.875em;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* Button styling */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+.btn-secondary {
+  background-color: var(--gray-500);
+  color: white;
+}
+.btn-secondary:hover {
+  background-color: var(--gray-600);
+}
+.btn-primary {
+  /* Using your variable */
+  background-color: var(--teal-blue);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--primary-color-dark);
+}
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

@@ -1,104 +1,171 @@
 import { Component, Input, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  ReactiveFormsModule,
-} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
-
 import { ModalService } from '../../services/modal.service';
 import { environment } from '../../../environments/environment.development';
+
+// --- NEW: Import the dynamic form component ---
+import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
+
 // Assume you have a toast service for notifications
 // import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-device-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule], // Import ReactiveFormsModule
+  // --- NEW: Import DynamicFormComponent here ---
+  imports: [CommonModule, DynamicFormComponent],
   templateUrl: './device-form.component.html',
   styleUrl: './device-form.component.scss',
 })
 export class DeviceFormComponent implements OnInit {
   // --- Data passed in from the modal context ---
-  /**
-   * The device object to edit. If null, we are in "Create" mode.
-   */
   @Input() device: any | null = null;
-  
-  /**
-   * A title passed from the modal context.
-   */
-  @Input() title: string = 'Device Form';
+  @Input() title: string = 'Device Form'; // This is still useful for the modal title
 
-  // --- Component Properties ---
-  public deviceForm: FormGroup;
-  public isEditMode: boolean = false;
+  // --- NEW: This will hold our generated config ---
+  public formConfig: any | null = null;
   public isLoading: boolean = false;
-  
-  // Hardcoded for example. In a real app, you'd fetch these.
-  public deviceTypes: any[] = [
-    { id: 1, ten: 'Máy thở' },
-    { id: 2, ten: 'Monitor' },
-    { id: 3, ten: 'Bơm tiêm điện' },
+
+  // We still need these to build the config's options
+  private deviceTypes: any[] = [
+    { key: null, value: '-- Chọn loại --' },
+    { key: 1, value: 'Máy thở' },
+    { key: 2, value: 'Monitor' },
+    { key: 3, value: 'Bơm tiêm điện' },
   ];
-  public deviceStatuses: string[] = ['Sẵn sàng', 'Đang sử dụng', 'Bảo trì'];
+  private deviceStatuses: any[] = [
+    { key: 'Sẵn sàng', value: 'Sẵn sàng' },
+    { key: 'Đang sử dụng', value: 'Đang sử dụng' },
+    { key: 'Bảo trì', value: 'Bảo trì' },
+  ];
 
   constructor(
-    private fb: FormBuilder,
     private modalService: ModalService,
     private http: HttpClient
-    // private toastService: ToastService 
+    // private toastService: ToastService
   ) {
-    // Initialize the form
-    this.deviceForm = this.fb.group({
-      Ma: ['', Validators.required],
-      Ten: ['', Validators.required],
-      Model: [''],
-      SerialNumber: [''],
-      ViTri: [''],
-      LoaiThietBi_Id: [null, Validators.required], // Matches 'deviceTypes' id
-      TrangThai_Ten: [this.deviceStatuses[0], Validators.required], // Default to 'Sẵn sàng'
-      // Read-only fields are not part of the form
-    });
+    // --- The constructor is now empty! ---
   }
 
   ngOnInit(): void {
-    this.isEditMode = !!this.device; // true if device is not null
-
-    if (this.isEditMode) {
-      // We have a device, patch the form with its data
-      this.deviceForm.patchValue(this.device);
-    }
+    // In ngOnInit, we build the config object
+    // In a real app, you might fetch deviceTypes/statuses from an API here
+    this.buildFormConfig();
   }
 
   /**
-   * Handles the form submission.
-   * Performs a POST (Create) or PUT (Update) operation.
+   * --- NEW: This method *builds the JSON config* ---
+   * It maps your old hardcoded form to the new JSON structure.
    */
-  public onSave(): void {
-    if (this.deviceForm.invalid) {
-      // Mark all fields as touched to show validation errors
-      this.deviceForm.markAllAsTouched();
-      return;
-    }
+  private buildFormConfig(): void {
+    const isEditMode = !!this.device;
+    const deviceData = this.device || {}; // Use empty object if creating
 
+    this.formConfig = {
+      // We don't need formTitle, modal service handles that.
+      entityId: isEditMode ? deviceData.Id : null,
+      saveUrl: environment.equipmentCatUrl,
+      formRows: [
+        {
+          controls: [
+            {
+              controlName: 'Ma',
+              controlType: 'text',
+              label: 'Mã thiết bị',
+              value: deviceData.Ma || '',
+              validators: { required: true },
+              validationMessages: { required: 'Mã là bắt buộc.' },
+              layout_flexGrow: 1,
+            },
+            {
+              controlName: 'Ten',
+              controlType: 'text',
+              label: 'Tên thiết bị',
+              value: deviceData.Ten || '',
+              validators: { required: true },
+              validationMessages: { required: 'Tên là bắt buộc.' },
+              layout_flexGrow: 1,
+            },
+          ],
+        },
+        {
+          controls: [
+            {
+              controlName: 'Model',
+              controlType: 'text',
+              label: 'Model',
+              value: deviceData.Model || '',
+              validators: {},
+              layout_flexGrow: 1,
+            },
+            {
+              controlName: 'SerialNumber',
+              controlType: 'text',
+              label: 'Serial Number',
+              value: deviceData.SerialNumber || '',
+              validators: {},
+              layout_flexGrow: 1,
+            },
+          ],
+        },
+        {
+          controls: [
+            {
+              controlName: 'LoaiThietBi_Id',
+              controlType: 'dropdown',
+              label: 'Loại thiết bị',
+              value: deviceData.LoaiThietBi_Id || null,
+              validators: { required: true },
+              validationMessages: { required: 'Vui lòng chọn loại thiết bị.' },
+              options: this.deviceTypes, // Use the data from this component
+              layout_flexGrow: 1,
+            },
+            {
+              controlName: 'TrangThai_Ten',
+              controlType: 'dropdown',
+              label: 'Trạng thái',
+              value: deviceData.TrangThai_Ten || 'Sẵn sàng',
+              validators: { required: true },
+              options: this.deviceStatuses, // Use the data from this component
+              layout_flexGrow: 1,
+            },
+          ],
+        },
+        {
+          controls: [
+            {
+              controlName: 'ViTri',
+              controlType: 'textarea', // Changed from text for more space
+              label: 'Vị trí',
+              value: deviceData.ViTri || '',
+              validators: {},
+              layout_flexGrow: 1,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  /**
+   * --- This is now an event handler ---
+   * It receives the form data from the dynamic component's output.
+   */
+  public onSave(formData: any): void {
     this.isLoading = true;
-    const formData = this.deviceForm.value;
-    const apiUrl = environment.equipmentCatUrl;
+    const apiUrl = this.formConfig.saveUrl;
+    const entityId = this.formConfig.entityId;
 
     let saveObservable;
 
-    if (this.isEditMode) {
+    if (entityId) {
       // --- Update (PUT) ---
-      const updateUrl = `${apiUrl}/${this.device.Id}`;
+      const updateUrl = `${apiUrl}/${entityId}`;
       saveObservable = this.http.put(updateUrl, { ...this.device, ...formData });
     } else {
       // --- Create (POST) ---
-      // We don't have NguoiTao, NgayTao, etc.
-      // The server should handle setting those fields.
       saveObservable = this.http.post(apiUrl, formData);
     }
 
@@ -112,10 +179,7 @@ export class DeviceFormComponent implements OnInit {
         next: (savedDevice) => {
           // this.toastService.showSuccess('Lưu thành công!');
           console.log('Save successful', savedDevice);
-          
-          // --- THIS IS KEY ---
-          // Close the modal and pass the *new/updated* device data back
-          this.modalService.close(savedDevice);
+          this.modalService.close(savedDevice); // Close modal on success
         },
         error: (err) => {
           // this.toastService.showError('Lưu thất bại!');
@@ -125,15 +189,10 @@ export class DeviceFormComponent implements OnInit {
   }
 
   /**
-   * Closes the modal without saving (passes no data).
+   * --- This is also an event handler ---
+   * Closes the modal without saving.
    */
   public onCancel(): void {
     this.modalService.close(); // No data means "cancel"
-  }
-
-  // --- Helper for form validation ---
-  public isInvalid(controlName: string): boolean {
-    const control = this.deviceForm.get(controlName);
-    return !!control && control.invalid && (control.dirty || control.touched);
   }
 }
