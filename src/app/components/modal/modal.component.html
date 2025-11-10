@@ -1,4 +1,4 @@
-<div class="modal-content" (click)="onModalContentClick($event)">
+<div class="modal-content" [ngClass]="getSizeClass()" (click)="onModalContentClick($event)">
   
   <div class="modal-header">
     <h2 class="modal-title">{{ options.title || 'Modal' }}</h2>

@@ -7,12 +7,14 @@ import {
   Inject, // CHANGED: Import Inject
   AfterViewInit, // CHANGED: Import AfterViewInit
 } from '@angular/core';
+import { CommonModule } from '@angular/common'; // <-- IMPORT CommonModule
 import { ModalOptions } from '../../models/modal-options.model';
 import { ModalRef, MODAL_OPTIONS } from '../../models/modal-ref.model'; // CHANGED: Import new refs
 
 @Component({
   selector: 'app-modal',
   standalone: true,
+  imports: [CommonModule], // <-- ADD CommonModule
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
@@ -61,6 +63,13 @@ export class ModalComponent implements AfterViewInit { // CHANGED: Removed OnIni
         });
       }
     }
+  }
+
+  /**
+   * --- NEW: Gets the CSS class for the modal size ---
+   */
+  public getSizeClass(): string {
+    return this.options.size ? `modal-size-${this.options.size}` : 'modal-size-md'; // Default to 'md'
   }
 
   /**

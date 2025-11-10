@@ -1,22 +1,21 @@
 /* src/app/components/dynamic-form/dynamic-form.component.scss */
 
 /* All the form styling now lives in this one reusable component.
-  This is just a copy of the styles from device-form.component.scss
 */
 
 /* --- Dynamic Row Layout --- */
 .form-row {
   display: flex;
   flex-wrap: wrap; 
-  gap: 1rem; 
-  margin-bottom: 1rem; 
+  gap: var(--spacing-md); /* 1rem */
+  margin-bottom: var(--spacing-md); /* 1rem */
 }
 
 /* --- Custom field highlighting --- */
 .form-group.field-highlight .form-control {
   /* Using your variables */
-  border-color: var(--primary-color);
-  background-color: var(--primary-color-light);
+  border-color: var(--teal-blue);
+  background-color: var(--aqua-island-light); /* Lighter theme color */
 }
 
 .dynamic-form-container {
@@ -26,7 +25,7 @@
 }
 
 .form-body {
-  padding-bottom: 1rem;
+  padding-bottom: var(--spacing-md);
 }
 
 .form-group {
@@ -34,37 +33,64 @@
   flex-direction: column;
   flex-basis: 200px;
   flex-shrink: 1;
+  flex-grow: 1; /* Allow fields to grow to fill space */
 }
 
 .form-group label {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-weight: 600; /* Bolder than medium */
+  margin-bottom: var(--spacing-xs); /* 0.25rem */
   color: var(--gray-700);
+  font-size: 0.875rem; /* 14px */
 }
 
 /* --- START OF FIX: Style for the asterisk --- */
 .required-asterisk {
   color: var(--color-danger);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   margin-left: 2px;
 }
 /* --- END OF FIX --- */
 
 .form-control {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  padding: var(--spacing-sm) 0.75rem; /* 8px 12px */
+  border-radius: var(--border-radius-md); /* 8px */
   box-sizing: border-box;
-  border: 1px solid var(--gray-300);
+  border: var(--border-width) solid var(--gray-300);
   background-color: var(--gray-50);
   color: var(--gray-800);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  
+  /* --- NEW: Ensure consistent height & text --- */
+  min-height: 38px; 
+  font-size: 0.9375rem; /* 15px, slightly smaller than base */
+  font-family: var(--font-family-sans); 
+  line-height: var(--line-height-base); // Use global variable
+}
+
+/* --- NEW: Dropdown (select) styling --- */
+select.form-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  // Using a data URI for an SVG chevron in the color var(--gray-700) which is #334155
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23334155'%3e%3cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25em 1.25em;
+  padding-right: 2.5rem; // Make space for the icon
+}
+
+/* --- NEW: Ensure textarea height is auto --- */
+textarea.form-control {
+  min-height: auto; 
 }
 
 .form-control:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-color-light);
+  border-color: var(--teal-blue); /* FIX: Use correct variable */
+  /* FIX: Use correct variable/color for shadow */
+  box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2); 
 }
 
 /* --- START OF FIX: Corrected CSS variables --- */
@@ -77,27 +103,40 @@
 }
 .invalid-feedback {
   color: var(--color-danger);
-  font-size: 0.875em;
-  margin-top: 0.25rem;
+  font-size: 0.875rem; /* Use rem not em */
+  margin-top: var(--spacing-xs); /* 0.25rem */
 }
 /* --- END OF FIX --- */
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--gray-200);
+  gap: var(--spacing-sm); /* 0.5rem */
+  padding-top: var(--spacing-md); /* 1rem */
+  border-top: var(--border-width) solid var(--gray-200);
+
+  /* --- NEW: Responsive buttons --- */
+  @media (max-width: 480px) {
+    flex-direction: column-reverse; /* Stack buttons, "Save" on bottom */
+    gap: 0.75rem; /* Add more space when stacked */
+  }
 }
 
 /* Button styling */
 .btn {
-  padding: 0.5rem 1rem;
+  padding: var(--spacing-sm) var(--spacing-md); /* 0.5rem 1rem */
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md); /* 8px */
   cursor: pointer;
-  font-weight: 600;
+  font-weight: var(--font-weight-medium); /* Use 500 */
+  font-size: 0.9375rem; /* 15px */
   transition: background-color 0.2s ease;
+
+  /* --- NEW: Responsive buttons --- */
+  @media (max-width: 480px) {
+    width: 100%; /* Make buttons full-width */
+    padding: 0.75rem 1rem; /* Taller tap target */
+  }
 }
 .btn-secondary {
   background-color: var(--gray-500);
@@ -112,7 +151,7 @@
   color: white;
 }
 .btn-primary:hover {
-  background-color: var(--primary-color-dark);
+  background-color: var(--peacock-blue); /* FIX: Use correct variable */
 }
 .btn:disabled {
   opacity: 0.65;

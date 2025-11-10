@@ -7,7 +7,9 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
-} from '@angular/core'; // <-- 1. REMOVED HostBinding
+  HostListener, // <-- 1. IMPORT HostListener
+  Renderer2, // <-- 2. IMPORT Renderer2
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavItem } from '../../models/nav-item.model';
@@ -33,16 +35,33 @@ export class SidebarComponent implements OnChanges {
   @Input() isOpen: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
 
-  // --- 2. REMOVED ALL @HostBinding BLOCKS ---
-
-  // Keep this reference to maintain DOM state
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
+  private isMobileView: boolean = false; // <-- 3. Add property
+
+  // 4. Inject Renderer2
+  constructor(private renderer: Renderer2, private el: ElementRef) {
+    this.checkIfMobile();
+  }
+
+  // 5. Add HostListener for window resize
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any): void {
+    this.checkIfMobile();
+  }
+
+  private checkIfMobile(): void {
+    // 992px is the breakpoint used in your CSS
+    this.isMobileView = window.innerWidth <= 992;
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']) {
+      // On mobile, check window size when sidebar state changes
+      this.checkIfMobile();
+      
       if (changes['isOpen'].firstChange) {
         return;
       }
@@ -62,8 +81,8 @@ export class SidebarComponent implements OnChanges {
     }
   }
 
-  // ... (rest of your component.ts file is unchanged) ...
-
+  // ... (hideAllSubmenus, restoreAccordionState, saveScrollPosition, restoreScrollPosition, onToggleSidebarClick are unchanged) ...
+  
   hideAllSubmenus(): void {
     this.navItems.forEach((item) => {
       if (item.children) {
@@ -102,7 +121,9 @@ export class SidebarComponent implements OnChanges {
     event.preventDefault();
     event.stopPropagation();
 
-    if (!this.isOpen) {
+    // On mobile, isOpen is always true (when the panel is out)
+    // On desktop, we only toggle accordion if isOpen is true
+    if (!this.isOpen && !this.isMobileView) {
       return;
     }
 
@@ -113,5 +134,16 @@ export class SidebarComponent implements OnChanges {
     }
 
     item.isOpen = this.openAccordionItems.has(item);
+  }
+
+  // --- 6. ADD NEW METHOD ---
+  /**
+   * Called when a navigation link (a tag) is clicked.
+   * If on mobile, it emits an event to close the sidebar.
+   */
+  public onNavLinkClick(): void {
+    if (this.isMobileView && this.isOpen) {
+      this.toggleSidebar.emit();
+    }
   }
 }

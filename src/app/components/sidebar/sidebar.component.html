@@ -1,5 +1,5 @@
 <aside
-  class="sidebar collapsed"
+  class="sidebar"
   [ngClass]="{ 'collapsed': !isOpen, 'open': isOpen }"
 >
   <div class="sidebar-header">
@@ -80,6 +80,7 @@
                 [routerLink]="item.link"
                 routerLinkActive="active"
                 [appTooltip]="!isOpen ? item.label : ''"
+                (click)="onNavLinkClick()" 
               >
                 <i [class]="item.icon"></i>
                 <span>{{ item.label }}</span>
@@ -111,6 +112,7 @@
                       [routerLink]="child.link"
                       routerLinkActive="active"
                       [appTooltip]="child.label"
+                      (click)="onNavLinkClick()"
                     >
                       <i [class]="child.icon"></i>
                       <span>{{ child.label }}</span>

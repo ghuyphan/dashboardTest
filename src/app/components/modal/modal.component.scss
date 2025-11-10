@@ -20,52 +20,85 @@
   // Centering
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: center; // Vertically center by default
 
   // Animation
   animation: modal-fade-in 0.2s ease-out;
+
+  /* --- NEW: Mobile positioning --- */
+  @media (max-width: 768px) { // Your app's mobile breakpoint
+    align-items: flex-start; // Align to top on mobile
+    padding: var(--spacing-lg) 0; // Add padding top/bottom
+    overflow-y: auto; // Allow backdrop to scroll if modal is huge
+    max-height: 501px;
+  }
+  @media (max-width: 480px) {
+    padding: var(--spacing-md) 0;
+  }
 }
 
 .modal-content {
   // Steal the glassmorphism style from your toast
+  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.25rem);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(15px);
   border-radius: 14px;
   box-shadow: 0 8px 30px rgba(3, 132, 143, 0.22); // Slightly larger shadow
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: var(--gray-800);
-
-  max-height: 90vh;
   display: flex;
   flex-direction: column;
 
-  /* --- RESPONSIVENESS FIX ---
-     REMOVED 'min-width: 400px'
-     REMOVED 'max-width: 90vw'
-     REMOVED 'width: auto'
-     
-     ADDED a flexible mobile-first width
-  */
-  width: 90vw;      /* Be 90% wide on mobile */
-  max-width: 600px; /* But stop growing at 600px (to match the form) */
+  /* --- RESPONSIVENESS FIX: REMOVED fixed width --- */
   box-sizing: border-box;
 
   // Animation (using fade-in to prevent lag)
   animation: modal-fade-in 0.25s ease-out;
   will-change: opacity;
+  
+  margin: auto 0; // Default margin for centering
+
+  /* --- NEW: Mobile height/margin behavior --- */
+  @media (max-width: 768px) {
+  max-height: 60vh; // Default max height
+    margin: 0; // Remove auto margin
+  }
+
+  /* --- NEW: Size variants --- */
+
+  /* Small (for confirmations) */
+  &.modal-size-sm {
+    width: clamp(300px, 80vw, 400px);
+  }
+
+  /* Medium (default for forms) */
+  &.modal-size-md {
+    width: clamp(320px, 90vw, 600px);
+  }
+
+  /* Large (future use) */
+  &.modal-size-lg {
+    width: clamp(320px, 90vw, 800px);
+  }
+
+  /* Extra Large (future use) */
+  &.modal-size-xl {
+    width: clamp(320px, 90vw, 1140px);
+  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  // border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  /* --- FIX: Added responsive margin-bottom --- */
+  margin-bottom: clamp(0.5rem, 2vw, 0.75rem);
   flex-shrink: 0; // Prevent header from shrinking
 }
 
 .modal-title {
-  font-size: 1.25rem;
+  /* --- FIX: Reduced font size --- */
+  font-size: clamp(1.125rem, 4vw, 1.25rem); // Was 1.25rem
   font-weight: 600;
   margin: 0;
 }
@@ -89,13 +122,11 @@
 }
 
 .modal-body {
-  padding: 20px;
+  /* --- FIX: Reduced padding --- */
+  // padding: clamp(0.75rem, 3vw, 1.25rem) clamp(1rem, 3vw, 1.25rem);
   overflow-y: auto; // Allow body to scroll if content is too tall
 
-  /* CHANGED: Remove default padding for mobile */
-  @media (max-width: 600px) {
-    padding: 1rem 0.5rem;
-  }
+  /* REMOVED: Media query for padding, clamp() handles it */
 }
 
 // --- Animations ---

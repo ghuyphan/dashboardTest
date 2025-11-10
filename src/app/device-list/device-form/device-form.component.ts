@@ -99,6 +99,7 @@ export class DeviceFormComponent implements OnInit {
       .open(ConfirmationModalComponent, {
         title: 'Thay đổi chưa lưu',
         disableBackdropClose: true, // Prevent closing this one
+        size: 'sm', // <-- FIX: Specify the small size
         context: {
           message:
             'Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn hủy bỏ chúng không?',
