@@ -8,7 +8,7 @@ import {
   ReusableTableComponent,
   GridColumn,
   SortChangedEvent,
-} from '../components/reusable-table/reusable-table.component'; 
+} from '../components/reusable-table/reusable-table.component';
 
 import { FooterActionService } from '../services/footer-action.service';
 import { FooterAction } from '../models/footer-action.model';
@@ -31,22 +31,44 @@ import { DeviceFormComponent } from './device-form/device-form.component';
 export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   // --- Grid Properties (Unchanged) ---
   public deviceColumns: GridColumn[] = [
+    // Basic Information
     { key: 'Id', label: 'ID', sortable: true },
-    { key: 'Ma', label: 'Mã', sortable: true },
-    { key: 'Ten', label: 'Tên', sortable: true },
-    { key: 'MaLoaiThietBi', label: 'Mã Thiết Bị', sortable: true },
-    { key: 'TenLoaiThietBi', label: 'Tên Thiết Bị', sortable: true },
-    { key: 'DeviceName', label: 'Device Name', sortable: true },
+    { key: 'Ma', label: 'Mã Thiết Bị', sortable: true },
+    { key: 'Ten', label: 'Tên Thiết Bị', sortable: true },
+    { key: 'DeviceName', label: 'Tên Máy', sortable: true },
     { key: 'Model', label: 'Model', sortable: true },
-    { key: 'SerialNumber', label: 'Serial Number', sortable: true },
-    { key: 'ViTri', label: 'Vị Trí', sortable: true },
+    { key: 'SerialNumber', label: 'Số Serial', sortable: true },
+
+    // Device Category Information
+    // { key: 'MaLoaiThietBi', label: 'Mã Loại TB', sortable: true },
+    { key: 'TenLoaiThietBi', label: 'Loại Thiết Bị', sortable: true },
+    // { key: 'LoaiThietBi_Id', label: 'ID Loại TB', sortable: true },
+
+    // Status Information
     { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true },
-    { key: 'LoaiThietBi_Id', label: 'ID Loại TB', sortable: true },
+    // { key: 'TrangThai_Id', label: 'ID Trạng Thái', sortable: true },
+
+    // Location & Description
+    { key: 'ViTri', label: 'Vị Trí', sortable: true },
+    { key: 'MoTa', label: 'Mô Tả', sortable: true },
+
+    // Purchase Information
+    { key: 'NgayMua', label: 'Ngày Mua', sortable: true },
+    { key: 'GiaMua', label: 'Giá Mua', sortable: true },
+    { key: 'NgayHetHanBH', label: 'Ngày Hết Hạn BH', sortable: true },
+
+    // Creator Information
     { key: 'NguoiTao', label: 'Người Tạo', sortable: true },
+    // { key: 'NguoiTao_Id', label: 'ID Người Tạo', sortable: true },
+
+    // Creation Date
     { key: 'NgayTao', label: 'Ngày Tạo', sortable: true },
+
+    // System Fields
+    { key: 'HL', label: 'HL', sortable: true }
   ];
 
-  public allDeviceData: any[] = []; 
+  public allDeviceData: any[] = [];
   public selectedDevice: any | null = null;
   public isLoading: boolean = false;
   private deviceSub: Subscription | null = null;
@@ -59,7 +81,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     private searchService: SearchService,
     // +++ 3. INJECT THE MODAL SERVICE +++
     private modalService: ModalService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.updateFooterActions();
@@ -149,13 +171,13 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // --- +++ ACTION METHODS (MODIFIED) +++ ---
-  
+
   /**
    * Opens the modal in "Create" mode.
    */
   private onCreate(): void {
     console.log('Create action triggered');
-    
+
     // Use the ModalService to open the form
     this.modalService
       .open(DeviceFormComponent, {
