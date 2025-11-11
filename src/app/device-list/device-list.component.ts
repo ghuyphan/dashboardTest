@@ -1,8 +1,7 @@
-// CHANGED: Imported AfterViewInit
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Subscription, finalize } from 'rxjs';
 
 import {
   ReusableTableComponent,
@@ -14,60 +13,21 @@ import { FooterActionService } from '../services/footer-action.service';
 import { FooterAction } from '../models/footer-action.model';
 import { SearchService } from '../services/search.service';
 import { environment } from '../../environments/environment.development';
-
-// +++ 1. IMPORT THE MODAL SERVICE AND FORM COMPONENT +++
 import { ModalService } from '../services/modal.service';
 import { DeviceFormComponent } from './device-form/device-form.component';
+import { ToastService } from '../services/toast.service';
+import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  // +++ 2. IMPORT THE FORM COMPONENT +++
-  // (It's standalone, so it just needs to be in the imports array)
   imports: [CommonModule, ReusableTableComponent, DeviceFormComponent],
   templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
 })
 export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
-  // --- Grid Properties (Unchanged) ---
-  public deviceColumns: GridColumn[] = [
-    // Basic Information
-    { key: 'Id', label: 'ID', sortable: true },
-    { key: 'Ma', label: 'Mã Thiết Bị', sortable: true },
-    { key: 'Ten', label: 'Tên Thiết Bị', sortable: true },
-    { key: 'DeviceName', label: 'Tên Máy', sortable: true },
-    { key: 'Model', label: 'Model', sortable: true },
-    { key: 'SerialNumber', label: 'Số Serial', sortable: true },
-
-    // Device Category Information
-    // { key: 'MaLoaiThietBi', label: 'Mã Loại TB', sortable: true },
-    { key: 'TenLoaiThietBi', label: 'Loại Thiết Bị', sortable: true },
-    // { key: 'LoaiThietBi_Id', label: 'ID Loại TB', sortable: true },
-
-    // Status Information
-    { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true },
-    // { key: 'TrangThai_Id', label: 'ID Trạng Thái', sortable: true },
-
-    // Location & Description
-    { key: 'ViTri', label: 'Vị Trí', sortable: true },
-    { key: 'MoTa', label: 'Mô Tả', sortable: true },
-
-    // Purchase Information
-    { key: 'NgayMua', label: 'Ngày Mua', sortable: true },
-    { key: 'GiaMua', label: 'Giá Mua', sortable: true },
-    { key: 'NgayHetHanBH', label: 'Ngày Hết Hạn BH', sortable: true },
-
-    // Creator Information
-    { key: 'NguoiTao', label: 'Người Tạo', sortable: true },
-    // { key: 'NguoiTao_Id', label: 'ID Người Tạo', sortable: true },
-
-    // Creation Date
-    { key: 'NgayTao', label: 'Ngày Tạo', sortable: true },
-
-    // System Fields
-    { key: 'HL', label: 'HL', sortable: true }
-  ];
-
+  // --- Grid Properties ---
+  public deviceColumns: GridColumn[] = [];
   public allDeviceData: any[] = [];
   public selectedDevice: any | null = null;
   public isLoading: boolean = false;
@@ -79,11 +39,23 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     private footerService: FooterActionService,
     private http: HttpClient,
     private searchService: SearchService,
-    // +++ 3. INJECT THE MODAL SERVICE +++
-    private modalService: ModalService
-  ) { }
+    private modalService: ModalService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
+    this.deviceColumns = [
+      { key: 'Ma', label: 'Mã Thiết Bị', sortable: true },
+      { key: 'Ten', label: 'Tên Thiết Bị', sortable: true },
+      { key: 'TenLoaiThietBi', label: 'Loại Thiết Bị', sortable: true },
+      { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true },
+      { key: 'ViTri', label: 'Vị Trí', sortable: true },
+      { key: 'Model', label: 'Model', sortable: true },
+      { key: 'NgayMua', label: 'Ngày Mua', sortable: true },
+      { key: 'GiaMua', label: 'Giá Mua', sortable: true },
+      { key: 'actions', label: '', sortable: false, width: '40px' } 
+    ];
+
     this.updateFooterActions();
     this.searchSub = this.searchService.searchTerm$.subscribe((term) => {
       this.currentSearchTerm = term;
@@ -121,19 +93,24 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoading = true;
     const url = environment.equipmentCatUrl;
 
-    this.deviceSub = this.http.get<any[]>(url).subscribe({
+    this.deviceSub = this.http.get<any[]>(url)
+    .pipe(
+      finalize(() => { this.isLoading = false; })
+    )
+    .subscribe({
       next: (data) => {
         const formattedData = data.map((device) => ({
           ...device,
           NgayTao: this.formatDate(device.NgayTao),
+          NgayMua: this.formatDate(device.NgayMua),
+          NgayHetHanBH: this.formatDate(device.NgayHetHanBH)
         }));
         this.allDeviceData = formattedData;
-        this.isLoading = false;
         console.log('Devices loaded and formatted:', formattedData);
       },
       error: (err) => {
         console.error('Failed to load devices:', err);
-        this.isLoading = false;
+        this.toastService.showError('Không thể tải danh sách thiết bị.');
       },
     });
   }
@@ -143,63 +120,77 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public onDeviceSelected(device: any): void {
-    // --- THIS IS THE FIX ---
-    // This now correctly handles toggling the selection off
     this.selectedDevice = this.selectedDevice === device ? null : device;
-    
     console.log('Selected device:', this.selectedDevice);
     this.updateFooterActions();
   }
 
+  /**
+   * --- UPDATED ---
+   * This now includes the "Xóa" (Delete) button definition.
+   */
   private updateFooterActions(): void {
     const isRowSelected = this.selectedDevice !== null;
     const actions: FooterAction[] = [
       {
         label: 'Tạo mới',
         icon: 'fas fa-plus',
-        action: () => this.onCreate(), // <-- Changed to call our new method
+        action: () => this.onCreate(),
         permission: 'QLThietBi.DMThietBi.RCREATE',
         className: 'btn-primary',
       },
       {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
-        action: () => this.onModify(), // <-- Changed to call our new method
+        action: () => this.onModify(this.selectedDevice), 
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
       },
+      // --- THIS IS THE NEWLY ADDED BUTTON ---
+      {
+        label: 'Xóa',
+        icon: 'fas fa-trash-alt',
+        action: () => this.onDelete(this.selectedDevice),
+        permission: 'equipment.catalog.delete', // Assuming this permission
+        className: 'btn-danger',
+        disabled: !isRowSelected,
+      }
+      // --- END ADDITION ---
     ];
     this.footerService.setActions(actions);
   }
 
-  // --- +++ ACTION METHODS (MODIFIED) +++ ---
+  /**
+   * Handles click events from the ... menu on each row.
+   */
+  public handleRowAction(event: { action: string, data: any }): void {
+    switch (event.action) {
+      case 'edit':
+        this.onModify(event.data);
+        break;
+      case 'delete':
+        this.onDelete(event.data);
+        break;
+    }
+  }
 
   /**
    * Opens the modal in "Create" mode.
    */
-  private onCreate(): void {
+  public onCreate(): void {
     console.log('Create action triggered');
 
-    // Use the ModalService to open the form
     this.modalService
       .open(DeviceFormComponent, {
-        title: 'Tạo mới thiết bị', // This title is used by app-modal
-        context: {
-          device: null, // Pass null to indicate "Create" mode
-          title: 'Tạo mới Thiết bị' // The form can use this if it wants
-        },
+        title: 'Tạo mới thiết bị',
+        context: { device: null, title: 'Tạo mới Thiết bị' },
       })
       .subscribe((result) => {
-        // This code runs *after* the modal is closed
         if (result) {
-          // 'result' is the new device object passed from modalService.close(savedDevice)
           console.log('Modal closed with new device:', result);
-          // For simplicity, just reload the whole list.
-          // In a real app, you might just add the new row to allDeviceData.
-          this.loadDevices();
+          this.loadDevices(); // Reload the list
         } else {
-          // Modal was cancelled
           console.log('Create modal was cancelled');
         }
       });
@@ -208,30 +199,69 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Opens the modal in "Edit" mode.
    */
-  private onModify(): void {
-    if (!this.selectedDevice) return;
-    console.log('Modify action triggered for:', this.selectedDevice.Ten);
+  public onModify(device: any): void {
+    if (!device) return;
+    console.log('Modify action triggered for:', device.Ten);
 
-    // Use the ModalService to open the form
     this.modalService
       .open(DeviceFormComponent, {
-        title: `Sửa Thiết bị: ${this.selectedDevice.Ten}`,
-        context: {
-          device: this.selectedDevice, // Pass the selected device
-          title: 'Sửa Thiết bị'
-        },
+        title: `Sửa Thiết bị: ${device.Ten}`,
+        context: { device: device, title: 'Sửa Thiết bị' },
       })
       .subscribe((result) => {
-        // This code runs *after* the modal is closed
         if (result) {
-          // 'result' is the updated device object
           console.log('Modal closed with updated device:', result);
-          // Reload the list to see changes
-          this.loadDevices();
+          this.loadDevices(); // Reload the list
         } else {
-          // Modal was cancelled
           console.log('Modify modal was cancelled');
         }
       });
+  }
+
+  /**
+   * Opens a confirmation modal and deletes the device if confirmed.
+   */
+  public onDelete(device: any): void {
+    if (!device) return;
+    console.log('Delete action triggered for:', device.Ten);
+
+    // 1. Open confirmation modal
+    this.modalService.open(ConfirmationModalComponent, {
+      title: 'Xác nhận Xóa',
+      size: 'sm',
+      context: {
+        message: `Bạn có chắc chắn muốn xóa thiết bị "${device.Ten}" (Mã: ${device.Ma}) không? Hành động này không thể hoàn tác.`,
+        confirmText: 'Xác nhận Xóa',
+        cancelText: 'Hủy bỏ'
+      }
+    }).subscribe(confirmed => {
+      // 2. If user confirmed, proceed with deletion
+      if (confirmed) {
+        this.isLoading = true; // Show table spinner
+        const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
+
+        this.http.delete(deleteUrl)
+          .pipe(finalize(() => { 
+            this.isLoading = false; 
+            // After deleting, clear selection and update footer
+            this.selectedDevice = null;
+            this.updateFooterActions();
+          }))
+          .subscribe({
+            next: (response: any) => {
+              const successMessage = response?.TenKetQua || 'Xóa thiết bị thành công!';
+              this.toastService.showSuccess(successMessage);
+              this.loadDevices(); // Refresh the list
+            },
+            error: (err: HttpErrorResponse) => {
+              const errorMessage = err.error?.TenKetQua || err.error?.ErrorMessage || 'Xóa thất bại. Đã có lỗi xảy ra.';
+              this.toastService.showError(errorMessage, 0);
+              console.error('Failed to delete device:', err);
+            }
+          });
+      } else {
+        console.log('Delete modal was cancelled');
+      }
+    });
   }
 }

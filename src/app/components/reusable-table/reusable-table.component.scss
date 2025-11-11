@@ -83,7 +83,71 @@
   display: block;
   max-width: 100%;
   font-weight: inherit;
+  
+  /* --- ADDED: Make cell-content a flex container --- */
+  display: flex;
+  align-items: center;
 }
+
+/* === NEW: STATUS CHIP STYLES === */
+.status-chip {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid currentColor;
+  text-transform: capitalize;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.status-ready { 
+  color: var(--color-success);
+  background-color: #e8f5e9; 
+}
+.status-repair { 
+  color: var(--color-warning);
+  background-color: #fffbeb;
+}
+.status-broken { 
+  color: var(--color-danger);
+  background-color: #fde8e8;
+}
+.status-default {
+  color: var(--gray-600);
+  background-color: var(--gray-100);
+}
+/* === END STATUS CHIP STYLES === */
+
+
+/* === NEW: ROW ACTION BUTTON STYLES === */
+.action-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  color: var(--gray-500);
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  .mat-icon {
+    font-size: 18px;
+    line-height: 1;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background-color: var(--gray-200);
+    color: var(--gray-800);
+  }
+}
+/* === END ROW ACTION BUTTON STYLES === */
+
 
 /* ============================================
     Material Component Overrides
@@ -157,6 +221,12 @@
     font-size: 0.8125rem !important; /* Slightly smaller */
     height: 36px !important; /* Consistent row height */
     
+    /* --- NEW: Style the action cell --- */
+    &.mat-column-actions {
+      padding: 0 4px !important;
+      width: 40px; // Fixed width for action button
+    }
+
     &:first-of-type {
       padding-left: var(--spacing-md) !important;
     }

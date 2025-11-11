@@ -11,7 +11,7 @@ import {
   HostListener,
   ElementRef
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common'; // Provides CurrencyPipe
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import {
@@ -22,6 +22,7 @@ import {
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TooltipDirective } from '../../directives/tooltip.directive';
+import { MatMenuModule } from '@angular/material/menu'; // <-- IMPORTED
 
 @Injectable()
 export class VietnamesePaginatorIntl extends MatPaginatorIntl {
@@ -61,13 +62,14 @@ export interface SortChangedEvent {
   selector: 'app-reusable-table',
   standalone: true,
   imports: [
-    CommonModule,
+    CommonModule, // <-- Provides CurrencyPipe
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatIconModule,
     TooltipDirective,
+    MatMenuModule, // <-- ADDED
   ],
   templateUrl: './reusable-table.component.html',
   styleUrls: ['./reusable-table.component.scss'],
@@ -84,15 +86,14 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   @Input() emptyStateText: string = 'Không có dữ liệu';
   @Input() noResultsText: string = 'Không tìm thấy kết quả phù hợp';
   
-  // --- CHANGED: Added trackByField input ---
-  // Defaults to 'Id', which is common. 
-  // You can set this to another unique key via [trackByField]="'someOtherKey'"
   @Input() trackByField: string = 'Id';
 
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
   @Output() pageChanged = new EventEmitter<any>();
   @Output() searchCleared = new EventEmitter<void>();
+  // --- ADDED: Output for row actions ---
+  @Output() rowAction = new EventEmitter<{ action: string, data: any }>();
 
   public dataSource = new MatTableDataSource<any>();
   public displayedColumns: string[] = [];
@@ -104,7 +105,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
 
-  // Initialize sort state to prevent undefined errors
   public sortState: { active: string; direction: SortDirection } = {
     active: '',
     direction: ''
@@ -117,7 +117,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     this.dataSource.paginator = this.paginator;
     this.setupColumnWidths();
     
-    // Initialize sort state from MatSort
     if (this.sort) {
       this.sortState = {
         active: this.sort.active,
@@ -135,7 +134,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       this.dataSource.data = this.data;
       this.selectedRow = null;
       
-      // Auto-scroll to top when data changes
       if (this.tableContainer?.nativeElement) {
         this.tableContainer.nativeElement.scrollTop = 0;
       }
@@ -156,7 +154,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   private handleLoadingState() {
     if (this.isLoading) {
-      // Show loading spinner only after 200ms to avoid flicker
       this.loadingTimer = setTimeout(() => {
         this.isLoadingWithDelay = true;
       }, 200);
@@ -184,7 +181,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   }
 
   public onMatSortChange(sort: Sort): void {
-    // Update local sort state
     this.sortState = {
       active: sort.active,
       direction: sort.direction as SortDirection
@@ -199,7 +195,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   public onPageChange(event: any): void {
     this.pageChanged.emit(event);
     
-    // Scroll to top when page changes
     if (this.tableContainer?.nativeElement) {
       this.tableContainer.nativeElement.scrollTop = 0;
     }
@@ -210,7 +205,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     this.dataSource.filter = '';
     this.searchCleared.emit();
     
-    // Reset to first page after clearing search
     if (this.paginator) {
       this.paginator.firstPage();
     }
@@ -237,7 +231,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     if (rows[newIndex]) {
       this.onRowClick(rows[newIndex]);
       
-      // Scroll to selected row
       setTimeout(() => {
         const rowElements = document.querySelectorAll('.clickable-row');
         if (rowElements[newIndex]) {
@@ -256,14 +249,25 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       : this.emptyStateText;
   }
 
-  // --- CHANGED: Added trackBy function ---
-  /**
-   * TrackBy function for the table.
-   * This improves performance by telling Angular how to identify
-   * unique rows, preventing unnecessary re-rendering.
-   * Using an arrow function preserves the 'this' context.
-   */
   public trackByFn = (index: number, item: any): any => {
     return item[this.trackByField] || index;
+  }
+
+  // --- ADDED: Helper for status chips ---
+  public getStatusClass(status: string): string {
+    if (!status) return 'status-default';
+    const lowerStatus = status.toLowerCase();
+
+    if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
+    if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa')) return 'status-repair';
+    if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
+    
+    return 'status-default';
+  }
+
+  // --- ADDED: Helper for row action menu ---
+  public onRowAction(action: string, element: any, event: MouseEvent): void {
+    event.stopPropagation(); // Prevent row click
+    this.rowAction.emit({ action, data: element });
   }
 }

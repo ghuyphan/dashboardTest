@@ -31,12 +31,41 @@
         </th>
         
         <td mat-cell *matCellDef="let element" class="compact-cell">
-          <div class="cell-content" [appTooltip]="element[col.key]">
-            {{ element[col.key] }}
+          <div class="cell-content" [appTooltip]="element[col.key]" [ngSwitch]="col.key">
+
+            <ng-container *ngSwitchCase="'actions'">
+              <button class="action-menu-btn" [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
+                <mat-icon>more_horiz</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="onRowAction('edit', element, $event)">
+                  <mat-icon>edit</mat-icon>
+                  <span>Sửa</span>
+                </button>
+                <button mat-menu-item (click)="onRowAction('delete', element, $event)" color="warn">
+                  <mat-icon>delete</mat-icon>
+                  <span>Xóa</span>
+                </button>
+              </mat-menu>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'TrangThai_Ten'">
+              <span class="status-chip" [ngClass]="getStatusClass(element.TrangThai_Ten)">
+                {{ element.TrangThai_Ten || 'N/A' }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'GiaMua'">
+              {{ element[col.key] | currency:'VND':'symbol':'1.0-0':'vi' }}
+            </ng-container>
+
+            <ng-container *ngSwitchDefault>
+              {{ element[col.key] }}
+            </ng-container>
+            
           </div>
         </td>
-
-      </ng-container>
+        </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="compact-header-row"></tr>
       
