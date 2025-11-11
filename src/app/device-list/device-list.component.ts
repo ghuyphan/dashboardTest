@@ -17,6 +17,8 @@ import { ModalService } from '../services/modal.service';
 import { DeviceFormComponent } from './device-form/device-form.component';
 import { ToastService } from '../services/toast.service';
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
+// --- ADDED: Import the Device model ---
+import { Device } from '../models/device.model';
 
 @Component({
   selector: 'app-device-list',
@@ -28,8 +30,10 @@ import { ConfirmationModalComponent } from '../components/confirmation-modal/con
 export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   // --- Grid Properties ---
   public deviceColumns: GridColumn[] = [];
-  public allDeviceData: any[] = [];
-  public selectedDevice: any | null = null;
+  // --- MODIFIED: Use Device[] type ---
+  public allDeviceData: Device[] = [];
+  // --- MODIFIED: Use Device type ---
+  public selectedDevice: Device | null = null;
   public isLoading: boolean = false;
   private deviceSub: Subscription | null = null;
   private searchSub: Subscription | null = null;
@@ -41,19 +45,21 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     private searchService: SearchService,
     private modalService: ModalService,
     private toastService: ToastService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.deviceColumns = [
       { key: 'Ma', label: 'Mã Thiết Bị', sortable: true },
       { key: 'Ten', label: 'Tên Thiết Bị', sortable: true },
+      // Note: The key 'TenLoaiThietBi' is not on the Device model, 
+      // but the API GET request must be returning it. We'll cast to Device.
       { key: 'TenLoaiThietBi', label: 'Loại Thiết Bị', sortable: true },
       { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true },
       { key: 'ViTri', label: 'Vị Trí', sortable: true },
       { key: 'Model', label: 'Model', sortable: true },
       { key: 'NgayMua', label: 'Ngày Mua', sortable: true },
       { key: 'GiaMua', label: 'Giá Mua', sortable: true },
-      { key: 'actions', label: '', sortable: false, width: '40px' }
+      { key: 'actions', label: '', sortable: false, width: '40px' },
     ];
 
     this.updateFooterActions();
@@ -74,6 +80,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.searchSub?.unsubscribe();
   }
 
+  // --- MODIFIED: This function remains the same, but its usage is important ---
   private formatDate(dateString: string): string {
     if (!dateString) return '';
     try {
@@ -93,18 +100,24 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoading = true;
     const url = environment.equipmentCatUrl;
 
-    this.deviceSub = this.http.get<any[]>(url)
-      .pipe(
-        finalize(() => { this.isLoading = false; })
-      )
+    // --- MODIFIED: Still get<any[]> as API response may not perfectly match model (e.g., NgayTao)
+    this.deviceSub = this.http
+      .get<any[]>(url)
+      .pipe(finalize(() => {
+        this.isLoading = false;
+      }))
       .subscribe({
         next: (data) => {
-          const formattedData = data.map((device) => ({
+          // --- MODIFIED: Map and cast to Device[] ---
+          const formattedData: Device[] = data.map((device) => ({
             ...device,
+            // Keep your date formatting. This assumes API returns NgayTao,
+            // even if not on the Device model, it will be on the object.
             NgayTao: this.formatDate(device.NgayTao),
             NgayMua: this.formatDate(device.NgayMua),
-            NgayHetHanBH: this.formatDate(device.NgayHetHanBH)
-          }));
+            NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
+          })) as Device[]; // Cast to Device[]
+          
           this.allDeviceData = formattedData;
           console.log('Devices loaded and formatted:', formattedData);
         },
@@ -119,7 +132,8 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log('Sort Changed (Handled by Table):', sortEvent);
   }
 
-  public onDeviceSelected(device: any): void {
+  // --- MODIFIED: Use Device type ---
+  public onDeviceSelected(device: Device): void {
     this.selectedDevice = this.selectedDevice === device ? null : device;
     console.log('Selected device:', this.selectedDevice);
     this.updateFooterActions();
@@ -142,29 +156,28 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
-        action: () => this.onModify(this.selectedDevice),
+        action: () => this.onModify(this.selectedDevice!), // Pass non-null
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
       },
-      // --- THIS IS THE NEWLY ADDED BUTTON ---
       {
         label: 'Xóa',
         icon: 'fas fa-trash-alt',
-        action: () => this.onDelete(this.selectedDevice),
+        action: () => this.onDelete(this.selectedDevice!), // Pass non-null
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE', // Assuming this permission
         className: 'btn-danger',
         disabled: !isRowSelected,
-      }
-      // --- END ADDITION ---
+      },
     ];
     this.footerService.setActions(actions);
   }
 
   /**
    * Handles click events from the ... menu on each row.
+   * --- MODIFIED: Use Device type ---
    */
-  public handleRowAction(event: { action: string, data: any }): void {
+  public handleRowAction(event: { action: string; data: Device }): void {
     switch (event.action) {
       case 'edit':
         this.onModify(event.data);
@@ -198,44 +211,56 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * Opens the modal in "Edit" mode.
+   * --- MODIFIED: Use Device type ---
    */
-
-  public onModify(device: any): void {
+  public onModify(device: Device): void {
     if (!device?.Id) return;
     this.isLoading = true;
     const fetchUrl = `${environment.equipmentCatUrl}/${device.Id}`;
 
-    this.http.get<any[]>(fetchUrl) // <-- FIX 1: Expect array response
-      .pipe(finalize(() => this.isLoading = false))
+    // API response for a single item is still an array [any]
+    this.http
+      .get<any[]>(fetchUrl)
+      .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (response) => {
-          // FIX 2: Handle array response and map properties
-          const apiDevice = response[0]; // Take first item from array
+          const apiDevice = response[0]; 
 
-          // FIX 3: Map API properties to form expectations
-          const mappedDevice = {
+          // --- MODIFIED: Map the API response to the Device model for the form ---
+          const mappedDevice: Device = {
             ...apiDevice,
-            LoaiThietBi_Id: apiDevice.CategoryID,    // API sends CategoryID
-            TrangThai_Id: apiDevice.TrangThai,       // API sends TrangThai
-            NgayMua: apiDevice.NgayMua || '',        // Handle nulls
-            NgayHetHanBH: apiDevice.NgayHetHanBH || ''
+            // Map properties that are different in the GET /id response
+            LoaiThietBi_Id: apiDevice.CategoryID,
+            TrangThai_Id: apiDevice.TrangThai,
+            // Ensure nulls are handled
+            NgayMua: apiDevice.NgayMua || null,
+            GiaMua: apiDevice.GiaMua || null,
+            NgayHetHanBH: apiDevice.NgayHetHanBH || null,
+            SerialNumber: apiDevice.SerialNumber || null,
+            Model: apiDevice.Model || null,
+            ViTri: apiDevice.ViTri || null,
+            MoTa: apiDevice.MoTa || null,
+            DeviceName: apiDevice.DeviceName || null,
           };
 
           console.log('Mapped device for edit:', mappedDevice);
-          this.openEditModal(mappedDevice); // Pass mapped device
+          this.openEditModal(mappedDevice); // Pass mapped Device
         },
         error: (err) => {
           console.error('Failed to fetch device for edit:', err);
-          this.toastService.showError('Không thể tải thông tin thiết bị để chỉnh sửa.');
-        }
+          this.toastService.showError(
+            'Không thể tải thông tin thiết bị để chỉnh sửa.'
+          );
+        },
       });
   }
 
-  private openEditModal(device: any): void {
+  // --- MODIFIED: Use Device type ---
+  private openEditModal(device: Device): void {
     this.modalService
       .open(DeviceFormComponent, {
         title: `Sửa Thiết bị: ${device.Ten}`,
-        context: { device, title: 'Sửa Thiết bị' }, // <-- Now passes FRESH device
+        context: { device, title: 'Sửa Thiết bị' }, // Pass Device to modal
       })
       .subscribe((result) => {
         if (result) {
@@ -249,48 +274,58 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * Opens a confirmation modal and deletes the device if confirmed.
+   * --- MODIFIED: Use Device type ---
    */
-  public onDelete(device: any): void {
+  public onDelete(device: Device): void {
     if (!device) return;
     console.log('Delete action triggered for:', device.Ten);
 
     // 1. Open confirmation modal
-    this.modalService.open(ConfirmationModalComponent, {
-      title: 'Xác nhận Xóa',
-      size: 'sm',
-      context: {
-        message: `Bạn có chắc chắn muốn xóa thiết bị "${device.Ten}" (Mã: ${device.Ma}) không? Hành động này không thể hoàn tác.`,
-        confirmText: 'Xác nhận Xóa',
-        cancelText: 'Hủy bỏ'
-      }
-    }).subscribe(confirmed => {
-      // 2. If user confirmed, proceed with deletion
-      if (confirmed) {
-        this.isLoading = true; // Show table spinner
-        const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
+    this.modalService
+      .open(ConfirmationModalComponent, {
+        title: 'Xác nhận Xóa',
+        size: 'sm',
+        context: {
+          message: `Bạn có chắc chắn muốn xóa thiết bị "${device.Ten}" (Mã: ${device.Ma}) không? Hành động này không thể hoàn tác.`,
+          confirmText: 'Xác nhận Xóa',
+          cancelText: 'Hủy bỏ',
+        },
+      })
+      .subscribe((confirmed) => {
+        // 2. If user confirmed, proceed with deletion
+        if (confirmed) {
+          this.isLoading = true; // Show table spinner
+          const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
 
-        this.http.delete(deleteUrl)
-          .pipe(finalize(() => {
-            this.isLoading = false;
-            // After deleting, clear selection and update footer
-            this.selectedDevice = null;
-            this.updateFooterActions();
-          }))
-          .subscribe({
-            next: (response: any) => {
-              const successMessage = response?.TenKetQua || 'Xóa thiết bị thành công!';
-              this.toastService.showSuccess(successMessage);
-              this.loadDevices(); // Refresh the list
-            },
-            error: (err: HttpErrorResponse) => {
-              const errorMessage = err.error?.TenKetQua || err.error?.ErrorMessage || 'Xóa thất bại. Đã có lỗi xảy ra.';
-              this.toastService.showError(errorMessage, 0);
-              console.error('Failed to delete device:', err);
-            }
-          });
-      } else {
-        console.log('Delete modal was cancelled');
-      }
-    });
+          this.http
+            .delete(deleteUrl)
+            .pipe(
+              finalize(() => {
+                this.isLoading = false;
+                // After deleting, clear selection and update footer
+                this.selectedDevice = null;
+                this.updateFooterActions();
+              })
+            )
+            .subscribe({
+              next: (response: any) => {
+                const successMessage =
+                  response?.TenKetQua || 'Xóa thiết bị thành công!';
+                this.toastService.showSuccess(successMessage);
+                this.loadDevices(); // Refresh the list
+              },
+              error: (err: HttpErrorResponse) => {
+                const errorMessage =
+                  err.error?.TenKetQua ||
+                  err.error?.ErrorMessage ||
+                  'Xóa thất bại. Đã có lỗi xảy ra.';
+                this.toastService.showError(errorMessage, 0);
+                console.error('Failed to delete device:', err);
+              },
+            });
+        } else {
+          console.log('Delete modal was cancelled');
+        }
+      });
   }
 }

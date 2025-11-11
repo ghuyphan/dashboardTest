@@ -10,10 +10,13 @@ import { environment } from '../../../environments/environment.development';
 import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
 import { ModalRef } from '../../models/modal-ref.model';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
-import { DropdownDataService, DropdownOption } from '../../services/dropdown-data.service';
-// --- 1. IMPORT AuthService ---
+import {
+  DropdownDataService,
+  DropdownOption,
+} from '../../services/dropdown-data.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
+import { Device } from '../../models/device.model';
 
 @Component({
   selector: 'app-device-form',
@@ -23,7 +26,7 @@ import { ToastService } from '../../services/toast.service';
   styleUrl: './device-form.component.scss',
 })
 export class DeviceFormComponent implements OnInit {
-  @Input() device: any | null = null;
+  @Input() device: Device | null = null;
   @Input() title: string = 'Biểu Mẫu Thiết Bị';
 
   public modalRef?: ModalRef;
@@ -33,8 +36,8 @@ export class DeviceFormComponent implements OnInit {
 
   public formConfig: any | null = null;
 
-  public isFormLoading: boolean = true; // Renamed from isLoading
-  public isSaving: boolean = false; // New state for submit
+  public isFormLoading: boolean = true;
+  public isSaving: boolean = false;
 
   constructor(
     private modalService: ModalService,
@@ -42,25 +45,25 @@ export class DeviceFormComponent implements OnInit {
     private dropdownService: DropdownDataService,
     private authService: AuthService,
     private toastService: ToastService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.isFormLoading = true;
     forkJoin([
       this.dropdownService.getDeviceTypes(),
-      this.dropdownService.getDeviceStatuses()
-    ]).pipe(
-      finalize(() => this.isFormLoading = false)
-    ).subscribe(
-      ([deviceTypes, deviceStatuses]) => {
-        this.buildFormConfig(deviceTypes, deviceStatuses);
-      },
-      (error) => {
-        console.error('Failed to load form dropdown data', error);
-        this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
-        this.modalRef?.close();
-      }
-    );
+      this.dropdownService.getDeviceStatuses(),
+    ])
+      .pipe(finalize(() => (this.isFormLoading = false)))
+      .subscribe(
+        ([deviceTypes, deviceStatuses]) => {
+          this.buildFormConfig(deviceTypes, deviceStatuses);
+        },
+        (error) => {
+          console.error('Failed to load form dropdown data', error);
+          this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
+          this.modalRef?.close();
+        }
+      );
 
     if (this.modalRef) {
       this.modalRef.canClose = () => this.canDeactivate();
@@ -71,7 +74,9 @@ export class DeviceFormComponent implements OnInit {
    * Chuyển đổi chuỗi ngày ISO (từ API) thành "yyyy-MM-dd"
    * cho input date.
    */
-  private parseApiDateToHtmlDate(isoDateString: string | null): string {
+  private parseApiDateToHtmlDate(
+    isoDateString: string | null | undefined
+  ): string {
     if (!isoDateString || isoDateString === '0001-01-01T00:00:00') {
       return ''; // Handle null/empty/invalid dates
     }
@@ -88,7 +93,8 @@ export class DeviceFormComponent implements OnInit {
    * trở lại thành chuỗi ISO 8601 cho API.
    */
   private formatHtmlDateToApiDate(dateString: string): string | null {
-    if (!dateString) { // dateString sẽ là "YYYY-MM-DD"
+    if (!dateString) {
+      // dateString sẽ là "YYYY-MM-DD"
       return null;
     }
     try {
@@ -135,17 +141,19 @@ export class DeviceFormComponent implements OnInit {
     deviceStatuses: DropdownOption[]
   ): void {
     const isEditMode = !!this.device;
-    const deviceData = this.device || {};
+    const deviceData: Partial<Device> = this.device || {};
 
-    const defaultStatusId = deviceStatuses.find(s => s.value === 'Sẵn sàng')?.key || null;
+    const defaultStatusId =
+      deviceStatuses.find((s) => s.value === 'Sẵn sàng')?.key || null;
 
     const categoryIdValue = deviceData.LoaiThietBi_Id
       ? parseFloat(deviceData.LoaiThietBi_Id.toString())
       : null;
 
-    const trangThaiValue = (deviceData.TrangThai_Id !== null && deviceData.TrangThai_Id !== undefined)
-      ? parseFloat(deviceData.TrangThai_Id) // <-- Đọc từ TrangThai_Id
-      : defaultStatusId;
+    const trangThaiValue =
+      deviceData.TrangThai_Id !== null && deviceData.TrangThai_Id !== undefined
+        ? parseFloat(deviceData.TrangThai_Id.toString()) // Read from TrangThai_Id
+        : defaultStatusId;
 
     this.formConfig = {
       entityId: isEditMode ? deviceData.Id : null,
@@ -199,20 +207,20 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
-              controlName: 'CategoryID', // Tên control trong form
+              controlName: 'CategoryID', // Form control name
               controlType: 'dropdown',
               label: 'Loại thiết bị',
-              value: categoryIdValue, // <-- Dùng giá trị đã sửa
+              value: categoryIdValue, // Value from Device.LoaiThietBi_Id
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn loại thiết bị.' },
               options: deviceTypes,
               layout_flexGrow: 1,
             },
             {
-              controlName: 'TrangThai', // Tên control trong form
+              controlName: 'TrangThai', // Form control name
               controlType: 'dropdown',
               label: 'Trạng thái',
-              value: trangThaiValue, // <-- Dùng giá trị đã sửa
+              value: trangThaiValue, // Value from Device.TrangThai_Id
               validators: { required: true },
               options: deviceStatuses,
               layout_flexGrow: 1,
@@ -248,7 +256,7 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'date',
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseApiDateToHtmlDate(deviceData.NgayMua), // Dùng hàm parse ngày ISO
+              value: this.parseApiDateToHtmlDate(deviceData.NgayMua),
               validators: {},
               layout_flexGrow: 1,
             },
@@ -257,7 +265,7 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'date',
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseApiDateToHtmlDate(deviceData.NgayHetHanBH), // Dùng hàm parse ngày ISO
+              value: this.parseApiDateToHtmlDate(deviceData.NgayHetHanBH),
               validators: {},
               layout_flexGrow: 1,
             },
@@ -267,9 +275,9 @@ export class DeviceFormComponent implements OnInit {
               label: 'Giá mua',
               value: deviceData.GiaMua || null,
               validators: {},
-              layout_flexGrow: 1
-            }
-          ]
+              layout_flexGrow: 1,
+            },
+          ],
         },
         // --- Row 6: MoTa ---
         {
@@ -299,7 +307,9 @@ export class DeviceFormComponent implements OnInit {
     const currentUserId = this.authService.getUserId();
 
     if (!currentUserId) {
-      this.toastService.showError('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
+      this.toastService.showError(
+        'Lỗi xác thực người dùng. Vui lòng đăng nhập lại.'
+      );
       console.error('User ID is missing, cannot save.');
       this.isSaving = false;
       return;
@@ -309,44 +319,60 @@ export class DeviceFormComponent implements OnInit {
     const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
 
     let saveObservable;
+    let devicePayload: Device; // Will hold the final device object
 
     if (entityId) {
       // --- UPDATE (PUT) ---
-      const updatePayload = {
-        ...this.device, // Includes any version field if present
-        ...formData,
+      devicePayload = {
+        ...this.device!,
+        Ma: formData.Ma,
+        Ten: formData.Ten,
+        Model: formData.Model || null,
+        SerialNumber: formData.SerialNumber || null,
+        DeviceName: formData.DeviceName || null,
+        ViTri: formData.ViTri || null,
+        MoTa: formData.MoTa || null,
+        LoaiThietBi_Id: formData.CategoryID,
+        TrangThai_Id: formData.TrangThai,
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
-        // If your backend has a Version field, it's included here automatically
       };
 
-      updatePayload.LoaiThietBi_Id = formData.CategoryID;
-      updatePayload.TrangThai_Id = formData.TrangThai;
-
+      // --- MODIFICATION: Wrap the payload as per user's request ---
+      const wrapperPayload = {
+        dmThietBi: devicePayload,
+      };
+      
       const updateUrl = `${apiUrl}/${entityId}`;
-      saveObservable = this.http.put(updateUrl, updatePayload);
+      saveObservable = this.http.put(updateUrl, wrapperPayload); // Send WRAPPED payload
 
     } else {
       // --- CREATE (POST) ---
-      const createPayload = {
+      devicePayload = {
         Id: 0,
         Ma: formData.Ma,
         Ten: formData.Ten,
-        SerialNumber: formData.SerialNumber || '',
-        Model: formData.Model || '',
+        SerialNumber: formData.SerialNumber || null,
+        Model: formData.Model || null,
         TrangThai_Id: formData.TrangThai,
-        ViTri: formData.ViTri || '',
+        ViTri: formData.ViTri || null,
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
-        MoTa: formData.MoTa || '',
+        MoTa: formData.MoTa || null,
         LoaiThietBi_Id: formData.CategoryID,
-        DeviceName: formData.DeviceName || '',
+        DeviceName: formData.DeviceName || null,
       };
 
-      saveObservable = this.http.post(apiUrl, createPayload);
+      // Create the wrapper object the API expects
+      const wrapperPayload = {
+        dmThietBi: devicePayload,
+      };
+
+      saveObservable = this.http.post(apiUrl, wrapperPayload); // Send wrapped payload
     }
+    // --- END OF MODIFICATION ---
 
     saveObservable
       .pipe(
@@ -368,18 +394,22 @@ export class DeviceFormComponent implements OnInit {
         error: (err: HttpErrorResponse) => {
           let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
 
-          // Check for conflict error (optional - requires backend support)
-          if (err.status === 409) {
-            errorMessage = 'Thiết bị này đã được cập nhật bởi người dùng khác. Vui lòng làm mới và thử lại.';
-          } else if (err.error) {
-            if (err.error.errors) {
+          if (err.error && err.error.errors) {
+            if (err.error.errors.dmThietBi) {
+              errorMessage = `Lỗi API: ${err.error.errors.dmThietBi[0]}`;
+            } else {
               const firstErrorKey = Object.keys(err.error.errors)[0];
               if (firstErrorKey.toLowerCase().includes('ngaymua')) {
                 errorMessage = `Ngày Mua: ${err.error.errors[firstErrorKey][0]}`;
               } else if (err.error.errors[firstErrorKey]) {
                 errorMessage = err.error.errors[firstErrorKey][0];
               }
-            } else if (typeof err.error === 'string') {
+            }
+          } else if (err.status === 409) {
+            errorMessage =
+              'Thiết bị này đã được cập nhật bởi người dùng khác. Vui lòng làm mới và thử lại.';
+          } else if (err.error) {
+            if (typeof err.error === 'string') {
               errorMessage = err.error;
             } else if (err.error.ErrorMessage) {
               errorMessage = err.error.ErrorMessage;
