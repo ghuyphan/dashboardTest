@@ -72,12 +72,12 @@ export class DeviceFormComponent implements OnInit {
     }
   }
 
-  // +++ NEW HELPER 1: Converts "DD/MM/YYYY" to "YYYY-MM-DDTHH:mm" +++
+  // --- MODIFIED: Renamed and updated logic ---
   /**
-   * Converts a "DD/MM/YYYY" string to a "yyyy-MM-ddTHH:mm" string
-   * for the datetime-local input.
+   * Converts a "DD/MM/YYYY" string to a "yyyy-MM-dd" string
+   * for the date input.
    */
-  private parseApiDateToDateTimeLocal(dateString: string): string {
+  private parseApiDateToHtmlDate(dateString: string): string {
     if (!dateString || !dateString.includes('/')) {
       return ''; // Not a valid string to parse
     }
@@ -89,34 +89,32 @@ export class DeviceFormComponent implements OnInit {
       const month = parts[1];
       const year = parts[2];
       
-      // Default to 00:00 for time
-      return `${year}-${month}-${day}T00:00`;
+      // Return YYYY-MM-DD format
+      return `${year}-${month}-${day}`;
     } catch (e) {
       console.error('Error parsing date string:', dateString, e);
       return '';
     }
   }
 
-  // +++ NEW HELPER 2: Converts "YYYY-MM-DDTHH:mm" to "DD/MM/YYYY" +++
+  // --- MODIFIED: Renamed and updated logic ---
   /**
-   * Converts a "yyyy-MM-ddTHH:mm" string from the input
-   * back to a "DD/MM/YYYY" string for the API.
+   * Converts a "yyyy-MM-dd" string from the input
+   * back to an ISO 8601 string for the API.
    */
-  private formatDateTimeLocalToApiDate(dateTimeString: string): string | null {
-    if (!dateTimeString) {
+  private formatHtmlDateToApiDate(dateString: string): string | null {
+    if (!dateString) { // dateString will be "YYYY-MM-DD"
       return null;
     }
     try {
-      const date = new Date(dateTimeString);
+      // This correctly parses "YYYY-MM-DD" as local midnight
+      const date = new Date(dateString); 
       if (isNaN(date.getTime())) return null;
 
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      
-      return `${day}/${month}/${year}`;
+      // Return the standard ISO 8601 string.
+      return date.toISOString(); 
     } catch (e) {
-      console.error('Error formatting datetime-local string:', dateTimeString, e);
+      console.error('Error formatting date string:', dateString, e);
       return null;
     }
   }
@@ -261,34 +259,32 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
+              // --- MODIFICATION ---
               controlName: 'NgayMua',
-              // +++ UPDATED +++
-              controlType: 'datetime', // Use 'datetime'
+              controlType: 'date', // <-- CHANGED
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              // +++ UPDATED +++
-              value: this.parseApiDateToDateTimeLocal(deviceData.NgayMua), 
+              value: this.parseApiDateToHtmlDate(deviceData.NgayMua), // <-- Use new helper
               validators: {},
               layout_flexGrow: 1,
             },
             {
+              // --- MODIFICATION ---
               controlName: 'NgayHetHanBH',
-              // +++ UPDATED +++
-              controlType: 'datetime', // Use 'datetime'
+              controlType: 'date', // <-- CHANGED
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              // +++ UPDATED +++
-              value: this.parseApiDateToDateTimeLocal(deviceData.NgayHetHanBH), 
+              value: this.parseApiDateToHtmlDate(deviceData.NgayHetHanBH), // <-- Use new helper
               validators: {},
               layout_flexGrow: 1,
             },
             {
               controlName: 'GiaMua',
-              controlType: 'text', // Use 'number'
+              controlType: 'currency',
               label: 'Giá mua',
               value: deviceData.GiaMua || null,
               validators: {},
-              layout_flexGrow: 1,
+              layout_flexGrow: 1
             }
           ]
         },
@@ -331,9 +327,9 @@ export class DeviceFormComponent implements OnInit {
       return;
     }
 
-    // +++ UPDATED: Format dates back to API format +++
-    const apiNgayMua = this.formatDateTimeLocalToApiDate(formData.NgayMua);
-    const apiNgayHetHanBH = this.formatDateTimeLocalToApiDate(formData.NgayHetHanBH);
+    // --- MODIFICATION: Use new helper ---
+    const apiNgayMua = this.formatHtmlDateToApiDate(formData.NgayMua);
+    const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
 
     let saveObservable;
 
@@ -345,6 +341,7 @@ export class DeviceFormComponent implements OnInit {
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
+        USER_: currentUserId 
       };
       
       const updateUrl = `${apiUrl}/${entityId}`;
@@ -358,15 +355,15 @@ export class DeviceFormComponent implements OnInit {
         Ten: formData.Ten,
         SerialNumber: formData.SerialNumber || '',
         Model: formData.Model || '',
-        TrangThai: formData.TrangThai, // This is the ID from the form
+        TrangThai: formData.TrangThai,
         ViTri: formData.ViTri || '',
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
         MoTa: formData.MoTa || '',
-        CategoryID: formData.CategoryID, // This is the ID from the form
+        CategoryID: formData.CategoryID,
         DeviceName: formData.DeviceName || '',
-        HL: 1.0 // Assuming HL is 1.0 for new records
+        USER_: currentUserId
       };
       
       saveObservable = this.http.post(apiUrl, createPayload);
@@ -395,7 +392,14 @@ export class DeviceFormComponent implements OnInit {
         error: (err: HttpErrorResponse) => { 
           let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
           if (err.error) {
-            if (typeof err.error === 'string') {
+            if (err.error.errors) {
+              const firstErrorKey = Object.keys(err.error.errors)[0];
+              if (firstErrorKey.toLowerCase().includes('ngaymua')) {
+                errorMessage = `Ngày Mua: ${err.error.errors[firstErrorKey][0]}`;
+              } else if (err.error.errors[firstErrorKey]) {
+                errorMessage = err.error.errors[firstErrorKey][0];
+              }
+            } else if (typeof err.error === 'string') {
               errorMessage = err.error;
             } else if (err.error.ErrorMessage) {
               errorMessage = err.error.ErrorMessage;

@@ -27,13 +27,22 @@
                      [class.is-invalid]="isInvalid(control.controlName)"
               />
 
-              <input *ngSwitchCase="'datetime'"
-                     [type]="'datetime-local'"
+              <input *ngSwitchCase="'date'"
+                     [type]="'date'" 
                      [id]="control.controlName"
                      [formControlName]="control.controlName"
                      [placeholder]="control.placeholder || ''"
                      class="form-control"
                      [class.is-invalid]="isInvalid(control.controlName)"
+              />
+              <input *ngSwitchCase="'currency'"
+                     [type]="'text'"
+                     [id]="control.controlName"
+                     [placeholder]="control.placeholder || '0'"
+                     class="form-control"
+                     [class.is-invalid]="isInvalid(control.controlName)"
+                     [value]="formatCurrency(dynamicForm.get(control.controlName)?.value)"
+                     (input)="onCurrencyInput($event, control.controlName)"
               />
 
               <select *ngSwitchCase="'dropdown'"

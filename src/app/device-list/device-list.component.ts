@@ -184,7 +184,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     // Use the ModalService to open the form
     this.modalService
       .open(DeviceFormComponent, {
-        title: 'Tạo mới Thiết bị', // This title is used by app-modal
+        title: 'Tạo mới thiết bị', // This title is used by app-modal
         context: {
           device: null, // Pass null to indicate "Create" mode
           title: 'Tạo mới Thiết bị' // The form can use this if it wants

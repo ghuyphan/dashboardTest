@@ -1,3 +1,4 @@
+// src/app/components/dynamic-form/dynamic-form.component.ts
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -11,7 +12,6 @@ import {
 @Component({
   selector: 'app-dynamic-form',
   standalone: true,
-  // Make sure to import CommonModule and ReactiveFormsModule
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss',
@@ -24,6 +24,9 @@ export class DynamicFormComponent implements OnInit, OnChanges {
   @Output() formCancelled = new EventEmitter<void>();
 
   public dynamicForm: FormGroup;
+  
+  // --- ADDITION: Formatter for currency ---
+  private currencyFormatter = new Intl.NumberFormat('en-US');
 
   constructor(private fb: FormBuilder) {
     this.dynamicForm = this.fb.group({});
@@ -36,22 +39,25 @@ export class DynamicFormComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // If the config is passed in late (e.g., from an API call),
-    // we need to rebuild the form when it arrives.
     if (changes['formConfig'] && changes['formConfig'].currentValue) {
       this.buildForm();
     }
   }
 
-  /**
-   * Dynamically builds the FormGroup from the formConfig input.
-   */
   private buildForm(): void {
     const formGroup: { [key: string]: FormControl } = {};
 
     for (const row of this.formConfig.formRows) {
       for (const control of row.controls) {
-        const controlValue = control.value ?? null;
+        
+        // --- MODIFICATION: Clean currency value before setting ---
+        let controlValue = control.value ?? null;
+        if (control.controlType === 'currency') {
+          // Ensure the initial value in the form model is a clean number
+          controlValue = this.cleanCurrency(controlValue);
+        }
+        // --- END MODIFICATION ---
+        
         const controlValidators = this.buildValidators(control.validators);
         
         formGroup[control.controlName] = new FormControl(
@@ -132,5 +138,54 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     }
 
     return 'Trường này không hợp lệ.'; // Generic fallback
+  }
+
+  // --- START OF ADDITIONS ---
+
+  /**
+   * Cleans a value (string or number) into a clean number or null.
+   * e.g., "1,000" -> 1000
+   * e.g., "abc" -> null
+   */
+  private cleanCurrency(value: any): number | null {
+    if (value === null || value === undefined) return null;
+    
+    // Remove all non-numeric characters except a potential decimal point
+    let stringValue = String(value).replace(/[^0-9.]+/g, '');
+    let numberValue = parseFloat(stringValue);
+
+    return isNaN(numberValue) ? null : numberValue;
+  }
+
+  /**
+   * Formats a raw number from the form control into a displayed string.
+   * e.g., 1000000 -> "1,000,000"
+   */
+  public formatCurrency(value: any): string {
+    const numberValue = this.cleanCurrency(value);
+    if (numberValue === null) {
+      return '';
+    }
+    // Use en-US locale for standard comma separators (e.g., 1,000,000)
+    return this.currencyFormatter.format(numberValue);
+  }
+
+  /**
+   * Handles the (input) event on currency fields.
+   * Updates the form control with the raw number and formats the displayed value.
+   */
+  public onCurrencyInput(event: Event, controlName: string): void {
+    const inputElement = event.target as HTMLInputElement;
+    const rawValue = this.cleanCurrency(inputElement.value);
+
+    // Update the actual form control with the clean number
+    // { emitEvent: false } prevents a recursive loop
+    this.dynamicForm.get(controlName)?.setValue(rawValue, { emitEvent: false });
+
+    // Re-format the displayed value
+    const formattedValue = this.formatCurrency(rawValue);
+    
+    // Set the display value directly
+    inputElement.value = formattedValue;
   }
 }
