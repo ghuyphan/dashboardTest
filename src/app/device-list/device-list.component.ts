@@ -41,7 +41,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     private searchService: SearchService,
     private modalService: ModalService,
     private toastService: ToastService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.deviceColumns = [
@@ -53,7 +53,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       { key: 'Model', label: 'Model', sortable: true },
       { key: 'NgayMua', label: 'Ngày Mua', sortable: true },
       { key: 'GiaMua', label: 'Giá Mua', sortable: true },
-      { key: 'actions', label: '', sortable: false, width: '40px' } 
+      { key: 'actions', label: '', sortable: false, width: '40px' }
     ];
 
     this.updateFooterActions();
@@ -94,25 +94,25 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     const url = environment.equipmentCatUrl;
 
     this.deviceSub = this.http.get<any[]>(url)
-    .pipe(
-      finalize(() => { this.isLoading = false; })
-    )
-    .subscribe({
-      next: (data) => {
-        const formattedData = data.map((device) => ({
-          ...device,
-          NgayTao: this.formatDate(device.NgayTao),
-          NgayMua: this.formatDate(device.NgayMua),
-          NgayHetHanBH: this.formatDate(device.NgayHetHanBH)
-        }));
-        this.allDeviceData = formattedData;
-        console.log('Devices loaded and formatted:', formattedData);
-      },
-      error: (err) => {
-        console.error('Failed to load devices:', err);
-        this.toastService.showError('Không thể tải danh sách thiết bị.');
-      },
-    });
+      .pipe(
+        finalize(() => { this.isLoading = false; })
+      )
+      .subscribe({
+        next: (data) => {
+          const formattedData = data.map((device) => ({
+            ...device,
+            NgayTao: this.formatDate(device.NgayTao),
+            NgayMua: this.formatDate(device.NgayMua),
+            NgayHetHanBH: this.formatDate(device.NgayHetHanBH)
+          }));
+          this.allDeviceData = formattedData;
+          console.log('Devices loaded and formatted:', formattedData);
+        },
+        error: (err) => {
+          console.error('Failed to load devices:', err);
+          this.toastService.showError('Không thể tải danh sách thiết bị.');
+        },
+      });
   }
 
   public onSortChanged(sortEvent: SortChangedEvent): void {
@@ -142,7 +142,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
-        action: () => this.onModify(this.selectedDevice), 
+        action: () => this.onModify(this.selectedDevice),
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
@@ -200,13 +200,39 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
    * Opens the modal in "Edit" mode.
    */
   public onModify(device: any): void {
-    if (!device) return;
+    if (!device?.Id) return;
     console.log('Modify action triggered for:', device.Ten);
 
+    this.isLoading = true;
+    const fetchUrl = `${environment.equipmentCatUrl}/${device.Id}`;
+
+    this.http.get<any>(fetchUrl)
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: (freshDevice) => {
+          // Format dates just like in loadDevices()
+          const formatted = {
+            ...freshDevice,
+            NgayTao: this.formatDate(freshDevice.NgayTao),
+            NgayMua: this.formatDate(freshDevice.NgayMua),
+            NgayHetHanBH: this.formatDate(freshDevice.NgayHetHanBH)
+          };
+
+          // Pass the FRESH device data to the modal
+          this.openEditModal(formatted);
+        },
+        error: (err) => {
+          console.error('Failed to fetch device for edit:', err);
+          this.toastService.showError('Không thể tải thông tin thiết bị để chỉnh sửa.');
+        }
+      });
+  }
+
+  private openEditModal(device: any): void {
     this.modalService
       .open(DeviceFormComponent, {
         title: `Sửa Thiết bị: ${device.Ten}`,
-        context: { device: device, title: 'Sửa Thiết bị' },
+        context: { device, title: 'Sửa Thiết bị' }, // <-- Now passes FRESH device
       })
       .subscribe((result) => {
         if (result) {
@@ -241,8 +267,8 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
 
         this.http.delete(deleteUrl)
-          .pipe(finalize(() => { 
-            this.isLoading = false; 
+          .pipe(finalize(() => {
+            this.isLoading = false;
             // After deleting, clear selection and update footer
             this.selectedDevice = null;
             this.updateFooterActions();

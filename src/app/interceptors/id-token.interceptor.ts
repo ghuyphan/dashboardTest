@@ -6,9 +6,12 @@ import { environment } from '../../environments/environment.development';
 
 /**
  * Intercepts POST, PUT, and DELETE requests to append the user's id_token
- * and id_user to the end of the URL, separated by a '/'.
- * E.g.: 'api/DMMay' becomes 'api/DMMay/[id_token]/[id_user]'
- * E.g.: 'api/DMMay?param=1' becomes 'api/DMMay/[id_token]/[id_user]?param=1'
+ * and id_user.
+ * * SPECIAL BEHAVIOR FOR PUT to equipmentCatUrl:
+ * E.g.: 'api/DMMay/123' becomes 'api/DMMay/[id_token]/[id_user]/123'
+ * * STANDARD BEHAVIOR (all other matching requests):
+ * E.g.: 'api/DMMay' (POST) becomes 'api/DMMay/[id_token]/[id_user]'
+ * E.g.: 'api/DMMay/123' (DELETE) becomes 'api/DMMay/123/[id_token]/[id_user]'
  */
 export const idTokenInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
@@ -35,25 +38,52 @@ export const idTokenInterceptor: HttpInterceptorFn = (
     const encodedIdToken = encodeURIComponent(idToken);
     const encodedUserId = encodeURIComponent(userId); // +++ ADDED +++
 
-    // 5. Handle URL modification, preserving query parameters
-    const [baseUrl, ...queryParts] = request.url.split('?');
+    // --- START OF MODIFICATION ---
+
+    // 5. Get API URL for equipment
+    const equipmentCatUrl = environment.equipmentCatUrl;
+    let newUrl: string;
+
+    // 6. Handle URL modification
+    const [baseUrlWithParams, ...queryParts] = request.url.split('?');
     const queryString = queryParts.join('?');
 
-    // +++ MODIFIED: Append both tokens +++
-    const newUrl = queryString
-      ? `${baseUrl}/${encodedIdToken}/${encodedUserId}?${queryString}`
-      : `${request.url}/${encodedIdToken}/${encodedUserId}`;
+    // 7. --- NEW LOGIC for specific PUT requests ---
+    // Check if it's a PUT request to the equipment URL with an ID
+    // e.g., PUT api/DMMay/123
+    if (request.method.toUpperCase() === 'PUT' && baseUrlWithParams.startsWith(equipmentCatUrl + '/')) {
+      
+      // Extract the base URL (api/DMMay) and the ID (123)
+      const baseUrl = equipmentCatUrl;
+      const entityId = baseUrlWithParams.substring(equipmentCatUrl.length + 1); // Get "123"
+      
+      // Build the new URL in the format: api/DMMay/[token]/[user]/[id]
+      newUrl = queryString
+        ? `${baseUrl}/${encodedIdToken}/${encodedUserId}/${entityId}?${queryString}`
+        : `${baseUrl}/${encodedIdToken}/${encodedUserId}/${entityId}`;
 
-    // 6. Clone the request with the new URL
+    } else {
+      // 8. --- ORIGINAL LOGIC for all other POST, PUT, DELETE requests ---
+      // e.g., POST api/DMMay  -> api/DMMay/[token]/[user]
+      // e.g., DELETE api/DMMay/123 -> api/DMMay/123/[token]/[user]
+      newUrl = queryString
+        ? `${baseUrlWithParams}/${encodedIdToken}/${encodedUserId}?${queryString}`
+        : `${request.url}/${encodedIdToken}/${encodedUserId}`;
+    }
+
+    // 9. Clone the request with the new URL
     const clonedRequest = request.clone({
       url: newUrl
     });
 
     // console.log(`idTokenInterceptor: ${request.url} -> ${newUrl}`);
     return next(clonedRequest);
+
+    // --- END OF MODIFICATION ---
+
   }
 
-  // 7. One or more tokens are missing
+  // 10. One or more tokens are missing
   console.warn(`idTokenInterceptor: Missing id_token or id_user for ${request.method} request to ${request.url}`);
   authService.logout();
   return next(request);

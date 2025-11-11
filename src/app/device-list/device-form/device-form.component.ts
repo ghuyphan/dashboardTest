@@ -319,18 +319,15 @@ export class DeviceFormComponent implements OnInit {
 
     if (entityId) {
       // --- UPDATE (PUT) ---
-      // Gửi payload với tên thuộc tính mà form control đã định nghĩa
       const updatePayload = {
-        ...this.device,
-        ...formData, // formData chứa { CategoryID: ..., TrangThai: ... }
+        ...this.device, // Includes any version field if present
+        ...formData,
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
-        USER_: currentUserId 
+        // If your backend has a Version field, it's included here automatically
       };
-      
-      // Ghi đè lại các tên -Id nếu API yêu cầu (tùy chọn, nhưng an toàn hơn)
-      // Nếu API của bạn chấp nhận cả hai thì không cần bước này
+
       updatePayload.LoaiThietBi_Id = formData.CategoryID;
       updatePayload.TrangThai_Id = formData.TrangThai;
 
@@ -339,22 +336,20 @@ export class DeviceFormComponent implements OnInit {
 
     } else {
       // --- CREATE (POST) ---
-      // Đảm bảo payload gửi đi khớp với những gì API mong đợi
       const createPayload = {
         Id: 0,
         Ma: formData.Ma,
         Ten: formData.Ten,
         SerialNumber: formData.SerialNumber || '',
         Model: formData.Model || '',
-        TrangThai_Id: formData.TrangThai, // Gửi TrangThai_Id
+        TrangThai_Id: formData.TrangThai,
         ViTri: formData.ViTri || '',
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
         MoTa: formData.MoTa || '',
-        LoaiThietBi_Id: formData.CategoryID, // Gửi LoaiThietBi_Id
+        LoaiThietBi_Id: formData.CategoryID,
         DeviceName: formData.DeviceName || '',
-        USER_: currentUserId
       };
       
       saveObservable = this.http.post(apiUrl, createPayload);
@@ -379,7 +374,11 @@ export class DeviceFormComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => { 
           let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
-          if (err.error) {
+          
+          // Check for conflict error (optional - requires backend support)
+          if (err.status === 409) {
+            errorMessage = 'Thiết bị này đã được cập nhật bởi người dùng khác. Vui lòng làm mới và thử lại.';
+          } else if (err.error) {
             if (err.error.errors) {
               const firstErrorKey = Object.keys(err.error.errors)[0];
               if (firstErrorKey.toLowerCase().includes('ngaymua')) {
