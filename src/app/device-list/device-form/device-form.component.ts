@@ -33,12 +33,9 @@ export class DeviceFormComponent implements OnInit {
 
   public formConfig: any | null = null;
   
-  // --- START OF CHANGE ---
   public isFormLoading: boolean = true; // Renamed from isLoading
   public isSaving: boolean = false; // New state for submit
-  // --- END OF CHANGE ---
 
-  // --- 2. INJECT AuthService ---
   constructor(
     private modalService: ModalService,
     private http: HttpClient,
@@ -48,15 +45,13 @@ export class DeviceFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // --- START OF CHANGE ---
     this.isFormLoading = true;
     forkJoin([
       this.dropdownService.getDeviceTypes(),
       this.dropdownService.getDeviceStatuses()
     ]).pipe(
-      finalize(() => this.isFormLoading = false) // Use isFormLoading here
+      finalize(() => this.isFormLoading = false)
     ).subscribe(
-    // --- END OF CHANGE ---
       ([deviceTypes, deviceStatuses]) => {
         this.buildFormConfig(deviceTypes, deviceStatuses);
       },
@@ -72,46 +67,34 @@ export class DeviceFormComponent implements OnInit {
     }
   }
 
-  // --- MODIFIED: Renamed and updated logic ---
   /**
-   * Converts a "DD/MM/YYYY" string to a "yyyy-MM-dd" string
-   * for the date input.
+   * Chuyển đổi chuỗi ngày ISO (từ API) thành "yyyy-MM-dd"
+   * cho input date.
    */
-  private parseApiDateToHtmlDate(dateString: string): string {
-    if (!dateString || !dateString.includes('/')) {
-      return ''; // Not a valid string to parse
+  private parseApiDateToHtmlDate(isoDateString: string): string {
+    if (!isoDateString) {
+      return ''; // Xử lý null hoặc chuỗi rỗng
     }
     try {
-      const parts = dateString.split('/');
-      if (parts.length < 3) return '';
-      
-      const day = parts[0];
-      const month = parts[1];
-      const year = parts[2];
-      
-      // Return YYYY-MM-DD format
-      return `${year}-${month}-${day}`;
+      // Chỉ cần lấy 10 ký tự đầu tiên (YYYY-MM-DD)
+      return isoDateString.substring(0, 10);
     } catch (e) {
-      console.error('Error parsing date string:', dateString, e);
+      console.error('Error parsing ISO date string:', isoDateString, e);
       return '';
     }
   }
 
-  // --- MODIFIED: Renamed and updated logic ---
   /**
-   * Converts a "yyyy-MM-dd" string from the input
-   * back to an ISO 8601 string for the API.
+   * Chuyển đổi chuỗi "yyyy-MM-dd" từ input
+   * trở lại thành chuỗi ISO 8601 cho API.
    */
   private formatHtmlDateToApiDate(dateString: string): string | null {
-    if (!dateString) { // dateString will be "YYYY-MM-DD"
+    if (!dateString) { // dateString sẽ là "YYYY-MM-DD"
       return null;
     }
     try {
-      // This correctly parses "YYYY-MM-DD" as local midnight
       const date = new Date(dateString); 
       if (isNaN(date.getTime())) return null;
-
-      // Return the standard ISO 8601 string.
       return date.toISOString(); 
     } catch (e) {
       console.error('Error formatting date string:', dateString, e);
@@ -122,17 +105,13 @@ export class DeviceFormComponent implements OnInit {
   private canDeactivate(): Observable<boolean> {
     const isDirty = this.dynamicForm?.dynamicForm?.dirty || false;
     
-    // --- START OF CHANGE ---
-    // Also check if we are in the middle of saving
     if (!isDirty && !this.isSaving) {
       return of(true);
     }
     
-    // If saving, prevent deactivation
     if (this.isSaving) {
       return of(false);
     }
-    // --- END OF CHANGE ---
     
     return this.modalService
       .open(ConfirmationModalComponent, {
@@ -150,7 +129,7 @@ export class DeviceFormComponent implements OnInit {
   }
 
   /**
-   * --- 3. UPDATED to include all fields from your JSON ---
+   * Xây dựng cấu hình form
    */
   private buildFormConfig(
     deviceTypes: DropdownOption[],
@@ -159,8 +138,21 @@ export class DeviceFormComponent implements OnInit {
     const isEditMode = !!this.device;
     const deviceData = this.device || {};
 
-    // Find the default status ID for "Sẵn sàng"
+    // Tìm ID mặc định cho "Sẵn sàng"
     const defaultStatusId = deviceStatuses.find(s => s.value === 'Sẵn sàng')?.key || null;
+
+    // --- *** SỬA LỖI LOGIC DROPDOWN *** ---
+    // Đọc đúng tên thuộc tính từ JSON (ví dụ: TrangThai_Id)
+    // và kiểm tra null/undefined một cách tường minh
+    
+    const categoryIdValue = (deviceData.LoaiThietBi_Id !== null && deviceData.LoaiThietBi_Id !== undefined) 
+                             ? parseFloat(deviceData.LoaiThietBi_Id) // <-- Đọc từ LoaiThietBi_Id
+                             : null;
+                             
+    const trangThaiValue = (deviceData.TrangThai_Id !== null && deviceData.TrangThai_Id !== undefined) 
+                            ? parseFloat(deviceData.TrangThai_Id) // <-- Đọc từ TrangThai_Id
+                            : defaultStatusId;
+    // --- *** KẾT THÚC SỬA LỖI *** ---
 
     this.formConfig = {
       entityId: isEditMode ? deviceData.Id : null,
@@ -170,7 +162,7 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
-              controlName: 'Ma', // Matches "Ma"
+              controlName: 'Ma',
               controlType: 'text',
               label: 'Mã thiết bị',
               value: deviceData.Ma || '',
@@ -179,7 +171,7 @@ export class DeviceFormComponent implements OnInit {
               layout_flexGrow: 1,
             },
             {
-              controlName: 'Ten', // Matches "Ten"
+              controlName: 'Ten',
               controlType: 'text',
               label: 'Tên thiết bị',
               value: deviceData.Ten || '',
@@ -193,7 +185,7 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
-              controlName: 'Model', // Matches "Model"
+              controlName: 'Model',
               controlType: 'text',
               label: 'Model',
               value: deviceData.Model || '',
@@ -201,7 +193,7 @@ export class DeviceFormComponent implements OnInit {
               layout_flexGrow: 1,
             },
             {
-              controlName: 'SerialNumber', // Matches "SerialNumber"
+              controlName: 'SerialNumber',
               controlType: 'text',
               label: 'Số Serial',
               value: deviceData.SerialNumber || '',
@@ -214,22 +206,22 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
-              controlName: 'CategoryID', // Matches "CategoryID"
+              controlName: 'CategoryID', // Tên control trong form
               controlType: 'dropdown',
               label: 'Loại thiết bị',
-              value: deviceData.CategoryID || null,
+              value: categoryIdValue, // <-- Dùng giá trị đã sửa
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn loại thiết bị.' },
               options: deviceTypes,
               layout_flexGrow: 1,
             },
             {
-              controlName: 'TrangThai', // Matches "TrangThai" (ID)
+              controlName: 'TrangThai', // Tên control trong form
               controlType: 'dropdown',
               label: 'Trạng thái',
-              value: deviceData.TrangThai || defaultStatusId, // Bind to ID
+              value: trangThaiValue, // <-- Dùng giá trị đã sửa
               validators: { required: true },
-              options: deviceStatuses, // Already mapped to { key: ID, value: TEN }
+              options: deviceStatuses,
               layout_flexGrow: 1,
             },
           ],
@@ -238,7 +230,7 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
-              controlName: 'DeviceName', // Matches "DeviceName"
+              controlName: 'DeviceName',
               controlType: 'text',
               label: 'Tên máy (Host name)',
               value: deviceData.DeviceName || '',
@@ -246,7 +238,7 @@ export class DeviceFormComponent implements OnInit {
               layout_flexGrow: 1,
             },
             {
-              controlName: 'ViTri', // Matches "ViTri"
+              controlName: 'ViTri',
               controlType: 'text',
               label: 'Vị trí',
               value: deviceData.ViTri || '',
@@ -255,26 +247,24 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // --- Row 5: Dates (as text for now) ---
+        // --- Row 5: Dates ---
         {
           controls: [
             {
-              // --- MODIFICATION ---
               controlName: 'NgayMua',
-              controlType: 'date', // <-- CHANGED
+              controlType: 'date',
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseApiDateToHtmlDate(deviceData.NgayMua), // <-- Use new helper
+              value: this.parseApiDateToHtmlDate(deviceData.NgayMua), // Dùng hàm parse ngày ISO
               validators: {},
               layout_flexGrow: 1,
             },
             {
-              // --- MODIFICATION ---
               controlName: 'NgayHetHanBH',
-              controlType: 'date', // <-- CHANGED
+              controlType: 'date',
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseApiDateToHtmlDate(deviceData.NgayHetHanBH), // <-- Use new helper
+              value: this.parseApiDateToHtmlDate(deviceData.NgayHetHanBH), // Dùng hàm parse ngày ISO
               validators: {},
               layout_flexGrow: 1,
             },
@@ -292,7 +282,7 @@ export class DeviceFormComponent implements OnInit {
         {
           controls: [
             {
-              controlName: 'MoTa', // Matches "MoTa"
+              controlName: 'MoTa',
               controlType: 'textarea',
               label: 'Mô tả',
               value: deviceData.MoTa || '',
@@ -306,28 +296,22 @@ export class DeviceFormComponent implements OnInit {
   }
 
   /**
-   * --- 4. UPDATED to build the exact JSON payload ---
+   * Xử lý lưu form
    */
   public onSave(formData: any): void {
-    // --- START OF CHANGE ---
     this.isSaving = true;
-    // --- END OF CHANGE ---
     const apiUrl = this.formConfig.saveUrl;
     const entityId = this.formConfig.entityId;
     
-    // +++ Get the user ID +++
     const currentUserId = this.authService.getUserId();
 
     if (!currentUserId) {
       this.toastService.showError('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
       console.error('User ID is missing, cannot save.');
-      // --- START OF CHANGE ---
       this.isSaving = false;
-      // --- END OF CHANGE ---
       return;
     }
 
-    // --- MODIFICATION: Use new helper ---
     const apiNgayMua = this.formatHtmlDateToApiDate(formData.NgayMua);
     const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
 
@@ -335,33 +319,40 @@ export class DeviceFormComponent implements OnInit {
 
     if (entityId) {
       // --- UPDATE (PUT) ---
+      // Gửi payload với tên thuộc tính mà form control đã định nghĩa
       const updatePayload = {
         ...this.device,
-        ...formData,
+        ...formData, // formData chứa { CategoryID: ..., TrangThai: ... }
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
         USER_: currentUserId 
       };
       
+      // Ghi đè lại các tên -Id nếu API yêu cầu (tùy chọn, nhưng an toàn hơn)
+      // Nếu API của bạn chấp nhận cả hai thì không cần bước này
+      updatePayload.LoaiThietBi_Id = formData.CategoryID;
+      updatePayload.TrangThai_Id = formData.TrangThai;
+
       const updateUrl = `${apiUrl}/${entityId}`;
       saveObservable = this.http.put(updateUrl, updatePayload);
 
     } else {
       // --- CREATE (POST) ---
+      // Đảm bảo payload gửi đi khớp với những gì API mong đợi
       const createPayload = {
         Id: 0,
         Ma: formData.Ma,
         Ten: formData.Ten,
         SerialNumber: formData.SerialNumber || '',
         Model: formData.Model || '',
-        TrangThai: formData.TrangThai,
+        TrangThai_Id: formData.TrangThai, // Gửi TrangThai_Id
         ViTri: formData.ViTri || '',
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
         MoTa: formData.MoTa || '',
-        CategoryID: formData.CategoryID,
+        LoaiThietBi_Id: formData.CategoryID, // Gửi LoaiThietBi_Id
         DeviceName: formData.DeviceName || '',
         USER_: currentUserId
       };
@@ -369,13 +360,10 @@ export class DeviceFormComponent implements OnInit {
       saveObservable = this.http.post(apiUrl, createPayload);
     }
 
-    // --- This part remains the same ---
     saveObservable
       .pipe(
         finalize(() => {
-          // --- START OF CHANGE ---
           this.isSaving = false;
-          // --- END OF CHANGE ---
         })
       )
       .subscribe({

@@ -152,7 +152,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         label: 'Xóa',
         icon: 'fas fa-trash-alt',
         action: () => this.onDelete(this.selectedDevice),
-        permission: 'equipment.catalog.delete', // Assuming this permission
+        permission: 'QLThietBi.QLThietBiChiTiet.RDELETE', // Assuming this permission
         className: 'btn-danger',
         disabled: !isRowSelected,
       }

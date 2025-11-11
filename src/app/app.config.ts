@@ -5,7 +5,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { MockAuthInterceptor } from './interceptors/mock-auth.interceptor';
 import { idTokenInterceptor } from './interceptors/id-token.interceptor';
-import { AuthService } from './services/auth.service'; // <-- Import AuthService
+import { AuthService } from './services/auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [

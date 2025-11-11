@@ -1,4 +1,4 @@
-import { Component, Input, ElementRef, ViewChild, OnChanges, AfterViewInit } from '@angular/core';
+import { Component, Input, ElementRef, ViewChild, OnChanges, AfterViewInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -22,29 +22,66 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.viewInitialized = true;
-    const initial = this.parseValue(this.value);
-    this.currentValue = initial;
-    this.updateDisplay(initial);
+    this.updateValue(this.value, false); // Pass initial value
   }
 
-  ngOnChanges(): void {
-    // Skip animation until the view is ready
+  ngOnChanges(changes: SimpleChanges): void {
     if (!this.viewInitialized) return;
 
-    const newValue = this.parseValue(this.value);
-    this.animateValue(this.currentValue, newValue);
+    if (changes['value']) {
+      this.updateValue(changes['value'].currentValue, true); // Pass new value
+    }
   }
 
+  // --- START OF MODIFICATION ---
+  /**
+   * Checks if the value is numeric or a string, and displays it
+   * accordingly (animating numbers, displaying strings directly).
+   */
+  private updateValue(newValue: string, animate: boolean): void {
+    const parsedNumber = this.parseValue(newValue);
+
+    if (isNaN(parsedNumber)) {
+      // --- A) VALUE IS A STRING (like "85,12%") ---
+      // Stop any previous animation and display the string directly.
+      this.currentValue = 0; // Reset numeric tracker
+      this.updateDisplayString(newValue);
+      
+    } else {
+      // --- B) VALUE IS A NUMBER (like "1,250") ---
+      if (animate) {
+        this.animateValue(this.currentValue, parsedNumber);
+      } else {
+        this.updateDisplayNumber(parsedNumber);
+        this.currentValue = parsedNumber;
+      }
+    }
+  }
+  
+  /**
+   * Parses a string to see if it's a valid number.
+   * Returns NaN if it contains non-numeric characters (like '%').
+   */
   private parseValue(val: string): number {
-    // Handle formatted strings like "1,250" or plain numbers
+    // Remove thousand separators (commas)
     const cleaned = (val?.replace(/,/g, '') || '0').trim();
+
+    // --- NEW CHECK ---
+    // Check if the cleaned string still contains non-numeric chars (e.g., '%')
+    if (/[^0-9.-]/.test(cleaned)) {
+      return NaN;
+    }
+    
     const num = parseFloat(cleaned);
-    return isNaN(num) ? 0 : num;
+    return num; // Will be NaN if parseFloat fails
   }
 
+  /**
+   * Animates from a start number to an end number.
+   */
   private animateValue(start: number, end: number): void {
     if (start === end) {
-      this.updateDisplay(end);
+      this.updateDisplayNumber(end);
       this.currentValue = end;
       return;
     }
@@ -59,7 +96,7 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       const easedProgress = easeOutQuart(progress);
       const val = Math.round(start + (end - start) * easedProgress);
 
-      this.updateDisplay(val);
+      this.updateDisplayNumber(val);
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -71,9 +108,23 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
     requestAnimationFrame(animate);
   }
 
-  private updateDisplay(value: number): void {
+  /**
+   * Updates the display with a formatted NUMBER.
+   */
+  private updateDisplayNumber(value: number): void {
     if (this.valueDisplay?.nativeElement) {
-      this.valueDisplay.nativeElement.textContent = value.toLocaleString();
+      // Use 'vi-VN' locale for correct comma/dot separators
+      this.valueDisplay.nativeElement.textContent = value.toLocaleString('vi-VN');
     }
   }
+
+  /**
+   * Updates the display with a raw STRING (e.g., "85,12%").
+   */
+  private updateDisplayString(value: string): void {
+    if (this.valueDisplay?.nativeElement) {
+      this.valueDisplay.nativeElement.textContent = value;
+    }
+  }
+  // --- END OF MODIFICATION ---
 }

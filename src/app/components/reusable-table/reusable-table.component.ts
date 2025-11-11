@@ -50,7 +50,8 @@ export interface GridColumn {
   key: string;
   label: string;
   sortable: boolean;
-  width?: string; // Optional width for better control
+  width?: string;
+  sticky?: 'start' | 'end' | false;
 }
 export type SortDirection = 'asc' | 'desc' | '';
 export interface SortChangedEvent {
@@ -85,7 +86,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   @Input() showLoadingText: boolean = true;
   @Input() emptyStateText: string = 'Không có dữ liệu';
   @Input() noResultsText: string = 'Không tìm thấy kết quả phù hợp';
-  
+
   @Input() trackByField: string = 'Id';
 
   @Output() rowClick = new EventEmitter<any>();
@@ -110,13 +111,13 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     direction: ''
   };
 
-  constructor() {}
+  constructor() { }
 
   ngAfterViewInit(): void {
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
     this.setupColumnWidths();
-    
+
     if (this.sort) {
       this.sortState = {
         active: this.sort.active,
@@ -133,7 +134,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     if (changes['data']) {
       this.dataSource.data = this.data;
       this.selectedRow = null;
-      
+
       if (this.tableContainer?.nativeElement) {
         this.tableContainer.nativeElement.scrollTop = 0;
       }
@@ -185,7 +186,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       active: sort.active,
       direction: sort.direction as SortDirection
     };
-    
+
     this.sortChanged.emit({
       column: sort.active,
       direction: sort.direction as SortDirection,
@@ -194,7 +195,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   public onPageChange(event: any): void {
     this.pageChanged.emit(event);
-    
+
     if (this.tableContainer?.nativeElement) {
       this.tableContainer.nativeElement.scrollTop = 0;
     }
@@ -204,7 +205,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     this.searchTerm = '';
     this.dataSource.filter = '';
     this.searchCleared.emit();
-    
+
     if (this.paginator) {
       this.paginator.firstPage();
     }
@@ -221,22 +222,22 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   private handleRowNavigation(down: boolean) {
     const rows = this.dataSource.filteredData;
     if (!rows.length) return;
-    
+
     const currentIndex = rows.findIndex(row => row === this.selectedRow);
     let newIndex = down ? currentIndex + 1 : currentIndex - 1;
-    
+
     if (newIndex < 0) newIndex = rows.length - 1;
     if (newIndex >= rows.length) newIndex = 0;
-    
+
     if (rows[newIndex]) {
       this.onRowClick(rows[newIndex]);
-      
+
       setTimeout(() => {
         const rowElements = document.querySelectorAll('.clickable-row');
         if (rowElements[newIndex]) {
-          rowElements[newIndex].scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'nearest' 
+          rowElements[newIndex].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
           });
         }
       }, 50);
@@ -244,7 +245,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   }
 
   getEmptyStateMessage(): string {
-    return this.searchTerm 
+    return this.searchTerm
       ? `${this.noResultsText} "${this.searchTerm}"`
       : this.emptyStateText;
   }
@@ -261,7 +262,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
     if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa')) return 'status-repair';
     if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
-    
+
     return 'status-default';
   }
 
