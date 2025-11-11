@@ -82,16 +82,22 @@
         (click)="onCancel()"
         [disabled]="isLoading"
       >
-        Hủy bỏ
+        <span class="btn-content-wrapper">
+          <i class="fas fa-times"></i> Hủy bỏ
+        </span>
       </button>
       <button
         type="submit"
         class="btn btn-primary"
         [disabled]="dynamicForm.invalid || isLoading"
       >
-        <span *ngIf="!isLoading">Lưu</span>
-        <span *ngIf="isLoading">Đang lưu...</span>
+        <span *ngIf="!isLoading" class="btn-content-wrapper">
+          <i class="fas fa-save"></i> Lưu
+        </span>
+        <span *ngIf="isLoading" class="btn-content-wrapper">
+          <i class="fas fa-spinner fa-spin"></i> Đang lưu...
+        </span>
       </button>
     </div>
-  </form>
+    </form>
 </div>

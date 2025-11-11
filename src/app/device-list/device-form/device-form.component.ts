@@ -32,7 +32,11 @@ export class DeviceFormComponent implements OnInit {
   private dynamicForm!: DynamicFormComponent;
 
   public formConfig: any | null = null;
-  public isLoading: boolean = true; 
+  
+  // --- START OF CHANGE ---
+  public isFormLoading: boolean = true; // Renamed from isLoading
+  public isSaving: boolean = false; // New state for submit
+  // --- END OF CHANGE ---
 
   // --- 2. INJECT AuthService ---
   constructor(
@@ -44,13 +48,15 @@ export class DeviceFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isLoading = true;
+    // --- START OF CHANGE ---
+    this.isFormLoading = true;
     forkJoin([
       this.dropdownService.getDeviceTypes(),
       this.dropdownService.getDeviceStatuses()
     ]).pipe(
-      finalize(() => this.isLoading = false)
+      finalize(() => this.isFormLoading = false) // Use isFormLoading here
     ).subscribe(
+    // --- END OF CHANGE ---
       ([deviceTypes, deviceStatuses]) => {
         this.buildFormConfig(deviceTypes, deviceStatuses);
       },
@@ -117,9 +123,19 @@ export class DeviceFormComponent implements OnInit {
 
   private canDeactivate(): Observable<boolean> {
     const isDirty = this.dynamicForm?.dynamicForm?.dirty || false;
-    if (!isDirty) {
+    
+    // --- START OF CHANGE ---
+    // Also check if we are in the middle of saving
+    if (!isDirty && !this.isSaving) {
       return of(true);
     }
+    
+    // If saving, prevent deactivation
+    if (this.isSaving) {
+      return of(false);
+    }
+    // --- END OF CHANGE ---
+    
     return this.modalService
       .open(ConfirmationModalComponent, {
         title: 'Thay đổi chưa lưu',
@@ -297,7 +313,9 @@ export class DeviceFormComponent implements OnInit {
    * --- 4. UPDATED to build the exact JSON payload ---
    */
   public onSave(formData: any): void {
-    this.isLoading = true;
+    // --- START OF CHANGE ---
+    this.isSaving = true;
+    // --- END OF CHANGE ---
     const apiUrl = this.formConfig.saveUrl;
     const entityId = this.formConfig.entityId;
     
@@ -307,7 +325,9 @@ export class DeviceFormComponent implements OnInit {
     if (!currentUserId) {
       this.toastService.showError('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
       console.error('User ID is missing, cannot save.');
-      this.isLoading = false;
+      // --- START OF CHANGE ---
+      this.isSaving = false;
+      // --- END OF CHANGE ---
       return;
     }
 
@@ -356,7 +376,9 @@ export class DeviceFormComponent implements OnInit {
     saveObservable
       .pipe(
         finalize(() => {
-          this.isLoading = false;
+          // --- START OF CHANGE ---
+          this.isSaving = false;
+          // --- END OF CHANGE ---
         })
       )
       .subscribe({

@@ -1,5 +1,3 @@
-// src/app/services/modal.service.ts
-
 import { Injectable, Type, Injector } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -73,7 +71,7 @@ export class ModalService {
 
     const overlayConfig = new OverlayConfig({
       hasBackdrop: true,
-      // CHANGED: This now matches your global styles.scss
+      backdropClass: 'app-modal-backdrop', 
       panelClass: 'app-modal-panel', 
       positionStrategy,
     });
