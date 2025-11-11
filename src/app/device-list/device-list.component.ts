@@ -199,27 +199,30 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Opens the modal in "Edit" mode.
    */
+
   public onModify(device: any): void {
     if (!device?.Id) return;
-    console.log('Modify action triggered for:', device.Ten);
-
     this.isLoading = true;
     const fetchUrl = `${environment.equipmentCatUrl}/${device.Id}`;
 
-    this.http.get<any>(fetchUrl)
+    this.http.get<any[]>(fetchUrl) // <-- FIX 1: Expect array response
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
-        next: (freshDevice) => {
-          // Format dates just like in loadDevices()
-          const formatted = {
-            ...freshDevice,
-            NgayTao: this.formatDate(freshDevice.NgayTao),
-            NgayMua: this.formatDate(freshDevice.NgayMua),
-            NgayHetHanBH: this.formatDate(freshDevice.NgayHetHanBH)
+        next: (response) => {
+          // FIX 2: Handle array response and map properties
+          const apiDevice = response[0]; // Take first item from array
+
+          // FIX 3: Map API properties to form expectations
+          const mappedDevice = {
+            ...apiDevice,
+            LoaiThietBi_Id: apiDevice.CategoryID,    // API sends CategoryID
+            TrangThai_Id: apiDevice.TrangThai,       // API sends TrangThai
+            NgayMua: apiDevice.NgayMua || '',        // Handle nulls
+            NgayHetHanBH: apiDevice.NgayHetHanBH || ''
           };
 
-          // Pass the FRESH device data to the modal
-          this.openEditModal(formatted);
+          console.log('Mapped device for edit:', mappedDevice);
+          this.openEditModal(mappedDevice); // Pass mapped device
         },
         error: (err) => {
           console.error('Failed to fetch device for edit:', err);

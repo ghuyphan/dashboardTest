@@ -12,7 +12,7 @@ import { ModalRef } from '../../models/modal-ref.model';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { DropdownDataService, DropdownOption } from '../../services/dropdown-data.service';
 // --- 1. IMPORT AuthService ---
-import { AuthService } from '../../services/auth.service'; 
+import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -32,7 +32,7 @@ export class DeviceFormComponent implements OnInit {
   private dynamicForm!: DynamicFormComponent;
 
   public formConfig: any | null = null;
-  
+
   public isFormLoading: boolean = true; // Renamed from isLoading
   public isSaving: boolean = false; // New state for submit
 
@@ -40,9 +40,9 @@ export class DeviceFormComponent implements OnInit {
     private modalService: ModalService,
     private http: HttpClient,
     private dropdownService: DropdownDataService,
-    private authService: AuthService, 
+    private authService: AuthService,
     private toastService: ToastService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.isFormLoading = true;
@@ -58,7 +58,7 @@ export class DeviceFormComponent implements OnInit {
       (error) => {
         console.error('Failed to load form dropdown data', error);
         this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
-        this.modalRef?.close(); 
+        this.modalRef?.close();
       }
     );
 
@@ -71,15 +71,14 @@ export class DeviceFormComponent implements OnInit {
    * Chuyển đổi chuỗi ngày ISO (từ API) thành "yyyy-MM-dd"
    * cho input date.
    */
-  private parseApiDateToHtmlDate(isoDateString: string): string {
-    if (!isoDateString) {
-      return ''; // Xử lý null hoặc chuỗi rỗng
+  private parseApiDateToHtmlDate(isoDateString: string | null): string {
+    if (!isoDateString || isoDateString === '0001-01-01T00:00:00') {
+      return ''; // Handle null/empty/invalid dates
     }
     try {
-      // Chỉ cần lấy 10 ký tự đầu tiên (YYYY-MM-DD)
-      return isoDateString.substring(0, 10);
+      return isoDateString.substring(0, 10); // YYYY-MM-DD
     } catch (e) {
-      console.error('Error parsing ISO date string:', isoDateString, e);
+      console.error('Error parsing date:', isoDateString, e);
       return '';
     }
   }
@@ -93,9 +92,9 @@ export class DeviceFormComponent implements OnInit {
       return null;
     }
     try {
-      const date = new Date(dateString); 
+      const date = new Date(dateString);
       if (isNaN(date.getTime())) return null;
-      return date.toISOString(); 
+      return date.toISOString();
     } catch (e) {
       console.error('Error formatting date string:', dateString, e);
       return null;
@@ -104,15 +103,15 @@ export class DeviceFormComponent implements OnInit {
 
   private canDeactivate(): Observable<boolean> {
     const isDirty = this.dynamicForm?.dynamicForm?.dirty || false;
-    
+
     if (!isDirty && !this.isSaving) {
       return of(true);
     }
-    
+
     if (this.isSaving) {
       return of(false);
     }
-    
+
     return this.modalService
       .open(ConfirmationModalComponent, {
         title: 'Thay đổi chưa lưu',
@@ -138,21 +137,15 @@ export class DeviceFormComponent implements OnInit {
     const isEditMode = !!this.device;
     const deviceData = this.device || {};
 
-    // Tìm ID mặc định cho "Sẵn sàng"
     const defaultStatusId = deviceStatuses.find(s => s.value === 'Sẵn sàng')?.key || null;
 
-    // --- *** SỬA LỖI LOGIC DROPDOWN *** ---
-    // Đọc đúng tên thuộc tính từ JSON (ví dụ: TrangThai_Id)
-    // và kiểm tra null/undefined một cách tường minh
-    
-    const categoryIdValue = (deviceData.LoaiThietBi_Id !== null && deviceData.LoaiThietBi_Id !== undefined) 
-                             ? parseFloat(deviceData.LoaiThietBi_Id) // <-- Đọc từ LoaiThietBi_Id
-                             : null;
-                             
-    const trangThaiValue = (deviceData.TrangThai_Id !== null && deviceData.TrangThai_Id !== undefined) 
-                            ? parseFloat(deviceData.TrangThai_Id) // <-- Đọc từ TrangThai_Id
-                            : defaultStatusId;
-    // --- *** KẾT THÚC SỬA LỖI *** ---
+    const categoryIdValue = deviceData.LoaiThietBi_Id
+      ? parseFloat(deviceData.LoaiThietBi_Id.toString())
+      : null;
+
+    const trangThaiValue = (deviceData.TrangThai_Id !== null && deviceData.TrangThai_Id !== undefined)
+      ? parseFloat(deviceData.TrangThai_Id) // <-- Đọc từ TrangThai_Id
+      : defaultStatusId;
 
     this.formConfig = {
       entityId: isEditMode ? deviceData.Id : null,
@@ -226,7 +219,7 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-         // --- Row 4: DeviceName, ViTri ---
+        // --- Row 4: DeviceName, ViTri ---
         {
           controls: [
             {
@@ -302,7 +295,7 @@ export class DeviceFormComponent implements OnInit {
     this.isSaving = true;
     const apiUrl = this.formConfig.saveUrl;
     const entityId = this.formConfig.entityId;
-    
+
     const currentUserId = this.authService.getUserId();
 
     if (!currentUserId) {
@@ -351,7 +344,7 @@ export class DeviceFormComponent implements OnInit {
         LoaiThietBi_Id: formData.CategoryID,
         DeviceName: formData.DeviceName || '',
       };
-      
+
       saveObservable = this.http.post(apiUrl, createPayload);
     }
 
@@ -362,19 +355,19 @@ export class DeviceFormComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (response: any) => { 
+        next: (response: any) => {
           const successMessage = response.TenKetQua || 'Lưu thành công!';
           this.toastService.showSuccess(successMessage);
-          
+
           console.log('Save successful', response);
           if (this.modalRef) {
             this.modalRef.canClose = () => true;
           }
           this.modalRef?.close(response);
         },
-        error: (err: HttpErrorResponse) => { 
+        error: (err: HttpErrorResponse) => {
           let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
-          
+
           // Check for conflict error (optional - requires backend support)
           if (err.status === 409) {
             errorMessage = 'Thiết bị này đã được cập nhật bởi người dùng khác. Vui lòng làm mới và thử lại.';
@@ -398,8 +391,8 @@ export class DeviceFormComponent implements OnInit {
           } else if (err.message) {
             errorMessage = err.message;
           }
-          
-          this.toastService.showError(errorMessage, 0); 
+
+          this.toastService.showError(errorMessage, 0);
           console.error('Failed to save device:', err);
         },
       });
