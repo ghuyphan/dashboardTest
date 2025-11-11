@@ -271,7 +271,7 @@ export class DeviceFormComponent implements OnInit {
             {
               controlName: 'GiaMua',
               controlType: 'currency',
-              label: 'Giá mua',
+              label: 'Giá mua (VND)',
               value: deviceData.GiaMua || null,
               validators: {},
               layout_flexGrow: 1,

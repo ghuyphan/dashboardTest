@@ -176,11 +176,20 @@ export class DynamicFormComponent implements OnInit, OnChanges {
    */
   public onCurrencyInput(event: Event, controlName: string): void {
     const inputElement = event.target as HTMLInputElement;
+    const control = this.dynamicForm.get(controlName);
+    if (!control) return;
+
     const rawValue = this.cleanCurrency(inputElement.value);
 
-    // Update the actual form control with the clean number
-    // { emitEvent: false } prevents a recursive loop
-    this.dynamicForm.get(controlName)?.setValue(rawValue, { emitEvent: false });
+    control.setValue(rawValue, { emitEvent: false }); // Emit is false
+
+    // --- CRITICAL FIX: Manually set dirty/touched flags ---
+    if (!control.touched) {
+      control.markAsTouched();
+    }
+
+    this.dynamicForm.markAsDirty();
+    // --------------------------------------------------------
 
     // Re-format the displayed value
     const formattedValue = this.formatCurrency(rawValue);
