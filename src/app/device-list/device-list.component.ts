@@ -143,7 +143,10 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public onDeviceSelected(device: any): void {
-    this.selectedDevice = device;
+    // --- THIS IS THE FIX ---
+    // This now correctly handles toggling the selection off
+    this.selectedDevice = this.selectedDevice === device ? null : device;
+    
     console.log('Selected device:', this.selectedDevice);
     this.updateFooterActions();
   }

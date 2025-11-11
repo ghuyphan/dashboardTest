@@ -81,9 +81,20 @@ select.form-control {
   padding-right: 2.5rem; // Make space for the icon
 }
 
+input[type="datetime-local"].form-control {
+  /* Most styling is inherited from .form-control */
+  /* Fix for browsers that don't apply height correctly */
+  height: 38px;
+  min-height: 38px; 
+  line-height: 1.5; /* Reset line-height for datetime-local */
+}
+
 /* --- NEW: Ensure textarea height is auto --- */
 textarea.form-control {
   min-height: auto; 
+  resize: vertical;
+  max-height: 200px;
+  overflow: auto;
 }
 
 .form-control:focus {

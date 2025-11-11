@@ -27,6 +27,15 @@
                      [class.is-invalid]="isInvalid(control.controlName)"
               />
 
+              <input *ngSwitchCase="'datetime'"
+                     [type]="'datetime-local'"
+                     [id]="control.controlName"
+                     [formControlName]="control.controlName"
+                     [placeholder]="control.placeholder || ''"
+                     class="form-control"
+                     [class.is-invalid]="isInvalid(control.controlName)"
+              />
+
               <select *ngSwitchCase="'dropdown'"
                       [id]="control.controlName"
                       [formControlName]="control.controlName"

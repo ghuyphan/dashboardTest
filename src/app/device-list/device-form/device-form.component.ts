@@ -1,7 +1,7 @@
 // src/app/device-list/device-form/device-form.component.ts
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, forkJoin } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
@@ -13,7 +13,7 @@ import { ConfirmationModalComponent } from '../../components/confirmation-modal/
 import { DropdownDataService, DropdownOption } from '../../services/dropdown-data.service';
 // --- 1. IMPORT AuthService ---
 import { AuthService } from '../../services/auth.service'; 
-// import { ToastService } from '../../services/toast.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-device-form',
@@ -39,8 +39,8 @@ export class DeviceFormComponent implements OnInit {
     private modalService: ModalService,
     private http: HttpClient,
     private dropdownService: DropdownDataService,
-    private authService: AuthService 
-    // private toastService: ToastService
+    private authService: AuthService, 
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -56,13 +56,62 @@ export class DeviceFormComponent implements OnInit {
       },
       (error) => {
         console.error('Failed to load form dropdown data', error);
-        // this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
+        this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
         this.modalRef?.close(); 
       }
     );
 
     if (this.modalRef) {
       this.modalRef.canClose = () => this.canDeactivate();
+    }
+  }
+
+  // +++ NEW HELPER 1: Converts "DD/MM/YYYY" to "YYYY-MM-DDTHH:mm" +++
+  /**
+   * Converts a "DD/MM/YYYY" string to a "yyyy-MM-ddTHH:mm" string
+   * for the datetime-local input.
+   */
+  private parseApiDateToDateTimeLocal(dateString: string): string {
+    if (!dateString || !dateString.includes('/')) {
+      return ''; // Not a valid string to parse
+    }
+    try {
+      const parts = dateString.split('/');
+      if (parts.length < 3) return '';
+      
+      const day = parts[0];
+      const month = parts[1];
+      const year = parts[2];
+      
+      // Default to 00:00 for time
+      return `${year}-${month}-${day}T00:00`;
+    } catch (e) {
+      console.error('Error parsing date string:', dateString, e);
+      return '';
+    }
+  }
+
+  // +++ NEW HELPER 2: Converts "YYYY-MM-DDTHH:mm" to "DD/MM/YYYY" +++
+  /**
+   * Converts a "yyyy-MM-ddTHH:mm" string from the input
+   * back to a "DD/MM/YYYY" string for the API.
+   */
+  private formatDateTimeLocalToApiDate(dateTimeString: string): string | null {
+    if (!dateTimeString) {
+      return null;
+    }
+    try {
+      const date = new Date(dateTimeString);
+      if (isNaN(date.getTime())) return null;
+
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      console.error('Error formatting datetime-local string:', dateTimeString, e);
+      return null;
     }
   }
 
@@ -197,19 +246,23 @@ export class DeviceFormComponent implements OnInit {
           controls: [
             {
               controlName: 'NgayMua',
-              controlType: 'text', // Use 'date' if you add that type to DynamicForm
+              // +++ UPDATED +++
+              controlType: 'datetime', // Use 'datetime'
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              value: deviceData.NgayMua || '', // Needs date formatting if not string
+              // +++ UPDATED +++
+              value: this.parseApiDateToDateTimeLocal(deviceData.NgayMua), 
               validators: {},
               layout_flexGrow: 1,
             },
             {
               controlName: 'NgayHetHanBH',
-              controlType: 'text', // Use 'date'
+              // +++ UPDATED +++
+              controlType: 'datetime', // Use 'datetime'
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              value: deviceData.NgayHetHanBH || '', // Needs date formatting
+              // +++ UPDATED +++
+              value: this.parseApiDateToDateTimeLocal(deviceData.NgayHetHanBH), 
               validators: {},
               layout_flexGrow: 1,
             },
@@ -247,38 +300,38 @@ export class DeviceFormComponent implements OnInit {
     this.isLoading = true;
     const apiUrl = this.formConfig.saveUrl;
     const entityId = this.formConfig.entityId;
+    
+    // +++ Get the user ID +++
     const currentUserId = this.authService.getUserId();
 
     if (!currentUserId) {
-      // this.toastService.showError('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
+      this.toastService.showError('Lỗi xác thực người dùng. Vui lòng đăng nhập lại.');
       console.error('User ID is missing, cannot save.');
       this.isLoading = false;
       return;
     }
 
+    // +++ UPDATED: Format dates back to API format +++
+    const apiNgayMua = this.formatDateTimeLocalToApiDate(formData.NgayMua);
+    const apiNgayHetHanBH = this.formatDateTimeLocalToApiDate(formData.NgayHetHanBH);
+
     let saveObservable;
 
     if (entityId) {
       // --- UPDATE (PUT) ---
-      // We merge the original device data with the new form data
-      // This preserves fields not in the form (like HL, NgayTao)
       const updatePayload = {
         ...this.device,
         ...formData,
-        USER_: currentUserId 
+        NgayMua: apiNgayMua,
+        GiaMua: formData.GiaMua || null,
+        NgayHetHanBH: apiNgayHetHanBH,
       };
-
-      // Clean up null/empty strings for date/number fields if needed
-      updatePayload.NgayMua = formData.NgayMua || null;
-      updatePayload.GiaMua = formData.GiaMua || null;
-      updatePayload.NgayHetHanBH = formData.NgayHetHanBH || null;
       
       const updateUrl = `${apiUrl}/${entityId}`;
       saveObservable = this.http.put(updateUrl, updatePayload);
 
     } else {
       // --- CREATE (POST) ---
-      // We create the payload from scratch to match your model
       const createPayload = {
         Id: 0,
         Ma: formData.Ma,
@@ -287,13 +340,12 @@ export class DeviceFormComponent implements OnInit {
         Model: formData.Model || '',
         TrangThai: formData.TrangThai, // This is the ID from the form
         ViTri: formData.ViTri || '',
-        NgayMua: formData.NgayMua || null,
+        NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
-        NgayHetHanBH: formData.NgayHetHanBH || null,
+        NgayHetHanBH: apiNgayHetHanBH,
         MoTa: formData.MoTa || '',
         CategoryID: formData.CategoryID, // This is the ID from the form
         DeviceName: formData.DeviceName || '',
-        USER_: currentUserId,
         HL: 1.0 // Assuming HL is 1.0 for new records
       };
       
@@ -308,16 +360,33 @@ export class DeviceFormComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (savedDevice) => {
-          // this.toastService.showSuccess('Lưu thành công!');
-          console.log('Save successful', savedDevice);
+        next: (response: any) => { 
+          const successMessage = response.TenKetQua || 'Lưu thành công!';
+          this.toastService.showSuccess(successMessage);
+          
+          console.log('Save successful', response);
           if (this.modalRef) {
             this.modalRef.canClose = () => true;
           }
-          this.modalRef?.close(savedDevice);
+          this.modalRef?.close(response);
         },
-        error: (err) => {
-          // this.toastService.showError('Lưu thất bại!');
+        error: (err: HttpErrorResponse) => { 
+          let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
+          if (err.error) {
+            if (typeof err.error === 'string') {
+              errorMessage = err.error;
+            } else if (err.error.ErrorMessage) {
+              errorMessage = err.error.ErrorMessage;
+            } else if (err.error.TenKetQua) {
+              errorMessage = err.error.TenKetQua;
+            } else if (err.message) {
+              errorMessage = err.message;
+            }
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          
+          this.toastService.showError(errorMessage, 0); 
           console.error('Failed to save device:', err);
         },
       });

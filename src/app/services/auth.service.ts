@@ -17,7 +17,7 @@ interface LoginResponse {
 
   APIKey: {
     access_token: string;
-    id_token?: string;
+    id_token?: string; // +++ NEW/MODIFIED +++ (Ensure this is optional)
     date_token?: string;
     expires_in?: string;
     token_type?: string;
@@ -47,6 +47,7 @@ interface ApiPermissionNode {
 
 // --- STORAGE KEYS ---
 const TOKEN_STORAGE_KEY = 'authToken';
+const ID_TOKEN_STORAGE_KEY = 'idToken'; // +++ NEW/MODIFIED +++
 const ROLES_STORAGE_KEY = 'userRoles';
 const USERNAME_STORAGE_KEY = 'username';
 const PERMISSIONS_STORAGE_KEY = 'userPermissions';
@@ -64,6 +65,7 @@ export class AuthService {
   private API_URL_PERMISSIONS_BASE = environment.permissionsUrl;
 
   private accessToken: string | null = null;
+  private idToken: string | null = null; // +++ NEW/MODIFIED +++
 
   // --- Observables for Auth State ---
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
@@ -87,6 +89,7 @@ export class AuthService {
    */
   public init(): Observable<any> { // <-- MADE PUBLIC, RETURNS OBSERVABLE
     let storedToken: string | null = null;
+    let storedIdToken: string | null = null; // +++ NEW/MODIFIED +++
     let storedRolesJson: string | null = null;
     let storedUsername: string | null = null;
     let storedFullName: string | null = null;
@@ -106,6 +109,7 @@ export class AuthService {
 
       if (storage) {
         storedToken = storage.getItem(TOKEN_STORAGE_KEY);
+        storedIdToken = storage.getItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
         storedRolesJson = storage.getItem(ROLES_STORAGE_KEY);
         storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
         storedFullName = storage.getItem(FULLNAME_STORAGE_KEY);
@@ -115,8 +119,9 @@ export class AuthService {
 
 
         // *** UPDATED: Check for ALL required user data ***
-        if (storedToken && storedRolesJson && storedUsername && storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) {
+        if (storedToken && storedIdToken && storedRolesJson && storedUsername && storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) { // +++ NEW/MODIFIED +++ (added storedIdToken)
           this.accessToken = storedToken;
+          this.idToken = storedIdToken; // +++ NEW/MODIFIED +++
           
           const roles: string[] = JSON.parse(storedRolesJson);
           const permissions: string[] = JSON.parse(storedPermissionsJson);
@@ -185,9 +190,13 @@ export class AuthService {
           return throwError(() => new Error(errorMessage));
         }
         this.accessToken = loginResponse.APIKey.access_token;
+        this.idToken = loginResponse.APIKey.id_token || null; // +++ NEW/MODIFIED +++
 
         try {
           storage.setItem(TOKEN_STORAGE_KEY, loginResponse.APIKey.access_token);
+          if (this.idToken) { // +++ NEW/MODIFIED +++
+            storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken); // +++ NEW/MODIFIED +++
+          } // +++ NEW/MODIFIED +++
         } catch (e) {
           return throwError(() => new Error('Failed to save auth token to web storage.'));
         }
@@ -277,6 +286,7 @@ export class AuthService {
     try {
       if (typeof otherStorage !== 'undefined') {
         otherStorage.removeItem(TOKEN_STORAGE_KEY);
+        otherStorage.removeItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
         otherStorage.removeItem(ROLES_STORAGE_KEY);
         otherStorage.removeItem(USERNAME_STORAGE_KEY);
         otherStorage.removeItem(PERMISSIONS_STORAGE_KEY);
@@ -302,11 +312,13 @@ export class AuthService {
    */
   private clearLocalAuthData(navigate: boolean = true): void {
     this.accessToken = null;
+    this.idToken = null; // +++ NEW/MODIFIED +++
 
     try {
       // *** This logic clears BOTH storages ***
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+        sessionStorage.removeItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
         sessionStorage.removeItem(ROLES_STORAGE_KEY);
         sessionStorage.removeItem(USERNAME_STORAGE_KEY);
         sessionStorage.removeItem(PERMISSIONS_STORAGE_KEY);
@@ -316,6 +328,7 @@ export class AuthService {
       }
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
         localStorage.removeItem(ROLES_STORAGE_KEY);
         localStorage.removeItem(USERNAME_STORAGE_KEY);
         localStorage.removeItem(PERMISSIONS_STORAGE_KEY);
@@ -358,6 +371,31 @@ export class AuthService {
       return null;
     }
   }
+
+  // +++ NEW/MODIFIED +++
+  /**
+   * Gets the current ID token.
+   */
+  public getIdToken(): string | null {
+    // Try in-memory first
+    if (this.idToken) {
+      return this.idToken;
+    }
+
+    // Try storage
+    try {
+      let token = (typeof localStorage !== 'undefined') ? localStorage.getItem(ID_TOKEN_STORAGE_KEY) : null;
+      if (!token) {
+        token = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(ID_TOKEN_STORAGE_KEY) : null;
+      }
+      this.idToken = token; // Cache it
+      return token;
+    } catch (e) {
+      return null;
+    }
+  }
+  // +++ END NEW/MODIFIED +++
+
 
   // --- Role & Permission Management Methods ---
 
