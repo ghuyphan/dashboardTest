@@ -1,4 +1,3 @@
-// src/app/device-list/device-form/device-form.component.ts
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -125,7 +124,7 @@ export class DeviceFormComponent implements OnInit {
         size: 'sm',
         context: {
           message:
-            'Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn hủy bỏ chúng không?',
+            'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
           confirmText: 'Hủy bỏ thay đổi',
           cancelText: 'Tiếp tục chỉnh sửa',
         },
@@ -319,58 +318,54 @@ export class DeviceFormComponent implements OnInit {
     const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
 
     let saveObservable;
-    let devicePayload: Device; // Will hold the final device object
 
     if (entityId) {
-      // --- UPDATE (PUT) ---
-      devicePayload = {
-        ...this.device!,
+      const updatePayload = {
+        Id: entityId,
         Ma: formData.Ma,
         Ten: formData.Ten,
         Model: formData.Model || null,
         SerialNumber: formData.SerialNumber || null,
-        DeviceName: formData.DeviceName || null,
+        DeviceName: formData.DeviceName || '',
         ViTri: formData.ViTri || null,
         MoTa: formData.MoTa || null,
-        LoaiThietBi_Id: formData.CategoryID,
-        TrangThai_Id: formData.TrangThai,
+        TrangThai: formData.TrangThai, // <-- SỬA: Dùng tên 'TrangThai'
+        CategoryID: formData.CategoryID, // <-- SỬA: Dùng tên 'CategoryID'
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
+        USER_: currentUserId, // <-- SỬA: Thêm USER_
       };
 
-      // --- MODIFICATION: Wrap the payload as per user's request ---
-      const wrapperPayload = {
-        dmThietBi: devicePayload,
-      };
-      
       const updateUrl = `${apiUrl}/${entityId}`;
-      saveObservable = this.http.put(updateUrl, wrapperPayload); // Send WRAPPED payload
-
+      // SỬA: Gửi payload phẳng đã được cập nhật
+      saveObservable = this.http.put(updateUrl, updatePayload);
     } else {
       // --- CREATE (POST) ---
-      devicePayload = {
+      // Logic này đã ĐÚNG từ lần trước
+      const devicePayloadForPost = {
         Id: 0,
         Ma: formData.Ma,
         Ten: formData.Ten,
         SerialNumber: formData.SerialNumber || null,
         Model: formData.Model || null,
-        TrangThai_Id: formData.TrangThai,
+        TrangThai: formData.TrangThai,
         ViTri: formData.ViTri || null,
         NgayMua: apiNgayMua,
         GiaMua: formData.GiaMua || null,
         NgayHetHanBH: apiNgayHetHanBH,
         MoTa: formData.MoTa || null,
-        LoaiThietBi_Id: formData.CategoryID,
-        DeviceName: formData.DeviceName || null,
+        CategoryID: formData.CategoryID,
+        DeviceName: formData.DeviceName || '',
+        USER_: currentUserId,
       };
 
-      // Create the wrapper object the API expects
+      // Gửi payload được "gói" lại
       const wrapperPayload = {
-        dmThietBi: devicePayload,
+        dmThietBi: devicePayloadForPost,
       };
 
-      saveObservable = this.http.post(apiUrl, wrapperPayload); // Send wrapped payload
+      saveObservable = this.http.post(apiUrl, wrapperPayload);
     }
     // --- END OF MODIFICATION ---
 
@@ -395,6 +390,7 @@ export class DeviceFormComponent implements OnInit {
           let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
 
           if (err.error && err.error.errors) {
+            // BE có thể vẫn trả về lỗi trong wrapper
             if (err.error.errors.dmThietBi) {
               errorMessage = `Lỗi API: ${err.error.errors.dmThietBi[0]}`;
             } else {

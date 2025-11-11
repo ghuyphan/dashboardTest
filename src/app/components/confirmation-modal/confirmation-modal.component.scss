@@ -31,8 +31,10 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-sm); /* 8px */
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
   // padding: var(--spacing-md) var(--spacing-lg); /* 16px 24px */
-  background-color: var(--gray-100); /* Use light gray for footer */
+  // background-color: var(--gray-100); /* Use light gray for footer */
   border-top: var(--border-width) solid var(--gray-200);
   /* Removed border-radius, this is handled by the parent app-modal */
 }

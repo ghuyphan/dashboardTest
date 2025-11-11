@@ -1,6 +1,6 @@
 // src/app/models/device.model.ts
 export interface Device {
-  Id: number;
+  Id?: number;
   Ma: string;
   Ten: string;
   SerialNumber?: string | null;
