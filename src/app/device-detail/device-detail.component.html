@@ -1,0 +1,87 @@
+<div class="page-container">
+  <div *ngIf="isLoading" class="detail-loading-spinner">
+    <p>Đang tải chi tiết thiết bị...</p>
+  </div>
+
+  <div *ngIf="!isLoading && device" class="detail-card-wrapper">
+    
+    <div class="detail-card" id="printable-area">
+      <div class="detail-header">
+        <div class="header-icon">
+          <i class="fas fa-laptop-medical"></i>
+        </div>
+        <div class="header-text">
+          <h2 class="device-name">{{ device.Ten }}</h2>
+          <span class="device-code">{{ device.Ma }}</span>
+        </div>
+        <div class="header-status">
+          <span class="status-chip">{{ device.TrangThai_Id || 'N/A' }}</span>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Model</span>
+            <span class="info-value">{{ device.Model || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Serial Number</span>
+            <span class="info-value">{{ device.SerialNumber || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Loại thiết bị</span>
+            <span class="info-value">{{ device.LoaiThietBi_Id || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tên máy (Hostname)</span>
+            <span class="info-value">{{ device.DeviceName || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Vị trí</span>
+            <span class="info-value">{{ device.ViTri || 'N/A' }}</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="info-label">Mô tả</span>
+            <span class="info-value description">{{ device.MoTa || 'Không có mô tả.' }}</span>
+          </div>
+        </div>
+
+        <div class="meta-panel">
+          <div class="qr-code-section">
+            <h4 class="meta-title">Mã QR (Serial Number)</h4>
+            <div class="qr-code-box">
+              <qrcode
+                [qrdata]="qrCodeValue"
+                [elementType]="'canvas'"
+                [errorCorrectionLevel]="'M'"
+                [width]="160"
+                [alt]="'QR Code for ' + device.SerialNumber"
+              ></qrcode>
+            </div>
+            <span class="qr-caption">{{ device.SerialNumber }}</span>
+          </div>
+
+          <div class="purchase-section">
+            <h4 class="meta-title">Thông tin mua hàng</h4>
+            <div class="info-item">
+              <span class="info-label">Giá mua</span>
+              <span class="info-value">{{ (device.GiaMua | currency:'VND':'symbol':'1.0-0':'vi') || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Ngày mua</span>
+              <span class="info-value">{{ formatDate(device.NgayMua) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Hết hạn bảo hành</span>
+              <span class="info-value">{{ formatDate(device.NgayHetHanBH) }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

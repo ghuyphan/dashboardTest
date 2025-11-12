@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Subscription, finalize } from 'rxjs';
+import { Router } from '@angular/router'; // <-- IMPORT ROUTER
 
 import {
   ReusableTableComponent,
@@ -40,7 +41,8 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     private http: HttpClient,
     private searchService: SearchService,
     private modalService: ModalService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: Router // <-- INJECT ROUTER
   ) { }
 
   ngOnInit(): void {
@@ -146,6 +148,9 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     console.log('Sort Changed (Handled by Table):', sortEvent);
   }
 
+  /**
+   * --- MODIFIED: This is now just for selection ---
+   */
   public onDeviceSelected(device: any): void {
     this.selectedDevice = this.selectedDevice === device ? null : device;
     console.log('Selected device:', this.selectedDevice);
@@ -153,8 +158,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * --- UPDATED ---
-   * This now includes the "Xóa" (Delete) button definition.
+   * --- UPDATED: Footer now has "View Detail" ---
    */
   private updateFooterActions(): void {
     const isRowSelected = this.selectedDevice !== null;
@@ -167,6 +171,14 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         className: 'btn-primary',
       },
       {
+        label: 'Xem Chi Tiết',
+        icon: 'fas fa-eye',
+        action: () => this.onViewDetail(this.selectedDevice),
+        permission: 'QLThietBi.DMThietBi.RVIEW', // Assumes a general view permission
+        className: 'btn-secondary',
+        disabled: !isRowSelected,
+      },
+            {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
         action: () => this.onModify(this.selectedDevice),
@@ -183,13 +195,21 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         className: 'btn-danger',
         disabled: !isRowSelected,
       }
-      // --- END ADDITION ---
     ];
     this.footerService.setActions(actions);
   }
 
   /**
+   * --- NEW: Handles the "View Detail" footer button click ---
+   */
+  public onViewDetail(device: any): void {
+    if (!device) return;
+    this.router.navigate(['/app/equipment/catalog', device.Id]);
+  }
+
+  /**
    * Handles click events from the ... menu on each row.
+   * These still work independently of the footer.
    */
   public handleRowAction(event: { action: string, data: any }): void {
     switch (event.action) {
@@ -224,7 +244,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Opens the modal in "Edit" mode.
+   * Opens the modal in "Edit" mode. (Called by row action menu)
    */
   public onModify(device: any): void {
     if (!device) return;
@@ -246,7 +266,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Opens a confirmation modal and deletes the device if confirmed.
+   * Opens a confirmation modal and deletes the device if confirmed. (Called by row action menu)
    */
   public onDelete(device: any): void {
     if (!device) return;

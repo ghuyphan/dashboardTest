@@ -83,13 +83,23 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     if (validatorsConfig.minLength) {
       validators.push(Validators.minLength(validatorsConfig.minLength));
     }
+    // --- START OF BEST PRACTICE ADDITIONS ---
+    if (validatorsConfig.maxLength) {
+      validators.push(Validators.maxLength(validatorsConfig.maxLength));
+    }
     if (validatorsConfig.email) {
       validators.push(Validators.email);
     }
     if (validatorsConfig.pattern) {
       validators.push(Validators.pattern(validatorsConfig.pattern));
     }
-    // ... add more as needed
+    if (validatorsConfig.min) {
+      validators.push(Validators.min(validatorsConfig.min));
+    }
+    if (validatorsConfig.max) {
+      validators.push(Validators.max(validatorsConfig.max));
+    }
+    // --- END OF BEST PRACTICE ADDITIONS ---
     
     return validators;
   }
@@ -133,14 +143,26 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
     for (const errorKey in control.errors) {
       if (controlConfig.validationMessages[errorKey]) {
+        // --- BEST PRACTICE: Add support for maxLength message ---
+        if (errorKey === 'maxLength') {
+          // Example: "Tên không được vượt quá 100 ký tự."
+          return controlConfig.validationMessages[errorKey];
+        }
+        if (errorKey === 'max') {
+           // Example: "Giá mua không hợp lệ (tối đa 10 tỷ)."
+          return controlConfig.validationMessages[errorKey];
+        }
+        if (errorKey === 'pattern') {
+          // Example: "Mã chỉ chứa chữ, số, gạch ngang, gạch dưới."
+          return controlConfig.validationMessages[errorKey];
+        }
+        // --- END ADDITION ---
         return controlConfig.validationMessages[errorKey];
       }
     }
 
     return 'Trường này không hợp lệ.'; // Generic fallback
   }
-
-  // --- START OF ADDITIONS ---
 
   /**
    * Cleans a value (string or number) into a clean number or null.

@@ -2,10 +2,11 @@
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
+  /* MODIFIED: Reduced padding and gap for flexibility */
+  padding: var(--spacing-sm);
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   transition: all 0.2s ease-in-out;
   border-left: none;
 
@@ -17,14 +18,14 @@
   @media (max-width: 768px) {
     flex-direction: column;
     text-align: center;
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
+    /* Padding and gap are already 'sm', so no change needed here */
   }
 }
 
 .widget-icon-wrapper {
-  width: 48px;
-  height: 48px;
+  /* MODIFIED: Reduced icon wrapper size */
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -32,11 +33,8 @@
   flex-shrink: 0;
 
   i {
-    font-size: 20px;
-    
-    @media (max-width: 768px) {
-      font-size: 18px;
-    }
+    /* MODIFIED: Reduced base icon font size */
+    font-size: 18px;
     
     @media (max-width: 480px) {
       font-size: 16px;
@@ -44,8 +42,7 @@
   }
 
   @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
+    /* Base size is now 40px, so no change needed */
     margin-bottom: var(--spacing-xs);
   }
 }
@@ -53,6 +50,8 @@
 .widget-content {
   flex-grow: 1;
   overflow: hidden;
+  /* NEW: Ensures content can shrink in flexbox */
+  min-width: 0;
 
   .widget-value {
     font-size: clamp(20px, 4vw, 28px);
@@ -61,6 +60,11 @@
     margin: 0;
     line-height: 1.1;
     font-feature-settings: "tnum"; // optional: better numeric alignment
+    
+    /* NEW: Added text overflow handling for value */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     @media (max-width: 768px) {
       font-size: clamp(18px, 5vw, 24px);

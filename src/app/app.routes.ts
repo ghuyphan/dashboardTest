@@ -45,6 +45,20 @@ export const routes: Routes = [
         }
       },
 
+      // --- START OF ADDITION ---
+      {
+        path: 'equipment/catalog/:id', // The new detail route
+        loadComponent: () => 
+          import('./device-detail/device-detail.component').then(m => m.DeviceDetailComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'QLThietBi.DMThietBi', // Assumes same view permission
+          title: 'Chi tiết thiết bị',
+          showSearchBar: false // No search bar on detail page
+        }
+      },
+      // --- END OF ADDITION ---
+
       {
         path: 'reports/bed-usage',
         // --- 2. USE loadComponent INSTEAD ---

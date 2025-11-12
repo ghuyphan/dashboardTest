@@ -166,8 +166,17 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Mã thiết bị',
               value: deviceData.Ma || '',
-              validators: { required: true },
-              validationMessages: { required: 'Mã là bắt buộc.' },
+              validators: {
+                required: true,
+                maxLength: 20,
+                // Example pattern: No spaces, only letters, numbers, -, _
+                pattern: '^[a-zA-Z0-9_-]+$',
+              },
+              validationMessages: {
+                required: 'Mã là bắt buộc.',
+                maxLength: 'Mã không được vượt quá 20 ký tự.',
+                pattern: 'Mã chỉ chứa chữ, số, gạch ngang, gạch dưới.',
+              },
               layout_flexGrow: 1,
             },
             {
@@ -175,8 +184,11 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Tên thiết bị',
               value: deviceData.Ten || '',
-              validators: { required: true },
-              validationMessages: { required: 'Tên là bắt buộc.' },
+              validators: { required: true, maxLength: 100 },
+              validationMessages: {
+                required: 'Tên là bắt buộc.',
+                maxLength: 'Tên không được vượt quá 100 ký tự.',
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -189,7 +201,10 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Model',
               value: deviceData.Model || '',
-              validators: {},
+              validators: { maxLength: 50 },
+              validationMessages: {
+                maxLength: 'Model không được vượt quá 50 ký tự.',
+              },
               layout_flexGrow: 1,
             },
             {
@@ -197,7 +212,10 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Số Serial',
               value: deviceData.SerialNumber || '',
-              validators: {},
+              validators: { maxLength: 50 },
+              validationMessages: {
+                maxLength: 'Số Serial không được vượt quá 50 ký tự.',
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -234,7 +252,10 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Tên máy (Host name)',
               value: deviceData.DeviceName || '',
-              validators: {},
+              validators: { maxLength: 50 },
+              validationMessages: {
+                maxLength: 'Tên máy không được vượt quá 50 ký tự.',
+              },
               layout_flexGrow: 1,
             },
             {
@@ -242,7 +263,10 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Vị trí',
               value: deviceData.ViTri || '',
-              validators: {},
+              validators: { maxLength: 100 },
+              validationMessages: {
+                maxLength: 'Vị trí không được vượt quá 100 ký tự.',
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -273,7 +297,10 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'currency',
               label: 'Giá mua (VND)',
               value: deviceData.GiaMua || null,
-              validators: {},
+              validators: { max: 10000000000 }, // Example: max 10 billion
+              validationMessages: {
+                max: 'Giá mua không hợp lệ (tối đa 10 tỷ).',
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -286,12 +313,19 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'textarea',
               label: 'Mô tả',
               value: deviceData.MoTa || '',
-              validators: {},
+              validators: { maxLength: 500 },
+              validationMessages: {
+                maxLength: 'Mô tả không được vượt quá 500 ký tự.',
+              },
               layout_flexGrow: 1,
             },
           ],
         },
       ],
+      // --- UPCOMING BEST PRACTICE: Cross-field validation ---
+      // formValidators: [
+      //   this.dateRangeValidator('NgayMua', 'NgayHetHanBH')
+      // ]
     };
   }
 
