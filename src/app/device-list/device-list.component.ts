@@ -171,7 +171,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         className: 'btn-primary',
       },
       {
-        label: 'Xem Chi Tiết',
+        label: 'Xem',
         icon: 'fas fa-eye',
         action: () => this.onViewDetail(this.selectedDevice),
         permission: 'QLThietBi.DMThietBi.RVIEW', // Assumes a general view permission

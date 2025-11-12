@@ -1,15 +1,17 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  width: 100%;
+  overflow: hidden;
 }
 
 .page-container {
-  height: 100%;
-  width: 100%;
-  padding: var(--spacing-md);
-  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  padding: 0; // Removed padding to be full-screen
+  box-sizing: border-box;
+  background-color: var(--white); // Match background
 }
 
 .detail-loading-spinner {
@@ -21,14 +23,23 @@
   color: var(--gray-600);
 }
 
+.detail-card-wrapper {
+  height: 100%;
+}
+
 .detail-card {
-  max-width: 1000px;
-  margin: 0 auto;
+  max-width: 100%; // Use full width
+  margin: 0; // Remove margin
   background: var(--white);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-md);
-  border: 1px solid var(--gray-200);
+  border-radius: 0; // Remove border-radius
+  box-shadow: none; // Remove box-shadow
+  border: none; // Remove border
   overflow: hidden;
+
+  // Make card fill height and scroll internally
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-header {
@@ -85,6 +96,11 @@
   display: flex;
   padding: var(--spacing-lg);
   gap: var(--spacing-xl);
+  
+  // Make body scrollable
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 
   @media (max-width: 768px) {
     flex-direction: column-reverse;
@@ -210,36 +226,71 @@
   background-color: var( --aqua-island-light);
 }
 
-/* Print Styles */
+/* --- UPDATED PRINT STYLES --- */
+#qr-print-section {
+  display: none; // Hidden by default on screen view
+  text-align: center;
+  padding: 2rem; // Add padding as needed for aesthetics during print preview
+  background-color: white; // Ensure clean background for print
+  color: black; // Ensure text is black
+}
+
+.print-device-name {
+  font-size: 1.5rem; // Adjust size as desired for print
+  font-weight: 700;
+  color: #000; // Explicitly set for print
+  margin: 0 0 1rem 0; // Reset default margin and add bottom margin
+}
+
+.print-serial {
+  font-family: monospace;
+  font-size: 1rem; // Adjust size as desired for print
+  color: #000; // Explicitly set for print
+  margin: 1rem 0 0 0; // Reset default margin and add top margin
+}
+
 @media print {
-  /* Hide everything except the printable area */
-  body * {
-    visibility: hidden;
-  }
-  
-  #printable-area, #printable-area * {
-    visibility: visible;
-  }
-
-  /* Position it at the top-left */
+  /* --- Hide All Other Content --- */
+  /* Hide the main application content */
   .page-container {
-    padding: 0;
-  }
-  
-  .detail-card {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    box-shadow: none;
-    border: none;
-    border-radius: 0;
+    display: none !important;
   }
 
-  .detail-body {
-    /* Ensure flex-direction is row for printing */
-    flex-direction: row !important;
+  /* --- Show Only the Print Section --- */
+  #qr-print-section {
+    display: block !important; // Crucially override the default 'display: none'
+    visibility: visible !important; // Ensure it's visible
+    position: static !important; // Reset any positioning that might interfere
+    margin: 0 auto !important; // Center the block on the printed page
+    padding: 2rem !important; // Re-apply padding for print
+    width: 100% !important; // Or a specific width like 80mm
+    max-width: 100% !important; // Ensure it doesn't overflow
+    box-sizing: border-box !important; // Include padding in width calculation
+    color: black !important; // Force black text
+    background-color: white !important; // Force white background
+  }
+
+  /* Ensure all children inside the print section are visible */
+  #qr-print-section * {
+    visibility: visible !important;
+    color: black !important;
+    background-color: transparent !important; // Or white, depending on preference
+  }
+
+  /* Optional: Improve QR code print quality if possible */
+  /* If angularx-qrcode supports SVG, prefer it for print */
+  /* #qr-print-section qrcode canvas { display: none; } */
+  /* #qr-print-section qrcode svg { display: block; max-width: 100%; height: auto; } */
+  /* If only canvas is available, it should print fine, but ensure visibility */
+  #qr-print-section qrcode {
+     display: block !important; // Ensure the QR code container itself is displayed
+     margin: 0 auto 1rem auto !important; // Center the QR code and add space below
+  }
+  #qr-print-section qrcode canvas {
+     display: block !important; // Ensure the canvas element is displayed
+     max-width: 100% !important; // Ensure it scales down if too large
+     height: auto !important;
+     // Optional: Adjust width if you want a specific size
+     // width: 200px !important; // Example fixed size
   }
 }

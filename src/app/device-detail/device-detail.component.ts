@@ -73,8 +73,12 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (data) => {
         this.device = data;
-        // Use the SerialNumber for the QR Code
-        this.qrCodeValue = this.device.SerialNumber || ''; 
+        
+        // --- START OF CHANGE ---
+        // Use the page's current URL for the QR Code
+        this.qrCodeValue = window.location.href; 
+        // --- END OF CHANGE ---
+
         this.setupFooterActions(this.device);
       },
       error: (err) => {
