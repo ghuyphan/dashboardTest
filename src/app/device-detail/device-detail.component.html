@@ -15,8 +15,8 @@
           <span class="device-code">{{ device.Ma }}</span>
         </div>
         <div class="header-status">
-          <span class="status-chip">{{ device.TrangThai_Id || 'N/A' }}</span>
-        </div>
+          <span class="status-chip">{{ device.TrangThai_Ten || 'N/A' }}</span>
+          </div>
       </div>
 
       <div class="detail-body">
@@ -32,8 +32,8 @@
           </div>
           <div class="info-item">
             <span class="info-label">Loại thiết bị</span>
-            <span class="info-value">{{ device.LoaiThietBi_Id || 'N/A' }}</span>
-          </div>
+            <span class="info-value">{{ device.TenLoaiThietBi || 'N/A' }}</span>
+            </div>
           <div class="info-item">
             <span class="info-label">Tên máy (Hostname)</span>
             <span class="info-value">{{ device.DeviceName || 'N/A' }}</span>

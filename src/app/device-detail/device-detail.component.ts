@@ -1,3 +1,4 @@
+// src/app/device-detail/device-detail.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -68,18 +69,24 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     // Unsubscribe from previous load if any
     this.deviceSub?.unsubscribe();
 
-    this.deviceSub = this.http.get<Device>(url).pipe(
+    // --- START OF CHANGE ---
+    // Expect an array of Devices (Device[]) instead of a single Device
+    this.deviceSub = this.http.get<Device[]>(url).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe({
-      next: (data) => {
-        this.device = data;
-        
-        // --- START OF CHANGE ---
-        // Use the page's current URL for the QR Code
-        this.qrCodeValue = window.location.href; 
+      next: (dataArray) => {
+        // Check if the array is valid and has at least one item
+        if (dataArray && dataArray.length > 0) {
+          this.device = dataArray[0]; // Assign the first item
+          
+          this.qrCodeValue = window.location.href; 
+          this.setupFooterActions(this.device);
+        } else {
+          // Handle cases where the API returns an empty array
+          this.toastService.showError('Không tìm thấy chi tiết cho thiết bị này.');
+          this.goBack();
+        }
         // --- END OF CHANGE ---
-
-        this.setupFooterActions(this.device);
       },
       error: (err) => {
         console.error('Failed to load device details:', err);
@@ -95,7 +102,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         label: 'Quay lại',
         icon: 'fas fa-arrow-left',
         action: () => this.goBack(),
-        className: 'btn-secondary',
+        className: 'btn-primary',
       },
       {
         label: 'In',
@@ -109,7 +116,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         icon: 'fas fa-pencil-alt',
         action: () => this.onEdit(device),
         permission: 'QLThietBi.DMThietBi.RMODIFY',
-        className: 'btn-primary',
+        className: 'btn-secondary',
       },
       {
         label: 'Xóa',

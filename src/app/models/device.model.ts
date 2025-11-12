@@ -14,6 +14,12 @@ export interface Device {
   MoTa?: string | null;
   DeviceName?: string | null;
   
+  // --- START OF ADDITION ---
+  // Add the fields from your API response
+  TenLoaiThietBi?: string | null;
+  TrangThai_Ten?: string | null;
+  // --- END OF ADDITION ---
+
   // Optional audit fields (if needed)
   DATE_?: string;
   USER_?: number;
