@@ -84,16 +84,21 @@
     </div>
   </div>
 
-  <div id="qr-print-section" *ngIf="device">
-    <h2 class="print-device-name">{{ device.Ten }}</h2>
+<div id="qr-print-section" *ngIf="device">
+  <div class="qr-compact-label">
     <qrcode
-      [qrdata]="device.SerialNumber || ''"
+      [qrdata]="qrCodeValue"
       [elementType]="'canvas'"
       [errorCorrectionLevel]="'M'"
-      [width]="256"
-      [alt]="'QR Code for ' + device.SerialNumber"
+      [width]="150"
+      [alt]="'QR Code for device ' + device.Ten"
     ></qrcode>
-    <p class="print-serial">{{ device.SerialNumber }}</p>
+    <div class="compact-info">
+      <div class="device-title">{{ device.Ten }}</div>
+      <div class="device-detail">{{ device.Ma }}</div>
+      <div class="device-detail">{{ device.DeviceName || device.SerialNumber }}</div>
+    </div>
   </div>
+</div>
 
 </div>

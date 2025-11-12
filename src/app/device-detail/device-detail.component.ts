@@ -1,5 +1,4 @@
-// src/app/device-detail/device-detail.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -21,12 +20,13 @@ import { ConfirmationModalComponent } from '../components/confirmation-modal/con
   imports: [
     CommonModule,
     RouterLink,
-    QRCodeComponent, // <-- IMPORT THE COMPONENT DIRECTLY
+    QRCodeComponent,
     DatePipe,
     CurrencyPipe
   ],
   templateUrl: './device-detail.component.html',
-  styleUrl: './device-detail.component.scss'
+  styleUrl: './device-detail.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class DeviceDetailComponent implements OnInit, OnDestroy {
   public device: Device | null = null;
@@ -133,9 +133,12 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/app/equipment/catalog']);
   }
 
-  onPrint(): void {
+onPrint(): void {
+  // Give the browser a moment to prepare the print layout
+  setTimeout(() => {
     window.print();
-  }
+  }, 100);
+}
 
   onEdit(device: Device): void {
     this.modalService.open(DeviceFormComponent, {

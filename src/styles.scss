@@ -387,6 +387,34 @@ a:hover {
   opacity: 1;
 }
 
+/* =================================================================== */
+/* 12. GLOBAL PRINT STYLES (NEW)                                       */
+/* =================================================================== */
+@media print {
+
+  /*
+    Allow overflow for printing...
+  */
+  body,
+  app-root,
+  .main-panel,
+  main,
+  .dashboard-content {
+    overflow: visible !important;
+    height: auto !important;
+    width: auto !important;
+    position: static !important;
+    display: block !important;
+  }
+
+  /* Hide non-essential layout parts */
+  app-sidebar,
+  app-header,
+  app-action-footer {
+    display: none !important;
+  }
+}
+
 /*
  * ===========================================
  * === FLYOUT SUBMENU STYLES
@@ -538,7 +566,7 @@ body>ul.submenu.open {
   background: none;
   box-shadow: none;
   border-radius: 0;
-  
+
   // Ensure the panel itself can participate in the fade
   // (helps with components that might animate *in* as well)
   animation: modal-fade-in 0.2s ease-out;

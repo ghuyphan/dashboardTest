@@ -53,7 +53,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'QLThietBi.DMThietBi', // Assumes same view permission
-          title: 'Chi tiết thiết bị',
+          title: 'Thông tin thiết bị',
           showSearchBar: false // No search bar on detail page
         }
       },
