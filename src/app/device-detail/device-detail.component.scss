@@ -9,7 +9,8 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 0;
+    /* --- MODIFICATION: Match padding/bg of bed-usage --- */
+    // padding: var(--spacing-md);
     box-sizing: border-box;
     background-color: var(--white);
 }
@@ -24,18 +25,21 @@
 }
 
 .detail-card-wrapper {
-    height: 100%;
+    /* --- MODIFICATION: Removed height --- */
+    height: auto;
 }
 
 .detail-card {
     max-width: 100%;
     margin: 0;
-    background: var(--white);
+    /* --- MODIFICATION: Make card background transparent --- */
+    background: transparent;
     border-radius: 0;
     box-shadow: none;
     border: none;
-    overflow: hidden;
-    height: 100%;
+    overflow: visible; /* Allow shadows */
+    /* --- MODIFICATION: Removed height --- */
+    height: auto;
     display: flex;
     flex-direction: column;
 }
@@ -44,10 +48,13 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    //   padding: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    background-color: var(--gray-50);
-    border-bottom: 1px solid var(--gray-200);
+    /* --- MODIFICATION: Make header a white card --- */
+    padding: var(--spacing-lg);
+    background-color: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--box-shadow-md);
+    /* --- END MODIFICATION --- */
 
     .header-icon {
         flex-shrink: 0;
@@ -93,17 +100,23 @@
 
 .detail-body {
     display: flex;
-    //   padding: var(--spacing-lg);
-    padding-top: var(--spacing-md);
+    /* --- MODIFICATION: Make body a white card --- */
+    padding: var(--spacing-lg);
+    background-color: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--box-shadow-md);
+    margin-top: var(--spacing-lg); /* Add space between header and body */
+    /* --- END MODIFICATION --- */
+    
     gap: var(--spacing-xl);
-
-    // Make body scrollable
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
 
     @media (max-width: 768px) {
         flex-direction: column-reverse;
+        /* --- MODIFICATION: Remove auto scroll on body --- */
+        /* overflow-y: auto; */ 
     }
 }
 
@@ -199,6 +212,7 @@
     }
 }
 
+/* --- MODIFICATION: Copied from reusable-table.component.scss --- */
 .status-chip {
     padding: 2px 10px;
     border-radius: 12px;
@@ -229,6 +243,8 @@
     color: var(--teal-blue);
     background-color: var(--aqua-island-light);
 }
+/* --- END MODIFICATION --- */
+
 
 /* --- PRINT STYLES --- */
 #qr-print-section {

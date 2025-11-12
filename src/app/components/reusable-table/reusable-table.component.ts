@@ -116,7 +116,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   ngAfterViewInit(): void {
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
-    this.setupColumnWidths();
 
     if (this.sort) {
       this.sortState = {
@@ -142,7 +141,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
     if (changes['columns']) {
       this.displayedColumns = this.columns.map((col) => col.key);
-      this.setupColumnWidths();
     }
 
     if (changes['searchTerm']) {
@@ -162,18 +160,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       clearTimeout(this.loadingTimer);
       this.isLoadingWithDelay = false;
     }
-  }
-
-  private setupColumnWidths() {
-    setTimeout(() => {
-      const headers = document.querySelectorAll('.mat-mdc-header-cell');
-      this.columns.forEach((col, index) => {
-        if (col.width && headers[index]) {
-          (headers[index] as HTMLElement).style.width = col.width;
-          (headers[index] as HTMLElement).style.minWidth = col.width;
-        }
-      });
-    }, 0);
   }
 
   public onRowClick(row: any): void {
@@ -254,17 +240,19 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     return item[this.trackByField] || index;
   }
 
-  // --- ADDED: Helper for status chips ---
+  // --- START OF MODIFICATION: Using your new function ---
   public getStatusClass(status: string): string {
     if (!status) return 'status-default';
     const lowerStatus = status.toLowerCase();
 
+    if (lowerStatus.includes('đang sử dụng')) return 'status-in-use';
     if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
     if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa')) return 'status-repair';
     if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
 
     return 'status-default';
   }
+  // --- END OF MODIFICATION ---
 
   // --- ADDED: Helper for row action menu ---
   public onRowAction(action: string, element: any, event: MouseEvent): void {

@@ -49,7 +49,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.deviceColumns = [
       // Basic Information
       // Đã thêm thuộc tính 'width' để định rõ kích thước cột
-      { key: 'Id', label: 'ID', sortable: true, width: '60px' },
+      { key: 'Id', label: 'ID', sortable: true, width: '50px' },
       { key: 'Ma', label: 'Mã Thiết Bị', sortable: true, width: '100px' },
       { key: 'Ten', label: 'Tên Thiết Bị', sortable: true, width: '150px' },
       { key: 'DeviceName', label: 'Tên Máy', sortable: true, width: '120px' },
@@ -60,7 +60,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       { key: 'TenLoaiThietBi', label: 'Loại Thiết Bị', sortable: true, width: '120px' },
 
       // Status Information
-      { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true, width: '100px' },
+      { key: 'TrangThai_Ten', label: 'Trạng Thái', sortable: true, width: '120px' },
 
       // Location & Description
       { key: 'ViTri', label: 'Vị Trí', sortable: true, width: '80px' },
@@ -213,6 +213,11 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   public handleRowAction(event: { action: string, data: any }): void {
     switch (event.action) {
+      // --- START OF MODIFICATION ---
+      case 'view':
+        this.onViewDetail(event.data);
+        break;
+      // --- END OF MODIFICATION ---
       case 'edit':
         this.onModify(event.data);
         break;

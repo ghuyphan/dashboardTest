@@ -192,4 +192,22 @@ onPrint(): void {
     // Use 'en-GB' for dd/MM/yyyy format, 'vi' locale might use '.'
     return new DatePipe('en-GB').transform(isoDate, 'dd/MM/yyyy') || 'N/A';
   }
+
+  // --- START OF MODIFICATION ---
+  /**
+   * Returns the correct CSS class for a given status string.
+   * (Copied from reusable-table.component)
+   */
+  public getStatusClass(status: string | null | undefined): string {
+    if (!status) return 'status-default';
+    const lowerStatus = status.toLowerCase();
+
+    if (lowerStatus.includes('đang sử dụng')) return 'status-in-use';
+    if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
+    if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa')) return 'status-repair';
+    if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
+
+    return 'status-default';
+  }
+  // --- END OF MODIFICATION ---
 }

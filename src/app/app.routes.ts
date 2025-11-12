@@ -7,18 +7,11 @@ import { permissionGuard } from './guards/permission.guard';
 // --- IMPORT YOUR NEW AND RENAMED COMPONENTS ---
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 
-// --- 1. REMOVE THESE IMPORTS. THEY WILL BE LAZY-LOADED. ---
-// import { HomeComponent } from './home/home.component';
-// import { DeviceListComponent } from './device-list/device-list.component';
-// import { BedUsageComponent } from './bed-usage/bed-usage.component';
-
-
 export const routes: Routes = [
   // Routes without the layout
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
 
-  // --- NEW Application Layout Route ---
   {
     path: 'app',
     component: MainLayoutComponent,
@@ -71,19 +64,6 @@ export const routes: Routes = [
           showSearchBar: false
         }
       },
-
-      // EXAMPLE 2: A route for viewing reports
-      /*
-      { 
-        path: 'reports', 
-        component: ReportsComponent,
-        canActivate: [permissionGuard],
-        data: {
-          permission: 'CAN_VIEW_REPORTS',
-          title: 'Báo cáo' 
-        }
-      },
-      */
 
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]

@@ -24,13 +24,22 @@
           [mat-sort-header]="col.key"
           [disabled]="!col.sortable"
           class="compact-header"
+          
+          [style.width]="col.width"
+          [style.min-width]="col.width"
+          [style.max-width]="col.width"
         >
           <div class="header-content" [appTooltip]="col.label">
             {{ col.label }}
           </div>
         </th>
         
-        <td mat-cell *matCellDef="let element" class="compact-cell">
+        <td mat-cell *matCellDef="let element" class="compact-cell"
+        
+          [style.width]="col.width"
+          [style.min-width]="col.width"
+          [style.max-width]="col.width"
+        >
           <div class="cell-content" [appTooltip]="element[col.key]" [ngSwitch]="col.key">
 
             <ng-container *ngSwitchCase="'actions'">
@@ -38,6 +47,10 @@
                 <mat-icon>more_horiz</mat-icon>
               </button>
               <mat-menu #rowMenu="matMenu">
+                <button mat-menu-item (click)="onRowAction('view', element, $event)">
+                  <mat-icon>remove_red_eye</mat-icon>
+                  <span>Xem</span>
+                </button>
                 <button mat-menu-item (click)="onRowAction('edit', element, $event)">
                   <mat-icon>edit</mat-icon>
                   <span>Sửa</span>

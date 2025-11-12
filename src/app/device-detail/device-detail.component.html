@@ -15,7 +15,9 @@
           <span class="device-code">{{ device.Ma }}</span>
         </div>
         <div class="header-status">
-          <span class="status-chip">{{ device.TrangThai_Ten || 'N/A' }}</span>
+          <span class="status-chip" [ngClass]="getStatusClass(device.TrangThai_Ten)">
+            {{ device.TrangThai_Ten || 'N/A' }}
+          </span>
           </div>
       </div>
 
