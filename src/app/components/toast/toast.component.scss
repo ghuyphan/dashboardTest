@@ -140,9 +140,9 @@
   color: var(--gray-700);
   margin: 0;
   line-height: 1.4;
-  white-space: pre-wrap; /* Allow wrapping */
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  white-space: nowrap;        /* Prevents line breaks */
+  overflow: hidden;           /* Clips overflow */
+  text-overflow: ellipsis;    /* Shows ... when truncated */
 }
 
 .toast-close {

@@ -101,12 +101,18 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
     // Listen for search term changes from the header
     this.searchSub = this.searchService.searchTerm$.pipe(
-      skip(1), // <-- YOUR FIX: Prevents double-load on init
+      // We no longer skip(1) because the header component now
+      // subscribes first and holds the initial value,
+      // so this subscription will receive the correct current term.
+      // skip(1), 
       debounceTime(300) // Wait 300ms after user stops typing
     ).subscribe((term) => {
-      this.currentSearchTerm = term;
-      this.currentPageIndex = 0; // Reset to first page on new search
-      this.reloadTrigger.next(); // Trigger a reload
+      // Only trigger a reload if the term has actually changed
+      if (term !== this.currentSearchTerm) {
+        this.currentSearchTerm = term;
+        this.currentPageIndex = 0; // Reset to first page on new search
+        this.reloadTrigger.next(); // Trigger a reload
+      }
     });
 
     // Main data loading pipeline
@@ -245,6 +251,14 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.currentPageIndex = pageEvent.pageIndex;
     this.currentPageSize = pageEvent.pageSize;
     this.reloadTrigger.next();
+    
+    // --- START OF MODIFICATION ---
+    // This line was causing the error and is not needed here,
+    // as the reusable-table component handles its own scrolling.
+    // if (this.tableContainer?.nativeElement) {
+    //   this.tableContainer.nativeElement.scrollTop = 0;
+    // }
+    // --- END OF MODIFICATION ---
   }
 
   /**
@@ -405,5 +419,15 @@ export class DeviceListComponent implements OnInit, OnDestroy {
           });
       }
     });
+  }
+
+  /**
+   * Called when the "Reset Search" button is clicked in the reusable table.
+   */
+  public onSearchCleared(): void {
+    // Calling this will trigger the searchSub subscription,
+    // which will set this.currentSearchTerm = '' and reload the table.
+    // It will ALSO trigger the subscription in the header to clear its input.
+    this.searchService.setSearchTerm('');
   }
 }

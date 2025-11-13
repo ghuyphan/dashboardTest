@@ -6,9 +6,14 @@ import {
   ViewChild,
   ElementRef,
   HostListener,
+  OnInit, // <-- IMPORT
+  OnDestroy, // <-- IMPORT
+  ChangeDetectorRef, // <-- IMPORT
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '../../models/user.model';
+import { SearchService } from '../../services/search.service'; // <-- IMPORT
+import { Subscription } from 'rxjs'; // <-- IMPORT
 
 @Component({
   selector: 'app-header',
@@ -17,26 +22,48 @@ import { User } from '../../models/user.model';
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy { // <-- IMPLEMENT
   @Input() currentUser: User | null = null;
   @Input() userInitials: string = '';
   @Input() rolesDisplay: string = '';
   @Input() currentScreenName: string = 'Dashboard';
-  @Input() showSearchBar: boolean = false; // <-- NEW
-  @Input() showBackButton: boolean = false; // <-- 1. ADD INPUT
+  @Input() showSearchBar: boolean = false;
+  @Input() showBackButton: boolean = false;
 
   @Output() sidebarToggled = new EventEmitter<void>();
   @Output() logoutClicked = new EventEmitter<void>();
-  @Output() searchChanged = new EventEmitter<string>(); // <-- NEW
-  @Output() backClicked = new EventEmitter<void>(); // <-- 2. ADD OUTPUT
+  // --- This is no longer needed, as we'll use the service ---
+  // @Output() searchChanged = new EventEmitter<string>();
+  @Output() backClicked = new EventEmitter<void>();
 
   isUserMenuOpen: boolean = false;
-  searchTerm: string = ''; // <-- NEW
+  searchTerm: string = '';
 
   @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
   @ViewChild('mobileToggle') mobileToggle!: ElementRef;
 
-  constructor() {}
+  // --- START OF MODIFICATION ---
+  private searchSub: Subscription | null = null;
+
+  constructor(
+    private searchService: SearchService, // <-- INJECT
+    private cd: ChangeDetectorRef // <-- INJECT
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to the search service to keep the local search term in sync
+    this.searchSub = this.searchService.searchTerm$.subscribe(term => {
+      if (term !== this.searchTerm) {
+        this.searchTerm = term;
+        this.cd.detectChanges(); // Update the view
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+  }
+  // --- END OF MODIFICATION ---
 
   toggleUserMenu(): void {
     this.isUserMenuOpen = !this.isUserMenuOpen;
@@ -46,7 +73,6 @@ export class HeaderComponent {
     this.sidebarToggled.emit();
   }
 
-  // <-- 3. ADD HANDLER -->
   onBackClick(): void {
     this.backClicked.emit();
   }
@@ -58,21 +84,16 @@ export class HeaderComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    // If user menu doesn't exist, do nothing
     if (!this.userMenuContainer) {
       return;
     }
 
-    // Check if the click is outside the user menu
     const isClickOutsideUserMenu =
       !this.userMenuContainer.nativeElement.contains(event.target);
-
-    // Check if the click is outside the mobile toggle button
     const isClickOutsideMobileToggle =
       !this.mobileToggle ||
       !this.mobileToggle.nativeElement.contains(event.target);
 
-    // If the click is outside both, close the menu
     if (isClickOutsideUserMenu && isClickOutsideMobileToggle) {
       this.isUserMenuOpen = false;
     }
@@ -88,20 +109,24 @@ export class HeaderComponent {
     this.isUserMenuOpen = false;
   }
 
-  // <-- NEW METHOD -->
+  // --- START OF MODIFICATION ---
+  /**
+   * Updates the search term in the service as the user types.
+   */
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
-    this.searchChanged.emit(this.searchTerm);
+    // Call the service directly
+    this.searchService.setSearchTerm(this.searchTerm);
   }
 
-  // --- START OF ADDITION ---
   /**
-   * Clears the search term and emits the change.
+   * Clears the search term in the service.
    */
   onClearSearch(): void {
     this.searchTerm = '';
-    this.searchChanged.emit(this.searchTerm);
+    // Call the service directly
+    this.searchService.setSearchTerm(this.searchTerm);
   }
-  // --- END OF ADDITION ---
+  // --- END OF MODIFICATION ---
 }

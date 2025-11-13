@@ -61,8 +61,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('--- ngOnInit CALLED ---'); 
-    console.log('At start of ngOnInit, isSidebarOpen =', this.isSidebarOpen); 
     // Subscribe to dynamic nav items
     this.navSubscription = this.authService.navItems$.subscribe(items => {
       this.navItems = this.deepCopyNavItems(items);
@@ -96,7 +94,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         mergeMap(route => route.data)
       )
       .subscribe((data: any) => {
-        console.log('Router data object:', data);
         this.currentScreenName = data['title'] || 'Dashboard';
         
         this.showSearchBar = data['showSearchBar'] === true;
@@ -158,10 +155,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
-  // --- 5. Update handler to use the service ---
-  onSearchTermChanged(term: string): void {
-    this.searchService.setSearchTerm(term);
-  }
+  // --- 5. This method is NO LONGER needed ---
+  // onSearchTermChanged(term: string): void {
+  //   this.searchService.setSearchTerm(term);
+  // }
 
   // <-- 5. ADD THIS HANDLER ---
   onBackClicked(): void {
