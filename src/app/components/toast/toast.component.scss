@@ -95,17 +95,14 @@
   flex-shrink: 0;
 
   div {
-    display: flex; // Center the SVG
+    display: flex; // Center the icon
     align-items: center;
     justify-content: center;
-  }
 
-  svg {
-    width: 20px;
-    height: 20px;
-    stroke: white;
-    stroke-width: 3;
-    fill: none;
+    ::ng-deep i {
+      font-size: 20px; // Set Font Awesome icon size
+      color: white;    // Set icon color
+    }
   }
 }
 /* Match brand colors */
@@ -163,12 +160,13 @@
   justify-content: center;
   border-radius: 4px;
 
-  svg {
-    width: 16px;
-    height: 16px;
-    stroke: currentColor;
-    stroke-width: 2.5;
+  // --- START OF MODIFICATION ---
+  // Style the <i> tag instead of the <svg> tag
+  i {
+    font-size: 16px;
+    line-height: 1;
   }
+  // --- END OF MODIFICATION ---
 
   &:hover {
     color: var(--gray-800);
@@ -204,6 +202,35 @@
 .toast.dismissing {
   animation: slideOut 0.3s var(--transition-smooth) forwards;
 }
+
+// --- START OF NEW "CLEAR ALL" STYLES ---
+.toast-clear-all {
+  position: absolute;
+  bottom: -28px; // Position it just below the top toast
+  right: 0;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  border: none;
+  border-radius: 0 0 8px 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 99; // Below the top toast (100) but above others
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s var(--transition-smooth);
+  
+  // Emerge from under the toast
+  transform: translateY(-5px); 
+  animation: slideDownFade 0.3s var(--transition-smooth);
+
+
+  &:hover {
+    opacity: 1;
+  }
+}
+// --- END OF NEW STYLES ---
+
 
 /* --- Responsive Media Query (Mobile) --- */
 @media (max-width: 480px) {
@@ -242,5 +269,10 @@
   }
   .toast-message {
     font-size: 14px;
+  }
+
+  // --- NEW: Hide "Clear All" on mobile ---
+  .toast-clear-all {
+    display: none;
   }
 }

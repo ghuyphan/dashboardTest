@@ -117,7 +117,7 @@
   align-items: center;
   position: relative;
   background-color: var(--gray-100);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-full);
   border: var(--border-width) solid var(--border-color);
   flex: 2 1 auto; /* Grow more than left/right, but can shrink */
   min-width: 0; /* Can shrink */

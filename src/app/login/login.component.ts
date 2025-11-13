@@ -43,7 +43,7 @@ export class LoginComponent {
     this.authService.login(this.credentials).subscribe({
       next: (response) => {
         this.isLoading = false;
-        this.toastService.showSuccess('✅ Đăng nhập thành công! Đang chuyển hướng...');
+        this.toastService.showSuccess('Đăng nhập thành công!');
         // AuthService handles token storage based on credentials.remember
         this.router.navigate(['/app']);
       },

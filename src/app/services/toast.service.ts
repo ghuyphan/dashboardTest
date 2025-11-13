@@ -6,35 +6,40 @@ import { ToastMessage, ToastType } from '../models/toast-message.model';
   providedIn: 'root'
 })
 export class ToastService {
-  // ⭐ CHANGED: Use Subject instead of BehaviorSubject
   private toastsSubject = new Subject<ToastMessage[]>();
   toasts$: Observable<ToastMessage[]> = this.toastsSubject.asObservable();
 
-  // Keep track of current toasts internally
   private currentToasts: ToastMessage[] = [];
   
   private toastIdCounter = 0;
-  private defaultDuration = 5000; // Default display time in ms (5 seconds)
+  private defaultDuration = 5000;
+  private MAX_TOASTS = 5; // <-- NEW: Set a maximum number of toasts
 
   constructor() { }
 
-  private addToast(message: string, type: ToastType, duration?: number): void {
+  private addToast(message: string, type: ToastType, duration?: number | null): void {
     const id = this.toastIdCounter++;
+    
+    const effectiveDuration = duration === undefined ? this.defaultDuration : duration;
+
     const newToast: ToastMessage = {
       id,
       message,
       type,
-      duration: duration ?? this.defaultDuration
+      duration: effectiveDuration
     };
+
+    // --- START OF MODIFICATION ---
+    // Check if we're at the limit
+    if (this.currentToasts.length >= this.MAX_TOASTS) {
+      // Remove the oldest toast (which is at the end of the array)
+      this.currentToasts.pop();
+    }
+    // --- END OF MODIFICATION ---
 
     // Add the new toast to the beginning of the array
     this.currentToasts = [newToast, ...this.currentToasts];
     this.toastsSubject.next(this.currentToasts);
-
-    // Automatically remove the toast after its duration
-    if (newToast.duration && newToast.duration > 0) {
-      setTimeout(() => this.removeToast(id), newToast.duration);
-    }
   }
 
   showSuccess(message: string, duration?: number): void {
@@ -42,9 +47,7 @@ export class ToastService {
   }
 
   showError(message: string, duration?: number): void {
-    // Keep error messages potentially longer or until dismissed manually if duration is 0 or negative
-    const effectiveDuration = (duration !== undefined && duration <= 0) ? undefined : duration;
-    this.addToast(message, 'error', effectiveDuration);
+    this.addToast(message, 'error', duration ?? 0);
   }
 
   showInfo(message: string, duration?: number): void {

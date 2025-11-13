@@ -1,4 +1,10 @@
-import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  ChangeDetectorRef,
+  OnDestroy,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { AsyncPipe, NgClass, NgFor } from '@angular/common';
 import { Observable, Subscription } from 'rxjs';
 import { ToastMessage, ToastType } from '../../models/toast-message.model';
@@ -10,15 +16,14 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   standalone: true,
   imports: [NgFor, NgClass, AsyncPipe],
   templateUrl: './toast.component.html',
-  styleUrl: './toast.component.scss'
+  styleUrl: './toast.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ToastComponent implements OnInit, OnDestroy { 
-  
+export class ToastComponent implements OnInit, OnDestroy {
   public toasts: ToastMessage[] = [];
   private toastSub!: Subscription;
-  
-  // --- REMOVED 'lastToastIds' ---
-  // private lastToastIds = new Set<number>();
+
+  private activeTimers = new Map<number, any>();
 
   private touchStartX = 0;
   private touchMoveX = 0;
@@ -28,91 +33,146 @@ export class ToastComponent implements OnInit, OnDestroy {
 
   constructor(
     private toastService: ToastService,
-    private sanitizer: DomSanitizer, 
-    private cdRef: ChangeDetectorRef 
+    private sanitizer: DomSanitizer,
+    private cdRef: ChangeDetectorRef
   ) {}
 
-ngOnInit(): void {
-  this.toastSub = this.toastService.toasts$.subscribe(newToasts => {
-    // Find truly new toasts by comparing IDs
-    const oldIds = new Set(this.toasts.map(t => t.id));
-    const newlyAddedToasts = newToasts.filter(t => !oldIds.has(t.id));
-    
-    // Update the component's array to match the service
-    this.toasts = newToasts; 
-    
-    // Animate each newly added toast
-    if (newlyAddedToasts.length > 0) {
-      setTimeout(() => {
-        newlyAddedToasts.forEach(toast => {
-          const wrapper = document.getElementById('toast-' + toast.id);
-          if (wrapper) {
-            wrapper.classList.add('new');
-            setTimeout(() => {
-              wrapper.classList.remove('new');
-            }, 300);
-          }
-        });
-      }, 0);
-    }
-  });
-}
+  ngOnInit(): void {
+    this.toastSub = this.toastService.toasts$.subscribe((newToasts) => {
+      const oldIds = new Set(this.toasts.map((t) => t.id));
+      const newlyAddedToasts = newToasts.filter((t) => !oldIds.has(t.id));
+
+      const newIds = new Set(newToasts.map((t) => t.id));
+      this.activeTimers.forEach((timer, id) => {
+        if (!newIds.has(id)) {
+          clearTimeout(timer);
+          this.activeTimers.delete(id);
+        }
+      });
+
+      this.toasts = newToasts;
+      this.cdRef.markForCheck(); // Tell Angular to update the view
+
+      if (newlyAddedToasts.length > 0) {
+        setTimeout(() => {
+          newlyAddedToasts.forEach((toast) => {
+            const wrapper = document.getElementById('toast-' + toast.id);
+            if (wrapper) {
+              wrapper.classList.add('new');
+              setTimeout(() => {
+                wrapper.classList.remove('new');
+              }, 250);
+            }
+
+            if (toast.duration && toast.duration > 0) {
+              const timer = setTimeout(() => {
+                this.closeToast(toast.id);
+                this.activeTimers.delete(toast.id);
+              }, toast.duration);
+              this.activeTimers.set(toast.id, timer);
+            }
+          });
+        }, 0);
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     if (this.toastSub) {
       this.toastSub.unsubscribe();
     }
+    this.activeTimers.forEach((timer) => clearTimeout(timer));
+    this.activeTimers.clear();
   }
 
   closeToast(id: number): void {
+    if (this.activeTimers.has(id)) {
+      clearTimeout(this.activeTimers.get(id));
+      this.activeTimers.delete(id);
+    }
+
     const wrapper = document.getElementById('toast-' + id);
-    const toast = wrapper?.querySelector('.toast'); // Target the inner .toast
+    const toast = wrapper?.querySelector('.toast');
 
     if (toast) {
       toast.classList.add('dismissing');
       setTimeout(() => {
         this.toastService.removeToast(id);
-      }, 300); // Match animation duration
+      }, 250);
     } else {
       this.toastService.removeToast(id);
     }
   }
 
-  // --- Helper functions (no changes) ---
+  // --- START OF NEW METHOD ---
+  clearAllToasts(event: MouseEvent): void {
+    event.stopPropagation(); // Stop click from triggering swipe logic
+
+    // Animate all visible toasts
+    this.toasts.forEach(toast => {
+      const wrapper = document.getElementById('toast-' + toast.id);
+      const toastEl = wrapper?.querySelector('.toast');
+      if (toastEl) {
+        toastEl.classList.add('dismissing');
+      }
+    });
+
+    // Clear all timers
+    this.activeTimers.forEach(timer => clearTimeout(timer));
+    this.activeTimers.clear();
+
+    // After animation, tell the service to clear its array
+    setTimeout(() => {
+      this.toastService.clearAll();
+    }, 250); // Match animation duration
+  }
+  // --- END OF NEW METHOD ---
+
+  trackByToast(index: number, toast: ToastMessage): number {
+    return toast.id;
+  }
+
   getTitle(type: ToastType): string {
     switch (type) {
-      case 'success': return 'Thành công';
-      case 'error': return 'Lỗi';
-      case 'warning': return 'Cảnh báo';
-      case 'info': return 'Thông tin';
-      default: return 'Thông báo';
+      case 'success':
+        return 'Thành công';
+      case 'error':
+        return 'Lỗi';
+      case 'warning':
+        return 'Cảnh báo';
+      case 'info':
+        return 'Thông tin';
+      default:
+        return 'Thông báo';
     }
   }
 
   getIcon(type: ToastType): SafeHtml {
-    let svg = '';
+    let iconClass = '';
     switch (type) {
       case 'success':
-        svg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        iconClass = 'fas fa-check';
         break;
       case 'error':
-        svg = `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+        iconClass = 'fas fa-times';
         break;
       case 'warning':
-        svg = `<svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        iconClass = 'fas fa-exclamation-triangle';
         break;
       case 'info':
-        svg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+        iconClass = 'fas fa-info-circle';
         break;
     }
-    return this.sanitizer.bypassSecurityTrustHtml(svg);
+    return this.sanitizer.bypassSecurityTrustHtml(
+      `<i class="${iconClass}"></i>`
+    );
   }
 
   getToastClass(toast: ToastMessage): string {
     return `toast-${toast.type}`;
   }
 
-  // --- Gesture Handlers (no changes) ---
+  // --- Gesture Handlers (Unchanged) ---
   handleTouchStart(event: TouchEvent, toastId: number): void {
     if (event.touches.length !== 1) {
       return;
@@ -129,7 +189,11 @@ ngOnInit(): void {
   }
 
   handleTouchMove(event: TouchEvent, toastId: number): void {
-    if (this.swipingToastId !== toastId || !this.swipedElement || event.touches.length !== 1) {
+    if (
+      this.swipingToastId !== toastId ||
+      !this.swipedElement ||
+      event.touches.length !== 1
+    ) {
       return;
     }
     this.touchMoveX = event.touches[0].clientX;
@@ -137,7 +201,7 @@ ngOnInit(): void {
 
     if (deltaX > 0) {
       event.preventDefault();
-      const opacity = 1 - (deltaX / this.swipedElement.offsetWidth);
+      const opacity = 1 - deltaX / this.swipedElement.offsetWidth;
       this.swipedElement.style.transform = `translateX(${deltaX}px) translateZ(0)`;
       this.swipedElement.style.opacity = `${opacity}`;
     } else {
@@ -152,7 +216,8 @@ ngOnInit(): void {
     }
     this.swipedElement.classList.remove('swiping');
     const deltaX = this.touchMoveX - this.touchStartX;
-    const dismissThreshold = this.swipedElement.offsetWidth * this.SWIPE_DISMISS_THRESHOLD_PERCENT;
+    const dismissThreshold =
+      this.swipedElement.offsetWidth * this.SWIPE_DISMISS_THRESHOLD_PERCENT;
 
     this.swipedElement.style.transform = '';
     this.swipedElement.style.opacity = '';
@@ -161,8 +226,8 @@ ngOnInit(): void {
       this.swipedElement.classList.add('dismissing');
       setTimeout(() => {
         this.toastService.removeToast(toastId);
-        this.cdRef.markForCheck(); 
-      }, 300);
+        this.cdRef.markForCheck();
+      }, 250);
     }
 
     this.touchStartX = 0;

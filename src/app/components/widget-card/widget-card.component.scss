@@ -49,7 +49,16 @@
   min-width: 0;
 
   .widget-value {
-    font-size: clamp(20px, 4vw, 28px);
+    // --- START OF MODIFICATION ---
+    /*
+      clamp(MIN, PREFERRED, MAX)
+      Min size: 1.125rem (18px)
+      Max size: 1.5rem (24px)
+      Preferred: 3vw (grows much slower than 5vw)
+    */
+    font-size: clamp(1.125rem, 3vw, 1.5rem);
+    // --- END OF MODIFICATION ---
+    
     font-weight: 600;
     color: var(--gray-900);
     margin: 0;
@@ -82,23 +91,17 @@
   }
 }
 
-/* --- START OF FIX --- */
 /* Responsive adjustments for mobile */
 @media (max-width: 767px) {
   .widget-content {
-    .widget-value, /* <-- ADDED THIS SELECTOR */
+    .widget-value,
     .widget-title,
     .widget-caption {
       white-space: normal; /* Allow wrapping on mobile */
     }
 
-    .widget-value {
-      font-size: clamp(
-        18px,
-        5vw,
-        24px
-      ); /* Slightly smaller value on mobile */
-    }
+    // --- REMOVED ---
+    // The main .widget-value clamp() now handles this,
+    // so we don't need a separate rule here.
   }
 }
-/* --- END OF FIX --- */

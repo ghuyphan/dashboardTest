@@ -1,5 +1,5 @@
 <div
-  *ngFor="let toast of toasts; let i = index"
+  *ngFor="let toast of toasts; let i = index; trackBy: trackByToast"
   class="toast-wrapper"
   [id]="'toast-' + toast.id"
   (touchstart)="handleTouchStart($event, toast.id)"
@@ -20,40 +20,16 @@
         (click)="closeToast(toast.id)"
         aria-label="Dismiss"
       >
-        <svg viewBox="0 0 24 24">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+        <i class="fas fa-times"></i>
       </button>
     </div>
   </div>
-</div><div
-  *ngFor="let toast of toasts; let i = index"
-  class="toast-wrapper"
-  [id]="'toast-' + toast.id"
-  (touchstart)="handleTouchStart($event, toast.id)"
-  (touchmove)="handleTouchMove($event, toast.id)"
-  (touchend)="handleTouchEnd($event, toast.id)"
->
-  <div class="toast" [ngClass]="'toast-' + toast.type">
-    <div class="toast-content">
-      <div class="toast-icon" [ngClass]="toast.type">
-        <div [innerHTML]="getIcon(toast.type)"></div>
-      </div>
-      <div class="toast-text">
-        <h3 class="toast-title">{{ getTitle(toast.type) }}</h3>
-        <p class="toast-message">{{ toast.message }}</p>
-      </div>
-      <button
-        class="toast-close"
-        (click)="closeToast(toast.id)"
-        aria-label="Dismiss"
-      >
-        <svg viewBox="0 0 24 24">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
+
+  <button
+    *ngIf="i === 0 && toasts.length > 1"
+    class="toast-clear-all"
+    (click)="clearAllToasts($event)"
+  >
+    Clear All ({{ toasts.length }})
+  </button>
   </div>
-</div>

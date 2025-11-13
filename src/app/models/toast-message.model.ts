@@ -4,5 +4,5 @@ export interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
-  duration?: number; // Optional duration in ms
+  duration?: number | null;
 }
