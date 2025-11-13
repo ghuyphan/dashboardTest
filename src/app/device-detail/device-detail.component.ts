@@ -14,6 +14,9 @@ import { FooterAction } from '../models/footer-action.model';
 import { DeviceFormComponent } from '../device-list/device-form/device-form.component';
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
 
+// --- 1. IMPORT the new strategy ---
+import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy'; // Adjust path if needed
+
 @Component({
   selector: 'app-device-detail',
   standalone: true,
@@ -59,7 +62,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.deviceSub?.unsubscribe();
-    this.footerService.clearActions(); // Clear footer actions when leaving
+    // --- THIS LINE IS THE FIX: IT IS REMOVED ---
+    // this.footerService.clearActions(); 
   }
 
   loadDevice(id: string): void {
@@ -69,13 +73,10 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     // Unsubscribe from previous load if any
     this.deviceSub?.unsubscribe();
 
-    // --- START OF CHANGE ---
-    // Expect an array of Devices (Device[]) instead of a single Device
     this.deviceSub = this.http.get<Device[]>(url).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe({
       next: (dataArray) => {
-        // Check if the array is valid and has at least one item
         if (dataArray && dataArray.length > 0) {
           this.device = dataArray[0]; // Assign the first item
           
@@ -86,7 +87,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
           this.toastService.showError('Không tìm thấy chi tiết cho thiết bị này.');
           this.goBack();
         }
-        // --- END OF CHANGE ---
       },
       error: (err) => {
         console.error('Failed to load device details:', err);
@@ -98,27 +98,18 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
   setupFooterActions(device: Device): void {
     const actions: FooterAction[] = [
-      // --- START OF MODIFICATION ---
-      // The "Back" button action is removed from here
-      // {
-      //   label: 'Quay lại',
-      //   icon: 'fas fa-arrow-left',
-      //   action: () => this.goBack(),
-      //   className: 'btn-primary',
-      // },
-      // --- END OF MODIFICATION ---
-      {
-        label: 'In',
-        icon: 'fas fa-print',
-        action: () => this.onPrint(),
-        permission: 'QLThietBi.DMThietBi.RPRINT', // Example permission
-        className: 'btn-secondary',
-      },
       {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
         action: () => this.onEdit(device),
         permission: 'QLThietBi.DMThietBi.RMODIFY',
+        className: 'btn-primary', 
+      },
+      {
+        label: 'In',
+        icon: 'fas fa-print',
+        action: () => this.onPrint(),
+        permission: 'QLThietBi.DMThietBi.RPRINT', // Example permission
         className: 'btn-secondary',
       },
       {
@@ -136,19 +127,22 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/app/equipment/catalog']);
   }
 
-onPrint(): void {
-  // Give the browser a moment to prepare the print layout
-  setTimeout(() => {
-    window.print();
-  }, 100);
-}
+  onPrint(): void {
+    // Give the browser a moment to prepare the print layout
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  }
 
   onEdit(device: Device): void {
     this.modalService.open(DeviceFormComponent, {
       title: `Sửa thiết bị`,
-      context: { device: device, title: 'Sửa thiết bị' },
+      context: { device: { ...device }, title: 'Sửa thiết bị' }, // Pass a copy
     }).subscribe((result) => {
       if (result) {
+        // --- CLEAR CACHE on success ---
+        CustomRouteReuseStrategy.clearCache('equipment/catalog');
+        
         this.toastService.showSuccess('Cập nhật thiết bị thành công.');
         this.loadDevice(device.Id!.toString()); // Reload data
       }
@@ -176,6 +170,9 @@ onPrint(): void {
     ).subscribe({
       next: (response) => {
         if (response) {
+          // --- CLEAR CACHE on success ---
+          CustomRouteReuseStrategy.clearCache('equipment/catalog');
+          
           this.toastService.showSuccess('Xóa thiết bị thành công!');
           this.goBack(); // Navigate back to the list
         }
@@ -185,6 +182,9 @@ onPrint(): void {
         const errorMessage = err.error?.TenKetQua || err.error?.ErrorMessage || 'Xóa thất bại. Đã có lỗi xảy ra.';
         this.toastService.showError(errorMessage, 0);
         console.error('Failed to delete device:', err);
+      },
+      complete: () => {
+        this.isLoading = false;
       }
     });
   }
@@ -196,7 +196,6 @@ onPrint(): void {
     return new DatePipe('en-GB').transform(isoDate, 'dd/MM/yyyy') || 'N/A';
   }
 
-  // --- START OF MODIFICATION ---
   /**
    * Returns the correct CSS class for a given status string.
    * (Copied from reusable-table.component)
@@ -212,5 +211,4 @@ onPrint(): void {
 
     return 'status-default';
   }
-  // --- END OF MODIFICATION ---
 }

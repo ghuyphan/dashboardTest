@@ -1,7 +1,8 @@
 import { ApplicationConfig, provideAppInitializer, inject, LOCALE_ID } from '@angular/core';
-import { provideRouter } from '@angular/router';
+// --- 1. IMPORT RouteReuseStrategy ---
+import { provideRouter, RouteReuseStrategy } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { registerLocaleData } from '@angular/common'; // Import the necessary function
+import { registerLocaleData } from '@angular/common';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
@@ -10,7 +11,8 @@ import { idTokenInterceptor } from './interceptors/id-token.interceptor';
 import { AuthService } from './services/auth.service';
 import localeVi from '@angular/common/locales/vi';
 
-// Register locale data for Vietnamese (vi)
+import { CustomRouteReuseStrategy } from './custom-route-reuse-strategy'; 
+
 registerLocaleData(localeVi);
 
 export const appConfig: ApplicationConfig = {
@@ -23,13 +25,13 @@ export const appConfig: ApplicationConfig = {
       idTokenInterceptor 
     ])),
 
-    // Define the locale ID for the application to enable 'vi' formatting pipes
     { provide: LOCALE_ID, useValue: 'vi' },
 
+    // --- 3. PROVIDE our new strategy ---
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
+
     provideAppInitializer(() => {
-      // We use inject() here to get the service
       const authService = inject(AuthService); 
-      // Return the init() function call
       return authService.init();
     })
   ]

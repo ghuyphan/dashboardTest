@@ -84,7 +84,16 @@
       (input)="onSearchChange($event)"
       aria-label="Search"
     />
-  </div>
+    <button
+      *ngIf="searchTerm"
+      type="button"
+      class="search-clear-btn"
+      (click)="onClearSearch()"
+      aria-label="Clear search"
+    >
+      <i class="fas fa-times"></i>
+    </button>
+    </div>
   <div class="header-right-controls">
     <div class="user-menu" #userMenuContainer *ngIf="currentUser">
       <button

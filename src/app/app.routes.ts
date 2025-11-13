@@ -3,12 +3,9 @@ import { LoginComponent } from './login/login.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { authGuard } from './guards/auth.guard';
 import { permissionGuard } from './guards/permission.guard';
-
-// --- IMPORT YOUR NEW AND RENAMED COMPONENTS ---
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 
 export const routes: Routes = [
-  // Routes without the layout
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
 
@@ -19,7 +16,6 @@ export const routes: Routes = [
     children: [
       {
         path: 'home',
-        // --- 2. USE loadComponent INSTEAD ---
         loadComponent: () => 
           import('./home/home.component').then(m => m.HomeComponent),
         data: { title: 'Trang chủ' }
@@ -27,7 +23,6 @@ export const routes: Routes = [
 
       {
         path: 'equipment/catalog',
-        // --- 2. USE loadComponent INSTEAD ---
         loadComponent: () => 
           import('./device-list/device-list.component').then(m => m.DeviceListComponent),
         canActivate: [permissionGuard],
@@ -37,24 +32,20 @@ export const routes: Routes = [
           showSearchBar: true
         }
       },
-
-      // --- START OF ADDITION ---
       {
-        path: 'equipment/catalog/:id', // The new detail route
+        path: 'equipment/catalog/:id',
         loadComponent: () => 
           import('./device-detail/device-detail.component').then(m => m.DeviceDetailComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'QLThietBi.DMThietBi', // Assumes same view permission
+          permission: 'QLThietBi.DMThietBi', 
           title: 'Thông tin thiết bị',
-          showSearchBar: false // No search bar on detail page
+          showSearchBar: false,
+          showBackButton: true
         }
       },
-      // --- END OF ADDITION ---
-
       {
         path: 'reports/bed-usage',
-        // --- 2. USE loadComponent INSTEAD ---
         loadComponent: () => 
           import('./bed-usage/bed-usage.component').then(m => m.BedUsageComponent),
         canActivate: [permissionGuard],

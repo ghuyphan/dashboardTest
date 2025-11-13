@@ -151,7 +151,8 @@
   width: 100%;
   border: none;
   background: none;
-  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 0;
+  /* MODIFICATION: Added right padding for clear button */
+  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) 0;
   font-size: 0.875rem;
   font-weight: var(--font-weight-medium);
   color: var(--gray-900);
@@ -162,6 +163,36 @@
     font-weight: var(--font-weight-normal);
   }
 }
+
+/* --- START OF ADDITION: Clear Button Style --- */
+.search-clear-btn {
+  position: absolute;
+  right: 2px; // Small offset from edge
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  font-size: 0.875rem; // 14px
+  color: var(--gray-500);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+  transition: background-color var(--transition-fast) ease,
+    color var(--transition-fast) ease;
+  line-height: 1;
+
+  &:hover {
+    background-color: var(--gray-200);
+    color: var(--gray-800);
+  }
+}
+/* --- END OF ADDITION --- */
+
 /* --- End Search --- */
 
 .header-right-controls {

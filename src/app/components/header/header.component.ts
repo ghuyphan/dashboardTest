@@ -94,4 +94,14 @@ export class HeaderComponent {
     this.searchTerm = target.value;
     this.searchChanged.emit(this.searchTerm);
   }
+
+  // --- START OF ADDITION ---
+  /**
+   * Clears the search term and emits the change.
+   */
+  onClearSearch(): void {
+    this.searchTerm = '';
+    this.searchChanged.emit(this.searchTerm);
+  }
+  // --- END OF ADDITION ---
 }

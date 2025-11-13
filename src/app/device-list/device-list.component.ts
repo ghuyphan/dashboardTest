@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// --- START: MODIFIED IMPORT ---
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Subscription, Subject, of, Observable } from 'rxjs'; // <-- ADDED Observable
-import { finalize, switchMap, tap, catchError, startWith, debounceTime } from 'rxjs/operators';
-// --- END: MODIFIED IMPORT ---
-import { Router } from '@angular/router'; 
+import { Subscription, Subject, of, Observable } from 'rxjs';
+// --- 1. IMPORT filter and skip ---
+import { finalize, switchMap, tap, catchError, startWith, debounceTime, skip, filter } from 'rxjs/operators';
+// --- 2. IMPORT NavigationEnd ---
+import { Router, NavigationEnd } from '@angular/router'; 
 import { PageEvent } from '@angular/material/paginator';
 
 import {
@@ -29,7 +29,6 @@ import { Device } from '../models/device.model';
  * Defines the expected shape of the paged API response.
  */
 export interface PagedResult<T> {
-  // --- MODIFICATION: Reverted to lowercase to match API error ---
   Items: T[];
   TotalCount: number;
 }
@@ -60,6 +59,8 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   // --- Subscriptions ---
   private dataLoadSub: Subscription | null = null;
   private searchSub: Subscription | null = null;
+  // --- 3. ADD a subscription for the router ---
+  private routerSub: Subscription | null = null; 
 
   // --- Event Triggers ---
   /** Triggers the data loading pipeline to re-run */
@@ -100,6 +101,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
     // Listen for search term changes from the header
     this.searchSub = this.searchService.searchTerm$.pipe(
+      skip(1), // <-- YOUR FIX: Prevents double-load on init
       debounceTime(300) // Wait 300ms after user stops typing
     ).subscribe((term) => {
       this.currentSearchTerm = term;
@@ -118,12 +120,27 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       // Switch to the loadDevices API call
       switchMap(() => this.loadDevices()) 
     ).subscribe();
+
+    // --- 4. ADD THIS SUBSCRIPTION ---
+    // This listens for when we navigate *back* to this component
+    this.routerSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      // --- 5. THE CRITICAL FIX ---
+      // Check for an EXACT URL match, not just 'includes'
+      if (event.urlAfterRedirects === '/app/equipment/catalog') {
+        // Re-set the footer actions
+        this.updateFooterActions();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.footerService.clearActions();
     this.dataLoadSub?.unsubscribe();
     this.searchSub?.unsubscribe();
+    // --- 6. UNUBSCRIBE from the router ---
+    this.routerSub?.unsubscribe();
   }
 
   /**
@@ -157,21 +174,34 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     // API uses 1-based indexing for PageNumber
     const pageNumber = this.currentPageIndex + 1;
 
-    // Build query parameters
-    let params = new HttpParams()
-      .set('PageNumber', pageNumber.toString())
-      .set('PageSize', this.currentPageSize.toString())
-      .set('sortColumn', this.currentSortColumn)
-      .set('sortDirection', this.currentSortDirection)
-      .set('filter', this.currentSearchTerm);
+    // --- YOUR NEW LOGIC ---
+    let url: string;
+    let params: HttpParams;
 
-    // Construct the URL based on your new endpoint structure
-    const url = `${environment.equipmentCatUrl}/page`; 
+    if (this.currentSearchTerm) {
+      // 1. Use the SEARCH endpoint
+      url = `${environment.equipmentCatUrl}/page/search`;
+      params = new HttpParams()
+        .set('PageNumber', pageNumber.toString())
+        .set('PageSize', this.currentPageSize.toString())
+        .set('sortColumn', this.currentSortColumn)
+        .set('sortDirection', this.currentSortDirection)
+        .set('TextSearch', this.currentSearchTerm);
+
+    } else {
+      // 2. Use the normal PAGING endpoint
+      url = `${environment.equipmentCatUrl}/page`;
+      params = new HttpParams()
+        .set('PageNumber', pageNumber.toString())
+        .set('PageSize', this.currentPageSize.toString())
+        .set('sortColumn', this.currentSortColumn)
+        .set('sortDirection', this.currentSortDirection);
+        // No 'filter' or 'TextSearch' parameter when search term is empty
+    }
+    // --- END OF YOUR LOGIC ---
 
     return this.http.get<PagedResult<Device>>(url, { params }).pipe(
       tap((response) => {
-        // --- START: MODIFICATION ---
-        // Use 'response.Items' (lowercase i)
         const formattedData = response.Items.map((device) => ({
           ...device,
           NgayTao: this.formatDate(device.NgayTao), // This now works
@@ -180,11 +210,9 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         }));
         
         this.pagedDeviceData = formattedData;
-        // Use 'response.TotalCount' (lowercase t, c)
         this.totalDeviceCount = response.TotalCount;
 
         console.log('total devices:', this.totalDeviceCount)
-        // --- END: MODIFICATION ---
         
         this.isLoading = false;
         console.log('Paged devices loaded:', response);

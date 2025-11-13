@@ -117,8 +117,13 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   constructor() { }
 
   ngAfterViewInit(): void {
+    // We connect the SORT, but NOT the paginator.
     this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
+
+    // --- START OF FIX ---
+    // DO NOT DO THIS FOR SERVER-SIDE PAGING:
+    // this.dataSource.paginator = this.paginator; 
+    // --- END OF FIX ---
 
     if (this.sort) {
       this.sortState = {
@@ -142,22 +147,28 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       }
     }
 
-    // --- NEW: Update paginator length when totalDataLength changes ---
-    if (changes['totalDataLength'] && this.paginator) {
-      this.paginator.length = this.totalDataLength;
-    }
+    // --- START OF FIX ---
+    // This logic is not needed because the [length] property on
+    // the <mat-paginator> in the HTML handles it automatically.
+    // if (changes['totalDataLength'] && this.paginator) {
+    //   this.paginator.length = this.totalDataLength;
+    // }
+    // --- END OF FIX ---
 
     if (changes['columns']) {
       this.displayedColumns = this.columns.map((col) => col.key);
     }
 
     if (changes['searchTerm']) {
-      // REMOVED for Server-Side Paging: Client-side filtering logic
-      // this.dataSource.filter = this.searchTerm.trim().toLowerCase();
+      // Client-side filtering is already correctly removed.
       
-      if (this.dataSource.paginator) {
-        this.dataSource.paginator.firstPage();
-      }
+      // --- FIX: This block is also unnecessary ---
+      // The parent component (device-list) already resets the page index
+      // when the search term changes.
+      // if (this.dataSource.paginator) {
+      //   this.dataSource.paginator.firstPage();
+      // }
+      // --- END OF FIX ---
     }
   }
 
@@ -183,6 +194,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       direction: sort.direction as SortDirection
     };
 
+    // This correctly emits the sort change to the parent (device-list)
     this.sortChanged.emit({
       column: sort.active,
       direction: sort.direction as SortDirection,
@@ -190,6 +202,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   }
 
   public onPageChange(event: PageEvent): void { // <-- Use PageEvent type
+    // This correctly emits the page change to the parent (device-list)
     this.pageChanged.emit(event);
 
     if (this.tableContainer?.nativeElement) {
@@ -199,7 +212,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   public clearSearch(): void {
     this.searchTerm = '';
-    this.dataSource.filter = '';
+    // this.dataSource.filter = ''; // Not needed for server-side
     this.searchCleared.emit();
 
     if (this.paginator) {
