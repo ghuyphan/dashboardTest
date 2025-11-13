@@ -1,171 +1,246 @@
 :host {
+  /* This is now the .toast-container */
   position: fixed;
-  top: var(--spacing-lg);    /* Use global var (24px) */
-  right: var(--spacing-lg);   /* Use global var (24px) */
-  z-index: 1050;             /* Keep it above modals */
-  width: auto;
-  max-width: 380px;
+  top: var(--spacing-lg); /* Use global var (24px) */
+  right: var(--spacing-lg); /* Use global var (24px) */
+  width: 380px;
+  max-width: calc(100vw - var(--spacing-lg) * 2); /* Don't touch screen edge */
+  z-index: 1050;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  /* Prevent interaction with the container, only children */
+  pointer-events: none;
+}
+
+.toast-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transition: transform 0.3s var(--transition-smooth),
+    opacity 0.3s var(--transition-smooth);
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  pointer-events: auto; /* Re-enable pointer events for toasts */
+}
+
+/* --- Stacking Logic --- */
+/* 1st toast (top) */
+.toast-wrapper:nth-child(1) {
+  z-index: 100;
+  transform: translateY(0) scale(1) translateZ(0);
+}
+/* 2nd toast */
+.toast-wrapper:nth-child(2) {
+  z-index: 99;
+  transform: translateY(8px) scale(0.95) translateZ(0);
+  opacity: 0.7;
+}
+/* 3rd toast */
+.toast-wrapper:nth-child(3) {
+  z-index: 98;
+  transform: translateY(16px) scale(0.9) translateZ(0);
+  opacity: 0.4;
+}
+/* All other toasts */
+.toast-wrapper:nth-child(n + 4) {
+  z-index: 97;
+  transform: translateY(24px) scale(0.85) translateZ(0);
+  opacity: 0; /* Hide them */
 }
 
 .toast {
-  /* Use global variables for theme */
-  background: rgba(255, 255, 255, 0.92); /* Glassmorphism from your theme */
+  /* Using your app's existing glassmorphism style */
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(15px);
-  border-radius: var(--border-radius-lg);   /* Use global var (12px) */
-  box-shadow: var(--box-shadow-lg);        /* Use global var */
+  border-radius: var(--border-radius-lg); /* 12px */
+  box-shadow: var(--box-shadow-lg);
   border: var(--border-width) solid rgba(255, 255, 255, 0.4);
-  color: var(--gray-800);                  /* Use global var */
+  color: var(--gray-800);
+  /* We removed the border-left, the icon replaces it */
 
-  /* Layout and spacing */
-  padding: var(--spacing-md);             /* Use global var (16px) */
-  display: flex;
-  justify-content: space-between;
-  
-  /* --- START OF CHANGE --- */
-  /* Align items to the top to better handle multi-line messages */
-  align-items: flex-start; 
-  /* --- END OF CHANGE --- */
-  
-  margin-bottom: var(--spacing-sm);       /* Use global var (8px) */
-  transition: all var(--transition-duration) var(--transition-smooth); /* Use global vars */
-
-  /* Left border for type indication */
-  border-left: 5px solid transparent;
-
-  &.toast-success {
-    border-left-color: var(--color-success);
-  }
-
-  &.toast-error {
-    border-left-color: var(--color-danger);
-  }
-
-  &.toast-info {
-    border-left-color: var(--color-info); /* This uses --teal-blue */
-  }
-
-  &.toast-warning {
-    border-left-color: var(--color-warning);
-  }
+  /* Layout from your example */
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* Add transition for swipe-to-dismiss snap-back */
+  transition: transform 0.3s var(--transition-smooth),
+    opacity 0.3s var(--transition-smooth);
 }
 
+/* Disable transitions while actively swiping */
+.toast.swiping {
+  transition: none;
+}
+
+/* --- New Sub-element Styles --- */
 .toast-content {
   display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toast-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
   align-items: center;
-  flex-grow: 1;
-  margin-right: var(--spacing-md); /* Use global var (16px) */
-  /* --- NEW --- */
-  /* Ensure content can shrink if close button is present */
-  min-width: 0;
+  justify-content: center;
+  flex-shrink: 0;
+
+  div {
+    display: flex; // Center the SVG
+    align-items: center;
+    justify-content: center;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    stroke: white;
+    stroke-width: 3;
+    fill: none;
+  }
+}
+/* Match brand colors */
+.toast-icon.success {
+  background: var(--color-success);
+}
+.toast-icon.error {
+  background: var(--color-danger);
+}
+.toast-icon.warning {
+  background: var(--color-warning);
+}
+.toast-icon.info {
+  background: var(--color-info);
+}
+
+.toast-text {
+  flex: 1;
+  min-width: 0; /* Allow text to shrink */
+}
+
+.toast-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0 0 4px 0;
+  /* Constraint: 1 line */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .toast-message {
-  flex-grow: 1;
-  font-size: 0.9375rem; /* 15px */
-  line-height: var(--line-height-base); /* Use global var */
-  /* Allow message to wrap if needed */
-  white-space: pre-wrap;
+  font-size: 14px;
+  color: var(--gray-700);
+  margin: 0;
+  line-height: 1.4;
+  white-space: pre-wrap; /* Allow wrapping */
   word-wrap: break-word;
-  /* Add overflow-wrap for good measure */
   overflow-wrap: break-word;
 }
 
-.toast-close-btn {
+.toast-close {
   background: none;
   border: none;
-  color: var(--gray-400); /* Use global var */
-  font-size: 1.6rem;
-  font-weight: bold;
-  line-height: 1;
-  opacity: 0.8;
+  padding: 4px;
   cursor: pointer;
-  padding: 0 5px;
-  margin-left: var(--spacing-sm); /* Use global var (8px) */
-  align-self: flex-start;
-  transition: color var(--transition-fast) ease; /* Use global var */
-  /* --- NEW --- */
-  flex-shrink: 0; /* Prevent close button from shrinking */
+  color: var(--gray-400);
+  transition: color 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2.5;
+  }
 
   &:hover {
-    opacity: 1;
-    color: var(--gray-700); /* Use global var */
+    color: var(--gray-800);
+    background: var(--gray-200);
   }
 }
 
 /* --- Animations --- */
-.toast {
-  animation: toast-slide-in var(--transition-duration) var(--transition-smooth) forwards;
-}
-
-@keyframes toast-slide-in {
+@keyframes slideIn {
   from {
+    transform: translateX(100%) translateZ(0);
     opacity: 0;
-    transform: translateX(30px);
   }
   to {
+    transform: translateX(0) translateZ(0);
     opacity: 1;
-    transform: translateX(0);
   }
 }
 
-.toast-fade-out {
-  animation: toast-slide-out var(--transition-duration) var(--transition-smooth) forwards;
+/* Apply slideIn to the .toast itself, inside the .new wrapper */
+.toast-wrapper.new .toast {
+  animation: slideIn 0.3s var(--transition-smooth);
 }
 
-@keyframes toast-slide-out {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes slideOut {
   to {
+    transform: translateX(100%) translateZ(0);
     opacity: 0;
-    transform: translateX(30px);
-    margin-bottom: -10px;
-    padding-top: 0;
-    padding-bottom: 0;
-    min-height: 0;
-    border-width: 0;
   }
 }
 
-/* --- Responsive Media Query (Tablet) --- */
-@media (max-width: 768px) {
-  :host {
-    /* Move closer to the edge */
-    top: var(--spacing-md);
-    right: var(--spacing-md);
-    /* Allow it to be a bit wider on tablets */
-    max-width: 420px;
-  }
+/* Apply slideOut when .dismissing class is added */
+.toast.dismissing {
+  animation: slideOut 0.3s var(--transition-smooth) forwards;
 }
-
 
 /* --- Responsive Media Query (Mobile) --- */
 @media (max-width: 480px) {
   :host {
-    /* Pin to top, full width with padding */
+    /* Use original responsive styles */
     top: var(--spacing-md);
     left: var(--spacing-md);
     right: var(--spacing-md);
-    width: auto;      /* Let left/right positioning define width */
-    max-width: 100%;  /* Override desktop max-width */
-    align-items: stretch; /* Make toasts full width */
+    width: auto;
+    max-width: 100%;
+    align-items: stretch;
+  }
+
+  .toast-wrapper {
+    /* --- RESET STACKING --- */
+    position: relative; /* No longer absolute */
+    transform: none !important;
+    opacity: 1 !important;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  /* Show all toasts in a list */
+  .toast-wrapper:nth-child(n + 4) {
+    display: block;
+    opacity: 1;
+    transform: none;
   }
 
   .toast {
-    min-width: 0; /* Allow toast to be smaller than 320px */
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md); /* Smaller padding */
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
+  .toast-title {
+    font-size: 15px;
+  }
   .toast-message {
-    font-size: 0.875rem; /* 14px, slightly smaller for mobile */
-  }
-
-  .toast-close-btn {
-    font-size: 1.5rem;
+    font-size: 14px;
   }
 }

@@ -2,7 +2,6 @@
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  /* MODIFIED: Reduced padding and gap for flexibility */
   padding: var(--spacing-sm);
   display: flex;
   align-items: center;
@@ -15,17 +14,21 @@
     box-shadow: var(--box-shadow-lg);
   }
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
-    /* Padding and gap are already 'sm', so no change needed here */
+  // Mobile-first approach: Stack layout by default
+  flex-direction: column;
+  text-align: center;
+
+  // On larger screens, switch to horizontal layout
+  @media (min-width: 768px) {
+    flex-direction: row;
+    text-align: left;
   }
 }
 
 .widget-icon-wrapper {
-  /* MODIFIED: Reduced icon wrapper size */
-  width: 40px;
-  height: 40px;
+  // Use clamp() for responsive size
+  width: clamp(36px, 10vw, 40px);
+  height: clamp(36px, 10vw, 40px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -33,18 +36,10 @@
   flex-shrink: 0;
 
   i {
-    /* MODIFIED: Reduced base icon font size */
-    font-size: 18px;
-    
-    @media (max-width: 480px) {
-      font-size: 16px;
-    }
+    // Use clamp() for responsive icon size
+    font-size: clamp(16px, 4.5vw, 18px);
   }
-
-  @media (max-width: 768px) {
-    /* Base size is now 40px, so no change needed */
-    margin-bottom: var(--spacing-xs);
-  }
+  // The parent's `gap` property handles spacing, so no margin is needed.
 }
 
 .widget-content {
@@ -60,15 +55,9 @@
     margin: 0;
     line-height: 1.1;
     font-feature-settings: "tnum"; // optional: better numeric alignment
-    
-    /* NEW: Added text overflow handling for value */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    @media (max-width: 768px) {
-      font-size: clamp(18px, 5vw, 24px);
-    }
   }
 
   .widget-title {
@@ -80,12 +69,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-top: 2px;
-
-    @media (max-width: 768px) {
-      font-size: clamp(10px, 2.5vw, 12px);
-      white-space: normal;
-      text-align: center;
-    }
   }
 
   .widget-caption {
@@ -96,11 +79,26 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
 
-    @media (max-width: 768px) {
-      font-size: clamp(9px, 2vw, 11px);
-      white-space: normal;
-      text-align: center;
+/* --- START OF FIX --- */
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+  .widget-content {
+    .widget-value, /* <-- ADDED THIS SELECTOR */
+    .widget-title,
+    .widget-caption {
+      white-space: normal; /* Allow wrapping on mobile */
+    }
+
+    .widget-value {
+      font-size: clamp(
+        18px,
+        5vw,
+        24px
+      ); /* Slightly smaller value on mobile */
     }
   }
 }
+/* --- END OF FIX --- */

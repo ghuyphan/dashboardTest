@@ -56,6 +56,34 @@
   }
 }
 
+/* --- START OF ADDITION: Back Button Style --- */
+/*
+ * We style this just like the mobile toggle, but
+ * it's always visible (when *ngIf is true).
+*/
+.header-back-btn {
+  display: flex; /* <-- Always flex */
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--gray-700);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: 50%;
+  transition: background-color var(--transition-fast) ease,
+    color var(--transition-fast) ease;
+  line-height: 1;
+}
+
+.header-back-btn:hover {
+  background-color: var(--gray-200);
+  color: var(--dark-teal);
+}
+/* --- END OF ADDITION --- */
+
+
 .mobile-sidebar-toggle {
   display: none;
   background: none;

@@ -1,24 +1,22 @@
-// src/app/models/device.model.ts
 export interface Device {
   Id?: number;
   Ma: string;
   Ten: string;
   SerialNumber?: string | null;
   Model?: string | null;
-  LoaiThietBi_Id: number;       // Mapped from CategoryID
-  TrangThai_Id: number;         // Mapped from TrangThai
+  LoaiThietBi_Id: number;       
+  TrangThai_Id: number;       
   ViTri?: string | null;
-  NgayMua?: string | null;      // ISO 8601 format (e.g., "2023-11-15T00:00:00")
+  NgayMua?: string | null;     
   GiaMua?: number | null;
-  NgayHetHanBH?: string | null; // ISO 8601 format
+  NgayHetHanBH?: string | null; 
   MoTa?: string | null;
   DeviceName?: string | null;
-  
-  // --- START OF ADDITION ---
-  // Add the fields from your API response
+
   TenLoaiThietBi?: string | null;
   TrangThai_Ten?: string | null;
-  // --- END OF ADDITION ---
+  NguoiTao?: string | null;   
+  NgayTao?: string | null;   
 
   // Optional audit fields (if needed)
   DATE_?: string;

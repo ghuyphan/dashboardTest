@@ -18,11 +18,12 @@ import {
   MatPaginator,
   MatPaginatorIntl,
   MatPaginatorModule,
+  PageEvent // <-- IMPORTED
 } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TooltipDirective } from '../../directives/tooltip.directive';
-import { MatMenuModule } from '@angular/material/menu'; // <-- IMPORTED
+import { MatMenuModule } from '@angular/material/menu'; 
 
 @Injectable()
 export class VietnamesePaginatorIntl extends MatPaginatorIntl {
@@ -70,7 +71,7 @@ export interface SortChangedEvent {
     MatProgressSpinnerModule,
     MatIconModule,
     TooltipDirective,
-    MatMenuModule, // <-- ADDED
+    MatMenuModule, 
   ],
   templateUrl: './reusable-table.component.html',
   styleUrls: ['./reusable-table.component.scss'],
@@ -89,11 +90,13 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   @Input() trackByField: string = 'Id';
 
+  // --- NEW INPUT for Server-Side Paging ---
+  @Input() totalDataLength: number = 0;
+
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
-  @Output() pageChanged = new EventEmitter<any>();
+  @Output() pageChanged = new EventEmitter<PageEvent>(); // <-- Use PageEvent type
   @Output() searchCleared = new EventEmitter<void>();
-  // --- ADDED: Output for row actions ---
   @Output() rowAction = new EventEmitter<{ action: string, data: any }>();
 
   public dataSource = new MatTableDataSource<any>();
@@ -139,12 +142,19 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       }
     }
 
+    // --- NEW: Update paginator length when totalDataLength changes ---
+    if (changes['totalDataLength'] && this.paginator) {
+      this.paginator.length = this.totalDataLength;
+    }
+
     if (changes['columns']) {
       this.displayedColumns = this.columns.map((col) => col.key);
     }
 
     if (changes['searchTerm']) {
-      this.dataSource.filter = this.searchTerm.trim().toLowerCase();
+      // REMOVED for Server-Side Paging: Client-side filtering logic
+      // this.dataSource.filter = this.searchTerm.trim().toLowerCase();
+      
       if (this.dataSource.paginator) {
         this.dataSource.paginator.firstPage();
       }
@@ -179,7 +189,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     });
   }
 
-  public onPageChange(event: any): void {
+  public onPageChange(event: PageEvent): void { // <-- Use PageEvent type
     this.pageChanged.emit(event);
 
     if (this.tableContainer?.nativeElement) {
@@ -206,7 +216,9 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   }
 
   private handleRowNavigation(down: boolean) {
-    const rows = this.dataSource.filteredData;
+    // Note: filteredData might still be used by DataSource, but with server-side data
+    // it will just be the current page's data.
+    const rows = this.dataSource.filteredData; 
     if (!rows.length) return;
 
     const currentIndex = rows.findIndex(row => row === this.selectedRow);
@@ -240,7 +252,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     return item[this.trackByField] || index;
   }
 
-  // --- START OF MODIFICATION: Using your new function ---
   public getStatusClass(status: string): string {
     if (!status) return 'status-default';
     const lowerStatus = status.toLowerCase();
@@ -252,9 +263,7 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
     return 'status-default';
   }
-  // --- END OF MODIFICATION ---
 
-  // --- ADDED: Helper for row action menu ---
   public onRowAction(action: string, element: any, event: MouseEvent): void {
     event.stopPropagation(); // Prevent row click
     this.rowAction.emit({ action, data: element });

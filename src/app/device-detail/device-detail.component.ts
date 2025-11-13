@@ -98,12 +98,15 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
   setupFooterActions(device: Device): void {
     const actions: FooterAction[] = [
-      {
-        label: 'Quay lại',
-        icon: 'fas fa-arrow-left',
-        action: () => this.goBack(),
-        className: 'btn-primary',
-      },
+      // --- START OF MODIFICATION ---
+      // The "Back" button action is removed from here
+      // {
+      //   label: 'Quay lại',
+      //   icon: 'fas fa-arrow-left',
+      //   action: () => this.goBack(),
+      //   className: 'btn-primary',
+      // },
+      // --- END OF MODIFICATION ---
       {
         label: 'In',
         icon: 'fas fa-print',

@@ -1,15 +1,18 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { ToastMessage, ToastType } from '../models/toast-message.model';
 
 @Injectable({
   providedIn: 'root'
 })
-
 export class ToastService {
-  private toastsSubject = new BehaviorSubject<ToastMessage[]>([]);
+  // ⭐ CHANGED: Use Subject instead of BehaviorSubject
+  private toastsSubject = new Subject<ToastMessage[]>();
   toasts$: Observable<ToastMessage[]> = this.toastsSubject.asObservable();
 
+  // Keep track of current toasts internally
+  private currentToasts: ToastMessage[] = [];
+  
   private toastIdCounter = 0;
   private defaultDuration = 5000; // Default display time in ms (5 seconds)
 
@@ -25,8 +28,8 @@ export class ToastService {
     };
 
     // Add the new toast to the beginning of the array
-    const currentToasts = [newToast, ...this.toastsSubject.getValue()];
-    this.toastsSubject.next(currentToasts);
+    this.currentToasts = [newToast, ...this.currentToasts];
+    this.toastsSubject.next(this.currentToasts);
 
     // Automatically remove the toast after its duration
     if (newToast.duration && newToast.duration > 0) {
@@ -53,11 +56,12 @@ export class ToastService {
   }
 
   removeToast(id: number): void {
-    const currentToasts = this.toastsSubject.getValue().filter(toast => toast.id !== id);
-    this.toastsSubject.next(currentToasts);
+    this.currentToasts = this.currentToasts.filter(toast => toast.id !== id);
+    this.toastsSubject.next(this.currentToasts);
   }
 
   clearAll(): void {
-    this.toastsSubject.next([]);
+    this.currentToasts = [];
+    this.toastsSubject.next(this.currentToasts);
   }
 }

@@ -107,10 +107,12 @@
     </table>
   </div>
 
-  <mat-paginator
+<mat-paginator
     [pageSize]="pageSize"
     [pageSizeOptions]="pageSizeOptions"
-    [length]="dataSource.data.length"
+    
+    [length]="totalDataLength" 
+
     (page)="onPageChange($event)"
     showFirstLastButtons
     aria-label="Select page of results"

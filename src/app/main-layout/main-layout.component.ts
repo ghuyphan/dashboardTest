@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common'; // <-- 1. IMPORT Location
 import {
   Router,
   RouterModule,
@@ -18,7 +18,6 @@ import { ActionFooterComponent } from '../components/action-footer/action-footer
 import { SidebarComponent } from '../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../components/header/header.component';
 
-// --- 1. IMPORT THE NEW SEARCH SERVICE ---
 import { SearchService } from '../services/search.service';
 
 @Component({
@@ -48,8 +47,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   currentScreenName: string = 'LOADING TITLE...';
   
   showSearchBar: boolean = false;
-  // --- 2. REMOVE currentSearchTerm ---
-  // currentSearchTerm: string = '';
+  showBackButton: boolean = false; // <-- 2. ADD THIS PROPERTY
 
   // **** ADDITION 1: Add isContentLoaded property ****
   isContentLoaded = false;
@@ -58,7 +56,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private searchService: SearchService // --- 3. INJECT THE SERVICE ---
+    private searchService: SearchService, // --- 3. INJECT THE SERVICE ---
+    private location: Location // <-- 3. INJECT Location
   ) {}
 
   ngOnInit(): void {
@@ -101,6 +100,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.currentScreenName = data['title'] || 'Dashboard';
         
         this.showSearchBar = data['showSearchBar'] === true;
+        this.showBackButton = data['showBackButton'] === true; // <-- 4. SET THE PROPERTY
         
         // --- 4. Clear search term using the service ---
         if (!this.showSearchBar) {
@@ -161,5 +161,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   // --- 5. Update handler to use the service ---
   onSearchTermChanged(term: string): void {
     this.searchService.setSearchTerm(term);
+  }
+
+  // <-- 5. ADD THIS HANDLER ---
+  onBackClicked(): void {
+    this.location.back();
   }
 }

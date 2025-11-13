@@ -23,10 +23,12 @@ export class HeaderComponent {
   @Input() rolesDisplay: string = '';
   @Input() currentScreenName: string = 'Dashboard';
   @Input() showSearchBar: boolean = false; // <-- NEW
+  @Input() showBackButton: boolean = false; // <-- 1. ADD INPUT
 
   @Output() sidebarToggled = new EventEmitter<void>();
   @Output() logoutClicked = new EventEmitter<void>();
   @Output() searchChanged = new EventEmitter<string>(); // <-- NEW
+  @Output() backClicked = new EventEmitter<void>(); // <-- 2. ADD OUTPUT
 
   isUserMenuOpen: boolean = false;
   searchTerm: string = ''; // <-- NEW
@@ -42,6 +44,11 @@ export class HeaderComponent {
 
   onMobileToggleClick(): void {
     this.sidebarToggled.emit();
+  }
+
+  // <-- 3. ADD HANDLER -->
+  onBackClick(): void {
+    this.backClicked.emit();
   }
 
   onLogoutClick(): void {

@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
 import { AsyncPipe, NgClass, NgFor } from '@angular/common';
-import { Observable } from 'rxjs';
-import { ToastMessage } from '../../models/toast-message.model';
+import { Observable, Subscription } from 'rxjs';
+import { ToastMessage, ToastType } from '../../models/toast-message.model';
 import { ToastService } from '../../services/toast.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-toast',
@@ -11,127 +12,162 @@ import { ToastService } from '../../services/toast.service';
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.scss'
 })
-export class ToastComponent {
-  toasts$: Observable<ToastMessage[]>;
+export class ToastComponent implements OnInit, OnDestroy { 
+  
+  public toasts: ToastMessage[] = [];
+  private toastSub!: Subscription;
+  
+  // --- REMOVED 'lastToastIds' ---
+  // private lastToastIds = new Set<number>();
 
-  // --- START OF ADDITION: Properties for swipe gesture ---
   private touchStartX = 0;
   private touchMoveX = 0;
   private swipingToastId: number | null = null;
   private swipedElement: HTMLElement | null = null;
-  private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.5; // Dismiss at 50% swipe
-  // --- END OF ADDITION ---
+  private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.5;
 
-  constructor(private toastService: ToastService) {
-    this.toasts$ = this.toastService.toasts$;
+  constructor(
+    private toastService: ToastService,
+    private sanitizer: DomSanitizer, 
+    private cdRef: ChangeDetectorRef 
+  ) {}
+
+ngOnInit(): void {
+  this.toastSub = this.toastService.toasts$.subscribe(newToasts => {
+    // Find truly new toasts by comparing IDs
+    const oldIds = new Set(this.toasts.map(t => t.id));
+    const newlyAddedToasts = newToasts.filter(t => !oldIds.has(t.id));
+    
+    // Update the component's array to match the service
+    this.toasts = newToasts; 
+    
+    // Animate each newly added toast
+    if (newlyAddedToasts.length > 0) {
+      setTimeout(() => {
+        newlyAddedToasts.forEach(toast => {
+          const wrapper = document.getElementById('toast-' + toast.id);
+          if (wrapper) {
+            wrapper.classList.add('new');
+            setTimeout(() => {
+              wrapper.classList.remove('new');
+            }, 300);
+          }
+        });
+      }, 0);
+    }
+  });
+}
+
+  ngOnDestroy(): void {
+    if (this.toastSub) {
+      this.toastSub.unsubscribe();
+    }
   }
 
-  // Method to manually close a toast
   closeToast(id: number): void {
-    this.toastService.removeToast(id);
+    const wrapper = document.getElementById('toast-' + id);
+    const toast = wrapper?.querySelector('.toast'); // Target the inner .toast
+
+    if (toast) {
+      toast.classList.add('dismissing');
+      setTimeout(() => {
+        this.toastService.removeToast(id);
+      }, 300); // Match animation duration
+    } else {
+      this.toastService.removeToast(id);
+    }
   }
 
-  // Get CSS class based on toast type
+  // --- Helper functions (no changes) ---
+  getTitle(type: ToastType): string {
+    switch (type) {
+      case 'success': return 'Thành công';
+      case 'error': return 'Lỗi';
+      case 'warning': return 'Cảnh báo';
+      case 'info': return 'Thông tin';
+      default: return 'Thông báo';
+    }
+  }
+
+  getIcon(type: ToastType): SafeHtml {
+    let svg = '';
+    switch (type) {
+      case 'success':
+        svg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        break;
+      case 'error':
+        svg = `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+        break;
+      case 'warning':
+        svg = `<svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        break;
+      case 'info':
+        svg = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+        break;
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(svg);
+  }
+
   getToastClass(toast: ToastMessage): string {
     return `toast-${toast.type}`;
   }
 
-  // --- START OF ADDITION: Swipe Gesture Handlers ---
-
-  /**
-   * Stores the initial touch position when a swipe begins.
-   */
+  // --- Gesture Handlers (no changes) ---
   handleTouchStart(event: TouchEvent, toastId: number): void {
-    // Only track the first touch point
     if (event.touches.length !== 1) {
       return;
     }
-
     this.touchStartX = event.touches[0].clientX;
-    this.touchMoveX = this.touchStartX; // Initialize moveX
+    this.touchMoveX = this.touchStartX;
     this.swipingToastId = toastId;
-    this.swipedElement = document.getElementById('toast-' + toastId);
+    const wrapper = document.getElementById('toast-' + toastId);
+    this.swipedElement = wrapper?.querySelector('.toast') as HTMLElement;
 
     if (this.swipedElement) {
-      // Disable CSS transitions while actively swiping to follow the finger
-      this.swipedElement.style.transition = 'none';
+      this.swipedElement.classList.add('swiping');
     }
   }
 
-  /**
-   * Tracks the finger movement and applies visual feedback (translate/opacity).
-   */
   handleTouchMove(event: TouchEvent, toastId: number): void {
     if (this.swipingToastId !== toastId || !this.swipedElement || event.touches.length !== 1) {
       return;
     }
-
     this.touchMoveX = event.touches[0].clientX;
     const deltaX = this.touchMoveX - this.touchStartX;
 
-    // We only care about swiping to the right (positive deltaX)
     if (deltaX > 0) {
-      // Prevent the page from scrolling vertically while we are swiping horizontally
-      event.preventDefault(); 
-      
+      event.preventDefault();
       const opacity = 1 - (deltaX / this.swipedElement.offsetWidth);
-      
-      // Apply the visual swipe effect
-      this.swipedElement.style.transform = `translateX(${deltaX}px)`;
+      this.swipedElement.style.transform = `translateX(${deltaX}px) translateZ(0)`;
       this.swipedElement.style.opacity = `${opacity}`;
     } else {
-      // If user tries swiping left, reset to original position
-      this.swipedElement.style.transform = 'translateX(0)';
+      this.swipedElement.style.transform = 'translateX(0) translateZ(0)';
       this.swipedElement.style.opacity = '1';
     }
   }
 
-  /**
-   * Determines whether to dismiss the toast or snap it back into place.
-   */
   handleTouchEnd(event: TouchEvent, toastId: number): void {
     if (this.swipingToastId !== toastId || !this.swipedElement) {
       return;
     }
-
+    this.swipedElement.classList.remove('swiping');
     const deltaX = this.touchMoveX - this.touchStartX;
     const dismissThreshold = this.swipedElement.offsetWidth * this.SWIPE_DISMISS_THRESHOLD_PERCENT;
 
+    this.swipedElement.style.transform = '';
+    this.swipedElement.style.opacity = '';
+
     if (deltaX > dismissThreshold) {
-      // --- DISMISS ---
-      // Re-enable transitions for the "fling" animation
-      this.swipedElement.style.transition = 'all 0.2s ease-out';
-      this.swipedElement.style.transform = `translateX(100%)`;
-      this.swipedElement.style.opacity = '0';
-      
-      // Wait for the animation to finish, then remove the toast from the service
+      this.swipedElement.classList.add('dismissing');
       setTimeout(() => {
         this.toastService.removeToast(toastId);
-        // Note: The element will be gone, so no need to clean up its styles
-      }, 200);
-
-    } else {
-      // --- SNAP BACK ---
-      // Re-enable transitions for the snap-back animation
-      this.swipedElement.style.transition = 'all 0.2s var(--transition-smooth)';
-      this.swipedElement.style.transform = 'translateX(0)';
-      this.swipedElement.style.opacity = '1';
-      
-      // Clean up inline styles after animation
-      setTimeout(() => {
-        if (this.swipedElement) {
-          this.swipedElement.style.transition = '';
-          this.swipedElement.style.transform = '';
-          this.swipedElement.style.opacity = '';
-        }
-      }, 200);
+        this.cdRef.markForCheck(); 
+      }, 300);
     }
 
-    // Reset swipe state
     this.touchStartX = 0;
     this.touchMoveX = 0;
     this.swipingToastId = null;
     this.swipedElement = null;
   }
-  // --- END OF ADDITION ---
 }

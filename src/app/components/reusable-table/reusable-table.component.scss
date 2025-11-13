@@ -180,29 +180,29 @@
       border-right: none !important;
     }
 
+    /* --- START OF MODIFICATION --- */
+    /*
+      This rule now sets the COLOR to white, but does NOT
+      set the opacity. This allows the default Material
+      opacity rules (for hover/active) to work.
+    */
     .mat-sort-header-arrow {
-      color: var(--white) !important;
-      opacity: 0.7 !important;
+      color: var(--white) !important; /* --- FIX: Added color back --- */
       font-size: 16px !important;
       width: 16px !important;
       height: 16px !important;
     }
-
-    .sort-indicator {
-      margin-left: 4px;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .sort-icon {
-      font-size: 16px !important;
-      width: 16px !important;
-      height: 16px !important;
-    }
-
+    
+    /*
+      This rule is left intentionally blank.
+      The default .mat-sort-header-sorted class will
+      apply the correct opacity to the white arrow.
+    */
     &.mat-sort-header-sorted .mat-sort-header-arrow {
-      opacity: 1 !important;
+      /* Let default styles apply for opacity */
     }
+    /* --- END OF MODIFICATION --- */
+
 
     &:hover {
       background-color: var(--teal-blue-dark) !important;

@@ -11,6 +11,7 @@
     (click)="toggleSidebar()"
   ></div>
 
+
   <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
     <app-header
       [currentUser]="currentUser"
@@ -18,9 +19,11 @@
       [rolesDisplay]="rolesDisplay"
       [currentScreenName]="currentScreenName"
       [showSearchBar]="showSearchBar" 
+      [showBackButton]="showBackButton" 
       (sidebarToggled)="toggleSidebar()"
       (logoutClicked)="logout()"
       (searchChanged)="onSearchTermChanged($event)"
+      (backClicked)="onBackClicked()" 
     ></app-header>
 
     <main class="dashboard-content">
