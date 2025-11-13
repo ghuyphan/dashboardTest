@@ -29,8 +29,9 @@ import { Device } from '../models/device.model';
  * Defines the expected shape of the paged API response.
  */
 export interface PagedResult<T> {
-  items: T[];
-  totalCount: number;
+  // --- MODIFICATION: Reverted to lowercase to match API error ---
+  Items: T[];
+  TotalCount: number;
 }
 
 @Component({
@@ -131,6 +132,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private formatDate(dateString: string | null | undefined): string {
     if (!dateString) return '';
     try {
+      // Check if the string already contains "dd/MM/yyyy"
+      if (dateString.includes('/') && dateString.length >= 10) {
+        // If it's already in the correct format (like from API response), just return the date part
+        return dateString.substring(0, 10);
+      }
+      
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return '';
       const day = date.getDate().toString().padStart(2, '0');
@@ -163,7 +170,9 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
     return this.http.get<PagedResult<Device>>(url, { params }).pipe(
       tap((response) => {
-        const formattedData = response.items.map((device) => ({
+        // --- START: MODIFICATION ---
+        // Use 'response.Items' (lowercase i)
+        const formattedData = response.Items.map((device) => ({
           ...device,
           NgayTao: this.formatDate(device.NgayTao), // This now works
           NgayMua: this.formatDate(device.NgayMua),
@@ -171,7 +180,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         }));
         
         this.pagedDeviceData = formattedData;
-        this.totalDeviceCount = response.totalCount;
+        // Use 'response.TotalCount' (lowercase t, c)
+        this.totalDeviceCount = response.TotalCount;
+
+        console.log('total devices:', this.totalDeviceCount)
+        // --- END: MODIFICATION ---
+        
         this.isLoading = false;
         console.log('Paged devices loaded:', response);
       }),
