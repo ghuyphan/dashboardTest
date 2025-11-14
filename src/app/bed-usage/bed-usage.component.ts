@@ -412,7 +412,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit', // Added seconds
-        fractionalSecondDigits: 3, // Added milliseconds
+        // fractionalSecondDigits: 3, // Added milliseconds
         hour12: false // Ensure 24-hour format
       });
     // --- END OF MODIFICATION ---

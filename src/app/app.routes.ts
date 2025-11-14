@@ -51,7 +51,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'QLThietBi.TQThietBi', 
-          title: 'Thông tin thiết bị',
+          title: 'Tổng quan thiết bị',
           showSearchBar: false,
           showBackButton: false
         }
@@ -71,8 +71,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
-
-  // Redirect the root path to login
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 
 ];

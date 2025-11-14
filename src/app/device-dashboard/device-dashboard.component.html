@@ -1,19 +1,109 @@
 <div class="page-container">
   <div class="page-content">
     
-    <div *ngIf="isLoading" class="chart-loading-spinner">
-      <div class.spinner></div>
+    <div class="widget-section" *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded">
+      <div class="widget-grid"> 
+        <div class="widget-skeleton" *ngFor="let i of [1,2,3,4,5,6]"></div>
+      </div>
+    </div>
+    <ng-template #widgetsLoaded>
+      <div class="widget-section">
+        <div class="widget-grid">
+          <app-widget-card 
+            *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
+            [icon]="widget.icon"
+            [title]="widget.title"
+            [value]="widget.value"
+            [caption]="widget.caption"
+            [accentColor]="widget.accentColor">
+          </app-widget-card>
+        </div>
+      </div>
+    </ng-template>
+
+    <div *ngIf="isLoading && widgetData.length === 0" class="chart-loading-spinner">
+      <div class="spinner"></div>
       <p>Đang tải dữ liệu thống kê...</p>
     </div>
 
-    <div class="chart-wrapper" [class.hidden]="isLoading">
-      <div 
-        #chartContainer 
-        class="chart-container-inner"
-        [attr.aria-busy]="isLoading"
-        role="img"
-        [attr.aria-label]="isChartInitialized ? 'Device status pie chart' : 'Loading chart'">
+    <div class="dashboard-main-content" *ngIf="!isLoading">
+      
+      <div class="filter-bar" *ngIf="currentFilter">
+        <span>
+          Đang lọc theo: 
+          <strong>{{ currentFilter.type }} = "{{ currentFilter.name }}"</strong>
+        </span>
+        <button class="clear-filter-btn" (click)="clearFilter()">
+          <i class="fas fa-times"></i> Xóa bộ lọc
+        </button>
       </div>
-    </div>
+
+      <div class="dashboard-main-grid">
+        
+        <div class="chart-card">
+          <div #chartContainerPie class="chart-container-inner" role="img" aria-label="Biểu đồ tròn trạng thái thiết bị"></div>
+        </div>
+        
+        <div class="chart-card">
+          <div #chartContainerCategory class="chart-container-inner" role="img" aria-label="Biểu đồ cột loại thiết bị"></div>
+        </div>
+
+        <div class="chart-card">
+          <div #chartContainerLocation class="chart-container-inner" role="img" aria-label="Biểu đồ cột vị trí thiết bị"></div>
+        </div>
+
+        <div class="chart-card">
+          <div #chartContainerTrend class="chart-container-inner" role="img" aria-label="Biểu đồ đường thiết bị mới"></div>
+        </div>
+        
+        <div class="action-list-card">
+          <h3 class="action-list-title">
+            <i class="fas fa-tools icon-warning"></i>
+            Thiết bị cần Chú ý
+          </h3>
+          <div class="action-list-body">
+            <ng-container *ngIf="attentionDevices.length > 0; else noAttention">
+              <ul>
+                <li *ngFor="let device of attentionDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
+                  <span class="list-item-main">{{ device.Ten }} ({{ device.Ma }})</span>
+                  <span class="list-item-sub">{{ device.ViTri }} - <strong class="text-warning">{{ device.TrangThai_Ten }}</strong></span>
+                </li>
+              </ul>
+            </ng-container>
+            <ng-template #noAttention>
+              <div class="list-empty-state">
+                <i class="fas fa-check-circle icon-success"></i>
+                <span>Không có thiết bị nào cần bảo trì.</span>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="action-list-card">
+          <h3 class="action-list-title">
+            <i class="fas fa-calendar-times icon-danger"></i>
+            Sắp hết hạn Bảo hành (30 ngày tới)
+          </h3>
+          <div class="action-list-body">
+            <ng-container *ngIf="expiringDevices.length > 0; else noExpiring">
+              <ul>
+                <li *ngFor="let device of expiringDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
+                  <span class="list-item-main">{{ device.Ten }} ({{ device.Ma }})</span>
+                  <span class="list-item-sub">{{ device.ViTri }} - <strong class="text-danger">Hết hạn: {{ device.NgayHetHanBH }}</strong></span>
+                </li>
+              </ul>
+            </ng-container>
+            <ng-template #noExpiring>
+              <div class="list-empty-state">
+                <i class="fas fa-check-circle icon-success"></i>
+                <span>Không có thiết bị nào sắp hết hạn.</span>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+      </div>
+      </div>
+
   </div>
 </div>
