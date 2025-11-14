@@ -101,7 +101,12 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private intersectionObserverInitialized = false;
 
   private allDevices: Device[] = [];
-  public currentFilter: ChartFilter | null = null;
+  
+  // --- START OF MODIFICATION ---
+  public currentFilter: ChartFilter | null = null; // Controls the animation class
+  public visibleFilter: ChartFilter | null = null; // Controls the *ngIf and text content
+  private filterTransitionTimer: any;
+  // --- END OF MODIFICATION ---
 
   public widgetData: WidgetData[] = [];
   public pieData: DeviceStatsData[] = [];
@@ -147,6 +152,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.chartInstanceLocation?.dispose();
     this.chartInstanceTrend?.dispose();
     this.chartResizeSubscription?.unsubscribe();
+    clearTimeout(this.filterTransitionTimer); // <-- ADD THIS
   }
 
   private setupResizeHandling(): void {
@@ -376,23 +382,42 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.cd.markForCheck();
   }
 
+  // --- START OF MODIFICATION ---
   private onChartClick(type: FilterType, params: any): void {
     const clickedName = params.name;
     if (!clickedName) return;
 
+    // Always clear any pending "hide" timers
+    clearTimeout(this.filterTransitionTimer);
+
     if (this.currentFilter && this.currentFilter.type === type && this.currentFilter.name === clickedName) {
-      this.currentFilter = null;
+      // If clicking the same slice, clear the filter
+      this.clearFilter();
     } else {
-      this.currentFilter = { type, name: clickedName };
+      // Otherwise, set the new filter
+      const newFilter = { type, name: clickedName };
+      this.currentFilter = newFilter; // This triggers the open animation
+      this.visibleFilter = newFilter; // This makes the content appear
+      this.refilterAndRenderAll();
     }
-    
-    this.refilterAndRenderAll();
   }
 
   public clearFilter(): void {
+    // Clear any pending hide timer
+    clearTimeout(this.filterTransitionTimer);
+
+    // Set filter to null to *start* the close animation
     this.currentFilter = null;
-    this.refilterAndRenderAll();
+    this.refilterAndRenderAll(); // Update charts to show all data
+
+    // Set a timer to remove the content *after* the animation (300ms)
+    // The content in `visibleFilter` will remain during the animation
+    this.filterTransitionTimer = setTimeout(() => {
+      this.visibleFilter = null; // Now remove the content
+      this.cd.markForCheck(); // Notify Angular to update the *ngIf
+    }, 300); // This MUST match your 'transition: all 0.3s ease-out' in SCSS
   }
+  // --- END OF MODIFICATION ---
   
   private aggregateAllData(allDevices: Device[]): {
     pieData: DeviceStatsData[], categoryData: AggregatedData[], locationData: AggregatedData[],
@@ -481,9 +506,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     this.updateWidgetValue('totalDevices', this.formatNumber(allDevices.length));
-    // --- UPDATED ---
     this.updateWidgetValue('totalValue', this.formatCurrency(totalValue));
-    // --- END UPDATED ---
     this.updateWidgetValue('inUse', this.formatNumber(inUse));
     this.updateWidgetValue('ready', this.formatNumber(ready));
     this.updateWidgetValue('needsAttention', this.formatNumber(needsAttention));
@@ -513,34 +536,26 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     if (widget) { widget.value = value; }
   }
 
-  // --- UPDATED ---
   private parseValue(val: any): number {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
-      // Remove commas AND dots for robustness
       const cleaned = val.replace(/[.,]/g, '').trim();
       const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     }
     return 0;
   }
-  // --- END UPDATED ---
 
   private formatNumber(value: number): string {
     return new Intl.NumberFormat('vi-VN').format(value);
   }
 
-  // --- NEW ---
-  /**
-   * Formats a number as Vietnamese currency (VND).
-   */
   private formatCurrency(value: number): string {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(value);
   }
-  // --- END NEW ---
 
   private formatPercentage(value: number): string {
     return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value) + '%';
