@@ -88,7 +88,6 @@ export class DeviceFormComponent implements OnInit {
   }
 
   /**
-   * --- START OF FIX ---
    * Chuyển đổi chuỗi ngày (từ API) thành "yyyy-MM-dd"
    * cho <input type="date">.
    */
@@ -127,7 +126,6 @@ export class DeviceFormComponent implements OnInit {
     console.warn('Unrecognized date format in form:', dateString);
     return ''; 
   }
-  /** --- END OF FIX --- */
 
 
   /**
@@ -311,8 +309,7 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'date',
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              // --- APPLY THE FIX HERE ---
-              value: this.parseValueToHtmlDate(data.NgayMua),
+              value: this.parseValueToHtmlDate(data.NgayMua), // This is correct
               validators: {},
               layout_flexGrow: 1,
             },
@@ -321,8 +318,7 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'date',
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              // --- APPLY THE FIX HERE ---
-              value: this.parseValueToHtmlDate(data.NgayHetHanBH),
+              value: this.parseValueToHtmlDate(data.NgayHetHanBH), // This is correct
               validators: {},
               layout_flexGrow: 1,
             },
@@ -375,7 +371,11 @@ export class DeviceFormComponent implements OnInit {
     }
 
     const apiNgayMua = this.formatHtmlDateToApiDate(formData.NgayMua);
-    const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgData.NgayHetHanBH);
+    
+    // --- *** THIS IS THE FIX *** ---
+    // It was trying to read `formData.NgData.NgayHetHanBH`
+    const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
+    // --- *** END OF FIX *** ---
 
     let saveObservable;
 

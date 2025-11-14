@@ -8,6 +8,17 @@
   min-height: 0; /* Critical for nested flex scrolling */
 }
 
+/* --- ADDED: Highlight Style --- */
+:host ::ng-deep .highlight {
+  background-color: var(--pastel-lemon, #FFF5B3);
+  color: var(--gray-900);
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+
 .reusable-table-wrapper {
   /* FLEX FIX: Make this wrapper grow to fill the :host */
   flex: 1;
@@ -99,6 +110,16 @@
   text-transform: capitalize;
   line-height: 1.5;
   white-space: nowrap;
+  
+  /* --- ADDED: Allow inner span/mark to wrap --- */
+  // This is a bit of a hack, but lets the chip contain the highlight
+  display: inline-flex;
+  span, mark {
+    display: inline;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 .status-in-use { 
   color: #FFFFFF;
@@ -155,6 +176,24 @@
     Material Component Overrides
    ============================================ */
 :host ::ng-deep {
+
+  /* --- NEW: Checkbox Column Styles --- */
+  .mat-column-select {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    padding: 0 0 0 4px !important;
+  }
+
+  .mat-mdc-header-cell.mat-column-select {
+    padding-left: 16px !important;
+  }
+
+  .mat-mdc-cell.mat-column-select {
+    padding-left: 16px !important;
+  }
+  /* --- End Checkbox Styles --- */
+
 
   /* COMPACT HEADER CELLS - Reduced space */
   .mat-mdc-header-cell {
@@ -229,7 +268,7 @@
       width: 40px; // Fixed width for action button
     }
 
-    &:first-of-type {
+    &:first-of-type:not(.mat-column-select) { // <-- MODIFIED
       padding-left: var(--spacing-md) !important;
     }
     &:last-of-type {
@@ -260,12 +299,23 @@
         background-color: var(--gray-100) !important;
       }
 
+      /* Single-select style */
       &.selected {
         background-color: var(--peppermint) !important;
         box-shadow: inset 3px 0 0 var(--teal-blue) !important;
         
         .mat-mdc-cell {
            color: var(--teal-blue-dark) !important;
+           font-weight: var(--font-weight-medium) !important;
+        }
+      }
+
+      /* --- NEW: Multi-select style --- */
+      &.multi-selected {
+        background-color: var(--pastel-sky) !important;
+        
+        .mat-mdc-cell {
+           color: var(--deep-sapphire) !important;
            font-weight: var(--font-weight-medium) !important;
         }
       }
@@ -471,6 +521,20 @@
       .mat-mdc-paginator-range-label {
         margin: 2px !important;
       }
+    }
+
+    /* --- NEW: Adjust checkbox column on mobile --- */
+    .mat-column-select {
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
+      padding: 0 0 0 4px !important;
+    }
+    .mat-mdc-header-cell.mat-column-select {
+      padding-left: 12px !important;
+    }
+    .mat-mdc-cell.mat-column-select {
+      padding-left: 12px !important;
     }
   }
 }

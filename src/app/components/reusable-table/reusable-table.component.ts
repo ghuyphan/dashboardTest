@@ -9,7 +9,8 @@ import {
   SimpleChanges,
   Injectable,
   HostListener,
-  ElementRef
+  ElementRef,
+  OnInit, 
 } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Provides CurrencyPipe
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -18,12 +19,15 @@ import {
   MatPaginator,
   MatPaginatorIntl,
   MatPaginatorModule,
-  PageEvent // <-- IMPORTED
+  PageEvent,
 } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TooltipDirective } from '../../directives/tooltip.directive';
-import { MatMenuModule } from '@angular/material/menu'; 
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { SelectionModel } from '@angular/cdk/collections';
+import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe'; // <-- 1. IMPORT THE NEW PIPE
 
 @Injectable()
 export class VietnamesePaginatorIntl extends MatPaginatorIntl {
@@ -64,20 +68,22 @@ export interface SortChangedEvent {
   selector: 'app-reusable-table',
   standalone: true,
   imports: [
-    CommonModule, // <-- Provides CurrencyPipe
+    CommonModule, 
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatIconModule,
     TooltipDirective,
-    MatMenuModule, 
+    MatMenuModule,
+    MatCheckboxModule,
+    HighlightSearchPipe, // <-- 2. ADD PIPE TO IMPORTS
   ],
   templateUrl: './reusable-table.component.html',
   styleUrls: ['./reusable-table.component.scss'],
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
 })
-export class ReusableTableComponent implements OnChanges, AfterViewInit {
+export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit { 
   @Input() data: any[] = [];
   @Input() columns: GridColumn[] = [];
   @Input() searchTerm: string = '';
@@ -89,21 +95,25 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   @Input() noResultsText: string = 'Không tìm thấy kết quả phù hợp';
 
   @Input() trackByField: string = 'Id';
+  @Input() enableMultiSelect: boolean = false; 
 
   // --- NEW INPUT for Server-Side Paging ---
   @Input() totalDataLength: number = 0;
 
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
-  @Output() pageChanged = new EventEmitter<PageEvent>(); // <-- Use PageEvent type
+  @Output() pageChanged = new EventEmitter<PageEvent>(); 
   @Output() searchCleared = new EventEmitter<void>();
   @Output() rowAction = new EventEmitter<{ action: string, data: any }>();
+  @Output() selectionChanged = new EventEmitter<any[]>(); 
 
   public dataSource = new MatTableDataSource<any>();
   public displayedColumns: string[] = [];
   public selectedRow: any | null = null;
   public isLoadingWithDelay = false;
   private loadingTimer: any;
+
+  public selection = new SelectionModel<any>(true, []);
 
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -116,14 +126,16 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   constructor() { }
 
-  ngAfterViewInit(): void {
-    // We connect the SORT, but NOT the paginator.
-    this.dataSource.sort = this.sort;
+  ngOnInit(): void {
+    // Emit selection changes
+    this.selection.changed.subscribe(() => {
+      this.selectionChanged.emit(this.selection.selected);
+    });
+    this.updateDisplayedColumns();
+  }
 
-    // --- START OF FIX ---
-    // DO NOT DO THIS FOR SERVER-SIDE PAGING:
-    // this.dataSource.paginator = this.paginator; 
-    // --- END OF FIX ---
+  ngAfterViewInit(): void {
+    this.dataSource.sort = this.sort;
 
     if (this.sort) {
       this.sortState = {
@@ -141,34 +153,24 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
     if (changes['data']) {
       this.dataSource.data = this.data;
       this.selectedRow = null;
+      this.selection.clear(); 
 
       if (this.tableContainer?.nativeElement) {
         this.tableContainer.nativeElement.scrollTop = 0;
       }
     }
 
-    // --- START OF FIX ---
-    // This logic is not needed because the [length] property on
-    // the <mat-paginator> in the HTML handles it automatically.
-    // if (changes['totalDataLength'] && this.paginator) {
-    //   this.paginator.length = this.totalDataLength;
-    // }
-    // --- END OF FIX ---
-
-    if (changes['columns']) {
-      this.displayedColumns = this.columns.map((col) => col.key);
+    if (changes['columns'] || changes['enableMultiSelect']) {
+      this.updateDisplayedColumns();
     }
+  }
 
-    if (changes['searchTerm']) {
-      // Client-side filtering is already correctly removed.
-      
-      // --- FIX: This block is also unnecessary ---
-      // The parent component (device-list) already resets the page index
-      // when the search term changes.
-      // if (this.dataSource.paginator) {
-      //   this.dataSource.paginator.firstPage();
-      // }
-      // --- END OF FIX ---
+  private updateDisplayedColumns(): void {
+    let baseCols = this.columns.map((col) => col.key);
+    if (this.enableMultiSelect) {
+      this.displayedColumns = ['select', ...baseCols];
+    } else {
+      this.displayedColumns = baseCols;
     }
   }
 
@@ -184,8 +186,12 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   }
 
   public onRowClick(row: any): void {
-    this.selectedRow = this.selectedRow === row ? null : row;
-    this.rowClick.emit(row);
+    if (!this.enableMultiSelect) {
+      this.selectedRow = this.selectedRow === row ? null : row;
+      this.rowClick.emit(row);
+    } else {
+      this.toggleRowSelection(row, null);
+    }
   }
 
   public onMatSortChange(sort: Sort): void {
@@ -194,15 +200,13 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
       direction: sort.direction as SortDirection
     };
 
-    // This correctly emits the sort change to the parent (device-list)
     this.sortChanged.emit({
       column: sort.active,
       direction: sort.direction as SortDirection,
     });
   }
 
-  public onPageChange(event: PageEvent): void { // <-- Use PageEvent type
-    // This correctly emits the page change to the parent (device-list)
+  public onPageChange(event: PageEvent): void { 
     this.pageChanged.emit(event);
 
     if (this.tableContainer?.nativeElement) {
@@ -212,7 +216,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   public clearSearch(): void {
     this.searchTerm = '';
-    // this.dataSource.filter = ''; // Not needed for server-side
     this.searchCleared.emit();
 
     if (this.paginator) {
@@ -222,6 +225,8 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (this.enableMultiSelect) return; 
+
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       this.handleRowNavigation(event.key === 'ArrowDown');
@@ -229,8 +234,6 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   }
 
   private handleRowNavigation(down: boolean) {
-    // Note: filteredData might still be used by DataSource, but with server-side data
-    // it will just be the current page's data.
     const rows = this.dataSource.filteredData; 
     if (!rows.length) return;
 
@@ -280,5 +283,44 @@ export class ReusableTableComponent implements OnChanges, AfterViewInit {
   public onRowAction(action: string, element: any, event: MouseEvent): void {
     event.stopPropagation(); // Prevent row click
     this.rowAction.emit({ action, data: element });
+  }
+
+  onCheckboxClick(event: MouseEvent): void {
+    event.stopPropagation();
+  }
+
+  toggleRowSelection(row: any, event: MouseEvent | null): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    this.selectedRow = null; 
+    this.rowClick.emit(null); 
+
+    this.selection.toggle(row);
+  }
+
+  isAllSelected(): boolean {
+    const numSelected = this.selection.selected.length;
+    const numRows = this.dataSource.data.length;
+    return numSelected === numRows;
+  }
+
+  masterToggle(): void {
+    this.selectedRow = null;
+    this.rowClick.emit(null);
+    
+    if (this.isAllSelected()) {
+      this.selection.clear();
+      return;
+    }
+    this.selection.select(...this.dataSource.data);
+  }
+
+  checkboxLabel(row?: any): string {
+    if (!row) {
+      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+    }
+    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row[this.trackByField] || ''}`;
   }
 }

@@ -1,0 +1,19 @@
+<div class="page-container">
+  <div class="page-content">
+    
+    <div *ngIf="isLoading" class="chart-loading-spinner">
+      <div class.spinner></div>
+      <p>Đang tải dữ liệu thống kê...</p>
+    </div>
+
+    <div class="chart-wrapper" [class.hidden]="isLoading">
+      <div 
+        #chartContainer 
+        class="chart-container-inner"
+        [attr.aria-busy]="isLoading"
+        role="img"
+        [attr.aria-label]="isChartInitialized ? 'Device status pie chart' : 'Loading chart'">
+      </div>
+    </div>
+  </div>
+</div>

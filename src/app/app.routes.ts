@@ -44,6 +44,18 @@ export const routes: Routes = [
           showBackButton: true
         }
       },
+            {
+        path: 'equipment/dashboard',
+        loadComponent: () => 
+          import('./device-dashboard/device-dashboard.component').then(m => m.DeviceDashboardComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'QLThietBi.TQThietBi', 
+          title: 'Thông tin thiết bị',
+          showSearchBar: false,
+          showBackButton: false
+        }
+      },
       {
         path: 'reports/bed-usage',
         loadComponent: () => 

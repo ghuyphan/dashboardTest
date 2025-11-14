@@ -56,13 +56,10 @@
   }
 }
 
-/* --- START OF ADDITION: Back Button Style --- */
-/*
- * We style this just like the mobile toggle, but
- * it's always visible (when *ngIf is true).
-*/
-.header-back-btn {
-  display: flex; /* <-- Always flex */
+/* --- START OF MODIFICATION --- */
+/* New shared class for header icon buttons */
+.header-icon-btn {
+  display: flex;
   align-items: center;
   justify-content: center;
   background: none;
@@ -72,42 +69,46 @@
   cursor: pointer;
   padding: var(--spacing-sm);
   border-radius: 50%;
+  /* --- MODIFIED: Added transform and box-shadow to transition --- */
   transition: background-color var(--transition-fast) ease,
-    color var(--transition-fast) ease;
+    color var(--transition-fast) ease,
+    transform var(--transition-fast) var(--transition-spring),
+    box-shadow var(--transition-fast) ease;
   line-height: 1;
 }
 
-.header-back-btn:hover {
+.header-icon-btn:hover {
   background-color: var(--gray-200);
   color: var(--dark-teal);
+  box-shadow: var(--box-shadow-md); /* --- ADDED --- */
 }
-/* --- END OF ADDITION --- */
+
+/* --- ADDED: Active state for "press" effect --- */
+.header-icon-btn:active {
+  transform: scale(0.95);
+  box-shadow: var(--box-shadow-sm);
+}
+/* --- END OF MODIFICATION --- */
+
+
+/* Back button just uses the shared class, but is always 'flex' (which is the default) */
+.header-back-btn {
+  /* This class is now just a selector, it gets styles from .header-icon-btn in the HTML */
+}
 
 
 .mobile-sidebar-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  color: var(--gray-700);
-  cursor: pointer;
-  padding: var(--spacing-sm);
-  border-radius: 50%;
-  transition: background-color var(--transition-fast) ease,
-    color var(--transition-fast) ease;
-  line-height: 1;
+  /* It will get .header-icon-btn styles from HTML */
+  /* We just set its UNIQUE display properties */
+  display: none; 
 }
 
-.mobile-sidebar-toggle:hover {
-  background-color: var(--gray-200);
-  color: var(--dark-teal);
-}
+/* REMOVED .mobile-sidebar-toggle:hover, it's covered by .header-icon-btn:hover */
 
 @media (max-width: 992px) {
   .mobile-sidebar-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; /* This now overrides the 'display: none' on mobile */
+    /* align-items and justify-content are already in .header-icon-btn */
   }
 }
 
@@ -144,7 +145,7 @@
 
 .search-icon {
   font-size: 0.875rem;
-  margin-top: 2px; /* Align better */
+  /* margin-top: 2px; */ /* <-- REMOVED THIS to let flexbox do the centering */
 }
 
 .header-search-input {
@@ -157,6 +158,7 @@
   font-weight: var(--font-weight-medium);
   color: var(--gray-900);
   outline: none;
+  line-height: 1; /* <-- ADDED THIS to make text height predictable */
 
   &::placeholder {
     color: var(--gray-600);

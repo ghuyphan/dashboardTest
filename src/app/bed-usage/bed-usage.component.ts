@@ -402,6 +402,8 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cd.markForCheck(); // Mark once to show spinner
 
     const apiUrl = environment.bedUsageUrl;
+    
+    // --- START OF MODIFICATION ---
     const getTimestamp = () =>
       new Date().toLocaleString('vi-VN', {
         day: '2-digit',
@@ -409,7 +411,11 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        second: '2-digit', // Added seconds
+        fractionalSecondDigits: 3, // Added milliseconds
+        hour12: false // Ensure 24-hour format
       });
+    // --- END OF MODIFICATION ---
 
     this.http
       .get<ApiResponseData[]>(apiUrl)

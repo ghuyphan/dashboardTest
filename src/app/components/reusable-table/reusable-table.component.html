@@ -16,6 +16,26 @@
       class="compact-table"
       [trackBy]="trackByFn" 
     >
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef class="compact-header mat-column-select">
+          <mat-checkbox
+            (change)="$event ? masterToggle() : null"
+            [checked]="selection.hasValue() && isAllSelected()"
+            [indeterminate]="selection.hasValue() && !isAllSelected()"
+            [aria-label]="checkboxLabel()"
+            (click)="onCheckboxClick($event)"
+          >
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row" class="compact-cell mat-column-select">
+          <mat-checkbox
+            (click)="toggleRowSelection(row, $event)"
+            [checked]="selection.isSelected(row)"
+            [aria-label]="checkboxLabel(row)"
+          >
+          </mat-checkbox>
+        </td>
+      </ng-container>
       <ng-container *ngFor="let col of columns" [matColumnDef]="col.key">
         
         <th
@@ -63,8 +83,8 @@
             </ng-container>
 
             <ng-container *ngSwitchCase="'TrangThai_Ten'">
-              <span class="status-chip" [ngClass]="getStatusClass(element.TrangThai_Ten)">
-                {{ element.TrangThai_Ten || 'N/A' }}
+              <span class="status-chip" [ngClass]="getStatusClass(element.TrangThai_Ten)" 
+                    [innerHTML]="element.TrangThai_Ten | highlightSearch: searchTerm">
               </span>
             </ng-container>
 
@@ -73,7 +93,7 @@
             </ng-container>
 
             <ng-container *ngSwitchDefault>
-              {{ element[col.key] }}
+              <span [innerHTML]="element[col.key] | highlightSearch: searchTerm"></span>
             </ng-container>
             
           </div>
@@ -87,7 +107,10 @@
         *matRowDef="let row; columns: displayedColumns"
         (click)="onRowClick(row)"
         class="clickable-row"
-        [ngClass]="{ 'selected': row === selectedRow }"
+        [ngClass]="{ 
+          'selected': row === selectedRow && !enableMultiSelect,
+          'multi-selected': selection.isSelected(row)
+        }"
       ></tr>
 
       <tr class="mat-row" *matNoDataRow>

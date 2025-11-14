@@ -49,7 +49,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
   // --- Paging & Sorting State ---
   public currentPageIndex: number = 0; // MatPaginator is 0-indexed
-  public currentPageSize: number = 15; // Default page size
+  public currentPageSize: number = 25; // Default page size
   public currentSortColumn: string = 'Id';
   public currentSortDirection: SortDirection = 'asc';
   public currentSearchTerm: string = '';
@@ -212,14 +212,11 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         this.pagedDeviceData = formattedData;
         this.totalDeviceCount = response.TotalCount;
 
-        console.log('total devices:', this.totalDeviceCount)
-
         this.isLoading = false;
-        console.log('Paged devices loaded:', response);
       }),
       catchError((err: HttpErrorResponse) => {
         console.error('Failed to load devices:', err);
-        this.toastService.showError('Không thể tải danh sách thiết bị.');
+        // this.toastService.showError('Không thể tải danh sách thiết bị.');
         this.isLoading = false;
         this.pagedDeviceData = []; // Clear data on error
         this.totalDeviceCount = 0; // Reset count on error
@@ -260,7 +257,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
    */
   public onDeviceSelected(device: any): void {
     this.selectedDevice = this.selectedDevice === device ? null : device;
-    console.log('Selected device:', this.selectedDevice);
     this.updateFooterActions();
   }
 
@@ -298,7 +294,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         icon: 'fas fa-eye',
         action: () => this.onViewDetail(this.selectedDevice),
         permission: 'QLThietBi.DMThietBi.RVIEW',
-        className: 'btn-secondary',
+        className: 'btn-ghost',
         disabled: !isRowSelected,
       },
     ];

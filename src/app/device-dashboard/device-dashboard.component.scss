@@ -1,0 +1,86 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--gray-50);
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--gray-50);
+}
+
+.page-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg); // Add padding
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.chart-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  
+  &.hidden {
+    display: none;
+  }
+
+  .chart-container-inner {
+    width: 100%;
+    height: 100%;
+    min-height: 400px; // Ensure chart has a minimum height
+    background-color: var(--white);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    contain: layout style paint;
+    box-shadow: var(--box-shadow-md);
+  }
+}
+
+// Loading spinner (copied from bed-usage)
+.chart-loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+  color: var(--gray-600);
+  font-size: 1.1rem;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--gray-200);
+    border-top-color: var(--teal-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: var(--spacing-md);
+  }
+}

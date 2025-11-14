@@ -37,7 +37,7 @@
   right: 0;
   bottom: 0;
   // background-color: rgba(0, 0, 0, 0.25); /* Dark overlay */
-  backdrop-filter: blur(2px); /* Apply blur to the image itself */
+  backdrop-filter: blur(5px); /* Apply blur to the image itself */
   z-index: 1; /* Place it behind the login card */
 }
 
@@ -344,15 +344,15 @@
     // justify-content: flex-start; /* MODIFIED: Align to top */
     padding: clamp(24px, 5vw, 40px);
 
-    /* --- NEW: Mobile logo alignment --- */
+    /* --- START OF MODIFICATION --- */
     .logo {
-      // text-align: left;
+      text-align: center; /* Center text */
 
       .logo-image {
-        margin: 0 0 clamp(16px, 4vw, 24px); /* Override desktop margin:auto */
+        margin: 0 auto clamp(16px, 4vw, 24px); /* Center image */
       }
     }
-    /* --- End new styles --- */
+    /* --- END OF MODIFICATION --- */
   }
 }
 

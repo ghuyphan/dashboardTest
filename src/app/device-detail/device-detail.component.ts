@@ -102,14 +102,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         icon: 'fas fa-pencil-alt',
         action: () => this.onEdit(device),
         permission: 'QLThietBi.DMThietBi.RMODIFY',
-        className: 'btn-primary', 
-      },
-      {
-        label: 'In',
-        icon: 'fas fa-print',
-        action: () => this.onPrint(),
-        permission: 'QLThietBi.DMThietBi.RPRINT', // Example permission
-        className: 'btn-secondary',
+        className: 'btn-secondary', 
       },
       {
         label: 'Xóa',
@@ -117,7 +110,14 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         action: () => this.onDelete(device),
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE',
         className: 'btn-danger',
-      }
+      },
+            {
+        label: 'In',
+        icon: 'fas fa-print',
+        action: () => this.onPrint(),
+        permission: 'QLThietBi.DMThietBi.RPRINT', // Example permission
+        className: 'btn-ghost',
+      },
     ];
     this.footerService.setActions(actions);
   }
