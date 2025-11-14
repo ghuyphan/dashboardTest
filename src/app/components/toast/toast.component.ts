@@ -5,8 +5,8 @@ import {
   OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { AsyncPipe, NgClass, NgFor } from '@angular/common';
-import { Observable, Subscription } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { ToastMessage, ToastType } from '../../models/toast-message.model';
 import { ToastService } from '../../services/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -14,7 +14,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 @Component({
   selector: 'app-toast',
   standalone: true,
-  imports: [NgFor, NgClass, AsyncPipe],
+  imports: [CommonModule],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, finalize, of, switchMap } from 'rxjs';
 import { QRCodeComponent } from 'angularx-qrcode'; // <-- CORRECT IMPORT FOR STANDALONE
 
@@ -22,7 +22,6 @@ import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy'; // Ad
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     QRCodeComponent,
     DatePipe,
     CurrencyPipe

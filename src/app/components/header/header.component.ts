@@ -100,12 +100,10 @@ export class HeaderComponent implements OnInit, OnDestroy { // <-- IMPLEMENT
   }
 
   onSettingsClick(): void {
-    console.log('Settings clicked');
     this.isUserMenuOpen = false;
   }
 
   onSupportClick(): void {
-    console.log('Support clicked');
     this.isUserMenuOpen = false;
   }
 

@@ -42,7 +42,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.2);
-    z-index: 1020;
+    z-index: 990;
     opacity: 0;
     visibility: hidden;
     backdrop-filter: blur(5px);
@@ -69,29 +69,6 @@
   background-color: var(--white);
   transition: margin-left var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
-
-  /*
-   * =================================
-   * === PERFORMANCE OPTIMIZATIONS ===
-   * =================================
-   */
-
-  /**
-   * 1. HINT 1: ISOLATE LAYOUT
-   * This tells the browser to isolate this element's layout.
-   * When 'margin-left' animates, the browser will NOT recalculate the
-   * layout of the children (like your big table or chart).
-   * This is a massive performance win.
-   */
-  contain: layout;
-
-  /**
-   * 2. HINT 2: PROMOTE TO GPU
-   * This tells the browser that 'margin-left' and 'width' are
-   * *about* to animate. The browser will promote this element to
-   * its own "compositor layer" (running on the GPU), so the
-   * animation doesn't block the main thread.
-   */
   will-change: margin-left, width;
 }
 
@@ -105,7 +82,7 @@
     margin-left: 0;
     width: 100%;
     transition: none;
-    
+
     /* Reset hints on mobile where animation is disabled */
     contain: none;
     will-change: auto;
@@ -121,7 +98,7 @@
 .dashboard-content {
   flex-grow: 1;
   padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
-  
+
   // **** MODIFICATION: Removed animation from here ****
   // animation: scaleIn 0.3s var(--transition-smooth); 
 
@@ -161,6 +138,7 @@
      */
     transform: scale(0.995);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -202,7 +180,7 @@ app-header {
   height: var(--header-height);
   /* FIXED: Explicit height */
   transform: translateY(0);
-  z-index: 1010;
+  z-index: 980;
   /* Keep it above content */
 
   /* * === MODIFICATION ===
@@ -237,7 +215,7 @@ app-header {
   background-color: var(--white);
   border-top: 1px solid var(--gray-200);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
-  z-index: 1000;
+  z-index: 980;
 
   transform: translateY(0);
 

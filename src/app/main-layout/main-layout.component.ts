@@ -1,5 +1,6 @@
+// src/app/main-layout/main-layout.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, Location } from '@angular/common'; // <-- 1. IMPORT Location
+import { CommonModule, Location } from '@angular/common'; 
 import {
   Router,
   RouterModule,
@@ -19,6 +20,8 @@ import { SidebarComponent } from '../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../components/header/header.component';
 
 import { SearchService } from '../services/search.service';
+// *** 1. IMPORT THE FOOTER SERVICE ***
+import { FooterActionService } from '../services/footer-action.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -47,17 +50,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   currentScreenName: string = 'LOADING TITLE...';
   
   showSearchBar: boolean = false;
-  showBackButton: boolean = false; // <-- 2. ADD THIS PROPERTY
+  showBackButton: boolean = false; 
 
-  // **** ADDITION 1: Add isContentLoaded property ****
   isContentLoaded = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private searchService: SearchService, // --- 3. INJECT THE SERVICE ---
-    private location: Location // <-- 3. INJECT Location
+    private searchService: SearchService, 
+    private location: Location,
+    // *** 2. INJECT THE FOOTER SERVICE ***
+    private footerService: FooterActionService 
   ) {}
 
   ngOnInit(): void {
@@ -82,7 +86,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        startWith(null), // Emit current route data on init
+        startWith(null), 
         map(() => this.activatedRoute),
         map(route => {
           while (route.firstChild) {
@@ -94,12 +98,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         mergeMap(route => route.data)
       )
       .subscribe((data: any) => {
+        // --- 3. ADD THIS LINE ---
+        // Clear the footer on EVERY navigation.
+        this.footerService.clearActions();
+        // --- END OF FIX ---
+
         this.currentScreenName = data['title'] || 'Dashboard';
         
         this.showSearchBar = data['showSearchBar'] === true;
-        this.showBackButton = data['showBackButton'] === true; // <-- 4. SET THE PROPERTY
+        this.showBackButton = data['showBackButton'] === true; 
         
-        // --- 4. Clear search term using the service ---
         if (!this.showSearchBar) {
           this.searchService.setSearchTerm('');
         }
@@ -109,12 +117,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.checkWindowSize();
     window.addEventListener('resize', this.checkWindowSize.bind(this));
 
-    // **** ADDITION 2: Add the delay ****
-    // This pushes the rendering of the router-outlet to the next
-    // browser task, allowing layout animations to complete first.
     setTimeout(() => {
       this.isContentLoaded = true;
-    }, 50); // 50ms is a safe bet
+    }, 50); 
   }
 
   private deepCopyNavItems(items: NavItem[]): NavItem[] {
@@ -155,12 +160,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
-  // --- 5. This method is NO LONGER needed ---
-  // onSearchTermChanged(term: string): void {
-  //   this.searchService.setSearchTerm(term);
-  // }
-
-  // <-- 5. ADD THIS HANDLER ---
   onBackClicked(): void {
     this.location.back();
   }

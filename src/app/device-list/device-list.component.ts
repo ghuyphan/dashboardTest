@@ -2,10 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Subscription, Subject, of, Observable } from 'rxjs';
-// --- 1. IMPORT filter and skip ---
 import { finalize, switchMap, tap, catchError, startWith, debounceTime, skip, filter } from 'rxjs/operators';
-// --- 2. IMPORT NavigationEnd ---
-import { Router, NavigationEnd } from '@angular/router'; 
+import { Router, NavigationEnd } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
 
 import {
@@ -44,7 +42,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   // --- Grid Properties ---
   public deviceColumns: GridColumn[] = [];
   public isLoading: boolean = true;
-  
+
   // --- Paged Data ---
   public pagedDeviceData: Device[] = [];
   public totalDeviceCount: number = 0;
@@ -60,7 +58,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private dataLoadSub: Subscription | null = null;
   private searchSub: Subscription | null = null;
   // --- 3. ADD a subscription for the router ---
-  private routerSub: Subscription | null = null; 
+  private routerSub: Subscription | null = null;
 
   // --- Event Triggers ---
   /** Triggers the data loading pipeline to re-run */
@@ -75,7 +73,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     private modalService: ModalService,
     private toastService: ToastService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.deviceColumns = [
@@ -101,10 +99,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
     // Listen for search term changes from the header
     this.searchSub = this.searchService.searchTerm$.pipe(
-      // We no longer skip(1) because the header component now
-      // subscribes first and holds the initial value,
-      // so this subscription will receive the correct current term.
-      // skip(1), 
       debounceTime(300) // Wait 300ms after user stops typing
     ).subscribe((term) => {
       // Only trigger a reload if the term has actually changed
@@ -124,7 +118,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         this.updateFooterActions();
       }),
       // Switch to the loadDevices API call
-      switchMap(() => this.loadDevices()) 
+      switchMap(() => this.loadDevices())
     ).subscribe();
 
     // --- 4. ADD THIS SUBSCRIPTION ---
@@ -160,7 +154,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         // If it's already in the correct format (like from API response), just return the date part
         return dateString.substring(0, 10);
       }
-      
+
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return '';
       const day = date.getDate().toString().padStart(2, '0');
@@ -202,7 +196,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         .set('PageSize', this.currentPageSize.toString())
         .set('sortColumn', this.currentSortColumn)
         .set('sortDirection', this.currentSortDirection);
-        // No 'filter' or 'TextSearch' parameter when search term is empty
+      // No 'filter' or 'TextSearch' parameter when search term is empty
     }
     // --- END OF YOUR LOGIC ---
 
@@ -214,12 +208,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
           NgayMua: this.formatDate(device.NgayMua),
           NgayHetHanBH: this.formatDate(device.NgayHetHanBH)
         }));
-        
+
         this.pagedDeviceData = formattedData;
         this.totalDeviceCount = response.TotalCount;
 
         console.log('total devices:', this.totalDeviceCount)
-        
+
         this.isLoading = false;
         console.log('Paged devices loaded:', response);
       }),
@@ -251,7 +245,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.currentPageIndex = pageEvent.pageIndex;
     this.currentPageSize = pageEvent.pageSize;
     this.reloadTrigger.next();
-    
+
     // --- START OF MODIFICATION ---
     // This line was causing the error and is not needed here,
     // as the reusable-table component handles its own scrolling.
@@ -284,14 +278,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         className: 'btn-primary',
       },
       {
-        label: 'Xem',
-        icon: 'fas fa-eye',
-        action: () => this.onViewDetail(this.selectedDevice),
-        permission: 'QLThietBi.DMThietBi.RVIEW',
-        className: 'btn-secondary',
-        disabled: !isRowSelected,
-      },
-      {
         label: 'Sửa',
         icon: 'fas fa-pencil-alt',
         action: () => this.onModify(this.selectedDevice),
@@ -306,7 +292,15 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE',
         className: 'btn-danger',
         disabled: !isRowSelected,
-      }
+      },
+            {
+        label: 'Xem',
+        icon: 'fas fa-eye',
+        action: () => this.onViewDetail(this.selectedDevice),
+        permission: 'QLThietBi.DMThietBi.RVIEW',
+        className: 'btn-secondary',
+        disabled: !isRowSelected,
+      },
     ];
     this.footerService.setActions(actions);
   }
@@ -364,7 +358,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       .open(DeviceFormComponent, {
         title: `Sửa thiết bị`,
         // Pass a copy to avoid mutating the table data before save
-        context: { device: { ...device }, title: 'Sửa thiết bị' }, 
+        context: { device: { ...device }, title: 'Sửa thiết bị' },
       })
       .subscribe((result) => {
         if (result) {
@@ -403,7 +397,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
             next: (response: any) => {
               const successMessage = response?.TenKetQua || 'Xóa thiết bị thành công!';
               this.toastService.showSuccess(successMessage);
-              
+
               // Check if it was the last item on the current page
               if (this.pagedDeviceData.length === 1 && this.currentPageIndex > 0) {
                 this.currentPageIndex--; // Go back one page
