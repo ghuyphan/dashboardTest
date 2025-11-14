@@ -38,7 +38,7 @@ function getCssVar(name: string): string {
 
 type EChartsOption = EChartsCoreOption;
 
-// (Các interface không đổi)
+// (Interfaces remain unchanged)
 interface WidgetData {
   id: string; icon: string; title: string; value: string; caption: string; accentColor: string;
 }
@@ -111,24 +111,21 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   public attentionDevices: ActionableDevice[] = [];
   public expiringDevices: ActionableDevice[] = [];
   
-  // --- 1. LOẠI BỎ chartColors, THÊM statusColorMap ---
   private statusColorMap = new Map<string, string>();
   private cssVars = {
     gray200: '', gray700: '', gray800: '', white: '',
     colorSuccess: '', colorWarning: '', colorDanger: '',
     colorInfo: '', colorPurple: '', colorBlue: '',
-    colorInUse: '', // Thêm màu cho "Đang sử dụng"
-    colorBooked: '', // Thêm màu cho "Đã Book"
-    colorLoaned: '', // Thêm màu cho "Cho mượn"
-    colorDefault: '', // Thêm màu mặc định
+    colorInUse: '', 
+    colorBooked: '', 
+    colorLoaned: '', 
+    colorDefault: '', 
   };
-  // --- KẾT THÚC THAY ĐỔI 1 ---
 
   private destroy$ = new Subject<void>();
   private resizeSubject = new Subject<void>();
   private chartResizeSubscription!: Subscription;
 
-  // (ngOnInit, ngAfterViewInit, ngOnDestroy, setupResizeHandling, triggerResize, setupIntersectionObserver, initializeCharts, lazyLoadECharts không đổi)
   ngOnInit(): void {
     this.initColors();
     this.isLoading = true; 
@@ -244,7 +241,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private initColors(): void {
     const c = getCssVar; 
     
-    // --- 2. LƯU TẤT CẢ MÀU VÀO cssVars ---
     this.cssVars = {
       gray200: c('--gray-200'),
       gray700: c('--gray-700'),
@@ -262,8 +258,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       colorDefault: c('--gray-500'),          // Khác
     };
 
-    // --- 3. TẠO MAP ÁNH XẠ ---
-    // (Sử dụng các tên trạng thái chính xác từ dữ liệu của bạn)
     this.statusColorMap.set('Sẵn sàng', this.cssVars.colorSuccess);
     this.statusColorMap.set('Đang sử dụng', this.cssVars.colorInUse);
     this.statusColorMap.set('Cần bảo trì', this.cssVars.colorWarning);
@@ -272,13 +266,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.statusColorMap.set('Thanh lý', this.cssVars.colorDanger);
     this.statusColorMap.set('Đã Book', this.cssVars.colorBooked);
     this.statusColorMap.set('Cho mượn', this.cssVars.colorLoaned);
-    // (Bạn có thể thêm các trạng thái khác nếu cần)
-    // --- KẾT THÚC THAY ĐỔI 3 ---
 
-    // (Widget data không đổi)
     this.widgetData = [
       { id: 'totalDevices', icon: 'fas fa-server', title: 'Tổng Thiết Bị', value: '0', caption: 'Total Devices', accentColor: this.cssVars.colorBlue },
-      { id: 'totalValue', icon: 'fas fa-dollar-sign', title: 'Tổng Giá Trị', value: '0', caption: 'Total Value (VND)', accentColor: this.cssVars.colorPurple },
+      { id: 'totalValue', icon: 'fas fa-dollar-sign', title: 'Tổng Giá Trị', value: '0 ₫', caption: 'Total Value (VND)', accentColor: this.cssVars.colorPurple },
       { id: 'inUse', icon: 'fas fa-power-off', title: 'Đang Sử Dụng', value: '0', caption: 'In Use', accentColor: this.cssVars.colorInfo },
       { id: 'ready', icon: 'fas fa-check-circle', title: 'Sẵn Sàng', value: '0', caption: 'Ready', accentColor: this.cssVars.colorSuccess },
       { id: 'needsAttention', icon: 'fas fa-exclamation-triangle', title: 'Cần Chú Ý', value: '0', caption: 'Needs Attention', accentColor: this.cssVars.colorWarning },
@@ -286,7 +277,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     ];
   }
 
-  // (initChart, setupResizeListener, loadData, aggregateAllData, calculateAndUpdateWidgets, parseDate, formatDate, updateWidgetValue, parseValue, formatNumber, formatPercentage, trackByWidgetId, navigateToDetail, render...Chart không đổi)
   private initChart(container: HTMLElement): EChartsType | undefined {
     if (!this.echartsInstance || !container) return;
     let chart: EChartsType | undefined;
@@ -491,7 +481,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     this.updateWidgetValue('totalDevices', this.formatNumber(allDevices.length));
-    this.updateWidgetValue('totalValue', this.formatNumber(totalValue));
+    // --- UPDATED ---
+    this.updateWidgetValue('totalValue', this.formatCurrency(totalValue));
+    // --- END UPDATED ---
     this.updateWidgetValue('inUse', this.formatNumber(inUse));
     this.updateWidgetValue('ready', this.formatNumber(ready));
     this.updateWidgetValue('needsAttention', this.formatNumber(needsAttention));
@@ -520,18 +512,36 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     const widget = this.widgetData.find((w) => w.id === id);
     if (widget) { widget.value = value; }
   }
+
+  // --- UPDATED ---
   private parseValue(val: any): number {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
-      const cleaned = val.replace(/,/g, '').trim();
+      // Remove commas AND dots for robustness
+      const cleaned = val.replace(/[.,]/g, '').trim();
       const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     }
     return 0;
   }
+  // --- END UPDATED ---
+
   private formatNumber(value: number): string {
     return new Intl.NumberFormat('vi-VN').format(value);
   }
+
+  // --- NEW ---
+  /**
+   * Formats a number as Vietnamese currency (VND).
+   */
+  private formatCurrency(value: number): string {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(value);
+  }
+  // --- END NEW ---
+
   private formatPercentage(value: number): string {
     return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value) + '%';
   }
@@ -583,16 +593,13 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   
   private buildPieOption(data: DeviceStatsData[]): EChartsOption {
     
-    // --- 4. SỬA LỖI LỌC MÀU XANH ---
     const chartData = data.map(item => ({
       value: item.SoLuong,
       name: item.TenTrangThai,
       itemStyle: {
-        // Gán màu vĩnh viễn cho trạng thái này
         color: this.statusColorMap.get(item.TenTrangThai) || this.cssVars.colorDefault 
       }
     }));
-    // --- KẾT THÚC SỬA LỖI 4 ---
 
     const totalDevices = data.reduce((sum, item) => sum + item.SoLuong, 0);
 
@@ -603,10 +610,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       backgroundColor: this.cssVars.white,
       textStyle: { fontFamily: GLOBAL_FONT_FAMILY, fontSize: 12, color: this.cssVars.gray700 },
       
-      // --- 5. BỎ mảng màu toàn cục ---
-      // color: this.chartColors, // (ĐÃ XÓA)
-      // --- KẾT THÚC THAY ĐỔI 5 ---
-
       title: {
         text: 'Thống Kê Trạng Thái',
         subtext: subtext,
@@ -637,7 +640,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           radius: ['45%', '70%'],
           center: ['50%', '60%'],
           avoidLabelOverlap: true,
-          // itemStyle đã được định nghĩa trong chartData
           label: { show: false, position: 'center' }, 
           emphasis: {
             label: {
@@ -648,13 +650,12 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
             },
           },
           labelLine: { show: false },
-          data: chartData, // <-- Dữ liệu mới đã có màu
+          data: chartData,
         }
       ],
     };
   }
 
-  // (buildBarOption và buildLineOption không đổi)
   private buildBarOption(title: string, yAxisData: string[], seriesData: number[]): EChartsOption {
     return {
       backgroundColor: this.cssVars.white,

@@ -9,10 +9,11 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    /* --- MODIFICATION: Match padding/bg of bed-usage --- */
-    // padding: var(--spacing-md);
+    /* --- START OF MODIFICATION --- */
+    padding: var(--spacing-xs); /* Add padding to match other pages */
     box-sizing: border-box;
-    background-color: var(--white);
+    background-color: var(--gray-50); /* Use gray background for contrast */
+    /* --- END OF MODIFICATION --- */
 }
 
 .detail-loading-spinner {
@@ -25,20 +26,17 @@
 }
 
 .detail-card-wrapper {
-    /* --- MODIFICATION: Removed height --- */
     height: auto;
 }
 
 .detail-card {
     max-width: 100%;
     margin: 0;
-    /* --- MODIFICATION: Make card background transparent --- */
     background: transparent;
     border-radius: 0;
     box-shadow: none;
     border: none;
     overflow: visible; /* Allow shadows */
-    /* --- MODIFICATION: Removed height --- */
     height: auto;
     display: flex;
     flex-direction: column;
@@ -48,13 +46,12 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    /* --- MODIFICATION: Make header a white card --- */
     padding: var(--spacing-lg);
     background-color: var(--white);
-    border: 1px solid var(--gray-200);
+    /* --- MODIFICATION: Removed border --- */
+    /* border: 1px solid var(--gray-200); */
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--box-shadow-md);
-    /* --- END MODIFICATION --- */
+    box-shadow: var(--box-shadow-md); /* This now matches the widget cards */
 
     .header-icon {
         flex-shrink: 0;
@@ -100,14 +97,13 @@
 
 .detail-body {
     display: flex;
-    /* --- MODIFICATION: Make body a white card --- */
     padding: var(--spacing-lg);
     background-color: var(--white);
-    border: 1px solid var(--gray-200);
+    /* --- MODIFICATION: Removed border --- */
+    /* border: 1px solid var(--gray-200); */
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--box-shadow-md);
-    margin-top: var(--spacing-lg); /* Add space between header and body */
-    /* --- END MODIFICATION --- */
+    box-shadow: var(--box-shadow-md); /* This now matches the widget cards */
+    margin-top: var(--spacing-lg); 
     
     gap: var(--spacing-xl);
     flex: 1;
@@ -115,8 +111,6 @@
 
     @media (max-width: 768px) {
         flex-direction: column-reverse;
-        /* --- MODIFICATION: Remove auto scroll on body --- */
-        /* overflow-y: auto; */ 
     }
 }
 
@@ -212,7 +206,7 @@
     }
 }
 
-/* --- MODIFICATION: Copied from reusable-table.component.scss --- */
+/* --- Copied from reusable-table.component.scss --- */
 .status-chip {
     padding: 2px 10px;
     border-radius: 12px;
@@ -326,4 +320,17 @@
     #qr-print-section qrcode canvas {
         display: block !important;
     }
+}
+
+/* --- MODIFICATION: Responsive padding for page container --- */
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: var(--spacing-sm);
+  }
 }

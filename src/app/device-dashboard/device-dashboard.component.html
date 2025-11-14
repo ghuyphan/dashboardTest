@@ -28,16 +28,17 @@
 
     <div class="dashboard-main-content" *ngIf="!isLoading">
       
-      <div class="filter-bar" *ngIf="currentFilter">
-        <span>
-          Đang lọc theo: 
-          <strong>{{ currentFilter.type }} = "{{ currentFilter.name }}"</strong>
-        </span>
-        <button class="clear-filter-btn" (click)="clearFilter()">
-          <i class="fas fa-times"></i> Xóa bộ lọc
-        </button>
+      <div class="filter-bar-container" [class.filter-bar-container--active]="currentFilter">
+        <div class="filter-bar" *ngIf="currentFilter">
+          <span>
+            Đang lọc theo: 
+            <strong>{{ currentFilter.type }} = "{{ currentFilter.name }}"</strong>
+          </span>
+          <button class="clear-filter-btn" (click)="clearFilter()">
+            <i class="fas fa-times"></i> Xóa bộ lọc
+          </button>
+        </div>
       </div>
-
       <div class="dashboard-main-grid">
         
         <div class="chart-card">

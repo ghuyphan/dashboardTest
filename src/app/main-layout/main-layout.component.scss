@@ -95,7 +95,7 @@
 .dashboard-content {
   flex-grow: 1;
   /* MODIFIED: Consistent large padding for desktop */
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
 
   /* This is now the SINGLE scroll container */
   overflow-y: auto;

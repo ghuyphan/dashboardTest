@@ -20,8 +20,7 @@
   flex: 1; // <-- NEW: Make it grow to fill :host
   min-height: 0; // <-- NEW: Prevent overflow
   overflow: hidden;
-  /* CRITICAL: Prevents double scrollbars */
-  padding: 0 var(--spacing-xs);
+  padding: var(--spacing-xs);
 }
 
 /*

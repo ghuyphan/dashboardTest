@@ -122,11 +122,17 @@
 }
 
 .modal-body {
-  /* --- FIX: Reduced padding --- */
-  // padding: clamp(0.75rem, 3vw, 1.25rem) clamp(1rem, 3vw, 1.25rem);
   overflow-y: auto; // Allow body to scroll if content is too tall
 
-  /* REMOVED: Media query for padding, clamp() handles it */
+  /* --- START OF MODIFICATION --- */
+  /* Hide scrollbar but keep scrolling functionality */
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+
+  &::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+  }
+  /* --- END OF MODIFICATION --- */
 }
 
 // --- Animations ---
@@ -135,6 +141,3 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/* @keyframes modal-slide-in { ... } // REMOVED to fix lag
-*/

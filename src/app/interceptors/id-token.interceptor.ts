@@ -10,12 +10,15 @@ import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 
 /**
- * Intercepts POST, PUT, and DELETE requests to append the user's id_token
- * and id_user.
- * * SPECIAL BEHAVIOR FOR PUT & DELETE to equipmentCatUrl with an ID:
- * E.g.: 'api/DMMay/123' becomes 'api/DMMay/[id_token]/[id_user]/123'
- * * STANDARD BEHAVIOR (all other matching requests):
- * E.g.: 'api/DMMay' (POST) becomes 'api/DMMay/[id_token]/[id_user]'
+ * Interceptor that appends user's id_token and id_user to POST, PUT, and DELETE requests.
+ * 
+ * SPECIAL BEHAVIOR FOR PUT & DELETE to equipment endpoints with an ID:
+ * - Original: 'api/DMMay/123' 
+ * - Modified: 'api/DMMay/[id_token]/[id_user]/123'
+ * 
+ * STANDARD BEHAVIOR FOR ALL OTHER MATCHING REQUESTS:
+ * - Original: 'api/DMMay' (POST) 
+ * - Modified: 'api/DMMay/[id_token]/[id_user]'
  */
 export const idTokenInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
@@ -24,71 +27,63 @@ export const idTokenInterceptor: HttpInterceptorFn = (
   const authService = inject(AuthService);
   const loginUrl = environment.authUrl;
 
-  // 1. Check if it's a method we should modify
+  // Check if the request method is one we need to modify
   const isTargetMethod = ['POST', 'PUT', 'DELETE'].includes(
     request.method.toUpperCase()
   );
 
-  // 2. Skip if it's not a target method OR it's the login request
+  // Skip processing if not a target method or if it's a login request
   if (!isTargetMethod || request.url.includes(loginUrl)) {
     return next(request);
   }
 
-  // 3. Get BOTH the id_token and id_user from the AuthService
+  // Retrieve required authentication tokens
   const idToken = authService.getIdToken();
   const userId = authService.getUserId();
 
   if (idToken && userId) {
-    // 4. URL-encode all parts to make it safe for a URL path
+    // URL-encode tokens to ensure they're safe for use in URL paths
     const encodedIdToken = encodeURIComponent(idToken);
     const encodedUserId = encodeURIComponent(userId);
 
-    // 5. Get API URL for equipment
+    // Get the equipment API base URL for special handling
     const equipmentCatUrl = environment.equipmentCatUrl;
     let newUrl: string;
 
-    // 6. Handle URL modification
+    // Split URL to separate base path from query parameters
     const [baseUrlWithParams, ...queryParts] = request.url.split('?');
     const queryString = queryParts.join('?');
 
-    // 7. --- MODIFIED LOGIC for specific PUT & DELETE requests ---
-    // Check if it's a PUT or DELETE request to the equipment URL with an ID
-    // e.g., PUT api/DMMay/123
-    // e.g., DELETE api/DMMay/123
+    // Handle special case for PUT/DELETE requests to equipment endpoints with IDs
     const method = request.method.toUpperCase();
     if (
       (method === 'PUT' || method === 'DELETE') &&
       baseUrlWithParams.startsWith(equipmentCatUrl + '/')
     ) {
-      // Extract the base URL (api/DMMay) and the ID (123)
+      // Extract base URL and entity ID for special URL format
+      // Format: base_url/[token]/[user]/[entity_id]
       const baseUrl = equipmentCatUrl;
-      const entityId = baseUrlWithParams.substring(equipmentCatUrl.length + 1); // Get "123"
+      const entityId = baseUrlWithParams.substring(equipmentCatUrl.length + 1);
 
-      // Build the new URL in the format: api/DMMay/[token]/[user]/[id]
       newUrl = queryString
         ? `${baseUrl}/${encodedIdToken}/${encodedUserId}/${entityId}?${queryString}`
         : `${baseUrl}/${encodedIdToken}/${encodedUserId}/${entityId}`;
     } else {
-      // 8. --- ORIGINAL LOGIC for all other POST requests ---
-      // e.g., POST api/DMMay  -> api/DMMay/[token]/[user]
+      // Standard case: append tokens to the end of the URL
+      // Format: original_url/[token]/[user]
       newUrl = queryString
         ? `${baseUrlWithParams}/${encodedIdToken}/${encodedUserId}?${queryString}`
         : `${request.url}/${encodedIdToken}/${encodedUserId}`;
     }
 
-    // 9. Clone the request with the new URL
+    // Clone the request with the modified URL
     const clonedRequest = request.clone({
       url: newUrl,
     });
 
-    // console.log(`idTokenInterceptor: ${request.url} -> ${newUrl}`);
     return next(clonedRequest);
   }
-
-  // 10. One or more tokens are missing
-  console.warn(
-    `idTokenInterceptor: Missing id_token or id_user for ${request.method} request to ${request.url}`
-  );
+  
   authService.logout();
   return next(request);
 };

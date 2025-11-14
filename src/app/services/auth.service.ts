@@ -5,57 +5,48 @@ import { catchError, tap, switchMap, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment.development';
 import { User } from '../models/user.model';
-import { NavItem } from '../models/nav-item.model'; // Make sure you created this file
+import { NavItem } from '../models/nav-item.model';
 
 // --- INTERFACES ---
-
-// Response from the FIRST call (/login)
 interface LoginResponse {
   MaKetQua: number;
   TenKetQua?: string;
   ErrorMessage?: string;
-
   APIKey: {
     access_token: string;
-    id_token?: string; // +++ NEW/MODIFIED +++ (Ensure this is optional)
+    id_token?: string;
     date_token?: string;
     expires_in?: string;
     token_type?: string;
   };
-
   UserInfo: {
     id_user: string;
     user_name: string;
-    ten_nhan_vien: string; // The API response still uses this key
-    nhom_chuc_danh: string; // *** We will use this for ROLES ***
+    ten_nhan_vien: string;
+    nhom_chuc_danh: string;
   };
 }
 
-// Interface for the NEW permission API response
-// *** USING YOUR VERSION: ID and PARENT_ID are strings ***
 interface ApiPermissionNode {
   ID: string;
   PARENT_ID: string;
   LABEL: string;
   LINK: string | null;
   ICON: string;
-  PERMISSION: string; // This key exists but we mainly use PERMISSIONS
-  PERMISSIONS: string[]; // This is the array we need
+  PERMISSION: string;
+  PERMISSIONS: string[];
   ORDER: number;
 }
 
-
 // --- STORAGE KEYS ---
 const TOKEN_STORAGE_KEY = 'authToken';
-const ID_TOKEN_STORAGE_KEY = 'idToken'; // +++ NEW/MODIFIED +++
+const ID_TOKEN_STORAGE_KEY = 'idToken';
 const ROLES_STORAGE_KEY = 'userRoles';
 const USERNAME_STORAGE_KEY = 'username';
 const PERMISSIONS_STORAGE_KEY = 'userPermissions';
 const FULLNAME_STORAGE_KEY = 'userFullName';
-const NAV_ITEMS_STORAGE_KEY = 'userNavItems'; // Key for storing the nav tree
-// *** NEW: Key for storing the User ID ***
+const NAV_ITEMS_STORAGE_KEY = 'userNavItems';
 const USER_ID_STORAGE_KEY = 'userId';
-
 
 @Injectable({
   providedIn: 'root'
@@ -65,7 +56,7 @@ export class AuthService {
   private API_URL_PERMISSIONS_BASE = environment.permissionsUrl;
 
   private accessToken: string | null = null;
-  private idToken: string | null = null; // +++ NEW/MODIFIED +++
+  private idToken: string | null = null;
 
   // --- Observables for Auth State ---
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
@@ -82,88 +73,98 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
+    // Initialize auth state from storage
+    this.initializeAuthState();
   }
 
   /**
-   * *** UPDATED: This is now the main public init method for APP_INITIALIZER ***
+   * Initializes the authentication state from stored data.
+   * This should be called once during application startup.
    */
-  public init(): Observable<any> { // <-- MADE PUBLIC, RETURNS OBSERVABLE
-    let storedToken: string | null = null;
-    let storedIdToken: string | null = null; // +++ NEW/MODIFIED +++
-    let storedRolesJson: string | null = null;
-    let storedUsername: string | null = null;
-    let storedFullName: string | null = null;
-    let storedUserId: string | null = null;
-    let storedPermissionsJson: string | null = null;
-    let storedNavItemsJson: string | null = null;
-    let storage: Storage | undefined;
+  private initializeAuthState(): void {
+    const storedToken = this.getStoredToken();
+    const storedIdToken = this.getStoredIdToken();
+    const storedRolesJson = this.getStoredItem(ROLES_STORAGE_KEY);
+    const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY);
+    const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY);
+    const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY);
+    const storedPermissionsJson = this.getStoredItem(PERMISSIONS_STORAGE_KEY);
+    const storedNavItemsJson = this.getStoredItem(NAV_ITEMS_STORAGE_KEY);
 
-    try {
-      // *** This logic checks both storages ***
-      if (typeof localStorage !== 'undefined' && localStorage.getItem(TOKEN_STORAGE_KEY)) {
-        storage = localStorage;
-      }
-      else if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
-        storage = sessionStorage;
-      }
+    // Check if all required user data exists in storage
+    if (storedToken && storedIdToken && storedRolesJson && storedUsername && 
+        storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) {
+      
+      this.accessToken = storedToken;
+      this.idToken = storedIdToken;
+      
+      const roles: string[] = JSON.parse(storedRolesJson);
+      const permissions: string[] = JSON.parse(storedPermissionsJson);
+      const navItems: NavItem[] = JSON.parse(storedNavItemsJson);
+      
+      // Build user object from stored data
+      const user: User = {
+        id: storedUserId,
+        username: storedUsername,
+        roles: roles,
+        permissions: permissions,
+        fullName: storedFullName
+      };
 
-      if (storage) {
-        storedToken = storage.getItem(TOKEN_STORAGE_KEY);
-        storedIdToken = storage.getItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
-        storedRolesJson = storage.getItem(ROLES_STORAGE_KEY);
-        storedUsername = storage.getItem(USERNAME_STORAGE_KEY);
-        storedFullName = storage.getItem(FULLNAME_STORAGE_KEY);
-        storedUserId = storage.getItem(USER_ID_STORAGE_KEY);
-        storedPermissionsJson = storage.getItem(PERMISSIONS_STORAGE_KEY);
-        storedNavItemsJson = storage.getItem(NAV_ITEMS_STORAGE_KEY);
-
-
-        // *** UPDATED: Check for ALL required user data ***
-        if (storedToken && storedIdToken && storedRolesJson && storedUsername && storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) { // +++ NEW/MODIFIED +++ (added storedIdToken)
-          this.accessToken = storedToken;
-          this.idToken = storedIdToken; // +++ NEW/MODIFIED +++
-          
-          const roles: string[] = JSON.parse(storedRolesJson);
-          const permissions: string[] = JSON.parse(storedPermissionsJson);
-          const navItems: NavItem[] = JSON.parse(storedNavItemsJson);
-          
-          // Build *full* user from storage
-          const user: User = {
-            id: storedUserId,
-            username: storedUsername,
-            roles: roles,
-            permissions: permissions, // Use stored permissions
-            fullName: storedFullName
-          };
-
-          this.currentUserSubject.next(user); // Emit full user
-          this.navItemsSubject.next(navItems); // Emit stored nav
-          this.isLoggedInSubject.next(true);
-
-          console.log(`AuthService: User '${user.username}' initialized from storage. Fetching fresh permissions...`);
-
-          // --- START OF FIX ---
-          // Return the observable so the APP_INITIALIZER can wait for it.
-          return this.fetchAndSetPermissions(storedUserId, storage).pipe(
-            catchError((err) => {
-              // If the background refresh fails, log out.
-              console.error("Failed to refresh permissions on init, logging out.", err);
-              this.logout();
-              return of(null); // Return a successful observable to finish init
-            })
-          );
-          // --- END OF FIX ---
-        }
-      }
-    } catch (e) {
-      console.error('Failed to initialize user from storage', e);
+      this.currentUserSubject.next(user);
+      this.navItemsSubject.next(navItems);
+      this.isLoggedInSubject.next(true);
     }
-
-    // If any part fails, clear everything
-    this.clearLocalAuthData(false);
-    return of(null); // <-- Must return an observable for the initializer
   }
 
+  /**
+   * Retrieves the stored token from either localStorage or sessionStorage.
+   */
+  private getStoredToken(): string | null {
+    return this.getStoredItem(TOKEN_STORAGE_KEY);
+  }
+
+  /**
+   * Retrieves the stored ID token from either localStorage or sessionStorage.
+   */
+  private getStoredIdToken(): string | null {
+    return this.getStoredItem(ID_TOKEN_STORAGE_KEY);
+  }
+
+  /**
+   * Retrieves an item from storage, checking both localStorage and sessionStorage.
+   */
+  private getStoredItem(key: string): string | null {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(key)) {
+      return localStorage.getItem(key);
+    }
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) {
+      return sessionStorage.getItem(key);
+    }
+    return null;
+  }
+
+  /**
+   * Main initialization method for APP_INITIALIZER.
+   * Returns an Observable to allow the app to wait for initialization.
+   */
+  public init(): Observable<any> {
+    // If user was already initialized from storage, return success
+    if (this.isLoggedInSubject.value) {
+      // Attempt to refresh permissions in the background
+      const userId = this.getUserId();
+      if (userId) {
+        return this.fetchAndSetPermissions(userId).pipe(
+          catchError((err) => {
+            console.error("Failed to refresh permissions on init, logging out.", err);
+            this.logout();
+            return of(null);
+          })
+        );
+      }
+    }
+    return of(null);
+  }
 
   /**
    * Logs a user in.
@@ -174,41 +175,40 @@ export class AuthService {
       passworD_: credentials.password
     };
 
-    // *** This logic selects the storage based on the "remember" flag ***
+    // Select storage based on "remember" flag
     const storage = credentials.remember ? localStorage : sessionStorage;
     this.clearOtherStorage(credentials.remember);
 
     return this.http.post<LoginResponse>(this.API_URL_LOGIN, payload, {
       headers: { 'Content-Type': 'application/json' },
     }).pipe(
-      // --- STEP 1: Handle Login Response ---
+      // Handle login response
       switchMap(loginResponse => {
-
         if (loginResponse.MaKetQua !== 200) {
           const errorMessage = loginResponse.TenKetQua || loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
           console.error(`Login failed (API MaKetQua: ${loginResponse.MaKetQua}):`, errorMessage);
           return throwError(() => new Error(errorMessage));
         }
+        
         this.accessToken = loginResponse.APIKey.access_token;
-        this.idToken = loginResponse.APIKey.id_token || null; // +++ NEW/MODIFIED +++
+        this.idToken = loginResponse.APIKey.id_token || null;
 
         try {
           storage.setItem(TOKEN_STORAGE_KEY, loginResponse.APIKey.access_token);
-          if (this.idToken) { // +++ NEW/MODIFIED +++
-            storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken); // +++ NEW/MODIFIED +++
-          } // +++ NEW/MODIFIED +++
+          if (this.idToken) {
+            storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken);
+          }
         } catch (e) {
           return throwError(() => new Error('Failed to save auth token to web storage.'));
         }
 
-        // --- STEP 2: Chain to Permission Call ---
+        // Extract user info and save to storage
         const { UserInfo } = loginResponse;
         const userId = UserInfo.id_user;
         if (!userId) {
           return throwError(() => new Error('Login response did not include a user ID.'));
         }
 
-        // *** NEW: Save all static user info to storage ***
         try {
           storage.setItem(USER_ID_STORAGE_KEY, UserInfo.id_user);
           storage.setItem(USERNAME_STORAGE_KEY, UserInfo.user_name);
@@ -219,130 +219,119 @@ export class AuthService {
            console.error('Failed to save user auth data to web storage', e);
         }
 
-        // *** UPDATED: Call the reusable fetchAndSetPermissions function ***
+        // Fetch permissions and build navigation
         return this.fetchAndSetPermissions(userId, storage);
       }),
-
-      // --- STEP 3: Handle ANY Error ---
-      catchError(error => this.handleError(error, true)) // Pass flag for login error
+      catchError(error => this.handleError(error, true))
     );
   }
 
   /**
-   * *** NEW: Reusable function to fetch, build, and save permissions and nav. ***
+   * Fetches permissions for the user and updates the application state.
+   * @param userId The ID of the user whose permissions are being fetched
+   * @param storage Optional storage object (used during login/init)
    */
-  private fetchAndSetPermissions(userId: string, storage: Storage): Observable<any> {
+  private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
     const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
     
     return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
       tap(permissionNodeArray => {
-        // --- Get user info from storage (or current state) ---
-        // Read from storage as source of truth for init/login
-        const storedUsername = storage.getItem(USERNAME_STORAGE_KEY) || 'Unknown';
-        const storedFullName = storage.getItem(FULLNAME_STORAGE_KEY) || '';
-        const storedRoles = JSON.parse(storage.getItem(ROLES_STORAGE_KEY) || '[]');
-       const storedUserId = storage.getItem(USER_ID_STORAGE_KEY) || '0';
+        // Retrieve user info from storage
+        const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY) || 'Unknown';
+        const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY) || '';
+        const storedRoles = JSON.parse(this.getStoredItem(ROLES_STORAGE_KEY) || '[]');
+        const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY) || '0';
         
-        // --- Map the permissionNodeArray to get flat permissions list ---
+        // Extract unique permissions from API response
         const allPermissionArrays = (permissionNodeArray || []).map(node => node.PERMISSIONS || []);
         const flatPermissions = allPermissionArrays.flat();
-        const permissionsFromApi = [...new Set(flatPermissions)]; // Get only unique permissions
+        const permissionsFromApi = [...new Set(flatPermissions)];
 
-        // --- Build the User object (updating the partial user) ---
+        // Create user object with fresh permissions
         const user: User = {
           id: storedUserId,
           username: storedUsername,
           fullName: storedFullName,
           roles: storedRoles,
-          permissions: permissionsFromApi // *** ADDED FRESH PERMISSIONS ***
+          permissions: permissionsFromApi
         };
         
-        // --- Build the dynamic nav tree from the same API response ---
+        // Build navigation tree from permission data
         const navTree = this.buildNavTree(permissionNodeArray || []);
 
-        // --- Save PERMISSIONS and NAV to storage ---
+        // Save data to storage
         try {
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
           storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree));
-          console.log(`Fresh permissions and nav items saved.`);
         } catch (e) {
            console.error('Failed to save permissions/nav data to web storage', e);
         }
 
-        // --- Set global auth state ---
-        this.isLoggedInSubject.next(true); // Ensure this is true
-        this.currentUserSubject.next(user); // Emit the *full* user object
-        this.navItemsSubject.next(navTree); // Emit new nav tree
+        // Update application state
+        this.isLoggedInSubject.next(true);
+        this.currentUserSubject.next(user);
+        this.navItemsSubject.next(navTree);
       })
     );
   }
 
-
   /**
-   * Helper to clear the *other* web storage
+   * Helper to clear the other web storage (not the one currently in use)
    */
   private clearOtherStorage(remember: boolean): void {
     const otherStorage = remember ? sessionStorage : localStorage;
     try {
       if (typeof otherStorage !== 'undefined') {
         otherStorage.removeItem(TOKEN_STORAGE_KEY);
-        otherStorage.removeItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
+        otherStorage.removeItem(ID_TOKEN_STORAGE_KEY);
         otherStorage.removeItem(ROLES_STORAGE_KEY);
         otherStorage.removeItem(USERNAME_STORAGE_KEY);
         otherStorage.removeItem(PERMISSIONS_STORAGE_KEY);
         otherStorage.removeItem(FULLNAME_STORAGE_KEY);
-        otherStorage.removeItem(NAV_ITEMS_STORAGE_KEY); // Clear nav items
-        otherStorage.removeItem(USER_ID_STORAGE_KEY); // *** ADDED ***
+        otherStorage.removeItem(NAV_ITEMS_STORAGE_KEY);
+        otherStorage.removeItem(USER_ID_STORAGE_KEY);
       }
     } catch (e) {
       console.error('Failed to clear other web storage', e);
     }
   }
 
-
   /**
-   * Logs the user out.
+   * Logs the user out and clears all authentication data.
    */
   logout(): void {
-     this.clearLocalAuthData(true); // Clear data and navigate
+     this.clearLocalAuthData(true);
   }
 
   /**
-   * Helper to clear all local authentication state and storage.
+   * Clears all local authentication state and storage.
+   * @param navigate Whether to navigate to login page after clearing data
    */
   private clearLocalAuthData(navigate: boolean = true): void {
     this.accessToken = null;
-    this.idToken = null; // +++ NEW/MODIFIED +++
+    this.idToken = null;
 
     try {
-      // *** This logic clears BOTH storages ***
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-        sessionStorage.removeItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
-        sessionStorage.removeItem(ROLES_STORAGE_KEY);
-        sessionStorage.removeItem(USERNAME_STORAGE_KEY);
-        sessionStorage.removeItem(PERMISSIONS_STORAGE_KEY);
-        sessionStorage.removeItem(FULLNAME_STORAGE_KEY);
-        sessionStorage.removeItem(NAV_ITEMS_STORAGE_KEY); // Clear nav items
-        sessionStorage.removeItem(USER_ID_STORAGE_KEY); // *** ADDED ***
-      }
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
-        localStorage.removeItem(ID_TOKEN_STORAGE_KEY); // +++ NEW/MODIFIED +++
-        localStorage.removeItem(ROLES_STORAGE_KEY);
-        localStorage.removeItem(USERNAME_STORAGE_KEY);
-        localStorage.removeItem(PERMISSIONS_STORAGE_KEY);
-        localStorage.removeItem(FULLNAME_STORAGE_KEY);
-        localStorage.removeItem(NAV_ITEMS_STORAGE_KEY); // Clear nav items
-        localStorage.removeItem(USER_ID_STORAGE_KEY); // *** ADDED ***
-      }
+      // Clear data from both storages
+      [localStorage, sessionStorage].forEach(storage => {
+        if (typeof storage !== 'undefined') {
+          storage.removeItem(TOKEN_STORAGE_KEY);
+          storage.removeItem(ID_TOKEN_STORAGE_KEY);
+          storage.removeItem(ROLES_STORAGE_KEY);
+          storage.removeItem(USERNAME_STORAGE_KEY);
+          storage.removeItem(PERMISSIONS_STORAGE_KEY);
+          storage.removeItem(FULLNAME_STORAGE_KEY);
+          storage.removeItem(NAV_ITEMS_STORAGE_KEY);
+          storage.removeItem(USER_ID_STORAGE_KEY);
+        }
+      });
     } catch (e) {
       console.error('Failed to remove auth data from web storage', e);
     }
 
     this.isLoggedInSubject.next(false);
-    this.currentUserSubject.next(null); // Set current user to null
-    this.navItemsSubject.next([]); // Clear nav items subject
+    this.currentUserSubject.next(null);
+    this.navItemsSubject.next([]);
 
     console.log('User logged out, state and web storage cleared.');
 
@@ -359,43 +348,23 @@ export class AuthService {
       return this.accessToken;
     }
 
-    try {
-      // *** This logic also checks both storages ***
-      let token = (typeof localStorage !== 'undefined') ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
-      if (!token) {
-        token = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(TOKEN_STORAGE_KEY) : null;
-      }
-      this.accessToken = token;
-      return token;
-    } catch (e) {
-      return null;
-    }
+    const token = this.getStoredItem(TOKEN_STORAGE_KEY);
+    this.accessToken = token;
+    return token;
   }
 
-  // +++ NEW/MODIFIED +++
   /**
    * Gets the current ID token.
    */
-  public getIdToken(): string | null {
-    // Try in-memory first
+  getIdToken(): string | null {
     if (this.idToken) {
       return this.idToken;
     }
 
-    // Try storage
-    try {
-      let token = (typeof localStorage !== 'undefined') ? localStorage.getItem(ID_TOKEN_STORAGE_KEY) : null;
-      if (!token) {
-        token = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem(ID_TOKEN_STORAGE_KEY) : null;
-      }
-      this.idToken = token; // Cache it
-      return token;
-    } catch (e) {
-      return null;
-    }
+    const token = this.getStoredItem(ID_TOKEN_STORAGE_KEY);
+    this.idToken = token;
+    return token;
   }
-  // +++ END NEW/MODIFIED +++
-
 
   // --- Role & Permission Management Methods ---
 
@@ -416,7 +385,7 @@ export class AuthService {
   }
 
   /**
-   * Checks if the current user has the specified *exact* permission string.
+   * Checks if the current user has the specified permission.
    */
   hasPermission(permission: string): boolean {
     const currentUser = this.currentUserSubject.getValue();
@@ -432,7 +401,7 @@ export class AuthService {
   }
 
   /**
-   * Checks if the user has a specific action (e.g., 'RCREATE') for a specific module
+   * Checks if the user has a specific action permission for a module.
    */
   hasActionPermission(modulePrefix: string, action: string): boolean {
     const currentUser = this.currentUserSubject.getValue();
@@ -450,34 +419,31 @@ export class AuthService {
     return actions.includes(action);
   }
 
-  
   /**
-   * Recursively builds the navigation tree from the flat API response.
-   * @param nodes The flat list of ApiPermissionNode from the server
-   * @param parentId The ID of the parent to start from (default "0" for root)
-   * @returns A nested array of NavItem
+   * Builds a navigation tree from flat permission nodes.
+   * @param nodes The flat list of permission nodes from the server
+   * @param parentId The ID of the parent node to start building from (default "0" for root)
+   * @returns A nested array of NavItem objects
    */
   private buildNavTree(nodes: ApiPermissionNode[], parentId: string = "0"): NavItem[] {
     const tree: NavItem[] = [];
 
     // Get direct children of the current parentId and sort them
     const children = nodes
-      .filter(node => node.PARENT_ID === parentId) // Using your string comparison
+      .filter(node => node.PARENT_ID === parentId)
       .sort((a, b) => a.ORDER - b.ORDER);
 
     for (const node of children) {
       // Recursively find children of the current node
-      const childrenOfNode = this.buildNavTree(nodes, node.ID); // Using string ID
+      const childrenOfNode = this.buildNavTree(nodes, node.ID);
       
       // Map the API node to the frontend NavItem
       const navItem: NavItem = {
         label: node.LABEL,
-        // *** UPDATED: Provide a default icon if missing ***
         icon: node.ICON || 'fas fa-dot-circle',
-        // *** UPDATED: Handle empty string LINKs as null ***
         link: node.LINK || null,
-        permissions: node.PERMISSIONS || [], // Ensure it's always an array
-        isOpen: false, // Default state
+        permissions: node.PERMISSIONS || [],
+        isOpen: false,
         children: childrenOfNode.length > 0 ? childrenOfNode : undefined
       };
       
@@ -487,15 +453,15 @@ export class AuthService {
     return tree;
   }
 
-
   /**
-   * Handles HTTP errors or Application errors.
+   * Handles HTTP and application errors.
+   * @param error The error object
+   * @param isLoginError Whether this error occurred during login
    */
   private handleError(error: HttpErrorResponse | Error, isLoginError: boolean = false): Observable<never> {
     let errorMessage: string;
 
     if (error instanceof HttpErrorResponse) {
-      // --- HTTP Error Logic ---
       console.error('AuthService HTTP Error:', error);
 
       if (error.error && typeof error.error === 'object' && error.error.ErrorMessage) {
@@ -519,26 +485,19 @@ export class AuthService {
          }
       }
     } else {
-      // --- Application Error Logic (thrown from switchMap) ---
-      // This is where the error from our `throwError(() => new Error(errorMessage))` in login() will be caught.
       console.error('AuthService App Error:', error.message);
       errorMessage = error.message;
     }
 
-    // --- START OF MODIFICATION ---
-    // Only clear data if it's a login error (e.g., bad credentials)
-    // or a critical app error. Do NOT clear data on a failed refresh (401)
-    // as that is handled by the init subscriber.
+    // Only clear data if it's a login error
     if (isLoginError) {
       this.clearLocalAuthData(false);
     }
-    // --- END OF MODIFICATION ---
 
     return throwError(() => new Error(errorMessage));
   }
   
   /**
-   * *** ADD THIS NEW HELPER METHOD ***
    * Gets the ID of the currently logged-in user.
    */
   public getUserId(): string | null {
