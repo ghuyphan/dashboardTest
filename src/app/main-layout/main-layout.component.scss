@@ -16,7 +16,7 @@
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
 
-  /* Define footer height */
+  /* MODIFIED: Define default (desktop) footer height */
   --footer-height: 55px;
 }
 
@@ -63,7 +63,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* FIXED: Changed from 100vh to 100% */
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
   background-color: var(--white);
@@ -82,8 +81,6 @@
     margin-left: 0;
     width: 100%;
     transition: none;
-
-    /* Reset hints on mobile where animation is disabled */
     contain: none;
     will-change: auto;
   }
@@ -97,61 +94,49 @@
 /* ========== DASHBOARD CONTENT ========== */
 .dashboard-content {
   flex-grow: 1;
-  padding: 0.75rem var(--spacing-lg) 0 var(--spacing-lg);
+  /* MODIFIED: Consistent large padding for desktop */
+  padding: var(--spacing-lg);
 
-  // **** MODIFICATION: Removed animation from here ****
-  // animation: scaleIn 0.3s var(--transition-smooth); 
-
-  /* FIXED: This is now the SINGLE scroll container */
+  /* This is now the SINGLE scroll container */
   overflow-y: auto;
   min-height: 0;
-
-  /* FIXED: Create positioning context for sticky elements */
   position: relative;
 
-  /* FIXED: Account for header and footer heights */
+  /* Account for header and footer heights */
   height: calc(100% - var(--header-height) - var(--footer-height));
+  
+  /* --- ADDED: Hide scrollbar but keep scrolling --- */
+  /* For Firefox */
+  scrollbar-width: none;
+  /* For Chrome, Safari, and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* --- END: Hide scrollbar --- */
 }
 
-// **** ADDITION 1: Styles for the new content wrapper ****
 .content-fade-wrapper {
-  height: 100%; // Ensure it fills the parent
-  // This animation plays *after* the content is rendered
-
-  /* * =================================
-   * === MODIFICATION ===
-   * =================================
-   *
-   * Changed animation to use your project's CSS variables
-   * for duration (0.3s) and easing to match the sidebar.
-   */
+  height: 100%;
   animation: contentFadeIn var(--transition-duration) var(--transition-smooth) both;
 }
 
 @keyframes contentFadeIn {
   from {
     opacity: 0;
-    /* * Using a very subtle scale transform.
-     * Unlike 'translateY', 'scale' does not affect the
-     * element's "box" size, so it won't cause the 
-     * scrollbar to flash.
-     */
     transform: scale(0.995);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
 
-// **** ADDITION 2: Styles for the loading spinner ****
 .initial-loading-spinner {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 100%; // Fill the .dashboard-content area
+  height: 100%;
   padding: 40px;
   font-size: 1.2rem;
   color: var(--gray-500);
@@ -159,79 +144,61 @@
 
 
 @media (max-width: 992px) {
+  /* Tablet padding */
   .dashboard-content {
     padding: var(--spacing-md);
   }
 }
 
+/* --- NEW: Added breakpoint to match footer component's responsive height --- */
+@media (max-width: 767px) {
+  :host {
+    /* Update footer height variable for mobile */
+    --footer-height: 44px;
+  }
+}
+
 @media (max-width: 480px) {
+  /* Small mobile padding */
   .dashboard-content {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
   }
 }
 
 /*
   * === SOLUTION STYLES (app-header) ===
-  * This styles the <app-header> tag.
   */
 app-header {
   flex-shrink: 0;
-  /* Prevent it from shrinking */
   height: var(--header-height);
-  /* FIXED: Explicit height */
   transform: translateY(0);
   z-index: 980;
-  /* Keep it above content */
-
-  /* * === MODIFICATION ===
-    * Animate both the 'transform' and 'margin-bottom' properties.
-    */
   transition: transform var(--transition-duration) var(--transition-smooth),
     margin-bottom var(--transition-duration) var(--transition-smooth);
 
   &.hidden {
     transform: translateY(-100%);
-
-    /* * === MODIFICATION ===
-      * Add a negative margin-bottom equal to the header's height
-      * to pull the content area up, removing the blank space.
-      */
     margin-bottom: calc(var(--header-height) * -1);
   }
 }
 
 /*
   * === SOLUTION STYLES (app-action-footer) ===
-  * This styles the <app-action-footer> tag.
   */
 :host ::ng-deep app-action-footer {
   display: block;
-  /* Ensure it behaves like a block element */
   flex-shrink: 0;
-  /* Prevent it from shrinking */
-  // height: var(--footer-height); /* FIXED: Explicit height */
-
-  /* Visual styling */
   background-color: var(--white);
   border-top: 1px solid var(--gray-200);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
   z-index: 980;
-
   transform: translateY(0);
-
-  /* * === MODIFICATION ===
-    * Animate both the 'transform' and 'margin-top' properties.
-    */
   transition: transform var(--transition-duration) var(--transition-smooth),
     margin-top var(--transition-duration) var(--transition-smooth);
 
   &.hidden {
     transform: translateY(100%);
-
-    /* * === MODIFICATION ===
-      * Add a negative margin-top equal to the footer's height
-      * to collapse its space.
-      */
+    /* Use margin-top to collapse the space */
     margin-top: calc(var(--footer-height) * -1);
   }
 }

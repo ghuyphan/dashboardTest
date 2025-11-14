@@ -99,7 +99,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
     // Listen for search term changes from the header
     this.searchSub = this.searchService.searchTerm$.pipe(
-      debounceTime(300) // Wait 300ms after user stops typing
+      debounceTime(500) // Wait 300ms after user stops typing
     ).subscribe((term) => {
       // Only trigger a reload if the term has actually changed
       if (term !== this.currentSearchTerm) {

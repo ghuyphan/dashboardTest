@@ -6,7 +6,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Prevent overflow */
+  overflow: hidden;
+  /* Prevent overflow */
 }
 
 /*
@@ -18,7 +19,9 @@
   flex-direction: column; // <-- CRITICAL
   flex: 1; // <-- NEW: Make it grow to fill :host
   min-height: 0; // <-- NEW: Prevent overflow
-  overflow: hidden; /* CRITICAL: Prevents double scrollbars */
+  overflow: hidden;
+  /* CRITICAL: Prevents double scrollbars */
+  padding: 0 var(--spacing-xs);
 }
 
 /*
@@ -30,7 +33,8 @@
   flex-direction: column;
   flex: 1; // <-- NEW: Make it grow
   min-height: 0; // <-- NEW: Prevent overflow
-  overflow: hidden; /* CRITICAL */
+  overflow: hidden;
+  /* CRITICAL */
 }
 
 p {
@@ -43,7 +47,8 @@ p {
 :host ::ng-deep app-reusable-table {
   flex: 1; // <-- CRITICAL: Makes table take all available space
   min-height: 0; // <-- CRITICAL: Prevents flexbox overflow
-  display: flex; /* Required for child height inheritance */
+  display: flex;
+  /* Required for child height inheritance */
 }
 
 // Make the loading message centered and fill the space
