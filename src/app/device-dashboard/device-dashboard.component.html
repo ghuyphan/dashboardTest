@@ -1,38 +1,46 @@
 <div class="page-container">
   <div class="page-content">
-    
-    <div class="widget-section" *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded">
-      <div class="widget-grid"> 
-        <div class="widget-skeleton" *ngFor="let i of [1,2,3,4,5,6]"></div>
+    <div
+      class="widget-section"
+      *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded"
+    >
+      <div class="widget-grid">
+        <div class="widget-skeleton" *ngFor="let i of [1, 2, 3, 4, 5, 6]"></div>
       </div>
     </div>
     <ng-template #widgetsLoaded>
       <div class="widget-section">
         <div class="widget-grid">
-          <app-widget-card 
+          <app-widget-card
             *ngFor="let widget of widgetData; trackBy: trackByWidgetId"
             [icon]="widget.icon"
             [title]="widget.title"
             [value]="widget.value"
             [caption]="widget.caption"
-            [accentColor]="widget.accentColor">
+            [accentColor]="widget.accentColor"
+          >
           </app-widget-card>
         </div>
       </div>
     </ng-template>
 
-    <div *ngIf="isLoading && widgetData.length === 0" class="chart-loading-spinner">
+    <div
+      *ngIf="isLoading && widgetData.length === 0"
+      class="chart-loading-spinner"
+    >
       <div class="spinner"></div>
       <p>Đang tải dữ liệu thống kê...</p>
     </div>
 
     <div class="dashboard-main-content" *ngIf="!isLoading">
-      
-      <div class="filter-bar-container" [class.filter-bar-container--active]="currentFilter">
+      <div
+        class="filter-bar-container"
+        [class.filter-bar-container--active]="currentFilter"
+      >
         <div class="filter-bar">
-          <ng-container *ngIf="visibleFilter"> 
+          <ng-container *ngIf="visibleFilter">
             <span>
-              Đang lọc theo: 
+              Đang lọc theo:
               <strong>{{ visibleFilter.name }}</strong>
             </span>
             <button class="clear-filter-btn" (click)="clearFilter()">
@@ -43,20 +51,55 @@
       </div>
 
       <div class="dashboard-main-grid">
-        
-        <div class="chart-card span-2"> <div #chartContainerStatus class="chart-container-inner" role="img" aria-label="Biểu đồ cột trạng thái thiết bị"></div>
+        <div class="chart-card span-2">
+          <h3 class="card-title">
+            <span>Thống Kê Trạng Thái</span>
+            <span class="card-subtitle">{{ statusChartSubtext }}</span>
+          </h3>
+          <div
+            #chartContainerStatus
+            class="chart-container-inner"
+            role="img"
+            aria-label="Biểu đồ tròn trạng thái thiết bị"
+          ></div>
         </div>
-        
-        <div class="action-list-card span-1"> <h3 class="action-list-title">
-            <i class="fas fa-tools icon-warning"></i>
-            Thiết bị cần Chú ý
+
+        <div class="chart-card span-1">
+          <h3 class="card-title">
+            <span>Số lượng theo Loại Thiết bị (Top 10)</span>
+          </h3>
+          <div
+            #chartContainerCategory
+            class="chart-container-inner"
+            role="img"
+            aria-label="Biểu đồ cột loại thiết bị"
+          ></div>
+        </div>
+
+        <div class="chart-card span-1">
+          <h3 class="card-title">
+            <span>{{ locationChartTitle }}</span>
+          </h3>
+          <div
+            #chartContainerLocation
+            class="chart-container-inner"
+            role="img"
+            aria-label="Biểu đồ cột vị trí thiết bị"
+          ></div>
+        </div>
+
+        <div class="action-list-card span-2">
+          <h3 class="card-title">
+            <span>
+              <i class="fas fa-tools icon-warning"></i>
+              Thiết bị cần Chú ý
+            </span>
           </h3>
           <div class="action-list-body">
             <ng-container *ngIf="attentionDevices.length > 0; else noAttention">
               <app-reusable-table
                 [data]="attentionDevices"
                 [columns]="attentionTableColumns"
-                [isLoading]="isLoading"
                 [showPaginator]="false"
                 [clientSideSort]="true"
                 (rowClick)="navigateToDetail($event)"
@@ -72,33 +115,38 @@
             </ng-template>
           </div>
         </div>
-        
-        <div class="chart-card span-1"> <div #chartContainerCategory class="chart-container-inner" role="img" aria-label="Biểu đồ cột loại thiết bị"></div>
+
+        <div class="chart-card span-3">
+          <h3 class="card-title">
+            <span>Thiết bị mới theo Tháng</span>
+          </h3>
+          <div
+            #chartContainerTrend
+            class="chart-container-inner"
+            role="img"
+            aria-label="Biểu đồ đường thiết bị mới"
+          ></div>
         </div>
 
-        <div class="chart-card span-1"> <div #chartContainerLocation class="chart-container-inner" role="img" aria-label="Biểu đồ cột vị trí thiết bị"></div>
-        </div>
-
-        <div class="chart-card span-1"> <div #chartContainerTrend class="chart-container-inner" role="img" aria-label="Biểu đồ đường thiết bị mới"></div>
-        </div>
-
-        <div class="action-list-card span-3"> <h3 class="action-list-title">
-            <i class="fas fa-calendar-times icon-danger"></i>
-            Sắp hết hạn Bảo hành (30 ngày tới)
+        <div class="action-list-card span-3">
+          <h3 class="card-title">
+            <span>
+              <i class="fas fa-calendar-times icon-danger"></i>
+              Sắp hết hạn Bảo hành (30 ngày tới)
+            </span>
           </h3>
           <div class="action-list-body">
             <ng-container *ngIf="expiringDevices.length > 0; else noExpiring">
               <app-reusable-table
                 [data]="expiringDevices"
                 [columns]="expiringTableColumns"
-                [isLoading]="isLoading"
                 [showPaginator]="false"
                 [clientSideSort]="true"
                 (rowClick)="navigateToDetail($event)"
                 emptyStateText="Không có thiết bị nào sắp hết hạn."
               >
               </app-reusable-table>
-              </ng-container>
+            </ng-container>
             <ng-template #noExpiring>
               <div class="list-empty-state">
                 <i class="fas fa-check-circle icon-success"></i>
@@ -107,9 +155,7 @@
             </ng-template>
           </div>
         </div>
-
-        </div>
+      </div>
     </div>
-
   </div>
 </div>

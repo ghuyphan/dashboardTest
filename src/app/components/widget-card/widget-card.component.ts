@@ -20,6 +20,11 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   private currentValue: number = 0;
   private viewInitialized = false;
 
+  // --- START OF MODIFICATION ---
+  // Store the original format (number, currency, or string)
+  private originalFormat: 'number' | 'currency' | 'string' = 'number';
+  // --- END OF MODIFICATION ---
+
   ngAfterViewInit(): void {
     this.viewInitialized = true;
     this.updateValue(this.value, false); // Pass initial value
@@ -33,7 +38,6 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
     }
   }
 
-  // --- START OF MODIFICATION ---
   /**
    * Checks if the value is numeric or a string, and displays it
    * accordingly (animating numbers, displaying strings directly).
@@ -43,16 +47,25 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
 
     if (isNaN(parsedNumber)) {
       // --- A) VALUE IS A STRING (like "85,12%") ---
-      // Stop any previous animation and display the string directly.
+      this.originalFormat = 'string'; // Save format
       this.currentValue = 0; // Reset numeric tracker
       this.updateDisplayString(newValue);
       
     } else {
-      // --- B) VALUE IS A NUMBER (like "1,250") ---
+      // --- B) VALUE IS A NUMBER (like "1,250" or "1.250.000 ₫") ---
+      
+      // --- NEW: Check if original value was currency ---
+      if (/[₫]|VND|USD|\$/.test(newValue)) {
+        this.originalFormat = 'currency';
+      } else {
+        this.originalFormat = 'number';
+      }
+      // --- END NEW ---
+
       if (animate) {
         this.animateValue(this.currentValue, parsedNumber);
       } else {
-        this.updateDisplayNumber(parsedNumber);
+        this.updateDisplayNumber(parsedNumber); // Use the new formatter
         this.currentValue = parsedNumber;
       }
     }
@@ -63,12 +76,16 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
    * Returns NaN if it contains non-numeric characters (like '%').
    */
   private parseValue(val: string): number {
-    // Remove thousand separators (commas)
-    const cleaned = (val?.replace(/,/g, '') || '0').trim();
-
-    // --- NEW CHECK ---
+    // --- START OF MODIFICATION ---
+    // This regex strips out all characters that are not digits or a decimal separator
+    // It removes "₫", ".", ",", " ", etc.
+    const cleaned = (val?.replace(/[^0-9,.-]/g, '') || '0')
+                      .replace(/[.,]/g, '') // Remove thousand separators (both . and ,)
+                      .trim();
+    // --- END OF MODIFICATION ---
+    
     // Check if the cleaned string still contains non-numeric chars (e.g., '%')
-    if (/[^0-9.-]/.test(cleaned)) {
+    if (/[^0-9]/.test(cleaned)) { // Only allow digits now
       return NaN;
     }
     
@@ -96,12 +113,13 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       const easedProgress = easeOutQuart(progress);
       const val = Math.round(start + (end - start) * easedProgress);
 
-      this.updateDisplayNumber(val);
+      this.updateDisplayNumber(val); // Use the new formatter
 
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
         this.currentValue = end;
+        this.updateDisplayNumber(end); // Ensure final value is accurate
       }
     };
 
@@ -113,8 +131,24 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
    */
   private updateDisplayNumber(value: number): void {
     if (this.valueDisplay?.nativeElement) {
-      // Use 'vi-VN' locale for correct comma/dot separators
-      this.valueDisplay.nativeElement.textContent = value.toLocaleString('vi-VN');
+      let formattedValue: string;
+
+      // --- START OF MODIFICATION ---
+      // Format based on the original type detected
+      if (this.originalFormat === 'currency') {
+        formattedValue = new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
+          maximumFractionDigits: 0, // No decimals for VND
+          minimumFractionDigits: 0,
+        }).format(value);
+      } else {
+        // Default to plain number formatting
+        formattedValue = new Intl.NumberFormat('vi-VN').format(value);
+      }
+      // --- END OF MODIFICATION ---
+      
+      this.valueDisplay.nativeElement.textContent = formattedValue;
     }
   }
 
@@ -126,5 +160,4 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       this.valueDisplay.nativeElement.textContent = value;
     }
   }
-  // --- END OF MODIFICATION ---
 }
