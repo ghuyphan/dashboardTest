@@ -11,21 +11,10 @@
   width: 100vw;
   height: 100vh;
   z-index: 1040; // Just under the toast
-
-  // Backdrop style
   background: rgba(0, 0, 0, 0.4);
-  
-  // --- CHANGED: Added blur backdrop ---
-
-  // Centering
   display: flex;
   justify-content: center;
   align-items: center; // Vertically center by default
-
-  // Animation
-  animation: modal-fade-in 0.2s ease-out;
-
-  /* --- NEW: Mobile positioning --- */
   @media (max-width: 768px) { // Your app's mobile breakpoint
     align-items: flex-start; // Align to top on mobile
     padding: var(--spacing-lg) 0; // Add padding top/bottom
@@ -53,7 +42,7 @@
   box-sizing: border-box;
 
   // Animation (using fade-in to prevent lag)
-  animation: modal-fade-in 0.25s ease-out;
+  animation: modal-fade-in 0.25s ease-out; // <-- THIS ANIMATION REMAINS
   will-change: opacity;
   
   margin: auto 0; // Default margin for centering
@@ -122,20 +111,14 @@
 }
 
 .modal-body {
-  overflow-y: auto; // Allow body to scroll if content is too tall
-
-  /* --- START OF MODIFICATION --- */
-  /* Hide scrollbar but keep scrolling functionality */
-  scrollbar-width: none; /* For Firefox */
-  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+  overflow-y: auto; 
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+    display: none; 
   }
-  /* --- END OF MODIFICATION --- */
 }
-
-// --- Animations ---
 
 @keyframes modal-fade-in {
   from { opacity: 0; }

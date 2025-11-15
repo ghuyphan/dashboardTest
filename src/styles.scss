@@ -312,20 +312,27 @@ a {
 /* CUSTOM TOOLTIP STYLES */
 .app-tooltip-container {
   position: fixed;
-  background-color: var(--gray-800);
-  color: var(--white);
+  background: rgba(255, 255, 255, 0.92); // NEW - Like toast
+  backdrop-filter: blur(10px); // NEW
+  color: var(--gray-900); // NEW - Dark text
+  font-weight: var(--font-weight-medium); // NEW
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--border-radius-md); // NEW - Softer corners
   font-size: 0.875rem;
-  box-shadow: var(--box-shadow-md);
+  box-shadow: var(--box-shadow-lg); // NEW - Match dropdowns
+  border: var(--border-width) solid rgba(255, 255, 255, 0.4); // NEW - Like toast
   z-index: 1052;
   opacity: 0;
-  transition: opacity 0.15s var(--transition-smooth);
+  transition: opacity 0.15s var(--transition-smooth), transform 0.15s var(--transition-smooth); // NEW
+  transform: scale(0.95); // NEW
+  transform-origin: left center; // NEW - Assumes it appears to the right
 
   &.show {
     opacity: 1;
+    transform: scale(1); // NEW
   }
 }
+
 
 /* GLOBAL PRINT STYLES */
 @media print {
@@ -442,7 +449,8 @@ body > ul.submenu.open {
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
   background: rgba(0, 0, 0, 0.3);
-  animation: modal-fade-in 0.2s ease-out;
+  // backdrop-filter: blur(5px);
+  /* animation: modal-fade-in 0.2s ease-out; -- REMOVED TO PREVENT LAG */
 }
 
 .app-modal-panel {
@@ -450,7 +458,7 @@ body > ul.submenu.open {
   background: none;
   box-shadow: none;
   border-radius: 0;
-  animation: modal-fade-in 0.2s ease-out;
+  animation: modal-fade-in 0.2s ease-out; /* This animates the content panel */
 }
 
 /* ============================================

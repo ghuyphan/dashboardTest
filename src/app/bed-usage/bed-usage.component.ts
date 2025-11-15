@@ -399,7 +399,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
           this.chartInstance.setOption(option, {
             notMerge: false,
             lazyUpdate: true,
-            silent: false // <-- Set to false to allow animations
+            silent: false
           });
         }
       });
