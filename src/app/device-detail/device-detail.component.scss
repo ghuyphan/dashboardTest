@@ -206,50 +206,6 @@
     }
 }
 
-/* --- Copied from reusable-table.component.scss --- */
-.status-chip {
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border: 1px solid currentColor;
-    text-transform: capitalize;
-    line-height: 1.5;
-    white-space: nowrap;
-}
-
-.status-chip {
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-medium);
-  border: none;
-  text-transform: capitalize;
-  line-height: 1.5;
-  white-space: nowrap;
-}
-.status-in-use { 
-  color: #FFFFFF;
-  background-color: var( --peacock-blue-light); /* Deep blue - distinct from teal header */
-}
-.status-ready { 
-  color: #FFFFFF;
-  background-color: var(--color-success);
-}
-.status-repair { 
-  color: #FFFFFF;
-  background-color: var(--color-warning);
-}
-.status-broken { 
-  color: #FFFFFF;
-  background-color: var(--color-danger);
-}
-.status-default {
-  color: #FFFFFF;
-  background-color: var(--gray-500);
-}
-
-
 /* --- PRINT STYLES --- */
 #qr-print-section {
     display: none;

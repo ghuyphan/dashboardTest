@@ -74,6 +74,12 @@
   min-height: 0; /* Critical for nested flex scrolling */
   position: relative;
 
+  /* --- START OF MODIFICATION (Scrollbar Style) --- */
+  /* For Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) var(--gray-100);
+  /* --- END OF MODIFICATION --- */
+
   /* Scroll indicators */
   background:
     /* Shadow covers */
@@ -521,10 +527,11 @@
   }
 }
 
-/* Scrollbar styling */
+/* --- START OF MODIFICATION (Scrollbar Style) --- */
+/* For Webkit (Chrome, Safari, Edge) */
 .table-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;  /* Thinner */
+  height: 6px; /* Thinner */
 }
 
 .table-container::-webkit-scrollbar-track {
@@ -536,11 +543,18 @@
   background: var(--gray-300);
   border-radius: var(--border-radius-sm);
   transition: background 0.2s var(--transition-smooth);
+  
+  /* Create an "overlay" effect */
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
   background: var(--gray-400);
+  background-clip: padding-box; /* Keep clip on hover */
 }
+/* --- END OF MODIFICATION --- */
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

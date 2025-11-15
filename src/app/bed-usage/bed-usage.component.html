@@ -21,15 +21,15 @@
       </div>
     </ng-template>
 
-    <div class="chart-wrapper">
-      <div class="chart-header-row">
-        <h2 class="chart-title">
-          Tình Hình Sử Dụng Giường Bệnh Toàn Viện
-          <span class="chart-subtitle">Overall Hospital Bed Occupancy Status</span>
-        </h2>
-
-        <div 
-          class="refresh-control" 
+    <div class="chart-card">
+      <h3 class="card-title">
+        <span>
+          <i class="fas fa-bed-pulse icon-info"></i>
+          Tình Hình Sử Dụng Giường Bệnh
+        </span>
+        
+        <span 
+          class="card-subtitle refresh-control"
           (click)="loadData()" 
           [class.loading]="isLoading"
           [attr.aria-label]="isLoading ? 'Loading data' : 'Refresh data'"
@@ -37,14 +37,15 @@
           tabindex="0"
           (keydown.enter)="loadData()"
           (keydown.space)="loadData()">
+          
           <div class="refresh-icon">
             <i class="fas" [ngClass]="{'fa-sync': !isLoading, 'fa-spinner fa-spin': isLoading}"></i>
           </div>
           <span class="refresh-text" *ngIf="currentDateTime">
-            Cập nhập lần cuối: {{ currentDateTime }}
+            Cập nhập: {{ currentDateTime }}
           </span>
-        </div>
-      </div>
+        </span>
+      </h3>
       
       <div 
         #chartContainer 
@@ -54,5 +55,5 @@
         [attr.aria-label]="isChartInitialized ? 'Bed usage chart' : 'Loading chart'">
       </div>
     </div>
-  </div>
+    </div>
 </div>

@@ -26,14 +26,21 @@
 /*
   MODIFICATION: Make the .grid-container fill the page-content
   and hold the table or loading indicator.
+  --- ADDED CARD STYLES FOR CONSISTENCY ---
 */
 .grid-container {
   display: flex;
   flex-direction: column;
   flex: 1; // <-- NEW: Make it grow
   min-height: 0; // <-- NEW: Prevent overflow
-  overflow: hidden;
-  /* CRITICAL */
+  
+  /* --- START OF MODIFICATION --- */
+  /* Add card styles from device-dashboard */
+  background-color: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-md);
+  overflow: hidden; /* This is critical to clip the table's corners */
+  /* --- END OF MODIFICATION --- */
 }
 
 p {
@@ -48,6 +55,12 @@ p {
   min-height: 0; // <-- CRITICAL: Prevents flexbox overflow
   display: flex;
   /* Required for child height inheritance */
+  
+  /* --- NEW: Remove the table's own radius --- */
+  /* This makes it fit flush inside our new card */
+  .reusable-table-wrapper {
+    border-radius: 0 !important;
+  }
 }
 
 // Make the loading message centered and fill the space

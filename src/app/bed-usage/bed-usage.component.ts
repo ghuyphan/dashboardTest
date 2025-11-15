@@ -636,7 +636,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         borderColor: 'rgba(255, 255, 255, 0.3)',
         borderWidth: 1,
       },
-      // --- START OF MODIFICATION ---
       label: {
         show: true, // Show the label
         position: 'inside', // Position it inside the bar
@@ -648,7 +647,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
           return params.value > 0 ? params.value : '';
         }
       },
-      // --- END OF MODIFICATION ---
       labelLayout: {
         hideOverlap: true,
       },
@@ -717,7 +715,9 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         left: '5%',
         right: '5%',
         top: '12%',
-        bottom: '28%',
+        // --- START OF MODIFICATION ---
+        bottom: '10%', // Reduced from 28%
+        // --- END OF MODIFICATION ---
         containLabel: true,
       },
       xAxis: {

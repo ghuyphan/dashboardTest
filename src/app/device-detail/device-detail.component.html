@@ -8,7 +8,7 @@
     <div class="detail-card">
       <div class="detail-header">
         <div class="header-icon">
-          <i class="fas fa-laptop-medical"></i>
+          <i [ngClass]="getDeviceIconClass(device?.TenLoaiThietBi)"></i>
         </div>
         <div class="header-text">
           <h2 class="device-name">{{ device.Ten }}</h2>

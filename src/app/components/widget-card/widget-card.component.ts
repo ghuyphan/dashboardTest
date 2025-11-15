@@ -23,6 +23,8 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   // --- START OF MODIFICATION ---
   // Store the original format (number, currency, or string)
   private originalFormat: 'number' | 'currency' | 'string' = 'number';
+  // Store the detected currency format
+  private detectedCurrency: string = 'VND'; 
   // --- END OF MODIFICATION ---
 
   ngAfterViewInit(): void {
@@ -54,13 +56,22 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
     } else {
       // --- B) VALUE IS A NUMBER (like "1,250" or "1.250.000 ₫") ---
       
-      // --- NEW: Check if original value was currency ---
-      if (/[₫]|VND|USD|\$/.test(newValue)) {
+      // --- START OF MODIFICATION: Check for specific currency ---
+      if (/[₫]|VND/.test(newValue)) {
         this.originalFormat = 'currency';
+        this.detectedCurrency = 'VND';
+      } else if (/\$/.test(newValue)) {
+        this.originalFormat = 'currency';
+        this.detectedCurrency = 'USD';
+      } else if (/\€/.test(newValue)) {
+        this.originalFormat = 'currency';
+        this.detectedCurrency = 'EUR';
       } else {
+        // Default to plain number
         this.originalFormat = 'number';
+        this.detectedCurrency = 'VND'; // Default for formatting
       }
-      // --- END NEW ---
+      // --- END OF MODIFICATION ---
 
       if (animate) {
         this.animateValue(this.currentValue, parsedNumber);
@@ -76,16 +87,15 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
    * Returns NaN if it contains non-numeric characters (like '%').
    */
   private parseValue(val: string): number {
-    // --- START OF MODIFICATION ---
     // This regex strips out all characters that are not digits or a decimal separator
-    // It removes "₫", ".", ",", " ", etc.
+    // It removes "₫", "$", "€", ".", ",", " ", etc.
     const cleaned = (val?.replace(/[^0-9,.-]/g, '') || '0')
                       .replace(/[.,]/g, '') // Remove thousand separators (both . and ,)
                       .trim();
-    // --- END OF MODIFICATION ---
     
-    // Check if the cleaned string still contains non-numeric chars (e.g., '%')
-    if (/[^0-9]/.test(cleaned)) { // Only allow digits now
+    // Check if the original string (after light cleaning) still contains non-numeric chars (e.g., '%')
+    // This handles the "85,12%" case
+    if (/[^0-9]/.test(cleaned)) { 
       return NaN;
     }
     
@@ -136,10 +146,11 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       // --- START OF MODIFICATION ---
       // Format based on the original type detected
       if (this.originalFormat === 'currency') {
+        // Use the detected currency
         formattedValue = new Intl.NumberFormat('vi-VN', {
           style: 'currency',
-          currency: 'VND',
-          maximumFractionDigits: 0, // No decimals for VND
+          currency: this.detectedCurrency, 
+          maximumFractionDigits: 0, 
           minimumFractionDigits: 0,
         }).format(value);
       } else {

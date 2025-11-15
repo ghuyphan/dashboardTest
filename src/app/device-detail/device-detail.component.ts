@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, finalize, of, switchMap } from 'rxjs';
+// --- MODIFIED: Added 'map' ---
+import { Subscription, finalize, of, switchMap, map } from 'rxjs';
 import { QRCodeComponent } from 'angularx-qrcode'; // <-- CORRECT IMPORT FOR STANDALONE
 
 import { Device } from '../models/device.model';
@@ -65,6 +66,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     // this.footerService.clearActions(); 
   }
 
+  // --- MODIFIED: (Suggestion 3) ---
   loadDevice(id: string): void {
     this.isLoading = true;
     const url = `${environment.equipmentCatUrl}/${id}`;
@@ -73,27 +75,28 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     this.deviceSub?.unsubscribe();
 
     this.deviceSub = this.http.get<Device[]>(url).pipe(
+      map(dataArray => {
+        if (dataArray && dataArray.length > 0) {
+          return dataArray[0]; // Transform the array to a single device
+        }
+        // If API returns empty array or null, throw an error
+        throw new Error('Không tìm thấy chi tiết cho thiết bị này.');
+      }),
       finalize(() => this.isLoading = false)
     ).subscribe({
-      next: (dataArray) => {
-        if (dataArray && dataArray.length > 0) {
-          this.device = dataArray[0]; // Assign the first item
-          
-          this.qrCodeValue = window.location.href; 
-          this.setupFooterActions(this.device);
-        } else {
-          // Handle cases where the API returns an empty array
-          this.toastService.showError('Không tìm thấy chi tiết cho thiết bị này.');
-          this.goBack();
-        }
+      next: (device) => {
+        this.device = device; // The device is now guaranteed to exist
+        this.qrCodeValue = window.location.href; 
+        this.setupFooterActions(this.device);
       },
-      error: (err) => {
+      error: (err: Error) => { // Catch the error thrown from the map operator
         console.error('Failed to load device details:', err);
-        this.toastService.showError('Không thể tải chi tiết thiết bị.');
+        this.toastService.showError(err.message || 'Không thể tải chi tiết thiết bị.');
         this.goBack();
       }
     });
   }
+  // --- END MODIFICATION ---
 
   setupFooterActions(device: Device): void {
     const actions: FooterAction[] = [
@@ -209,5 +212,33 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
 
     return 'status-default';
+  }
+
+  // --- NEW: (Suggestion 2) ---
+  /**
+   * Returns a Font Awesome icon class based on the device type.
+   */
+  public getDeviceIconClass(deviceType: string | null | undefined): string {
+    if (!deviceType) return 'fas fa-question-circle'; // Default icon
+    
+    const lowerType = deviceType.toLowerCase();
+
+    if (lowerType.includes('laptop') || lowerType.includes('máy tính')) {
+      return 'fas fa-laptop-medical';
+    }
+    if (lowerType.includes('printer') || lowerType.includes('máy in')) {
+      return 'fas fa-print';
+    }
+    if (lowerType.includes('server') || lowerType.includes('máy chủ')) {
+      return 'fas fa-server';
+    }
+    if (lowerType.includes('monitor') || lowerType.includes('màn hình')) {
+      return 'fas fa-desktop';
+    }
+    if (lowerType.includes('phone') || lowerType.includes('điện thoại')) {
+      return 'fas fa-mobile-alt';
+    }
+    
+    return 'fas fa-hdd'; // A good generic hardware icon
   }
 }

@@ -13,20 +13,28 @@
   height: 100%;
   overflow: hidden;
   background-color: var(--gray-50);
-  // padding: var(--spacing-xs);
 }
 
 .page-content {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-padding: var(--spacing-xs);
+  padding: var(--spacing-xs);
   height: 0;
   min-height: 0;
+  /* --- ADDED: Allow content itself to scroll if needed --- */
+  overflow-y: auto;
+  gap: var(--spacing-lg); /* Add gap between widgets and chart card */
+
+  /* --- ADDED: Hide scrollbar but keep scrolling --- */
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .widget-section {
-  padding-bottom: var(--spacing-md);
+  padding-bottom: 0; /* Removed bottom padding, gap handles it */
   flex-shrink: 0;
 }
 
@@ -36,6 +44,7 @@ padding: var(--spacing-xs);
   border-radius: var(--border-radius-md);
   height: 80px;
   will-change: opacity;
+  animation: skeleton-pulse 1.5s infinite ease-in-out;
 }
 
 .widget-grid {
@@ -49,138 +58,141 @@ padding: var(--spacing-xs);
   }
 }
 
-.chart-wrapper {
-  flex-grow: 1;
+/* --- START OF MODIFICATION --- */
+/* Copied from device-dashboard.component.scss for consistency */
+
+.chart-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-md);
+  
+  /* Make card flexible */
+  flex: 1; /* This card will grow to fill the remaining space */
+  min-height: 400px; /* Ensure it has a good minimum height */
+  
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  margin-top: var(--spacing-xxl); /* MODIFIED: Increased margin-top for more space */
-  height: 0;
 
-  /* --- START OF MODIFICATION (Best Practice Layout) --- */
-  .chart-header-row {
-    position: relative;
-    display: grid; /* Use Grid for robust centering */
-    grid-template-columns: 1fr auto 1fr; /* [spacer] [title] [button] */
-    align-items: center;
-    gap: var(--spacing-sm);
-    width: 100%;
-    margin-bottom: var(--spacing-xs);
-    flex-shrink: 0; /* NEW: Prevent header from shrinking in flex layout */
+  @media (max-width: 768px) {
+    min-height: 350px;
   }
 
-  .chart-title {
-    grid-column: 2 / 3; /* Place title in the center column */
-    text-align: center; /* Ensure it's centered */
-    font-size: 1.5rem;
-    font-weight: bold;
-    font-family: var(--font-family-sans);
-    color: var(--peacock-blue);
-    // padding: 0 var(--spacing-sm);
-    flex-shrink: 0;
-    margin: 0;
-    line-height: 1.2;
-    /* Removed padding-left/right: 40px; no longer needed */
-
-    .chart-subtitle {
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--gray-600);
-      display: block;
-      margin-top: 4px;
-    }
-  }
-
-  .refresh-control {
-    grid-column: 3 / 4; /* Place button in the right column */
-    justify-self: end; /* Align button to the right */
-
-    /* Removed absolute positioning */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    width: fit-content;
-    min-height: 28px;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-full);
-    background-color: transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-    border: 1px solid transparent;
-    outline: none;
-     background-color: var(--gray-100);
-
-    &:focus {
-      border-color: var(--peacock-blue);
-      box-shadow: 0 0 0 2px rgba(0, 119, 139, 0.2);
-    }
-
-    .refresh-icon {
-      font-size: 0.875rem;
-      color: var(--gray-600);
-      transition: color 0.2s ease;
-    }
-
-    .refresh-text {
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--gray-600);
-      white-space: nowrap;
-      /* Removed all transition/hiding properties */
-    }
-
-    &:hover:not(.loading) {
-      background-color: var(--gray-100);
-
-      .refresh-icon {
-        color: var(--peacock-blue);
-      }
-      /* Removed hover effect for .refresh-text */
-    }
-
-    &.loading {
-      cursor: not-allowed;
-
-      .refresh-icon {
-        color: var(--peacock-blue);
-      }
-    }
-
-    /* REQUEST: On mobile, just show icon */
-    @media (max-width: 768px) {
-      .refresh-text {
-        display: none;
-      }
-      padding: var(
-        --spacing-xs
-      ); /* Make it a smaller circle/square button */
-      gap: 0;
-    }
-  }
-  /* --- END OF MODIFICATION --- */
-
-  .chart-container-inner {
-    width: 100%;
-    flex-grow: 1; /* MODIFIED: Changed from height: 100% to fill space */
+  @media (max-width: 480px) {
     min-height: 300px;
-    background-color: var(--white);
-    border-radius: var(--border-radius-lg);
-    // padding: var(--spacing-sm);
-    display: flex;
-    align-items: stretch;
-    justify-content: stretch;
-    contain: layout style paint; // Optimize rendering
+  }
+}
 
-    &.hidden {
-      visibility: hidden;
-      height: 0;
-      min-height: 0;
-      padding: 0;
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0 0 var(--spacing-sm) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+
+  > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .card-subtitle {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 400;
+    color: var(--gray-700);
+  }
+
+  i {
+    font-size: 1rem;
+    &.icon-info {
+      color: var(--color-info);
     }
   }
 }
+
+/* This is the new refresh button style, using the .card-subtitle class */
+.refresh-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  outline: none;
+  font-size: 0.75rem; /* Make text smaller */
+  font-weight: 500;
+  color: var(--gray-600);
+
+  .refresh-icon {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .refresh-text {
+    white-space: nowrap;
+  }
+
+  &:hover:not(.loading) {
+    background-color: var(--gray-100);
+    .refresh-icon {
+      color: var(--peacock-blue);
+    }
+  }
+
+  &.loading {
+    cursor: not-allowed;
+    .refresh-icon {
+      color: var(--peacock-blue);
+      /* This class is already handled by [ngClass] in the HTML */
+    }
+  }
+
+  @media (max-width: 768px) {
+    .refresh-text {
+      display: none;
+    }
+    padding: var(--spacing-xs);
+    gap: 0;
+  }
+}
+
+
+.chart-container-inner {
+  width: 100%;
+  height: 100%; /* Height is now controlled by flex-grow */
+  flex-grow: 1;
+  min-height: 300px; /* Set a min-height for the chart area */
+  
+  /* Removed background-color, border-radius, padding */
+  /* These are now handled by the parent .chart-card */
+  
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  
+  /* This is the optimization from device-dashboard */
+  contain: layout style paint; 
+
+  &.hidden {
+    visibility: hidden;
+    height: 0;
+    min-height: 0;
+    padding: 0;
+  }
+}
+/* --- END OF MODIFICATION --- */
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -192,21 +204,8 @@ padding: var(--spacing-xs);
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: var(--spacing-xs);
   }
-
-  .chart-wrapper {
-    .chart-title {
-      font-size: 1.25rem;
-      /* Removed padding overrides as they are no longer needed */
-
-      .chart-subtitle {
-        font-size: 0.875rem;
-      }
-    }
-
-    .chart-container-inner {
-      min-height: 250px;
-    }
-  }
+  
+  /* Card title is already responsive */
 }
 
 @media (max-width: 480px) {
@@ -217,18 +216,6 @@ padding: var(--spacing-xs);
   .widget-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-xs);
-  }
-
-  .chart-wrapper {
-    .chart-title {
-      font-size: 1.1rem;
-      padding: 0 var(--spacing-xs);
-    }
-
-    .chart-container-inner {
-      min-height: 200px;
-      padding: var(--spacing-xs);
-    }
   }
 }
 
@@ -243,8 +230,4 @@ padding: var(--spacing-xs);
   100% {
     opacity: 0.6;
   }
-}
-
-.widget-skeleton {
-  animation: skeleton-pulse 1.5s infinite ease-in-out;
 }

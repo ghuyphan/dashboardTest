@@ -194,8 +194,8 @@ app-header {
   display: block;
   flex-shrink: 0;
   background-color: var(--white);
-  border-top: 1px solid var(--gray-200);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+  // border-top: 1px solid var(--gray-200);
+  // box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
   z-index: 980;
   transform: translateY(0);
   transition: transform var(--transition-duration) var(--transition-smooth),
