@@ -1,4 +1,3 @@
-// ghuyphan/dashboardtest/dashboardTest-9cca48aabb631ff285e83e463edbc63487aa62ca/src/app/bed-usage/bed-usage.component.ts
 import {
   Component,
   OnInit,
@@ -10,28 +9,17 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   NgZone,
-  HostListener, // <-- 1. IMPORT HostListener
+  HostListener, // (Already imported)
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject, Subscription } from 'rxjs'; // <-- Removed 'fromEvent'
+import { Subject } from 'rxjs'; // <-- Removed 'fromEvent'
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
 import { environment } from '../../environments/environment.development';
-
-// --- 2. IMPORT DataZoomComponent ---
-import { BarChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  DataZoomComponent, // <-- Added
-} from 'echarts/components';
-// ---
 
 type EChartsOption = EChartsCoreOption;
 
@@ -103,6 +91,12 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   private echartsInstance?: typeof echarts;
   private chartInstance?: EChartsType;
   private dataRefreshInterval?: ReturnType<typeof setInterval>;
+  
+  // --- START OF MODIFICATION ---
+  private intersectionObserver?: IntersectionObserver;
+  public isChartVisible: boolean = false;
+  public isChartInitialized: boolean = false;
+  // --- END OF MODIFICATION ---
 
   currentDateTime: string = '';
   public isLoading: boolean = false;
@@ -110,7 +104,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   widgetData: WidgetData[] = [];
   private bedStatusSeries: BedStatusSeries[] = [];
   
-  // Cached CSS Vars
+  // (cssVars property remains unchanged)
   private cssVars = {
     chartColor1: '',
     chartColor2: '',
@@ -125,7 +119,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     gray800: '',
     peacockBlue: '',
     white: '',
-    tealBlue: '', // <-- Added for type safety, will be filled in initColors
+    tealBlue: '', 
   };
 
   private destroy$ = new Subject<void>();
@@ -134,7 +128,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @HostListener('window:resize')
   onWindowResize(): void {
-    // Debounce the resize event
+    // (This HostListener remains unchanged)
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
       this.chartInstance?.resize();
@@ -146,7 +140,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.initializeChart();
+    // --- MODIFIED ---
+    // We set up the observer, which will THEN call initializeChart()
+    this.setupIntersectionObserver();
+    // --- END OF MODIFICATION ---
     this.startRefreshInterval();
   }
 
@@ -161,9 +158,53 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.dataRefreshInterval) {
       clearInterval(this.dataRefreshInterval);
     }
+    // --- ADDED ---
+    this.intersectionObserver?.disconnect();
+    // --- END OF ADDITION ---
   }
+  
+  // --- ADDED ---
+  /**
+   * Sets up an IntersectionObserver to lazy-load the chart
+   * only when it becomes visible.
+   */
+  private setupIntersectionObserver(): void {
+    // Check if browser supports it
+    if (typeof IntersectionObserver === 'undefined') {
+      console.warn('IntersectionObserver not supported, loading chart immediately.');
+      this.initializeChart();
+      return;
+    }
+
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // When the chart is intersecting (visible) and not already visible
+          if (entry.isIntersecting && !this.isChartVisible) {
+            this.isChartVisible = true;
+            this.intersectionObserver?.disconnect(); // Stop observing
+            
+            // Now we initialize the chart
+            this.ngZone.run(() => {
+              this.initializeChart();
+              this.cd.markForCheck();
+            });
+          }
+        });
+      },
+      { 
+        rootMargin: '100px', // Load it when it's 100px away from the viewport
+        threshold: 0.01 
+      }
+    );
+    
+    // Start observing the chart container element
+    this.intersectionObserver.observe(this.chartContainer.nativeElement);
+  }
+  // --- END OF ADDITION ---
 
   private startRefreshInterval(): void {
+    // (This method remains unchanged)
     this.ngZone.runOutsideAngular(() => {
       this.dataRefreshInterval = setInterval(() => {
         this.ngZone.run(() => this.loadData());
@@ -173,6 +214,11 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   private async initializeChart(): Promise<void> {
+    // --- ADDED ---
+    // Prevent re-initialization
+    if (this.isChartInitialized) return;
+    this.isChartInitialized = true;
+    // --- END OF ADDITION ---
     
     // Lazy load ECharts
     await this.lazyLoadECharts();
@@ -185,6 +231,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private async lazyLoadECharts(): Promise<void> {
+    // (This method remains unchanged)
     try {
       const [
         echartsCore,
@@ -194,7 +241,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         TooltipComponent,
         GridComponent,
         LegendComponent,
-        DataZoomComponent, // <-- ADDED
+        DataZoomComponent, 
       ] = await Promise.all([
         import('echarts/core'),
         import('echarts/renderers'),
@@ -203,7 +250,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         import('echarts/components'),
         import('echarts/components'),
         import('echarts/components'),
-        import('echarts/components'), // <-- ADDED
+        import('echarts/components'), 
       ]);
 
       this.echartsInstance = echartsCore;
@@ -215,7 +262,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         TooltipComponent.TooltipComponent,
         GridComponent.GridComponent,
         LegendComponent.LegendComponent,
-        DataZoomComponent.DataZoomComponent, // <-- ADDED
+        DataZoomComponent.DataZoomComponent, 
       ]);
     } catch (error) {
       console.error('Error lazy-loading ECharts', error);
@@ -223,6 +270,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initColors(): void {
+    // (This method remains unchanged)
     const c = getCssVar;
 
     this.widgetData = [
@@ -244,7 +292,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: c('--chart-color-9') }
     ];
     
-    // Cache CSS variables
     this.cssVars = {
       chartColor1: c('--chart-color-1'),
       chartColor2: c('--chart-color-2'),
@@ -259,13 +306,12 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       gray800: c('--gray-800'),
       peacockBlue: c('--peacock-blue'),
       white: c('--white'),
-      // --- START OF FIX ---
-      tealBlue: c('--teal-blue'), // <-- ADDED THE MISSING PROPERTY
-      // --- END OF FIX ---
+      tealBlue: c('--teal-blue'),
     };
   }
 
   private initChart(): void {
+    // (This method remains unchanged)
     if (!this.echartsInstance) {
       console.error('ECharts has not been loaded');
       return;
@@ -289,6 +335,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public loadData(): void {
+    // (This method remains unchanged)
     if (this.isLoading) return;
     
     this.isLoading = true;
@@ -339,6 +386,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private renderChart(chartData: DepartmentChartData[], enableAnimation: boolean): void {
+    // (This method remains unchanged)
     if (!this.chartInstance || !this.echartsInstance) return;
     
     const option = this.buildOption(chartData);
@@ -357,8 +405,11 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       });
     });
   }
-
+  
+  // ... all other methods (transformApiData, parseDepartmentName, updateWidgetValue, etc.) remain exactly the same ...
+  
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
+    // (This method remains unchanged)
     return apiData.map((item) => {
       const parts = this.parseDepartmentName(item.TenPhongBan);
       return {
@@ -377,6 +428,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private parseDepartmentName(fullName: string): { viName: string; enName: string } {
+    // (This method remains unchanged)
     const withoutTotal = fullName.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
     const parts = withoutTotal.split(/\s+-\s+/);
     
@@ -402,6 +454,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateWidgetValue(id: string, value: string): void {
+    // (This method remains unchanged)
     const widget = this.widgetData.find((w) => w.id === id);
     if (widget) {
       widget.value = value;
@@ -409,6 +462,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private calculateAndUpdateWidgets(apiData: ApiResponseData[]): void {
+    // (This method remains unchanged)
     const totals = {
       giuongTrong: 0,
       dangDieuTri: 0,
@@ -462,6 +516,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private resetWidgetsToZero(): void {
+    // (This method remains unchanged)
     this.updateWidgetValue('occupancyRate', '0,00%');
     this.updateWidgetValue('totalBeds', '0');
     this.updateWidgetValue('dangDieuTri', '0');
@@ -473,10 +528,12 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   trackByWidgetId(index: number, item: WidgetData): string {
+    // (This method remains unchanged)
     return item.id;
   }
 
   private formatNumber(value: number): string {
+    // (This method remains unchanged)
     return new Intl.NumberFormat('vi-VN', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -484,6 +541,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private formatPercentage(value: number): string {
+    // (This method remains unchanged)
     return (
       new Intl.NumberFormat('vi-VN', {
         minimumFractionDigits: 2,
@@ -493,6 +551,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
+    // (This method remains unchanged)
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );

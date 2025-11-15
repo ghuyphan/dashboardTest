@@ -1,5 +1,3 @@
-// src/app/device-dashboard/device-dashboard.component.ts
-
 import {
   Component,
   OnInit,
@@ -659,7 +657,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
               .padStart(2, '0')}`;
             trendMap.set(monthKey, (trendMap.get(monthKey) || 0) + 1);
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       const needsAttentionCheck =
@@ -699,7 +697,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
               NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
             });
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -845,8 +843,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
         this.chartInstanceStatus?.setOption(option, {
-          notMerge: true,
+          notMerge: false,
           lazyUpdate: true,
+          silent: false
         });
       });
     });
@@ -862,8 +861,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
         this.chartInstanceCategory?.setOption(option, {
-          notMerge: true,
+          notMerge: false,
           lazyUpdate: true,
+          silent: false
         });
       });
     });
@@ -881,8 +881,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
         this.chartInstanceLocation?.setOption(option, {
-          notMerge: true,
+          notMerge: false,
           lazyUpdate: true,
+          silent: false
         });
       });
     });
@@ -935,11 +936,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           if (!params.name) return '';
           // totalDevices is still needed here
           const percent = ((params.value / totalDevices) * 100).toFixed(1);
-          return `${params.marker} <b>${
-            params.name
-          }</b><br/>Số lượng: <b>${this.formatNumber(
-            params.value
-          )}</b> (${percent}%)`;
+          return `${params.marker} <b>${params.name
+            }</b><br/>Số lượng: <b>${this.formatNumber(
+              params.value
+            )}</b> (${percent}%)`;
         },
       },
       legend: {

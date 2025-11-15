@@ -1,4 +1,3 @@
-// ghuyphan/dashboardtest/dashboardTest-9cca48aabb631ff285e83e463edbc63487aa62ca/src/app/device-detail/device-detail.component.ts
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +15,6 @@ import { FooterAction } from '../models/footer-action.model';
 import { DeviceFormComponent } from '../device-list/device-form/device-form.component';
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
 
-// --- 1. IMPORT the new strategy ---
 import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy'; // Adjust path if needed
 
 @Component({
