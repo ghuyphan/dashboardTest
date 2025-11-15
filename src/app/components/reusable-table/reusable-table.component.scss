@@ -273,7 +273,9 @@
   .mat-mdc-cell {
     padding: 0 var(--spacing-sm) !important; /* Reduced padding */
     color: var(--gray-700) !important;
-    border-bottom: 1px solid var(--gray-200) !important;
+    /* --- START OF MODIFICATION --- */
+    border-bottom: none !important; /* REMOVED BORDER */
+    /* --- END OF MODIFICATION --- */
     font-size: 0.8125rem !important; /* Slightly smaller */
     height: 36px !important; /* Consistent row height */
 
@@ -298,6 +300,12 @@
   .mat-mdc-row {
     height: 36px !important; /* Compact height */
     transition: all 0.2s var(--transition-smooth);
+
+    /* --- START OF MODIFICATION: ZEBRA STRIPING --- */
+    &:nth-child(even) {
+      background-color: var(--white); /* Use a light gray for the stripe */
+    }
+    /* --- END OF MODIFICATION --- */
 
     &.clickable-row {
       cursor: pointer;
@@ -342,6 +350,13 @@
       Empty State Styles - Enhanced UX
      ============================================ */
   .mat-no-data-row {
+    /* --- START OF MODIFICATION --- */
+    /* Make sure even/odd striping doesn't apply to the no-data row */
+    &:nth-child(even) {
+      background-color: var(--white) !important;
+    }
+    /* --- END OF MODIFICATION --- */
+    
     .mat-mdc-cell {
       border-bottom: none !important;
       padding: var(--spacing-xl) !important;

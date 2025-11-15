@@ -367,7 +367,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       colorDanger: c('--color-danger'), // Hỏng / Thanh lý
       colorInfo: c('--color-info'),
       colorPurple: c('--chart-color-6'),
-      colorBlue: c('--peacock-blue'),
+      colorBlue: c('--teal-blue'), // CHANGED to use --teal-blue
       colorInUse: c('--peacock-blue-light'), // Đang sử dụng
       colorBooked: c('--chart-color-6'), // Đã Book
       colorLoaned: c('--chart-color-9'), // Cho mượn
@@ -568,7 +568,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     // Pass a dynamic title to the location chart
     const locationTitle = this.currentFilter
       ? `Vị trí (Đã lọc)`
-      : `Vị trí có nhiều TB cần chú ý`;
+      : `Vị trí có TB cần chú ý (Top 10)`; // MODIFIED TITLE
     this.renderLocationChart(this.locationData, locationTitle);
     this.renderTrendChart(this.trendData);
     // --- END MODIFICATION ---
@@ -735,7 +735,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       value,
     }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
+      .slice(0, 10); // <-- Get Top 10
     const trendData = Array.from(trendMap, ([month, value]) => ({
       month,
       value,
@@ -953,7 +953,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private renderCategoryChart(data: AggregatedData[]): void {
     if (!this.chartInstanceCategory) return;
     const option = this.buildBarOption(
-      'Số lượng theo Loại Thiết bị',
+      'Số lượng theo Loại Thiết bị (Top 10)',
       data.map((d) => d.name).reverse(),
       data.map((d) => d.value).reverse()
     );
@@ -971,13 +971,15 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   // Updated to accept a dynamic title
   private renderLocationChart(data: AggregatedData[], title: string): void {
     if (!this.chartInstanceLocation) return;
-    // Use the colorDanger for this chart
+    // --- START OF COLOR CHANGE ---
+    // Use the standard blue color instead of danger
     const option = this.buildBarOption(
       title,
       data.map((d) => d.name).reverse(),
       data.map((d) => d.value).reverse(),
-      this.cssVars.colorDanger
+      this.cssVars.colorBlue 
     );
+    // --- END OF COLOR CHANGE ---
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
         this.chartInstanceLocation?.setOption(option, {
@@ -1083,6 +1085,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     xAxisData: string[],
     seriesData: number[]
   ): EChartsOption {
+    // --- START OF COLOR CHANGE ---
+    const chartColor = this.cssVars.colorBlue; // Use brand color
+    // --- END OF COLOR CHANGE ---
+    
     return {
       backgroundColor: this.cssVars.white,
       textStyle: {
@@ -1121,7 +1127,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           type: 'line',
           smooth: true,
           data: seriesData,
-          itemStyle: { color: this.cssVars.colorSuccess },
+          // --- START OF COLOR CHANGE ---
+          itemStyle: { color: chartColor },
           areaStyle: {
             color: new (this.echartsInstance as any).graphic.LinearGradient(
               0,
@@ -1129,11 +1136,12 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
               0,
               1,
               [
-                { offset: 0, color: this.cssVars.colorSuccess },
+                { offset: 0, color: chartColor }, // Use brand color
                 { offset: 1, color: this.cssVars.white },
               ]
             ),
           },
+          // --- END OF COLOR CHANGE ---
         },
       ],
     };
