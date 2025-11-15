@@ -1,3 +1,4 @@
+// ghuyphan/dashboardtest/dashboardTest-9cca48aabb631ff285e83e463edbc63487aa62ca/src/app/components/widget-card/widget-card.component.ts
 import { Component, Input, ElementRef, ViewChild, OnChanges, AfterViewInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -20,12 +21,8 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   private currentValue: number = 0;
   private viewInitialized = false;
 
-  // --- START OF MODIFICATION ---
-  // Store the original format (number, currency, or string)
   private originalFormat: 'number' | 'currency' | 'string' = 'number';
-  // Store the detected currency format
   private detectedCurrency: string = 'VND'; 
-  // --- END OF MODIFICATION ---
 
   ngAfterViewInit(): void {
     this.viewInitialized = true;
@@ -56,7 +53,6 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
     } else {
       // --- B) VALUE IS A NUMBER (like "1,250" or "1.250.000 ₫") ---
       
-      // --- START OF MODIFICATION: Check for specific currency ---
       if (/[₫]|VND/.test(newValue)) {
         this.originalFormat = 'currency';
         this.detectedCurrency = 'VND';
@@ -71,7 +67,6 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
         this.originalFormat = 'number';
         this.detectedCurrency = 'VND'; // Default for formatting
       }
-      // --- END OF MODIFICATION ---
 
       if (animate) {
         this.animateValue(this.currentValue, parsedNumber);
@@ -133,7 +128,13 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       }
     };
 
-    requestAnimationFrame(animate);
+    // --- START OF MODIFICATION ---
+    // This pushes the animation to the next event loop,
+    // allowing the (more important) ECharts render to start first.
+    setTimeout(() => {
+      requestAnimationFrame(animate);
+    }, 300); // A small 100ms delay is all we need
+    // --- END OF MODIFICATION ---
   }
 
   /**
@@ -143,8 +144,6 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
     if (this.valueDisplay?.nativeElement) {
       let formattedValue: string;
 
-      // --- START OF MODIFICATION ---
-      // Format based on the original type detected
       if (this.originalFormat === 'currency') {
         // Use the detected currency
         formattedValue = new Intl.NumberFormat('vi-VN', {
@@ -157,7 +156,6 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
         // Default to plain number formatting
         formattedValue = new Intl.NumberFormat('vi-VN').format(value);
       }
-      // --- END OF MODIFICATION ---
       
       this.valueDisplay.nativeElement.textContent = formattedValue;
     }

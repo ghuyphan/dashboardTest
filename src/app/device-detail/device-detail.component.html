@@ -77,9 +77,15 @@
             </div>
             <div class="info-item">
               <span class="info-label">Hết hạn bảo hành</span>
-              <span class="info-value">{{ formatDate(device.NgayHetHanBH) }}</span>
+              <span class="info-value" [class.expiring]="isWarrantyExpiring">
+                <i *ngIf="isWarrantyExpiring" class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                {{ formatDate(device.NgayHetHanBH) }}
+                <span *ngIf="isWarrantyExpiring" class="expiry-text">
+                   (Còn {{ warrantyExpiresInDays }} ngày)
+                </span>
+              </span>
             </div>
-          </div>
+            </div>
         </div>
 
       </div>

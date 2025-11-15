@@ -115,8 +115,9 @@
 
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell no-data-cell" [attr.colspan]="displayedColumns.length">
-          <div class="no-data-container">
-            <div class="no-data-icon-container">
+          
+          <div class="no-data-container" *ngIf="!isLoading">
+          <div class="no-data-icon-container">
               <mat-icon class="no-data-icon">inbox</mat-icon>
             </div>
             <p class="no-data-text">{{ getEmptyStateMessage() }}</p>

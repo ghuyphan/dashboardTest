@@ -1,3 +1,4 @@
+/* ghuyphan/dashboardtest/dashboardTest-9cca48aabb631ff285e83e463edbc63487aa62ca/src/app/device-detail/device-detail.component.scss */
 :host {
     display: flex;
     flex-direction: column;
@@ -290,3 +291,43 @@
     padding: var(--spacing-sm);
   }
 }
+
+/* --- START OF MODIFICATION --- */
+/* --- ADDED: Warranty Expiry Styles --- */
+.info-value.expiring {
+  color: var(--color-warning); /* Use the global warning color */
+  font-weight: 600; /* Make it bold */
+  display: flex; /* Align icon and text */
+  align-items: center;
+  flex-wrap: wrap; /* Allow text to wrap if needed */
+
+  i {
+    margin-right: var(--spacing-xs);
+    font-size: 0.9em;
+    /* Add a subtle animation */
+    animation: pulse-warning 1.5s infinite;
+  }
+}
+
+.expiry-text {
+  font-size: 0.9em;
+  font-weight: 500;
+  margin-left: var(--spacing-sm);
+  color: var(--gray-700); /* Darker text for readability */
+}
+
+@keyframes pulse-warning {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* --- END OF MODIFICATION --- */

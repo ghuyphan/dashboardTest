@@ -26,16 +26,6 @@ import { Device } from '../models/device.model';
 import { ToastService } from '../services/toast.service';
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
 
-// --- Imports for ECharts (unchanged) ---
-import { BarChart, LineChart, PieChart } from 'echarts/charts';
-import {
-  GridComponent,
-  DataZoomComponent,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-} from 'echarts/components';
-
 // --- Imports for Table (unchanged) ---
 import {
   ReusableTableComponent,
@@ -1099,7 +1089,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         trigger: 'axis',
         textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
       },
-      grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
+      grid: { left: '3%', right: '4%', containLabel: true },
       xAxis: { type: 'category', boundaryGap: false, data: xAxisData },
       yAxis: {
         type: 'value',
@@ -1107,10 +1097,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           lineStyle: { color: this.cssVars.gray200, type: 'dotted' },
         },
       },
-      dataZoom: [
-        { type: 'inside', start: 0, end: 100 },
-        { start: 0, end: 100, height: 20, bottom: 5 },
-      ],
+      // dataZoom: [
+      //   { type: 'inside', start: 0, end: 100 },
+      //   { start: 0, end: 100, height: 20, bottom: 5 },
+      // ],
       series: [
         {
           name: 'Thiết bị mới',

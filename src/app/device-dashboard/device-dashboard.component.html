@@ -53,7 +53,10 @@
       <div class="dashboard-main-grid">
         <div class="chart-card span-2">
           <h3 class="card-title">
-            <span>Thống Kê Trạng Thái</span>
+            <span>
+              <i class="fas fa-pie-chart icon-info"></i>
+              Thống Kê Trạng Thái
+            </span>
             <span class="card-subtitle">{{ statusChartSubtext }}</span>
           </h3>
           <div
@@ -66,8 +69,11 @@
 
         <div class="chart-card span-1">
           <h3 class="card-title">
-            <span>Số lượng theo Loại Thiết bị (Top 10)</span>
-          </h3>
+            <span>
+              <i class="fas fa-tags icon-info"></i>
+              Số lượng theo Loại Thiết bị (Top 10)
+            </span>
+            </h3>
           <div
             #chartContainerCategory
             class="chart-container-inner"
@@ -78,8 +84,11 @@
 
         <div class="chart-card span-1">
           <h3 class="card-title">
-            <span>{{ locationChartTitle }}</span>
-          </h3>
+            <span>
+              <i class="fas fa-map-marker-alt icon-info"></i>
+              {{ locationChartTitle }}
+            </span>
+            </h3>
           <div
             #chartContainerLocation
             class="chart-container-inner"
@@ -118,8 +127,11 @@
 
         <div class="chart-card span-3">
           <h3 class="card-title">
-            <span>Thiết bị mới theo Tháng</span>
-          </h3>
+            <span>
+              <i class="fas fa-chart-line icon-info"></i>
+              Thiết bị mới theo Tháng
+            </span>
+            </h3>
           <div
             #chartContainerTrend
             class="chart-container-inner"

@@ -1,3 +1,4 @@
+// ghuyphan/dashboardtest/dashboardTest-9cca48aabb631ff285e83e463edbc63487aa62ca/src/app/device-detail/device-detail.component.ts
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -38,6 +39,11 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   private routeSub: Subscription | null = null;
   private deviceSub: Subscription | null = null;
 
+  // --- START OF MODIFICATION ---
+  public isWarrantyExpiring: boolean = false;
+  public warrantyExpiresInDays: number = 0;
+  // --- END OF MODIFICATION ---
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -66,7 +72,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     // this.footerService.clearActions(); 
   }
 
-  // --- MODIFIED: (Suggestion 3) ---
   loadDevice(id: string): void {
     this.isLoading = true;
     const url = `${environment.equipmentCatUrl}/${id}`;
@@ -88,6 +93,10 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         this.device = device; // The device is now guaranteed to exist
         this.qrCodeValue = window.location.href; 
         this.setupFooterActions(this.device);
+        
+        // --- START OF MODIFICATION ---
+        this.checkWarrantyStatus(this.device); // Check warranty status
+        // --- END OF MODIFICATION ---
       },
       error: (err: Error) => { // Catch the error thrown from the map operator
         console.error('Failed to load device details:', err);
@@ -96,7 +105,66 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       }
     });
   }
-  // --- END MODIFICATION ---
+  
+  // --- START OF MODIFICATION ---
+  /**
+   * (Copied from dashboard)
+   * Parses a date string (dd/MM/yyyy or ISO) into a Date object.
+   */
+  private parseDate(dateString: string | null | undefined): Date | null {
+    if (!dateString) return null;
+    try {
+      if (dateString.includes('/')) {
+        const parts = dateString.substring(0, 10).split('/');
+        // Note: Months are 0-indexed in JS (Number(parts[1]) - 1)
+        const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        return isNaN(d.getTime()) ? null : d;
+      } else {
+        // Assume ISO string
+        const d = new Date(dateString);
+        return isNaN(d.getTime()) ? null : d;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Checks the warranty status of the loaded device.
+   */
+  private checkWarrantyStatus(device: Device): void {
+    // Reset state
+    this.isWarrantyExpiring = false;
+    this.warrantyExpiresInDays = 0;
+
+    if (!device.NgayHetHanBH) {
+      return;
+    }
+
+    try {
+      const expiryDate = this.parseDate(device.NgayHetHanBH);
+      if (!expiryDate) {
+        return;
+      }
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const timeDiff = expiryDate.getTime() - today.getTime();
+      const daysDiff = Math.ceil(timeDiff / msPerDay);
+
+      // Check if (expiring in the next 30 days) AND (not already expired)
+      if (daysDiff >= 0 && daysDiff <= 30) {
+        this.isWarrantyExpiring = true;
+        this.warrantyExpiresInDays = daysDiff;
+      }
+      
+    } catch (e) {
+      console.error('Error checking warranty status', e);
+    }
+  }
+  // --- END OF MODIFICATION ---
 
   setupFooterActions(device: Device): void {
     const actions: FooterAction[] = [
