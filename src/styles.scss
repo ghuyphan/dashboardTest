@@ -448,9 +448,11 @@ body > ul.submenu.open {
 
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
-  background: rgba(0, 0, 0, 0.3);
-  // backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(3px);
   /* animation: modal-fade-in 0.2s ease-out; -- REMOVED TO PREVENT LAG */
+    transition: none !important; /* Disables the CDK's default opacity transition */
+  animation: none !important;  /* Disables all animations */
 }
 
 .app-modal-panel {
@@ -458,7 +460,7 @@ body > ul.submenu.open {
   background: none;
   box-shadow: none;
   border-radius: 0;
-  animation: modal-fade-in 0.2s ease-out; /* This animates the content panel */
+  // animation: modal-fade-in 0.1s ease-out !important;
 }
 
 /* ============================================
