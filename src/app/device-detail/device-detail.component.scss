@@ -1,310 +1,319 @@
 /* ghuyphan/dashboardtest/dashboardTest-9cca48aabb631ff285e83e463edbc63487aa62ca/src/app/device-detail/device-detail.component.scss */
 :host {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .page-container {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    /* --- START OF MODIFICATION --- */
-    padding: var(--spacing-xs); /* Add padding to match other pages */
-    box-sizing: border-box;
-    background-color: var(--gray-50); /* Use gray background for contrast */
-    /* --- END OF MODIFICATION --- */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* --- MODIFICATION: Added more padding & background --- */
+  padding: var(--spacing-xs); /* Use larger padding for the page */
+  box-sizing: border-box;
+  background-color: var(--gray-50); /* Use gray background for card contrast */
+  /* --- END MODIFICATION --- */
+
+  /* --- MODIFICATION: Responsive padding --- */
+  @media (max-width: 768px) {
+    padding: var(--spacing-xs);
+  }
+
+  @media (max-width: 480px) {
+    padding: var(--spacing-xs);
+  }
 }
 
 .detail-loading-spinner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    font-size: 1.1rem;
-    color: var(--gray-600);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 1.1rem;
+  color: var(--gray-600);
 }
 
 .detail-card-wrapper {
-    height: auto;
+  height: auto;
 }
 
 .detail-card {
-    max-width: 100%;
-    margin: 0;
-    background: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
-    overflow: visible; /* Allow shadows */
-    height: auto;
-    display: flex;
-    flex-direction: column;
+  /* --- MODIFICATION: This is now the SINGLE card --- */
+  max-width: 100%;
+  margin: 0;
+  background: var(--white); /* White background */
+  border-radius: var(--border-radius-lg); /* Rounded corners */
+  box-shadow: var(--box-shadow-md); /* Standard shadow */
+  border: none;
+  overflow: hidden; /* CRITICAL: To contain the child elements */
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  /* --- END MODIFICATION --- */
 }
 
 .detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  /* --- MODIFICATION: This is no longer a card --- */
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--gray-200); /* Separator line */
+  /* REMOVED: background-color, border-radius, box-shadow */
+  /* --- END MODIFICATION --- */
+
+  .header-icon {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--teal-blue-light);
+    color: var(--teal-blue-dark);
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-lg);
-    background-color: var(--white);
-    /* --- MODIFICATION: Removed border --- */
-    /* border: 1px solid var(--gray-200); */
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--box-shadow-md); /* This now matches the widget cards */
+    justify-content: center;
+    font-size: 1.5rem;
+  }
 
-    .header-icon {
-        flex-shrink: 0;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background-color: var(--teal-blue-light);
-        color: var(--teal-blue-dark);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
+  .header-text {
+    flex-grow: 1;
+    min-width: 0;
+  }
 
-    .header-text {
-        flex-grow: 1;
-        min-width: 0;
-    }
+  .device-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-    .device-name {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin: 0;
-        line-height: 1.2;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+  .device-code {
+    font-size: 1rem;
+    color: var(--gray-600);
+    font-family: monospace;
+  }
 
-    .device-code {
-        font-size: 1rem;
-        color: var(--gray-600);
-        font-family: monospace;
-    }
-
-    .header-status .status-chip {
-        padding: 6px 14px;
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
+  .header-status .status-chip {
+    padding: 6px 14px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
 }
 
 .detail-body {
-    display: flex;
-    padding: var(--spacing-lg);
-    background-color: var(--white);
-    /* --- MODIFICATION: Removed border --- */
-    /* border: 1px solid var(--gray-200); */
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--box-shadow-md); /* This now matches the widget cards */
-    margin-top: var(--spacing-lg); 
-    
-    gap: var(--spacing-xl);
-    flex: 1;
-    min-height: 0;
+  display: flex;
+  /* --- MODIFICATION: This is no longer a card --- */
+  padding: 0; /* Padding is now on the children */
+  gap: 0; /* Gap is removed */
+  /* REMOVED: background-color, border-radius, box-shadow, margin-top */
+  /* --- END MODIFICATION --- */
+  flex: 1;
+  min-height: 0;
 
-    @media (max-width: 768px) {
-        flex-direction: column-reverse;
-    }
+  @media (max-width: 992px) { /* Use a larger breakpoint for this */
+    flex-direction: column; /* Stack vertically on tablets */
+  }
 }
 
 .info-grid {
-    flex: 2; // Takes 2/3 of space
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-lg) var(--spacing-md);
-    min-width: 0;
+  flex: 3; // Takes more space
+  display: grid;
+  /* --- MODIFICATION: Switched to 3 columns --- */
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-lg); /* Added internal padding */
+  /* --- END MODIFICATION --- */
+  min-width: 0;
 
-    @media (max-width: 480px) {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
+  @media (max-width: 1200px) { /* On smaller desktops, 2 cols */
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) { /* On mobile, 1 col */
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
 }
 
 .info-item {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 
-    &.full-width {
-        grid-column: 1 / -1;
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .info-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    margin-bottom: var(--spacing-xs);
+    text-transform: uppercase;
+  }
+
+  .info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &.description {
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-
-    .info-label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: var(--gray-500);
-        margin-bottom: var(--spacing-xs);
-        text-transform: uppercase;
-    }
-
-    .info-value {
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--gray-800);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-
-        &.description {
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-    }
+  }
 }
 
 .meta-panel {
-    flex: 1; // Takes 1/3 of space
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xl);
+  flex: 1; // Takes 1/3 of space
+  min-width: 250px; /* Give it a reasonable min-width */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  /* --- MODIFICATION: Visually group this panel --- */
+  background-color: var(--gray-100);
+  padding: var(--spacing-lg);
+  border-left: 1px solid var(--gray-200);
+  /* --- END MODIFICATION --- */
+
+  @media (max-width: 992px) {
+    /* When stacked, remove side border and add top border */
+    border-left: none;
+    border-top: 1px solid var(--gray-200);
+  }
 }
 
 .meta-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--gray-700);
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--gray-200);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--gray-200);
 }
 
 .qr-code-section {
-    text-align: center;
+  text-align: center;
 
-    .qr-code-box {
-        padding: var(--spacing-sm);
-        background-color: var(--white);
-        border-radius: var(--border-radius-md);
-        border: 1px solid var(--gray-200);
-        display: inline-block;
-    }
+  .qr-code-box {
+    padding: var(--spacing-sm);
+    background-color: var(--white);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--gray-200);
+    display: inline-block;
+  }
 
-    .qr-caption {
-        display: block;
-        margin-top: var(--spacing-sm);
-        font-family: monospace;
-        font-size: 0.875rem;
-        color: var(--gray-600);
-    }
+  .qr-caption {
+    display: block;
+    margin-top: var(--spacing-sm);
+    font-family: monospace;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+  }
 }
 
 .purchase-section {
-    .info-item {
-        margin-bottom: var(--spacing-md);
+  .info-item {
+    margin-bottom: var(--spacing-md);
 
-        &:last-child {
-            margin-bottom: 0;
-        }
+    &:last-child {
+      margin-bottom: 0;
     }
+  }
 }
 
-/* --- PRINT STYLES --- */
+/* --- PRINT STYLES (Unchanged) --- */
 #qr-print-section {
-    display: none;
-    background-color: white;
+  display: none;
+  background-color: white;
 }
 
 .qr-compact-label {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    border: 1px solid #000;
-    border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid #000;
+  border-radius: 8px;
 }
 
 .compact-info {
-    text-align: left;
+  text-align: left;
 }
 
 .device-title {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: #000;
-    margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 0.25rem;
 }
 
 .device-detail {
-    font-size: 0.75rem;
-    font-family: monospace;
-    color: #333;
-    line-height: 1.3;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #333;
+  line-height: 1.3;
 }
 
-/* --- PRINT MEDIA QUERY --- */
+/* --- PRINT MEDIA QUERY (Unchanged) --- */
 @media print {
-    @page {
-        size: auto;
-        margin: 5mm;
-    }
+  @page {
+    size: auto;
+    margin: 5mm;
+  }
 
-    body * {
-        visibility: hidden !important;
-    }
+  body * {
+    visibility: hidden !important;
+  }
 
-    #qr-print-section,
-    #qr-print-section * {
-        visibility: visible !important;
-    }
+  #qr-print-section,
+  #qr-print-section * {
+    visibility: visible !important;
+  }
 
-    #qr-print-section {
-        position: absolute !important;
-        left: 10mm !important;
-        top: 10mm !important;
-        display: block !important;
-    }
+  #qr-print-section {
+    position: absolute !important;
+    left: 10mm !important;
+    top: 10mm !important;
+    display: block !important;
+  }
 
-    .qr-compact-label {
-        border: 1px solid #000 !important;
-        border-radius: 8px !important;
-        padding: 0.5rem !important;
-    }
+  .qr-compact-label {
+    border: 1px solid #000 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem !important;
+  }
 
-    .device-title,
-    .device-detail {
-        color: #000 !important;
-    }
+  .device-title,
+  .device-detail {
+    color: #000 !important;
+  }
 
-    #qr-print-section qrcode canvas {
-        display: block !important;
-    }
-}
-
-/* --- MODIFICATION: Responsive padding for page container --- */
-@media (max-width: 768px) {
-  .page-container {
-    padding: var(--spacing-md);
+  #qr-print-section qrcode canvas {
+    display: block !important;
   }
 }
 
-@media (max-width: 480px) {
-  .page-container {
-    padding: var(--spacing-sm);
-  }
-}
-
-/* --- START OF MODIFICATION --- */
-/* --- ADDED: Warranty Expiry Styles --- */
+/* --- Warranty Expiry Styles (Unchanged) --- */
 .info-value.expiring {
-  color: var(--color-warning); /* Use the global warning color */
-  font-weight: 600; /* Make it bold */
-  display: flex; /* Align icon and text */
+  color: var(--color-warning);
+  font-weight: 600;
+  display: flex;
   align-items: center;
-  flex-wrap: wrap; /* Allow text to wrap if needed */
+  flex-wrap: wrap;
 
   i {
     margin-right: var(--spacing-xs);
     font-size: 0.9em;
-    /* Add a subtle animation */
     animation: pulse-warning 1.5s infinite;
   }
 }
@@ -313,7 +322,7 @@
   font-size: 0.9em;
   font-weight: 500;
   margin-left: var(--spacing-sm);
-  color: var(--gray-700); /* Darker text for readability */
+  color: var(--gray-700);
 }
 
 @keyframes pulse-warning {
@@ -330,4 +339,3 @@
     transform: scale(1);
   }
 }
-/* --- END OF MODIFICATION --- */
