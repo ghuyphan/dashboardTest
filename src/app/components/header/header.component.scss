@@ -16,7 +16,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--white);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
   height: var(--header-height);
   flex-shrink: 0;
   position: sticky;

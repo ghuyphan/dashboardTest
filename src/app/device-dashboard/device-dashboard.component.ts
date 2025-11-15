@@ -28,39 +28,62 @@ import { WidgetCardComponent } from '../components/widget-card/widget-card.compo
 
 // --- MODIFICATION: Import PieChart and necessary components ---
 import { BarChart, LineChart, PieChart } from 'echarts/charts';
-import { 
-  GridComponent, 
-  DataZoomComponent, 
-  TitleComponent, 
-  TooltipComponent, 
-  LegendComponent 
+import {
+  GridComponent,
+  DataZoomComponent,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
 } from 'echarts/components';
 // --- END MODIFICATION ---
+
+// --- START OF MODIFICATION ---
+// 1. Import the table component and its column definition
+import {
+  ReusableTableComponent,
+  GridColumn,
+} from '../components/reusable-table/reusable-table.component';
+// --- END OF MODIFICATION ---
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 function getCssVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
 }
 
 type EChartsOption = EChartsCoreOption;
 
 // (Interfaces remain unchanged)
 interface WidgetData {
-  id: string; icon: string; title: string; value: string; caption: string; accentColor: string;
+  id: string;
+  icon: string;
+  title: string;
+  value: string;
+  caption: string;
+  accentColor: string;
 }
 interface DeviceStatsData {
-  TenTrangThai: string; SoLuong: number;
+  TenTrangThai: string;
+  SoLuong: number;
 }
 interface AggregatedData {
-  name: string; value: number;
+  name: string;
+  value: number;
 }
 interface TemporalData {
-  month: string; value: number;
+  month: string;
+  value: number;
 }
 interface ActionableDevice {
-  Id: number; Ten: string; Ma: string; ViTri: string; TrangThai_Ten?: string | null; NgayHetHanBH?: string | null;
+  Id: number;
+  Ten: string;
+  Ma: string;
+  ViTri: string;
+  TrangThai_Ten?: string | null;
+  NgayHetHanBH?: string | null;
 }
 type FilterType = 'status' | 'category' | 'location';
 interface ChartFilter {
@@ -68,11 +91,11 @@ interface ChartFilter {
   name: string;
 }
 
-
 @Component({
   selector: 'app-device-dashboard',
   standalone: true,
-  imports: [CommonModule, WidgetCardComponent],
+  // 2. Add ReusableTableComponent to imports
+  imports: [CommonModule, WidgetCardComponent, ReusableTableComponent],
   templateUrl: './device-dashboard.component.html',
   styleUrl: './device-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,7 +119,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private router = inject(Router);
 
   private echartsInstance?: typeof echarts;
-  
+
   // --- MODIFICATION (Suggestion 2) ---
   private chartInstanceStatus?: EChartsType; // Renamed from chartInstancePie
   // --- END MODIFICATION ---
@@ -113,9 +136,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private intersectionObserverInitialized = false;
 
   private allDevices: Device[] = [];
-  
+
   public currentFilter: ChartFilter | null = null;
-  public visibleFilter: ChartFilter | null = null; 
+  public visibleFilter: ChartFilter | null = null;
   private filterTransitionTimer: any;
 
   public widgetData: WidgetData[] = [];
@@ -127,16 +150,48 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   public trendData: TemporalData[] = [];
   public attentionDevices: ActionableDevice[] = [];
   public expiringDevices: ActionableDevice[] = [];
-  
+
+  // --- START OF MODIFICATION ---
+  // 3. Define the column structures for your new tables
+  public attentionTableColumns: GridColumn[] = [
+    { key: 'Ten', label: 'Tên Thiết Bị (Mã)', sortable: true, width: '50%' },
+    { key: 'ViTri', label: 'Vị Trí', sortable: true, width: '25%' },
+    {
+      key: 'TrangThai_Ten',
+      label: 'Trạng Thái',
+      sortable: true,
+      width: '25%',
+    },
+  ];
+
+  public expiringTableColumns: GridColumn[] = [
+    { key: 'Ten', label: 'Tên Thiết Bị (Mã)', sortable: true, width: '50%' },
+    { key: 'ViTri', label: 'Vị Trí', sortable: true, width: '25%' },
+    {
+      key: 'NgayHetHanBH',
+      label: 'Ngày Hết Hạn',
+      sortable: true,
+      width: '25%',
+    },
+  ];
+  // --- END OF MODIFICATION ---
+
   private statusColorMap = new Map<string, string>();
   private cssVars = {
-    gray200: '', gray700: '', gray800: '', white: '',
-    colorSuccess: '', colorWarning: '', colorDanger: '',
-    colorInfo: '', colorPurple: '', colorBlue: '',
-    colorInUse: '', 
-    colorBooked: '', 
-    colorLoaned: '', 
-    colorDefault: '', 
+    gray200: '',
+    gray700: '',
+    gray800: '',
+    white: '',
+    colorSuccess: '',
+    colorWarning: '',
+    colorDanger: '',
+    colorInfo: '',
+    colorPurple: '',
+    colorBlue: '',
+    colorInUse: '',
+    colorBooked: '',
+    colorLoaned: '',
+    colorDefault: '',
   };
 
   private destroy$ = new Subject<void>();
@@ -145,7 +200,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
   ngOnInit(): void {
     this.initColors();
-    this.isLoading = true; 
+    this.isLoading = true;
     this.cd.markForCheck();
     Promise.resolve().then(() => this.loadData());
   }
@@ -168,16 +223,16 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   private setupResizeHandling(): void {
-    this.chartResizeSubscription = this.resizeSubject.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.ngZone.runOutsideAngular(() => {
-        this.chartInstanceStatus?.resize(); // Renamed
-        this.chartInstanceCategory?.resize();
-        this.chartInstanceLocation?.resize();
-        this.chartInstanceTrend?.resize();
+    this.chartResizeSubscription = this.resizeSubject
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.ngZone.runOutsideAngular(() => {
+          this.chartInstanceStatus?.resize(); // Renamed
+          this.chartInstanceCategory?.resize();
+          this.chartInstanceLocation?.resize();
+          this.chartInstanceTrend?.resize();
+        });
       });
-    });
   }
 
   private triggerResize(): void {
@@ -189,11 +244,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       this.initializeCharts();
       return;
     }
-    
+
     // --- MODIFICATION (Suggestion 2) ---
     // Use the renamed chart container
     if (!this.chartContainerStatus || !this.chartContainerStatus.nativeElement) {
-      this.initializeCharts(); 
+      this.initializeCharts();
       return;
     }
     // --- END MODIFICATION ---
@@ -220,16 +275,25 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.isChartInitialized = true;
 
     await this.lazyLoadECharts();
-    
+
     // --- MODIFICATION (Suggestion 2) ---
-    this.chartInstanceStatus = this.initChart(this.chartContainerStatus.nativeElement); // Renamed
+    this.chartInstanceStatus = this.initChart(
+      this.chartContainerStatus.nativeElement
+    ); // Renamed
     // --- END MODIFICATION ---
-    this.chartInstanceCategory = this.initChart(this.chartContainerCategory.nativeElement);
-    this.chartInstanceLocation = this.initChart(this.chartContainerLocation.nativeElement);
-    this.chartInstanceTrend = this.initChart(this.chartContainerTrend.nativeElement);
-    
+    this.chartInstanceCategory = this.initChart(
+      this.chartContainerCategory.nativeElement
+    );
+    this.chartInstanceLocation = this.initChart(
+      this.chartContainerLocation.nativeElement
+    );
+    this.chartInstanceTrend = this.initChart(
+      this.chartContainerTrend.nativeElement
+    );
+
     // --- MODIFICATION (Suggestion 2) ---
-    this.chartInstanceStatus?.on('click', (params) => { // Renamed
+    this.chartInstanceStatus?.on('click', (params) => {
+      // Renamed
       this.ngZone.run(() => this.onChartClick('status', params));
     });
     // --- END MODIFICATION ---
@@ -239,7 +303,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.chartInstanceLocation?.on('click', (params) => {
       this.ngZone.run(() => this.onChartClick('location', params));
     });
-    
+
     this.setupResizeListener();
     this.refilterAndRenderAll();
   }
@@ -248,45 +312,66 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     try {
       // --- MODIFICATION: Added all necessary components ---
       const [
-        echartsCore, CanvasRenderer, PieChartModule, BarChartModule, LineChartModule,
-        TitleComponentModule, TooltipComponentModule, LegendComponentModule, GridComponentModule, DataZoomComponentModule,
+        echartsCore,
+        CanvasRenderer,
+        PieChartModule,
+        BarChartModule,
+        LineChartModule,
+        TitleComponentModule,
+        TooltipComponentModule,
+        LegendComponentModule,
+        GridComponentModule,
+        DataZoomComponentModule,
       ] = await Promise.all([
-        import('echarts/core'), import('echarts/renderers'), import('echarts/charts'),
-        import('echarts/charts'), import('echarts/charts'), import('echarts/components'),
-        import('echarts/components'), import('echarts/components'), import('echarts/components'), 
-        import('echarts/components'), 
+        import('echarts/core'),
+        import('echarts/renderers'),
+        import('echarts/charts'),
+        import('echarts/charts'),
+        import('echarts/charts'),
+        import('echarts/components'),
+        import('echarts/components'),
+        import('echarts/components'),
+        import('echarts/components'),
+        import('echarts/components'),
       ]);
       // --- END MODIFICATION ---
       this.echartsInstance = echartsCore;
       // --- MODIFICATION: Use all imported components ---
       this.echartsInstance.use([
-        CanvasRenderer.CanvasRenderer, PieChartModule.PieChart, BarChartModule.BarChart, LineChartModule.LineChart,
-        TitleComponentModule.TitleComponent, TooltipComponentModule.TooltipComponent, LegendComponentModule.LegendComponent,
-        GridComponentModule.GridComponent, DataZoomComponentModule.DataZoomComponent,
+        CanvasRenderer.CanvasRenderer,
+        PieChartModule.PieChart,
+        BarChartModule.BarChart,
+        LineChartModule.LineChart,
+        TitleComponentModule.TitleComponent,
+        TooltipComponentModule.TooltipComponent,
+        LegendComponentModule.LegendComponent,
+        GridComponentModule.GridComponent,
+        DataZoomComponentModule.DataZoomComponent,
       ]);
       // --- END MODIFICATION ---
-    } catch (error) { console.error('Error lazy-loading ECharts', error); }
+    } catch (error) {
+      console.error('Error lazy-loading ECharts', error);
+    }
   }
 
-
   private initColors(): void {
-    const c = getCssVar; 
-    
+    const c = getCssVar;
+
     this.cssVars = {
       gray200: c('--gray-200'),
       gray700: c('--gray-700'),
       gray800: c('--gray-800'),
       white: c('--white'),
-      colorSuccess: c('--color-success'),     // Sẵn sàng
-      colorWarning: c('--color-warning'),    // Bảo trì / Sửa chữa
-      colorDanger: c('--color-danger'),     // Hỏng / Thanh lý
+      colorSuccess: c('--color-success'), // Sẵn sàng
+      colorWarning: c('--color-warning'), // Bảo trì / Sửa chữa
+      colorDanger: c('--color-danger'), // Hỏng / Thanh lý
       colorInfo: c('--color-info'),
       colorPurple: c('--chart-color-6'),
       colorBlue: c('--peacock-blue'),
       colorInUse: c('--peacock-blue-light'), // Đang sử dụng
-      colorBooked: c('--chart-color-6'),     // Đã Book
-      colorLoaned: c('--chart-color-9'),     // Cho mượn
-      colorDefault: c('--gray-500'),          // Khác
+      colorBooked: c('--chart-color-6'), // Đã Book
+      colorLoaned: c('--chart-color-9'), // Cho mượn
+      colorDefault: c('--gray-500'), // Khác
     };
 
     this.statusColorMap.set('Sẵn sàng', this.cssVars.colorSuccess);
@@ -299,14 +384,56 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.statusColorMap.set('Cho mượn', this.cssVars.colorLoaned);
 
     this.widgetData = [
-      { id: 'totalDevices', icon: 'fas fa-server', title: 'Tổng Thiết Bị', value: '0', caption: 'Total Devices', accentColor: this.cssVars.colorBlue },
+      {
+        id: 'totalDevices',
+        icon: 'fas fa-server',
+        title: 'Tổng Thiết Bị',
+        value: '0',
+        caption: 'Total Devices',
+        accentColor: this.cssVars.colorBlue,
+      },
       // --- MODIFICATION (Suggestion 4) ---
-      { id: 'attentionValue', icon: 'fas fa-dollar-sign', title: 'Giá trị TB cần sửa', value: '0 ₫', caption: 'Value of Attention Devices', accentColor: this.cssVars.colorWarning },
+      {
+        id: 'attentionValue',
+        icon: 'fas fa-dollar-sign',
+        title: 'Giá trị TB cần sửa',
+        value: '0 ₫',
+        caption: 'Value of Attention Devices',
+        accentColor: this.cssVars.colorWarning,
+      },
       // --- END MODIFICATION ---
-      { id: 'inUse', icon: 'fas fa-power-off', title: 'Đang Sử Dụng', value: '0', caption: 'In Use', accentColor: this.cssVars.colorInfo },
-      { id: 'ready', icon: 'fas fa-check-circle', title: 'Sẵn Sàng', value: '0', caption: 'Ready', accentColor: this.cssVars.colorSuccess },
-      { id: 'needsAttention', icon: 'fas fa-exclamation-triangle', title: 'Cần Chú Ý', value: '0', caption: 'Needs Attention', accentColor: this.cssVars.colorWarning },
-      { id: 'expiring', icon: 'fas fa-calendar-times', title: 'Sắp Hết BH', value: '0', caption: 'Warranty Expiring', accentColor: this.cssVars.colorDanger }
+      {
+        id: 'inUse',
+        icon: 'fas fa-power-off',
+        title: 'Đang Sử Dụng',
+        value: '0',
+        caption: 'In Use',
+        accentColor: this.cssVars.colorInfo,
+      },
+      {
+        id: 'ready',
+        icon: 'fas fa-check-circle',
+        title: 'Sẵn Sàng',
+        value: '0',
+        caption: 'Ready',
+        accentColor: this.cssVars.colorSuccess,
+      },
+      {
+        id: 'needsAttention',
+        icon: 'fas fa-exclamation-triangle',
+        title: 'Cần Chú Ý',
+        value: '0',
+        caption: 'Needs Attention',
+        accentColor: this.cssVars.colorWarning,
+      },
+      {
+        id: 'expiring',
+        icon: 'fas fa-calendar-times',
+        title: 'Sắp Hết BH',
+        value: '0',
+        caption: 'Warranty Expiring',
+        accentColor: this.cssVars.colorDanger,
+      },
     ];
   }
 
@@ -314,7 +441,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     if (!this.echartsInstance || !container) return;
     let chart: EChartsType | undefined;
     this.ngZone.runOutsideAngular(() => {
-      chart = this.echartsInstance!.init(container, undefined, { renderer: 'canvas', useDirtyRect: true });
+      chart = this.echartsInstance!.init(container, undefined, {
+        renderer: 'canvas',
+        useDirtyRect: true,
+      });
     });
     return chart;
   }
@@ -339,13 +469,13 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   public loadData(): void {
-    const apiUrl = environment.equipmentCatUrl; 
+    const apiUrl = environment.equipmentCatUrl;
     this.http
-      .get<Device[]>(apiUrl) 
+      .get<Device[]>(apiUrl)
       .pipe(
         finalize(() => {
           this.isLoading = false;
-          this.cd.markForCheck(); 
+          this.cd.markForCheck();
           if (!this.intersectionObserverInitialized) {
             this.ngZone.runOutsideAngular(() => {
               setTimeout(() => {
@@ -359,8 +489,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       )
       .subscribe({
         next: (allDevices) => {
-          this.allDevices = allDevices; 
-          this.refilterAndRenderAll(); 
+          this.allDevices = allDevices;
+          this.refilterAndRenderAll();
         },
         error: (error) => {
           console.error('Error loading all device data:', error);
@@ -378,23 +508,33 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
     if (this.currentFilter) {
       const { type, name } = this.currentFilter;
-      const filterName = name; 
+      const filterName = name;
 
       switch (type) {
         case 'status':
-          filteredDevices = this.allDevices.filter(d => (d.TrangThai_Ten || 'Không xác định') === filterName);
+          filteredDevices = this.allDevices.filter(
+            (d) => (d.TrangThai_Ten || 'Không xác định') === filterName
+          );
           break;
         case 'category':
-          filteredDevices = this.allDevices.filter(d => (d.TenLoaiThietBi || 'Không xác định') === filterName);
+          filteredDevices = this.allDevices.filter(
+            (d) => (d.TenLoaiThietBi || 'Không xác định') === filterName
+          );
           break;
         case 'location':
           // --- MODIFICATION (Suggestion 3) ---
           // This filter action is now different.
           // It filters by locations that HAVE devices needing attention.
-          filteredDevices = this.allDevices.filter(d => {
+          filteredDevices = this.allDevices.filter((d) => {
             const statusLower = (d.TrangThai_Ten || '').toLowerCase();
-            const needsAttention = statusLower.includes('bảo trì') || statusLower.includes('hỏng') || statusLower.includes('sửa chữa');
-            return needsAttention && (d.ViTri || 'Không xác định') === filterName;
+            const needsAttention =
+              statusLower.includes('bảo trì') ||
+              statusLower.includes('hỏng') ||
+              statusLower.includes('sửa chữa');
+            return (
+              needsAttention &&
+              (d.ViTri || 'Không xác định') === filterName
+            );
           });
           // --- END MODIFICATION ---
           break;
@@ -402,12 +542,19 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     this.calculateAndUpdateWidgets(filteredDevices);
-    
+
     // --- MODIFICATION (Suggestion 3) ---
     // Pass the *unfiltered* list to get the location data, as it's now a "problem" chart
-    const { statusData, categoryData, locationData, trendData, attentionDevices, expiringDevices } = this.aggregateAllData(filteredDevices, this.allDevices);
+    const {
+      statusData,
+      categoryData,
+      locationData,
+      trendData,
+      attentionDevices,
+      expiringDevices,
+    } = this.aggregateAllData(filteredDevices, this.allDevices);
     // --- END MODIFICATION ---
-    
+
     this.statusData = statusData; // Renamed
     this.categoryData = categoryData;
     this.locationData = locationData;
@@ -419,11 +566,13 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.renderStatusChart(this.statusData); // Renamed call
     this.renderCategoryChart(this.categoryData);
     // Pass a dynamic title to the location chart
-    const locationTitle = this.currentFilter ? `Vị trí (Đã lọc)` : `Vị trí có nhiều TB cần chú ý`;
+    const locationTitle = this.currentFilter
+      ? `Vị trí (Đã lọc)`
+      : `Vị trí có nhiều TB cần chú ý`;
     this.renderLocationChart(this.locationData, locationTitle);
     this.renderTrendChart(this.trendData);
     // --- END MODIFICATION ---
-    
+
     this.cd.markForCheck();
   }
 
@@ -433,12 +582,16 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
     clearTimeout(this.filterTransitionTimer);
 
-    if (this.currentFilter && this.currentFilter.type === type && this.currentFilter.name === clickedName) {
+    if (
+      this.currentFilter &&
+      this.currentFilter.type === type &&
+      this.currentFilter.name === clickedName
+    ) {
       this.clearFilter();
     } else {
       const newFilter = { type, name: clickedName };
-      this.currentFilter = newFilter; 
-      this.visibleFilter = newFilter; 
+      this.currentFilter = newFilter;
+      this.visibleFilter = newFilter;
       this.refilterAndRenderAll();
     }
   }
@@ -447,37 +600,49 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     clearTimeout(this.filterTransitionTimer);
 
     this.currentFilter = null;
-    this.refilterAndRenderAll(); 
+    this.refilterAndRenderAll();
 
     this.filterTransitionTimer = setTimeout(() => {
-      this.visibleFilter = null; 
-      this.cd.markForCheck(); 
+      this.visibleFilter = null;
+      this.cd.markForCheck();
     }, 300);
   }
-  
+
   // --- MODIFICATION (Suggestion 3) ---
   // Now accepts the *full* device list to build the location chart,
   // while `filteredDevices` is used for all other charts.
-  private aggregateAllData(filteredDevices: Device[], allDevices: Device[]): {
-    statusData: DeviceStatsData[], categoryData: AggregatedData[], locationData: AggregatedData[],
-    trendData: TemporalData[], attentionDevices: ActionableDevice[], expiringDevices: ActionableDevice[],
+  private aggregateAllData(
+    filteredDevices: Device[],
+    allDevices: Device[]
+  ): {
+    statusData: DeviceStatsData[];
+    categoryData: AggregatedData[];
+    locationData: AggregatedData[];
+    trendData: TemporalData[];
+    attentionDevices: ActionableDevice[];
+    expiringDevices: ActionableDevice[];
   } {
     const statusMap = new Map<string, number>();
     const categoryMap = new Map<string, number>();
     const trendMap = new Map<string, number>();
     const attentionDevices: ActionableDevice[] = [];
     const expiringDevices: ActionableDevice[] = [];
-    
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const oneYearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(
+      today.getTime() + 30 * 24 * 60 * 60 * 1000
+    );
+    const oneYearAgo = new Date(
+      today.getTime() - 365 * 24 * 60 * 60 * 1000
+    );
 
     // Loop 1: Use filteredDevices for most charts and lists
     for (const device of filteredDevices) {
-      if (!device.Id) continue; 
+      if (!device.Id) continue;
       const statusName = device.TrangThai_Ten || 'Không xác định';
       const categoryName = device.TenLoaiThietBi || 'Không xác định';
-      
+
       statusMap.set(statusName, (statusMap.get(statusName) || 0) + 1);
       categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + 1);
 
@@ -485,89 +650,172 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         try {
           const createdDate = this.parseDate(device.NgayTao);
           if (createdDate && createdDate >= oneYearAgo) {
-            const monthKey = `${createdDate.getFullYear()}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            const monthKey = `${createdDate.getFullYear()}-${(
+              createdDate.getMonth() + 1
+            )
+              .toString()
+              .padStart(2, '0')}`;
             trendMap.set(monthKey, (trendMap.get(monthKey) || 0) + 1);
           }
-        } catch (e) { }
+        } catch (e) {}
       }
 
       const statusLower = statusName.toLowerCase();
-      if (statusLower.includes('bảo trì') || statusLower.includes('hỏng') || statusLower.includes('sửa chữa')) {
+      if (
+        statusLower.includes('bảo trì') ||
+        statusLower.includes('hỏng') ||
+        statusLower.includes('sửa chữa')
+      ) {
         attentionDevices.push({
-          Id: device.Id, Ten: device.Ten, Ma: device.Ma, ViTri: device.ViTri || 'N/A', TrangThai_Ten: device.TrangThai_Ten,
+          Id: device.Id,
+          // --- START OF MODIFICATION ---
+          // Combine Ten and Ma for the table
+          Ten: `${device.Ten} (${device.Ma})`,
+          Ma: device.Ma,
+          // --- END OF MODIFICATION ---
+          ViTri: device.ViTri || 'N/A',
+          TrangThai_Ten: device.TrangThai_Ten,
         });
       }
-      
+
       if (device.NgayHetHanBH) {
-         try {
-           const expiryDate = this.parseDate(device.NgayHetHanBH);
-           if (expiryDate && expiryDate <= thirtyDaysFromNow && expiryDate >= today) {
-              expiringDevices.push({
-                Id: device.Id, Ten: device.Ten, Ma: device.Ma, ViTri: device.ViTri || 'N/A', NgayHetHanBH: this.formatDate(device.NgayHetHanBH)
-              });
-           }
-         } catch(e) {}
+        try {
+          const expiryDate = this.parseDate(device.NgayHetHanBH);
+          if (
+            expiryDate &&
+            expiryDate <= thirtyDaysFromNow &&
+            expiryDate >= today
+          ) {
+            expiringDevices.push({
+              Id: device.Id,
+              // --- START OF MODIFICATION ---
+              // Combine Ten and Ma for the table
+              Ten: `${device.Ten} (${device.Ma})`,
+              Ma: device.Ma,
+              // --- END OF MODIFICATION ---
+              ViTri: device.ViTri || 'N/A',
+              NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
+            });
+          }
+        } catch (e) {}
       }
     }
-    
+
     // --- MODIFICATION (Suggestion 3) ---
     // Loop 2: Use *allDevices* (or filtered, if filter is location) to build the location chart
     const locationMap = new Map<string, number>();
     // If we are filtering by location, we just want to see that location's problems.
     // Otherwise, we want to see *all* problem locations.
-    const devicesForLocationChart = (this.currentFilter?.type === 'location') ? filteredDevices : allDevices;
-    
+    const devicesForLocationChart =
+      this.currentFilter?.type === 'location' ? filteredDevices : allDevices;
+
     for (const device of devicesForLocationChart) {
       const statusLower = (device.TrangThai_Ten || '').toLowerCase();
-      if (statusLower.includes('bảo trì') || statusLower.includes('hỏng') || statusLower.includes('sửa chữa')) {
+      if (
+        statusLower.includes('bảo trì') ||
+        statusLower.includes('hỏng') ||
+        statusLower.includes('sửa chữa')
+      ) {
         const locationName = device.ViTri || 'Không xác định';
         locationMap.set(locationName, (locationMap.get(locationName) || 0) + 1);
       }
     }
     // --- END MODIFICATION ---
 
-    const statusData = Array.from(statusMap, ([ten, sl]) => ({ TenTrangThai: ten, SoLuong: sl }));
-    const categoryData = Array.from(categoryMap, ([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
-    const locationData = Array.from(locationMap, ([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value).slice(0, 10);
-    const trendData = Array.from(trendMap, ([month, value]) => ({ month, value })).sort((a,b) => a.month.localeCompare(b.month));
-    
-    expiringDevices.sort((a,b) => this.parseDate(a.NgayHetHanBH!)!.getTime() - this.parseDate(b.NgayHetHanBH!)!.getTime());
-    
-    return { statusData, categoryData, locationData, trendData, attentionDevices, expiringDevices };
+    const statusData = Array.from(statusMap, ([ten, sl]) => ({
+      TenTrangThai: ten,
+      SoLuong: sl,
+    }));
+    const categoryData = Array.from(categoryMap, ([name, value]) => ({
+      name,
+      value,
+    })).sort((a, b) => b.value - a.value);
+    const locationData = Array.from(locationMap, ([name, value]) => ({
+      name,
+      value,
+    }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+    const trendData = Array.from(trendMap, ([month, value]) => ({
+      month,
+      value,
+    })).sort((a, b) => a.month.localeCompare(b.month));
+
+    expiringDevices.sort(
+      (a, b) =>
+        this.parseDate(a.NgayHetHanBH!)!.getTime() -
+        this.parseDate(b.NgayHetHanBH!)!.getTime()
+    );
+
+    return {
+      statusData,
+      categoryData,
+      locationData,
+      trendData,
+      attentionDevices,
+      expiringDevices,
+    };
   }
-  
+
   private calculateAndUpdateWidgets(devicesToCalc: Device[]): void {
     // --- MODIFICATION (Suggestion 4) ---
-    let attentionValue = 0, inUse = 0, ready = 0, needsAttention = 0, expiring = 0;
+    let attentionValue = 0,
+      inUse = 0,
+      ready = 0,
+      needsAttention = 0,
+      expiring = 0;
     // --- END MODIFICATION ---
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(
+      today.getTime() + 30 * 24 * 60 * 60 * 1000
+    );
 
     for (const device of devicesToCalc) {
       const status = (device.TrangThai_Ten || '').toLowerCase();
-      if (status.includes('đang sử dụng')) { inUse++; } 
-      else if (status.includes('sẵn sàng')) { ready++; } 
-      else if (status.includes('bảo trì') || status.includes('hỏng') || status.includes('sửa chữa')) { 
-        needsAttention++; 
-        
+      if (status.includes('đang sử dụng')) {
+        inUse++;
+      } else if (status.includes('sẵn sàng')) {
+        ready++;
+      } else if (
+        status.includes('bảo trì') ||
+        status.includes('hỏng') ||
+        status.includes('sửa chữa')
+      ) {
+        needsAttention++;
+
         // --- MODIFICATION (Suggestion 4) ---
         // Also sum the value if it needs attention
         const price = this.parseValue(device.GiaMua);
-        if (!isNaN(price)) { attentionValue += price; }
+        if (!isNaN(price)) {
+          attentionValue += price;
+        }
         // --- END MODIFICATION ---
       }
 
       if (device.NgayHetHanBH) {
         try {
-           const expiryDate = this.parseDate(device.NgayHetHanBH);
-           if (expiryDate && expiryDate <= thirtyDaysFromNow && expiryDate >= today) { expiring++; }
-        } catch (e) { }
+          const expiryDate = this.parseDate(device.NgayHetHanBH);
+          if (
+            expiryDate &&
+            expiryDate <= thirtyDaysFromNow &&
+            expiryDate >= today
+          ) {
+            expiring++;
+          }
+        } catch (e) {}
       }
     }
 
-    this.updateWidgetValue('totalDevices', this.formatNumber(devicesToCalc.length));
+    this.updateWidgetValue(
+      'totalDevices',
+      this.formatNumber(devicesToCalc.length)
+    );
     // --- MODIFICATION (Suggestion 4) ---
-    this.updateWidgetValue('attentionValue', this.formatCurrency(attentionValue));
+    this.updateWidgetValue(
+      'attentionValue',
+      this.formatCurrency(attentionValue)
+    );
     // --- END MODIFICATION ---
     this.updateWidgetValue('inUse', this.formatNumber(inUse));
     this.updateWidgetValue('ready', this.formatNumber(ready));
@@ -580,23 +828,35 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     if (!dateString) return null;
     try {
       if (dateString.includes('/')) {
-         const parts = dateString.substring(0, 10).split('/');
-         const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-         return isNaN(d.getTime()) ? null : d;
+        const parts = dateString.substring(0, 10).split('/');
+        const d = new Date(
+          Number(parts[2]),
+          Number(parts[1]) - 1,
+          Number(parts[0])
+        );
+        return isNaN(d.getTime()) ? null : d;
       } else {
-         const d = new Date(dateString); 
-         return isNaN(d.getTime()) ? null : d;
+        const d = new Date(dateString);
+        return isNaN(d.getTime()) ? null : d;
       }
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   }
   public formatDate(dateString: string | null | undefined): string {
     const date = this.parseDate(dateString);
     if (!date) return 'N/A';
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   }
   private updateWidgetValue(id: string, value: string): void {
     const widget = this.widgetData.find((w) => w.id === id);
-    if (widget) { widget.value = value; }
+    if (widget) {
+      widget.value = value;
+    }
   }
   private parseValue(val: any): number {
     if (typeof val === 'number') return val;
@@ -613,12 +873,17 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private formatCurrency(value: number): string {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
-      currency: 'VND'
+      currency: 'VND',
     }).format(value);
   }
 
   private formatPercentage(value: number): string {
-    return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value) + '%';
+    return (
+      new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }).format(value) + '%'
+    );
   }
   trackByWidgetId(index: number, item: WidgetData): string {
     return item.id;
@@ -636,22 +901,29 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
     // Sort ascending by value so bar chart is descending (top-to-bottom)
     const sortedData = [...data].sort((a, b) => a.SoLuong - b.SoLuong);
-    const yAxisData = sortedData.map(d => d.TenTrangThai);
-    const seriesData = sortedData.map(d => d.SoLuong);
-    
+    const yAxisData = sortedData.map((d) => d.TenTrangThai);
+    const seriesData = sortedData.map((d) => d.SoLuong);
+
     // Create a color function to pass to the bar chart builder
     const colorFn = (params: any) => {
       const statusName = params.name; // 'params.name' will be the category from yAxisData
       return this.statusColorMap.get(statusName) || this.cssVars.colorDefault;
     };
 
-    const option = this.buildBarOption('Thống Kê Trạng Thái', yAxisData, seriesData, colorFn);
-    
+    const option = this.buildBarOption(
+      'Thống Kê Trạng Thái',
+      yAxisData,
+      seriesData,
+      colorFn
+    );
+
     // Set total count for subtext
     const totalDevices = data.reduce((sum, item) => sum + item.SoLuong, 0);
     const isFiltered = !!this.currentFilter;
-    const subtext = isFiltered ? `Tổng (đã lọc): ${totalDevices}` : `Tổng số: ${totalDevices} thiết bị`;
-    
+    const subtext = isFiltered
+      ? `Tổng (đã lọc): ${totalDevices}`
+      : `Tổng số: ${totalDevices} thiết bị`;
+
     // --- THIS IS THE FIX for TS4111 and TS2339 ---
     const titleConfig = option['title'];
     if (titleConfig && !Array.isArray(titleConfig)) {
@@ -659,17 +931,20 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       option['title'] = {
         ...titleConfig, // Now spreading a known object
         subtext: subtext,
-        subtextStyle: { 
+        subtextStyle: {
           color: isFiltered ? this.cssVars.colorBlue : this.cssVars.gray700,
-          fontSize: 13 
-        }
+          fontSize: 13,
+        },
       };
     }
     // --- END OF FIX ---
 
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
-        this.chartInstanceStatus?.setOption(option, { notMerge: true, lazyUpdate: true });
+        this.chartInstanceStatus?.setOption(option, {
+          notMerge: true,
+          lazyUpdate: true,
+        });
       });
     });
   }
@@ -677,10 +952,17 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
   private renderCategoryChart(data: AggregatedData[]): void {
     if (!this.chartInstanceCategory) return;
-    const option = this.buildBarOption('Số lượng theo Loại Thiết bị', data.map(d => d.name).reverse(), data.map(d => d.value).reverse());
+    const option = this.buildBarOption(
+      'Số lượng theo Loại Thiết bị',
+      data.map((d) => d.name).reverse(),
+      data.map((d) => d.value).reverse()
+    );
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
-        this.chartInstanceCategory?.setOption(option, { notMerge: true, lazyUpdate: true });
+        this.chartInstanceCategory?.setOption(option, {
+          notMerge: true,
+          lazyUpdate: true,
+        });
       });
     });
   }
@@ -690,10 +972,18 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private renderLocationChart(data: AggregatedData[], title: string): void {
     if (!this.chartInstanceLocation) return;
     // Use the colorDanger for this chart
-    const option = this.buildBarOption(title, data.map(d => d.name).reverse(), data.map(d => d.value).reverse(), this.cssVars.colorDanger);
+    const option = this.buildBarOption(
+      title,
+      data.map((d) => d.name).reverse(),
+      data.map((d) => d.value).reverse(),
+      this.cssVars.colorDanger
+    );
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
-        this.chartInstanceLocation?.setOption(option, { notMerge: true, lazyUpdate: true });
+        this.chartInstanceLocation?.setOption(option, {
+          notMerge: true,
+          lazyUpdate: true,
+        });
       });
     });
   }
@@ -701,49 +991,70 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
   private renderTrendChart(data: TemporalData[]): void {
     if (!this.chartInstanceTrend) return;
-    const option = this.buildLineOption('Thiết bị mới theo Tháng', data.map(d => d.month), data.map(d => d.value));
+    const option = this.buildLineOption(
+      'Thiết bị mới theo Tháng',
+      data.map((d) => d.month),
+      data.map((d) => d.value)
+    );
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
-        this.chartInstanceTrend?.setOption(option, { notMerge: true, lazyUpdate: true });
+        this.chartInstanceTrend?.setOption(option, {
+          notMerge: true,
+          lazyUpdate: true,
+        });
       });
     });
   }
-  
+
   // --- MODIFICATION (Suggestion 2) ---
   // This function is now gone.
   // private buildPieOption(data: DeviceStatsData[]): EChartsOption { ... }
   // --- END MODIFICATION ---
 
-
   // --- MODIFICATION (Suggestion 2) ---
   // Updated to accept an optional dynamic color string or function
-  private buildBarOption(title: string, yAxisData: string[], seriesData: number[], color: string | ((params: any) => string) = this.cssVars.colorBlue): EChartsOption {
-  // --- END MODIFICATION ---
+  private buildBarOption(
+    title: string,
+    yAxisData: string[],
+    seriesData: number[],
+    color: string | ((params: any) => string) = this.cssVars.colorBlue
+  ): EChartsOption {
+    // --- END MODIFICATION ---
     return {
       backgroundColor: this.cssVars.white,
-      textStyle: { fontFamily: GLOBAL_FONT_FAMILY, fontSize: 12, color: this.cssVars.gray700 },
+      textStyle: {
+        fontFamily: GLOBAL_FONT_FAMILY,
+        fontSize: 12,
+        color: this.cssVars.gray700,
+      },
       title: {
         text: title,
         left: 'center',
-        textStyle: { color: this.cssVars.gray800, fontWeight: 'bold', fontSize: 16 },
+        textStyle: {
+          color: this.cssVars.gray800,
+          fontWeight: 'bold',
+          fontSize: 16,
+        },
       },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
-        textStyle: { fontFamily: GLOBAL_FONT_FAMILY }
+        textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
       },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
       xAxis: {
         type: 'value',
         boundaryGap: [0, 0.01],
-        splitLine: { lineStyle: { color: this.cssVars.gray200, type: 'dotted' } },
+        splitLine: {
+          lineStyle: { color: this.cssVars.gray200, type: 'dotted' },
+        },
       },
       yAxis: {
         type: 'category',
         data: yAxisData,
         axisTick: { show: false },
         axisLine: { show: false },
-        axisLabel: { fontSize: 10, overflow: 'truncate', width: 100 }
+        axisLabel: { fontSize: 10, overflow: 'truncate', width: 100 },
       },
       series: [
         {
@@ -754,33 +1065,55 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
             // --- MODIFICATION (Suggestion 2) ---
             color: color, // Use the passed color
             // --- END MODIFICATION ---
-            borderRadius: [0, 4, 4, 0]
+            borderRadius: [0, 4, 4, 0],
           },
-          label: { show: true, position: 'right', color: this.cssVars.gray700, fontSize: 10 }
+          label: {
+            show: true,
+            position: 'right',
+            color: this.cssVars.gray700,
+            fontSize: 10,
+          },
         },
       ],
     };
   }
 
-  private buildLineOption(title: string, xAxisData: string[], seriesData: number[]): EChartsOption {
+  private buildLineOption(
+    title: string,
+    xAxisData: string[],
+    seriesData: number[]
+  ): EChartsOption {
     return {
       backgroundColor: this.cssVars.white,
-      textStyle: { fontFamily: GLOBAL_FONT_FAMILY, fontSize: 12, color: this.cssVars.gray700 },
+      textStyle: {
+        fontFamily: GLOBAL_FONT_FAMILY,
+        fontSize: 12,
+        color: this.cssVars.gray700,
+      },
       title: {
         text: title,
         left: 'center',
-        textStyle: { color: this.cssVars.gray800, fontWeight: 'bold', fontSize: 16 },
+        textStyle: {
+          color: this.cssVars.gray800,
+          fontWeight: 'bold',
+          fontSize: 16,
+        },
       },
       tooltip: {
         trigger: 'axis',
-        textStyle: { fontFamily: GLOBAL_FONT_FAMILY }
+        textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
       },
       grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
       xAxis: { type: 'category', boundaryGap: false, data: xAxisData },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: this.cssVars.gray200, type: 'dotted' } } },
+      yAxis: {
+        type: 'value',
+        splitLine: {
+          lineStyle: { color: this.cssVars.gray200, type: 'dotted' },
+        },
+      },
       dataZoom: [
         { type: 'inside', start: 0, end: 100 },
-        { start: 0, end: 100, height: 20, bottom: 5 }
+        { start: 0, end: 100, height: 20, bottom: 5 },
       ],
       series: [
         {
@@ -790,10 +1123,16 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           data: seriesData,
           itemStyle: { color: this.cssVars.colorSuccess },
           areaStyle: {
-            color: new (this.echartsInstance as any).graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: this.cssVars.colorSuccess },
-              { offset: 1, color: this.cssVars.white }
-            ])
+            color: new (this.echartsInstance as any).graphic.LinearGradient(
+              0,
+              0,
+              0,
+              1,
+              [
+                { offset: 0, color: this.cssVars.colorSuccess },
+                { offset: 1, color: this.cssVars.white },
+              ]
+            ),
           },
         },
       ],

@@ -51,23 +51,17 @@
           </h3>
           <div class="action-list-body">
             <ng-container *ngIf="attentionDevices.length > 0; else noAttention">
-              <table class="simple-action-table">
-                <thead>
-                  <tr>
-                    <th>Tên Thiết Bị (Mã)</th>
-                    <th>Vị Trí</th>
-                    <th>Trạng Thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let device of attentionDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
-                    <td data-label="Thiết bị">{{ device.Ten }} ({{ device.Ma }})</td>
-                    <td data-label="Vị Trí">{{ device.ViTri }}</td>
-                    <td data-label="Trạng Thái"><strong class="text-warning">{{ device.TrangThai_Ten }}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-              </ng-container>
+              <app-reusable-table
+                [data]="attentionDevices"
+                [columns]="attentionTableColumns"
+                [isLoading]="isLoading"
+                [showPaginator]="false"
+                [clientSideSort]="true"
+                (rowClick)="navigateToDetail($event)"
+                emptyStateText="Không có thiết bị nào cần bảo trì."
+              >
+              </app-reusable-table>
+            </ng-container>
             <ng-template #noAttention>
               <div class="list-empty-state">
                 <i class="fas fa-check-circle icon-success"></i>
@@ -76,7 +70,6 @@
             </ng-template>
           </div>
         </div>
-
         <div class="action-list-card">
           <h3 class="action-list-title">
             <i class="fas fa-calendar-times icon-danger"></i>
@@ -84,22 +77,16 @@
           </h3>
           <div class="action-list-body">
             <ng-container *ngIf="expiringDevices.length > 0; else noExpiring">
-              <table class="simple-action-table">
-                <thead>
-                  <tr>
-                    <th>Tên Thiết Bị (Mã)</th>
-                    <th>Vị Trí</th>
-                    <th>Ngày Hết Hạn</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let device of expiringDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
-                    <td data-label="Thiết bị">{{ device.Ten }} ({{ device.Ma }})</td>
-                    <td data-label="Vị Trí">{{ device.ViTri }}</td>
-                    <td data-label="Hết hạn"><strong class="text-danger">{{ device.NgayHetHanBH }}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
+              <app-reusable-table
+                [data]="expiringDevices"
+                [columns]="expiringTableColumns"
+                [isLoading]="isLoading"
+                [showPaginator]="false"
+                [clientSideSort]="true"
+                (rowClick)="navigateToDetail($event)"
+                emptyStateText="Không có thiết bị nào sắp hết hạn."
+              >
+              </app-reusable-table>
               </ng-container>
             <ng-template #noExpiring>
               <div class="list-empty-state">

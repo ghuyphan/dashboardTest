@@ -6,18 +6,22 @@
   width: 100%;
   overflow: hidden;
   min-height: 0; /* Critical for nested flex scrolling */
+
+  /* --- START OF MODIFICATION --- */
+  /* 1. Define the default fallback color as a CSS variable on the host */
+  --table-header-bg: var(--teal-blue);
+  /* --- END OF MODIFICATION --- */
 }
 
 /* --- ADDED: Highlight Style --- */
 :host ::ng-deep .highlight {
-  background-color: var(--pastel-lemon, #FFF5B3);
+  background-color: var(--pastel-lemon, #fff5b3);
   color: var(--gray-900);
   font-weight: 700;
   padding: 0 2px;
   border-radius: 3px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
-
 
 .reusable-table-wrapper {
   /* FLEX FIX: Make this wrapper grow to fill the :host */
@@ -25,13 +29,13 @@
   display: flex;
   flex-direction: column;
   min-height: 0; /* Critical for nested flex scrolling */
-  
+
   position: relative;
   background-color: var(--white);
   border-radius: var(--border-radius-md);
   box-shadow: none; /* Removed shadow as requested */
   overflow: hidden;
-  // border: var(--border-width) solid var(--gray-200); 
+  // border: var(--border-width) solid var(--gray-200);
 }
 
 .loading-shade {
@@ -73,11 +77,17 @@
   /* Scroll indicators */
   background:
     /* Shadow covers */
-    linear-gradient(to right, var(--white) 30%, rgba(255,255,255,0)), 
-    linear-gradient(to left, var(--white) 30%, rgba(255,255,255,0)) 100% 0,
+    linear-gradient(to right, var(--white) 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, var(--white) 30%, rgba(255, 255, 255, 0)) 100% 0,
     /* Shadows */
-    radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)) 0 0,
-    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)) 100% 0;
+    radial-gradient(farthest-side at 0% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0))
+      0 0,
+    radial-gradient(
+        farthest-side at 100% 50%,
+        rgba(0, 0, 0, 0.12),
+        rgba(0, 0, 0, 0)
+      )
+      100% 0;
   background-repeat: no-repeat;
   background-color: var(--white);
   background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
@@ -94,7 +104,7 @@
   display: block;
   max-width: 100%;
   font-weight: inherit;
-  
+
   /* --- ADDED: Make cell-content a flex container --- */
   display: flex;
   align-items: center;
@@ -110,35 +120,38 @@
   text-transform: capitalize;
   line-height: 1.5;
   white-space: nowrap;
-  
+
   /* --- ADDED: Allow inner span/mark to wrap --- */
   // This is a bit of a hack, but lets the chip contain the highlight
   display: inline-flex;
-  span, mark {
+  span,
+  mark {
     display: inline;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 }
-.status-in-use { 
-  color: #FFFFFF;
-  background-color: var( --peacock-blue-light); /* Deep blue - distinct from teal header */
+.status-in-use {
+  color: #ffffff;
+  background-color: var(
+    --peacock-blue-light
+  ); /* Deep blue - distinct from teal header */
 }
-.status-ready { 
-  color: #FFFFFF;
+.status-ready {
+  color: #ffffff;
   background-color: var(--color-success);
 }
-.status-repair { 
-  color: #FFFFFF;
+.status-repair {
+  color: #ffffff;
   background-color: var(--color-warning);
 }
-.status-broken { 
-  color: #FFFFFF;
+.status-broken {
+  color: #ffffff;
   background-color: var(--color-danger);
 }
 .status-default {
-  color: #FFFFFF;
+  color: #ffffff;
   background-color: var(--gray-500);
 }
 
@@ -171,12 +184,10 @@
 }
 /* === END ROW ACTION BUTTON STYLES === */
 
-
 /* ============================================
     Material Component Overrides
    ============================================ */
 :host ::ng-deep {
-
   /* --- NEW: Checkbox Column Styles --- */
   .mat-column-select {
     width: 48px !important;
@@ -194,10 +205,14 @@
   }
   /* --- End Checkbox Styles --- */
 
-
   /* COMPACT HEADER CELLS - Reduced space */
   .mat-mdc-header-cell {
-    background-color: var(--teal-blue) !important;
+    /* --- START OF MODIFICATION --- */
+    /* 2. Use the CSS variable. It will inherit from :host or the HostBinding */
+    /* The !important is kept to override Angular Material's base styles. */
+    background-color: var(--table-header-bg) !important;
+    /* --- END OF MODIFICATION --- */
+
     color: var(--white) !important;
     font-weight: var(--font-weight-medium) !important;
     font-size: 0.75rem !important; /* Reduced font size */
@@ -231,7 +246,7 @@
       width: 16px !important;
       height: 16px !important;
     }
-    
+
     /*
       This rule is left intentionally blank.
       The default .mat-sort-header-sorted class will
@@ -242,8 +257,8 @@
     }
     /* --- END OF MODIFICATION --- */
 
-
     &:hover {
+      /* This will be overridden by the variable, but is a good fallback */
       background-color: var(--teal-blue-dark) !important;
     }
   }
@@ -261,14 +276,15 @@
     border-bottom: 1px solid var(--gray-200) !important;
     font-size: 0.8125rem !important; /* Slightly smaller */
     height: 36px !important; /* Consistent row height */
-    
+
     /* --- NEW: Style the action cell --- */
     &.mat-column-actions {
       padding: 0 4px !important;
       width: 40px; // Fixed width for action button
     }
 
-    &:first-of-type:not(.mat-column-select) { // <-- MODIFIED
+    &:first-of-type:not(.mat-column-select) {
+      // <-- MODIFIED
       padding-left: var(--spacing-md) !important;
     }
     &:last-of-type {
@@ -287,7 +303,7 @@
       cursor: pointer;
 
       &:hover {
-        background-color: var(--gray-50) !important; 
+        background-color: var(--gray-50) !important;
         transform: translateY(-1px);
         box-shadow: var(--box-shadow-sm);
         position: relative;
@@ -303,20 +319,20 @@
       &.selected {
         background-color: var(--peppermint) !important;
         box-shadow: inset 3px 0 0 var(--teal-blue) !important;
-        
+
         .mat-mdc-cell {
-           color: var(--teal-blue-dark) !important;
-           font-weight: var(--font-weight-medium) !important;
+          color: var(--teal-blue-dark) !important;
+          font-weight: var(--font-weight-medium) !important;
         }
       }
 
       /* --- NEW: Multi-select style --- */
       &.multi-selected {
         background-color: var(--pastel-sky) !important;
-        
+
         .mat-mdc-cell {
-           color: var(--deep-sapphire) !important;
-           font-weight: var(--font-weight-medium) !important;
+          color: var(--deep-sapphire) !important;
+          font-weight: var(--font-weight-medium) !important;
         }
       }
     }
@@ -412,10 +428,10 @@
     .mat-mdc-paginator-page-size-label,
     .mat-mdc-paginator-range-label,
     .mat-mdc-select-value-text {
-       color: var(--gray-600) !important;
-       font-family: var(--font-family-sans) !important;
-       font-size: 0.75rem !important;
-       line-height: 1.2 !important;
+      color: var(--gray-600) !important;
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.75rem !important;
+      line-height: 1.2 !important;
     }
 
     .mat-mdc-form-field {
@@ -476,9 +492,18 @@
 
 /* Keyframe animations */
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.6; }
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
 }
 
 /* Scrollbar styling */
@@ -510,13 +535,13 @@
       padding: var(--spacing-xs) var(--spacing-xs) !important;
       font-size: 0.75rem !important;
     }
-    
+
     .mat-mdc-paginator {
       .mat-mdc-paginator-container {
         flex-wrap: wrap !important;
         gap: 4px !important;
       }
-      
+
       .mat-mdc-paginator-page-size,
       .mat-mdc-paginator-range-label {
         margin: 2px !important;

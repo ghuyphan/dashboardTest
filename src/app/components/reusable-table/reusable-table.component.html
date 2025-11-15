@@ -130,7 +130,8 @@
     </table>
   </div>
 
-<mat-paginator
+  <mat-paginator
+    *ngIf="showPaginator"
     [pageSize]="pageSize"
     [pageSizeOptions]="pageSizeOptions"
     
@@ -142,4 +143,4 @@
     class="compact-paginator"
   >
   </mat-paginator>
-</div>
+  </div>

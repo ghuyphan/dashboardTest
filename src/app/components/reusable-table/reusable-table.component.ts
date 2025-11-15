@@ -10,7 +10,8 @@ import {
   Injectable,
   HostListener,
   ElementRef,
-  OnInit, 
+  OnInit,
+  HostBinding,
 } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Provides CurrencyPipe
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -27,7 +28,7 @@ import { TooltipDirective } from '../../directives/tooltip.directive';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { SelectionModel } from '@angular/cdk/collections';
-import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe'; // <-- 1. IMPORT THE NEW PIPE
+import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
 
 @Injectable()
 export class VietnamesePaginatorIntl extends MatPaginatorIntl {
@@ -68,7 +69,7 @@ export interface SortChangedEvent {
   selector: 'app-reusable-table',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
@@ -77,13 +78,13 @@ export interface SortChangedEvent {
     TooltipDirective,
     MatMenuModule,
     MatCheckboxModule,
-    HighlightSearchPipe, // <-- 2. ADD PIPE TO IMPORTS
+    HighlightSearchPipe,
   ],
   templateUrl: './reusable-table.component.html',
   styleUrls: ['./reusable-table.component.scss'],
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
 })
-export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit { 
+export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() data: any[] = [];
   @Input() columns: GridColumn[] = [];
   @Input() searchTerm: string = '';
@@ -95,17 +96,30 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   @Input() noResultsText: string = 'Không tìm thấy kết quả phù hợp';
 
   @Input() trackByField: string = 'Id';
-  @Input() enableMultiSelect: boolean = false; 
+  @Input() enableMultiSelect: boolean = false;
 
-  // --- NEW INPUT for Server-Side Paging ---
   @Input() totalDataLength: number = 0;
+
+  @Input() showPaginator: boolean = true;
+  @Input() clientSideSort: boolean = false;
+
+  // --- START OF MODIFICATION ---
+  @Input() headerColor: string | null = null;
+
+  @HostBinding('style.--table-header-bg')
+  get tableHeaderBg() {
+    // If headerColor is provided, this binding will set the CSS variable.
+    // If it's null, the binding is removed, and the CSS fallback will be used.
+    return this.headerColor;
+  }
+  // --- END OF MODIFICATION ---
 
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
-  @Output() pageChanged = new EventEmitter<PageEvent>(); 
+  @Output() pageChanged = new EventEmitter<PageEvent>();
   @Output() searchCleared = new EventEmitter<void>();
-  @Output() rowAction = new EventEmitter<{ action: string, data: any }>();
-  @Output() selectionChanged = new EventEmitter<any[]>(); 
+  @Output() rowAction = new EventEmitter<{ action: string; data: any }>();
+  @Output() selectionChanged = new EventEmitter<any[]>();
 
   public dataSource = new MatTableDataSource<any>();
   public displayedColumns: string[] = [];
@@ -121,10 +135,10 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
 
   public sortState: { active: string; direction: SortDirection } = {
     active: '',
-    direction: ''
+    direction: '',
   };
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit(): void {
     // Emit selection changes
@@ -135,12 +149,15 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   }
 
   ngAfterViewInit(): void {
-    this.dataSource.sort = this.sort;
+    // Only apply client-side sort if the flag is set
+    if (this.clientSideSort) {
+      this.dataSource.sort = this.sort;
+    }
 
     if (this.sort) {
       this.sortState = {
         active: this.sort.active,
-        direction: this.sort.direction as SortDirection
+        direction: this.sort.direction as SortDirection,
       };
     }
   }
@@ -153,7 +170,12 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
     if (changes['data']) {
       this.dataSource.data = this.data;
       this.selectedRow = null;
-      this.selection.clear(); 
+      this.selection.clear();
+
+      // Re-link sort if we are in client-side mode
+      if (this.clientSideSort && this.sort) {
+        this.dataSource.sort = this.sort;
+      }
 
       if (this.tableContainer?.nativeElement) {
         this.tableContainer.nativeElement.scrollTop = 0;
@@ -197,16 +219,19 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   public onMatSortChange(sort: Sort): void {
     this.sortState = {
       active: sort.active,
-      direction: sort.direction as SortDirection
+      direction: sort.direction as SortDirection,
     };
 
-    this.sortChanged.emit({
-      column: sort.active,
-      direction: sort.direction as SortDirection,
-    });
+    // Only emit the event if we are NOT in client-side sort mode
+    if (!this.clientSideSort) {
+      this.sortChanged.emit({
+        column: sort.active,
+        direction: sort.direction as SortDirection,
+      });
+    }
   }
 
-  public onPageChange(event: PageEvent): void { 
+  public onPageChange(event: PageEvent): void {
     this.pageChanged.emit(event);
 
     if (this.tableContainer?.nativeElement) {
@@ -225,7 +250,7 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if (this.enableMultiSelect) return; 
+    if (this.enableMultiSelect) return;
 
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
@@ -234,10 +259,10 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   }
 
   private handleRowNavigation(down: boolean) {
-    const rows = this.dataSource.filteredData; 
+    const rows = this.dataSource.filteredData;
     if (!rows.length) return;
 
-    const currentIndex = rows.findIndex(row => row === this.selectedRow);
+    const currentIndex = rows.findIndex((row) => row === this.selectedRow);
     let newIndex = down ? currentIndex + 1 : currentIndex - 1;
 
     if (newIndex < 0) newIndex = rows.length - 1;
@@ -251,7 +276,7 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
         if (rowElements[newIndex]) {
           rowElements[newIndex].scrollIntoView({
             behavior: 'smooth',
-            block: 'nearest'
+            block: 'nearest',
           });
         }
       }, 50);
@@ -266,7 +291,7 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
 
   public trackByFn = (index: number, item: any): any => {
     return item[this.trackByField] || index;
-  }
+  };
 
   public getStatusClass(status: string): string {
     if (!status) return 'status-default';
@@ -274,8 +299,10 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
 
     if (lowerStatus.includes('đang sử dụng')) return 'status-in-use';
     if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
-    if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa')) return 'status-repair';
-    if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
+    if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa'))
+      return 'status-repair';
+    if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý'))
+      return 'status-broken';
 
     return 'status-default';
   }
@@ -293,9 +320,9 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
     if (event) {
       event.stopPropagation();
     }
-    
-    this.selectedRow = null; 
-    this.rowClick.emit(null); 
+
+    this.selectedRow = null;
+    this.rowClick.emit(null);
 
     this.selection.toggle(row);
   }
@@ -309,7 +336,7 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   masterToggle(): void {
     this.selectedRow = null;
     this.rowClick.emit(null);
-    
+
     if (this.isAllSelected()) {
       this.selection.clear();
       return;
@@ -321,6 +348,8 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row[this.trackByField] || ''}`;
+    return `${
+      this.selection.isSelected(row) ? 'deselect' : 'select'
+    } row ${row[this.trackByField] || ''}`;
   }
 }
