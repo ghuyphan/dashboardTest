@@ -44,22 +44,6 @@
 
       <div class="dashboard-main-grid">
         
-        <div class="chart-card">
-          <div #chartContainerPie class="chart-container-inner" role="img" aria-label="Biểu đồ tròn trạng thái thiết bị"></div>
-        </div>
-        
-        <div class="chart-card">
-          <div #chartContainerCategory class="chart-container-inner" role="img" aria-label="Biểu đồ cột loại thiết bị"></div>
-        </div>
-
-        <div class="chart-card">
-          <div #chartContainerLocation class="chart-container-inner" role="img" aria-label="Biểu đồ cột vị trí thiết bị"></div>
-        </div>
-
-        <div class="chart-card">
-          <div #chartContainerTrend class="chart-container-inner" role="img" aria-label="Biểu đồ đường thiết bị mới"></div>
-        </div>
-        
         <div class="action-list-card">
           <h3 class="action-list-title">
             <i class="fas fa-tools icon-warning"></i>
@@ -67,13 +51,23 @@
           </h3>
           <div class="action-list-body">
             <ng-container *ngIf="attentionDevices.length > 0; else noAttention">
-              <ul>
-                <li *ngFor="let device of attentionDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
-                  <span class="list-item-main">{{ device.Ten }} ({{ device.Ma }})</span>
-                  <span class="list-item-sub">{{ device.ViTri }} - <strong class="text-warning">{{ device.TrangThai_Ten }}</strong></span>
-                </li>
-              </ul>
-            </ng-container>
+              <table class="simple-action-table">
+                <thead>
+                  <tr>
+                    <th>Tên Thiết Bị (Mã)</th>
+                    <th>Vị Trí</th>
+                    <th>Trạng Thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let device of attentionDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
+                    <td data-label="Thiết bị">{{ device.Ten }} ({{ device.Ma }})</td>
+                    <td data-label="Vị Trí">{{ device.ViTri }}</td>
+                    <td data-label="Trạng Thái"><strong class="text-warning">{{ device.TrangThai_Ten }}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+              </ng-container>
             <ng-template #noAttention>
               <div class="list-empty-state">
                 <i class="fas fa-check-circle icon-success"></i>
@@ -90,13 +84,23 @@
           </h3>
           <div class="action-list-body">
             <ng-container *ngIf="expiringDevices.length > 0; else noExpiring">
-              <ul>
-                <li *ngFor="let device of expiringDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
-                  <span class="list-item-main">{{ device.Ten }} ({{ device.Ma }})</span>
-                  <span class="list-item-sub">{{ device.ViTri }} - <strong class="text-danger">Hết hạn: {{ device.NgayHetHanBH }}</strong></span>
-                </li>
-              </ul>
-            </ng-container>
+              <table class="simple-action-table">
+                <thead>
+                  <tr>
+                    <th>Tên Thiết Bị (Mã)</th>
+                    <th>Vị Trí</th>
+                    <th>Ngày Hết Hạn</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let device of expiringDevices" (click)="navigateToDetail(device)" class="clickable-list-item">
+                    <td data-label="Thiết bị">{{ device.Ten }} ({{ device.Ma }})</td>
+                    <td data-label="Vị Trí">{{ device.ViTri }}</td>
+                    <td data-label="Hết hạn"><strong class="text-danger">{{ device.NgayHetHanBH }}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+              </ng-container>
             <ng-template #noExpiring>
               <div class="list-empty-state">
                 <i class="fas fa-check-circle icon-success"></i>
@@ -105,9 +109,24 @@
             </ng-template>
           </div>
         </div>
+        <div class="chart-card">
+          <div #chartContainerStatus class="chart-container-inner" role="img" aria-label="Biểu đồ cột trạng thái thiết bị"></div>
+        </div>
+        
+        <div class="chart-card">
+          <div #chartContainerCategory class="chart-container-inner" role="img" aria-label="Biểu đồ cột loại thiết bị"></div>
+        </div>
 
+        <div class="chart-card">
+          <div #chartContainerLocation class="chart-container-inner" role="img" aria-label="Biểu đồ cột vị trí thiết bị"></div>
+        </div>
+
+        <div class="chart-card">
+          <div #chartContainerTrend class="chart-container-inner" role="img" aria-label="Biểu đồ đường thiết bị mới"></div>
+        </div>
+        
       </div>
-      </div>
+    </div>
 
   </div>
 </div>

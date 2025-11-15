@@ -95,7 +95,7 @@
 .dashboard-content {
   flex-grow: 1;
   /* MODIFIED: Consistent large padding for desktop */
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-mds);
 
   /* This is now the SINGLE scroll container */
   overflow-y: auto;
@@ -104,14 +104,16 @@
 
   /* Account for header and footer heights */
   height: calc(100% - var(--header-height) - var(--footer-height));
-  
+
   /* --- ADDED: Hide scrollbar but keep scrolling --- */
   /* For Firefox */
   scrollbar-width: none;
+
   /* For Chrome, Safari, and Opera */
   &::-webkit-scrollbar {
     display: none;
   }
+
   /* --- END: Hide scrollbar --- */
 }
 
@@ -125,6 +127,7 @@
     opacity: 0;
     transform: scale(0.995);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -144,9 +147,10 @@
 
 
 @media (max-width: 992px) {
+
   /* Tablet padding */
   .dashboard-content {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 }
 
@@ -159,6 +163,7 @@
 }
 
 @media (max-width: 480px) {
+
   /* Small mobile padding */
   .dashboard-content {
     padding: var(--spacing-sm);

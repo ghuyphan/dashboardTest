@@ -203,6 +203,8 @@
   display: flex;
   flex-direction: column;
   min-height: 400px; 
+  /* --- ADDED: To contain the table --- */
+  overflow: hidden;
 
   /* --- NEW: Responsive Height --- */
   @media (max-width: 768px) {
@@ -220,6 +222,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  /* --- ADDED: Prevent title from shrinking --- */
+  flex-shrink: 0;
 
   i {
     font-size: 1rem;
@@ -230,12 +234,14 @@
 
 .action-list-body {
   overflow-y: auto;
-  max-height: 300px;
+  /* max-height: 300px; */ // <-- REMOVED: Let flex-grow handle it
   flex-grow: 1;
+  /* --- ADDED: For proper scrolling --- */
+  min-height: 0;
 
   /* --- NEW: Responsive Height --- */
   @media (max-width: 768px) {
-    max-height: 250px;
+    // max-height: 250px; // <-- REMOVED
   }
   
   /* --- Hide scrollbar but keep scrolling --- */
@@ -244,37 +250,7 @@
     display: none;
   }
   
-  ul { list-style: none; padding: 0; margin: 0; }
-  li {
-    display: flex;
-    flex-direction: column;
-    padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid var(--gray-100);
-    &:last-child { border-bottom: none; }
-  }
-
-  .clickable-list-item {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    border-radius: 4px;
-    padding: var(--spacing-sm) var(--spacing-xs);
-
-    &:hover {
-      background-color: var(--gray-100);
-    }
-  }
-
-  .list-item-main {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--gray-800);
-  }
-  .list-item-sub {
-    font-size: 0.75rem;
-    color: var(--gray-500);
-  }
-  .text-warning { color: var(--color-warning); }
-  .text-danger { color: var(--color-danger); }
+  // --- REMOVED <ul> and <li> styles ---
 
   .list-empty-state {
     display: flex;
@@ -356,3 +332,96 @@
   }
   /* --- END NEW --- */
 }
+
+
+/* --- START: NEW STYLES FOR SIMPLE-ACTION-TABLE --- */
+.simple-action-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    tr {
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    th {
+      text-align: left;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: 0.75rem; // 12px
+      font-weight: var(--font-weight-medium);
+      color: var(--gray-600);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      background-color: var(--gray-50);
+
+      &:first-child { padding-left: 0; }
+      &:last-child { padding-right: 0; }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--gray-200);
+      transition: background-color 0.2s ease;
+      
+      &.clickable-list-item {
+        cursor: pointer;
+        &:hover {
+          background-color: var(--gray-100);
+        }
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: var(--spacing-sm);
+      font-size: 0.875rem; // 14px
+      color: var(--gray-700);
+      vertical-align: top;
+      
+      &:first-child { padding-left: 0; }
+      &:last-child { padding-right: 0; }
+      
+      // Data labels for mobile
+      @media (max-width: 480px) {
+        display: block;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        padding-bottom: 2px;
+        border-bottom: none;
+
+        &:before {
+          content: attr(data-label);
+          font-weight: var(--font-weight-medium);
+          color: var(--gray-500);
+          font-size: 0.75rem;
+          margin-right: var(--spacing-sm);
+          display: inline-block;
+          min-width: 80px; // align labels
+        }
+        
+        &:last-child {
+           padding-bottom: var(--spacing-sm);
+           border-bottom: 1px solid var(--gray-200);
+        }
+      }
+    }
+    
+    // Hide table structure on mobile
+    @media (max-width: 480px) {
+      thead { display: none; }
+      tr { 
+        display: block; 
+        padding: var(--spacing-sm) 0;
+        border-bottom: none;
+      }
+    }
+  }
+}
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-danger); }
+/* --- END: NEW STYLES --- */
