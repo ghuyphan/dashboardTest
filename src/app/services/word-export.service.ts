@@ -14,82 +14,75 @@ export class WordExportService {
   constructor(private http: HttpClient) { }
 
   /**
-   * Loads a Word template, fills it with data, and triggers a download.
-   * @param templatePath Path to the .docx template in assets (e.g., 'assets/templates/report.docx')
-   * @param data The JSON object containing the data to fill into the template
-   * @param outputFileName The name of the file to be downloaded
+   * Helper to detect if a response is actually HTML (error page) instead of a binary file.
+   * This happens often in SPAs when a file path is wrong and index.html is returned.
+   */
+  private isHtmlResponse(buffer: ArrayBuffer): boolean {
+    const textDecoder = new TextDecoder('utf-8');
+    // Check the first few bytes
+    const textContent = textDecoder.decode(buffer.slice(0, 500)).trim().toLowerCase();
+    return textContent.startsWith('<!doctype html') || textContent.startsWith('<html');
+  }
+
+  /**
+   * Internal helper to fetch and prepare the docxtemplater instance.
+   */
+  private createDocFromTemplate(templatePath: string, data: any): Observable<Docxtemplater<PizZip>> {
+    return this.http.get(templatePath, { responseType: 'arraybuffer' }).pipe(
+      map((content: ArrayBuffer) => {
+        // 1. Check for 404/HTML error
+        if (this.isHtmlResponse(content)) {
+          throw new Error(`File mẫu không tìm thấy ('${templatePath}'). Server trả về trang HTML.`);
+        }
+
+        // 2. Unzip
+        const zip = new PizZip(content);
+        
+        // 3. Create Docxtemplater instance
+        return new Docxtemplater(zip, {
+          paragraphLoop: true,
+          linebreaks: true,
+          nullGetter: () => '' // Replace null/undefined with empty string automatically
+        });
+      }),
+      map(doc => {
+        // 4. Render data
+        doc.render(data);
+        return doc;
+      })
+    );
+  }
+
+  /**
+   * Generates the report and immediately triggers a download in the browser.
    */
   public generateReport(templatePath: string, data: any, outputFileName: string): void {
-    // 1. Load the template file as a binary array buffer
-    this.http.get(templatePath, { responseType: 'arraybuffer' }).subscribe({
-      next: (content: ArrayBuffer) => {
+    this.createDocFromTemplate(templatePath, data).subscribe({
+      next: (doc) => {
         try {
-          // Check if the server returned HTML (SPA fallback error)
-          const textDecoder = new TextDecoder('utf-8');
-          // Peek at the first 100 bytes to see if it looks like HTML
-          const textContent = textDecoder.decode(content.slice(0, 100)); 
-          
-          if (textContent.includes('<!DOCTYPE html>') || textContent.includes('<html')) {
-            throw new Error('File not found (Server returned HTML). Check assets path.');
-          }
-
-          // 2. Unzip the content of the file
-          const zip = new PizZip(content);
-
-          // 3. Parse the template
-          const doc = new Docxtemplater(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-          });
-
-          // 4. Render the document (replace variables with data)
-          doc.render(data);
-
-          // 5. Generate the output file blob
           const out = doc.getZip().generate({
             type: 'blob',
             mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           });
-
-          // 6. Save the file to the user's computer
           saveAs(out, outputFileName);
-
         } catch (error) {
-          console.error('Error generating Word report:', error);
-          alert('Có lỗi xảy ra khi tạo báo cáo (Template Error).');
+          console.error('Error generating Word file:', error);
+          alert('Lỗi khi tạo file báo cáo.');
         }
       },
       error: (err) => {
-        console.error('Error loading template file:', err);
-        alert('Không tìm thấy file mẫu báo cáo (404).');
+        console.error(err);
+        alert(err.message || 'Không tìm thấy mẫu báo cáo.');
       }
     });
   }
 
   /**
-   * Generates the report and returns it as a Blob for viewing or printing,
-   * instead of downloading it immediately.
-   * @param templatePath Path to the .docx template
-   * @param data Data to fill
+   * Generates the report and returns it as a Blob (for Preview/Printing).
    */
   public generateReportBlob(templatePath: string, data: any): Observable<Blob> {
-    return this.http.get(templatePath, { responseType: 'arraybuffer' }).pipe(
-      map((content: ArrayBuffer) => {
-        // Check for HTML fallback error
-        const textDecoder = new TextDecoder('utf-8');
-        const textContent = textDecoder.decode(content.slice(0, 100));
-        if (textContent.includes('<!DOCTYPE html>') || textContent.includes('<html')) {
-          throw new Error('Template file not found (got HTML instead of DOCX).');
-        }
-
-        const zip = new PizZip(content);
-        const doc = new Docxtemplater(zip, {
-          paragraphLoop: true,
-          linebreaks: true,
-        });
-
-        doc.render(data);
-
+    return this.createDocFromTemplate(templatePath, data).pipe(
+      map((doc) => {
         return doc.getZip().generate({
           type: 'blob',
           mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -97,7 +90,7 @@ export class WordExportService {
       }),
       catchError(error => {
         console.error('Error generating report blob:', error);
-        return throwError(() => error);
+        return throwError(() => new Error('Không thể tạo bản xem trước. Vui lòng kiểm tra file mẫu.'));
       })
     );
   }

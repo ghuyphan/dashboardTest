@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, Inject } from '@angular/core';
+import { CommonModule, DatePipe, CurrencyPipe, DOCUMENT } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, finalize, of, switchMap, map } from 'rxjs';
+import { Subscription, finalize, map, switchMap, of } from 'rxjs';
 import { QRCodeComponent } from 'angularx-qrcode';
 
 import { Device } from '../models/device.model';
@@ -15,8 +15,6 @@ import { DeviceFormComponent } from '../device-list/device-form/device-form.comp
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
 import { WordExportService } from '../services/word-export.service';
 import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy';
-
-// --- IMPORT THE VIEWER ---
 import { DocxPrintViewerComponent } from '../components/docx-print-viewer/docx-print-viewer.component';
 
 @Component({
@@ -49,7 +47,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     private footerService: FooterActionService,
     private modalService: ModalService,
     private toastService: ToastService,
-    private wordExportService: WordExportService
+    private wordExportService: WordExportService,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   ngOnInit(): void {
@@ -125,9 +124,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
     try {
       const expiryDate = this.parseDate(device.NgayHetHanBH);
-      if (!expiryDate) {
-        return;
-      }
+      if (!expiryDate) return;
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -145,35 +142,37 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- REPLACED: New method to open Preview ---
+  // --- FUNCTION 1: Word Report Preview ---
   onPrintWordReport(device: Device): void {
     if (!device) return;
-    
     this.isLoading = true;
 
-    // 1. Path to your .docx file
     const templatePath = 'assets/templates/device-detail.docx';
-    
-    // 2. Prepare Data
     const reportData = {
       ...device,
       PrintDate: new Date().toLocaleDateString('vi-VN'),
       GiaMuaFormatted: new Intl.NumberFormat('vi-VN', { 
         style: 'currency', 
         currency: 'VND' 
-      }).format(device.GiaMua || 0)
+      }).format(device.GiaMua || 0),
+      Model: device.Model || '',
+      SerialNumber: device.SerialNumber || '',
+      ViTri: device.ViTri || '',
+      TrangThai_Ten: device.TrangThai_Ten || '',
+      MoTa: device.MoTa || ''
     };
 
-    // 3. Generate Blob -> Open Viewer
     this.wordExportService.generateReportBlob(templatePath, reportData)
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: (blob) => {
           this.modalService.open(DocxPrintViewerComponent, {
-            title: 'Xem trước bản in', // Title for the modal
-            size: 'lg',               // Large modal
+            title: 'Xem trước bản in',
+            size: 'lg',
+            disableBackdropClose: true,
             context: { 
-              docBlob: blob           // Pass data to component
+              docBlob: blob,
+              fileName: `Bien_Ban_${device.Ma}.docx`
             }
           });
         },
@@ -181,6 +180,21 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
           this.toastService.showError('Không thể tạo báo cáo: ' + err.message);
         }
       });
+  }
+
+  // --- FUNCTION 2: QR Code Print (Scoped) ---
+  onPrintQrCode(): void {
+    // 1. Add the special class to body so CSS knows we are printing QR
+    this.document.body.classList.add('print-mode-qr');
+
+    // 2. Trigger print
+    window.print();
+
+    // 3. Remove the class immediately after (or after short delay)
+    // Note: 'onafterprint' is cleaner, but setTimeout covers most cases
+    setTimeout(() => {
+      this.document.body.classList.remove('print-mode-qr');
+    }, 500);
   }
 
   setupFooterActions(device: Device): void {
@@ -199,11 +213,17 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE',
         className: 'btn-danger',
       },
-      // --- UPDATED BUTTON ---
+      {
+        label: 'In Mã QR',
+        icon: 'fas fa-qrcode',
+        action: () => this.onPrintQrCode(),
+        permission: 'QLThietBi.DMThietBi.RPRINT',
+        className: 'btn-ghost',
+      },
       {
         label: 'In Biên Bản', 
-        icon: 'fas fa-print',
-        action: () => this.onPrintWordReport(device), // Calls the new preview method
+        icon: 'fas fa-file-word',
+        action: () => this.onPrintWordReport(device),
         permission: 'QLThietBi.DMThietBi.RPRINT',
         className: 'btn-primary',
       },
@@ -213,13 +233,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/app/equipment/catalog']);
-  }
-
-  // Legacy simple print (backup)
-  onPrint(): void {
-    setTimeout(() => {
-      window.print();
-    }, 100);
   }
 
   onEdit(device: Device): void {
@@ -263,8 +276,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false;
-        const errorMessage = err.error?.TenKetQua || err.error?.ErrorMessage || 'Xóa thất bại. Đã có lỗi xảy ra.';
-        this.toastService.showError(errorMessage, 0);
+        this.toastService.showError(err.error?.TenKetQua || 'Xóa thất bại.', 0);
       },
       complete: () => {
         this.isLoading = false;
@@ -279,26 +291,21 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
   public getStatusClass(status: string | null | undefined): string {
     if (!status) return 'status-default';
-    const lowerStatus = status.toLowerCase();
-
-    if (lowerStatus.includes('đang sử dụng')) return 'status-in-use';
-    if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
-    if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa')) return 'status-repair';
-    if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý')) return 'status-broken';
-
+    const lower = status.toLowerCase();
+    if (lower.includes('đang sử dụng')) return 'status-in-use';
+    if (lower.includes('sẵn sàng')) return 'status-ready';
+    if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
+    if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
     return 'status-default';
   }
 
   public getDeviceIconClass(deviceType: string | null | undefined): string {
     if (!deviceType) return 'fas fa-question-circle';
-    const lowerType = deviceType.toLowerCase();
-
-    if (lowerType.includes('laptop') || lowerType.includes('máy tính')) return 'fas fa-laptop-medical';
-    if (lowerType.includes('printer') || lowerType.includes('máy in')) return 'fas fa-print';
-    if (lowerType.includes('server') || lowerType.includes('máy chủ')) return 'fas fa-server';
-    if (lowerType.includes('monitor') || lowerType.includes('màn hình')) return 'fas fa-desktop';
-    if (lowerType.includes('phone') || lowerType.includes('điện thoại')) return 'fas fa-mobile-alt';
-    
+    const lower = deviceType.toLowerCase();
+    if (lower.includes('laptop') || lower.includes('máy tính')) return 'fas fa-laptop-medical';
+    if (lower.includes('printer') || lower.includes('máy in')) return 'fas fa-print';
+    if (lower.includes('server') || lower.includes('máy chủ')) return 'fas fa-server';
+    if (lower.includes('monitor')) return 'fas fa-desktop';
     return 'fas fa-hdd';
   }
 }

@@ -360,22 +360,57 @@ a {
 /* GLOBAL PRINT STYLES */
 @media print {
 
-  body,
-  app-root,
-  .main-panel,
-  main,
-  .dashboard-content {
-    overflow: visible !important;
-    height: auto !important;
-    width: auto !important;
-    position: static !important;
-    display: block !important;
-  }
-
+  /* Always hide navigation, header, and footer in print */
   app-sidebar,
   app-header,
   app-action-footer {
     display: none !important;
+  }
+
+  /* DEFAULT PRINT MODE:
+    Used for general browser printing. Expands the main content area.
+    Only active if NOT in a specific print mode.
+  */
+  body:not(.print-mode-qr):not(.print-mode-docx) {
+    app-root,
+    .main-panel,
+    main,
+    .dashboard-content {
+      overflow: visible !important;
+      height: auto !important;
+      width: auto !important;
+      position: static !important;
+      display: block !important;
+    }
+  }
+
+  /*
+    DOCX PRINT MODE:
+    Triggered when printing the Word Preview.
+    We hide 'app-root' because the Modal (CDK Overlay) is usually a sibling,
+    attached directly to the body. This prevents the dashboard from appearing 
+    in the background.
+  */
+  body.print-mode-docx app-root {
+    display: none !important;
+  }
+
+  /*
+    QR PRINT MODE:
+    Triggered when printing the QR code.
+    We MUST keep 'app-root' visible because the QR Code component is 
+    deep inside the component tree. The component's own CSS (DeviceDetailComponent)
+    will handle hiding its siblings using :host-context.
+  */
+  body.print-mode-qr {
+    app-root,
+    .main-panel,
+    main,
+    .dashboard-content {
+      visibility: visible !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
   }
 }
 
