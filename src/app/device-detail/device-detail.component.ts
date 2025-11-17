@@ -3,7 +3,7 @@ import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, finalize, of, switchMap, map } from 'rxjs';
-import { QRCodeComponent } from 'angularx-qrcode'; 
+import { QRCodeComponent } from 'angularx-qrcode';
 
 import { Device } from '../models/device.model';
 import { environment } from '../../environments/environment.development';
@@ -13,8 +13,11 @@ import { ToastService } from '../services/toast.service';
 import { FooterAction } from '../models/footer-action.model';
 import { DeviceFormComponent } from '../device-list/device-form/device-form.component';
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
+import { WordExportService } from '../services/word-export.service';
+import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy';
 
-import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy'; // Adjust path if needed
+// --- IMPORT THE VIEWER ---
+import { DocxPrintViewerComponent } from '../components/docx-print-viewer/docx-print-viewer.component';
 
 @Component({
   selector: 'app-device-detail',
@@ -45,7 +48,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private footerService: FooterActionService,
     private modalService: ModalService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private wordExportService: WordExportService
   ) {}
 
   ngOnInit(): void {
@@ -69,26 +73,25 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const url = `${environment.equipmentCatUrl}/${id}`;
 
-    // Unsubscribe from previous load if any
     this.deviceSub?.unsubscribe();
 
     this.deviceSub = this.http.get<Device[]>(url).pipe(
       map(dataArray => {
         if (dataArray && dataArray.length > 0) {
-          return dataArray[0]; // Transform the array to a single device
+          return dataArray[0];
         }
-        // If API returns empty array or null, throw an error
         throw new Error('Không tìm thấy chi tiết cho thiết bị này.');
       }),
       finalize(() => this.isLoading = false)
     ).subscribe({
       next: (device) => {
-        this.device = device; // The device is now guaranteed to exist
-        this.qrCodeValue = window.location.href; 
+        this.device = device;
+        this.qrCodeValue = window.location.href;
+        
         this.setupFooterActions(this.device);
-        this.checkWarrantyStatus(this.device); // Check warranty status
+        this.checkWarrantyStatus(this.device);
       },
-      error: (err: Error) => { // Catch the error thrown from the map operator
+      error: (err: Error) => {
         console.error('Failed to load device details:', err);
         this.toastService.showError(err.message || 'Không thể tải chi tiết thiết bị.');
         this.goBack();
@@ -96,19 +99,14 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     });
   }
   
-  /**
-   * Parses a date string (dd/MM/yyyy or ISO) into a Date object.
-   */
   private parseDate(dateString: string | null | undefined): Date | null {
     if (!dateString) return null;
     try {
       if (dateString.includes('/')) {
         const parts = dateString.substring(0, 10).split('/');
-        // Note: Months are 0-indexed in JS (Number(parts[1]) - 1)
         const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
         return isNaN(d.getTime()) ? null : d;
       } else {
-        // Assume ISO string
         const d = new Date(dateString);
         return isNaN(d.getTime()) ? null : d;
       }
@@ -117,11 +115,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Checks the warranty status of the loaded device.
-   */
   private checkWarrantyStatus(device: Device): void {
-    // Reset state
     this.isWarrantyExpiring = false;
     this.warrantyExpiresInDays = 0;
 
@@ -142,15 +136,51 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       const timeDiff = expiryDate.getTime() - today.getTime();
       const daysDiff = Math.ceil(timeDiff / msPerDay);
 
-      // Check if (expiring in the next 30 days) AND (not already expired)
       if (daysDiff >= 0 && daysDiff <= 30) {
         this.isWarrantyExpiring = true;
         this.warrantyExpiresInDays = daysDiff;
       }
-      
     } catch (e) {
       console.error('Error checking warranty status', e);
     }
+  }
+
+  // --- REPLACED: New method to open Preview ---
+  onPrintWordReport(device: Device): void {
+    if (!device) return;
+    
+    this.isLoading = true;
+
+    // 1. Path to your .docx file
+    const templatePath = 'assets/templates/device-detail.docx';
+    
+    // 2. Prepare Data
+    const reportData = {
+      ...device,
+      PrintDate: new Date().toLocaleDateString('vi-VN'),
+      GiaMuaFormatted: new Intl.NumberFormat('vi-VN', { 
+        style: 'currency', 
+        currency: 'VND' 
+      }).format(device.GiaMua || 0)
+    };
+
+    // 3. Generate Blob -> Open Viewer
+    this.wordExportService.generateReportBlob(templatePath, reportData)
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: (blob) => {
+          this.modalService.open(DocxPrintViewerComponent, {
+            title: 'Xem trước bản in', // Title for the modal
+            size: 'lg',               // Large modal
+            context: { 
+              docBlob: blob           // Pass data to component
+            }
+          });
+        },
+        error: (err) => {
+          this.toastService.showError('Không thể tạo báo cáo: ' + err.message);
+        }
+      });
   }
 
   setupFooterActions(device: Device): void {
@@ -169,12 +199,13 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE',
         className: 'btn-danger',
       },
-            {
-        label: 'In',
+      // --- UPDATED BUTTON ---
+      {
+        label: 'In Biên Bản', 
         icon: 'fas fa-print',
-        action: () => this.onPrint(),
-        permission: 'QLThietBi.DMThietBi.RPRINT', // Example permission
-        className: 'btn-ghost',
+        action: () => this.onPrintWordReport(device), // Calls the new preview method
+        permission: 'QLThietBi.DMThietBi.RPRINT',
+        className: 'btn-primary',
       },
     ];
     this.footerService.setActions(actions);
@@ -184,8 +215,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['/app/equipment/catalog']);
   }
 
+  // Legacy simple print (backup)
   onPrint(): void {
-    // Give the browser a moment to prepare the print layout
     setTimeout(() => {
       window.print();
     }, 100);
@@ -194,14 +225,12 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   onEdit(device: Device): void {
     this.modalService.open(DeviceFormComponent, {
       title: `Sửa thiết bị`,
-      context: { device: { ...device }, title: 'Sửa thiết bị' }, // Pass a copy
+      context: { device: { ...device }, title: 'Sửa thiết bị' },
     }).subscribe((result) => {
       if (result) {
-        // Clear cache on success
         CustomRouteReuseStrategy.clearCache('equipment/catalog');
-        
         this.toastService.showSuccess('Cập nhật thiết bị thành công.');
-        this.loadDevice(device.Id!.toString()); // Reload data
+        this.loadDevice(device.Id!.toString());
       }
     });
   }
@@ -222,23 +251,20 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
           const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
           return this.http.delete(deleteUrl);
         }
-        return of(null); // Return an empty observable if not confirmed
+        return of(null);
       })
     ).subscribe({
       next: (response) => {
         if (response) {
-          // Clear cache on success
           CustomRouteReuseStrategy.clearCache('equipment/catalog');
-          
           this.toastService.showSuccess('Xóa thiết bị thành công!');
-          this.goBack(); // Navigate back to the list
+          this.goBack();
         }
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false;
         const errorMessage = err.error?.TenKetQua || err.error?.ErrorMessage || 'Xóa thất bại. Đã có lỗi xảy ra.';
         this.toastService.showError(errorMessage, 0);
-        console.error('Failed to delete device:', err);
       },
       complete: () => {
         this.isLoading = false;
@@ -246,16 +272,11 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Helper to format dates from API
   formatDate(isoDate: string | null | undefined): string {
     if (!isoDate || isoDate === '0001-01-01T00:00:00') return 'N/A';
-    // Use 'en-GB' for dd/MM/yyyy format, 'vi' locale might use '.'
     return new DatePipe('en-GB').transform(isoDate, 'dd/MM/yyyy') || 'N/A';
   }
 
-  /**
-   * Returns the correct CSS class for a given status string.
-   */
   public getStatusClass(status: string | null | undefined): string {
     if (!status) return 'status-default';
     const lowerStatus = status.toLowerCase();
@@ -268,30 +289,16 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     return 'status-default';
   }
 
-  /**
-   * Returns a Font Awesome icon class based on the device type.
-   */
   public getDeviceIconClass(deviceType: string | null | undefined): string {
-    if (!deviceType) return 'fas fa-question-circle'; // Default icon
-    
+    if (!deviceType) return 'fas fa-question-circle';
     const lowerType = deviceType.toLowerCase();
 
-    if (lowerType.includes('laptop') || lowerType.includes('máy tính')) {
-      return 'fas fa-laptop-medical';
-    }
-    if (lowerType.includes('printer') || lowerType.includes('máy in')) {
-      return 'fas fa-print';
-    }
-    if (lowerType.includes('server') || lowerType.includes('máy chủ')) {
-      return 'fas fa-server';
-    }
-    if (lowerType.includes('monitor') || lowerType.includes('màn hình')) {
-      return 'fas fa-desktop';
-    }
-    if (lowerType.includes('phone') || lowerType.includes('điện thoại')) {
-      return 'fas fa-mobile-alt';
-    }
+    if (lowerType.includes('laptop') || lowerType.includes('máy tính')) return 'fas fa-laptop-medical';
+    if (lowerType.includes('printer') || lowerType.includes('máy in')) return 'fas fa-print';
+    if (lowerType.includes('server') || lowerType.includes('máy chủ')) return 'fas fa-server';
+    if (lowerType.includes('monitor') || lowerType.includes('màn hình')) return 'fas fa-desktop';
+    if (lowerType.includes('phone') || lowerType.includes('điện thoại')) return 'fas fa-mobile-alt';
     
-    return 'fas fa-hdd'; // A good generic hardware icon
+    return 'fas fa-hdd';
   }
 }

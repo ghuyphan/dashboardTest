@@ -4,11 +4,11 @@
   </div>
 
   <div *ngIf="!isLoading && device" class="detail-card-wrapper">
-    
+
     <div class="detail-card">
       <div class="detail-header">
         <div class="header-icon">
-          <i [ngClass]="getDeviceIconClass(device?.TenLoaiThietBi)"></i>
+          <i [ngClass]="getDeviceIconClass(device.TenLoaiThietBi)"></i>
         </div>
         <div class="header-text">
           <h2 class="device-name">{{ device.Ten }}</h2>
@@ -18,11 +18,11 @@
           <span class="status-chip" [ngClass]="getStatusClass(device.TrangThai_Ten)">
             {{ device.TrangThai_Ten || 'N/A' }}
           </span>
-          </div>
+        </div>
       </div>
 
       <div class="detail-body">
-        
+
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Model</span>
@@ -35,7 +35,7 @@
           <div class="info-item">
             <span class="info-label">Loại thiết bị</span>
             <span class="info-value">{{ device.TenLoaiThietBi || 'N/A' }}</span>
-            </div>
+          </div>
           <div class="info-item">
             <span class="info-label">Tên máy (Hostname)</span>
             <span class="info-value">{{ device.DeviceName || 'N/A' }}</span>
@@ -54,16 +54,11 @@
           <div class="qr-code-section">
             <h4 class="meta-title">Mã QR (Liên kết)</h4>
             <div class="qr-code-box">
-              <qrcode
-                [qrdata]="qrCodeValue"
-                [elementType]="'canvas'"
-                [errorCorrectionLevel]="'M'"
-                [width]="160"
-                [alt]="'QR Code for device ' + device.Ten"
-              ></qrcode>
+              <qrcode [qrdata]="qrCodeValue" [elementType]="'canvas'" [errorCorrectionLevel]="'M'" [width]="160"
+                [alt]="'QR Code for device ' + device.Ten"></qrcode>
             </div>
             <span class="qr-caption">Quét để mở trang chi tiết</span>
-            </div>
+          </div>
 
           <div class="purchase-section">
             <h4 class="meta-title">Thông tin mua hàng</h4>
@@ -81,32 +76,27 @@
                 <i *ngIf="isWarrantyExpiring" class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                 {{ formatDate(device.NgayHetHanBH) }}
                 <span *ngIf="isWarrantyExpiring" class="expiry-text">
-                   (Còn {{ warrantyExpiresInDays }} ngày)
+                  (Còn {{ warrantyExpiresInDays }} ngày)
                 </span>
               </span>
             </div>
-            </div>
+          </div>
         </div>
 
       </div>
     </div>
   </div>
 
-<div id="qr-print-section" *ngIf="device">
-  <div class="qr-compact-label">
-    <qrcode
-      [qrdata]="qrCodeValue"
-      [elementType]="'canvas'"
-      [errorCorrectionLevel]="'M'"
-      [width]="150"
-      [alt]="'QR Code for device ' + device.Ten"
-    ></qrcode>
-    <div class="compact-info">
-      <div class="device-title">{{ device.Ten }}</div>
-      <div class="device-detail">{{ device.Ma }}</div>
-      <div class="device-detail">{{ device.DeviceName || device.SerialNumber }}</div>
+  <div id="qr-print-section" *ngIf="device">
+    <div class="qr-compact-label">
+      <qrcode [qrdata]="qrCodeValue" [elementType]="'canvas'" [errorCorrectionLevel]="'M'" [width]="150"
+        [alt]="'QR Code for device ' + device.Ten"></qrcode>
+      <div class="compact-info">
+        <div class="device-title">{{ device.Ten }}</div>
+        <div class="device-detail">{{ device.Ma }}</div>
+        <div class="device-detail">{{ device.DeviceName || device.SerialNumber }}</div>
+      </div>
     </div>
   </div>
-</div>
 
 </div>

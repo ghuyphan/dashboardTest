@@ -37,7 +37,7 @@ html {
 
 :root {
   /* COLOR PALETTE */
-  
+
   /* Brand Colors */
   --aqua-island: #9BDAD9;
   --teal-blue: #00839B;
@@ -181,10 +181,21 @@ h6 {
   color: var(--peacock-blue);
 }
 
-h1 { font-size: 2.25rem; }
-h2 { font-size: 1.875rem; }
-h3 { font-size: 1.5rem; }
-h4 { font-size: 1.25rem; }
+h1 {
+  font-size: 2.25rem;
+}
+
+h2 {
+  font-size: 1.875rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
 
 p {
   margin-bottom: var(--spacing-md);
@@ -262,6 +273,7 @@ a {
     opacity: 0;
     transform: translateY(-0.75rem);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -273,6 +285,7 @@ a {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -280,13 +293,23 @@ a {
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ACCESSIBILITY & FOCUS STATES */
@@ -336,6 +359,7 @@ a {
 
 /* GLOBAL PRINT STYLES */
 @media print {
+
   body,
   app-root,
   .main-panel,
@@ -356,7 +380,7 @@ a {
 }
 
 /* FLYOUT SUBMENU STYLES */
-body > ul.submenu.open {
+body>ul.submenu.open {
   list-style: none;
   margin: 0;
   background-color: var(--gray-100);
@@ -446,11 +470,10 @@ body > ul.submenu.open {
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-      transition: none !important; /* Disables the CDK's default opacity transition */
-  animation: none !important;  /* Disables all animations */
-  /* Removed transitions to ensure instant rendering performance with blur */
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  transition: none !important;
+  animation: none !important;
 }
 
 .app-modal-panel {
@@ -471,22 +494,27 @@ body > ul.submenu.open {
   line-height: 1.5;
   white-space: nowrap;
 }
-.status-in-use { 
+
+.status-in-use {
   color: #FFFFFF;
-  background-color: var( --peacock-blue-light);
+  background-color: var(--peacock-blue-light);
 }
-.status-ready { 
+
+.status-ready {
   color: #FFFFFF;
   background-color: var(--color-success);
 }
-.status-repair { 
+
+.status-repair {
   color: #FFFFFF;
   background-color: var(--color-warning);
 }
-.status-broken { 
+
+.status-broken {
   color: #FFFFFF;
   background-color: var(--color-danger);
 }
+
 .status-default {
   color: #FFFFFF;
   background-color: var(--gray-500);

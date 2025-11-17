@@ -34,7 +34,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   @Output() flyoutToggled = new EventEmitter<boolean>();
 
   private globalClickListener!: () => void;
-  private menuClickListener!: () => void; // <-- NEW: Listener for inside the menu
+  private menuClickListener!: () => void;
 
   private originalParent: Node | null = null;
   private nextSibling: Node | null = null;
@@ -76,7 +76,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     if (this.globalClickListener) {
       this.globalClickListener();
     }
-    this.closeFlyout(); // This will also clean up the menuClickListener
+    this.closeFlyout();
   }
 
   @HostListener('click', ['$event'])
@@ -111,38 +111,56 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.originalParent = this.flyoutMenu.parentNode;
     this.nextSibling = this.flyoutMenu.nextSibling;
 
-    // 2. Append to body
+    // 2. Append to body so it can float above everything
     this.renderer.appendChild(this.document.body, this.flyoutMenu);
 
-    // 3. Position it
+    // 3. Set initial styles to measure dimensions (hidden)
+    this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
+    this.renderer.setStyle(this.flyoutMenu, 'visibility', 'hidden');
+    this.renderer.addClass(this.flyoutMenu, 'open');
+
+    // 4. Measure positions
     const hostPos = this.el.nativeElement.getBoundingClientRect();
+    const menuRect = this.flyoutMenu.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // 5. Calculate Top Position (Collision Detection)
+    let top = hostPos.top;
+    const bottomPadding = 10; // Space from bottom edge
+
+    // If the menu extends past the bottom of the screen...
+    if (top + menuRect.height > viewportHeight - bottomPadding) {
+      // Shift it up so the bottom of the menu sits at the bottom safe area
+      top = viewportHeight - menuRect.height - bottomPadding;
+      
+      // Optional: Ensure it doesn't go off the top edge
+      if (top < bottomPadding) {
+        top = bottomPadding;
+      }
+    }
+
+    // 6. Calculate Left Position
     const offset = 8; // 8px (0.5rem) gap
-
     const rootStyle = getComputedStyle(this.document.documentElement);
-    const collapsedWidth = parseFloat(
-      rootStyle.getPropertyValue('--sidebar-width-collapsed')
-    );
-
-    const top = hostPos.top;
+    const collapsedWidthVal = rootStyle.getPropertyValue('--sidebar-width-collapsed');
+    // Fallback to 60 if variable is missing or parse fails
+    const collapsedWidth = collapsedWidthVal ? parseFloat(collapsedWidthVal) : 60;
     const left = collapsedWidth + offset;
 
-    this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
+    // 7. Apply Final Coordinates and Show
     this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
     this.renderer.setStyle(this.flyoutMenu, 'left', `${left}px`);
+    this.renderer.removeStyle(this.flyoutMenu, 'visibility');
 
-    this.renderer.addClass(this.flyoutMenu, 'open');
     this.flyoutToggled.emit(true);
-
     FlyoutDirective.activeFlyout = this;
 
-    // --- NEW LOGIC ---
-    // Add a listener FOR THE MENU ITSELF to handle inner clicks
+    // 8. Add listener for inner clicks
     this.zone.runOutsideAngular(() => {
       this.menuClickListener = this.renderer.listen(
         this.flyoutMenu as HTMLElement,
         'click',
         (event: Event) => {
-          // Check if the click was on a link, button, or icon inside a button
           const target = event.target as HTMLElement;
           if (
             target.tagName === 'A' ||
@@ -157,7 +175,6 @@ export class FlyoutDirective implements OnInit, OnDestroy {
         }
       );
     });
-    // --- END NEW LOGIC ---
   }
 
   private closeFlyout() {
@@ -165,12 +182,10 @@ export class FlyoutDirective implements OnInit, OnDestroy {
       return;
     }
 
-    // --- NEW: Clean up the menu listener ---
     if (this.menuClickListener) {
       this.menuClickListener();
       (this.menuClickListener as any) = null;
     }
-    // --- END NEW ---
 
     // 1. Remove visibility class
     this.renderer.removeClass(this.flyoutMenu, 'open');
@@ -186,6 +201,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.renderer.removeStyle(this.flyoutMenu, 'position');
     this.renderer.removeStyle(this.flyoutMenu, 'top');
     this.renderer.removeStyle(this.flyoutMenu, 'left');
+    this.renderer.removeStyle(this.flyoutMenu, 'visibility'); // Ensure visibility reset
 
     // 4. Clear state
     this.originalParent = null;

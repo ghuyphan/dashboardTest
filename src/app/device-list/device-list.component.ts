@@ -34,7 +34,7 @@ export interface PagedResult<T> {
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  imports: [CommonModule, ReusableTableComponent, DeviceFormComponent],
+  imports: [CommonModule, ReusableTableComponent],
   templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
 })
