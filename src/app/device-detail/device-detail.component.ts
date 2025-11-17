@@ -169,6 +169,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
           this.modalService.open(DocxPrintViewerComponent, {
             title: 'Xem trước bản in',
             size: 'lg',
+            hideHeader: true,
             disableBackdropClose: true,
             context: { 
               docBlob: blob,
