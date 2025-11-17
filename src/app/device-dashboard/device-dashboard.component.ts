@@ -13,7 +13,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject, Subscription, fromEvent } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
@@ -23,14 +23,11 @@ import { environment } from '../../environments/environment.development';
 import { Device } from '../models/device.model';
 import { ToastService } from '../services/toast.service';
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
-
-// --- Imports for Table (unchanged) ---
 import {
   ReusableTableComponent,
   GridColumn,
 } from '../components/reusable-table/reusable-table.component';
 
-// (Global constants and interfaces remain unchanged)
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -129,11 +126,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   public attentionDevices: ActionableDevice[] = [];
   public expiringDevices: ActionableDevice[] = [];
 
-  // --- START OF MODIFICATION ---
-  // Public properties for HTML titles
   public statusChartSubtext: string = '';
   public locationChartTitle: string = '';
-  // --- END OF MODIFICATION ---
 
   public attentionTableColumns: GridColumn[] = [
     { key: 'Ten', label: 'Tên Thiết Bị (Mã)', sortable: true, width: '50%' },
@@ -510,7 +504,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       widgetData,
     } = this.aggregateAllData(filteredDevices, this.allDevices);
 
-    // --- Update widgets directly ---
     this.updateWidgetValue(
       'totalDevices',
       this.formatNumber(widgetData.totalDevices)
@@ -537,8 +530,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.attentionDevices = attentionDevices;
     this.expiringDevices = expiringDevices;
 
-    // --- START OF MODIFICATION ---
-    // Update public title properties
     const totalStatus = this.statusData.reduce(
       (sum, item) => sum + item.SoLuong,
       0
@@ -550,12 +541,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     this.locationChartTitle = this.currentFilter
       ? `Vị trí (Đã lọc)`
       : `Vị trí có TB cần chú ý (Top 10)`;
-    // --- END OF MODIFICATION ---
 
-    // Render charts
     this.renderStatusChart(this.statusData);
     this.renderCategoryChart(this.categoryData);
-    this.renderLocationChart(this.locationData); // No longer needs title
+    this.renderLocationChart(this.locationData);
     this.renderTrendChart(this.trendData);
 
     this.cd.markForCheck();
@@ -760,7 +749,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     };
   }
 
-  // --- Helper functions (unchanged) ---
   private parseDate(dateString: string | null | undefined): Date | null {
     if (!dateString) return null;
     try {
@@ -780,6 +768,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       return null;
     }
   }
+
   public formatDate(dateString: string | null | undefined): string {
     const date = this.parseDate(dateString);
     if (!date) return 'N/A';
@@ -789,12 +778,14 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       year: 'numeric',
     });
   }
+
   private updateWidgetValue(id: string, value: string): void {
     const widget = this.widgetData.find((w) => w.id === id);
     if (widget) {
       widget.value = value;
     }
   }
+
   private parseValue(val: any): number {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') {
@@ -804,9 +795,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     }
     return 0;
   }
+
   private formatNumber(value: number): string {
     return new Intl.NumberFormat('vi-VN').format(value);
   }
+
   private formatCurrency(value: number): string {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -822,23 +815,23 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       }).format(value) + '%'
     );
   }
+
   trackByWidgetId(index: number, item: WidgetData): string {
     return item.id;
   }
+
   public navigateToDetail(device: ActionableDevice): void {
     if (device && device.Id) {
       this.router.navigate(['/app/equipment/catalog', device.Id]);
     }
   }
 
-  // ---
-  // --- CHART BUILDER FUNCTIONS
-  // ---
+  // --- CHART BUILDER FUNCTIONS ---
 
   private renderStatusChart(data: DeviceStatsData[]): void {
     if (!this.chartInstanceStatus) return;
 
-    const option = this.buildDonutOption(data); // Unchanged
+    const option = this.buildDonutOption(data);
 
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
@@ -854,7 +847,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private renderCategoryChart(data: AggregatedData[]): void {
     if (!this.chartInstanceCategory) return;
     const option = this.buildBarOption(
-      // --- MODIFICATION: Title removed from here ---
       data.map((d) => d.name).reverse(),
       data.map((d) => d.value).reverse()
     );
@@ -869,11 +861,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     });
   }
 
-  // --- MODIFICATION: Removed 'title' parameter ---
   private renderLocationChart(data: AggregatedData[]): void {
     if (!this.chartInstanceLocation) return;
     const option = this.buildBarOption(
-      // --- MODIFICATION: Title removed from here ---
       data.map((d) => d.name).reverse(),
       data.map((d) => d.value).reverse(),
       this.cssVars.colorBlue
@@ -892,7 +882,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private renderTrendChart(data: TemporalData[]): void {
     if (!this.chartInstanceTrend) return;
     const option = this.buildLineOption(
-      // --- MODIFICATION: Title removed from here ---
       data.map((d) => d.month),
       data.map((d) => d.value)
     );
@@ -919,8 +908,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       },
     }));
 
-    // --- MODIFICATION: Total calculation moved to refilterAndRenderAll ---
-    // We still need it locally for the tooltip formatter
     const totalDevices = data.reduce((sum, item) => sum + item.SoLuong, 0);
 
     return {
@@ -928,13 +915,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
       },
-      // --- MODIFICATION: REMOVED entire title block ---
       tooltip: {
         trigger: 'item',
         textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
         formatter: (params: any) => {
           if (!params.name) return '';
-          // totalDevices is still needed here
           const percent = ((params.value / totalDevices) * 100).toFixed(1);
           return `${params.marker} <b>${params.name
             }</b><br/>Số lượng: <b>${this.formatNumber(
@@ -945,7 +930,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       legend: {
         orient: 'vertical',
         left: '4%',
-        top: '25%', // You might want to adjust this now
+        top: '25%',
         align: 'left',
         itemGap: 10,
         icon: 'circle',
@@ -976,7 +961,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
             alignTo: 'labelLine',
             formatter: (params: any) => {
               if (!params.value) return '';
-              // totalDevices is also needed here
               const percent = ((params.value / totalDevices) * 100).toFixed(1);
               return `${params.name}\n${percent}%`;
             },
@@ -1005,7 +989,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
               fontWeight: 'bold',
               formatter: (params: any) => {
                 if (!params.value) return '0%';
-                // totalDevices is also needed here
                 return `${((params.value / totalDevices) * 100).toFixed(0)}%`;
               },
             },
@@ -1017,7 +1000,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   private buildBarOption(
-    // --- MODIFICATION: Removed 'title' parameter ---
     yAxisData: string[],
     seriesData: number[],
     color: string | ((params: any) => string) = this.cssVars.colorBlue
@@ -1029,7 +1011,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         fontSize: 12,
         color: this.cssVars.gray700,
       },
-      // --- MODIFICATION: REMOVED entire title block ---
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -1071,7 +1052,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   private buildLineOption(
-    // --- MODIFICATION: Removed 'title' parameter ---
     xAxisData: string[],
     seriesData: number[]
   ): EChartsOption {
@@ -1084,7 +1064,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         fontSize: 12,
         color: this.cssVars.gray700,
       },
-      // --- MODIFICATION: REMOVED entire title block ---
       tooltip: {
         trigger: 'axis',
         textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
@@ -1097,10 +1076,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           lineStyle: { color: this.cssVars.gray200, type: 'dotted' },
         },
       },
-      // dataZoom: [
-      //   { type: 'inside', start: 0, end: 100 },
-      //   { start: 0, end: 100, height: 20, bottom: 5 },
-      // ],
       series: [
         {
           name: 'Thiết bị mới',

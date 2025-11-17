@@ -13,7 +13,7 @@ import {
   OnInit,
   HostBinding,
 } from '@angular/core';
-import { CommonModule } from '@angular/common'; // Provides CurrencyPipe
+import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
 import {
@@ -103,16 +103,12 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   @Input() showPaginator: boolean = true;
   @Input() clientSideSort: boolean = false;
 
-  // --- START OF MODIFICATION ---
   @Input() headerColor: string | null = null;
 
   @HostBinding('style.--table-header-bg')
   get tableHeaderBg() {
-    // If headerColor is provided, this binding will set the CSS variable.
-    // If it's null, the binding is removed, and the CSS fallback will be used.
     return this.headerColor;
   }
-  // --- END OF MODIFICATION ---
 
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
@@ -141,7 +137,6 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   constructor() {}
 
   ngOnInit(): void {
-    // Emit selection changes
     this.selection.changed.subscribe(() => {
       this.selectionChanged.emit(this.selection.selected);
     });
@@ -149,7 +144,6 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   }
 
   ngAfterViewInit(): void {
-    // Only apply client-side sort if the flag is set
     if (this.clientSideSort) {
       this.dataSource.sort = this.sort;
     }
@@ -172,7 +166,6 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
       this.selectedRow = null;
       this.selection.clear();
 
-      // Re-link sort if we are in client-side mode
       if (this.clientSideSort && this.sort) {
         this.dataSource.sort = this.sort;
       }
@@ -222,7 +215,6 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
       direction: sort.direction as SortDirection,
     };
 
-    // Only emit the event if we are NOT in client-side sort mode
     if (!this.clientSideSort) {
       this.sortChanged.emit({
         column: sort.active,
@@ -308,7 +300,7 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
   }
 
   public onRowAction(action: string, element: any, event: MouseEvent): void {
-    event.stopPropagation(); // Prevent row click
+    event.stopPropagation();
     this.rowAction.emit({ action, data: element });
   }
 

@@ -1,126 +1,119 @@
-// Base styles for the modal, inspired by your toast component
-
 :host {
-  // The :host isn't strictly needed here, but good for consistency
-}
-
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 1040; // Just under the toast
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center; // Vertically center by default
-  @media (max-width: 768px) { // Your app's mobile breakpoint
-    align-items: flex-start; // Align to top on mobile
-    padding: var(--spacing-lg) 0; // Add padding top/bottom
-    overflow-y: auto; // Allow backdrop to scroll if modal is huge
-    max-height: 501px;
-  }
-  @media (max-width: 480px) {
-    padding: var(--spacing-md) 0;
-  }
+  display: contents;
 }
 
 .modal-content {
-  // Steal the glassmorphism style from your toast
-  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.25rem);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
-  border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(3, 132, 143, 0.22); // Slightly larger shadow
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: var(--gray-800);
   display: flex;
   flex-direction: column;
-
-  /* --- RESPONSIVENESS FIX: REMOVED fixed width --- */
   box-sizing: border-box;
-
-  // Animation (using fade-in to prevent lag)
-  animation: modal-fade-in 0.25s ease-out; // <-- THIS ANIMATION REMAINS
-  will-change: opacity;
+  margin: auto;
   
-  margin: auto 0; // Default margin for centering
+  /* Modern Card Style */
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 
+              0 0 0 1px rgba(0, 0, 0, 0.05);
+  color: var(--gray-800);
+  
+  position: relative;
+  overflow: hidden;
+  
+  /* Responsive Sizing */
+  width: clamp(300px, 90vw, 600px); 
+  max-height: 85vh;
+  
+  /* Animation */
+  animation: modalZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 
-  /* --- NEW: Mobile height/margin behavior --- */
+  /* Size Variants */
+  &.modal-size-sm { width: clamp(300px, 90vw, 400px); }
+  &.modal-size-md { width: clamp(300px, 90vw, 600px); }
+  &.modal-size-lg { width: clamp(300px, 90vw, 800px); }
+  &.modal-size-xl { width: clamp(300px, 95vw, 1140px); }
+
   @media (max-width: 768px) {
-  max-height: 60vh; // Default max height
-    margin: 0; // Remove auto margin
-  }
-
-  /* --- NEW: Size variants --- */
-
-  /* Small (for confirmations) */
-  &.modal-size-sm {
-    width: clamp(300px, 80vw, 400px);
-  }
-
-  /* Medium (default for forms) */
-  &.modal-size-md {
-    width: clamp(320px, 90vw, 600px);
-  }
-
-  /* Large (future use) */
-  &.modal-size-lg {
-    width: clamp(320px, 90vw, 800px);
-  }
-
-  /* Extra Large (future use) */
-  &.modal-size-xl {
-    width: clamp(320px, 90vw, 1140px);
+    width: 95vw;
+    max-height: 80vh;
+    border-radius: 16px;
   }
 }
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  /* --- FIX: Added responsive margin-bottom --- */
-  margin-bottom: clamp(0.5rem, 2vw, 0.75rem);
-  flex-shrink: 0; // Prevent header from shrinking
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
 }
 
 .modal-title {
-  /* --- FIX: Reduced font size --- */
-  font-size: clamp(1.125rem, 4vw, 1.25rem); // Was 1.25rem
-  font-weight: 600;
   margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--gray-900);
 }
 
 .modal-close-btn {
-  // Copied from your toast-close-btn
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-right: -8px;
+  
+  background: transparent;
   border: none;
-  color: var(--gray-300);
-  font-size: 1.8rem; // Larger for a modal
-  font-weight: bold;
+  border-radius: 50%;
+  color: var(--gray-400);
+  font-size: 1.5rem;
   line-height: 1;
-  opacity: 0.8;
   cursor: pointer;
-  padding: 0 5px;
+  transition: all 0.2s ease;
 
   &:hover {
-    opacity: 1;
-    color: var(--gray-700);
+    background-color: var(--gray-100);
+    color: var(--gray-800);
   }
 }
 
 .modal-body {
-  overflow-y: auto; 
-  scrollbar-width: none; 
-  -ms-overflow-style: none;
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  
+  /* Modern Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
 
   &::-webkit-scrollbar {
-    display: none; 
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+    border-radius: 3px;
   }
 }
 
-@keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes modalZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

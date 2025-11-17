@@ -38,7 +38,7 @@ html {
 :root {
   /* COLOR PALETTE */
   
-  /* Brand Colors - Primary */
+  /* Brand Colors */
   --aqua-island: #9BDAD9;
   --teal-blue: #00839B;
   --peacock-blue: #006E96;
@@ -53,7 +53,7 @@ html {
   --peppermint: #E6F5E9;
   --dark-gray: #4A4A4A;
 
-  /* Pastel Colors - NEW */
+  /* Pastel Colors */
   --pastel-lavender: #E6E6FA;
   --pastel-mint: #B2F2E6;
   --pastel-peach: #FFD1B3;
@@ -65,7 +65,7 @@ html {
   --pastel-coral: #FFB3BA;
   --pastel-powder: #BDB3FF;
 
-  /* Functional Palette - Grays */
+  /* Functional Palette */
   --gray-100: #F8FAFC;
   --gray-200: #E2E8F0;
   --gray-300: #CBD5E1;
@@ -312,24 +312,24 @@ a {
 /* CUSTOM TOOLTIP STYLES */
 .app-tooltip-container {
   position: fixed;
-  background: rgba(255, 255, 255, 0.92); // NEW - Like toast
-  backdrop-filter: blur(10px); // NEW
-  color: var(--gray-900); // NEW - Dark text
-  font-weight: var(--font-weight-medium); // NEW
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  color: var(--gray-900);
+  font-weight: var(--font-weight-medium);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius-md); // NEW - Softer corners
+  border-radius: var(--border-radius-md);
   font-size: 0.875rem;
-  box-shadow: var(--box-shadow-lg); // NEW - Match dropdowns
-  border: var(--border-width) solid rgba(255, 255, 255, 0.4); // NEW - Like toast
+  box-shadow: var(--box-shadow-lg);
+  border: var(--border-width) solid rgba(255, 255, 255, 0.4);
   z-index: 1052;
   opacity: 0;
-  transition: opacity 0.15s var(--transition-smooth), transform 0.15s var(--transition-smooth); // NEW
-  transform: scale(0.95); // NEW
-  transform-origin: left center; // NEW - Assumes it appears to the right
+  transition: opacity 0.15s var(--transition-smooth), transform 0.15s var(--transition-smooth);
+  transform: scale(0.95);
+  transform-origin: left center;
 
   &.show {
     opacity: 1;
-    transform: scale(1); // NEW
+    transform: scale(1);
   }
 }
 
@@ -366,7 +366,7 @@ body > ul.submenu.open {
   width: 220px;
   z-index: 1040;
   overflow: hidden;
-  padding: var(--spacing-xs); /* Added padding to match dropdown */
+  padding: var(--spacing-xs);
 
   li {
     list-style: none;
@@ -387,11 +387,8 @@ body > ul.submenu.open {
       color: var(--gray-700);
       font-weight: var(--font-weight-normal);
       transition: background-color 0.2s ease, color 0.2s ease;
-      
-      /* --- ADDED to ensure link itself doesn't overflow --- */
       overflow: hidden;
       width: 100%;
-      /* --- END ADDITION --- */
 
       i {
         font-size: var(--font-size-base);
@@ -448,11 +445,12 @@ body > ul.submenu.open {
 
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(3px);
-  /* animation: modal-fade-in 0.2s ease-out; -- REMOVED TO PREVENT LAG */
-    transition: none !important; /* Disables the CDK's default opacity transition */
+  -webkit-backdrop-filter: blur(3px);
+      transition: none !important; /* Disables the CDK's default opacity transition */
   animation: none !important;  /* Disables all animations */
+  /* Removed transitions to ensure instant rendering performance with blur */
 }
 
 .app-modal-panel {
@@ -460,12 +458,9 @@ body > ul.submenu.open {
   background: none;
   box-shadow: none;
   border-radius: 0;
-  // animation: modal-fade-in 0.1s ease-out !important;
 }
 
-/* ============================================
-   Global Status Chip Styles
-   ============================================ */
+/* Global Status Chip Styles */
 .status-chip {
   padding: 2px 10px;
   border-radius: 12px;
@@ -478,7 +473,7 @@ body > ul.submenu.open {
 }
 .status-in-use { 
   color: #FFFFFF;
-  background-color: var( --peacock-blue-light); /* Deep blue - distinct from teal header */
+  background-color: var( --peacock-blue-light);
 }
 .status-ready { 
   color: #FFFFFF;

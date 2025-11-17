@@ -1,19 +1,13 @@
 :host {
-  /* Ensure the component itself always tries to fill its parent */
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   overflow: hidden;
-  min-height: 0; /* Critical for nested flex scrolling */
-
-  /* --- START OF MODIFICATION --- */
-  /* 1. Define the default fallback color as a CSS variable on the host */
+  min-height: 0;
   --table-header-bg: var(--teal-blue);
-  /* --- END OF MODIFICATION --- */
 }
 
-/* --- ADDED: Highlight Style --- */
 :host ::ng-deep .highlight {
   background-color: var(--pastel-lemon, #fff5b3);
   color: var(--gray-900);
@@ -24,25 +18,22 @@
 }
 
 .reusable-table-wrapper {
-  /* FLEX FIX: Make this wrapper grow to fill the :host */
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Critical for nested flex scrolling */
-
+  min-height: 0;
   position: relative;
   background-color: var(--white);
   border-radius: var(--border-radius-md);
-  box-shadow: none; /* Removed shadow as requested */
+  box-shadow: none;
   overflow: hidden;
-  // border: var(--border-width) solid var(--gray-200);
 }
 
 .loading-shade {
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 40px; /* Updated to match new paginator height */
+  bottom: 40px;
   right: 0;
   background: rgba(255, 255, 255, 0.92);
   z-index: 50;
@@ -68,32 +59,18 @@
 }
 
 .table-container {
-  /* FLEX FIX: This container now grows to fill the wrapper minus paginator */
   flex: 1;
   overflow: auto;
-  min-height: 0; /* Critical for nested flex scrolling */
+  min-height: 0;
   position: relative;
-
-  /* --- START OF MODIFICATION (Scrollbar Style) --- */
-  /* For Firefox */
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) var(--gray-100);
-  /* --- END OF MODIFICATION --- */
 
-  /* Scroll indicators */
   background:
-    /* Shadow covers */
     linear-gradient(to right, var(--white) 30%, rgba(255, 255, 255, 0)),
     linear-gradient(to left, var(--white) 30%, rgba(255, 255, 255, 0)) 100% 0,
-    /* Shadows */
-    radial-gradient(farthest-side at 0% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0))
-      0 0,
-    radial-gradient(
-        farthest-side at 100% 50%,
-        rgba(0, 0, 0, 0.12),
-        rgba(0, 0, 0, 0)
-      )
-      100% 0;
+    radial-gradient(farthest-side at 0% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0)) 0 0,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0)) 100% 0;
   background-repeat: no-repeat;
   background-color: var(--white);
   background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
@@ -101,22 +78,17 @@
   background-attachment: local, local, scroll, scroll;
 }
 
-/* Content wrappers for text truncation */
 .header-content,
 .cell-content {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: block;
-  max-width: 100%;
-  font-weight: inherit;
-
-  /* --- ADDED: Make cell-content a flex container --- */
   display: flex;
   align-items: center;
+  max-width: 100%;
+  font-weight: inherit;
 }
 
-/* === NEW: STATUS CHIP STYLES === */
 .status-chip {
   padding: 2px 10px;
   border-radius: 12px;
@@ -126,10 +98,8 @@
   text-transform: capitalize;
   line-height: 1.5;
   white-space: nowrap;
-
-  /* --- ADDED: Allow inner span/mark to wrap --- */
-  // This is a bit of a hack, but lets the chip contain the highlight
   display: inline-flex;
+
   span,
   mark {
     display: inline;
@@ -140,9 +110,7 @@
 }
 .status-in-use {
   color: #ffffff;
-  background-color: var(
-    --peacock-blue-light
-  ); /* Deep blue - distinct from teal header */
+  background-color: var(--peacock-blue-light);
 }
 .status-ready {
   color: #ffffff;
@@ -161,7 +129,6 @@
   background-color: var(--gray-500);
 }
 
-/* === NEW: ROW ACTION BUTTON STYLES === */
 .action-menu-btn {
   display: inline-flex;
   align-items: center;
@@ -188,13 +155,8 @@
     color: var(--gray-800);
   }
 }
-/* === END ROW ACTION BUTTON STYLES === */
 
-/* ============================================
-    Material Component Overrides
-   ============================================ */
 :host ::ng-deep {
-  /* --- NEW: Checkbox Column Styles --- */
   .mat-column-select {
     width: 48px !important;
     min-width: 48px !important;
@@ -209,90 +171,58 @@
   .mat-mdc-cell.mat-column-select {
     padding-left: 16px !important;
   }
-  /* --- End Checkbox Styles --- */
 
-  /* COMPACT HEADER CELLS - Reduced space */
   .mat-mdc-header-cell {
-    /* --- START OF MODIFICATION --- */
-    /* 2. Use the CSS variable. It will inherit from :host or the HostBinding */
-    /* The !important is kept to override Angular Material's base styles. */
     background-color: var(--table-header-bg) !important;
-    /* --- END OF MODIFICATION --- */
-
     color: var(--white) !important;
     font-weight: var(--font-weight-medium) !important;
-    font-size: 0.75rem !important; /* Reduced font size */
+    font-size: 0.75rem !important;
     letter-spacing: 0.03em !important;
-    padding: var(--spacing-xs) var(--spacing-sm) !important; /* Reduced padding */
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
     border-bottom: none !important;
     border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
     white-space: nowrap;
-    height: 32px !important; /* Further reduced height */
+    height: 32px !important;
     min-height: 32px !important;
-    line-height: 32px !important; /* Match height for vertical centering */
-
+    line-height: 32px !important;
     position: sticky;
     top: 0;
     z-index: 10;
-    // box-shadow: 0 1px 2px rgba(0,0,0,0.15) !important; /* Lighter shadow */
 
     &:last-child {
       border-right: none !important;
     }
 
-    /* --- START OF MODIFICATION --- */
-    /*
-      This rule now sets the COLOR to white, but does NOT
-      set the opacity. This allows the default Material
-      opacity rules (for hover/active) to work.
-    */
     .mat-sort-header-arrow {
-      color: var(--white) !important; /* --- FIX: Added color back --- */
+      color: var(--white) !important;
       font-size: 16px !important;
       width: 16px !important;
       height: 16px !important;
     }
 
-    /*
-      This rule is left intentionally blank.
-      The default .mat-sort-header-sorted class will
-      apply the correct opacity to the white arrow.
-    */
-    &.mat-sort-header-sorted .mat-sort-header-arrow {
-      /* Let default styles apply for opacity */
-    }
-    /* --- END OF MODIFICATION --- */
-
     &:hover {
-      /* This will be overridden by the variable, but is a good fallback */
       background-color: var(--teal-blue-dark) !important;
     }
   }
 
-  /* CRITICAL: Target the header row itself to reduce height */
   .mat-mdc-header-row {
-    height: 32px !important; /* Match header cell height */
+    height: 32px !important;
     min-height: 32px !important;
   }
 
-  /* COMPACT DATA CELLS */
   .mat-mdc-cell {
-    padding: 0 var(--spacing-sm) !important; /* Reduced padding */
+    padding: 0 var(--spacing-sm) !important;
     color: var(--gray-700) !important;
-    /* --- START OF MODIFICATION --- */
-    border-bottom: none !important; /* REMOVED BORDER */
-    /* --- END OF MODIFICATION --- */
-    font-size: 0.8125rem !important; /* Slightly smaller */
-    height: 36px !important; /* Consistent row height */
+    border-bottom: none !important;
+    font-size: 0.8125rem !important;
+    height: 36px !important;
 
-    /* --- NEW: Style the action cell --- */
     &.mat-column-actions {
       padding: 0 4px !important;
-      width: 40px; // Fixed width for action button
+      width: 40px;
     }
 
     &:first-of-type:not(.mat-column-select) {
-      // <-- MODIFIED
       padding-left: var(--spacing-md) !important;
     }
     &:last-of-type {
@@ -300,18 +230,13 @@
     }
   }
 
-  /* ============================================
-      Row Styles & States - Enhanced UX
-     ============================================ */
   .mat-mdc-row {
-    height: 36px !important; /* Compact height */
+    height: 36px !important;
     transition: all 0.2s var(--transition-smooth);
 
-    /* --- START OF MODIFICATION: ZEBRA STRIPING --- */
     &:nth-child(even) {
-      background-color: var(--white); /* Use a light gray for the stripe */
+      background-color: var(--white);
     }
-    /* --- END OF MODIFICATION --- */
 
     &.clickable-row {
       cursor: pointer;
@@ -329,7 +254,6 @@
         background-color: var(--gray-100) !important;
       }
 
-      /* Single-select style */
       &.selected {
         background-color: var(--peppermint) !important;
         box-shadow: inset 3px 0 0 var(--teal-blue) !important;
@@ -340,7 +264,6 @@
         }
       }
 
-      /* --- NEW: Multi-select style --- */
       &.multi-selected {
         background-color: var(--pastel-sky) !important;
 
@@ -352,16 +275,10 @@
     }
   }
 
-  /* ============================================
-      Empty State Styles - Enhanced UX
-     ============================================ */
   .mat-no-data-row {
-    /* --- START OF MODIFICATION --- */
-    /* Make sure even/odd striping doesn't apply to the no-data row */
     &:nth-child(even) {
       background-color: var(--white) !important;
     }
-    /* --- END OF MODIFICATION --- */
     
     .mat-mdc-cell {
       border-bottom: none !important;
@@ -424,13 +341,10 @@
     }
   }
 
-  /* ============================================
-      Compact Paginator Overrides - REDUCED HEIGHT
-     ============================================ */
   .mat-mdc-paginator {
     flex-shrink: 0;
     background-color: var(--white) !important;
-    height: 40px !important; /* Further reduced height from 48px */
+    height: 40px !important;
     min-height: 40px !important;
 
     .mat-mdc-paginator-container {
@@ -458,23 +372,23 @@
     .mat-mdc-form-field {
       .mat-mdc-text-field-wrapper {
         padding: 0 4px !important;
-        height: 28px !important; /* Reduced from 32px */
+        height: 28px !important;
         border-radius: var(--border-radius-sm) !important;
       }
 
       .mat-mdc-form-field-infix {
-        padding-top: 2px !important; /* Reduced padding */
+        padding-top: 2px !important;
         padding-bottom: 2px !important;
         min-height: 28px !important;
       }
 
       .mat-mdc-form-field-subscript-wrapper {
-        display: none !important; /* Hide subscript to save space */
+        display: none !important;
       }
     }
 
     .mat-mdc-icon-button {
-      width: 28px !important; /* Reduced from 32px */
+      width: 28px !important;
       height: 28px !important;
       padding: 2px !important;
 
@@ -493,7 +407,6 @@
       font-family: var(--font-family-sans) !important;
     }
 
-    /* Adjust spacing between paginator elements */
     .mat-mdc-paginator-range-actions {
       display: flex !important;
       align-items: center !important;
@@ -501,7 +414,6 @@
     }
   }
 
-  /* Focus states for accessibility */
   .mat-mdc-header-cell:focus-visible,
   .mat-mdc-cell:focus-visible,
   .mat-mdc-icon-button:focus-visible {
@@ -511,7 +423,6 @@
   }
 }
 
-/* Keyframe animations */
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -527,11 +438,9 @@
   }
 }
 
-/* --- START OF MODIFICATION (Scrollbar Style) --- */
-/* For Webkit (Chrome, Safari, Edge) */
 .table-container::-webkit-scrollbar {
-  width: 6px;  /* Thinner */
-  height: 6px; /* Thinner */
+  width: 6px;
+  height: 6px;
 }
 
 .table-container::-webkit-scrollbar-track {
@@ -543,20 +452,16 @@
   background: var(--gray-300);
   border-radius: var(--border-radius-sm);
   transition: background 0.2s var(--transition-smooth);
-  
-  /* Create an "overlay" effect */
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 .table-container::-webkit-scrollbar-thumb:hover {
   background: var(--gray-400);
-  background-clip: padding-box; /* Keep clip on hover */
+  background-clip: padding-box;
 }
-/* --- END OF MODIFICATION --- */
 
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   :host ::ng-deep {
     .mat-mdc-header-cell,
@@ -577,7 +482,6 @@
       }
     }
 
-    /* --- NEW: Adjust checkbox column on mobile --- */
     .mat-column-select {
       width: 40px !important;
       min-width: 40px !important;

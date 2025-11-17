@@ -9,12 +9,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   NgZone,
-  HostListener, // (Already imported)
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs'; // <-- Removed 'fromEvent'
+import { Subject } from 'rxjs';
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
@@ -30,7 +30,6 @@ function getCssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-// --- Interfaces (Unchanged) ---
 interface ApiResponseData {
   TenPhongBan: string;
   PhongBan_Id: number;
@@ -92,11 +91,9 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   private chartInstance?: EChartsType;
   private dataRefreshInterval?: ReturnType<typeof setInterval>;
   
-  // --- START OF MODIFICATION ---
   private intersectionObserver?: IntersectionObserver;
   public isChartVisible: boolean = false;
   public isChartInitialized: boolean = false;
-  // --- END OF MODIFICATION ---
 
   currentDateTime: string = '';
   public isLoading: boolean = false;
@@ -104,7 +101,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   widgetData: WidgetData[] = [];
   private bedStatusSeries: BedStatusSeries[] = [];
   
-  // (cssVars property remains unchanged)
   private cssVars = {
     chartColor1: '',
     chartColor2: '',
@@ -123,12 +119,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   };
 
   private destroy$ = new Subject<void>();
-  
   private resizeTimeout: any;
 
   @HostListener('window:resize')
   onWindowResize(): void {
-    // (This HostListener remains unchanged)
     clearTimeout(this.resizeTimeout);
     this.resizeTimeout = setTimeout(() => {
       this.chartInstance?.resize();
@@ -140,10 +134,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // --- MODIFIED ---
-    // We set up the observer, which will THEN call initializeChart()
     this.setupIntersectionObserver();
-    // --- END OF MODIFICATION ---
     this.startRefreshInterval();
   }
 
@@ -158,18 +149,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.dataRefreshInterval) {
       clearInterval(this.dataRefreshInterval);
     }
-    // --- ADDED ---
     this.intersectionObserver?.disconnect();
-    // --- END OF ADDITION ---
   }
   
-  // --- ADDED ---
-  /**
-   * Sets up an IntersectionObserver to lazy-load the chart
-   * only when it becomes visible.
-   */
   private setupIntersectionObserver(): void {
-    // Check if browser supports it
     if (typeof IntersectionObserver === 'undefined') {
       console.warn('IntersectionObserver not supported, loading chart immediately.');
       this.initializeChart();
@@ -179,12 +162,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // When the chart is intersecting (visible) and not already visible
           if (entry.isIntersecting && !this.isChartVisible) {
             this.isChartVisible = true;
-            this.intersectionObserver?.disconnect(); // Stop observing
+            this.intersectionObserver?.disconnect(); 
             
-            // Now we initialize the chart
             this.ngZone.run(() => {
               this.initializeChart();
               this.cd.markForCheck();
@@ -193,18 +174,15 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         });
       },
       { 
-        rootMargin: '100px', // Load it when it's 100px away from the viewport
+        rootMargin: '100px',
         threshold: 0.01 
       }
     );
     
-    // Start observing the chart container element
     this.intersectionObserver.observe(this.chartContainer.nativeElement);
   }
-  // --- END OF ADDITION ---
 
   private startRefreshInterval(): void {
-    // (This method remains unchanged)
     this.ngZone.runOutsideAngular(() => {
       this.dataRefreshInterval = setInterval(() => {
         this.ngZone.run(() => this.loadData());
@@ -214,24 +192,15 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   private async initializeChart(): Promise<void> {
-    // --- ADDED ---
-    // Prevent re-initialization
     if (this.isChartInitialized) return;
     this.isChartInitialized = true;
-    // --- END OF ADDITION ---
     
-    // Lazy load ECharts
     await this.lazyLoadECharts();
-    
-    // Initialize chart instance
     this.initChart();
-        
-    // LOAD DATA *after* chart is initialized
     this.loadData();
   }
 
   private async lazyLoadECharts(): Promise<void> {
-    // (This method remains unchanged)
     try {
       const [
         echartsCore,
@@ -270,7 +239,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initColors(): void {
-    // (This method remains unchanged)
     const c = getCssVar;
 
     this.widgetData = [
@@ -311,7 +279,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initChart(): void {
-    // (This method remains unchanged)
     if (!this.echartsInstance) {
       console.error('ECharts has not been loaded');
       return;
@@ -322,11 +289,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance = this.echartsInstance!.init(container, undefined, {
         renderer: 'canvas',
-        useDirtyRect: true, // Performance optimization
+        useDirtyRect: true,
       });
     });
 
-    // Resize after a short delay
     this.ngZone.runOutsideAngular(() => {
       setTimeout(() => {
         this.chartInstance?.resize();
@@ -335,11 +301,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public loadData(): void {
-    // (This method remains unchanged)
     if (this.isLoading) return;
     
     this.isLoading = true;
-    this.cd.markForCheck(); // Mark once to show spinner
+    this.cd.markForCheck();
 
     const apiUrl = environment.bedUsageUrl;
     
@@ -386,7 +351,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private renderChart(chartData: DepartmentChartData[], enableAnimation: boolean): void {
-    // (This method remains unchanged)
     if (!this.chartInstance || !this.echartsInstance) return;
     
     const option = this.buildOption(chartData);
@@ -406,10 +370,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
   
-  // ... all other methods (transformApiData, parseDepartmentName, updateWidgetValue, etc.) remain exactly the same ...
-  
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
-    // (This method remains unchanged)
     return apiData.map((item) => {
       const parts = this.parseDepartmentName(item.TenPhongBan);
       return {
@@ -428,7 +389,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private parseDepartmentName(fullName: string): { viName: string; enName: string } {
-    // (This method remains unchanged)
     const withoutTotal = fullName.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
     const parts = withoutTotal.split(/\s+-\s+/);
     
@@ -454,7 +414,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateWidgetValue(id: string, value: string): void {
-    // (This method remains unchanged)
     const widget = this.widgetData.find((w) => w.id === id);
     if (widget) {
       widget.value = value;
@@ -462,7 +421,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private calculateAndUpdateWidgets(apiData: ApiResponseData[]): void {
-    // (This method remains unchanged)
     const totals = {
       giuongTrong: 0,
       dangDieuTri: 0,
@@ -516,7 +474,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private resetWidgetsToZero(): void {
-    // (This method remains unchanged)
     this.updateWidgetValue('occupancyRate', '0,00%');
     this.updateWidgetValue('totalBeds', '0');
     this.updateWidgetValue('dangDieuTri', '0');
@@ -528,12 +485,10 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   trackByWidgetId(index: number, item: WidgetData): string {
-    // (This method remains unchanged)
     return item.id;
   }
 
   private formatNumber(value: number): string {
-    // (This method remains unchanged)
     return new Intl.NumberFormat('vi-VN', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -541,7 +496,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private formatPercentage(value: number): string {
-    // (This method remains unchanged)
     return (
       new Intl.NumberFormat('vi-VN', {
         minimumFractionDigits: 2,
@@ -551,7 +505,6 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
-    // (This method remains unchanged)
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
@@ -569,13 +522,13 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         borderWidth: 1,
       },
       label: {
-        show: true, // Show the label
-        position: 'inside', // Position it inside the bar
-        color: this.cssVars.white, // Text color
+        show: true,
+        position: 'inside',
+        color: this.cssVars.white,
         fontFamily: GLOBAL_FONT_FAMILY,
         fontSize: 9,
         fontWeight: 'bold',
-        formatter: (params: any) => { // Only show if value > 0
+        formatter: (params: any) => {
           return params.value > 0 ? params.value : '';
         }
       },
@@ -644,7 +597,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         left: '5%',
         right: '5%',
         top: '12%',
-        bottom: '80px', // Increased from 10% to make space
+        bottom: '80px',
         containLabel: true,
       },
       xAxis: {

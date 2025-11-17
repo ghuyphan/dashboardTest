@@ -1,4 +1,3 @@
-// src/app/components/dynamic-form/dynamic-form.component.ts
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -25,7 +24,6 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
   public dynamicForm: FormGroup;
   
-  // --- ADDITION: Formatter for currency ---
   private currencyFormatter = new Intl.NumberFormat('en-US');
 
   constructor(private fb: FormBuilder) {
@@ -50,13 +48,10 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     for (const row of this.formConfig.formRows) {
       for (const control of row.controls) {
         
-        // --- MODIFICATION: Clean currency value before setting ---
         let controlValue = control.value ?? null;
         if (control.controlType === 'currency') {
-          // Ensure the initial value in the form model is a clean number
           controlValue = this.cleanCurrency(controlValue);
         }
-        // --- END MODIFICATION ---
         
         const controlValidators = this.buildValidators(control.validators);
         
@@ -69,9 +64,6 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     this.dynamicForm = new FormGroup(formGroup);
   }
 
-  /**
-   * Helper function to parse validator config into Angular Validators.
-   */
   private buildValidators(validatorsConfig: any): any[] {
     if (!validatorsConfig) {
       return [];
@@ -83,7 +75,6 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     if (validatorsConfig.minLength) {
       validators.push(Validators.minLength(validatorsConfig.minLength));
     }
-    // --- START OF BEST PRACTICE ADDITIONS ---
     if (validatorsConfig.maxLength) {
       validators.push(Validators.maxLength(validatorsConfig.maxLength));
     }
@@ -99,42 +90,27 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     if (validatorsConfig.max) {
       validators.push(Validators.max(validatorsConfig.max));
     }
-    // --- END OF BEST PRACTICE ADDITIONS ---
     
     return validators;
   }
 
-  /**
-   * Handles the form submission.
-   * Emits the form value up to the parent component.
-   */
   public onSave(): void {
     if (this.dynamicForm.invalid) {
       this.dynamicForm.markAllAsTouched();
       return;
     }
-    // We don't save here. We just emit!
     this.formSubmitted.emit(this.dynamicForm.value);
   }
 
-  /**
-   * Emits the cancel event.
-   */
   public onCancel(): void {
     this.formCancelled.emit();
   }
 
-  /**
-   * Helper for form validation.
-   */
   public isInvalid(controlName: string): boolean {
     const control = this.dynamicForm.get(controlName);
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 
-  /**
-   * Helper to get the first validation error message.
-   */
   public getErrorMessage(controlConfig: any): string {
     const control = this.dynamicForm.get(controlConfig.controlName);
     if (!control || !control.errors || !controlConfig.validationMessages) {
@@ -143,59 +119,39 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
     for (const errorKey in control.errors) {
       if (controlConfig.validationMessages[errorKey]) {
-        // --- BEST PRACTICE: Add support for maxLength message ---
         if (errorKey === 'maxLength') {
-          // Example: "Tên không được vượt quá 100 ký tự."
           return controlConfig.validationMessages[errorKey];
         }
         if (errorKey === 'max') {
-           // Example: "Giá mua không hợp lệ (tối đa 10 tỷ)."
           return controlConfig.validationMessages[errorKey];
         }
         if (errorKey === 'pattern') {
-          // Example: "Mã chỉ chứa chữ, số, gạch ngang, gạch dưới."
           return controlConfig.validationMessages[errorKey];
         }
-        // --- END ADDITION ---
         return controlConfig.validationMessages[errorKey];
       }
     }
 
-    return 'Trường này không hợp lệ.'; // Generic fallback
+    return 'Trường này không hợp lệ.';
   }
 
-  /**
-   * Cleans a value (string or number) into a clean number or null.
-   * e.g., "1,000" -> 1000
-   * e.g., "abc" -> null
-   */
   private cleanCurrency(value: any): number | null {
     if (value === null || value === undefined) return null;
     
-    // Remove all non-numeric characters except a potential decimal point
     let stringValue = String(value).replace(/[^0-9.]+/g, '');
     let numberValue = parseFloat(stringValue);
 
     return isNaN(numberValue) ? null : numberValue;
   }
 
-  /**
-   * Formats a raw number from the form control into a displayed string.
-   * e.g., 1000000 -> "1,000,000"
-   */
   public formatCurrency(value: any): string {
     const numberValue = this.cleanCurrency(value);
     if (numberValue === null) {
       return '';
     }
-    // Use en-US locale for standard comma separators (e.g., 1,000,000)
     return this.currencyFormatter.format(numberValue);
   }
 
-  /**
-   * Handles the (input) event on currency fields.
-   * Updates the form control with the raw number and formats the displayed value.
-   */
   public onCurrencyInput(event: Event, controlName: string): void {
     const inputElement = event.target as HTMLInputElement;
     const control = this.dynamicForm.get(controlName);
@@ -203,20 +159,15 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
     const rawValue = this.cleanCurrency(inputElement.value);
 
-    control.setValue(rawValue, { emitEvent: false }); // Emit is false
+    control.setValue(rawValue, { emitEvent: false });
 
-    // --- CRITICAL FIX: Manually set dirty/touched flags ---
     if (!control.touched) {
       control.markAsTouched();
     }
 
     this.dynamicForm.markAsDirty();
-    // --------------------------------------------------------
 
-    // Re-format the displayed value
     const formattedValue = this.formatCurrency(rawValue);
-    
-    // Set the display value directly
     inputElement.value = formattedValue;
   }
 }

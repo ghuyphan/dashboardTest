@@ -52,18 +52,14 @@ export class DeviceFormComponent implements OnInit {
     let deviceData$: Observable<Device | null>;
 
     if (this.device && this.device.Id) {
-      // --- EDIT MODE ---
-      // Fetch fresh data from the API
       const url = `${environment.equipmentCatUrl}/${this.device.Id}`;
       deviceData$ = this.http.get<Device[]>(url).pipe(
         map(dataArray => (dataArray && dataArray.length > 0) ? dataArray[0] : null)
       );
     } else {
-      // --- CREATE MODE ---
       deviceData$ = of(null);
     }
 
-    // Load dropdowns and device data in parallel
     forkJoin({
       deviceTypes: this.dropdownService.getDeviceTypes(),
       deviceStatuses: this.dropdownService.getDeviceStatuses(),
@@ -86,33 +82,25 @@ export class DeviceFormComponent implements OnInit {
     }
   }
 
-  /**
-   * Chuyển đổi chuỗi ngày (từ API) thành "yyyy-MM-dd"
-   * cho <input type="date">.
-   */
   private parseValueToHtmlDate(
     dateString: string | null | undefined
   ): string {
     if (!dateString || dateString === '0001-01-01T00:00:00') {
-      return ''; // Handle null/empty/invalid dates
+      return '';
     }
     
     try {
-      // 1. Check if it's a "dd/MM/yyyy..." string (from the API response)
       if (dateString.includes('/') && dateString.length >= 10) {
         const parts = dateString.substring(0, 10).split('/');
         if (parts.length === 3) {
-          // Reformat from dd/MM/yyyy to yyyy-MM-dd
           return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
       }
       
-      // 2. Check if it's an ISO string (just in case)
       if (dateString.includes('T')) {
-        return dateString.substring(0, 10); // YYYY-MM-DD
+        return dateString.substring(0, 10);
       }
 
-      // 3. Check if it's already in "yyyy-MM-dd" format
       if (dateString.includes('-') && dateString.length === 10) {
          return dateString;
       }
@@ -126,26 +114,19 @@ export class DeviceFormComponent implements OnInit {
     return ''; 
   }
 
-
-  /**
-   * Chuyển đổi chuỗi "yyyy-MM-dd" từ input
-   * trở lại thành chuỗi ISO 8601 cho API.
-   */
   private formatHtmlDateToApiDate(dateString: string): string | null {
     if (!dateString) {
       return null;
     }
     try {
-      // Create date as local time
-      const parts = dateString.split('-'); // "yyyy", "MM", "dd"
+      const parts = dateString.split('-');
       const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+      const month = parseInt(parts[1], 10) - 1;
       const day = parseInt(parts[2], 10);
       const date = new Date(year, month, day);
 
       if (isNaN(date.getTime())) return null;
       
-      // Return as ISO string
       return date.toISOString();
     } catch (e) {
       console.error('Error formatting date string:', dateString, e);
@@ -173,16 +154,13 @@ export class DeviceFormComponent implements OnInit {
       .pipe(switchMap((result) => of(!!result)));
   }
 
-  /**
-   * Xây dựng cấu hình form
-   */
   private buildFormConfig(
     deviceTypes: DropdownOption[],
     deviceStatuses: DropdownOption[],
-    deviceData: Device | null // <-- Use the fresh data
+    deviceData: Device | null
   ): void {
     const isEditMode = !!deviceData;
-    const data: Partial<Device> = deviceData || {}; // Use the fresh data
+    const data: Partial<Device> = deviceData || {};
 
     const defaultStatusId =
       deviceStatuses.find((s) => s.value === 'Sẵn sàng')?.key || null;
@@ -200,7 +178,6 @@ export class DeviceFormComponent implements OnInit {
       entityId: isEditMode ? data.Id : null,
       saveUrl: environment.equipmentCatUrl,
       formRows: [
-        // --- Row 1: Ma, Ten ---
         {
           controls: [
             {
@@ -230,7 +207,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // --- Row 2: Model, SerialNumber ---
         {
           controls: [
             {
@@ -253,7 +229,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // --- Row 3: CategoryID, TrangThai ---
         {
           controls: [
             {
@@ -277,7 +252,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // --- Row 4: DeviceName, ViTri ---
         {
           controls: [
             {
@@ -300,7 +274,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // --- Row 5: Dates ---
         {
           controls: [
             {
@@ -308,7 +281,7 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'date',
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseValueToHtmlDate(data.NgayMua), // This is correct
+              value: this.parseValueToHtmlDate(data.NgayMua),
               validators: {},
               layout_flexGrow: 1,
             },
@@ -317,7 +290,7 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'date',
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseValueToHtmlDate(data.NgayHetHanBH), // This is correct
+              value: this.parseValueToHtmlDate(data.NgayHetHanBH),
               validators: {},
               layout_flexGrow: 1,
             },
@@ -332,7 +305,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // --- Row 6: MoTa ---
         {
           controls: [
             {
@@ -350,9 +322,6 @@ export class DeviceFormComponent implements OnInit {
     };
   }
 
-  /**
-   * Xử lý lưu form
-   */
   public onSave(formData: any): void {
     this.isSaving = true;
     const apiUrl = this.formConfig.saveUrl;
@@ -370,11 +339,7 @@ export class DeviceFormComponent implements OnInit {
     }
 
     const apiNgayMua = this.formatHtmlDateToApiDate(formData.NgayMua);
-    
-    // --- *** THIS IS THE FIX *** ---
-    // It was trying to read `formData.NgData.NgayHetHanBH`
     const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
-    // --- *** END OF FIX *** ---
 
     let saveObservable;
 
@@ -434,7 +399,6 @@ export class DeviceFormComponent implements OnInit {
           const successMessage = response.TenKetQua || 'Lưu thành công!';
           this.toastService.showSuccess(successMessage);
 
-          console.log('Save successful', response);
           if (this.modalRef) {
             this.modalRef.canClose = () => true;
           }
