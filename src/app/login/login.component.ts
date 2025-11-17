@@ -4,6 +4,8 @@ import { CommonModule, NgClass } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { RouterLink, Router } from '@angular/router';
+import { ModalService } from '../services/modal.service';
+import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-login',
@@ -32,28 +34,44 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    private modalService: ModalService
   ) {}
 
   onSubmit() {
     if (this.isLoading) return;
     this.isLoading = true;
 
-    // The whole credentials object, including the 'remember' flag, is passed
     this.authService.login(this.credentials).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.toastService.showSuccess('Đăng nhập thành công!');
-        // AuthService handles token storage based on credentials.remember
         this.router.navigate(['/app']);
       },
-      error: (err: Error) => { // Type the error as 'Error'
+      error: (err: any) => {
         this.isLoading = false;
         
-        // Display the specific error message from the authService
-        // 'err.message' will be the error string we created in auth.service
-        const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
-        this.toastService.showError(errorMessage, 0); 
+        // Kiểm tra mã lỗi 104 (Tài khoản bị khóa)
+        if (err.code == 104) {
+          this.modalService.open(ConfirmationModalComponent, {
+            title: 'Tài khoản bị khóa',
+            size: 'sm', // Kích thước vừa phải
+            disableBackdropClose: true, // Bắt buộc người dùng đọc và nhấn nút
+            context: {
+              title: '',
+              icon: 'fas fa-user-shield', 
+              iconColor: 'var(--color-danger)', // Màu đỏ để cảnh báo
+
+              message: `${err.message}\n\nVui lòng liên hệ bộ phận IT qua hotline:\n☎ 1108 / 1109 để mở khóa.`,
+              confirmText: 'Đã hiểu',
+              cancelText: '' // Ẩn nút Cancel để thành hộp thoại thông báo (Alert)
+            }
+          });
+        } else {
+          // Xử lý các lỗi khác
+          const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
+          this.toastService.showError(errorMessage); 
+        }
         
         console.error('Login failed', err);
       }

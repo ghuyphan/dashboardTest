@@ -3,31 +3,60 @@
   width: 100%;
 }
 
-.confirm-header {
+.confirm-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: var(--spacing-sm);
 }
 
-.confirm-body {
-  font-size: var(--font-size-base);
-  color: var(--gray-700);
-  line-height: 1.6;
-
-  p {
-    margin-bottom: 0;
+/* Icon Styling */
+.confirm-icon-wrapper {
+  margin-bottom: var(--spacing-md);
+  
+  i {
+    font-size: 3.5rem;
+    line-height: 1;
+    color: var(--gray-400); 
   }
 }
 
-.confirm-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: var(--border-width) solid var(--gray-200);
+/* Content Styling */
+.confirm-content {
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
 }
 
+.confirm-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.confirm-message {
+  font-size: var(--font-size-base);
+  color: var(--gray-600);
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Footer Styling */
+.confirm-footer {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+/* Button Styles */
 .btn {
   display: inline-block;
-  padding: 0.6rem 1.1rem; 
+  padding: 0.6rem 1.5rem;
+  min-width: 100px;
   border: var(--border-width) solid transparent;
   border-radius: var(--border-radius-md);
   font-size: 0.875rem;
@@ -46,12 +75,13 @@
 
 .btn-secondary {
   background-color: var(--white);
-  color: var(--gray-800);
+  color: var(--gray-700);
   border-color: var(--gray-300);
 
   &:hover:not(:disabled) {
-    background-color: var(--gray-100);
+    background-color: var(--gray-50);
     border-color: var(--gray-400);
+    color: var(--gray-900);
   }
 }
 
@@ -59,10 +89,17 @@
   background-color: var(--color-danger);
   color: var(--white);
   border-color: var(--color-danger);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
 
   &:hover:not(:disabled) {
     background-color: #c9302c;
     border-color: #b02a37;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(220, 53, 69, 0.3);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 }
 

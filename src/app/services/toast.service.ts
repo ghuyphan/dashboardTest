@@ -12,8 +12,8 @@ export class ToastService {
   private currentToasts: ToastMessage[] = [];
   
   private toastIdCounter = 0;
-  private defaultDuration = 5000;
-  private MAX_TOASTS = 5; // <-- NEW: Set a maximum number of toasts
+  private defaultDuration = 4000;
+  private MAX_TOASTS = 5;
 
   constructor() { }
 
@@ -29,13 +29,11 @@ export class ToastService {
       duration: effectiveDuration
     };
 
-    // --- START OF MODIFICATION ---
     // Check if we're at the limit
     if (this.currentToasts.length >= this.MAX_TOASTS) {
       // Remove the oldest toast (which is at the end of the array)
       this.currentToasts.pop();
     }
-    // --- END OF MODIFICATION ---
 
     // Add the new toast to the beginning of the array
     this.currentToasts = [newToast, ...this.currentToasts];
@@ -47,7 +45,7 @@ export class ToastService {
   }
 
   showError(message: string, duration?: number): void {
-    this.addToast(message, 'error', duration ?? 0);
+    this.addToast(message, 'error', duration);
   }
 
   showInfo(message: string, duration?: number): void {

@@ -10,22 +10,23 @@ import { ModalRef } from '../../models/modal-ref.model';
   styleUrls: ['./confirmation-modal.component.scss'],
 })
 export class ConfirmationModalComponent {
-  // These will be set from the modal context
   @Input() title: string = 'Confirm';
   @Input() message: string = 'Are you sure?';
   @Input() confirmText: string = 'OK';
   @Input() cancelText: string = 'Cancel';
+  
+  @Input() icon: string = '';
+  @Input() iconColor: string = '';
 
-  // This will be injected when the modal is created
   public modalRef!: ModalRef;
 
   constructor() {}
 
   onConfirm(): void {
-    this.modalRef?.close(true); // Close and return 'true'
+    this.modalRef?.close(true);
   }
 
   onCancel(): void {
-    this.modalRef?.close(false); // Close and return 'false'
+    this.modalRef?.close(false);
   }
 }

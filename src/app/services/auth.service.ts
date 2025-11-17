@@ -92,16 +92,16 @@ export class AuthService {
     const storedNavItemsJson = this.getStoredItem(NAV_ITEMS_STORAGE_KEY);
 
     // Check if all required user data exists in storage
-    if (storedToken && storedIdToken && storedRolesJson && storedUsername && 
-        storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) {
-      
+    if (storedToken && storedIdToken && storedRolesJson && storedUsername &&
+      storedFullName && storedUserId && storedPermissionsJson && storedNavItemsJson) {
+
       this.accessToken = storedToken;
       this.idToken = storedIdToken;
-      
+
       const roles: string[] = JSON.parse(storedRolesJson);
       const permissions: string[] = JSON.parse(storedPermissionsJson);
       const navItems: NavItem[] = JSON.parse(storedNavItemsJson);
-      
+
       // Build user object from stored data
       const user: User = {
         id: storedUserId,
@@ -169,7 +169,7 @@ export class AuthService {
   /**
    * Logs a user in.
    */
-  login(credentials: {username: string, password: string, remember: boolean}): Observable<any> {
+  login(credentials: { username: string, password: string, remember: boolean }): Observable<any> {
     const payload = {
       usernamE_: credentials.username,
       passworD_: credentials.password
@@ -184,12 +184,18 @@ export class AuthService {
     }).pipe(
       // Handle login response
       switchMap(loginResponse => {
+        // Check specific API result codes
         if (loginResponse.MaKetQua !== 200) {
           const errorMessage = loginResponse.TenKetQua || loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.';
           console.error(`Login failed (API MaKetQua: ${loginResponse.MaKetQua}):`, errorMessage);
-          return throwError(() => new Error(errorMessage));
+          
+          // Throw a custom error object that includes the code
+          return throwError(() => ({
+            message: errorMessage,
+            code: loginResponse.MaKetQua
+          }));
         }
-        
+
         this.accessToken = loginResponse.APIKey.access_token;
         this.idToken = loginResponse.APIKey.id_token || null;
 
@@ -216,7 +222,7 @@ export class AuthService {
           const rolesFromApi = UserInfo.nhom_chuc_danh ? [UserInfo.nhom_chuc_danh] : [];
           storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(rolesFromApi));
         } catch (e) {
-           console.error('Failed to save user auth data to web storage', e);
+          console.error('Failed to save user auth data to web storage', e);
         }
 
         // Fetch permissions and build navigation
@@ -233,7 +239,7 @@ export class AuthService {
    */
   private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
     const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
-    
+
     return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
       tap(permissionNodeArray => {
         // Retrieve user info from storage
@@ -241,7 +247,7 @@ export class AuthService {
         const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY) || '';
         const storedRoles = JSON.parse(this.getStoredItem(ROLES_STORAGE_KEY) || '[]');
         const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY) || '0';
-        
+
         // Extract unique permissions from API response
         const allPermissionArrays = (permissionNodeArray || []).map(node => node.PERMISSIONS || []);
         const flatPermissions = allPermissionArrays.flat();
@@ -255,7 +261,7 @@ export class AuthService {
           roles: storedRoles,
           permissions: permissionsFromApi
         };
-        
+
         // Build navigation tree from permission data
         const navTree = this.buildNavTree(permissionNodeArray || []);
 
@@ -264,7 +270,7 @@ export class AuthService {
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
           storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree));
         } catch (e) {
-           console.error('Failed to save permissions/nav data to web storage', e);
+          console.error('Failed to save permissions/nav data to web storage', e);
         }
 
         // Update application state
@@ -300,7 +306,7 @@ export class AuthService {
    * Logs the user out and clears all authentication data.
    */
   logout(): void {
-     this.clearLocalAuthData(true);
+    this.clearLocalAuthData(true);
   }
 
   /**
@@ -436,7 +442,7 @@ export class AuthService {
     for (const node of children) {
       // Recursively find children of the current node
       const childrenOfNode = this.buildNavTree(nodes, node.ID);
-      
+
       // Map the API node to the frontend NavItem
       const navItem: NavItem = {
         label: node.LABEL,
@@ -446,10 +452,10 @@ export class AuthService {
         isOpen: false,
         children: childrenOfNode.length > 0 ? childrenOfNode : undefined
       };
-      
+
       tree.push(navItem);
     }
-    
+
     return tree;
   }
 
@@ -458,7 +464,13 @@ export class AuthService {
    * @param error The error object
    * @param isLoginError Whether this error occurred during login
    */
-  private handleError(error: HttpErrorResponse | Error, isLoginError: boolean = false): Observable<never> {
+  private handleError(error: any, isLoginError: boolean = false): Observable<never> {
+    // FIX: If the error object already has a 'code' property (custom business error), 
+    // pass it through as-is without wrapping it in a standard Error.
+    if (error && error.code) {
+      return throwError(() => error);
+    }
+
     let errorMessage: string;
 
     if (error instanceof HttpErrorResponse) {
@@ -472,17 +484,17 @@ export class AuthService {
       }
 
       if (errorMessage === 'An unknown error occurred!' || !errorMessage) {
-         if (error.status === 0 || error.status === -1) {
-            errorMessage = 'Network error or could not connect to the server.';
-         } else if (error.status === 401) {
-            errorMessage = 'Authentication failed or session expired. Please log in again.';
-         } else if (error.status === 403) {
-            errorMessage = 'You do not have permission to perform this action.';
-         } else if (error.status === 400) {
-            errorMessage = 'Invalid request. Please check your input.';
-         } else if (error.status >= 500) {
-            errorMessage = 'Server error. Please try again later.';
-         }
+        if (error.status === 0 || error.status === -1) {
+          errorMessage = 'Network error or could not connect to the server.';
+        } else if (error.status === 401) {
+          errorMessage = 'Authentication failed or session expired. Please log in again.';
+        } else if (error.status === 403) {
+          errorMessage = 'You do not have permission to perform this action.';
+        } else if (error.status === 400) {
+          errorMessage = 'Invalid request. Please check your input.';
+        } else if (error.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
       }
     } else {
       console.error('AuthService App Error:', error.message);
@@ -494,9 +506,10 @@ export class AuthService {
       this.clearLocalAuthData(false);
     }
 
+    // Fallback: Return a standard error with the message
     return throwError(() => new Error(errorMessage));
   }
-  
+
   /**
    * Gets the ID of the currently logged-in user.
    */

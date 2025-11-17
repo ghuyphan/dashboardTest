@@ -471,7 +471,7 @@ export class DeviceFormComponent implements OnInit {
             errorMessage = err.message;
           }
 
-          this.toastService.showError(errorMessage, 0);
+          this.toastService.showError(errorMessage);
           console.error('Failed to save device:', err);
         },
       });
