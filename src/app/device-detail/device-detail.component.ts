@@ -147,7 +147,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     if (!device) return;
     this.isLoading = true;
 
-    const templatePath = 'assets/templates/device-detail.docx';
+    const templatePath = 'assets/templates/01-10-2025 - Bien ban ban giao- Signpad - Khoa CĐHA.docx';
     const reportData = {
       ...device,
       PrintDate: new Date().toLocaleDateString('vi-VN'),
