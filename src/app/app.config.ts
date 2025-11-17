@@ -6,7 +6,6 @@ import { registerLocaleData } from '@angular/common';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
-import { MockAuthInterceptor } from './interceptors/mock-auth.interceptor';
 import { idTokenInterceptor } from './interceptors/id-token.interceptor';
 import { AuthService } from './services/auth.service';
 import localeVi from '@angular/common/locales/vi';
@@ -20,7 +19,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     
     provideHttpClient(withInterceptors([
-      MockAuthInterceptor, 
       authInterceptor,
       idTokenInterceptor 
     ])),

@@ -23,7 +23,7 @@ export class LoginComponent {
   public credentials = {
     username: '',
     password: '',
-    remember: false // This value is bound from the checkbox in the HTML
+    remember: false
   };
 
   public passwordVisible: boolean = false;
@@ -47,18 +47,16 @@ export class LoginComponent {
         // AuthService handles token storage based on credentials.remember
         this.router.navigate(['/app']);
       },
-      // --- START OF MODIFICATION ---
       error: (err: Error) => { // Type the error as 'Error'
         this.isLoading = false;
         
         // Display the specific error message from the authService
-        // 'err.message' sẽ là chuỗi lỗi chúng ta đã tạo trong auth.service
+        // 'err.message' will be the error string we created in auth.service
         const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
         this.toastService.showError(errorMessage, 0); 
         
         console.error('Login failed', err);
       }
-      // --- END OF MODIFICATION ---
     });
   }
 

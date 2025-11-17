@@ -1,62 +1,54 @@
-// src/app/components/modal/modal.component.ts
-
 import {
   Component,
   ViewChild,
   ViewContainerRef,
-  Inject, // CHANGED: Import Inject
-  AfterViewInit, // CHANGED: Import AfterViewInit
+  Inject,
+  AfterViewInit,
 } from '@angular/core';
-import { CommonModule } from '@angular/common'; // <-- IMPORT CommonModule
+import { CommonModule } from '@angular/common'; 
 import { ModalOptions } from '../../models/modal-options.model';
-import { ModalRef, MODAL_OPTIONS } from '../../models/modal-ref.model'; // CHANGED: Import new refs
+import { ModalRef, MODAL_OPTIONS } from '../../models/modal-ref.model';
 
 @Component({
   selector: 'app-modal',
   standalone: true,
-  imports: [CommonModule], // <-- ADD CommonModule
+  imports: [CommonModule],
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss'
 })
-export class ModalComponent implements AfterViewInit { // CHANGED: Removed OnInit, OnDestroy
+export class ModalComponent implements AfterViewInit {
   
-  @ViewChild('modalContentHost', { read: ViewContainerRef, static: true }) // CHANGED: Set static: true
+  @ViewChild('modalContentHost', { read: ViewContainerRef, static: true })
   modalContentHost!: ViewContainerRef;
 
-  // CHANGED: No more observable state. We get options via injection.
   constructor(
     private modalRef: ModalRef,
-    @Inject(MODAL_OPTIONS) public options: ModalOptions // Options are now public for the template
+    @Inject(MODAL_OPTIONS) public options: ModalOptions
   ) {}
 
-  // CHANGED: Load content after the view is initialized
   ngAfterViewInit(): void {
     this.loadModalContent();
   }
 
   /**
-   * Dynamically loads the component specified in ModalOptions.
+   * Renders the component specified in modal options.
+   * Clears any existing content before loading new component.
    */
-  private loadModalContent(): void { // CHANGED: No longer takes options argument
-    // Host is guaranteed to be ready in ngAfterViewInit with static: true
+  private loadModalContent(): void {
     this.modalContentHost.clear(); 
 
-    if (this.options) {
-      // 1. Create the component
+    if (this.options?.component) {
       const componentRef = this.modalContentHost.createComponent(this.options.component);
 
-      // 2. Pass context data (if any) to the component's instance
+      // Pass data to the dynamic component
       if (this.options.context) {
         Object.assign(componentRef.instance, this.options.context);
       }
       
-      // 3. Inject the ModalRef into the dynamic component
-      // This allows the loaded component (e.g., a form) to close the modal
-      // Note: The loaded component must have: `public modalRef?: ModalRef;`
+      // Provide modal reference so the loaded component can close the modal
       componentRef.instance.modalRef = this.modalRef;
 
-      // 4. (Optional) Listen for a 'closeModal' event (your old pattern)
-      // We'll keep this for compatibility, but injecting ModalRef is better.
+      // Support legacy closeModal event subscription
       if (componentRef.instance.closeModal) {
         componentRef.instance.closeModal.subscribe((data: any) => {
           this.closeModal(data);
@@ -66,27 +58,22 @@ export class ModalComponent implements AfterViewInit { // CHANGED: Removed OnIni
   }
 
   /**
-   * --- NEW: Gets the CSS class for the modal size ---
+   * Returns CSS class for modal sizing based on options.
+   * Defaults to medium size if no size specified.
    */
   public getSizeClass(): string {
-    return this.options.size ? `modal-size-${this.options.size}` : 'modal-size-md'; // Default to 'md'
+    return this.options.size ? `modal-size-${this.options.size}` : 'modal-size-md';
   }
 
-  /**
-   * Closes the modal by calling the service.
-   * CHANGED: Now passes data back via ModalRef.
-   */
   closeModal(data?: any): void {
     this.modalRef.close(data);
   }
 
   /**
-   * Prevents the backdrop click from firing when clicking
-   * on the modal content itself.
+   * Stops click events from bubbling up when user clicks inside modal content.
+   * This prevents the backdrop click handler from triggering.
    */
   onModalContentClick(event: Event): void {
     event.stopPropagation();
   }
-
-  // CHANGED: onBackdropClick() is removed. The service handles this now.
 }

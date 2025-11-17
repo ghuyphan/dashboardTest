@@ -1,4 +1,3 @@
-// src/app/main-layout/main-layout.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common'; 
 import {
@@ -20,7 +19,6 @@ import { SidebarComponent } from '../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../components/header/header.component';
 
 import { SearchService } from '../services/search.service';
-// *** 1. IMPORT THE FOOTER SERVICE ***
 import { FooterActionService } from '../services/footer-action.service';
 
 @Component({
@@ -60,7 +58,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private searchService: SearchService, 
     private location: Location,
-    // *** 2. INJECT THE FOOTER SERVICE ***
     private footerService: FooterActionService 
   ) {}
 
@@ -70,7 +67,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       this.navItems = this.deepCopyNavItems(items);
     });
 
-    // 1. Subscribe to get User Info
+    // Subscribe to get User Info
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user && user.roles) {
@@ -82,7 +79,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 2. Subscribe to Router Events for Screen Title
+    // Subscribe to Router Events for Screen Title
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -98,10 +95,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         mergeMap(route => route.data)
       )
       .subscribe((data: any) => {
-        // --- 3. ADD THIS LINE ---
         // Clear the footer on EVERY navigation.
         this.footerService.clearActions();
-        // --- END OF FIX ---
 
         this.currentScreenName = data['title'] || 'Dashboard';
         
@@ -113,7 +108,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         }
       });
 
-    // 3. Check window size
+    // Check window size
     this.checkWindowSize();
     window.addEventListener('resize', this.checkWindowSize.bind(this));
 

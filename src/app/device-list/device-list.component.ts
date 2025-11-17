@@ -57,7 +57,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   // --- Subscriptions ---
   private dataLoadSub: Subscription | null = null;
   private searchSub: Subscription | null = null;
-  // --- 3. ADD a subscription for the router ---
   private routerSub: Subscription | null = null;
 
   // --- Event Triggers ---
@@ -121,13 +120,11 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       switchMap(() => this.loadDevices())
     ).subscribe();
 
-    // --- 4. ADD THIS SUBSCRIPTION ---
-    // This listens for when we navigate *back* to this component
+    // Listen for navigation events to maintain footer actions
     this.routerSub = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      // --- 5. THE CRITICAL FIX ---
-      // Check for an EXACT URL match, not just 'includes'
+      // Check for an EXACT URL match
       if (event.urlAfterRedirects === '/app/equipment/catalog') {
         // Re-set the footer actions
         this.updateFooterActions();
@@ -139,7 +136,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.footerService.clearActions();
     this.dataLoadSub?.unsubscribe();
     this.searchSub?.unsubscribe();
-    // --- 6. UNUBSCRIBE from the router ---
     this.routerSub?.unsubscribe();
   }
 
@@ -174,12 +170,11 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     // API uses 1-based indexing for PageNumber
     const pageNumber = this.currentPageIndex + 1;
 
-    // --- YOUR NEW LOGIC ---
     let url: string;
     let params: HttpParams;
 
     if (this.currentSearchTerm) {
-      // 1. Use the SEARCH endpoint
+      // Use the SEARCH endpoint
       url = `${environment.equipmentCatUrl}/page/search`;
       params = new HttpParams()
         .set('PageNumber', pageNumber.toString())
@@ -189,7 +184,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         .set('TextSearch', this.currentSearchTerm);
 
     } else {
-      // 2. Use the normal PAGING endpoint
+      // Use the normal PAGING endpoint
       url = `${environment.equipmentCatUrl}/page`;
       params = new HttpParams()
         .set('PageNumber', pageNumber.toString())
@@ -198,7 +193,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         .set('sortDirection', this.currentSortDirection);
       // No 'filter' or 'TextSearch' parameter when search term is empty
     }
-    // --- END OF YOUR LOGIC ---
 
     return this.http.get<PagedResult<Device>>(url, { params }).pipe(
       tap((response) => {
@@ -242,14 +236,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.currentPageIndex = pageEvent.pageIndex;
     this.currentPageSize = pageEvent.pageSize;
     this.reloadTrigger.next();
-
-    // --- START OF MODIFICATION ---
-    // This line was causing the error and is not needed here,
-    // as the reusable-table component handles its own scrolling.
-    // if (this.tableContainer?.nativeElement) {
-    //   this.tableContainer.nativeElement.scrollTop = 0;
-    // }
-    // --- END OF MODIFICATION ---
   }
 
   /**

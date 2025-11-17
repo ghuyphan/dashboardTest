@@ -1,8 +1,7 @@
-// src/app/device-list/device-form/device-form.component.ts
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, forkJoin, map } from 'rxjs'; // 'map' is imported
+import { Observable, of, forkJoin, map } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
 import { ModalService } from '../../services/modal.service';

@@ -27,35 +27,35 @@ export class ModalService {
     options?: Omit<ModalOptions, 'component'>
   ): Observable<any> {
     
-    // 1. Combine component and options
+    // Combine component and options
     const modalOptions: ModalOptions = {
       component,
       ...options,
     };
 
-    // 2. Create the overlay
+    // Create the overlay
     const overlayRef = this.createOverlay(modalOptions);
 
-    // 3. Create the ModalRef
+    // Create the ModalRef
     const modalRef = new ModalRef(overlayRef);
 
-    // 4. Create the injector
+    // Create the injector
     const injector = this.createInjector(modalOptions, modalRef);
 
-    // 5. Create the portal
+    // Create the portal
     const portal = new ComponentPortal(ModalComponent, null, injector);
 
-    // 6. Attach the portal to the overlay
+    // Attach the portal to the overlay
     overlayRef.attach(portal);
 
-    // 7. Handle backdrop click to close
+    // Handle backdrop click to close
     if (!modalOptions.disableBackdropClose) {
       overlayRef.backdropClick().subscribe(() => {
         modalRef.close();
       });
     }
 
-    // 8. Return the observable for the caller to subscribe to
+    // Return the observable for the caller to subscribe to
     return modalRef.afterClosed;
   }
 

@@ -7,8 +7,8 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
-  HostListener, // <-- 1. IMPORT HostListener
-  Renderer2, // <-- 2. IMPORT Renderer2
+  HostListener,
+  Renderer2,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -39,14 +39,12 @@ export class SidebarComponent implements OnChanges {
 
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
-  private isMobileView: boolean = false; // <-- 3. Add property
+  private isMobileView: boolean = false;
 
-  // 4. Inject Renderer2
   constructor(private renderer: Renderer2, private el: ElementRef) {
     this.checkIfMobile();
   }
 
-  // 5. Add HostListener for window resize
   @HostListener('window:resize', ['$event'])
   onResize(event: any): void {
     this.checkIfMobile();
@@ -81,8 +79,6 @@ export class SidebarComponent implements OnChanges {
     }
   }
 
-  // ... (hideAllSubmenus, restoreAccordionState, saveScrollPosition, restoreScrollPosition, onToggleSidebarClick are unchanged) ...
-  
   hideAllSubmenus(): void {
     this.navItems.forEach((item) => {
       if (item.children) {
@@ -136,10 +132,9 @@ export class SidebarComponent implements OnChanges {
     item.isOpen = this.openAccordionItems.has(item);
   }
 
-  // --- 6. ADD NEW METHOD ---
   /**
-   * Called when a navigation link (a tag) is clicked.
-   * If on mobile, it emits an event to close the sidebar.
+   * Handles navigation link clicks.
+   * Closes the sidebar on mobile after navigation.
    */
   public onNavLinkClick(): void {
     if (this.isMobileView && this.isOpen) {

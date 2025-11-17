@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptors, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse, HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor'; // Import the functional interceptor

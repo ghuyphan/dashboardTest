@@ -1,127 +1,140 @@
 :host {
-  /* This is now the .toast-container */
   position: fixed;
-  top: var(--spacing-lg); /* Use global var (24px) */
-  right: var(--spacing-lg); /* Use global var (24px) */
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
   width: 380px;
-  max-width: calc(100vw - var(--spacing-lg) * 2); /* Don't touch screen edge */
+  max-width: calc(100vw - var(--spacing-lg) * 2);
   z-index: 1050;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  /* Prevent interaction with the container, only children */
   pointer-events: none;
 }
 
 .toast-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative; // Changed from absolute to relative for expanded default
   transition: transform 0.3s var(--transition-smooth),
     opacity 0.3s var(--transition-smooth);
   will-change: transform, opacity;
-  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0);
-  pointer-events: auto; /* Re-enable pointer events for toasts */
-}
+  pointer-events: auto;
+  margin-bottom: var(--spacing-sm); // Add spacing between toasts
+  opacity: 1;
 
-/* --- Stacking Logic --- */
-/* 1st toast (top) */
-.toast-wrapper:nth-child(1) {
-  z-index: 100;
-  transform: translateY(0) scale(1) translateZ(0);
-}
-/* 2nd toast */
-.toast-wrapper:nth-child(2) {
-  z-index: 99;
-  transform: translateY(8px) scale(0.95) translateZ(0);
-  opacity: 0.7;
-}
-/* 3rd toast */
-.toast-wrapper:nth-child(3) {
-  z-index: 98;
-  transform: translateY(16px) scale(0.9) translateZ(0);
-  opacity: 0.4;
-}
-/* All other toasts */
-.toast-wrapper:nth-child(n + 4) {
-  z-index: 97;
-  transform: translateY(24px) scale(0.85) translateZ(0);
-  opacity: 0; /* Hide them */
+  // Collapsed state (when NOT expanded)
+  &:not(.expanded) {
+    position: absolute;
+    margin-bottom: 0;
+
+    &:nth-child(1) {
+      z-index: 100;
+      transform: translateY(0) scale(1) translateZ(0);
+      opacity: 1;
+    }
+
+    &:nth-child(2) {
+      z-index: 99;
+      transform: translateY(8px) scale(0.95) translateZ(0);
+      opacity: 0.7;
+    }
+
+    &:nth-child(3) {
+      z-index: 98;
+      transform: translateY(16px) scale(0.9) translateZ(0);
+      opacity: 0.4;
+    }
+
+    &:nth-child(n + 4) {
+      z-index: 97;
+      transform: translateY(24px) scale(0.85) translateZ(0);
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  // Expanded state - show all toasts in a vertical list (default)
+  &.expanded {
+    position: relative !important;
+    transform: none !important;
+    opacity: 1 !important;
+    margin-bottom: var(--spacing-sm);
+    z-index: auto !important;
+    pointer-events: auto !important;
+  }
 }
 
 .toast {
-  /* Using your app's existing glassmorphism style */
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(15px);
-  border-radius: var(--border-radius-lg); /* 12px */
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-lg);
   border: var(--border-width) solid rgba(255, 255, 255, 0.4);
   color: var(--gray-800);
-  /* We removed the border-left, the icon replaces it */
-
-  /* Layout from your example */
   padding: 20px;
   position: relative;
   z-index: 1;
   backface-visibility: hidden;
   transform: translateZ(0);
-  /* Add transition for swipe-to-dismiss snap-back */
   transition: transform 0.3s var(--transition-smooth),
     opacity 0.3s var(--transition-smooth);
+
+  // Disable transitions while swiping
+  &.swiping {
+    transition: none;
+  }
+
+  &.dismissing {
+    animation: slideOut 0.3s var(--transition-smooth) forwards;
+  }
 }
 
-/* Disable transitions while actively swiping */
-.toast.swiping {
-  transition: none;
-}
-
-/* --- New Sub-element Styles --- */
 .toast-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center; // Changed from flex-start to center
   gap: 12px;
 }
 
 .toast-icon {
   width: 40px;
   height: 40px;
-  border-radius: 50px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
   div {
-    display: flex; // Center the icon
+    display: flex;
     align-items: center;
     justify-content: center;
 
     ::ng-deep i {
-      font-size: 20px; // Set Font Awesome icon size
-      color: white;    // Set icon color
+      font-size: 20px;
+      color: white;
     }
   }
-}
-/* Match brand colors */
-.toast-icon.success {
-  background: var(--color-success);
-}
-.toast-icon.error {
-  background: var(--color-danger);
-}
-.toast-icon.warning {
-  background: var(--color-warning);
-}
-.toast-icon.info {
-  background: var(--color-info);
+
+  &.success {
+    background: var(--color-success);
+  }
+
+  &.error {
+    background: var(--color-danger);
+  }
+
+  &.warning {
+    background: var(--color-warning);
+  }
+
+  &.info {
+    background: var(--color-info);
+  }
 }
 
 .toast-text {
   flex: 1;
-  min-width: 0; /* Allow text to shrink */
+  min-width: 0;
 }
 
 .toast-title {
@@ -129,20 +142,16 @@
   font-weight: 600;
   color: var(--gray-900);
   margin: 0 0 4px 0;
-  /* Constraint: 1 line */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .toast-message {
   font-size: 14px;
   color: var(--gray-700);
   margin: 0;
-  line-height: 1.4;
-  white-space: nowrap;        /* Prevents line breaks */
-  overflow: hidden;           /* Clips overflow */
-  text-overflow: ellipsis;    /* Shows ... when truncated */
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .toast-close {
@@ -160,13 +169,10 @@
   justify-content: center;
   border-radius: 4px;
 
-  // --- START OF MODIFICATION ---
-  // Style the <i> tag instead of the <svg> tag
   i {
     font-size: 16px;
     line-height: 1;
   }
-  // --- END OF MODIFICATION ---
 
   &:hover {
     color: var(--gray-800);
@@ -174,7 +180,64 @@
   }
 }
 
-/* --- Animations --- */
+// Action buttons container
+.toast-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.toast-action-btn {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(15px);
+  color: var(--gray-800);
+  border: var(--border-width) solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 12px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.toast-expand-btn {
+  color: var(--color-info);
+
+  &:hover {
+    color: var(--color-info);
+    background: rgba(255, 255, 255, 1);
+  }
+}
+
+.toast-clear-btn {
+  color: var(--color-danger);
+
+  &:hover {
+    color: var(--color-danger);
+    background: rgba(255, 255, 255, 1);
+  }
+}
+
+// Animations
 @keyframes slideIn {
   from {
     transform: translateX(100%) translateZ(0);
@@ -186,7 +249,6 @@
   }
 }
 
-/* Apply slideIn to the .toast itself, inside the .new wrapper */
 .toast-wrapper.new .toast {
   animation: slideIn 0.3s var(--transition-smooth);
 }
@@ -198,44 +260,9 @@
   }
 }
 
-/* Apply slideOut when .dismissing class is added */
-.toast.dismissing {
-  animation: slideOut 0.3s var(--transition-smooth) forwards;
-}
-
-// --- START OF NEW "CLEAR ALL" STYLES ---
-.toast-clear-all {
-  position: absolute;
-  bottom: -28px; // Position it just below the top toast
-  right: 0;
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
-  border: none;
-  border-radius: 0 0 8px 8px;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  z-index: 99; // Below the top toast (100) but above others
-  opacity: 0.8;
-  transition: opacity 0.2s ease, transform 0.2s var(--transition-smooth);
-  
-  // Emerge from under the toast
-  transform: translateY(-5px); 
-  animation: slideDownFade 0.3s var(--transition-smooth);
-
-
-  &:hover {
-    opacity: 1;
-  }
-}
-// --- END OF NEW STYLES ---
-
-
-/* --- Responsive Media Query (Mobile) --- */
+// Responsive - Mobile
 @media (max-width: 480px) {
   :host {
-    /* Use original responsive styles */
     top: var(--spacing-md);
     left: var(--spacing-md);
     right: var(--spacing-md);
@@ -245,18 +272,17 @@
   }
 
   .toast-wrapper {
-    /* --- RESET STACKING --- */
-    position: relative; /* No longer absolute */
+    position: relative !important;
     transform: none !important;
     opacity: 1 !important;
     margin-bottom: var(--spacing-sm);
-  }
+    pointer-events: auto !important;
 
-  /* Show all toasts in a list */
-  .toast-wrapper:nth-child(n + 4) {
-    display: block;
-    opacity: 1;
-    transform: none;
+    &:nth-child(n + 4) {
+      display: block;
+      opacity: 1;
+      transform: none;
+    }
   }
 
   .toast {
@@ -267,12 +293,12 @@
   .toast-title {
     font-size: 15px;
   }
+
   .toast-message {
     font-size: 14px;
   }
 
-  // --- NEW: Hide "Clear All" on mobile ---
-  .toast-clear-all {
-    display: none;
+  .toast-actions {
+    display: none; // Hide action buttons on mobile
   }
 }

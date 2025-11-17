@@ -2,9 +2,8 @@ import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-// --- MODIFIED: Added 'map' ---
 import { Subscription, finalize, of, switchMap, map } from 'rxjs';
-import { QRCodeComponent } from 'angularx-qrcode'; // <-- CORRECT IMPORT FOR STANDALONE
+import { QRCodeComponent } from 'angularx-qrcode'; 
 
 import { Device } from '../models/device.model';
 import { environment } from '../../environments/environment.development';
@@ -37,10 +36,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   private routeSub: Subscription | null = null;
   private deviceSub: Subscription | null = null;
 
-  // --- START OF MODIFICATION ---
   public isWarrantyExpiring: boolean = false;
   public warrantyExpiresInDays: number = 0;
-  // --- END OF MODIFICATION ---
 
   constructor(
     private route: ActivatedRoute,
@@ -66,8 +63,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.deviceSub?.unsubscribe();
-    // --- THIS LINE IS THE FIX: IT IS REMOVED ---
-    // this.footerService.clearActions(); 
   }
 
   loadDevice(id: string): void {
@@ -91,10 +86,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         this.device = device; // The device is now guaranteed to exist
         this.qrCodeValue = window.location.href; 
         this.setupFooterActions(this.device);
-        
-        // --- START OF MODIFICATION ---
         this.checkWarrantyStatus(this.device); // Check warranty status
-        // --- END OF MODIFICATION ---
       },
       error: (err: Error) => { // Catch the error thrown from the map operator
         console.error('Failed to load device details:', err);
@@ -104,9 +96,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     });
   }
   
-  // --- START OF MODIFICATION ---
   /**
-   * (Copied from dashboard)
    * Parses a date string (dd/MM/yyyy or ISO) into a Date object.
    */
   private parseDate(dateString: string | null | undefined): Date | null {
@@ -162,7 +152,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       console.error('Error checking warranty status', e);
     }
   }
-  // --- END OF MODIFICATION ---
 
   setupFooterActions(device: Device): void {
     const actions: FooterAction[] = [
@@ -208,7 +197,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       context: { device: { ...device }, title: 'Sửa thiết bị' }, // Pass a copy
     }).subscribe((result) => {
       if (result) {
-        // --- CLEAR CACHE on success ---
+        // Clear cache on success
         CustomRouteReuseStrategy.clearCache('equipment/catalog');
         
         this.toastService.showSuccess('Cập nhật thiết bị thành công.');
@@ -238,7 +227,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (response) => {
         if (response) {
-          // --- CLEAR CACHE on success ---
+          // Clear cache on success
           CustomRouteReuseStrategy.clearCache('equipment/catalog');
           
           this.toastService.showSuccess('Xóa thiết bị thành công!');
@@ -266,7 +255,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
   /**
    * Returns the correct CSS class for a given status string.
-   * (Copied from reusable-table.component)
    */
   public getStatusClass(status: string | null | undefined): string {
     if (!status) return 'status-default';
@@ -280,7 +268,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     return 'status-default';
   }
 
-  // --- NEW: (Suggestion 2) ---
   /**
    * Returns a Font Awesome icon class based on the device type.
    */

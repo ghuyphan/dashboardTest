@@ -1,35 +1,49 @@
-<div
-  *ngFor="let toast of toasts; let i = index; trackBy: trackByToast"
-  class="toast-wrapper"
-  [id]="'toast-' + toast.id"
-  (touchstart)="handleTouchStart($event, toast.id)"
-  (touchmove)="handleTouchMove($event, toast.id)"
-  (touchend)="handleTouchEnd($event, toast.id)"
->
-  <div class="toast" [ngClass]="'toast-' + toast.type">
-    <div class="toast-content">
-      <div class="toast-icon" [ngClass]="toast.type">
-        <div [innerHTML]="getIcon(toast.type)"></div>
+<ng-container *ngFor="let toast of toasts; let i = index; trackBy: trackByToast">
+  <div
+    class="toast-wrapper"
+    [id]="'toast-' + toast.id"
+    [class.expanded]="isExpanded"
+    (touchstart)="handleTouchStart($event, toast.id)"
+    (touchmove)="handleTouchMove($event, toast.id)"
+    (touchend)="handleTouchEnd($event, toast.id)"
+  >
+    <div class="toast" [ngClass]="'toast-' + toast.type">
+      <div class="toast-content">
+        <div class="toast-icon" [ngClass]="toast.type">
+          <div [innerHTML]="getIcon(toast.type)"></div>
+        </div>
+        <div class="toast-text">
+          <h3 class="toast-title">{{ getTitle(toast.type) }}</h3>
+          <p class="toast-message">{{ toast.message }}</p>
+        </div>
+        <button
+          class="toast-close"
+          (click)="closeToast(toast.id)"
+          aria-label="Dismiss"
+        >
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <div class="toast-text">
-        <h3 class="toast-title">{{ getTitle(toast.type) }}</h3>
-        <p class="toast-message">{{ toast.message }}</p>
-      </div>
+    </div>
+
+    <!-- Action buttons - only show on first toast when multiple toasts exist -->
+    <div *ngIf="i === 0 && toasts.length > 1" class="toast-actions">
       <button
-        class="toast-close"
-        (click)="closeToast(toast.id)"
-        aria-label="Dismiss"
+        class="toast-action-btn toast-expand-btn"
+        (click)="toggleExpanded($event)"
+        [attr.aria-label]="isExpanded ? 'Collapse toasts' : 'Expand all toasts'"
       >
-        <i class="fas fa-times"></i>
+        <i [class]="isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+        {{ isExpanded ? 'Thu gọn' : 'Mở tất cả' }} ({{ toasts.length }})
+      </button>
+      <button
+        class="toast-action-btn toast-clear-btn"
+        (click)="clearAllToasts($event)"
+        aria-label="Clear all toasts"
+      >
+        <i class="fas fa-trash-alt"></i>
+        Xóa tất cả
       </button>
     </div>
   </div>
-
-  <button
-    *ngIf="i === 0 && toasts.length > 1"
-    class="toast-clear-all"
-    (click)="clearAllToasts($event)"
-  >
-    Clear All ({{ toasts.length }})
-  </button>
-  </div>
+</ng-container>
