@@ -204,15 +204,13 @@
 }
 /* --- ***** END: LAYOUT LƯỚI ***** --- */
 
-.chart-card {
-  background-color: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
-  box-shadow: var(--box-shadow-md);
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
 
+/* Apply minimum height to app-chart-card to ensure visual consistency 
+   within the grid. 
+*/
+app-chart-card {
+  min-height: 400px;
+  
   @media (max-width: 768px) {
     min-height: 350px;
   }
@@ -222,23 +220,6 @@
   }
 }
 
-.chart-container-inner {
-  width: 100%;
-  height: 100%;
-  flex-grow: 1;
-  min-height: 350px;
-  contain: layout style paint;
-  /* --- MODIFICATION: Added negative margin to account for title padding --- */
-  margin-top: calc(-1 * var(--spacing-sm));
-
-  @media (max-width: 768px) {
-    min-height: 300px;
-  }
-
-  @media (max-width: 480px) {
-    min-height: 250px;
-  }
-}
 
 .action-list-card {
   background-color: var(--white);
@@ -259,11 +240,6 @@
   }
 }
 
-/*
-  ---
-  --- MODIFICATION: Renamed to .card-title and styles added ---
-  ---
-*/
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
@@ -273,7 +249,7 @@
   border-bottom: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
-  justify-content: space-between; // Allows subtext to go to the right
+  justify-content: space-between; 
   gap: var(--spacing-sm);
   flex-shrink: 0;
 

@@ -32,7 +32,7 @@
       <p>Đang tải dữ liệu thống kê...</p>
     </div>
 
-    <div class="dashboard-main-content" *ngIf="!isLoading">
+    <div class="dashboard-main-content" *ngIf="!isLoading || widgetData.length > 0">
       <div
         class="filter-bar-container"
         [class.filter-bar-container--active]="currentFilter"
@@ -51,51 +51,34 @@
       </div>
 
       <div class="dashboard-main-grid">
-        <div class="chart-card span-2">
-          <h3 class="card-title">
-            <span>
-              <i class="fas fa-pie-chart icon-info"></i>
-              Thống Kê Trạng Thái
-            </span>
-            <span class="card-subtitle">{{ statusChartSubtext }}</span>
-          </h3>
-          <div
-            #chartContainerStatus
-            class="chart-container-inner"
-            role="img"
-            aria-label="Biểu đồ tròn trạng thái thiết bị"
-          ></div>
-        </div>
+        
+        <app-chart-card class="span-2"
+          title="Thống Kê Trạng Thái"
+          [subtitle]="statusChartSubtext"
+          icon="fas fa-pie-chart"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="statusChartOptions"
+          (chartClick)="onChartClick('status', $event)">
+        </app-chart-card>
 
-        <div class="chart-card span-1">
-          <h3 class="card-title">
-            <span>
-              <i class="fas fa-tags icon-info"></i>
-              Số lượng theo Loại Thiết bị (Top 10)
-            </span>
-            </h3>
-          <div
-            #chartContainerCategory
-            class="chart-container-inner"
-            role="img"
-            aria-label="Biểu đồ cột loại thiết bị"
-          ></div>
-        </div>
+        <app-chart-card class="span-1"
+          title="Số lượng theo Loại Thiết bị (Top 10)"
+          icon="fas fa-tags"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="categoryChartOptions"
+          (chartClick)="onChartClick('category', $event)">
+        </app-chart-card>
 
-        <div class="chart-card span-1">
-          <h3 class="card-title">
-            <span>
-              <i class="fas fa-map-marker-alt icon-info"></i>
-              {{ locationChartTitle }}
-            </span>
-            </h3>
-          <div
-            #chartContainerLocation
-            class="chart-container-inner"
-            role="img"
-            aria-label="Biểu đồ cột vị trí thiết bị"
-          ></div>
-        </div>
+        <app-chart-card class="span-1"
+          [title]="locationChartTitle"
+          icon="fas fa-map-marker-alt"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="locationChartOptions"
+          (chartClick)="onChartClick('location', $event)">
+        </app-chart-card>
 
         <div class="action-list-card span-2">
           <h3 class="card-title">
@@ -125,20 +108,13 @@
           </div>
         </div>
 
-        <div class="chart-card span-3">
-          <h3 class="card-title">
-            <span>
-              <i class="fas fa-chart-line icon-info"></i>
-              Thiết bị mới theo Tháng
-            </span>
-            </h3>
-          <div
-            #chartContainerTrend
-            class="chart-container-inner"
-            role="img"
-            aria-label="Biểu đồ đường thiết bị mới"
-          ></div>
-        </div>
+        <app-chart-card class="span-3"
+          title="Thiết bị mới theo Tháng"
+          icon="fas fa-chart-line"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="trendChartOptions">
+        </app-chart-card>
 
         <div class="action-list-card span-3">
           <h3 class="card-title">

@@ -2,27 +2,24 @@ import {
   Component,
   OnInit,
   OnDestroy,
-  ElementRef,
-  ViewChild,
   inject,
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 
-import type { EChartsType, EChartsCoreOption } from 'echarts/core';
-import type * as echarts from 'echarts/core';
+// Only import Types
+import type { EChartsCoreOption } from 'echarts/core';
 import { environment } from '../../environments/environment.development';
 
 import { Device } from '../models/device.model';
 import { ToastService } from '../services/toast.service';
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
+import { ChartCardComponent } from '../components/chart-card/chart-card.component';
 import {
   ReusableTableComponent,
   GridColumn,
@@ -36,8 +33,6 @@ function getCssVar(name: string): string {
     .getPropertyValue(name)
     .trim();
 }
-
-type EChartsOption = EChartsCoreOption;
 
 interface WidgetData {
   id: string;
@@ -76,41 +71,24 @@ interface ChartFilter {
 @Component({
   selector: 'app-device-dashboard',
   standalone: true,
-  imports: [CommonModule, WidgetCardComponent, ReusableTableComponent],
+  imports: [
+    CommonModule,
+    WidgetCardComponent,
+    ReusableTableComponent,
+    ChartCardComponent
+  ],
   templateUrl: './device-dashboard.component.html',
   styleUrl: './device-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('chartContainerStatus')
-  chartContainerStatus!: ElementRef<HTMLDivElement>;
-  @ViewChild('chartContainerCategory')
-  chartContainerCategory!: ElementRef<HTMLDivElement>;
-  @ViewChild('chartContainerLocation')
-  chartContainerLocation!: ElementRef<HTMLDivElement>;
-  @ViewChild('chartContainerTrend')
-  chartContainerTrend!: ElementRef<HTMLDivElement>;
-
+export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
+  privateVX = inject(ChangeDetectorRef); // Renamed to match usage (cd) or fix usage
   private cd = inject(ChangeDetectorRef);
-  private ngZone = inject(NgZone);
   private toastService = inject(ToastService);
   private router = inject(Router);
 
-  private echartsInstance?: typeof echarts;
-
-  private chartInstanceStatus?: EChartsType;
-  private chartInstanceCategory?: EChartsType;
-  private chartInstanceLocation?: EChartsType;
-  private chartInstanceTrend?: EChartsType;
-
-  private resizeObserver?: ResizeObserver;
-  private intersectionObserver?: IntersectionObserver;
-
   public isLoading: boolean = false;
-  private isChartVisible: boolean = false;
-  public isChartInitialized: boolean = false;
-  private intersectionObserverInitialized = false;
 
   private allDevices: Device[] = [];
 
@@ -119,10 +97,13 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private filterTransitionTimer: any;
 
   public widgetData: WidgetData[] = [];
-  public statusData: DeviceStatsData[] = [];
-  public categoryData: AggregatedData[] = [];
-  public locationData: AggregatedData[] = [];
-  public trendData: TemporalData[] = [];
+  
+  // Chart Options
+  public statusChartOptions: EChartsCoreOption | null = null;
+  public categoryChartOptions: EChartsCoreOption | null = null;
+  public locationChartOptions: EChartsCoreOption | null = null;
+  public trendChartOptions: EChartsCoreOption | null = null;
+
   public attentionDevices: ActionableDevice[] = [];
   public expiringDevices: ActionableDevice[] = [];
 
@@ -153,186 +134,63 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
   private statusColorMap = new Map<string, string>();
   private cssVars = {
-    gray200: '',
-    gray700: '',
-    gray800: '',
-    white: '',
-    colorSuccess: '',
-    colorWarning: '',
-    colorDanger: '',
-    colorInfo: '',
-    colorPurple: '',
-    colorBlue: '',
-    colorInUse: '',
-    colorBooked: '',
-    colorLoaned: '',
-    colorDefault: '',
+    gray200: '#E2E8F0',
+    gray700: '#334155',
+    gray800: '#1E293B',
+    white: '#FFFFFF',
+    colorSuccess: '#16A34A',
+    colorWarning: '#F59E0B',
+    colorDanger: '#DC2626',
+    colorInfo: '#0EA5E9',
+    colorPurple: '#D8B4FE',
+    colorBlue: '#00839B',
+    colorInUse: '#38BDF8',
+    colorBooked: '#F472B6',
+    colorLoaned: '#FB923C',
+    colorDefault: '#64748B',
   };
 
   private destroy$ = new Subject<void>();
-  private resizeSubject = new Subject<void>();
-  private chartResizeSubscription!: Subscription;
 
   ngOnInit(): void {
-    this.initColors();
+    // We can try to fetch CSS vars, but fallback to defaults if running too early
+    setTimeout(() => this.initColors(), 0);
+    
     this.isLoading = true;
     this.cd.markForCheck();
     Promise.resolve().then(() => this.loadData());
   }
 
-  ngAfterViewInit(): void {
-    this.setupResizeHandling();
-  }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.resizeObserver?.disconnect();
-    this.intersectionObserver?.disconnect();
-    this.chartInstanceStatus?.dispose();
-    this.chartInstanceCategory?.dispose();
-    this.chartInstanceLocation?.dispose();
-    this.chartInstanceTrend?.dispose();
-    this.chartResizeSubscription?.unsubscribe();
     clearTimeout(this.filterTransitionTimer);
   }
 
-  private setupResizeHandling(): void {
-    this.chartResizeSubscription = this.resizeSubject
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.ngZone.runOutsideAngular(() => {
-          this.chartInstanceStatus?.resize();
-          this.chartInstanceCategory?.resize();
-          this.chartInstanceLocation?.resize();
-          this.chartInstanceTrend?.resize();
-        });
-      });
-  }
-
-  private triggerResize(): void {
-    this.resizeSubject.next();
-  }
-
-  private setupIntersectionObserver(): void {
-    if (typeof IntersectionObserver === 'undefined') {
-      this.initializeCharts();
-      return;
-    }
-
-    if (!this.chartContainerStatus || !this.chartContainerStatus.nativeElement) {
-      this.initializeCharts();
-      return;
-    }
-
-    this.intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !this.isChartVisible) {
-            this.isChartVisible = true;
-            this.intersectionObserver?.disconnect();
-            this.initializeCharts();
-          }
-        });
-      },
-      { rootMargin: '100px', threshold: 0.01 }
-    );
-    this.intersectionObserver.observe(this.chartContainerStatus.nativeElement);
-  }
-
-  private async initializeCharts(): Promise<void> {
-    if (this.isChartInitialized) return;
-    this.isChartInitialized = true;
-
-    await this.lazyLoadECharts();
-
-    this.chartInstanceStatus = this.initChart(
-      this.chartContainerStatus.nativeElement
-    );
-    this.chartInstanceCategory = this.initChart(
-      this.chartContainerCategory.nativeElement
-    );
-    this.chartInstanceLocation = this.initChart(
-      this.chartContainerLocation.nativeElement
-    );
-    this.chartInstanceTrend = this.initChart(
-      this.chartContainerTrend.nativeElement
-    );
-
-    this.chartInstanceStatus?.on('click', (params) => {
-      this.ngZone.run(() => this.onChartClick('status', params));
-    });
-    this.chartInstanceCategory?.on('click', (params) => {
-      this.ngZone.run(() => this.onChartClick('category', params));
-    });
-    this.chartInstanceLocation?.on('click', (params) => {
-      this.ngZone.run(() => this.onChartClick('location', params));
-    });
-
-    this.setupResizeListener();
-    this.refilterAndRenderAll();
-  }
-
-  private async lazyLoadECharts(): Promise<void> {
-    try {
-      const [
-        echartsCore,
-        CanvasRenderer,
-        chartsModule,
-        componentsModule,
-      ] = await Promise.all([
-        import('echarts/core'),
-        import('echarts/renderers'),
-        import('echarts/charts'),
-        import('echarts/components'),
-      ]);
-
-      const { PieChart, BarChart, LineChart } = chartsModule;
-      const {
-        TitleComponent,
-        TooltipComponent,
-        LegendComponent,
-        GridComponent,
-        DataZoomComponent,
-      } = componentsModule;
-
-      this.echartsInstance = echartsCore;
-
-      this.echartsInstance.use([
-        CanvasRenderer.CanvasRenderer,
-        PieChart,
-        BarChart,
-        LineChart,
-        TitleComponent,
-        TooltipComponent,
-        LegendComponent,
-        GridComponent,
-        DataZoomComponent,
-      ]);
-    } catch (error) {
-      console.error('Error lazy-loading ECharts', error);
-    }
-  }
-
   private initColors(): void {
-    const c = getCssVar;
-
-    this.cssVars = {
-      gray200: c('--gray-200'),
-      gray700: c('--gray-700'),
-      gray800: c('--gray-800'),
-      white: c('--white'),
-      colorSuccess: c('--color-success'),
-      colorWarning: c('--color-warning'),
-      colorDanger: c('--color-danger'),
-      colorInfo: c('--color-info'),
-      colorPurple: c('--chart-color-6'),
-      colorBlue: c('--teal-blue'),
-      colorInUse: c('--peacock-blue-light'),
-      colorBooked: c('--chart-color-6'),
-      colorLoaned: c('--chart-color-9'),
-      colorDefault: c('--gray-500'),
-    };
+    // Safely get CSS variables if in browser
+    if (typeof window !== 'undefined') {
+      const c = getCssVar;
+      // Update vars if available
+      const checkVar = (name: string, fallback: string) => {
+          const val = c(name);
+          return val ? val : fallback;
+      };
+      
+      this.cssVars.gray200 = checkVar('--gray-200', this.cssVars.gray200);
+      this.cssVars.gray700 = checkVar('--gray-700', this.cssVars.gray700);
+      this.cssVars.gray800 = checkVar('--gray-800', this.cssVars.gray800);
+      this.cssVars.white = checkVar('--white', this.cssVars.white);
+      this.cssVars.colorSuccess = checkVar('--color-success', this.cssVars.colorSuccess);
+      this.cssVars.colorWarning = checkVar('--color-warning', this.cssVars.colorWarning);
+      this.cssVars.colorDanger = checkVar('--color-danger', this.cssVars.colorDanger);
+      this.cssVars.colorInfo = checkVar('--color-info', this.cssVars.colorInfo);
+      this.cssVars.colorBlue = checkVar('--teal-blue', this.cssVars.colorBlue);
+      this.cssVars.colorInUse = checkVar('--peacock-blue-light', this.cssVars.colorInUse);
+      this.cssVars.colorBooked = checkVar('--chart-color-6', this.cssVars.colorBooked);
+      this.cssVars.colorLoaned = checkVar('--chart-color-9', this.cssVars.colorLoaned);
+      this.cssVars.colorDefault = checkVar('--gray-500', this.cssVars.colorDefault);
+    }
 
     this.statusColorMap.set('Sẵn sàng', this.cssVars.colorSuccess);
     this.statusColorMap.set('Đang sử dụng', this.cssVars.colorInUse);
@@ -395,35 +253,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     ];
   }
 
-  private initChart(container: HTMLElement): EChartsType | undefined {
-    if (!this.echartsInstance || !container) return;
-    let chart: EChartsType | undefined;
-    this.ngZone.runOutsideAngular(() => {
-      chart = this.echartsInstance!.init(container, undefined, {
-        renderer: 'canvas',
-        useDirtyRect: true,
-      });
-    });
-    return chart;
-  }
-
-  private setupResizeListener(): void {
-    if (!this.chartContainerStatus) return;
-    this.ngZone.runOutsideAngular(() => {
-      let resizeTimeout: any;
-      const onResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => this.triggerResize(), 150);
-      };
-      window.addEventListener('resize', onResize, { passive: true });
-      this.resizeObserver = new ResizeObserver(onResize);
-      this.resizeObserver.observe(this.chartContainerStatus.nativeElement);
-      this.resizeObserver.observe(this.chartContainerCategory.nativeElement);
-      this.resizeObserver.observe(this.chartContainerLocation.nativeElement);
-      this.resizeObserver.observe(this.chartContainerTrend.nativeElement);
-    });
-  }
-
   public loadData(): void {
     const apiUrl = environment.equipmentCatUrl;
     this.http
@@ -432,14 +261,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
         finalize(() => {
           this.isLoading = false;
           this.cd.markForCheck();
-          if (!this.intersectionObserverInitialized) {
-            this.ngZone.runOutsideAngular(() => {
-              setTimeout(() => {
-                this.setupIntersectionObserver();
-                this.intersectionObserverInitialized = true;
-              }, 0);
-            });
-          }
         }),
         takeUntil(this.destroy$)
       )
@@ -453,10 +274,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           this.toastService.showError(
             'Không thể tải dữ liệu thống kê thiết bị.'
           );
-          this.chartInstanceStatus?.clear();
-          this.chartInstanceCategory?.clear();
-          this.chartInstanceLocation?.clear();
-          this.chartInstanceTrend?.clear();
+          this.statusChartOptions = null;
+          this.categoryChartOptions = null;
+          this.locationChartOptions = null;
+          this.trendChartOptions = null;
         },
       });
   }
@@ -523,14 +344,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       this.formatNumber(widgetData.expiring)
     );
 
-    this.statusData = statusData;
-    this.categoryData = categoryData;
-    this.locationData = locationData;
-    this.trendData = trendData;
     this.attentionDevices = attentionDevices;
     this.expiringDevices = expiringDevices;
 
-    const totalStatus = this.statusData.reduce(
+    const totalStatus = statusData.reduce(
       (sum, item) => sum + item.SoLuong,
       0
     );
@@ -542,15 +359,25 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
       ? `Vị trí (Đã lọc)`
       : `Vị trí có TB cần chú ý (Top 10)`;
 
-    this.renderStatusChart(this.statusData);
-    this.renderCategoryChart(this.categoryData);
-    this.renderLocationChart(this.locationData);
-    this.renderTrendChart(this.trendData);
+    this.statusChartOptions = this.buildDonutOption(statusData);
+    this.categoryChartOptions = this.buildBarOption(
+      categoryData.map((d) => d.name).reverse(),
+      categoryData.map((d) => d.value).reverse()
+    );
+    this.locationChartOptions = this.buildBarOption(
+      locationData.map((d) => d.name).reverse(),
+      locationData.map((d) => d.value).reverse(),
+      this.cssVars.colorBlue
+    );
+    this.trendChartOptions = this.buildLineOption(
+      trendData.map((d) => d.month),
+      trendData.map((d) => d.value)
+    );
 
     this.cd.markForCheck();
   }
 
-  private onChartClick(type: FilterType, params: any): void {
+  public onChartClick(type: FilterType, params: any): void {
     const clickedName = params.name;
     if (!clickedName) return;
 
@@ -807,15 +634,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     }).format(value);
   }
 
-  private formatPercentage(value: number): string {
-    return (
-      new Intl.NumberFormat('vi-VN', {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      }).format(value) + '%'
-    );
-  }
-
   trackByWidgetId(index: number, item: WidgetData): string {
     return item.id;
   }
@@ -828,76 +646,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
 
   // --- CHART BUILDER FUNCTIONS ---
 
-  private renderStatusChart(data: DeviceStatsData[]): void {
-    if (!this.chartInstanceStatus) return;
-
-    const option = this.buildDonutOption(data);
-
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        this.chartInstanceStatus?.setOption(option, {
-          notMerge: false,
-          lazyUpdate: true,
-          silent: false
-        });
-      });
-    });
-  }
-
-  private renderCategoryChart(data: AggregatedData[]): void {
-    if (!this.chartInstanceCategory) return;
-    const option = this.buildBarOption(
-      data.map((d) => d.name).reverse(),
-      data.map((d) => d.value).reverse()
-    );
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        this.chartInstanceCategory?.setOption(option, {
-          notMerge: false,
-          lazyUpdate: true,
-          silent: false
-        });
-      });
-    });
-  }
-
-  private renderLocationChart(data: AggregatedData[]): void {
-    if (!this.chartInstanceLocation) return;
-    const option = this.buildBarOption(
-      data.map((d) => d.name).reverse(),
-      data.map((d) => d.value).reverse(),
-      this.cssVars.colorBlue
-    );
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        this.chartInstanceLocation?.setOption(option, {
-          notMerge: false,
-          lazyUpdate: true,
-          silent: false
-        });
-      });
-    });
-  }
-
-  private renderTrendChart(data: TemporalData[]): void {
-    if (!this.chartInstanceTrend) return;
-    const option = this.buildLineOption(
-      data.map((d) => d.month),
-      data.map((d) => d.value)
-    );
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        this.chartInstanceTrend?.setOption(option, {
-          notMerge: true,
-          lazyUpdate: true,
-        });
-      });
-    });
-  }
-
-  private buildDonutOption(data: DeviceStatsData[]): EChartsOption {
-    if (!this.echartsInstance) return {};
-
+  private buildDonutOption(data: DeviceStatsData[]): EChartsCoreOption {
     const chartData = data.map((item) => ({
       name: item.TenTrangThai,
       value: item.SoLuong,
@@ -1003,7 +752,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
     yAxisData: string[],
     seriesData: number[],
     color: string | ((params: any) => string) = this.cssVars.colorBlue
-  ): EChartsOption {
+  ): EChartsCoreOption {
     return {
       backgroundColor: this.cssVars.white,
       textStyle: {
@@ -1054,7 +803,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
   private buildLineOption(
     xAxisData: string[],
     seriesData: number[]
-  ): EChartsOption {
+  ): EChartsCoreOption {
     const chartColor = this.cssVars.colorBlue;
 
     return {
@@ -1084,16 +833,17 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy, AfterViewIni
           data: seriesData,
           itemStyle: { color: chartColor },
           areaStyle: {
-            color: new (this.echartsInstance as any).graphic.LinearGradient(
-              0,
-              0,
-              0,
-              1,
-              [
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
                 { offset: 0, color: chartColor },
                 { offset: 1, color: this.cssVars.white },
               ]
-            ),
+            },
           },
         },
       ],
