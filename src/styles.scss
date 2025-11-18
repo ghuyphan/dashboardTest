@@ -1,3 +1,4 @@
+// src/styles.scss
 @use '@angular/material' as mat;
 
 html,
@@ -613,4 +614,43 @@ body>ul.submenu.open {
 .status-default {
   color: #FFFFFF;
   background-color: var(--gray-500);
+}
+
+/* ==================================================
+   GLOBAL SKELETON LOADER
+   ================================================== */
+.skeleton {
+  background-color: var(--gray-200);
+  border-radius: var(--border-radius-md);
+  animation: skeleton-pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-text {
+  height: 1em;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  @extend .skeleton;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+  @extend .skeleton;
+}
+
+.skeleton-rect {
+  width: 100%;
+  height: 100%;
+  @extend .skeleton;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
 }

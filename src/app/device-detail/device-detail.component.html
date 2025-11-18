@@ -1,7 +1,32 @@
 <div class="page-container">
-  <div *ngIf="isLoading" class="app-loading-container">
-    <div class="app-loading-spinner"></div>
-    <p>Đang tải chi tiết thiết bị...</p>
+  
+  <div *ngIf="isLoading" class="detail-card-wrapper">
+    <div class="detail-card">
+      
+      <div class="detail-header">
+        <div class="skeleton-circle" style="width: 50px; height: 50px;"></div>
+        <div class="header-text" style="display: flex; flex-direction: column; gap: 8px; width: 100%">
+           <div class="skeleton" style="width: 40%; height: 28px;"></div>
+           <div class="skeleton" style="width: 20%; height: 18px;"></div>
+        </div>
+      </div>
+
+      <div class="detail-body">
+        <div class="info-grid">
+          <div class="info-item" *ngFor="let i of [1,2,3,4,5,6]">
+            <div class="skeleton" style="width: 30%; height: 14px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="width: 80%; height: 20px;"></div>
+          </div>
+        </div>
+
+        <div class="meta-panel">
+           <div class="skeleton" style="width: 100%; height: 160px;"></div>
+           <div class="skeleton" style="width: 60%; height: 20px; margin-top: 20px;"></div>
+           <div class="skeleton" style="width: 80%; height: 20px; margin-top: 10px;"></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <div *ngIf="!isLoading && device" class="detail-card-wrapper">

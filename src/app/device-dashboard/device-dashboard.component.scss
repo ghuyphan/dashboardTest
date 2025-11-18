@@ -34,17 +34,16 @@
   }
 }
 
-/* --- Thẻ KPI (Widget) --- */
+/* --- Widget Skeleton Wrapper --- */
 .widget-section {
   padding-bottom: var(--spacing-md);
   flex-shrink: 0;
 }
 
 .widget-skeleton {
-  background: var(--gray-100);
-  border-radius: var(--border-radius-md);
+  /* Local styling for size only */
   height: 80px;
-  animation: skeleton-pulse 1.5s infinite ease-in-out;
+  /* Animation is now handled by global .skeleton class */
 }
 
 .widget-grid {
@@ -62,45 +61,7 @@
   }
 }
 
-@keyframes skeleton-pulse {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
-}
-
-/* --- Spinner --- */
-.chart-loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 400px;
-  color: var(--gray-600);
-  font-size: 1.1rem;
-
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--gray-200);
-    border-top-color: var(--teal-blue);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: var(--spacing-md);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Removed redundant @keyframes skeleton-pulse and spinner styles */
 
 .dashboard-main-content {
   display: flex;
@@ -202,12 +163,7 @@
     grid-column: span 1;
   }
 }
-/* --- ***** END: LAYOUT LƯỚI ***** --- */
 
-
-/* Apply minimum height to app-chart-card to ensure visual consistency 
-   within the grid. 
-*/
 app-chart-card {
   min-height: 400px;
   
@@ -219,7 +175,6 @@ app-chart-card {
     min-height: 300px;
   }
 }
-
 
 .action-list-card {
   background-color: var(--white);
@@ -253,16 +208,14 @@ app-chart-card {
   gap: var(--spacing-sm);
   flex-shrink: 0;
 
-  // For main title text with icon
   > span:first-child {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
   }
 
-  // For subtext
   .card-subtitle {
-    font-size: 0.875rem; // 14px
+    font-size: 0.875rem;
     font-weight: 400;
     color: var(--gray-700);
   }
@@ -275,11 +228,9 @@ app-chart-card {
     &.icon-danger {
       color: var(--color-danger);
     }
-    /* --- START OF MODIFICATION --- */
     &.icon-info {
       color: var(--color-info);
     }
-    /* --- END OF MODIFICATION --- */
   }
 }
 
