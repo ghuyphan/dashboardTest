@@ -55,14 +55,12 @@ import { saveAs } from 'file-saver';
     </div>
   `,
   styles: [`
-    /* ... (Previous styles remain the same) ... */
-
-    /* Layout adjustments for the new toolbar structure */
+    /* Layout adjustments for the toolbar */
     .viewer-toolbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.75rem 1.5rem; /* Slightly reduced padding */
+      padding: 0.75rem 1.5rem;
       background: white;
       border-bottom: 1px solid #e5e7eb;
       flex-shrink: 0;
@@ -75,7 +73,6 @@ import { saveAs } from 'file-saver';
       align-items: center;
     }
 
-    /* Style for the new Back button */
     .back-btn {
       color: #64748B;
       padding: 0.5rem 0.75rem;
@@ -85,7 +82,6 @@ import { saveAs } from 'file-saver';
       color: #0F172A;
     }
 
-    /* Re-center the hint text on small screens if needed */
     .toolbar-hint { 
       color: #6b7280; 
       font-size: 0.875rem; 
@@ -97,10 +93,8 @@ import { saveAs } from 'file-saver';
     .toolbar-hint i { color: #00839B; }
     
     @media (max-width: 640px) {
-      .toolbar-hint { display: none; } /* Hide hint on mobile to save space */
+      .toolbar-hint { display: none; }
     }
-
-    /* ... (Rest of the CSS remains exactly as provided in previous answer) ... */
     
     :host {
       display: flex;
@@ -136,11 +130,50 @@ import { saveAs } from 'file-saver';
     /* Print Styles */
     @media print {
       @page { size: A4 portrait; margin: 0; }
-      :host, .viewer-container, .viewer-body, .content-wrapper { display: block !important; position: static !important; width: 100% !important; height: auto !important; overflow: visible !important; background: white !important; margin: 0 !important; padding: 0 !important; }
-      .viewer-toolbar, .loading-overlay, .error-message { display: none !important; }
-      ::ng-deep section.docx { margin: 0 !important; box-shadow: none !important; page-break-after: always !important; width: 100% !important; }
-      ::ng-deep app-root > *:not(app-modal), ::ng-deep .modal-backdrop, ::ng-deep .cdk-overlay-container > *:not(.cdk-global-overlay-wrapper) { display: none !important; }
-      ::ng-deep .cdk-global-overlay-wrapper, ::ng-deep .cdk-overlay-pane, ::ng-deep .modal-content { position: static !important; transform: none !important; width: 100% !important; max-width: none !important; height: auto !important; border: none !important; padding: 0 !important; margin: 0 !important; display: block !important; overflow: visible !important; }
+      
+      :host, .viewer-container, .viewer-body, .content-wrapper { 
+        display: block !important; 
+        position: static !important; 
+        width: 100% !important; 
+        height: auto !important; 
+        overflow: visible !important; 
+        background: white !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+      }
+
+      .viewer-toolbar, .loading-overlay, .error-message { 
+        display: none !important; 
+      }
+
+      ::ng-deep section.docx { 
+        margin: 0 !important; 
+        box-shadow: none !important; 
+        page-break-after: always !important; 
+        /* FIXED: Force A4 width instead of 100% to prevent text reflow */
+        width: 210mm !important; 
+      }
+
+      ::ng-deep app-root > *:not(app-modal), 
+      ::ng-deep .modal-backdrop, 
+      ::ng-deep .cdk-overlay-container > *:not(.cdk-global-overlay-wrapper) { 
+        display: none !important; 
+      }
+
+      ::ng-deep .cdk-global-overlay-wrapper, 
+      ::ng-deep .cdk-overlay-pane, 
+      ::ng-deep .modal-content { 
+        position: static !important; 
+        transform: none !important; 
+        width: 100% !important; 
+        max-width: none !important; 
+        height: auto !important; 
+        border: none !important; 
+        padding: 0 !important; 
+        margin: 0 !important; 
+        display: block !important; 
+        overflow: visible !important; 
+      }
     }
   `]
 })
@@ -172,12 +205,14 @@ export class DocxPrintViewerComponent implements AfterViewInit, OnDestroy {
     const options = {
       className: 'docx',
       inWrapper: true,
-      ignoreWidth: false,
+      ignoreWidth: false, // Respect Word's width settings
       ignoreHeight: false,
       breakPages: true,
       trimXmlDeclaration: true,
       useBase64URL: true,
       debug: false,
+      experimental: false, // UPDATED: Improves layout accuracy
+      renderChanges: false // UPDATED: Hide track changes comments if any
     };
 
     renderAsync(this.docBlob, this.container.nativeElement, undefined, options)
