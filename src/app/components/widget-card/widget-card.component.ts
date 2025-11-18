@@ -14,38 +14,56 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   @Input() value: string = '0';
   @Input() caption: string = 'Caption';
   @Input() accentColor: string = '#64748B';
+  @Input() isLoading: boolean = false; // New input for skeleton state
 
   @ViewChild('valueDisplay', { static: false }) valueDisplay!: ElementRef<HTMLDivElement>;
 
   private currentValue: number = 0;
   private viewInitialized = false;
 
-  // Added 'percent' to supported formats
   private originalFormat: 'number' | 'currency' | 'string' | 'percent' = 'number';
   private detectedCurrency: string = 'VND'; 
 
   ngAfterViewInit(): void {
     this.viewInitialized = true;
-    this.updateValue(this.value, false);
+    // If data is already present on init, animate it immediately
+    if (!this.isLoading) {
+      this.updateValue(this.value, true);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.viewInitialized) return;
 
-    if (changes['value']) {
+    // 1. Handle Loading State Transitions
+    if (changes['isLoading']) {
+      const prev = changes['isLoading'].previousValue;
+      const curr = changes['isLoading'].currentValue;
+
+      // If transition: Loading (true) -> Loaded (false)
+      if (prev === true && curr === false) {
+        // Wait a tick for *ngIf to switch templates, then animate
+        setTimeout(() => {
+          this.updateValue(this.value, true); // true = animate
+        });
+        return;
+      }
+    }
+
+    // 2. Handle Value Changes (only if not currently loading)
+    if (changes['value'] && !this.isLoading) {
       this.updateValue(changes['value'].currentValue, true);
     }
   }
 
   private updateValue(newValue: string, animate: boolean): void {
-    // 1. Handle Percentage specifically
+    // Safety check if element exists (it might not if we are still in skeleton mode)
+    if (!this.valueDisplay?.nativeElement) return;
+
+    // 1. Handle Percentage
     if (typeof newValue === 'string' && newValue.includes('%')) {
         this.originalFormat = 'percent';
-        
-        // Parse "89,96%" -> 89.96 (Remove %, replace comma with dot)
-        let cleanStr = newValue.replace(/[%]/g, '').trim();
-        cleanStr = cleanStr.replace(/,/g, '.'); 
-        
+        let cleanStr = newValue.replace(/[%]/g, '').trim().replace(/,/g, '.');
         const parsed = parseFloat(cleanStr);
 
         if (!isNaN(parsed)) {
@@ -58,31 +76,18 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
         } else {
              this.updateDisplayString(newValue);
         }
-        return; // Exit early for percentages
+        return; 
     }
 
-    // 2. Handle Standard Numbers / Currency (Existing Logic)
+    // 2. Handle Numbers / Currency
     const parsedNumber = this.parseValue(newValue);
 
     if (isNaN(parsedNumber)) {
       this.originalFormat = 'string';
       this.currentValue = 0;
       this.updateDisplayString(newValue);
-      
     } else {
-      if (/[₫]|VND/.test(newValue)) {
-        this.originalFormat = 'currency';
-        this.detectedCurrency = 'VND';
-      } else if (/\$/.test(newValue)) {
-        this.originalFormat = 'currency';
-        this.detectedCurrency = 'USD';
-      } else if (/\€/.test(newValue)) {
-        this.originalFormat = 'currency';
-        this.detectedCurrency = 'EUR';
-      } else {
-        this.originalFormat = 'number';
-        this.detectedCurrency = 'VND';
-      }
+      this.detectFormat(newValue); // Helper to set currency/number format
 
       if (animate) {
         this.animateValue(this.currentValue, parsedNumber);
@@ -93,18 +98,26 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
     }
   }
   
-  private parseValue(val: string): number {
-    // This aggressively removes punctuation for integers/currency
-    const cleaned = (val?.replace(/[^0-9,.-]/g, '') || '0')
-                      .replace(/[.,]/g, '')
-                      .trim();
-    
-    if (/[^0-9]/.test(cleaned)) { 
-      return NaN;
+  private detectFormat(newValue: string) {
+    if (/[₫]|VND/.test(newValue)) {
+      this.originalFormat = 'currency';
+      this.detectedCurrency = 'VND';
+    } else if (/\$/.test(newValue)) {
+      this.originalFormat = 'currency';
+      this.detectedCurrency = 'USD';
+    } else if (/\€/.test(newValue)) {
+      this.originalFormat = 'currency';
+      this.detectedCurrency = 'EUR';
+    } else {
+      this.originalFormat = 'number';
+      this.detectedCurrency = 'VND';
     }
-    
-    const num = parseFloat(cleaned);
-    return num;
+  }
+
+  private parseValue(val: string): number {
+    const cleaned = (val?.replace(/[^0-9,.-]/g, '') || '0').replace(/[.,]/g, '').trim();
+    if (/[^0-9]/.test(cleaned)) return NaN;
+    return parseFloat(cleaned);
   }
 
   private animateValue(start: number, end: number): void {
@@ -114,7 +127,7 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       return;
     }
 
-    const duration = 800;
+    const duration = 1000; // Slower animation looks better after skeleton
     const startTime = performance.now();
     const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
 
@@ -125,7 +138,6 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       
       let val = start + (end - start) * easedProgress;
 
-      // Only round if NOT a percentage. Percentages need decimals (e.g. 45.52%)
       if (this.originalFormat !== 'percent') {
          val = Math.round(val);
       }
@@ -140,34 +152,31 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       }
     };
 
-    setTimeout(() => {
-      requestAnimationFrame(animate);
-    }, 300);
+    requestAnimationFrame(animate);
   }
 
   private updateDisplayNumber(value: number): void {
-    if (this.valueDisplay?.nativeElement) {
-      let formattedValue: string;
+    if (!this.valueDisplay?.nativeElement) return;
 
-      if (this.originalFormat === 'currency') {
-        formattedValue = new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: this.detectedCurrency, 
-          maximumFractionDigits: 0, 
-          minimumFractionDigits: 0,
-        }).format(value);
-      } else if (this.originalFormat === 'percent') {
-        // Format percentage: 2 decimal places + % symbol
-        formattedValue = new Intl.NumberFormat('vi-VN', {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        }).format(value) + '%';
-      } else {
-        formattedValue = new Intl.NumberFormat('vi-VN').format(value);
-      }
-      
-      this.valueDisplay.nativeElement.textContent = formattedValue;
+    let formattedValue: string;
+
+    if (this.originalFormat === 'currency') {
+      formattedValue = new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: this.detectedCurrency, 
+        maximumFractionDigits: 0, 
+        minimumFractionDigits: 0,
+      }).format(value);
+    } else if (this.originalFormat === 'percent') {
+      formattedValue = new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }).format(value) + '%';
+    } else {
+      formattedValue = new Intl.NumberFormat('vi-VN').format(value);
     }
+    
+    this.valueDisplay.nativeElement.textContent = formattedValue;
   }
 
   private updateDisplayString(value: string): void {

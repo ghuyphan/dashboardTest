@@ -15,9 +15,7 @@
   </div>
 
   <div class="card-body">
-    <div *ngIf="isLoading" class="loading-overlay">
-      <div class="spinner"></div>
-    </div>
+    <div *ngIf="isLoading" class="skeleton-rect"></div>
 
     <div 
       #chartContainer 

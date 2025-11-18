@@ -8,6 +8,7 @@
   gap: var(--spacing-sm);
   transition: all 0.2s ease-in-out;
   border-left: none;
+  min-height: 90px; /* Ensure height stability during load */
 
   &:hover {
     transform: translateY(-2px);
@@ -39,7 +40,11 @@
     // Use clamp() for responsive icon size
     font-size: clamp(16px, 4.5vw, 18px);
   }
-  // The parent's `gap` property handles spacing, so no margin is needed.
+  
+  &.skeleton {
+    background-color: var(--gray-200);
+    animation: skeleton-pulse 1.5s infinite ease-in-out;
+  }
 }
 
 .widget-content {
@@ -47,23 +52,17 @@
   overflow: hidden;
   /* NEW: Ensures content can shrink in flexbox */
   min-width: 0;
+  width: 100%; /* Ensure skeletons take full width in flex */
 
   .widget-value {
-    // --- START OF MODIFICATION ---
-    /*
-      clamp(MIN, PREFERRED, MAX)
-      Min size: 1.125rem (18px)
-      Max size: 1.5rem (24px)
-      Preferred: 3vw (grows much slower than 5vw)
-    */
+    /* clamp(MIN, PREFERRED, MAX) */
     font-size: clamp(1.125rem, 3vw, 1.5rem);
-    // --- END OF MODIFICATION ---
     
     font-weight: 600;
     color: var(--gray-900);
     margin: 0;
     line-height: 1.1;
-    font-feature-settings: "tnum"; // optional: better numeric alignment
+    font-feature-settings: "tnum";
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -91,17 +90,25 @@
   }
 }
 
+// Global skeleton styles are assumed to be in styles.scss
+// duplicating animation locally just in case specific tuning is needed
+@keyframes skeleton-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
 /* Responsive adjustments for mobile */
 @media (max-width: 767px) {
   .widget-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center; // Center skeletons on mobile
+    
     .widget-value,
     .widget-title,
     .widget-caption {
       white-space: normal; /* Allow wrapping on mobile */
     }
-
-    // --- REMOVED ---
-    // The main .widget-value clamp() now handles this,
-    // so we don't need a separate rule here.
   }
 }

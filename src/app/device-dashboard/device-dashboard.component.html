@@ -6,7 +6,7 @@
       *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded"
     >
       <div class="widget-grid">
-        <div class="widget-skeleton skeleton" *ngFor="let i of [1, 2, 3, 4, 5, 6]"></div>
+        <app-widget-card *ngFor="let i of [1, 2, 3, 4, 5, 6]" [isLoading]="true"></app-widget-card>
       </div>
     </div>
 
@@ -20,6 +20,7 @@
             [value]="widget.value"
             [caption]="widget.caption"
             [accentColor]="widget.accentColor"
+            [isLoading]="isLoading"
           >
           </app-widget-card>
         </div>
@@ -51,7 +52,7 @@
           [subtitle]="statusChartSubtext"
           icon="fas fa-pie-chart"
           iconClass="icon-info"
-          [isLoading]="isLoading"
+          [isLoading]="isLoading" 
           [chartOptions]="statusChartOptions"
           (chartClick)="onChartClick('status', $event)">
         </app-chart-card>
