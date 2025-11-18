@@ -1,19 +1,47 @@
-<div class="confirm-container">
-  <div *ngIf="icon" class="confirm-icon-wrapper">
-    <i [class]="icon" [style.color]="iconColor"></i>
-  </div>
+<div class="confirm-container" [ngClass]="'layout-' + layout">
+  
+  <ng-container *ngIf="layout === 'center'">
+    <div *ngIf="icon" class="confirm-icon-wrapper">
+      <i [class]="icon" [style.color]="iconColor"></i>
+    </div>
 
-  <div class="confirm-content">
-    <h3 *ngIf="title" class="confirm-title">{{ title }}</h3>
-    <p class="confirm-message">{{ message }}</p>
-  </div>
+    <div class="confirm-content">
+      <h3 *ngIf="title" class="confirm-title">{{ title }}</h3>
+      <p class="confirm-message">{{ message }}</p>
+    </div>
 
-  <div class="confirm-footer">
-    <button *ngIf="cancelText" type="button" class="btn btn-secondary" (click)="onCancel()">
-      {{ cancelText }}
-    </button>
-    <button type="button" class="btn btn-danger" (click)="onConfirm()">
-      {{ confirmText }}
-    </button>
-  </div>
+    <div class="confirm-footer">
+      <button *ngIf="cancelText" type="button" class="btn btn-secondary" (click)="onCancel()">
+        {{ cancelText }}
+      </button>
+      <button type="button" class="btn btn-danger" (click)="onConfirm()">
+        {{ confirmText }}
+      </button>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="layout === 'standard'">
+    
+    <div class="standard-header" *ngIf="title || icon">
+      <div *ngIf="icon" class="mini-icon">
+         <i [class]="icon" [style.color]="iconColor"></i>
+      </div>
+      <h3 *ngIf="title" class="confirm-title">{{ title }}</h3>
+    </div>
+
+    <div class="confirm-content">
+      <p class="confirm-message">{{ message }}</p>
+    </div>
+
+    <div class="confirm-footer">
+      <button *ngIf="cancelText" type="button" class="btn btn-ghost" (click)="onCancel()">
+        {{ cancelText }}
+      </button>
+      
+      <button type="button" class="btn btn-primary" (click)="onConfirm()">
+        {{ confirmText }}
+      </button>
+    </div>
+  </ng-container>
+
 </div>

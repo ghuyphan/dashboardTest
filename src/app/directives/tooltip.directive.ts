@@ -5,98 +5,205 @@ import {
   HostListener,
   Renderer2,
   OnDestroy,
+  NgZone,
 } from '@angular/core';
 
+/**
+ * Tooltip Directive
+ * 
+ * Displays a tooltip on hover that's positioned to the right of the host element.
+ * Automatically handles cleanup on scroll, resize, click, and navigation events.
+ * 
+ * @example
+ * <button [appTooltip]="'Click to save'">Save</button>
+ */
 @Directive({
   selector: '[appTooltip]',
   standalone: true,
 })
 export class TooltipDirective implements OnDestroy {
+  /** The text content to display in the tooltip */
   @Input('appTooltip') tooltipText: string = '';
-  private tooltipElement: HTMLDivElement | null = null;
-  private scrollListener: (() => void) | null = null;
-  private resizeListener: (() => void) | null = null;
 
-  constructor(private el: ElementRef, private renderer: Renderer2) {}
+  /** The tooltip DOM element */
+  private tooltipElement: HTMLDivElement | null = null;
+
+  /** Event listener cleanup functions */
+  private listeners: Array<(() => void)> = [];
+
+  /** Delay before showing tooltip (in milliseconds) */
+  private readonly SHOW_DELAY = 300;
+
+  /** Horizontal offset from the host element (in pixels) */
+  private readonly HORIZONTAL_OFFSET = 8;
+
+  /** Timer for delayed tooltip display */
+  private showTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(
+    private el: ElementRef<HTMLElement>,
+    private renderer: Renderer2,
+    private zone: NgZone
+  ) {}
 
   @HostListener('mouseenter')
-  onMouseEnter() {
-    if (!this.tooltipText || this.tooltipElement) {
+  onMouseEnter(): void {
+    if (!this.tooltipText?.trim() || this.tooltipElement) {
       return;
     }
-    this.createTooltip();
+
+    // Add slight delay to prevent tooltips from flashing during quick hovers
+    this.showTimer = setTimeout(() => {
+      this.createTooltip();
+    }, this.SHOW_DELAY);
   }
 
   @HostListener('mouseleave')
-  onMouseLeave() {
+  onMouseLeave(): void {
+    this.clearShowTimer();
     this.destroyTooltip();
   }
 
   /**
-   * Fix 1: Close tooltip immediately on click.
-   * This prevents it from getting stuck if the click triggers
-   * navigation or a modal (which might stop mouseleave from firing).
+   * Close tooltip on click to prevent it from getting stuck
+   * when navigation or modals are triggered
    */
   @HostListener('click')
-  onClick() {
+  onClick(): void {
+    this.clearShowTimer();
     this.destroyTooltip();
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
+    this.clearShowTimer();
     this.destroyTooltip();
   }
 
-  private createTooltip() {
-    // 1. Create the element
+  /**
+   * Creates and displays the tooltip element
+   */
+  private createTooltip(): void {
+    if (this.tooltipElement) {
+      return;
+    }
+
+    // Create tooltip element
     this.tooltipElement = this.renderer.createElement('div');
-    this.renderer.appendChild(
-      this.tooltipElement,
-      this.renderer.createText(this.tooltipText)
-    );
+    const textNode = this.renderer.createText(this.tooltipText);
+    this.renderer.appendChild(this.tooltipElement, textNode);
     this.renderer.addClass(this.tooltipElement, 'app-tooltip-container');
 
-    // 2. Append to body to avoid overflow issues
+    // Append to body to avoid overflow/z-index issues
     this.renderer.appendChild(document.body, this.tooltipElement);
 
-    // 3. Position it
+    // Position and show
     this.updatePosition();
-    this.renderer.addClass(this.tooltipElement, 'show');
+    
+    // Use requestAnimationFrame to ensure positioning is complete before showing
+    requestAnimationFrame(() => {
+      if (this.tooltipElement) {
+        this.renderer.addClass(this.tooltipElement, 'show');
+      }
+    });
 
-    // Fix 2: Listen to global scroll and resize events to hide tooltip
-    // capturing these events ensures we clear the tooltip if the user scrolls away
-    this.scrollListener = this.renderer.listen('window', 'scroll', () => this.destroyTooltip());
-    this.resizeListener = this.renderer.listen('window', 'resize', () => this.destroyTooltip());
+    // Register global event listeners outside Angular zone for better performance
+    this.registerGlobalListeners();
   }
 
-  private updatePosition() {
-    if (!this.tooltipElement) return;
+  /**
+   * Updates the tooltip position relative to the host element
+   */
+  private updatePosition(): void {
+    if (!this.tooltipElement) {
+      return;
+    }
 
-    const hostPos = this.el.nativeElement.getBoundingClientRect();
-    const tooltipPos = this.tooltipElement.getBoundingClientRect();
+    const hostRect = this.el.nativeElement.getBoundingClientRect();
+    const tooltipRect = this.tooltipElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    // Position to the right of the element
-    const top = hostPos.top + (hostPos.height - tooltipPos.height) / 2;
-    const left = hostPos.right + 8; // 8px offset
+    // Calculate vertical position (centered relative to host)
+    let top = hostRect.top + (hostRect.height - tooltipRect.height) / 2;
 
+    // Calculate horizontal position (to the right of host)
+    let left = hostRect.right + this.HORIZONTAL_OFFSET;
+
+    // Boundary detection: if tooltip overflows viewport right edge, show on left
+    if (left + tooltipRect.width > viewportWidth - this.HORIZONTAL_OFFSET) {
+      left = hostRect.left - tooltipRect.width - this.HORIZONTAL_OFFSET;
+    }
+
+    // Vertical boundary detection: keep within viewport
+    if (top < this.HORIZONTAL_OFFSET) {
+      top = this.HORIZONTAL_OFFSET;
+    } else if (top + tooltipRect.height > viewportHeight - this.HORIZONTAL_OFFSET) {
+      top = viewportHeight - tooltipRect.height - this.HORIZONTAL_OFFSET;
+    }
+
+    // Apply calculated position
     this.renderer.setStyle(this.tooltipElement, 'top', `${top}px`);
     this.renderer.setStyle(this.tooltipElement, 'left', `${left}px`);
   }
 
-  private destroyTooltip() {
-    if (this.tooltipElement) {
-      this.renderer.removeClass(this.tooltipElement, 'show');
-      this.renderer.removeChild(document.body, this.tooltipElement);
-      this.tooltipElement = null;
+  /**
+   * Registers global event listeners to auto-hide tooltip
+   */
+  private registerGlobalListeners(): void {
+    // Run outside Angular zone to avoid triggering change detection
+    this.zone.runOutsideAngular(() => {
+      // Hide on scroll (any scrollable element)
+      const scrollListener = this.renderer.listen('window', 'scroll', () => {
+        this.zone.run(() => this.destroyTooltip());
+      }, { capture: true, passive: true });
+
+      // Hide on resize
+      const resizeListener = this.renderer.listen('window', 'resize', () => {
+        this.zone.run(() => this.destroyTooltip());
+      }, { passive: true });
+
+      this.listeners.push(scrollListener, resizeListener);
+    });
+  }
+
+  /**
+   * Removes the tooltip from the DOM and cleans up listeners
+   */
+  private destroyTooltip(): void {
+    if (!this.tooltipElement) {
+      return;
     }
 
-    // Clean up global listeners
-    if (this.scrollListener) {
-      this.scrollListener();
-      this.scrollListener = null;
+    // Remove show class for fade-out animation
+    this.renderer.removeClass(this.tooltipElement, 'show');
+
+    // Wait for animation to complete before removing from DOM
+    setTimeout(() => {
+      if (this.tooltipElement) {
+        this.renderer.removeChild(document.body, this.tooltipElement);
+        this.tooltipElement = null;
+      }
+    }, 150); // Match CSS transition duration
+
+    // Clean up all event listeners
+    this.cleanupListeners();
+  }
+
+  /**
+   * Clears the show timer if it exists
+   */
+  private clearShowTimer(): void {
+    if (this.showTimer) {
+      clearTimeout(this.showTimer);
+      this.showTimer = null;
     }
-    if (this.resizeListener) {
-      this.resizeListener();
-      this.resizeListener = null;
-    }
+  }
+
+  /**
+   * Removes all registered event listeners
+   */
+  private cleanupListeners(): void {
+    this.listeners.forEach(unsubscribe => unsubscribe());
+    this.listeners = [];
   }
 }

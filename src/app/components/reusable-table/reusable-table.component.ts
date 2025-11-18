@@ -12,6 +12,9 @@ import {
   ElementRef,
   OnInit,
   HostBinding,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -24,12 +27,50 @@ import {
 } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { TooltipDirective } from '../../directives/tooltip.directive';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { SelectionModel } from '@angular/cdk/collections';
+
+import { TooltipDirective } from '../../directives/tooltip.directive';
 import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
 
+// Constants
+const LOADING_DEBOUNCE_MS = 200;
+const LOADING_HIDE_DELAY_MS = 150;
+const ROW_NAVIGATION_DELAY_MS = 50;
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
+const DEFAULT_TRACK_BY_FIELD = 'Id';
+
+// Interfaces
+export interface GridColumn {
+  key: string;
+  label: string;
+  sortable: boolean;
+  width?: string;
+  sticky?: 'start' | 'end' | false;
+}
+
+export type SortDirection = 'asc' | 'desc' | '';
+
+export interface SortChangedEvent {
+  column: string;
+  direction: SortDirection;
+}
+
+export interface RowActionEvent {
+  action: string;
+  data: any;
+}
+
+interface SortState {
+  active: string;
+  direction: SortDirection;
+}
+
+/**
+ * Vietnamese localization for Material Paginator
+ */
 @Injectable()
 export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   override itemsPerPageLabel = 'Số hàng:';
@@ -38,31 +79,24 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   override firstPageLabel = 'Trang đầu';
   override lastPageLabel = 'Trang cuối';
 
-  override getRangeLabel = (page: number, pageSize: number, length: number) => {
+  override getRangeLabel = (
+    page: number,
+    pageSize: number,
+    length: number
+  ): string => {
     if (length === 0 || pageSize === 0) {
       return `0 / ${length}`;
     }
-    length = Math.max(length, 0);
+
+    const maxLength = Math.max(length, 0);
     const startIndex = page * pageSize;
     const endIndex =
-      startIndex < length
-        ? Math.min(startIndex + pageSize, length)
+      startIndex < maxLength
+        ? Math.min(startIndex + pageSize, maxLength)
         : startIndex + pageSize;
-    return `${startIndex + 1} - ${endIndex} / ${length}`;
-  };
-}
 
-export interface GridColumn {
-  key: string;
-  label: string;
-  sortable: boolean;
-  width?: string;
-  sticky?: 'start' | 'end' | false;
-}
-export type SortDirection = 'asc' | 'desc' | '';
-export interface SortChangedEvent {
-  column: string;
-  direction: SortDirection;
+    return `${startIndex + 1} - ${endIndex} / ${maxLength}`;
+  };
 }
 
 @Component({
@@ -83,71 +117,111 @@ export interface SortChangedEvent {
   templateUrl: './reusable-table.component.html',
   styleUrls: ['./reusable-table.component.scss'],
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit {
+export class ReusableTableComponent
+  implements OnInit, OnChanges, AfterViewInit, OnDestroy
+{
+  // Inputs
   @Input() data: any[] = [];
   @Input() columns: GridColumn[] = [];
-  @Input() searchTerm: string = '';
-  @Input() isLoading: boolean = false;
-  @Input() pageSize: number = 10;
-  @Input() pageSizeOptions: number[] = [5, 10, 25, 50];
-  @Input() showLoadingText: boolean = true;
-  @Input() emptyStateText: string = 'Không có dữ liệu';
-  @Input() noResultsText: string = 'Không tìm thấy kết quả phù hợp';
-
-  @Input() trackByField: string = 'Id';
-  @Input() enableMultiSelect: boolean = false;
-
-  @Input() totalDataLength: number = 0;
-
-  @Input() showPaginator: boolean = true;
-  @Input() clientSideSort: boolean = false;
-
+  @Input() searchTerm = '';
+  @Input() isLoading = false;
+  @Input() pageSize = DEFAULT_PAGE_SIZE;
+  @Input() pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS;
+  @Input() showLoadingText = true;
+  @Input() emptyStateText = 'Không có dữ liệu';
+  @Input() noResultsText = 'Không tìm thấy kết quả phù hợp';
+  @Input() trackByField = DEFAULT_TRACK_BY_FIELD;
+  @Input() enableMultiSelect = false;
+  @Input() totalDataLength = 0;
+  @Input() showPaginator = true;
+  @Input() clientSideSort = false;
   @Input() headerColor: string | null = null;
 
-  @HostBinding('style.--table-header-bg')
-  get tableHeaderBg() {
-    return this.headerColor;
-  }
-
+  // Outputs
   @Output() rowClick = new EventEmitter<any>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
   @Output() pageChanged = new EventEmitter<PageEvent>();
   @Output() searchCleared = new EventEmitter<void>();
-  @Output() rowAction = new EventEmitter<{ action: string; data: any }>();
+  @Output() rowAction = new EventEmitter<RowActionEvent>();
   @Output() selectionChanged = new EventEmitter<any[]>();
 
-  public dataSource = new MatTableDataSource<any>();
-  public displayedColumns: string[] = [];
-  public selectedRow: any | null = null;
-  public isLoadingWithDelay = false;
-  private loadingTimer: any;
+  // Host Binding
+  @HostBinding('style.--table-header-bg')
+  get tableHeaderBg(): string | null {
+    return this.headerColor;
+  }
 
-  public selection = new SelectionModel<any>(true, []);
-
+  // ViewChildren
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
 
-  public sortState: { active: string; direction: SortDirection } = {
+  // Public Properties
+  public readonly dataSource = new MatTableDataSource<any>();
+  public displayedColumns: string[] = [];
+  public selectedRow: any | null = null;
+  public isLoadingWithDelay = false;
+  public readonly selection = new SelectionModel<any>(true, []);
+  public sortState: SortState = {
     active: '',
     direction: '',
   };
 
-  constructor() {}
+  // Private Properties
+  private loadingTimer?: ReturnType<typeof setTimeout>;
 
   ngOnInit(): void {
-    this.selection.changed.subscribe(() => {
-      this.selectionChanged.emit(this.selection.selected);
-    });
+    this.initializeSelectionListener();
     this.updateDisplayedColumns();
   }
 
   ngAfterViewInit(): void {
-    if (this.clientSideSort) {
-      this.dataSource.sort = this.sort;
+    this.initializeSort();
+    this.initializeSortState();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isLoading']) {
+      this.handleLoadingStateChange();
     }
 
+    if (changes['data']) {
+      this.handleDataChange();
+    }
+
+    if (changes['columns'] || changes['enableMultiSelect']) {
+      this.updateDisplayedColumns();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.clearLoadingTimer();
+  }
+
+  /**
+   * Initializes selection change listener
+   */
+  private initializeSelectionListener(): void {
+    this.selection.changed.subscribe(() => {
+      this.selectionChanged.emit(this.selection.selected);
+    });
+  }
+
+  /**
+   * Initializes sort functionality
+   */
+  private initializeSort(): void {
+    if (this.clientSideSort && this.sort) {
+      this.dataSource.sort = this.sort;
+    }
+  }
+
+  /**
+   * Initializes sort state from MatSort
+   */
+  private initializeSortState(): void {
     if (this.sort) {
       this.sortState = {
         active: this.sort.active,
@@ -156,91 +230,155 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
     }
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isLoading']) {
-      this.handleLoadingState();
-    }
-
-    if (changes['data']) {
-      this.dataSource.data = this.data;
-      this.selectedRow = null;
-      this.selection.clear();
-
-      if (this.clientSideSort && this.sort) {
-        this.dataSource.sort = this.sort;
-      }
-
-      if (this.tableContainer?.nativeElement) {
-        this.tableContainer.nativeElement.scrollTop = 0;
-      }
-    }
-
-    if (changes['columns'] || changes['enableMultiSelect']) {
-      this.updateDisplayedColumns();
-    }
-  }
-
+  /**
+   * Updates displayed columns based on configuration
+   */
   private updateDisplayedColumns(): void {
-    let baseCols = this.columns.map((col) => col.key);
-    if (this.enableMultiSelect) {
-      this.displayedColumns = ['select', ...baseCols];
-    } else {
-      this.displayedColumns = baseCols;
-    }
+    const baseColumns = this.columns.map((col) => col.key);
+
+    this.displayedColumns = this.enableMultiSelect
+      ? ['select', ...baseColumns]
+      : baseColumns;
   }
 
-  private handleLoadingState() {
+  /**
+   * Handles loading state changes with debouncing
+   */
+  private handleLoadingStateChange(): void {
     if (this.isLoading) {
-      // When starting to load, we might want a small delay (debounce) 
-      // to avoid flickering if the load is super fast (e.g. < 200ms).
-      this.loadingTimer = setTimeout(() => {
-        this.isLoadingWithDelay = true;
-      }, 200);
+      this.startLoadingWithDelay();
     } else {
+      this.stopLoadingWithDelay();
+    }
+  }
+
+  /**
+   * Starts loading state after debounce period
+   */
+  private startLoadingWithDelay(): void {
+    this.loadingTimer = setTimeout(() => {
+      this.isLoadingWithDelay = true;
+    }, LOADING_DEBOUNCE_MS);
+  }
+
+  /**
+   * Stops loading state with smooth transition
+   */
+  private stopLoadingWithDelay(): void {
+    this.clearLoadingTimer();
+
+    setTimeout(() => {
+      this.isLoadingWithDelay = false;
+    }, LOADING_HIDE_DELAY_MS);
+  }
+
+  /**
+   * Clears the loading timer
+   */
+  private clearLoadingTimer(): void {
+    if (this.loadingTimer) {
       clearTimeout(this.loadingTimer);
-      
-      // --- FIX START: Smooth transition ---
-      // Delay hiding the spinner by a small amount (e.g., 100-150ms).
-      // This ensures the table data (which was just assigned in ngOnChanges)
-      // has enough time to render into the DOM behind the overlay.
-      setTimeout(() => {
-         this.isLoadingWithDelay = false;
-      }, 150); 
-      // --- FIX END ---
+      this.loadingTimer = undefined;
     }
   }
 
-  public onRowClick(row: any): void {
-    if (!this.enableMultiSelect) {
-      this.selectedRow = this.selectedRow === row ? null : row;
-      this.rowClick.emit(row);
-    } else {
-      this.toggleRowSelection(row, null);
+  /**
+   * Handles data changes
+   */
+  private handleDataChange(): void {
+    this.dataSource.data = this.data;
+    this.clearSelection();
+    this.reinitializeSort();
+    this.scrollToTop();
+  }
+
+  /**
+   * Clears row and checkbox selection
+   */
+  private clearSelection(): void {
+    this.selectedRow = null;
+    this.selection.clear();
+  }
+
+  /**
+   * Reinitializes sort after data change
+   */
+  private reinitializeSort(): void {
+    if (this.clientSideSort && this.sort) {
+      this.dataSource.sort = this.sort;
     }
   }
 
-  public onMatSortChange(sort: Sort): void {
-    this.sortState = {
-      active: sort.active,
-      direction: sort.direction as SortDirection,
-    };
-
-    if (!this.clientSideSort) {
-      this.sortChanged.emit({
-        column: sort.active,
-        direction: sort.direction as SortDirection,
-      });
-    }
-  }
-
-  public onPageChange(event: PageEvent): void {
-    this.pageChanged.emit(event);
-
+  /**
+   * Scrolls table container to top
+   */
+  private scrollToTop(): void {
     if (this.tableContainer?.nativeElement) {
       this.tableContainer.nativeElement.scrollTop = 0;
     }
   }
 
+  /**
+   * Handles row click events
+   */
+  public onRowClick(row: any): void {
+    if (this.enableMultiSelect) {
+      this.toggleRowSelection(row, null);
+    } else {
+      this.toggleSingleRowSelection(row);
+    }
+  }
+
+  /**
+   * Toggles single row selection
+   */
+  private toggleSingleRowSelection(row: any): void {
+    this.selectedRow = this.selectedRow === row ? null : row;
+    this.rowClick.emit(row);
+  }
+
+  /**
+   * Handles Material sort change events
+   */
+  public onMatSortChange(sort: Sort): void {
+    this.updateSortState(sort);
+
+    if (!this.clientSideSort) {
+      this.emitSortChange(sort);
+    }
+  }
+
+  /**
+   * Updates internal sort state
+   */
+  private updateSortState(sort: Sort): void {
+    this.sortState = {
+      active: sort.active,
+      direction: sort.direction as SortDirection,
+    };
+  }
+
+  /**
+   * Emits sort change event
+   */
+  private emitSortChange(sort: Sort): void {
+    this.sortChanged.emit({
+      column: sort.active,
+      direction: sort.direction as SortDirection,
+    });
+  }
+
+  /**
+   * Handles page change events
+   */
+  public onPageChange(event: PageEvent): void {
+    this.pageChanged.emit(event);
+    this.scrollToTop();
+  }
+
+  /**
+   * Clears search and resets to first page
+   */
   public clearSearch(): void {
     this.searchTerm = '';
     this.searchCleared.emit();
@@ -250,108 +388,227 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
     }
   }
 
+  /**
+   * Handles keyboard navigation
+   */
   @HostListener('window:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent) {
-    if (this.enableMultiSelect) return;
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if (this.enableMultiSelect) {
+      return;
+    }
 
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (this.isNavigationKey(event.key)) {
       event.preventDefault();
       this.handleRowNavigation(event.key === 'ArrowDown');
     }
   }
 
-  private handleRowNavigation(down: boolean) {
+  /**
+   * Checks if key is a navigation key
+   */
+  private isNavigationKey(key: string): boolean {
+    return key === 'ArrowDown' || key === 'ArrowUp';
+  }
+
+  /**
+   * Handles row navigation with arrow keys
+   */
+  private handleRowNavigation(down: boolean): void {
     const rows = this.dataSource.filteredData;
-    if (!rows.length) return;
+    if (!rows.length) {
+      return;
+    }
 
-    const currentIndex = rows.findIndex((row) => row === this.selectedRow);
-    let newIndex = down ? currentIndex + 1 : currentIndex - 1;
+    const newIndex = this.calculateNewRowIndex(rows, down);
+    const newRow = rows[newIndex];
 
-    if (newIndex < 0) newIndex = rows.length - 1;
-    if (newIndex >= rows.length) newIndex = 0;
-
-    if (rows[newIndex]) {
-      this.onRowClick(rows[newIndex]);
-
-      setTimeout(() => {
-        const rowElements = document.querySelectorAll('.clickable-row');
-        if (rowElements[newIndex]) {
-          rowElements[newIndex].scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          });
-        }
-      }, 50);
+    if (newRow) {
+      this.onRowClick(newRow);
+      this.scrollRowIntoView(newIndex);
     }
   }
 
-  getEmptyStateMessage(): string {
+  /**
+   * Calculates new row index for navigation
+   */
+  private calculateNewRowIndex(rows: any[], down: boolean): number {
+    const currentIndex = rows.findIndex((row) => row === this.selectedRow);
+    let newIndex = down ? currentIndex + 1 : currentIndex - 1;
+
+    if (newIndex < 0) {
+      newIndex = rows.length - 1;
+    }
+    if (newIndex >= rows.length) {
+      newIndex = 0;
+    }
+
+    return newIndex;
+  }
+
+  /**
+   * Scrolls row into view
+   */
+  private scrollRowIntoView(index: number): void {
+    setTimeout(() => {
+      const rowElements = document.querySelectorAll('.clickable-row');
+      const rowElement = rowElements[index];
+
+      if (rowElement) {
+        rowElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
+    }, ROW_NAVIGATION_DELAY_MS);
+  }
+
+  /**
+   * Gets appropriate empty state message
+   */
+  public getEmptyStateMessage(): string {
     return this.searchTerm
       ? `${this.noResultsText} "${this.searchTerm}"`
       : this.emptyStateText;
   }
 
+  /**
+   * TrackBy function for performance optimization
+   */
   public trackByFn = (index: number, item: any): any => {
-    return item[this.trackByField] || index;
+    return item[this.trackByField] ?? index;
   };
 
+  /**
+   * Gets CSS class for status display
+   */
   public getStatusClass(status: string): string {
-    if (!status) return 'status-default';
+    if (!status) {
+      return 'status-default';
+    }
+
+    const statusMap: Record<string, string[]> = {
+      'status-in-use': ['đang sử dụng'],
+      'status-ready': ['sẵn sàng'],
+      'status-repair': ['bảo trì', 'sửa chữa'],
+      'status-broken': ['hỏng', 'thanh lý'],
+    };
+
     const lowerStatus = status.toLowerCase();
 
-    if (lowerStatus.includes('đang sử dụng')) return 'status-in-use';
-    if (lowerStatus.includes('sẵn sàng')) return 'status-ready';
-    if (lowerStatus.includes('bảo trì') || lowerStatus.includes('sửa chữa'))
-      return 'status-repair';
-    if (lowerStatus.includes('hỏng') || lowerStatus.includes('thanh lý'))
-      return 'status-broken';
+    for (const [className, keywords] of Object.entries(statusMap)) {
+      if (keywords.some((keyword) => lowerStatus.includes(keyword))) {
+        return className;
+      }
+    }
 
     return 'status-default';
   }
 
+  /**
+   * Handles row action button clicks
+   */
   public onRowAction(action: string, element: any, event: MouseEvent): void {
     event.stopPropagation();
     this.rowAction.emit({ action, data: element });
   }
 
-  onCheckboxClick(event: MouseEvent): void {
+  /**
+   * Prevents checkbox click from bubbling
+   */
+  public onCheckboxClick(event: MouseEvent): void {
     event.stopPropagation();
   }
 
-  toggleRowSelection(row: any, event: MouseEvent | null): void {
+  /**
+   * Toggles row selection in multi-select mode
+   */
+  public toggleRowSelection(row: any, event: MouseEvent | null): void {
     if (event) {
       event.stopPropagation();
     }
 
     this.selectedRow = null;
     this.rowClick.emit(null);
-
     this.selection.toggle(row);
   }
 
-  isAllSelected(): boolean {
+  /**
+   * Checks if all rows are selected
+   */
+  public isAllSelected(): boolean {
     const numSelected = this.selection.selected.length;
     const numRows = this.dataSource.data.length;
-    return numSelected === numRows;
+    return numSelected === numRows && numRows > 0;
   }
 
-  masterToggle(): void {
+  /**
+   * Toggles selection for all rows
+   */
+  public masterToggle(): void {
     this.selectedRow = null;
     this.rowClick.emit(null);
 
     if (this.isAllSelected()) {
       this.selection.clear();
-      return;
+    } else {
+      this.selection.select(...this.dataSource.data);
     }
-    this.selection.select(...this.dataSource.data);
   }
 
-  checkboxLabel(row?: any): string {
+  /**
+   * Gets accessibility label for checkboxes
+   */
+  public checkboxLabel(row?: any): string {
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    return `${
-      this.selection.isSelected(row) ? 'deselect' : 'select'
-    } row ${row[this.trackByField] || ''}`;
+
+    const rowId = row[this.trackByField] || '';
+    const action = this.selection.isSelected(row) ? 'deselect' : 'select';
+
+    return `${action} row ${rowId}`;
+  }
+
+  /**
+   * Gets selected rows
+   */
+  public getSelectedRows(): any[] {
+    return this.selection.selected;
+  }
+
+  /**
+   * Checks if a row is selected
+   */
+  public isRowSelected(row: any): boolean {
+    return this.selection.isSelected(row);
+  }
+
+  /**
+   * Clears all selections
+   */
+  public clearAllSelections(): void {
+    this.clearSelection();
+  }
+
+  /**
+   * Selects specific rows
+   */
+  public selectRows(rows: any[]): void {
+    this.selection.clear();
+    this.selection.select(...rows);
+  }
+
+  /**
+   * Gets current page data
+   */
+  public getCurrentPageData(): any[] {
+    return this.dataSource.filteredData;
+  }
+
+  /**
+   * Refreshes table data source
+   */
+  public refresh(): void {
+    this.dataSource.data = [...this.data];
   }
 }

@@ -139,15 +139,18 @@ export class DeviceFormComponent implements OnInit {
     if (!isDirty && !this.isSaving) return of(true);
     if (this.isSaving) return of(false);
 
-    return this.modalService
+return this.modalService
       .open(ConfirmationModalComponent, {
         title: 'Thay đổi chưa lưu',
         disableBackdropClose: true,
         size: 'sm',
         context: {
-          message:
-            'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
-          confirmText: 'Hủy bỏ thay đổi',
+          layout: 'standard',
+          icon: 'fas fa-question-circle',
+          iconColor: 'var(--color-info)',
+          
+          message: 'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
+          confirmText: 'Hủy bỏ thay đổi', 
           cancelText: 'Tiếp tục chỉnh sửa',
         },
       })

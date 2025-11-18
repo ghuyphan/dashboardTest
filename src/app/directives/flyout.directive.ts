@@ -13,160 +13,104 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
+/**
+ * Flyout Directive
+ * 
+ * Creates a floating menu that appears next to a collapsed sidebar item.
+ * When enabled, clicking the host element positions the menu as a fixed overlay.
+ * Handles collision detection, auto-closing on outside clicks, and proper cleanup.
+ * 
+ * @example
+ * <button [appFlyout]="submenuElement" [flyoutEnabled]="isSidebarCollapsed">
+ *   Menu Item
+ * </button>
+ */
 @Directive({
   selector: '[appFlyout]',
   standalone: true,
 })
 export class FlyoutDirective implements OnInit, OnDestroy {
-  /**
-   * The <ul> submenu element to show/hide.
-   */
+  /** The submenu element (typically a <ul>) to show/hide as a flyout */
   @Input('appFlyout') flyoutMenu: HTMLElement | null = null;
-  /**
-   * Enables or disables the flyout logic.
-   * (e.g., true when sidebar is collapsed, false when open)
+
+  /** 
+   * Enables or disables the flyout behavior
+   * Set to true when sidebar is collapsed, false when expanded
    */
   @Input() flyoutEnabled: boolean = false;
 
-  /**
-   * Emits the open (true) or closed (false) state.
-   */
+  /** Emits when the flyout opens (true) or closes (false) */
   @Output() flyoutToggled = new EventEmitter<boolean>();
 
-  private globalClickListener!: () => void;
-  private menuClickListener!: () => void;
+  /** Event listener cleanup functions */
+  private listeners: {
+    globalClick?: () => void;
+    menuClick?: () => void;
+  } = {};
 
-  private originalParent: Node | null = null;
-  private nextSibling: Node | null = null;
+  /** Original DOM position to restore when closing */
+  private originalPosition: {
+    parent: Node | null;
+    nextSibling: Node | null;
+  } = {
+    parent: null,
+    nextSibling: null,
+  };
 
-  /**
-   * Tracks the currently open flyout directive instance.
-   */
+  /** Tracks the currently open flyout to ensure only one is active */
   private static activeFlyout: FlyoutDirective | null = null;
+
+  /** Spacing constants */
+  private readonly VIEWPORT_PADDING = 10;
+  private readonly HORIZONTAL_OFFSET = 8;
+  private readonly DEFAULT_SIDEBAR_WIDTH = 60;
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
-    private el: ElementRef, // This is the host element (the <button>)
+    private el: ElementRef<HTMLElement>,
     private renderer: Renderer2,
     private zone: NgZone
   ) {}
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      // This listener handles clicks OUTSIDE the menu
-      this.globalClickListener = this.renderer.listen(
-        this.document,
-        'click',
-        (event: Event) => {
-          if (
-            this.originalParent &&
-            !this.el.nativeElement.contains(event.target) &&
-            !this.flyoutMenu?.contains(event.target as Node)
-          ) {
-            this.zone.run(() => {
-              this.closeFlyout();
-            });
-          }
-        }
-      );
-    });
+    this.registerGlobalClickListener();
   }
 
   ngOnDestroy(): void {
-    if (this.globalClickListener) {
-      this.globalClickListener();
-    }
+    this.cleanupListeners();
     this.closeFlyout();
   }
 
   @HostListener('click', ['$event'])
-  onClick(event: Event) {
+  onClick(event: Event): void {
     if (!this.flyoutEnabled) {
       return;
     }
+
     event.preventDefault();
     event.stopPropagation();
 
-    if (this.originalParent) {
+    // Toggle: close if already open, open if closed
+    if (this.isOpen()) {
       this.closeFlyout();
     } else {
       this.openFlyout();
     }
   }
 
-  private openFlyout() {
-    // If another flyout is open, close it first.
-    if (
-      FlyoutDirective.activeFlyout &&
-      FlyoutDirective.activeFlyout !== this
-    ) {
-      FlyoutDirective.activeFlyout.closeFlyout();
-    }
-
-    if (!this.flyoutEnabled || !this.flyoutMenu || this.originalParent) {
-      return;
-    }
-
-    // 1. Save original location
-    this.originalParent = this.flyoutMenu.parentNode;
-    this.nextSibling = this.flyoutMenu.nextSibling;
-
-    // 2. Append to body so it can float above everything
-    this.renderer.appendChild(this.document.body, this.flyoutMenu);
-
-    // 3. Set initial styles to measure dimensions (hidden)
-    this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
-    this.renderer.setStyle(this.flyoutMenu, 'visibility', 'hidden');
-    this.renderer.addClass(this.flyoutMenu, 'open');
-
-    // 4. Measure positions
-    const hostPos = this.el.nativeElement.getBoundingClientRect();
-    const menuRect = this.flyoutMenu.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    
-    // 5. Calculate Top Position (Collision Detection)
-    let top = hostPos.top;
-    const bottomPadding = 10; // Space from bottom edge
-
-    // If the menu extends past the bottom of the screen...
-    if (top + menuRect.height > viewportHeight - bottomPadding) {
-      // Shift it up so the bottom of the menu sits at the bottom safe area
-      top = viewportHeight - menuRect.height - bottomPadding;
-      
-      // Optional: Ensure it doesn't go off the top edge
-      if (top < bottomPadding) {
-        top = bottomPadding;
-      }
-    }
-
-    // 6. Calculate Left Position
-    const offset = 8; // 8px (0.5rem) gap
-    const rootStyle = getComputedStyle(this.document.documentElement);
-    const collapsedWidthVal = rootStyle.getPropertyValue('--sidebar-width-collapsed');
-    // Fallback to 60 if variable is missing or parse fails
-    const collapsedWidth = collapsedWidthVal ? parseFloat(collapsedWidthVal) : 60;
-    const left = collapsedWidth + offset;
-
-    // 7. Apply Final Coordinates and Show
-    this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
-    this.renderer.setStyle(this.flyoutMenu, 'left', `${left}px`);
-    this.renderer.removeStyle(this.flyoutMenu, 'visibility');
-
-    this.flyoutToggled.emit(true);
-    FlyoutDirective.activeFlyout = this;
-
-    // 8. Add listener for inner clicks
+  /**
+   * Registers a global click listener to close the flyout when clicking outside
+   */
+  private registerGlobalClickListener(): void {
     this.zone.runOutsideAngular(() => {
-      this.menuClickListener = this.renderer.listen(
-        this.flyoutMenu as HTMLElement,
+      this.listeners.globalClick = this.renderer.listen(
+        this.document,
         'click',
         (event: Event) => {
-          const target = event.target as HTMLElement;
+          // Only close if flyout is open and click is outside both host and menu
           if (
-            target.tagName === 'A' ||
-            target.tagName === 'BUTTON' ||
-            target.closest('A') ||
-            target.closest('BUTTON')
+            this.isOpen() &&
+            !this.isClickInsideHostOrMenu(event)
           ) {
             this.zone.run(() => {
               this.closeFlyout();
@@ -177,39 +121,258 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     });
   }
 
-  private closeFlyout() {
-    if (!this.originalParent || !this.flyoutMenu) {
+  /**
+   * Opens the flyout menu with proper positioning
+   */
+  private openFlyout(): void {
+    // Close any other active flyout first
+    this.closeOtherFlyouts();
+
+    // Validation checks
+    if (!this.canOpenFlyout()) {
       return;
     }
 
-    if (this.menuClickListener) {
-      this.menuClickListener();
-      (this.menuClickListener as any) = null;
+    // Save original DOM position for restoration later
+    this.saveOriginalPosition();
+
+    // Move menu to body for proper z-index layering
+    this.renderer.appendChild(this.document.body, this.flyoutMenu);
+
+    // Prepare menu for measurement (hidden but rendered)
+    this.prepareMenuForPositioning();
+
+    // Calculate and apply position
+    this.positionFlyout();
+
+    // Show the menu
+    this.renderer.removeStyle(this.flyoutMenu!, 'visibility');
+
+    // Update state and register menu click listener
+    this.flyoutToggled.emit(true);
+    FlyoutDirective.activeFlyout = this;
+    this.registerMenuClickListener();
+  }
+
+  /**
+   * Closes the flyout menu and restores original DOM position
+   */
+  private closeFlyout(): void {
+    if (!this.isOpen()) {
+      return;
     }
 
-    // 1. Remove visibility class
-    this.renderer.removeClass(this.flyoutMenu, 'open');
+    // Remove menu click listener
+    if (this.listeners.menuClick) {
+      this.listeners.menuClick();
+      this.listeners.menuClick = undefined;
+    }
 
-    // 2. Put the menu back where it came from
-    this.renderer.insertBefore(
-      this.originalParent,
-      this.flyoutMenu,
-      this.nextSibling
-    );
+    // Remove open styling
+    this.renderer.removeClass(this.flyoutMenu!, 'open');
 
-    // 3. Clean up styles
-    this.renderer.removeStyle(this.flyoutMenu, 'position');
-    this.renderer.removeStyle(this.flyoutMenu, 'top');
-    this.renderer.removeStyle(this.flyoutMenu, 'left');
-    this.renderer.removeStyle(this.flyoutMenu, 'visibility'); // Ensure visibility reset
+    // Restore original DOM position
+    this.restoreOriginalPosition();
 
-    // 4. Clear state
-    this.originalParent = null;
-    this.nextSibling = null;
+    // Clean up positioning styles
+    this.removePositioningStyles();
+
+    // Clear state
+    this.clearOriginalPosition();
     this.flyoutToggled.emit(false);
 
     if (FlyoutDirective.activeFlyout === this) {
       FlyoutDirective.activeFlyout = null;
     }
+  }
+
+  /**
+   * Closes any other active flyout instance
+   */
+  private closeOtherFlyouts(): void {
+    if (FlyoutDirective.activeFlyout && FlyoutDirective.activeFlyout !== this) {
+      FlyoutDirective.activeFlyout.closeFlyout();
+    }
+  }
+
+  /**
+   * Validates if the flyout can be opened
+   */
+  private canOpenFlyout(): boolean {
+    return this.flyoutEnabled && 
+           this.flyoutMenu !== null && 
+           !this.isOpen();
+  }
+
+  /**
+   * Checks if the flyout is currently open
+   */
+  private isOpen(): boolean {
+    return this.originalPosition.parent !== null;
+  }
+
+  /**
+   * Saves the menu's original DOM position for later restoration
+   */
+  private saveOriginalPosition(): void {
+    this.originalPosition.parent = this.flyoutMenu!.parentNode;
+    this.originalPosition.nextSibling = this.flyoutMenu!.nextSibling;
+  }
+
+  /**
+   * Restores the menu to its original DOM position
+   */
+  private restoreOriginalPosition(): void {
+    if (this.originalPosition.parent && this.flyoutMenu) {
+      this.renderer.insertBefore(
+        this.originalPosition.parent,
+        this.flyoutMenu,
+        this.originalPosition.nextSibling
+      );
+    }
+  }
+
+  /**
+   * Clears the saved original position data
+   */
+  private clearOriginalPosition(): void {
+    this.originalPosition.parent = null;
+    this.originalPosition.nextSibling = null;
+  }
+
+  /**
+   * Prepares the menu for positioning by making it fixed but hidden
+   */
+  private prepareMenuForPositioning(): void {
+    this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
+    this.renderer.setStyle(this.flyoutMenu, 'visibility', 'hidden');
+    this.renderer.addClass(this.flyoutMenu, 'open');
+  }
+
+  /**
+   * Calculates and applies the optimal position for the flyout menu
+   */
+  private positionFlyout(): void {
+    const hostRect = this.el.nativeElement.getBoundingClientRect();
+    const menuRect = this.flyoutMenu!.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    const top = this.calculateVerticalPosition(hostRect, menuRect, viewportHeight);
+    const left = this.calculateHorizontalPosition();
+
+    this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
+    this.renderer.setStyle(this.flyoutMenu, 'left', `${left}px`);
+  }
+
+  /**
+   * Calculates the vertical position with collision detection
+   */
+  private calculateVerticalPosition(
+    hostRect: DOMRect,
+    menuRect: DOMRect,
+    viewportHeight: number
+  ): number {
+    let top = hostRect.top;
+
+    // Check if menu would overflow bottom of viewport
+    const wouldOverflowBottom = top + menuRect.height > viewportHeight - this.VIEWPORT_PADDING;
+
+    if (wouldOverflowBottom) {
+      // Try aligning bottom-to-bottom (menu grows upward from button)
+      const topAlignedBottom = hostRect.bottom - menuRect.height;
+
+      if (topAlignedBottom >= this.VIEWPORT_PADDING) {
+        // Fits when aligned upward
+        top = topAlignedBottom;
+      } else {
+        // Doesn't fit either way, pin to bottom of viewport
+        top = viewportHeight - menuRect.height - this.VIEWPORT_PADDING;
+
+        // If menu is taller than viewport, pin to top instead
+        if (top < this.VIEWPORT_PADDING) {
+          top = this.VIEWPORT_PADDING;
+        }
+      }
+    }
+
+    return top;
+  }
+
+  /**
+   * Calculates the horizontal position based on sidebar width
+   */
+  private calculateHorizontalPosition(): number {
+    const rootStyle = getComputedStyle(this.document.documentElement);
+    const collapsedWidthValue = rootStyle.getPropertyValue('--sidebar-width-collapsed');
+    const collapsedWidth = collapsedWidthValue 
+      ? parseFloat(collapsedWidthValue) 
+      : this.DEFAULT_SIDEBAR_WIDTH;
+
+    return collapsedWidth + this.HORIZONTAL_OFFSET;
+  }
+
+  /**
+   * Removes all positioning-related inline styles
+   */
+  private removePositioningStyles(): void {
+    const stylesToRemove = ['position', 'top', 'left', 'visibility'];
+    stylesToRemove.forEach(style => {
+      this.renderer.removeStyle(this.flyoutMenu!, style);
+    });
+  }
+
+  /**
+   * Registers click listener on menu items to close flyout when selecting an item
+   */
+  private registerMenuClickListener(): void {
+    this.zone.runOutsideAngular(() => {
+      this.listeners.menuClick = this.renderer.listen(
+        this.flyoutMenu as HTMLElement,
+        'click',
+        (event: Event) => {
+          if (this.isClickableElement(event.target as HTMLElement)) {
+            this.zone.run(() => {
+              this.closeFlyout();
+            });
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * Checks if the clicked element is a clickable item (link or button)
+   */
+  private isClickableElement(element: HTMLElement): boolean {
+    return (
+      element.tagName === 'A' ||
+      element.tagName === 'BUTTON' ||
+      element.closest('A') !== null ||
+      element.closest('BUTTON') !== null
+    );
+  }
+
+  /**
+   * Checks if the click event occurred inside the host element or flyout menu
+   */
+  private isClickInsideHostOrMenu(event: Event): boolean {
+    const target = event.target as Node;
+    return (
+      this.el.nativeElement.contains(target) ||
+      this.flyoutMenu?.contains(target) ||
+      false
+    );
+  }
+
+  /**
+   * Cleans up all registered event listeners
+   */
+  private cleanupListeners(): void {
+    Object.values(this.listeners).forEach(listener => {
+      if (listener) {
+        listener();
+      }
+    });
+    this.listeners = {};
   }
 }

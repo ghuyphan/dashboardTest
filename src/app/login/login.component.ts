@@ -36,7 +36,7 @@ export class LoginComponent {
     private toastService: ToastService,
     private router: Router,
     private modalService: ModalService
-  ) {}
+  ) { }
 
   onSubmit() {
     if (this.isLoading) return;
@@ -50,29 +50,31 @@ export class LoginComponent {
       },
       error: (err: any) => {
         this.isLoading = false;
-        
+
         // Kiểm tra mã lỗi 104 (Tài khoản bị khóa)
         if (err.code == 104) {
           this.modalService.open(ConfirmationModalComponent, {
             title: 'Tài khoản bị khóa',
-            size: 'sm', // Kích thước vừa phải
-            disableBackdropClose: true, // Bắt buộc người dùng đọc và nhấn nút
+            size: 'sm',
+            disableBackdropClose: true,
             context: {
-              title: '',
-              icon: 'fas fa-user-shield', 
-              iconColor: 'var(--color-danger)', // Màu đỏ để cảnh báo
+              layout: 'center', // Explicitly center this alert
+
+              title: '', // Keep empty if you just want the icon
+              icon: 'fas fa-user-shield',
+              iconColor: 'var(--color-danger)',
 
               message: `${err.message}\n\nVui lòng liên hệ bộ phận IT qua hotline:\n☎ 1108 / 1109 để mở khóa.`,
               confirmText: 'Đã hiểu',
-              cancelText: '' // Ẩn nút Cancel để thành hộp thoại thông báo (Alert)
+              cancelText: ''
             }
           });
         } else {
           // Xử lý các lỗi khác
           const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
-          this.toastService.showError(errorMessage); 
+          this.toastService.showError(errorMessage);
         }
-        
+
         console.error('Login failed', err);
       }
     });

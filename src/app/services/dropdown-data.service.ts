@@ -1,48 +1,57 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, shareReplay, tap } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
+import { map, shareReplay, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 
-// The target format our forms will use
+// --- Interfaces ---
+
+// The target format for your Dynamic Form
 export interface DropdownOption {
-  key: any; // Can be string or number
+  key: string | number;
   value: string;
+}
+
+// Raw API shapes (matches your backend exactly)
+interface ApiDeviceType {
+  Id: number;
+  TenThietBi: string;
+}
+
+interface ApiDeviceStatus {
+  ID: number;
+  TEN: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class DropdownDataService {
+  
+  private readonly http = inject(HttpClient);
 
-  // --- Caches ---
-  // We use shareReplay to "cache" the result of the observable
+  // --- Caching ---
   private deviceTypes$: Observable<DropdownOption[]> | null = null;
   private deviceStatuses$: Observable<DropdownOption[]> | null = null;
 
-  constructor(private http: HttpClient) { }
-
   /**
    * Gets the list of device types.
-   * Will fetch from API on first call, then return cached result.
+   * Caches the result until clearCache() is called.
    */
   getDeviceTypes(): Observable<DropdownOption[]> {
     if (this.deviceTypes$) {
       return this.deviceTypes$;
     }
 
-    // --- Using your environment variable ---
-    const typesUrl = environment.deviceListUrl; 
-    
-    this.deviceTypes$ = this.http.get<any[]>(typesUrl).pipe(
-      map(types => [
-        { key: null, value: '-- Chọn loại --' },
-        ...types.map(type => ({
-          key: type.Id, // Matches { "Id": 10.0, ... }
-          value: type.TenThietBi // Matches { "TenThietBi": "Laptop", ... }
-        }))
-      ]),
-      shareReplay(1) // <-- Cache the result and share with all subscribers
+    const url = environment.deviceListUrl;
+
+    this.deviceTypes$ = this.http.get<ApiDeviceType[]>(url).pipe(
+      map(items => items.map(item => ({
+        key: item.Id,           // Maps "Id" -> key
+        value: item.TenThietBi  // Maps "TenThietBi" -> value
+      }))),
+      shareReplay(1),
+      catchError(err => this.handleError('Device Types', err))
     );
 
     return this.deviceTypes$;
@@ -50,28 +59,43 @@ export class DropdownDataService {
 
   /**
    * Gets the list of device statuses.
-   * Will fetch from API on first call, then return cached result.
+   * @param groupId The status group ID (defaults to 1105 as per your requirement)
    */
-  getDeviceStatuses(): Observable<DropdownOption[]> {
+  getDeviceStatuses(groupId = 1105): Observable<DropdownOption[]> {
+    // If we need to support different groupIds, we might need a Map<id, Observable> 
+    // instead of a single variable. For now, assuming singleton usage:
     if (this.deviceStatuses$) {
       return this.deviceStatuses$;
     }
 
-    // --- Using your environment variable ---
-    const statusUrl = environment.statusListUrl + '/1105'; 
-    
-    this.deviceStatuses$ = this.http.get<any[]>(statusUrl).pipe(
-      map(statuses =>
-        statuses.map(status => ({
-          // --- *** IMPORTANT CORRECTION *** ---
-          // We must use the ID as the key so the form saves "TrangThai": 1111
-          key: status.ID, // <-- CORRECTED: Was status.TEN in your version
-          value: status.TEN // Matches { "TEN": "Sẵn sàng", ... }
-        }))
-      ),
-      shareReplay(1) // <-- Cache the result
+    const url = `${environment.statusListUrl}/${groupId}`;
+
+    this.deviceStatuses$ = this.http.get<ApiDeviceStatus[]>(url).pipe(
+      map(items => items.map(item => ({
+        key: item.ID,  // Maps "ID" -> key
+        value: item.TEN // Maps "TEN" -> value
+      }))),
+      shareReplay(1),
+      catchError(err => this.handleError('Device Statuses', err))
     );
 
     return this.deviceStatuses$;
+  }
+
+  /**
+   * Clears the cache. Call this if you add/edit items and need fresh data.
+   */
+  clearCache(): void {
+    this.deviceTypes$ = null;
+    this.deviceStatuses$ = null;
+  }
+
+  /**
+   * Centralized error handling
+   */
+  private handleError(context: string, error: HttpErrorResponse) {
+    console.error(`Error fetching ${context}:`, error);
+    // Return an empty array so the UI doesn't break, or re-throw if you want to show a toast
+    return of([]); 
   }
 }
