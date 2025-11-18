@@ -20,7 +20,8 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   private currentValue: number = 0;
   private viewInitialized = false;
 
-  private originalFormat: 'number' | 'currency' | 'string' = 'number';
+  // Added 'percent' to supported formats
+  private originalFormat: 'number' | 'currency' | 'string' | 'percent' = 'number';
   private detectedCurrency: string = 'VND'; 
 
   ngAfterViewInit(): void {
@@ -37,6 +38,30 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   }
 
   private updateValue(newValue: string, animate: boolean): void {
+    // 1. Handle Percentage specifically
+    if (typeof newValue === 'string' && newValue.includes('%')) {
+        this.originalFormat = 'percent';
+        
+        // Parse "89,96%" -> 89.96 (Remove %, replace comma with dot)
+        let cleanStr = newValue.replace(/[%]/g, '').trim();
+        cleanStr = cleanStr.replace(/,/g, '.'); 
+        
+        const parsed = parseFloat(cleanStr);
+
+        if (!isNaN(parsed)) {
+             if (animate) {
+                 this.animateValue(this.currentValue, parsed);
+             } else {
+                 this.currentValue = parsed;
+                 this.updateDisplayNumber(parsed);
+             }
+        } else {
+             this.updateDisplayString(newValue);
+        }
+        return; // Exit early for percentages
+    }
+
+    // 2. Handle Standard Numbers / Currency (Existing Logic)
     const parsedNumber = this.parseValue(newValue);
 
     if (isNaN(parsedNumber)) {
@@ -69,6 +94,7 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
   }
   
   private parseValue(val: string): number {
+    // This aggressively removes punctuation for integers/currency
     const cleaned = (val?.replace(/[^0-9,.-]/g, '') || '0')
                       .replace(/[.,]/g, '')
                       .trim();
@@ -96,7 +122,13 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = easeOutQuart(progress);
-      const val = Math.round(start + (end - start) * easedProgress);
+      
+      let val = start + (end - start) * easedProgress;
+
+      // Only round if NOT a percentage. Percentages need decimals (e.g. 45.52%)
+      if (this.originalFormat !== 'percent') {
+         val = Math.round(val);
+      }
 
       this.updateDisplayNumber(val);
 
@@ -124,6 +156,12 @@ export class WidgetCardComponent implements OnChanges, AfterViewInit {
           maximumFractionDigits: 0, 
           minimumFractionDigits: 0,
         }).format(value);
+      } else if (this.originalFormat === 'percent') {
+        // Format percentage: 2 decimal places + % symbol
+        formattedValue = new Intl.NumberFormat('vi-VN', {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        }).format(value) + '%';
       } else {
         formattedValue = new Intl.NumberFormat('vi-VN').format(value);
       }

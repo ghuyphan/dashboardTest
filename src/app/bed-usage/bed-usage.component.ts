@@ -241,8 +241,9 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   private initColors(): void {
     const c = getCssVar;
 
+    // Ensure default here is also '0,0%'
     this.widgetData = [
-      { id: 'occupancyRate', title: 'Công Suất', value: '0,00%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: c('--chart-color-1') },
+      { id: 'occupancyRate', title: 'Công Suất', value: '0,0%', caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: c('--chart-color-1') },
       { id: 'totalBeds', title: 'Tổng Số', value: '0', caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: c('--chart-color-2') },
       { id: 'giuongTrong', title: 'Giường Trống', value: '0', caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: c('--chart-color-3') },
       { id: 'dangDieuTri', title: 'Đang Điều Trị', value: '0', caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: c('--chart-color-1') },
@@ -350,7 +351,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     return apiData.map((item) => {
       const parts = this.parseDepartmentName(item.TenPhongBan);
       return {
-        tenPhongBan: item.TenPhongBan,
+        tenPhongBan: item.TenPhongBan, 
         viName: parts.viName,
         enName: parts.enName,
         totalBeds: item.Tong,
@@ -365,16 +366,39 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private parseDepartmentName(fullName: string): { viName: string; enName: string } {
-    const withoutTotal = fullName.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
-    const parts = withoutTotal.split(/\s+-\s+/);
+    // 1. Remove the (Σ: ...) part
+    let cleanName = fullName.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
+    
+    // 2. STRATEGY 1: Check for Newline Separator (\r\n or \n)
+    if (cleanName.match(/[\r\n]+/)) {
+      const lines = cleanName.split(/[\r\n]+/);
+      const validLines = lines.map(l => l.trim()).filter(l => l.length > 0);
+      
+      if (validLines.length >= 2) {
+         return { 
+           viName: validLines[0], 
+           enName: validLines.slice(1).join(' ') 
+         };
+      }
+    }
+
+    // 3. FALLBACK
+    cleanName = cleanName.replace(/[\r\n]+/g, ' ').trim();
+
+    // Strategy 2: Try splitting by ' - '
+    const parts = cleanName.split(/\s+-\s+/);
     if (parts.length >= 2) {
       return { viName: parts[0].trim(), enName: parts.slice(1).join(' - ').trim() };
     }
-    const match = withoutTotal.match(/^(.+?)\s+([A-Z][a-zA-Z\s&()]+)$/);
+
+    // Strategy 3: Regex for "Vietnamese Name" followed by "English Name"
+    const match = cleanName.match(/^(.+?)\s+([A-Z][a-zA-Z\s&()]+)$/);
     if (match) {
       return { viName: match[1].trim(), enName: match[2].trim() };
     }
-    return { viName: withoutTotal, enName: '' };
+
+    // 4. Return whole string as Vietnamese name
+    return { viName: cleanName, enName: '' };
   }
 
   private updateWidgetValue(id: string, value: string): void {
@@ -399,21 +423,21 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const occupiedBeds = totals.dangDieuTri + totals.choXuatVien + totals.daBook + totals.chuaSanSang + totals.choMuonGiuong;
-    let occupancyRateStr = '0,00%';
+    
+    let occupancyRateStr = '0,0%';
     if (totals.totalBeds > 0) {
       const rate = (occupiedBeds / totals.totalBeds) * 100;
-      occupancyRateStr = this.formatPercentage(rate);
+      occupancyRateStr = this.formatPercentage(rate); 
     }
 
     const updates = {
-      occupancyRate: occupancyRateStr,
+      occupancyRate: occupancyRateStr, 
       totalBeds: this.formatNumber(totals.totalBeds),
       giuongTrong: this.formatNumber(totals.giuongTrong),
       dangDieuTri: this.formatNumber(totals.dangDieuTri),
       choXuatVien: this.formatNumber(totals.choXuatVien),
       daBook: this.formatNumber(totals.daBook),
       chuaSanSang: this.formatNumber(totals.chuaSanSang),
-      // --- UPDATE NEW WIDGET ---
       choMuonGiuong: this.formatNumber(totals.choMuonGiuong),
     };
 
@@ -426,7 +450,8 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private resetWidgetsToZero(): void {
-    this.widgetData.forEach(w => w.value = w.id === 'occupancyRate' ? '0,00%' : '0');
+    // Default to '0,0%'
+    this.widgetData.forEach(w => w.value = w.id === 'occupancyRate' ? '0,0%' : '0');
     this.cd.markForCheck();
   }
 
@@ -438,8 +463,12 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     return new Intl.NumberFormat('vi-VN').format(value);
   }
 
+  /**
+   * UPDATED: Manually force 1 decimal place with a comma separator.
+   * This bypasses locale issues where 'vi-VN' might default incorrectly in some environments.
+   */
   private formatPercentage(value: number): string {
-    return new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value) + '%';
+    return value.toFixed(1).replace('.', ',') + '%';
   }
 
   private buildOption(data: DepartmentChartData[]): EChartsOption {
@@ -448,7 +477,7 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
     );
     const currentColors = this.bedStatusSeries.map((s) => s.color);
 
-    const series = this.bedStatusSeries.map((config) => ({
+    const series: any[] = this.bedStatusSeries.map((config) => ({
       name: config.name,
       type: 'bar' as const,
       stack: 'beds',
@@ -472,6 +501,31 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       data: data.map((item: DepartmentChartData) => item[config.dataKey]),
     }));
 
+    // Phantom series to show Total Sum
+    series.push({
+      name: 'Tổng (Total)',
+      type: 'bar',
+      barGap: '-100%', 
+      barWidth: '60%', 
+      data: data.map((item) => item.totalBeds),
+      itemStyle: { color: 'transparent' },
+      emphasis: { disabled: true },
+      label: {
+        show: true,
+        position: 'top',
+        color: this.cssVars.gray800,
+        fontFamily: GLOBAL_FONT_FAMILY,
+        fontWeight: 'bold',
+        fontSize: 10,
+        formatter: '{c}',
+        distance: 5
+      },
+      tooltip: { show: false },
+      z: 10, 
+      silent: true 
+    });
+
+
     return {
       useDirtyRect: true,
       backgroundColor: this.cssVars.white,
@@ -490,12 +544,13 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
         formatter: (params: any) => {
           if (!params || params.length === 0) return '';
           const dataIndex = params[0].dataIndex;
-          const item = data[dataIndex];
+          const item = data[dataIndex]; 
           let result = `<div style="font-weight: bold; margin-bottom: 5px; font-size: 12px; font-family: ${GLOBAL_FONT_FAMILY};">${item.viName}</div>`;
           if (item.enName) {
             result += `<div style="margin-bottom: 5px; color: #666; font-family: ${GLOBAL_FONT_FAMILY};">${item.enName}</div>`;
           }
           params.forEach((param: any) => {
+            if (param.seriesName === 'Tổng (Total)') return; 
             if (param.value > 0) {
               result += `<div style="margin: 3px 0; font-family: ${GLOBAL_FONT_FAMILY};">${param.marker} ${param.seriesName}: <strong>${param.value}</strong></div>`;
             }
@@ -519,50 +574,45 @@ export class BedUsageComponent implements OnInit, OnDestroy, AfterViewInit {
       grid: {
         left: '5%',
         right: '5%',
-        top: '12%',
-        // Increased bottom padding to accommodate rotated labels
-        // bottom: '110px', 
         containLabel: true,
       },
-      // --- DATA ZOOM: SLIDER + MOUSE WHEEL ---
-      // dataZoom: [
-      //   {
-      //     type: 'slider',
-      //     show: true,
-      //     xAxisIndex: [0],
-      //     startValue: 0, 
-      //     endValue: 8,   // Show first 9 items
-      //     bottom: '10px',
-      //     height: 20,
-      //     borderColor: 'transparent',
-      //     backgroundColor: '#f1f5f9',
-      //     fillerColor: 'rgba(0, 131, 155, 0.2)',
-      //     handleStyle: {
-      //       color: this.cssVars.tealBlue,
-      //       borderColor: this.cssVars.tealBlue
-      //     },
-      //     brushSelect: false 
-      //   },
-      //   {
-      //     type: 'inside', 
-      //     xAxisIndex: [0],
-      //     startValue: 0,
-      //     endValue: 8,
-      //     zoomOnMouseWheel: false,
-      //     moveOnMouseWheel: true,
-      //     moveOnMouseMove: true
-      //   }
-      // ],
+      dataZoom: [
+        {
+          type: 'slider',
+          show: true,
+          xAxisIndex: [0],
+          startValue: 0, 
+          endValue: 8, 
+          bottom: '10px',
+          height: 20,
+          borderColor: 'transparent',
+          backgroundColor: '#f1f5f9',
+          fillerColor: 'rgba(0, 131, 155, 0.2)',
+          handleStyle: {
+            color: this.cssVars.tealBlue,
+            borderColor: this.cssVars.tealBlue
+          },
+          brushSelect: false 
+        },
+        {
+          type: 'inside', 
+          xAxisIndex: [0],
+          startValue: 0,
+          endValue: 8,
+          zoomOnMouseWheel: false,
+          moveOnMouseWheel: true,
+          moveOnMouseMove: true
+        }
+      ],
       xAxis: {
         type: 'category',
         data: xAxisData,
         axisLabel: {
-          interval: 0, // Show ALL labels
-          rotate: 45,  // Rotate 45 degrees
-          fontSize: 10, // Increase font size for better readability
+          interval: 0, 
+          rotate: 45, 
+          fontSize: 10, 
           fontWeight: 'bold',
           overflow: 'truncate', 
-          // width: 120,
           hideOverlap: false, 
           margin: 10,
         },
