@@ -243,7 +243,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }).subscribe((result) => {
       if (result) {
         CustomRouteReuseStrategy.clearCache('equipment/catalog');
-        this.toastService.showSuccess('Cập nhật thiết bị thành công.');
+        // this.toastService.showSuccess('Cập nhật thiết bị thành công.');
         this.loadDevice(device.Id!.toString());
       }
     });

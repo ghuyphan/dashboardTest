@@ -29,6 +29,7 @@ const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 function getCssVar(name: string): string {
+  if (typeof document === 'undefined') return '';
   return getComputedStyle(document.documentElement)
     .getPropertyValue(name)
     .trim();
@@ -83,7 +84,6 @@ interface ChartFilter {
 })
 export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
-  privateVX = inject(ChangeDetectorRef); // Renamed to match usage (cd) or fix usage
   private cd = inject(ChangeDetectorRef);
   private toastService = inject(ToastService);
   private router = inject(Router);
@@ -153,8 +153,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
-    // We can try to fetch CSS vars, but fallback to defaults if running too early
-    setTimeout(() => this.initColors(), 0);
+    // Safely get CSS variables if in browser
+    if (typeof window !== 'undefined') {
+      setTimeout(() => this.initColors(), 0);
+    }
     
     this.isLoading = true;
     this.cd.markForCheck();
@@ -168,29 +170,26 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   private initColors(): void {
-    // Safely get CSS variables if in browser
-    if (typeof window !== 'undefined') {
-      const c = getCssVar;
-      // Update vars if available
-      const checkVar = (name: string, fallback: string) => {
-          const val = c(name);
-          return val ? val : fallback;
-      };
-      
-      this.cssVars.gray200 = checkVar('--gray-200', this.cssVars.gray200);
-      this.cssVars.gray700 = checkVar('--gray-700', this.cssVars.gray700);
-      this.cssVars.gray800 = checkVar('--gray-800', this.cssVars.gray800);
-      this.cssVars.white = checkVar('--white', this.cssVars.white);
-      this.cssVars.colorSuccess = checkVar('--color-success', this.cssVars.colorSuccess);
-      this.cssVars.colorWarning = checkVar('--color-warning', this.cssVars.colorWarning);
-      this.cssVars.colorDanger = checkVar('--color-danger', this.cssVars.colorDanger);
-      this.cssVars.colorInfo = checkVar('--color-info', this.cssVars.colorInfo);
-      this.cssVars.colorBlue = checkVar('--teal-blue', this.cssVars.colorBlue);
-      this.cssVars.colorInUse = checkVar('--peacock-blue-light', this.cssVars.colorInUse);
-      this.cssVars.colorBooked = checkVar('--chart-color-6', this.cssVars.colorBooked);
-      this.cssVars.colorLoaned = checkVar('--chart-color-9', this.cssVars.colorLoaned);
-      this.cssVars.colorDefault = checkVar('--gray-500', this.cssVars.colorDefault);
-    }
+    const c = getCssVar;
+    // Helper to update vars if available
+    const checkVar = (name: string, fallback: string) => {
+        const val = c(name);
+        return val ? val : fallback;
+    };
+    
+    this.cssVars.gray200 = checkVar('--gray-200', this.cssVars.gray200);
+    this.cssVars.gray700 = checkVar('--gray-700', this.cssVars.gray700);
+    this.cssVars.gray800 = checkVar('--gray-800', this.cssVars.gray800);
+    this.cssVars.white = checkVar('--white', this.cssVars.white);
+    this.cssVars.colorSuccess = checkVar('--color-success', this.cssVars.colorSuccess);
+    this.cssVars.colorWarning = checkVar('--color-warning', this.cssVars.colorWarning);
+    this.cssVars.colorDanger = checkVar('--color-danger', this.cssVars.colorDanger);
+    this.cssVars.colorInfo = checkVar('--color-info', this.cssVars.colorInfo);
+    this.cssVars.colorBlue = checkVar('--teal-blue', this.cssVars.colorBlue);
+    this.cssVars.colorInUse = checkVar('--peacock-blue-light', this.cssVars.colorInUse);
+    this.cssVars.colorBooked = checkVar('--chart-color-6', this.cssVars.colorBooked);
+    this.cssVars.colorLoaned = checkVar('--chart-color-9', this.cssVars.colorLoaned);
+    this.cssVars.colorDefault = checkVar('--gray-500', this.cssVars.colorDefault);
 
     this.statusColorMap.set('Sẵn sàng', this.cssVars.colorSuccess);
     this.statusColorMap.set('Đang sử dụng', this.cssVars.colorInUse);
@@ -274,6 +273,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           this.toastService.showError(
             'Không thể tải dữ liệu thống kê thiết bị.'
           );
+          // Set to null to trigger empty state
           this.statusChartOptions = null;
           this.categoryChartOptions = null;
           this.locationChartOptions = null;
@@ -285,96 +285,260 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private refilterAndRenderAll(): void {
     let filteredDevices = this.allDevices;
 
+    // 1. Apply Filters to create the "Filtered Set" (Used for Grids, Widgets, and Drill-down charts)
     if (this.currentFilter) {
       const { type, name } = this.currentFilter;
-      const filterName = name;
-
+      
       switch (type) {
         case 'status':
           filteredDevices = this.allDevices.filter(
-            (d) => (d.TrangThai_Ten || 'Không xác định') === filterName
+            (d) => (d.TrangThai_Ten || 'Không xác định') === name
           );
           break;
         case 'category':
           filteredDevices = this.allDevices.filter(
-            (d) => (d.TenLoaiThietBi || 'Không xác định') === filterName
+            (d) => (d.TenLoaiThietBi || 'Không xác định') === name
           );
           break;
         case 'location':
           filteredDevices = this.allDevices.filter((d) => {
+             // Special location logic
             const statusLower = (d.TrangThai_Ten || '').toLowerCase();
             const needsAttention =
               statusLower.includes('bảo trì') ||
               statusLower.includes('hỏng') ||
               statusLower.includes('sửa chữa');
             return (
-              needsAttention && (d.ViTri || 'Không xác định') === filterName
+              needsAttention && (d.ViTri || 'Không xác định') === name
             );
           });
           break;
       }
     }
 
-    const {
-      statusData,
-      categoryData,
-      locationData,
-      trendData,
-      attentionDevices,
-      expiringDevices,
-      widgetData,
-    } = this.aggregateAllData(filteredDevices, this.allDevices);
+    // 2. Calculate Widgets & Grids (Always use filtered set)
+    const filteredAggregates = this.aggregateGeneralData(filteredDevices);
+    this.updateWidgets(filteredAggregates.widgetData);
+    this.attentionDevices = filteredAggregates.attentionDevices;
+    this.expiringDevices = filteredAggregates.expiringDevices;
 
-    this.updateWidgetValue(
-      'totalDevices',
-      this.formatNumber(widgetData.totalDevices)
-    );
-    this.updateWidgetValue(
-      'attentionValue',
-      this.formatCurrency(widgetData.attentionValue)
-    );
-    this.updateWidgetValue('inUse', this.formatNumber(widgetData.inUse));
-    this.updateWidgetValue('ready', this.formatNumber(widgetData.ready));
-    this.updateWidgetValue(
-      'needsAttention',
-      this.formatNumber(widgetData.needsAttention)
-    );
-    this.updateWidgetValue(
-      'expiring',
-      this.formatNumber(widgetData.expiring)
-    );
+    // 3. Calculate Charts
+    // STRATEGY: If a chart represents the ACTIVE FILTER, use ALL data + Highlight (Fade out others).
+    // Otherwise, use FILTERED data (Drill-down behavior).
 
-    this.attentionDevices = attentionDevices;
-    this.expiringDevices = expiringDevices;
+    // --- Status Chart Data ---
+    let statusData: DeviceStatsData[];
+    let highlightStatus: string | undefined;
 
-    const totalStatus = statusData.reduce(
-      (sum, item) => sum + item.SoLuong,
-      0
-    );
+    if (this.currentFilter?.type === 'status') {
+       statusData = this.aggregateStatus(this.allDevices); // Show context (Full set)
+       highlightStatus = this.currentFilter.name; // Highlight selected
+    } else {
+       statusData = this.aggregateStatus(filteredDevices); // Show filtered subset
+    }
+
+    // --- Category Chart Data ---
+    let categoryData: AggregatedData[];
+    let highlightCategory: string | undefined;
+
+    if (this.currentFilter?.type === 'category') {
+        categoryData = this.aggregateCategory(this.allDevices);
+        highlightCategory = this.currentFilter.name;
+    } else {
+        categoryData = this.aggregateCategory(filteredDevices);
+    }
+
+    // --- Location Chart Data ---
+    let locationData: AggregatedData[];
+    let highlightLocation: string | undefined;
+
+    if (this.currentFilter?.type === 'location') {
+        locationData = this.aggregateLocation(this.allDevices);
+        highlightLocation = this.currentFilter.name;
+    } else {
+        locationData = this.aggregateLocation(filteredDevices);
+    }
+    
+    // Sort/Slice chart data
+    categoryData.sort((a, b) => b.value - a.value);
+    locationData.sort((a, b) => b.value - a.value).slice(0, 10); // Top 10 locations only
+
+    // --- Trend Chart (Always uses filtered context) ---
+    const trendData = filteredAggregates.trendData; 
+
+    // 4. Render Charts (Assign Options or NULL for Empty State)
+
+    // Status Chart
+    const totalStatus = statusData.reduce((sum, item) => sum + item.SoLuong, 0);
     this.statusChartSubtext = this.currentFilter
       ? `Tổng (đã lọc): ${this.formatNumber(totalStatus)}`
       : `Tổng số: ${this.formatNumber(totalStatus)} thiết bị`;
 
+    this.statusChartOptions = statusData.length > 0
+      ? this.buildDonutOption(statusData, highlightStatus)
+      : null; // Trigger empty state icon
+
+    // Category Chart
+    this.categoryChartOptions = categoryData.length > 0
+      ? this.buildBarOption(
+          categoryData.map((d) => d.name).reverse(),
+          categoryData.map((d) => d.value).reverse(),
+          this.cssVars.colorBlue,
+          highlightCategory
+        )
+      : null;
+
+    // Location Chart
     this.locationChartTitle = this.currentFilter
       ? `Vị trí (Đã lọc)`
       : `Vị trí có TB cần chú ý (Top 10)`;
 
-    this.statusChartOptions = this.buildDonutOption(statusData);
-    this.categoryChartOptions = this.buildBarOption(
-      categoryData.map((d) => d.name).reverse(),
-      categoryData.map((d) => d.value).reverse()
-    );
-    this.locationChartOptions = this.buildBarOption(
-      locationData.map((d) => d.name).reverse(),
-      locationData.map((d) => d.value).reverse(),
-      this.cssVars.colorBlue
-    );
-    this.trendChartOptions = this.buildLineOption(
-      trendData.map((d) => d.month),
-      trendData.map((d) => d.value)
-    );
+    this.locationChartOptions = locationData.length > 0
+      ? this.buildBarOption(
+          locationData.map((d) => d.name).reverse(),
+          locationData.map((d) => d.value).reverse(),
+          this.cssVars.colorBlue,
+          highlightLocation
+        )
+      : null;
+
+    // Trend Chart
+    this.trendChartOptions = trendData.length > 0
+      ? this.buildLineOption(
+          trendData.map((d) => d.month),
+          trendData.map((d) => d.value)
+        )
+      : null;
 
     this.cd.markForCheck();
+  }
+
+  // --- Aggregation Helpers ---
+
+  private aggregateStatus(devices: Device[]): DeviceStatsData[] {
+    const statusMap = new Map<string, number>();
+    devices.forEach(d => {
+       const name = d.TrangThai_Ten || 'Không xác định';
+       statusMap.set(name, (statusMap.get(name) || 0) + 1);
+    });
+    return Array.from(statusMap, ([TenTrangThai, SoLuong]) => ({ TenTrangThai, SoLuong }));
+  }
+
+  private aggregateCategory(devices: Device[]): AggregatedData[] {
+    const map = new Map<string, number>();
+    devices.forEach(d => {
+       const name = d.TenLoaiThietBi || 'Không xác định';
+       map.set(name, (map.get(name) || 0) + 1);
+    });
+    return Array.from(map, ([name, value]) => ({ name, value }));
+  }
+
+  private aggregateLocation(devices: Device[]): AggregatedData[] {
+    const map = new Map<string, number>();
+    devices.forEach(d => {
+      // Special logic: Location chart only shows devices that need attention
+      const statusLower = (d.TrangThai_Ten || '').toLowerCase();
+      if (
+        statusLower.includes('bảo trì') ||
+        statusLower.includes('hỏng') ||
+        statusLower.includes('sửa chữa')
+      ) {
+        const name = d.ViTri || 'Không xác định';
+        map.set(name, (map.get(name) || 0) + 1);
+      }
+    });
+    return Array.from(map, ([name, value]) => ({ name, value }));
+  }
+
+  private aggregateGeneralData(filteredDevices: Device[]) {
+    // Reuses logic to calculate widgets, attention list, expiring list, and trend
+    const trendMap = new Map<string, number>();
+    const attentionDevices: ActionableDevice[] = [];
+    const expiringDevices: ActionableDevice[] = [];
+
+    let attentionValue = 0;
+    let inUse = 0;
+    let ready = 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const oneYearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+    for (const device of filteredDevices) {
+      if (!device.Id) continue;
+      const statusName = device.TrangThai_Ten || 'Không xác định';
+      const statusLower = statusName.toLowerCase();
+
+      if (statusLower.includes('đang sử dụng')) inUse++;
+      else if (statusLower.includes('sẵn sàng')) ready++;
+
+      // Trend
+      if (device.NgayTao) {
+        try {
+          const createdDate = this.parseDate(device.NgayTao);
+          if (createdDate && createdDate >= oneYearAgo) {
+            const monthKey = `${createdDate.getFullYear()}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            trendMap.set(monthKey, (trendMap.get(monthKey) || 0) + 1);
+          }
+        } catch (e) {}
+      }
+
+      // Attention
+      const needsAttentionCheck = statusLower.includes('bảo trì') || statusLower.includes('hỏng') || statusLower.includes('sửa chữa');
+      if (needsAttentionCheck) {
+        attentionDevices.push({
+          Id: device.Id,
+          Ten: `${device.Ten} (${device.Ma})`,
+          Ma: device.Ma,
+          ViTri: device.ViTri || 'N/A',
+          TrangThai_Ten: device.TrangThai_Ten,
+        });
+        const price = this.parseValue(device.GiaMua);
+        if (!isNaN(price)) attentionValue += price;
+      }
+
+      // Expiring
+      if (device.NgayHetHanBH) {
+        try {
+          const expiryDate = this.parseDate(device.NgayHetHanBH);
+          const isExpiringCheck = expiryDate && expiryDate <= thirtyDaysFromNow && expiryDate >= today;
+          if (isExpiringCheck) {
+            expiringDevices.push({
+              Id: device.Id,
+              Ten: `${device.Ten} (${device.Ma})`,
+              Ma: device.Ma,
+              ViTri: device.ViTri || 'N/A',
+              NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    const trendData = Array.from(trendMap, ([month, value]) => ({ month, value })).sort((a, b) => a.month.localeCompare(b.month));
+
+    expiringDevices.sort((a, b) => this.parseDate(a.NgayHetHanBH!)!.getTime() - this.parseDate(b.NgayHetHanBH!)!.getTime());
+
+    const widgetData = {
+      totalDevices: filteredDevices.length,
+      attentionValue,
+      inUse,
+      ready,
+      needsAttention: attentionDevices.length,
+      expiring: expiringDevices.length,
+    };
+
+    return { trendData, attentionDevices, expiringDevices, widgetData };
+  }
+
+  private updateWidgets(data: any): void {
+    this.updateWidgetValue('totalDevices', this.formatNumber(data.totalDevices));
+    this.updateWidgetValue('attentionValue', this.formatCurrency(data.attentionValue));
+    this.updateWidgetValue('inUse', this.formatNumber(data.inUse));
+    this.updateWidgetValue('ready', this.formatNumber(data.ready));
+    this.updateWidgetValue('needsAttention', this.formatNumber(data.needsAttention));
+    this.updateWidgetValue('expiring', this.formatNumber(data.expiring));
   }
 
   public onChartClick(type: FilterType, params: any): void {
@@ -383,6 +547,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
     clearTimeout(this.filterTransitionTimer);
 
+    // Toggle logic: If clicking the same filter, clear it.
     if (
       this.currentFilter &&
       this.currentFilter.type === type &&
@@ -407,173 +572,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       this.visibleFilter = null;
       this.cd.markForCheck();
     }, 300);
-  }
-
-  private aggregateAllData(
-    filteredDevices: Device[],
-    allDevices: Device[]
-  ): {
-    statusData: DeviceStatsData[];
-    categoryData: AggregatedData[];
-    locationData: AggregatedData[];
-    trendData: TemporalData[];
-    attentionDevices: ActionableDevice[];
-    expiringDevices: ActionableDevice[];
-    widgetData: {
-      totalDevices: number;
-      attentionValue: number;
-      inUse: number;
-      ready: number;
-      needsAttention: number;
-      expiring: number;
-    };
-  } {
-    const statusMap = new Map<string, number>();
-    const categoryMap = new Map<string, number>();
-    const trendMap = new Map<string, number>();
-    const attentionDevices: ActionableDevice[] = [];
-    const expiringDevices: ActionableDevice[] = [];
-
-    let attentionValue = 0;
-    let inUse = 0;
-    let ready = 0;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(
-      today.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
-    const oneYearAgo = new Date(
-      today.getTime() - 365 * 24 * 60 * 60 * 1000
-    );
-
-    for (const device of filteredDevices) {
-      if (!device.Id) continue;
-      const statusName = device.TrangThai_Ten || 'Không xác định';
-      const categoryName = device.TenLoaiThietBi || 'Không xác định';
-      const statusLower = statusName.toLowerCase();
-
-      statusMap.set(statusName, (statusMap.get(statusName) || 0) + 1);
-      categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + 1);
-
-      if (statusLower.includes('đang sử dụng')) {
-        inUse++;
-      } else if (statusLower.includes('sẵn sàng')) {
-        ready++;
-      }
-
-      if (device.NgayTao) {
-        try {
-          const createdDate = this.parseDate(device.NgayTao);
-          if (createdDate && createdDate >= oneYearAgo) {
-            const monthKey = `${createdDate.getFullYear()}-${(
-              createdDate.getMonth() + 1
-            )
-              .toString()
-              .padStart(2, '0')}`;
-            trendMap.set(monthKey, (trendMap.get(monthKey) || 0) + 1);
-          }
-        } catch (e) { }
-      }
-
-      const needsAttentionCheck =
-        statusLower.includes('bảo trì') ||
-        statusLower.includes('hỏng') ||
-        statusLower.includes('sửa chữa');
-
-      if (needsAttentionCheck) {
-        attentionDevices.push({
-          Id: device.Id,
-          Ten: `${device.Ten} (${device.Ma})`,
-          Ma: device.Ma,
-          ViTri: device.ViTri || 'N/A',
-          TrangThai_Ten: device.TrangThai_Ten,
-        });
-
-        const price = this.parseValue(device.GiaMua);
-        if (!isNaN(price)) {
-          attentionValue += price;
-        }
-      }
-
-      if (device.NgayHetHanBH) {
-        try {
-          const expiryDate = this.parseDate(device.NgayHetHanBH);
-          const isExpiringCheck =
-            expiryDate &&
-            expiryDate <= thirtyDaysFromNow &&
-            expiryDate >= today;
-
-          if (isExpiringCheck) {
-            expiringDevices.push({
-              Id: device.Id,
-              Ten: `${device.Ten} (${device.Ma})`,
-              Ma: device.Ma,
-              ViTri: device.ViTri || 'N/A',
-              NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
-            });
-          }
-        } catch (e) { }
-      }
-    }
-
-    const locationMap = new Map<string, number>();
-    const devicesForLocationChart =
-      this.currentFilter?.type === 'location' ? filteredDevices : allDevices;
-
-    for (const device of devicesForLocationChart) {
-      const statusLower = (device.TrangThai_Ten || '').toLowerCase();
-      if (
-        statusLower.includes('bảo trì') ||
-        statusLower.includes('hỏng') ||
-        statusLower.includes('sửa chữa')
-      ) {
-        const locationName = device.ViTri || 'Không xác định';
-        locationMap.set(locationName, (locationMap.get(locationName) || 0) + 1);
-      }
-    }
-
-    const statusData = Array.from(statusMap, ([ten, sl]) => ({
-      TenTrangThai: ten,
-      SoLuong: sl,
-    }));
-    const categoryData = Array.from(categoryMap, ([name, value]) => ({
-      name,
-      value,
-    })).sort((a, b) => b.value - a.value);
-    const locationData = Array.from(locationMap, ([name, value]) => ({
-      name,
-      value,
-    }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
-    const trendData = Array.from(trendMap, ([month, value]) => ({
-      month,
-      value,
-    })).sort((a, b) => a.month.localeCompare(b.month));
-
-    expiringDevices.sort(
-      (a, b) =>
-        this.parseDate(a.NgayHetHanBH!)!.getTime() -
-        this.parseDate(b.NgayHetHanBH!)!.getTime()
-    );
-
-    return {
-      statusData,
-      categoryData,
-      locationData,
-      trendData,
-      attentionDevices,
-      expiringDevices,
-      widgetData: {
-        totalDevices: filteredDevices.length,
-        attentionValue: attentionValue,
-        inUse: inUse,
-        ready: ready,
-        needsAttention: attentionDevices.length,
-        expiring: expiringDevices.length,
-      },
-    };
   }
 
   private parseDate(dateString: string | null | undefined): Date | null {
@@ -646,16 +644,20 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
   // --- CHART BUILDER FUNCTIONS ---
 
-  private buildDonutOption(data: DeviceStatsData[]): EChartsCoreOption {
-    const chartData = data.map((item) => ({
-      name: item.TenTrangThai,
-      value: item.SoLuong,
-      itemStyle: {
-        color:
-          this.statusColorMap.get(item.TenTrangThai) ||
-          this.cssVars.colorDefault,
-      },
-    }));
+  private buildDonutOption(data: DeviceStatsData[], highlightName?: string): EChartsCoreOption {
+    const chartData = data.map((item) => {
+      // Fade out items that don't match the highlightName (if one exists)
+      const opacity = (highlightName && item.TenTrangThai !== highlightName) ? 0.2 : 1;
+      
+      return {
+        name: item.TenTrangThai,
+        value: item.SoLuong,
+        itemStyle: {
+          color: this.statusColorMap.get(item.TenTrangThai) || this.cssVars.colorDefault,
+          opacity: opacity
+        },
+      };
+    });
 
     const totalDevices = data.reduce((sum, item) => sum + item.SoLuong, 0);
 
@@ -751,8 +753,26 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private buildBarOption(
     yAxisData: string[],
     seriesData: number[],
-    color: string | ((params: any) => string) = this.cssVars.colorBlue
+    color: string = this.cssVars.colorBlue,
+    highlightName?: string
   ): EChartsCoreOption {
+    
+    // Map simple data to object with styles to apply fading
+    const formattedData = seriesData.map((val, index) => {
+      const name = yAxisData[index];
+      // Fade out items that don't match the highlightName
+      const opacity = (highlightName && name !== highlightName) ? 0.2 : 1;
+      
+      return {
+        value: val,
+        itemStyle: {
+          color: color,
+          opacity: opacity,
+          borderRadius: [0, 4, 4, 0],
+        }
+      };
+    });
+
     return {
       backgroundColor: this.cssVars.white,
       textStyle: {
@@ -784,11 +804,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
         {
           name: 'Số lượng',
           type: 'bar',
-          data: seriesData,
-          itemStyle: {
-            color: color,
-            borderRadius: [0, 4, 4, 0],
-          },
+          data: formattedData,
+          // Global itemStyle is fallback, specific itemStyle in data overrides it
           label: {
             show: true,
             position: 'right',

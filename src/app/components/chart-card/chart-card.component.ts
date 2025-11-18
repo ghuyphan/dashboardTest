@@ -14,8 +14,8 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+// Removed MatIconModule to use FontAwesome (<i> tags) for consistency
 
-// Import ECharts Types (Types only, no heavy code)
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
 
@@ -34,6 +34,10 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   @Input() icon: string = '';
   @Input() iconClass: string = '';
   @Input() isLoading: boolean = false;
+  
+  // --- Empty State Configuration ---
+  @Input() emptyText: string = 'Không có dữ liệu'; 
+  @Input() emptyIcon: string = 'fas fa-chart-bar'; // Default FontAwesome icon
 
   // --- Chart Inputs ---
   @Input() chartOptions: EChartsCoreOption | null = null;
@@ -54,12 +58,10 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   private ngZone = inject(NgZone);
 
   ngAfterViewInit(): void {
-    // Use IntersectionObserver to only initialize chart when it scrolls into view
     this.setupIntersectionObserver();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Update chart if options change and chart is already active
     if (changes['chartOptions'] && this.isChartLoaded && this.chartInstance) {
       this.updateChartOption();
     }
@@ -93,22 +95,14 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   private async initChartWorkflow(): Promise<void> {
-    // 1. Lazy Load ECharts Modules
     await this.lazyLoadECharts();
-    
-    // 2. Initialize Instance
     this.initChartInstance();
-    
-    // 3. Set Initial Options
     this.updateChartOption();
-    
-    // 4. Setup Auto-Resize
     this.setupResizeObserver();
   }
 
   private async lazyLoadECharts(): Promise<void> {
     try {
-      // Parallel import of required modules
       const [
         echartsCore,
         CanvasRenderer,
@@ -122,8 +116,6 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
       ]);
 
       this.echartsInstance = echartsCore;
-
-      // Register the components we use across the app
       this.echartsInstance.use([
         CanvasRenderer.CanvasRenderer,
         charts.BarChart,
@@ -152,7 +144,6 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
         { renderer: 'canvas', useDirtyRect: true }
       );
 
-      // Forward click events to parent
       this.chartInstance.on('click', (params) => {
         this.ngZone.run(() => this.chartClick.emit(params));
       });
@@ -160,15 +151,19 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   private updateChartOption(): void {
-    if (!this.chartInstance || !this.chartOptions) return;
+    if (!this.chartInstance) return;
 
-    this.ngZone.runOutsideAngular(() => {
-      this.chartInstance!.setOption(this.chartOptions!, {
-        notMerge: false, // Allow merging for smoother updates
-        lazyUpdate: true,
-        silent: false
+    if (this.chartOptions) {
+      this.ngZone.runOutsideAngular(() => {
+        this.chartInstance!.setOption(this.chartOptions!, {
+          notMerge: false, 
+          lazyUpdate: true,
+          silent: false
+        });
       });
-    });
+    } else {
+        this.chartInstance.clear();
+    }
   }
 
   private setupResizeObserver(): void {

@@ -185,12 +185,9 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Mã thiết bị',
               value: data.Ma || '',
-              validators: { required: true, maxLength: 20, pattern: '^[a-zA-Z0-9_-]+$' },
-              validationMessages: {
-                required: 'Mã là bắt buộc.',
-                maxLength: 'Mã không được vượt quá 20 ký tự.',
-                pattern: 'Mã chỉ chứa chữ, số, gạch ngang, gạch dưới.',
-              },
+              disabled: true, // Disable input
+              placeholder: isEditMode ? '' : 'Mã sẽ được tạo tự động',
+              validators: { }, // No client-side validation needed since it's disabled/auto
               layout_flexGrow: 1,
             },
             {
@@ -366,7 +363,7 @@ export class DeviceFormComponent implements OnInit {
     } else {
       const devicePayloadForPost = {
         Id: 0,
-        Ma: formData.Ma,
+        Ma: formData.Ma || null, // Send null if empty
         Ten: formData.Ten,
         SerialNumber: formData.SerialNumber || null,
         Model: formData.Model || null,

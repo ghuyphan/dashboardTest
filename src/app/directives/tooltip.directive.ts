@@ -14,6 +14,8 @@ import {
 export class TooltipDirective implements OnDestroy {
   @Input('appTooltip') tooltipText: string = '';
   private tooltipElement: HTMLDivElement | null = null;
+  private scrollListener: (() => void) | null = null;
+  private resizeListener: (() => void) | null = null;
 
   constructor(private el: ElementRef, private renderer: Renderer2) {}
 
@@ -27,6 +29,16 @@ export class TooltipDirective implements OnDestroy {
 
   @HostListener('mouseleave')
   onMouseLeave() {
+    this.destroyTooltip();
+  }
+
+  /**
+   * Fix 1: Close tooltip immediately on click.
+   * This prevents it from getting stuck if the click triggers
+   * navigation or a modal (which might stop mouseleave from firing).
+   */
+  @HostListener('click')
+  onClick() {
     this.destroyTooltip();
   }
 
@@ -47,8 +59,20 @@ export class TooltipDirective implements OnDestroy {
     this.renderer.appendChild(document.body, this.tooltipElement);
 
     // 3. Position it
+    this.updatePosition();
+    this.renderer.addClass(this.tooltipElement, 'show');
+
+    // Fix 2: Listen to global scroll and resize events to hide tooltip
+    // capturing these events ensures we clear the tooltip if the user scrolls away
+    this.scrollListener = this.renderer.listen('window', 'scroll', () => this.destroyTooltip());
+    this.resizeListener = this.renderer.listen('window', 'resize', () => this.destroyTooltip());
+  }
+
+  private updatePosition() {
+    if (!this.tooltipElement) return;
+
     const hostPos = this.el.nativeElement.getBoundingClientRect();
-    const tooltipPos = this.tooltipElement!.getBoundingClientRect();
+    const tooltipPos = this.tooltipElement.getBoundingClientRect();
 
     // Position to the right of the element
     const top = hostPos.top + (hostPos.height - tooltipPos.height) / 2;
@@ -56,7 +80,6 @@ export class TooltipDirective implements OnDestroy {
 
     this.renderer.setStyle(this.tooltipElement, 'top', `${top}px`);
     this.renderer.setStyle(this.tooltipElement, 'left', `${left}px`);
-    this.renderer.addClass(this.tooltipElement, 'show');
   }
 
   private destroyTooltip() {
@@ -64,6 +87,16 @@ export class TooltipDirective implements OnDestroy {
       this.renderer.removeClass(this.tooltipElement, 'show');
       this.renderer.removeChild(document.body, this.tooltipElement);
       this.tooltipElement = null;
+    }
+
+    // Clean up global listeners
+    if (this.scrollListener) {
+      this.scrollListener();
+      this.scrollListener = null;
+    }
+    if (this.resizeListener) {
+      this.resizeListener();
+      this.resizeListener = null;
     }
   }
 }

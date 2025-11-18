@@ -1,46 +1,33 @@
-/*
-  MODIFICATION: Apply flex layout to the host
-  to make it fill the available space (e.g., in the router outlet)
-*/
 :host {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Prevent overflow */
 }
 
-/*
-  MODIFICATION: Make .page-content the main flex container
-*/
 .page-content {
-  height: 100%; // <-- CRITICAL
-  display: flex; // <-- CRITICAL
-  flex-direction: column; // <-- CRITICAL
-  flex: 1; // <-- NEW: Make it grow to fill :host
-  min-height: 0; // <-- NEW: Prevent overflow
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   padding: var(--spacing-xs);
 }
 
-/*
-  MODIFICATION: Make the .grid-container fill the page-content
-  and hold the table or loading indicator.
-  --- ADDED CARD STYLES FOR CONSISTENCY ---
-*/
 .grid-container {
   display: flex;
   flex-direction: column;
-  flex: 1; // <-- NEW: Make it grow
-  min-height: 0; // <-- NEW: Prevent overflow
+  flex: 1;
+  min-height: 0;
   
-  /* --- START OF MODIFICATION --- */
-  /* Add card styles from device-dashboard */
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  overflow: hidden; /* This is critical to clip the table's corners */
-  /* --- END OF MODIFICATION --- */
+  overflow: hidden;
+  
+  /* PERFORMANCE FIX: Helps browser optimize rendering */
+  contain: content; 
 }
 
 p {
@@ -48,22 +35,16 @@ p {
   color: var(--gray-600);
 }
 
-// --- CRITICAL STYLES ---
-// This tells the table component to fill the .grid-container
 :host ::ng-deep app-reusable-table {
-  flex: 1; // <-- CRITICAL: Makes table take all available space
-  min-height: 0; // <-- CRITICAL: Prevents flexbox overflow
+  flex: 1;
+  min-height: 0;
   display: flex;
-  /* Required for child height inheritance */
   
-  /* --- NEW: Remove the table's own radius --- */
-  /* This makes it fit flush inside our new card */
   .reusable-table-wrapper {
     border-radius: 0 !important;
   }
 }
 
-// Make the loading message centered and fill the space
 .loading-indicator {
   flex: 1;
   display: flex;

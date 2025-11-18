@@ -23,8 +23,12 @@
       [class.hidden]="isLoading || !chartOptions">
     </div>
     
-    <div *ngIf="!isLoading && !chartOptions" class="empty-state">
-        No data available
+    <div *ngIf="!isLoading && !chartOptions" class="no-data-container">
+      <div class="no-data-icon-wrapper">
+        <i [class]="emptyIcon"></i>
+      </div>
+      <span class="no-data-text">{{ emptyText }}</span>
     </div>
+
   </div>
 </div>

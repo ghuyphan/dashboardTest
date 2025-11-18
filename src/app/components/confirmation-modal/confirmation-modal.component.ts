@@ -10,8 +10,8 @@ import { ModalRef } from '../../models/modal-ref.model';
   styleUrls: ['./confirmation-modal.component.scss'],
 })
 export class ConfirmationModalComponent {
-  @Input() title: string = 'Confirm';
-  @Input() message: string = 'Are you sure?';
+  @Input() title: string = ''; 
+  @Input() message: string = '';
   @Input() confirmText: string = 'OK';
   @Input() cancelText: string = 'Cancel';
   

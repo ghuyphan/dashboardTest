@@ -55,8 +55,9 @@ export class DynamicFormComponent implements OnInit, OnChanges {
         
         const controlValidators = this.buildValidators(control.validators);
         
+        // Update: Initialize FormControl with value AND disabled state
         formGroup[control.controlName] = new FormControl(
-          controlValue,
+          { value: controlValue, disabled: control.disabled || false },
           controlValidators
         );
       }
@@ -99,7 +100,8 @@ export class DynamicFormComponent implements OnInit, OnChanges {
       this.dynamicForm.markAllAsTouched();
       return;
     }
-    this.formSubmitted.emit(this.dynamicForm.value);
+    // Update: Use getRawValue() to include values from disabled fields
+    this.formSubmitted.emit(this.dynamicForm.getRawValue());
   }
 
   public onCancel(): void {
@@ -119,15 +121,6 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
     for (const errorKey in control.errors) {
       if (controlConfig.validationMessages[errorKey]) {
-        if (errorKey === 'maxLength') {
-          return controlConfig.validationMessages[errorKey];
-        }
-        if (errorKey === 'max') {
-          return controlConfig.validationMessages[errorKey];
-        }
-        if (errorKey === 'pattern') {
-          return controlConfig.validationMessages[errorKey];
-        }
         return controlConfig.validationMessages[errorKey];
       }
     }
