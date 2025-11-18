@@ -1,0 +1,118 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%; /* Ensure it fills parent */
+}
+
+.chart-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-md);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header {
+  flex-shrink: 0;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+
+  .title-text {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    
+    i {
+      font-size: 1rem;
+      &.icon-info { color: var(--color-info); }
+      &.icon-warning { color: var(--color-warning); }
+      &.icon-danger { color: var(--color-danger); }
+      &.icon-success { color: var(--color-success); }
+    }
+  }
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--gray-700);
+  margin-left: auto;
+}
+
+.header-controls {
+  margin-left: auto; 
+  display: flex;
+  align-items: center;
+}
+
+.card-body {
+  flex-grow: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px; /* Default minimum height */
+}
+
+.chart-container {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  
+  &.hidden {
+    visibility: hidden;
+  }
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+/* Loading State */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+
+  .spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--teal-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

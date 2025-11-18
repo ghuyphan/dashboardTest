@@ -1,11 +1,15 @@
-/* --- START OF FIX --- */
+/*
+  Refactored styles.
+  Styles specific to .chart-card, .card-title, etc. have been removed
+  as they are now handled by ChartCardComponent.
+*/
+
 :host {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
-/* --- END OF FIX --- */
 
 .page-container {
   display: flex;
@@ -22,11 +26,8 @@
   padding: var(--spacing-xs);
   height: 0;
   min-height: 0;
-  /* --- ADDED: Allow content itself to scroll if needed --- */
   overflow-y: auto;
-  gap: var(--spacing-lg); /* Add gap between widgets and chart card */
-
-  /* --- ADDED: Hide scrollbar but keep scrolling --- */
+  gap: var(--spacing-lg);
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
@@ -34,11 +35,10 @@
 }
 
 .widget-section {
-  padding-bottom: 0; /* Removed bottom padding, gap handles it */
+  padding-bottom: 0;
   flex-shrink: 0;
 }
 
-// Skeleton loading states
 .widget-skeleton {
   background: var(--gray-100);
   border-radius: var(--border-radius-md);
@@ -58,65 +58,9 @@
   }
 }
 
-/* --- START OF MODIFICATION --- */
-/* Copied from device-dashboard.component.scss for consistency */
-
-.chart-card {
-  background-color: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
-  box-shadow: var(--box-shadow-md);
-  
-  /* Make card flexible */
-  flex: 1; /* This card will grow to fill the remaining space */
-  min-height: 400px; /* Ensure it has a good minimum height */
-  
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 768px) {
-    min-height: 350px;
-  }
-
-  @media (max-width: 480px) {
-    min-height: 300px;
-  }
-}
-
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-800);
-  margin: 0 0 var(--spacing-sm) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--gray-200);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-sm);
-  flex-shrink: 0;
-
-  > span:first-child {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-  }
-
-  .card-subtitle {
-    font-size: 0.875rem; /* 14px */
-    font-weight: 400;
-    color: var(--gray-700);
-  }
-
-  i {
-    font-size: 1rem;
-    &.icon-info {
-      color: var(--color-info);
-    }
-  }
-}
-
-/* This is the new refresh button style, using the .card-subtitle class */
+/* Styles for the Refresh Button
+  (Projected content, so styles must remain in the parent component)
+*/
 .refresh-control {
   display: flex;
   align-items: center;
@@ -129,7 +73,7 @@
   flex-shrink: 0;
   border: 1px solid transparent;
   outline: none;
-  font-size: 0.75rem; /* Make text smaller */
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--gray-600);
 
@@ -154,7 +98,6 @@
     cursor: not-allowed;
     .refresh-icon {
       color: var(--peacock-blue);
-      /* This class is already handled by [ngClass] in the HTML */
     }
   }
 
@@ -167,33 +110,6 @@
   }
 }
 
-
-.chart-container-inner {
-  width: 100%;
-  height: 100%; /* Height is now controlled by flex-grow */
-  flex-grow: 1;
-  min-height: 300px; /* Set a min-height for the chart area */
-  
-  /* Removed background-color, border-radius, padding */
-  /* These are now handled by the parent .chart-card */
-  
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  
-  /* This is the optimization from device-dashboard */
-  contain: layout style paint; 
-
-  &.hidden {
-    visibility: hidden;
-    height: 0;
-    min-height: 0;
-    padding: 0;
-  }
-}
-/* --- END OF MODIFICATION --- */
-
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .page-content {
@@ -204,8 +120,6 @@
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: var(--spacing-xs);
   }
-  
-  /* Card title is already responsive */
 }
 
 @media (max-width: 480px) {
@@ -219,7 +133,6 @@
   }
 }
 
-// Simplified animation for skeleton
 @keyframes skeleton-pulse {
   0% {
     opacity: 0.6;

@@ -1,5 +1,6 @@
 <div class="page-container">
   <div class="page-content">
+    
     <div class="widget-section" *ngIf="isLoading && widgetData.length === 0; else widgetsLoaded">
       <div class="widget-grid">
         <div class="widget-skeleton" *ngFor="let i of [1,2,3,4,5,6,7]"></div>
@@ -21,39 +22,33 @@
       </div>
     </ng-template>
 
-    <div class="chart-card">
-      <h3 class="card-title">
-        <span>
-          <i class="fas fa-bed-pulse icon-info"></i>
-          Tình Hình Sử Dụng Giường Bệnh
-        </span>
-        
-        <span 
-          class="card-subtitle refresh-control"
-          (click)="loadData()" 
-          [class.loading]="isLoading"
-          [attr.aria-label]="isLoading ? 'Loading data' : 'Refresh data'"
-          role="button"
-          tabindex="0"
-          (keydown.enter)="loadData()"
-          (keydown.space)="loadData()">
-          
-          <div class="refresh-icon">
-            <i class="fas" [ngClass]="{'fa-sync': !isLoading, 'fa-spinner fa-spin': isLoading}"></i>
-          </div>
-          <span class="refresh-text" *ngIf="currentDateTime">
-            Cập nhập: {{ currentDateTime }}
-          </span>
-        </span>
-      </h3>
+    <app-chart-card 
+      title="Tình Hình Sử Dụng Giường Bệnh" 
+      icon="fas fa-bed-pulse" 
+      iconClass="icon-info"
+      [isLoading]="isLoading"
+      [chartOptions]="chartOptions">
       
       <div 
-        #chartContainer 
-        class="chart-container-inner"
-        [attr.aria-busy]="isLoading"
-        role="img"
-        [attr.aria-label]="isLoading ? 'Loading chart' : 'Bed usage chart'">
+        header-actions
+        class="refresh-control"
+        (click)="loadData()" 
+        [class.loading]="isLoading"
+        [attr.aria-label]="isLoading ? 'Loading data' : 'Refresh data'"
+        role="button"
+        tabindex="0"
+        (keydown.enter)="loadData()"
+        (keydown.space)="loadData()">
+        
+        <div class="refresh-icon">
+          <i class="fas" [ngClass]="{'fa-sync': !isLoading, 'fa-spinner fa-spin': isLoading}"></i>
+        </div>
+        <span class="refresh-text" *ngIf="currentDateTime">
+          Cập nhập: {{ currentDateTime }}
+        </span>
       </div>
-      </div>
-    </div>
+
+    </app-chart-card>
+
+  </div>
 </div>
