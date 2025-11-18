@@ -35,6 +35,7 @@
   left: 0;
   bottom: 40px;
   right: 0;
+  // Use the global overlay logic mostly, but positioned specific to table body
   background: rgba(255, 255, 255, 0.92);
   z-index: 50;
   display: flex;
@@ -42,20 +43,6 @@
   justify-content: center;
   backdrop-filter: blur(2px);
   transition: opacity 0.2s var(--transition-smooth);
-
-  .loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-  }
-
-  .loading-text {
-    color: var(--gray-600);
-    font-size: 0.875rem;
-    font-weight: var(--font-weight-medium);
-  }
 }
 
 .table-container {

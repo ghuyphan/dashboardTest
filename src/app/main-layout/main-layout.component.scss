@@ -113,18 +113,6 @@
   }
 }
 
-.initial-loading-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 40px;
-  font-size: 1.2rem;
-  color: var(--gray-500);
-}
-
-
 @media (max-width: 992px) {
   .dashboard-content {
     padding: var(--spacing-sm) var(--spacing-md);

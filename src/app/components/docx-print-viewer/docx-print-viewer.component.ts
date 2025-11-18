@@ -38,9 +38,11 @@ import { saveAs } from 'file-saver';
       </div>
 
       <div class="viewer-body">
-        <div *ngIf="isLoading" class="loading-overlay">
-          <div class="spinner"></div>
-          <p>Đang tải tài liệu...</p>
+        <div *ngIf="isLoading" class="app-loading-overlay">
+          <div class="app-loading-container">
+             <div class="app-loading-spinner"></div>
+             <p>Đang tải tài liệu...</p>
+          </div>
         </div>
         
         <div *ngIf="!isLoading && hasError" class="error-message">
@@ -120,10 +122,6 @@ import { saveAs } from 'file-saver';
     ::ng-deep section.docx { width: 210mm !important; min-height: 297mm !important; background: white !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; margin: 0 auto 1.5rem auto !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
     ::ng-deep section.docx table td, ::ng-deep section.docx table th { border: 1px solid black !important; }
 
-    /* Loading/Error */
-    .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #00839B; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .error-message { display: flex; flex-direction: column; align-items: center; padding: 2rem; color: #ef4444; gap: 1rem; }
     .error-message i { font-size: 2.5rem; }
 
@@ -142,7 +140,7 @@ import { saveAs } from 'file-saver';
         padding: 0 !important; 
       }
 
-      .viewer-toolbar, .loading-overlay, .error-message { 
+      .viewer-toolbar, .app-loading-overlay, .error-message { 
         display: none !important; 
       }
 

@@ -1,9 +1,9 @@
 <div class="reusable-table-wrapper">
   
   <div class="loading-shade" *ngIf="isLoadingWithDelay">
-    <div class="loading-content">
-      <mat-spinner diameter="32"></mat-spinner>
-      <div *ngIf="showLoadingText" class="loading-text">Đang tải dữ liệu...</div>
+    <div class="app-loading-container">
+      <div class="app-loading-spinner"></div>
+      <p *ngIf="showLoadingText">Đang tải dữ liệu...</p>
     </div>
   </div>
 
@@ -144,4 +144,4 @@
     class="compact-paginator"
   >
   </mat-paginator>
-  </div>
+</div>
