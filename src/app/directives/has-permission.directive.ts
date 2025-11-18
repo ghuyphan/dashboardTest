@@ -10,7 +10,7 @@ import { Subscription } from 'rxjs'; // Import Subscription
  */
 @Directive({
   selector: '[appHasPermission]',
-  standalone: true // Make it a standalone directive
+  standalone: true 
 })
 export class HasPermissionDirective implements OnDestroy { // Implement OnDestroy
   private hasView = false;
