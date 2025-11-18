@@ -113,15 +113,3 @@
     gap: var(--spacing-xs);
   }
 }
-
-@keyframes skeleton-pulse {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
-}

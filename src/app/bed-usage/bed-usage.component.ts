@@ -75,6 +75,7 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   private ngZone = inject(NgZone);
 
   public isLoading: boolean = false;
+  public isRefreshing: boolean = false; // New state for background/manual refresh
   public currentDateTime: string = '';
   
   // Holds the calculated options to pass to the child component
@@ -93,7 +94,7 @@ export class BedUsageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initColors();
-    this.loadData();
+    this.loadData(true); // Initial load: Show Skeleton
     this.startAutoRefresh();
   }
 
@@ -108,7 +109,8 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   private startAutoRefresh(): void {
     this.ngZone.runOutsideAngular(() => {
       this.dataRefreshInterval = setInterval(() => {
-        this.ngZone.run(() => this.loadData());
+        // Interval load: No Skeleton
+        this.ngZone.run(() => this.loadData(false));
       }, 60000); // 1 min
     });
   }
@@ -154,9 +156,15 @@ export class BedUsageComponent implements OnInit, OnDestroy {
     ];
   }
 
-  public loadData(): void {
-    if (this.isLoading) return;
-    this.isLoading = true;
+  public loadData(showSkeleton: boolean = false): void {
+    // Prevent duplicate requests
+    if (this.isLoading || this.isRefreshing) return;
+
+    if (showSkeleton) {
+      this.isLoading = true;
+    }
+    this.isRefreshing = true; // Mark as refreshing regardless of skeleton state
+    
     this.cd.markForCheck();
 
     const apiUrl = environment.bedUsageUrl;
@@ -164,6 +172,8 @@ export class BedUsageComponent implements OnInit, OnDestroy {
     this.http.get<ApiResponseData[]>(apiUrl).pipe(
       finalize(() => {
         this.isLoading = false;
+        this.isRefreshing = false;
+        
         this.currentDateTime = new Date().toLocaleString('vi-VN', {
           day: '2-digit', month: '2-digit', year: 'numeric',
           hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false

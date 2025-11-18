@@ -191,12 +191,22 @@ export class ReusableTableComponent implements OnInit, OnChanges, AfterViewInit 
 
   private handleLoadingState() {
     if (this.isLoading) {
+      // When starting to load, we might want a small delay (debounce) 
+      // to avoid flickering if the load is super fast (e.g. < 200ms).
       this.loadingTimer = setTimeout(() => {
         this.isLoadingWithDelay = true;
       }, 200);
     } else {
       clearTimeout(this.loadingTimer);
-      this.isLoadingWithDelay = false;
+      
+      // --- FIX START: Smooth transition ---
+      // Delay hiding the spinner by a small amount (e.g., 100-150ms).
+      // This ensures the table data (which was just assigned in ngOnChanges)
+      // has enough time to render into the DOM behind the overlay.
+      setTimeout(() => {
+         this.isLoadingWithDelay = false;
+      }, 150); 
+      // --- FIX END ---
     }
   }
 
