@@ -1,38 +1,52 @@
 <div class="chart-card">
-  <div class="card-header">
-    <h3 class="card-title">
-      <span class="title-text">
-        @if (icon()) {
-          <i [class]="icon()" [ngClass]="iconClass()"></i>
+  <!-- Header: Only rendered if title, subtitle, or actions exist -->
+  @if (title() || subtitle() || icon()) {
+    <div class="card-header">
+      <!-- Wrapper handles the One-Line Title + Subtitle layout -->
+      <div class="card-title-wrapper">
+        <h3 class="card-title">
+          @if (icon()) {
+            <!-- [ngClass] allows your old classes like 'icon-info' to work -->
+            <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
+          }
+          {{ title() }}
+        </h3>
+        
+        @if (subtitle()) {
+          <span class="card-subtitle">{{ subtitle() }}</span>
         }
-        {{ title() }}
-      </span>
+      </div>
       
-      @if (subtitle()) {
-        <span class="card-subtitle">{{ subtitle() }}</span>
-      }
-      
+      <!-- Content Projection for Buttons/Dropdowns -->
       <div class="header-controls">
         <ng-content select="[header-actions]"></ng-content>
       </div>
-    </h3>
-  </div>
+    </div>
+  }
 
   <div class="card-body">
+    <!-- Loading Skeleton (Uses absolute positioning from SCSS) -->
     @if (isLoading()) {
-      <div class="skeleton-rect"></div>
+      <div class="skeleton-overlay" aria-label="Loading chart">
+        <div class="skeleton-rect"></div>
+      </div>
     }
 
+    <!-- Chart Container -->
+    <!-- class.invisible matches the SCSS (visibility: hidden) for better ECharts init -->
     <div 
       #chartContainer 
       class="chart-container"
-      [class.hidden]="!showChart()">
+      [class.invisible]="!showChart()"
+      role="img" 
+      [attr.aria-label]="title() ? 'Chart showing ' + title() : 'Data visualization'">
     </div>
     
+    <!-- Empty State -->
     @if (showEmptyState()) {
       <div class="no-data-container">
         <div class="no-data-icon-wrapper">
-          <i [class]="emptyIcon()"></i>
+          <i [class]="emptyIcon()" aria-hidden="true"></i>
         </div>
         <span class="no-data-text">{{ emptyText() }}</span>
       </div>

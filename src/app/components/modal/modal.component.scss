@@ -7,7 +7,7 @@
   flex-direction: column;
   box-sizing: border-box;
   margin: auto;
-  background: var(--white);
+  background:  rgba(255, 255, 255, 0.95);
   
   /* Use global variable for consistency */
   border-radius: var(--border-radius-lg);
@@ -63,7 +63,7 @@
   
   border-bottom: 1px solid var(--gray-200);
   flex-shrink: 0;
-  background-color: var(--white);
+  background:  rgba(255, 255, 255, 0.95);
 }
 
 .modal-title {
@@ -113,6 +113,7 @@
   /* Modern Scrollbar */
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) transparent;
+   scrollbar-gutter: stable; 
 
   &::-webkit-scrollbar {
     width: 6px;

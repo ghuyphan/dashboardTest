@@ -1,14 +1,29 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router'; 
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon'; 
+
 import { User } from '../../models/user.model';
 import { SearchService } from '../../services/search.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatMenuModule,
+    MatButtonModule,
+    MatDividerModule,
+    MatIconModule
+  ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
+  // Important: Allows us to style the floating menu panel
+  encapsulation: ViewEncapsulation.None 
 })
 export class HeaderComponent {
   @Input() currentUser: User | null = null;
@@ -22,24 +37,13 @@ export class HeaderComponent {
   @Output() logoutClicked = new EventEmitter<void>();
   @Output() backClicked = new EventEmitter<void>();
 
-  isUserMenuOpen: boolean = false;
-
-  @ViewChild('userMenuContainer') userMenuContainer!: ElementRef;
-  @ViewChild('mobileToggle') mobileToggle!: ElementRef;
-
-  // Inject the service
   public searchService = inject(SearchService);
 
   constructor() {}
 
   // Getter to read the signal value directly in the template
-  // In HTML: [value]="searchTerm"
   get searchTerm(): string {
     return this.searchService.searchTerm();
-  }
-
-  toggleUserMenu(): void {
-    this.isUserMenuOpen = !this.isUserMenuOpen;
   }
 
   onMobileToggleClick(): void {
@@ -52,30 +56,18 @@ export class HeaderComponent {
 
   onLogoutClick(): void {
     this.logoutClicked.emit();
-    this.isUserMenuOpen = false;
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    if (!this.userMenuContainer) return;
-    const isClickOutsideUserMenu = !this.userMenuContainer.nativeElement.contains(event.target);
-    const isClickOutsideMobileToggle = !this.mobileToggle || !this.mobileToggle.nativeElement.contains(event.target);
-    if (isClickOutsideUserMenu && isClickOutsideMobileToggle) {
-      this.isUserMenuOpen = false;
-    }
-  }
-
-  onSettingsClick(): void {
-    this.isUserMenuOpen = false;
+  onSettingsClick(): void { 
+    // Example action for MatMenu click
   }
 
   onSupportClick(): void {
-    this.isUserMenuOpen = false;
+    // Example action for MatMenu click
   }
 
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;
-    // Set the signal value
     this.searchService.setSearchTerm(target.value);
   }
 
