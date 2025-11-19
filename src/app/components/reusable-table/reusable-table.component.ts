@@ -120,8 +120,7 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReusableTableComponent<T> // <--- Generic T added here
-  implements OnInit, OnChanges, AfterViewInit, OnDestroy
-{
+  implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   // Inputs - Types updated to T
   @Input() data: T[] = [];
   @Input() columns: GridColumn[] = [];
@@ -486,20 +485,18 @@ export class ReusableTableComponent<T> // <--- Generic T added here
       return 'status-default';
     }
 
-    const statusMap: Record<string, string[]> = {
-      'status-in-use': ['đang sử dụng'],
-      'status-ready': ['sẵn sàng'],
-      'status-repair': ['bảo trì', 'sửa chữa'],
-      'status-broken': ['hỏng', 'thanh lý'],
-    };
+    const lower = status.toLowerCase();
 
-    const lowerStatus = status.toLowerCase();
+    if (lower.includes('đang sử dụng')) return 'status-in-use';
+    if (lower.includes('sẵn sàng')) return 'status-ready';
 
-    for (const [className, keywords] of Object.entries(statusMap)) {
-      if (keywords.some((keyword) => lowerStatus.includes(keyword))) {
-        return className;
-      }
-    }
+    // [NEW] Prioritize specific 'Đang bảo trì' / 'Đang sửa chữa' as 'status-maintenance' (Gray)
+    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa')) return 'status-maintenance';
+
+    // [EXISTING] Generic 'bảo trì' or 'sửa chữa' as 'status-repair' (Warning)
+    if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
+
+    if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
 
     return 'status-default';
   }

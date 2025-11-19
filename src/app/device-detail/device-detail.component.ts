@@ -50,7 +50,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private wordExportService: WordExportService,
     @Inject(DOCUMENT) private document: Document
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.routeSub = this.route.params.subscribe(params => {
@@ -87,7 +87,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       next: (device) => {
         this.device = device;
         this.qrCodeValue = window.location.href;
-        
+
         this.setupFooterActions(this.device);
         this.checkWarrantyStatus(this.device);
       },
@@ -98,7 +98,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   // Removed private parseDate(...)
 
   private checkWarrantyStatus(device: Device): void {
@@ -113,7 +113,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       // Use DateUtils.parse instead of local method
       const expiryDate = DateUtils.parse(device.NgayHetHanBH);
       if (!expiryDate) return;
-      
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -141,8 +141,10 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   public getStatusClass(status: string | null | undefined): string {
     if (!status) return 'status-default';
     const lower = status.toLowerCase();
+
     if (lower.includes('đang sử dụng')) return 'status-in-use';
     if (lower.includes('sẵn sàng')) return 'status-ready';
+    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa')) return 'status-maintenance';
     if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
     if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
     return 'status-default';
@@ -157,7 +159,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     if (lower.includes('monitor')) return 'fas fa-desktop';
     return 'fas fa-hdd';
   }
-  
+
   // --- Other methods (onPrintWordReport, onPrintQrCode, setupFooterActions, goBack, onEdit, onDelete) ---
   // Paste the rest of the original file content here if copying, or just ensure they are preserved.
   // For brevity, I assumed the existing methods are kept as is.
@@ -169,9 +171,9 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     const reportData = {
       ...device,
       PrintDate: new Date().toLocaleDateString('vi-VN'),
-      GiaMuaFormatted: new Intl.NumberFormat('vi-VN', { 
-        style: 'currency', 
-        currency: 'VND' 
+      GiaMuaFormatted: new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
       }).format(device.GiaMua || 0),
       Model: device.Model || '',
       SerialNumber: device.SerialNumber || '',
@@ -189,7 +191,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
             size: 'lg',
             hideHeader: true,
             disableBackdropClose: true,
-            context: { 
+            context: {
               docBlob: blob,
               fileName: `Bien_Ban_${device.Ma}.docx`
             }
@@ -216,7 +218,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         icon: 'fas fa-pencil-alt',
         action: () => this.onEdit(device),
         permission: 'QLThietBi.DMThietBi.RMODIFY',
-        className: 'btn-secondary', 
+        className: 'btn-secondary',
       },
       {
         label: 'Xóa',
@@ -233,7 +235,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         className: 'btn-ghost',
       },
       {
-        label: 'In Biên Bản', 
+        label: 'In Biên Bản',
         icon: 'fas fa-file-word',
         action: () => this.onPrintWordReport(device),
         permission: 'QLThietBi.DMThietBi.RPRINT',

@@ -593,6 +593,11 @@ body > ul.submenu.open {
   background-color: var(--color-success);
 }
 
+.status-maintenance {
+  color: #FFFFFF;
+  background-color: var(--dark-gray);
+}
+
 .status-repair {
   color: #FFFFFF;
   background-color: var(--color-warning);

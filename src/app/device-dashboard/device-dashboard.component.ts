@@ -148,7 +148,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     colorInUse: '#38BDF8',
     colorBooked: '#F472B6',
     colorLoaned: '#FB923C',
-    colorDefault: '#64748B',
+    colorDefault: '#4A4A4A',
   };
 
   private destroy$ = new Subject<void>();
@@ -195,7 +195,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     this.statusColorMap.set('Sẵn sàng', this.cssVars.colorSuccess);
     this.statusColorMap.set('Đang sử dụng', this.cssVars.colorInUse);
     this.statusColorMap.set('Cần bảo trì', this.cssVars.colorWarning);
-    this.statusColorMap.set('Đang bảo trì', this.cssVars.colorWarning);
+    this.statusColorMap.set('Đang bảo trì', this.cssVars.colorDefault);
     this.statusColorMap.set('Hỏng', this.cssVars.colorDanger);
     this.statusColorMap.set('Thanh lý', this.cssVars.colorDanger);
     this.statusColorMap.set('Đã Book', this.cssVars.colorBooked);

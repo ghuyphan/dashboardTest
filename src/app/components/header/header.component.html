@@ -1,8 +1,6 @@
 <header class="dashboard-header">
-  <!-- LEFT SECTION -->
   <div class="header-left-controls">
     
-    <!-- Mobile Toggle: Hidden on Desktop via CSS -->
     <button
       class="header-icon-btn mobile-sidebar-toggle"
       (click)="onMobileToggleClick()"
@@ -29,7 +27,6 @@
     <h2 class="header-title">{{ currentScreenName }}</h2>
   </div>
 
-  <!-- CENTER SEARCH (Optional) -->
   <div class="header-search-container" *ngIf="showSearchBar">
     <div class="search-icon-wrapper">
       <i class="fas fa-search search-icon"></i>
@@ -53,23 +50,16 @@
     </button>
   </div>
 
-  <!-- RIGHT SECTION -->
   <div class="header-right-controls">
     <div class="user-menu" *ngIf="currentUser">
       
-      <!-- Trigger Button -->
       <button class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
         <div class="header-avatar-initials">{{ userInitials }}</div>
-        <!-- Chevron Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="chevron-icon">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+        <i class="fas fa-chevron-down chevron-icon"></i>
       </button>
 
-      <!-- Dropdown Menu -->
       <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before">
         
-        <!-- Profile Card -->
         <div class="menu-section-wrapper" (click)="$event.stopPropagation()">
           <div class="dropdown-profile-header">
             <div class="dropdown-avatar-initials">{{ userInitials }}</div>
@@ -80,7 +70,6 @@
           </div>
         </div>
 
-        <!-- Menu Actions -->
         <div class="menu-items-wrapper">
           <button mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
             <div class="menu-icon-bg"><i class="fas fa-gear"></i></div>
