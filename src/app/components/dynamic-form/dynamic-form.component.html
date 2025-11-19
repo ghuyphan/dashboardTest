@@ -2,67 +2,103 @@
   <form [formGroup]="dynamicForm" (ngSubmit)="onSave()" novalidate>
     <div class="form-body">
 
-      <div *ngIf="formConfig" class="dynamic-form-layout">
+      @if (formConfig) {
+        <div class="dynamic-form-layout">
 
-        <div *ngFor="let row of formConfig.formRows" class="form-row">
+          @for (row of formConfig.formRows; track $index) {
+            <div class="form-row">
 
-          <div *ngFor="let control of row.controls" class="form-group">
+              @for (control of row.controls; track control.controlName) {
+                <div class="form-group"
+                     [style.flex-grow]="control.layout_flexGrow || 1"
+                     [style.flex-basis]="'200px'">
 
-            <label [for]="control.controlName">
-              {{ control.label }}
-              <span *ngIf="control.validators?.required" class="required-asterisk">*</span>
-            </label>
+                  <label [for]="control.controlName">
+                    {{ control.label }}
+                    @if (control.validators?.required) {
+                      <span class="required-asterisk">*</span>
+                    }
+                  </label>
 
-            <div [ngSwitch]="control.controlType">
+                  <!-- CONTROL SWITCH -->
+                  @switch (control.controlType) {
 
-              <input *ngSwitchCase="'text'" type="text" [id]="control.controlName"
-                [formControlName]="control.controlName" [placeholder]="control.placeholder || ''" class="form-control"
-                [class.is-invalid]="isInvalid(control.controlName)" />
+                    @case ('text') {
+                      <input type="text" [id]="control.controlName"
+                        [formControlName]="control.controlName" 
+                        [placeholder]="control.placeholder || ''" 
+                        class="form-control"
+                        [class.is-invalid]="isInvalid(control.controlName)" />
+                    }
 
-              <input *ngSwitchCase="'date'" type="date" [id]="control.controlName"
-                [formControlName]="control.controlName" [placeholder]="control.placeholder || ''" class="form-control"
-                [class.is-invalid]="isInvalid(control.controlName)" />
+                    @case ('date') {
+                      <input type="date" [id]="control.controlName"
+                        [formControlName]="control.controlName" 
+                        [placeholder]="control.placeholder || ''" 
+                        class="form-control"
+                        [class.is-invalid]="isInvalid(control.controlName)" />
+                    }
 
-              <input *ngSwitchCase="'currency'" type="text" [id]="control.controlName"
-                [placeholder]="control.placeholder || '0'" class="form-control"
-                [class.is-invalid]="isInvalid(control.controlName)"
-                [value]="formatCurrency(dynamicForm.get(control.controlName)?.value)"
-                (input)="onCurrencyInput($event, control.controlName)"
-                (blur)="onCurrencyInput($event, control.controlName)"
-                [disabled]="dynamicForm.get(control.controlName)?.disabled || false" />
+                    @case ('currency') {
+                      <input type="text" [id]="control.controlName"
+                        [placeholder]="control.placeholder || '0'" 
+                        class="form-control"
+                        [class.is-invalid]="isInvalid(control.controlName)"
+                        [value]="formatCurrency(dynamicForm.get(control.controlName)?.value)"
+                        (input)="onCurrencyInput($event, control.controlName)"
+                        (blur)="onCurrencyInput($event, control.controlName)"
+                        [disabled]="dynamicForm.get(control.controlName)?.disabled || false" />
+                    }
 
-              <select *ngSwitchCase="'dropdown'" [id]="control.controlName" [formControlName]="control.controlName"
-                class="form-control" [class.is-invalid]="isInvalid(control.controlName)">
+                    <!-- MATERIAL DROPDOWN -->
+                    @case ('dropdown') {
+                      <div class="custom-dropdown-wrapper" [class.is-invalid]="isInvalid(control.controlName)">
+                        <mat-form-field appearance="outline" class="full-width-field dense-form-field" subscriptSizing="dynamic">
+                          <mat-select [formControlName]="control.controlName" [id]="control.controlName"
+                                      [placeholder]="control.placeholder || 'Chọn ' + (control.label || '...')">
+                            <mat-option [value]="null">
+                              -- {{ control.placeholder ? control.placeholder : 'Chọn ' + (control.label || 'Vui lòng chọn') }} --
+                            </mat-option>
+                            @for (opt of control.options; track opt.key) {
+                              <mat-option [value]="opt.key ?? opt.value">
+                                {{ opt.value }}
+                              </mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                    }
 
-                <option [ngValue]="null">
-                  -- {{ control.placeholder ? control.placeholder : 'Chọn ' + (control.label || 'Vui lòng chọn') }} --
-                </option>
+                    @case ('textarea') {
+                      <textarea [id]="control.controlName" [formControlName]="control.controlName"
+                        [placeholder]="control.placeholder || ''" 
+                        class="form-control" 
+                        rows="3"
+                        [class.is-invalid]="isInvalid(control.controlName)">
+                      </textarea>
+                    }
 
-                <option *ngFor="let opt of control.options" [ngValue]="opt.key ?? opt.value">
-                  {{ opt.value }}
-                </option>
+                    @case ('checkbox') {
+                      <div class="checkbox-wrapper">
+                        <input type="checkbox" [id]="control.controlName" [formControlName]="control.controlName"
+                          class="form-check-input" />
+                      </div>
+                    }
+                  }
 
-              </select>
+                  <!-- VALIDATION ERROR -->
+                  @if (isInvalid(control.controlName)) {
+                    <div class="invalid-feedback">
+                      {{ getErrorMessage(control) }}
+                    </div>
+                  }
 
-              <textarea *ngSwitchCase="'textarea'" [id]="control.controlName" [formControlName]="control.controlName"
-                [placeholder]="control.placeholder || ''" class="form-control" rows="3"
-                [class.is-invalid]="isInvalid(control.controlName)">
-              </textarea>
-
-              <div *ngSwitchCase="'checkbox'" class="checkbox-wrapper">
-                <input type="checkbox" [id]="control.controlName" [formControlName]="control.controlName"
-                  class="form-check-input" />
-              </div>
-
+                </div>
+              }
             </div>
-
-            <div *ngIf="isInvalid(control.controlName)" class="invalid-feedback">
-              {{ getErrorMessage(control) }}
-            </div>
-
-          </div>
+          }
         </div>
-      </div>
+      }
     </div>
 
     <div class="form-actions">
@@ -73,12 +109,16 @@
       </button>
 
       <button type="submit" class="btn btn-primary" [disabled]="dynamicForm.invalid || isLoading">
-        <span *ngIf="!isLoading" class="btn-content-wrapper">
-          <i class="fas fa-save"></i> Lưu
-        </span>
-        <span *ngIf="isLoading" class="btn-content-wrapper">
-          <i class="fas fa-spinner fa-spin"></i> Đang lưu...
-        </span>
+        @if (!isLoading) {
+          <span class="btn-content-wrapper">
+            <i class="fas fa-save"></i> Lưu
+          </span>
+        }
+        @if (isLoading) {
+          <span class="btn-content-wrapper">
+            <i class="fas fa-spinner fa-spin"></i> Đang lưu...
+          </span>
+        }
       </button>
     </div>
   </form>

@@ -15,14 +15,14 @@ import { DOCUMENT } from '@angular/common';
 
 /**
  * Flyout Directive
- * 
+ *
  * Creates a floating menu that appears next to a collapsed sidebar item.
  * When enabled, clicking the host element positions the menu as a fixed overlay.
  * Handles collision detection, auto-closing on outside clicks, and proper cleanup.
- * 
+ *
  * @example
  * <button [appFlyout]="submenuElement" [flyoutEnabled]="isSidebarCollapsed">
- *   Menu Item
+ * Menu Item
  * </button>
  */
 @Directive({
@@ -33,7 +33,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   /** The submenu element (typically a <ul>) to show/hide as a flyout */
   @Input('appFlyout') flyoutMenu: HTMLElement | null = null;
 
-  /** 
+  /**
    * Enables or disables the flyout behavior
    * Set to true when sidebar is collapsed, false when expanded
    */
@@ -68,7 +68,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   constructor(
     @Inject(DOCUMENT) private document: Document,
     private el: ElementRef<HTMLElement>,
-    private renderer: Renderer2,
+    private renderer: Renderer2, // Fixed: Added 'private' modifier and corrected name
     private zone: NgZone
   ) {}
 
@@ -108,10 +108,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
         'click',
         (event: Event) => {
           // Only close if flyout is open and click is outside both host and menu
-          if (
-            this.isOpen() &&
-            !this.isClickInsideHostOrMenu(event)
-          ) {
+          if (this.isOpen() && !this.isClickInsideHostOrMenu(event)) {
             this.zone.run(() => {
               this.closeFlyout();
             });
@@ -137,7 +134,9 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.saveOriginalPosition();
 
     // Move menu to body for proper z-index layering
-    this.renderer.appendChild(this.document.body, this.flyoutMenu);
+    if (this.flyoutMenu) {
+      this.renderer.appendChild(this.document.body, this.flyoutMenu);
+    }
 
     // Prepare menu for measurement (hidden but rendered)
     this.prepareMenuForPositioning();
@@ -146,7 +145,9 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     this.positionFlyout();
 
     // Show the menu
-    this.renderer.removeStyle(this.flyoutMenu!, 'visibility');
+    if (this.flyoutMenu) {
+      this.renderer.removeStyle(this.flyoutMenu, 'visibility');
+    }
 
     // Update state and register menu click listener
     this.flyoutToggled.emit(true);
@@ -169,7 +170,9 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     }
 
     // Remove open styling
-    this.renderer.removeClass(this.flyoutMenu!, 'open');
+    if (this.flyoutMenu) {
+      this.renderer.removeClass(this.flyoutMenu, 'open');
+    }
 
     // Restore original DOM position
     this.restoreOriginalPosition();
@@ -199,9 +202,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
    * Validates if the flyout can be opened
    */
   private canOpenFlyout(): boolean {
-    return this.flyoutEnabled && 
-           this.flyoutMenu !== null && 
-           !this.isOpen();
+    return this.flyoutEnabled && this.flyoutMenu !== null && !this.isOpen();
   }
 
   /**
@@ -215,8 +216,10 @@ export class FlyoutDirective implements OnInit, OnDestroy {
    * Saves the menu's original DOM position for later restoration
    */
   private saveOriginalPosition(): void {
-    this.originalPosition.parent = this.flyoutMenu!.parentNode;
-    this.originalPosition.nextSibling = this.flyoutMenu!.nextSibling;
+    if (this.flyoutMenu) {
+      this.originalPosition.parent = this.flyoutMenu.parentNode;
+      this.originalPosition.nextSibling = this.flyoutMenu.nextSibling;
+    }
   }
 
   /**
@@ -244,20 +247,30 @@ export class FlyoutDirective implements OnInit, OnDestroy {
    * Prepares the menu for positioning by making it fixed but hidden
    */
   private prepareMenuForPositioning(): void {
-    this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
-    this.renderer.setStyle(this.flyoutMenu, 'visibility', 'hidden');
-    this.renderer.addClass(this.flyoutMenu, 'open');
+    if (this.flyoutMenu) {
+      this.renderer.setStyle(this.flyoutMenu, 'position', 'fixed');
+      this.renderer.setStyle(this.flyoutMenu, 'visibility', 'hidden');
+      this.renderer.addClass(this.flyoutMenu, 'open');
+    }
   }
 
   /**
    * Calculates and applies the optimal position for the flyout menu
    */
   private positionFlyout(): void {
+    if (!this.flyoutMenu) {
+      return;
+    }
+
     const hostRect = this.el.nativeElement.getBoundingClientRect();
-    const menuRect = this.flyoutMenu!.getBoundingClientRect();
+    const menuRect = this.flyoutMenu.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
 
-    const top = this.calculateVerticalPosition(hostRect, menuRect, viewportHeight);
+    const top = this.calculateVerticalPosition(
+      hostRect,
+      menuRect,
+      viewportHeight
+    );
     const left = this.calculateHorizontalPosition();
 
     this.renderer.setStyle(this.flyoutMenu, 'top', `${top}px`);
@@ -275,7 +288,8 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     let top = hostRect.top;
 
     // Check if menu would overflow bottom of viewport
-    const wouldOverflowBottom = top + menuRect.height > viewportHeight - this.VIEWPORT_PADDING;
+    const wouldOverflowBottom =
+      top + menuRect.height > viewportHeight - this.VIEWPORT_PADDING;
 
     if (wouldOverflowBottom) {
       // Try aligning bottom-to-bottom (menu grows upward from button)
@@ -303,9 +317,11 @@ export class FlyoutDirective implements OnInit, OnDestroy {
    */
   private calculateHorizontalPosition(): number {
     const rootStyle = getComputedStyle(this.document.documentElement);
-    const collapsedWidthValue = rootStyle.getPropertyValue('--sidebar-width-collapsed');
-    const collapsedWidth = collapsedWidthValue 
-      ? parseFloat(collapsedWidthValue) 
+    const collapsedWidthValue = rootStyle.getPropertyValue(
+      '--sidebar-width-collapsed'
+    );
+    const collapsedWidth = collapsedWidthValue
+      ? parseFloat(collapsedWidthValue)
       : this.DEFAULT_SIDEBAR_WIDTH;
 
     return collapsedWidth + this.HORIZONTAL_OFFSET;
@@ -315,29 +331,33 @@ export class FlyoutDirective implements OnInit, OnDestroy {
    * Removes all positioning-related inline styles
    */
   private removePositioningStyles(): void {
-    const stylesToRemove = ['position', 'top', 'left', 'visibility'];
-    stylesToRemove.forEach(style => {
-      this.renderer.removeStyle(this.flyoutMenu!, style);
-    });
+    if (this.flyoutMenu) {
+      const stylesToRemove = ['position', 'top', 'left', 'visibility'];
+      stylesToRemove.forEach((style) => {
+        this.renderer.removeStyle(this.flyoutMenu, style);
+      });
+    }
   }
 
   /**
    * Registers click listener on menu items to close flyout when selecting an item
    */
   private registerMenuClickListener(): void {
-    this.zone.runOutsideAngular(() => {
-      this.listeners.menuClick = this.renderer.listen(
-        this.flyoutMenu as HTMLElement,
-        'click',
-        (event: Event) => {
-          if (this.isClickableElement(event.target as HTMLElement)) {
-            this.zone.run(() => {
-              this.closeFlyout();
-            });
+    if (this.flyoutMenu) {
+      this.zone.runOutsideAngular(() => {
+        this.listeners.menuClick = this.renderer.listen(
+          this.flyoutMenu,
+          'click',
+          (event: Event) => {
+            if (this.isClickableElement(event.target as HTMLElement)) {
+              this.zone.run(() => {
+                this.closeFlyout();
+              });
+            }
           }
-        }
-      );
-    });
+        );
+      });
+    }
   }
 
   /**
@@ -368,7 +388,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
    * Cleans up all registered event listeners
    */
   private cleanupListeners(): void {
-    Object.values(this.listeners).forEach(listener => {
+    Object.values(this.listeners).forEach((listener) => {
       if (listener) {
         listener();
       }

@@ -45,34 +45,41 @@
 }
 /* --- END OF FIX --- */
 
-.form-control {
+/* --- STANDARD INPUT STYLES --- */
+/* Define a mixin for shared input styles to ensure consistency */
+@mixin input-base-styles {
   width: 100%;
-  padding: var(--spacing-sm) 0.75rem; /* 8px 12px */
   border-radius: var(--border-radius-md); /* 8px */
   box-sizing: border-box;
   border: var(--border-width) solid var(--gray-300);
   background-color: var(--gray-50);
   color: var(--gray-800);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  /* --- NEW: Ensure consistent height & text --- */
   min-height: 38px;
-  font-size: 0.9375rem; /* 15px, slightly smaller than base */
+  font-size: 0.9375rem; /* 15px */
   font-family: var(--font-family-sans);
-  line-height: var(--line-height-base); // Use global variable
+  line-height: var(--line-height-base);
 }
 
-/* --- NEW: Dropdown (select) styling --- */
-select.form-control {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  // Using a data URI for an SVG chevron in the color var(--gray-700) which is #334155
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23334155'%3e%3cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1.25em 1.25em;
-  padding-right: 2.5rem; // Make space for the icon
+.form-control {
+  @include input-base-styles;
+  padding: var(--spacing-sm) 0.75rem; /* 8px 12px */
+
+  &:focus {
+    outline: none;
+    border-color: var(--teal-blue); /* FIX: Use correct variable */
+    /* FIX: Use correct variable/color for shadow */
+    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2);
+  }
+
+  /* --- START OF FIX: Corrected CSS variables --- */
+  &.is-invalid {
+    border-color: var(--color-danger);
+    &:focus {
+      /* Added the light red shadow */
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+    }
+  }
 }
 
 input[type="datetime-local"].form-control {
@@ -91,21 +98,171 @@ textarea.form-control {
   overflow: auto;
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: var(--teal-blue); /* FIX: Use correct variable */
-  /* FIX: Use correct variable/color for shadow */
-  box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2);
+/* ============================================================
+   MATERIAL DROPDOWN OVERRIDES (To match .form-control)
+   ============================================================ */
+
+/* Wrapper to help position and style validation states */
+.custom-dropdown-wrapper {
+  width: 100%;
+  position: relative;
+  
+  /* If the wrapper has 'is-invalid' class, color the Material border red */
+  &.is-invalid {
+    ::ng-deep .mat-mdc-notched-outline__stroke {
+      stroke: var(--color-danger) !important;
+      border-color: var(--color-danger) !important;
+    }
+    /* Focus shadow for error state */
+    ::ng-deep .mat-focused .mat-mdc-text-field-wrapper {
+       box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+    }
+  }
 }
 
-/* --- START OF FIX: Corrected CSS variables --- */
-.form-control.is-invalid {
-  border-color: var(--color-danger);
+.full-width-field {
+  width: 100%;
 }
-.form-control.is-invalid:focus {
-  /* Added the light red shadow */
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+
+::ng-deep {
+  /* 1. FORCE HEIGHT & PADDING: 
+     Angular Material defaults to 56px. We force it to 38px to match inputs.
+     We remove top/bottom padding and adjust the 'infix' (content area).
+  */
+  .dense-form-field .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+    padding: 0 0.75rem !important; /* Horizontal padding matches input */
+    height: 38px !important;       /* Exact height match */
+    display: flex;
+    align-items: center;
+    
+    /* Remove Material default background if any */
+    background-color: var(--gray-50) !important;
+
+    /* The container for label/input */
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      min-height: 38px !important;
+      border: none !important;
+      display: flex !important;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Vertically center the select value */
+    .mat-mdc-select-value {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  /* 2. BORDER & OUTLINE OVERRIDES */
+  /* We rely on Material's notched outline for the border but style it to match */
+  .mat-mdc-form-field {
+    
+    /* Normal Border Color & Radius */
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+        border-color: var(--gray-300) !important;
+        border-width: var(--border-width) !important;
+    }
+    
+    /* Radius fix for outline segments */
+    .mdc-notched-outline__leading {
+        border-top-left-radius: var(--border-radius-md) !important;
+        border-bottom-left-radius: var(--border-radius-md) !important;
+    }
+    .mdc-notched-outline__trailing {
+        border-top-right-radius: var(--border-radius-md) !important;
+        border-bottom-right-radius: var(--border-radius-md) !important;
+    }
+
+    /* Hover Border Color */
+    &:hover .mdc-notched-outline__leading,
+    &:hover .mdc-notched-outline__notch,
+    &:hover .mdc-notched-outline__trailing {
+      border-color: var(--gray-400) !important;
+    }
+
+    /* Focused State: Border Color, Thickness & Shadow */
+    &.mat-focused {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+            border-color: var(--teal-blue) !important;
+            border-width: 1px !important; /* Keep border width consistent */
+        }
+        
+        /* Add our custom focus shadow to the wrapper */
+        .mat-mdc-text-field-wrapper {
+            box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2) !important;
+        }
+    }
+
+    /* Text Color inside dropdown */
+    .mat-mdc-select-value-text {
+      color: var(--gray-800) !important;
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.9375rem !important;
+    }
+
+    /* Placeholder Color */
+    .mat-mdc-select-placeholder {
+      color: var(--gray-500) !important;
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.9375rem !important;
+      opacity: 1 !important; /* Ensure placeholder is fully visible */
+    }
+    
+    /* Arrow Icon Color */
+    .mat-mdc-select-arrow {
+      color: var(--gray-600) !important;
+    }
+  }
+
+  /* 3. DROPDOWN PANEL (The popup list) */
+  .mat-mdc-select-panel {
+    background-color: var(--white) !important;
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--box-shadow-md) !important;
+    border-radius: var(--border-radius-md) !important;
+    margin-top: 4px; /* Slight offset from input */
+    
+    /* Custom Scrollbar for the list */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--gray-300);
+      border-radius: 3px;
+    }
+    
+    /* Individual Options */
+    .mat-mdc-option {
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.9375rem !important;
+      color: var(--gray-800) !important;
+      min-height: 40px !important; /* Slightly taller for touch targets */
+      
+      &:hover:not(.mdc-list-item--disabled) {
+        background-color: var(--gray-100) !important;
+      }
+      
+      /* Selected Item Highlight */
+      &.mdc-list-item--selected {
+        background-color: var(--aqua-island-light) !important; 
+        .mdc-list-item__primary-text {
+          color: var(--teal-blue-dark) !important;
+          font-weight: 600 !important;
+        }
+      }
+    }
+  }
 }
+
 .invalid-feedback {
   color: var(--color-danger);
   font-size: 0.875rem; /* Use rem not em */

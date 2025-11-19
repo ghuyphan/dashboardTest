@@ -7,11 +7,11 @@
   flex-direction: column;
   box-sizing: border-box;
   margin: auto;
-  background: rgba(255, 255, 255, 0.9); 
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 1); 
+  /* backdrop-filter: blur(12px); */ /* Optionally re-enable if needed later */
+  /* -webkit-backdrop-filter: blur(12px); */
   
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  /* border: 1px solid rgba(255, 255, 255, 0.8); */
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 
               0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -43,7 +43,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
+  /* Adjusted padding: Increased top/left/right (1.5rem), Reduced bottom (1rem) */
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
   border-bottom: 1px solid var(--gray-200);
   flex-shrink: 0;
 }
@@ -63,7 +64,8 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  margin-right: -8px;
+  /* Adjusted margin to align visually with the reduced padding */
+  margin-right: -4px; 
   
   background: transparent;
   border: none;
@@ -82,7 +84,8 @@
 
 .modal-body {
   flex: 1;
-  padding: 1.5rem;
+  /* Increased padding for body content (1.5rem -> 2rem) for better breathing room */
+  padding: 2rem;
   overflow-y: auto;
   overscroll-behavior: contain;
   
@@ -102,14 +105,21 @@
     background-color: var(--gray-300);
     border-radius: 3px;
   }
+
+  /* Reduce padding on smaller screens */
+  @media (max-width: 480px) {
+    padding: 1.5rem;
+  }
 }
 
 /* Simple Fade In Animation (Cheaper for GPU when combined with backdrop-filter) */
 @keyframes modalFadeIn {
   0% {
     opacity: 0;
+    transform: scale(0.98); /* Added slight scale effect */
   }
   100% {
     opacity: 1;
+    transform: scale(1);
   }
 }

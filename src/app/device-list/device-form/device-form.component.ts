@@ -1,21 +1,22 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, forkJoin, map } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
-import { ModalService } from '../../services/modal.service';
-import { environment } from '../../../environments/environment.development';
-import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
+// Models & Services
+import { Device } from '../../models/device.model';
 import { ModalRef } from '../../models/modal-ref.model';
-import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
-import {
-  DropdownDataService,
-  DropdownOption,
-} from '../../services/dropdown-data.service';
+import { ModalService } from '../../services/modal.service';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
-import { Device } from '../../models/device.model';
+import { DropdownDataService, DropdownOption } from '../../services/dropdown-data.service';
+import { environment } from '../../../environments/environment.development';
+import { DateUtils } from '../../utils/date.utils'; // Import DateUtils
+
+// Components
+import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
+import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-device-form',
@@ -25,45 +26,54 @@ import { Device } from '../../models/device.model';
   styleUrl: './device-form.component.scss',
 })
 export class DeviceFormComponent implements OnInit {
-  @Input() device: Device | null = null; 
+  // -------------------------------------------------------------------------
+  // Inputs & ViewChildren
+  // -------------------------------------------------------------------------
+  @Input() device: Device | null = null;
   @Input() title: string = 'Biểu Mẫu Thiết Bị';
-
-  public modalRef?: ModalRef;
 
   @ViewChild(DynamicFormComponent)
   private dynamicForm!: DynamicFormComponent;
 
-  public formConfig: any | null = null;
+  // -------------------------------------------------------------------------
+  // Dependencies (Modern inject() pattern)
+  // -------------------------------------------------------------------------
+  private readonly modalService = inject(ModalService);
+  private readonly http = inject(HttpClient);
+  private readonly dropdownService = inject(DropdownDataService);
+  private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
 
-  public isFormLoading: boolean = true;
-  public isSaving: boolean = false;
+  // -------------------------------------------------------------------------
+  // State
+  // -------------------------------------------------------------------------
+  public modalRef?: ModalRef;
+  public formConfig: any | null = null; // Consider creating an interface for FormConfig
+  public isFormLoading = true;
+  public isSaving = false;
 
-  constructor(
-    private modalService: ModalService,
-    private http: HttpClient,
-    private dropdownService: DropdownDataService,
-    private authService: AuthService,
-    private toastService: ToastService
-  ) {}
-
+  // -------------------------------------------------------------------------
+  // Lifecycle
+  // -------------------------------------------------------------------------
   ngOnInit(): void {
+    this.initializeFormData();
+    this.setupModalCloseGuard();
+  }
+
+  // -------------------------------------------------------------------------
+  // Initialization Logic
+  // -------------------------------------------------------------------------
+  private initializeFormData(): void {
     this.isFormLoading = true;
 
-    let deviceData$: Observable<Device | null>;
+    // 1. Prepare Device Data Stream
+    const deviceData$ = this.getDeviceDataStream();
 
-    if (this.device && this.device.Id) {
-      const url = `${environment.equipmentCatUrl}/${this.device.Id}`;
-      deviceData$ = this.http.get<Device[]>(url).pipe(
-        map(dataArray => (dataArray && dataArray.length > 0) ? dataArray[0] : null)
-      );
-    } else {
-      deviceData$ = of(null);
-    }
-
+    // 2. Load all dependencies in parallel
     forkJoin({
       deviceTypes: this.dropdownService.getDeviceTypes(),
       deviceStatuses: this.dropdownService.getDeviceStatuses(),
-      deviceData: deviceData$
+      deviceData: deviceData$,
     })
       .pipe(finalize(() => (this.isFormLoading = false)))
       .subscribe({
@@ -74,89 +84,30 @@ export class DeviceFormComponent implements OnInit {
           console.error('Failed to load form data', error);
           this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
           this.modalRef?.close();
-        }
+        },
       });
+  }
 
+  private getDeviceDataStream(): Observable<Device | null> {
+    if (this.device?.Id) {
+      const url = `${environment.equipmentCatUrl}/${this.device.Id}`;
+      return this.http.get<Device[]>(url).pipe(
+        // API returns an array, we need the first item
+        map((dataArray) => (dataArray?.length ? dataArray[0] : null))
+      );
+    }
+    return of(null);
+  }
+
+  private setupModalCloseGuard(): void {
     if (this.modalRef) {
       this.modalRef.canClose = () => this.canDeactivate();
     }
   }
 
-  private parseValueToHtmlDate(
-    dateString: string | null | undefined
-  ): string {
-    if (!dateString || dateString === '0001-01-01T00:00:00') {
-      return '';
-    }
-    
-    try {
-      if (dateString.includes('/') && dateString.length >= 10) {
-        const parts = dateString.substring(0, 10).split('/');
-        if (parts.length === 3) {
-          return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-      }
-      
-      if (dateString.includes('T')) {
-        return dateString.substring(0, 10);
-      }
-
-      if (dateString.includes('-') && dateString.length === 10) {
-         return dateString;
-      }
-
-    } catch (e) {
-      console.error('Error parsing date:', dateString, e);
-      return '';
-    }
-    
-    console.warn('Unrecognized date format in form:', dateString);
-    return ''; 
-  }
-
-  private formatHtmlDateToApiDate(dateString: string): string | null {
-    if (!dateString) {
-      return null;
-    }
-    try {
-      const parts = dateString.split('-');
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const date = new Date(year, month, day);
-
-      if (isNaN(date.getTime())) return null;
-      
-      return date.toISOString();
-    } catch (e) {
-      console.error('Error formatting date string:', dateString, e);
-      return null;
-    }
-  }
-
-  private canDeactivate(): Observable<boolean> {
-    const isDirty = this.dynamicForm?.dynamicForm?.dirty || false;
-    if (!isDirty && !this.isSaving) return of(true);
-    if (this.isSaving) return of(false);
-
-return this.modalService
-      .open(ConfirmationModalComponent, {
-        title: 'Thay đổi chưa lưu',
-        disableBackdropClose: true,
-        size: 'sm',
-        context: {
-          layout: 'standard',
-          icon: 'fas fa-question-circle',
-          iconColor: 'var(--color-info)',
-          
-          message: 'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
-          confirmText: 'Hủy bỏ thay đổi', 
-          cancelText: 'Tiếp tục chỉnh sửa',
-        },
-      })
-      .pipe(switchMap((result) => of(!!result)));
-  }
-
+  // -------------------------------------------------------------------------
+  // Form Configuration
+  // -------------------------------------------------------------------------
   private buildFormConfig(
     deviceTypes: DropdownOption[],
     deviceStatuses: DropdownOption[],
@@ -165,22 +116,21 @@ return this.modalService
     const isEditMode = !!deviceData;
     const data: Partial<Device> = deviceData || {};
 
-    const defaultStatusId =
-      deviceStatuses.find((s) => s.value === 'Sẵn sàng')?.key || null;
+    // REFACTOR: Force null for new items, strictly use existing ID for edit.
+    // We removed the logic that looked for "Sẵn sàng".
+    const trangThaiValue = isEditMode && data.TrangThai_Id !== undefined
+      ? data.TrangThai_Id
+      : null; 
 
     const categoryIdValue = data.LoaiThietBi_Id
-      ? parseFloat(data.LoaiThietBi_Id.toString())
+      ? Number(data.LoaiThietBi_Id)
       : null;
-
-    const trangThaiValue =
-      data.TrangThai_Id !== null && data.TrangThai_Id !== undefined
-        ? parseFloat(data.TrangThai_Id.toString()) 
-        : defaultStatusId;
 
     this.formConfig = {
       entityId: isEditMode ? data.Id : null,
       saveUrl: environment.equipmentCatUrl,
       formRows: [
+        // Row 1: Code & Name
         {
           controls: [
             {
@@ -188,9 +138,8 @@ return this.modalService
               controlType: 'text',
               label: 'Mã thiết bị',
               value: data.Ma || '',
-              disabled: true, // Disable input
+              disabled: true,
               placeholder: isEditMode ? '' : 'Mã sẽ được tạo tự động',
-              validators: { }, // No client-side validation needed since it's disabled/auto
               layout_flexGrow: 1,
             },
             {
@@ -207,6 +156,7 @@ return this.modalService
             },
           ],
         },
+        // Row 2: Model & Serial
         {
           controls: [
             {
@@ -229,6 +179,7 @@ return this.modalService
             },
           ],
         },
+        // Row 3: Type & Status
         {
           controls: [
             {
@@ -245,13 +196,15 @@ return this.modalService
               controlName: 'TrangThai',
               controlType: 'dropdown',
               label: 'Trạng thái',
-              value: trangThaiValue,
+              value: trangThaiValue, // Will be null if new
               validators: { required: true },
+              validationMessages: { required: 'Vui lòng chọn trạng thái.' },
               options: deviceStatuses,
               layout_flexGrow: 1,
             },
           ],
         },
+        // Row 4: Hostname & Location
         {
           controls: [
             {
@@ -274,6 +227,7 @@ return this.modalService
             },
           ],
         },
+        // Row 5: Dates & Price
         {
           controls: [
             {
@@ -281,8 +235,7 @@ return this.modalService
               controlType: 'date',
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseValueToHtmlDate(data.NgayMua),
-              validators: {},
+              value: this.toHtmlDate(data.NgayMua),
               layout_flexGrow: 1,
             },
             {
@@ -290,8 +243,7 @@ return this.modalService
               controlType: 'date',
               label: 'Ngày hết hạn BH',
               placeholder: 'DD/MM/YYYY',
-              value: this.parseValueToHtmlDate(data.NgayHetHanBH),
-              validators: {},
+              value: this.toHtmlDate(data.NgayHetHanBH),
               layout_flexGrow: 1,
             },
             {
@@ -299,12 +251,13 @@ return this.modalService
               controlType: 'currency',
               label: 'Giá mua (VND)',
               value: data.GiaMua || null,
-              validators: { max: 10000000000 }, 
+              validators: { max: 10000000000 },
               validationMessages: { max: 'Giá mua không hợp lệ (tối đa 10 tỷ).' },
               layout_flexGrow: 1,
             },
           ],
         },
+        // Row 6: Description
         {
           controls: [
             {
@@ -322,126 +275,161 @@ return this.modalService
     };
   }
 
+  // -------------------------------------------------------------------------
+  // Action Handlers
+  // -------------------------------------------------------------------------
   public onSave(formData: any): void {
     this.isSaving = true;
-    const apiUrl = this.formConfig.saveUrl;
-    const entityId = this.formConfig.entityId;
-
+    
     const currentUserId = this.authService.getUserId();
-
     if (!currentUserId) {
-      this.toastService.showError(
-        'Lỗi xác thực người dùng. Vui lòng đăng nhập lại.'
-      );
-      console.error('User ID is missing, cannot save.');
+      this.toastService.showError('Lỗi xác thực: Vui lòng đăng nhập lại.');
       this.isSaving = false;
       return;
     }
 
-    const apiNgayMua = this.formatHtmlDateToApiDate(formData.NgayMua);
-    const apiNgayHetHanBH = this.formatHtmlDateToApiDate(formData.NgayHetHanBH);
+    const payload = this.createSavePayload(formData, currentUserId);
+    const request$ = this.getSaveRequest(payload);
 
-    let saveObservable;
-
-    if (entityId) {
-      const updatePayload = {
-        Id: entityId,
-        Ma: formData.Ma,
-        Ten: formData.Ten,
-        Model: formData.Model || null,
-        SerialNumber: formData.SerialNumber || null,
-        DeviceName: formData.DeviceName || '',
-        ViTri: formData.ViTri || null,
-        MoTa: formData.MoTa || null,
-        TrangThai: formData.TrangThai, 
-        CategoryID: formData.CategoryID, 
-        NgayMua: apiNgayMua,
-        GiaMua: formData.GiaMua || null,
-        NgayHetHanBH: apiNgayHetHanBH,
-        USER_: currentUserId, 
-      };
-
-      const updateUrl = `${apiUrl}/${entityId}`;
-      saveObservable = this.http.put(updateUrl, updatePayload);
-    } else {
-      const devicePayloadForPost = {
-        Id: 0,
-        Ma: formData.Ma || null, // Send null if empty
-        Ten: formData.Ten,
-        SerialNumber: formData.SerialNumber || null,
-        Model: formData.Model || null,
-        TrangThai: formData.TrangThai,
-        ViTri: formData.ViTri || null,
-        NgayMua: apiNgayMua,
-        GiaMua: formData.GiaMua || null,
-        NgayHetHanBH: apiNgayHetHanBH,
-        MoTa: formData.MoTa || null,
-        CategoryID: formData.CategoryID,
-        DeviceName: formData.DeviceName || '',
-        USER_: currentUserId,
-      };
-
-      // const wrapperPayload = {
-      //   dmThietBi: devicePayloadForPost,
-      // };
-
-      saveObservable = this.http.post(apiUrl, devicePayloadForPost);
-    }
-
-    saveObservable
-      .pipe(
-        finalize(() => {
-          this.isSaving = false;
-        })
-      )
-      .subscribe({
-        next: (response: any) => {
-          const successMessage = response.TenKetQua || 'Lưu thành công!';
-          this.toastService.showSuccess(successMessage);
-
-          if (this.modalRef) {
-            this.modalRef.canClose = () => true;
-          }
-          this.modalRef?.close(response);
-        },
-        error: (err: HttpErrorResponse) => {
-          let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
-
-          if (err.error && err.error.errors) {
-            if (err.error.errors.dmThietBi) {
-              errorMessage = `Lỗi API: ${err.error.errors.dmThietBi[0]}`;
-            } else {
-              const firstErrorKey = Object.keys(err.error.errors)[0];
-              if (firstErrorKey.toLowerCase().includes('ngaymua')) {
-                errorMessage = `Ngày Mua: ${err.error.errors[firstErrorKey][0]}`;
-              } else if (err.error.errors[firstErrorKey]) {
-                errorMessage = err.error.errors[firstErrorKey][0];
-              }
-            }
-          } else if (err.status === 409) {
-            errorMessage =
-              'Thiết bị này đã được cập nhật bởi người dùng khác. Vui lòng làm mới và thử lại.';
-          } else if (err.error) {
-            if (typeof err.error === 'string') {
-              errorMessage = err.error;
-            } else if (err.error.ErrorMessage) {
-              errorMessage = err.error.ErrorMessage;
-            } else if (err.error.TenKetQua) {
-              errorMessage = err.error.TenKetQua;
-            } else if (err.message) {
-              errorMessage = err.message;
-            }
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
-
-          this.toastService.showError(errorMessage);
-          console.error('Failed to save device:', err);
-        },
-      });
+    request$.pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
+      next: (response: any) => {
+        const msg = response.TenKetQua || 'Lưu thành công!';
+        this.toastService.showSuccess(msg);
+        
+        // Allow closing without warning since we saved
+        if (this.modalRef) this.modalRef.canClose = () => true;
+        this.modalRef?.close(response);
+      },
+      error: (err: HttpErrorResponse) => this.handleSaveError(err)
+    });
   }
 
   public onCancel(): void {
     this.modalRef?.close();
+  }
+
+  private canDeactivate(): Observable<boolean> {
+    const isDirty = this.dynamicForm?.dynamicForm?.dirty ?? false;
+
+    if (!isDirty && !this.isSaving) return of(true);
+    if (this.isSaving) return of(false);
+
+    return this.modalService.open(ConfirmationModalComponent, {
+      title: 'Thay đổi chưa lưu',
+      disableBackdropClose: true,
+      size: 'sm',
+      context: {
+        message: 'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
+        confirmText: 'Hủy bỏ thay đổi',
+        cancelText: 'Tiếp tục chỉnh sửa',
+        icon: 'fas fa-question-circle',
+        iconColor: 'var(--color-info)',
+      },
+    }).pipe(switchMap((res) => of(!!res)));
+  }
+
+  // -------------------------------------------------------------------------
+  // Helpers: Payload Construction & API
+  // -------------------------------------------------------------------------
+  private createSavePayload(formData: any, userId: string): any {
+    // Using DateUtils for API date formatting logic if needed, 
+    // but since formData from dynamic form is likely YYYY-MM-DD string from input[type=date],
+    // we need to convert it to ISO string for API.
+    // If your DateUtils has a specific method for this, you can use it.
+    // Otherwise, stick with toApiDate or similar logic.
+    const apiNgayMua = this.toApiDate(formData.NgayMua);
+    const apiNgayHetHanBH = this.toApiDate(formData.NgayHetHanBH);
+
+    return {
+      // Common fields
+      Id: this.formConfig.entityId || 0,
+      Ma: formData.Ma || null,
+      Ten: formData.Ten,
+      Model: formData.Model || null,
+      SerialNumber: formData.SerialNumber || null,
+      DeviceName: formData.DeviceName || '',
+      ViTri: formData.ViTri || null,
+      MoTa: formData.MoTa || null,
+      TrangThai: formData.TrangThai,
+      CategoryID: formData.CategoryID,
+      NgayMua: apiNgayMua,
+      GiaMua: formData.GiaMua || null,
+      NgayHetHanBH: apiNgayHetHanBH,
+      USER_: userId,
+    };
+  }
+
+  private getSaveRequest(payload: any): Observable<any> {
+    const apiUrl = this.formConfig.saveUrl;
+    const id = this.formConfig.entityId;
+
+    if (id) {
+      return this.http.put(`${apiUrl}/${id}`, payload);
+    } else {
+      return this.http.post(apiUrl, payload);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Helpers: Date Conversion
+  // -------------------------------------------------------------------------
+  private toHtmlDate(dateStr: string | null | undefined): string {
+    if (!dateStr || dateStr === '0001-01-01T00:00:00') return '';
+    
+    // Use DateUtils to parse the date string first to ensure valid date object
+    const date = DateUtils.parse(dateStr);
+    
+    if (date) {
+        // Convert Date object to YYYY-MM-DD string for input[type="date"]
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    return '';
+  }
+
+  private toApiDate(htmlDate: string): string | null {
+    if (!htmlDate) return null;
+    // DateUtils.parse handles various formats, including YYYY-MM-DD
+    const date = DateUtils.parse(htmlDate);
+    return date ? date.toISOString() : null;
+  }
+
+  // -------------------------------------------------------------------------
+  // Helpers: Error Handling
+  // -------------------------------------------------------------------------
+  private handleSaveError(err: HttpErrorResponse): void {
+    let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
+
+    if (err.error?.errors) {
+      // Validation errors (ASP.NET Core style)
+      const errors = err.error.errors;
+      if (errors.dmThietBi) {
+        errorMessage = `Lỗi API: ${errors.dmThietBi[0]}`;
+      } else {
+        // Find first error key
+        const firstKey = Object.keys(errors)[0];
+        const msg = errors[firstKey][0];
+        
+        if (firstKey.toLowerCase().includes('ngaymua')) {
+          errorMessage = `Ngày Mua: ${msg}`;
+        } else {
+          errorMessage = msg;
+        }
+      }
+    } else if (err.status === 409) {
+      errorMessage = 'Dữ liệu đã bị thay đổi bởi người khác. Vui lòng tải lại trang.';
+    } else if (typeof err.error === 'string') {
+      errorMessage = err.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    console.error('Failed to save device:', err);
+    this.toastService.showError(errorMessage);
   }
 }
