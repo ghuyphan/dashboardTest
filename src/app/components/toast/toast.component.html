@@ -1,14 +1,8 @@
 <ng-container *ngFor="let toast of toasts; let i = index; trackBy: trackByToast">
-  <div
-    class="toast-wrapper"
-    [id]="'toast-' + toast.id"
-    [class.expanded]="isExpanded"
-    (mouseenter)="pauseTimer(toast.id)"
-    (mouseleave)="resumeTimer(toast)"
-    (touchstart)="handleTouchStart($event, toast.id)"
-    (touchmove)="handleTouchMove($event, toast.id)"
-    (touchend)="handleTouchEnd($event, toast)"
-  >
+  <div class="toast-wrapper" [id]="'toast-' + toast.id" [class.expanded]="isExpanded"
+    (mouseenter)="pauseTimer(toast.id)" (mouseleave)="resumeTimer(toast)"
+    (touchstart)="handleTouchStart($event, toast.id)" (touchmove)="handleTouchMove($event, toast.id)"
+    (touchend)="handleTouchEnd($event, toast)">
     <div class="toast" [ngClass]="'toast-' + toast.type">
       <div class="toast-content">
         <div class="toast-icon" [ngClass]="toast.type">
@@ -18,30 +12,19 @@
           <h3 class="toast-title">{{ getTitle(toast.type) }}</h3>
           <p class="toast-message">{{ toast.message }}</p>
         </div>
-        <button
-          class="toast-close"
-          (click)="closeToast(toast.id)"
-          aria-label="Dismiss"
-        >
+        <button class="toast-close" (click)="closeToast(toast.id)" aria-label="Dismiss">
           <i class="fas fa-times"></i>
         </button>
       </div>
     </div>
 
     <div *ngIf="i === 0 && toasts.length > 1" class="toast-actions">
-      <button
-        class="toast-action-btn toast-expand-btn"
-        (click)="toggleExpanded($event)"
-        [attr.aria-label]="isExpanded ? 'Collapse toasts' : 'Expand all toasts'"
-      >
+      <button class="toast-action-btn toast-expand-btn" (click)="toggleExpanded($event)"
+        [attr.aria-label]="isExpanded ? 'Collapse toasts' : 'Expand all toasts'">
         <i [class]="isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
         {{ isExpanded ? 'Thu gọn' : 'Mở tất cả' }} ({{ toasts.length }})
       </button>
-      <button
-        class="toast-action-btn toast-clear-btn"
-        (click)="clearAllToasts($event)"
-        aria-label="Clear all toasts"
-      >
+      <button class="toast-action-btn toast-clear-btn" (click)="clearAllToasts($event)" aria-label="Clear all toasts">
         <i class="fas fa-trash-alt"></i>
         Xóa tất cả
       </button>

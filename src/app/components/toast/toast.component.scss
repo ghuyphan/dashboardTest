@@ -2,10 +2,9 @@
   position: fixed;
   top: var(--spacing-lg);
   right: var(--spacing-lg);
-  /* CHANGED: Flexible width with a sensible max-width */
-  width: auto;
-  max-width: 420px;
-  min-width: 320px; /* Ensure it doesn't get too skinny */
+  /* FIXED WIDTH: consistent look */
+  width: 360px;
+  max-width: calc(100vw - var(--spacing-lg) * 2);
   z-index: 1050;
   display: flex;
   flex-direction: column;
@@ -14,11 +13,11 @@
 }
 
 .toast-wrapper {
-  position: relative; 
-  /* Ensure wrapper fits the content up to the host max-width */
-  width: 100%; 
+  position: relative;
+  width: 100%;
   transition: transform 0.3s var(--transition-smooth),
-    opacity 0.3s var(--transition-smooth);
+    opacity 0.3s var(--transition-smooth),
+    margin-bottom 0.3s var(--transition-smooth);
   will-change: transform, opacity;
   backface-visibility: hidden;
   transform: translateZ(0);
@@ -26,38 +25,58 @@
   margin-bottom: var(--spacing-sm);
   opacity: 1;
 
-  // Collapsed state (when NOT expanded)
+  /* ============================================================
+     STACKED STATE (Optimized Logic)
+     - Uses absolute positioning so tall messages don't push
+       the stack apart.
+     - Handles up to 4 visible items for a deep stack effect.
+     ============================================================ */
   &:not(.expanded) {
     position: absolute;
     margin-bottom: 0;
+    right: 0;
+    top: 0;
 
+    /* 1st Toast (Front) */
     &:nth-child(1) {
       z-index: 100;
       transform: translateY(0) scale(1) translateZ(0);
       opacity: 1;
     }
 
+    /* 2nd Toast */
     &:nth-child(2) {
       z-index: 99;
-      transform: translateY(8px) scale(0.95) translateZ(0);
-      opacity: 0.7;
+      transform: translateY(8px) scale(0.96) translateZ(0);
+      opacity: 0.8;
     }
 
+    /* 3rd Toast */
     &:nth-child(3) {
       z-index: 98;
-      transform: translateY(16px) scale(0.9) translateZ(0);
+      transform: translateY(16px) scale(0.92) translateZ(0);
+      opacity: 0.6;
+    }
+
+    /* 4th Toast */
+    &:nth-child(4) {
+      z-index: 97;
+      transform: translateY(24px) scale(0.88) translateZ(0);
       opacity: 0.4;
     }
 
-    &:nth-child(n + 4) {
-      z-index: 97;
-      transform: translateY(24px) scale(0.85) translateZ(0);
+    /* 5th Toast & Beyond (Hidden) */
+    &:nth-child(n + 5) {
+      z-index: 90;
+      transform: translateY(32px) scale(0.84) translateZ(0);
       opacity: 0;
       pointer-events: none;
     }
   }
 
-  // Expanded state
+  /* ============================================================
+     EXPANDED STATE
+     ============================================================ */
   &.expanded {
     position: relative !important;
     transform: none !important;
@@ -69,19 +88,23 @@
 }
 
 .toast {
-  background: rgba(255, 255, 255, 0.95); /* Slightly increased opacity */
+  /* OLD STYLE: Glassmorphism & Border Radius */
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(15px);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-lg);
   border: var(--border-width) solid rgba(255, 255, 255, 0.4);
   color: var(--gray-800);
-  padding: 16px; /* Slightly more compact padding */
+  padding: 16px; /* Slightly compacted from 20px */
   position: relative;
   z-index: 1;
   backface-visibility: hidden;
   transform: translateZ(0);
   transition: transform 0.3s var(--transition-smooth),
     opacity 0.3s var(--transition-smooth);
+  
+  box-sizing: border-box;
+  width: 100%;
 
   &.swiping {
     transition: none;
@@ -94,19 +117,18 @@
 
 .toast-content {
   display: flex;
-  align-items: flex-start; /* Align to top so icon stays up if text wraps */
+  align-items: center; /* Centered Icon */
   gap: 12px;
 }
 
 .toast-icon {
-  width: 36px; /* Adjusted size */
+  width: 36px; /* Adjusted slightly for compactness */
   height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px; /* Optical alignment with title */
 
   div {
     display: flex;
@@ -130,7 +152,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .toast-title {
@@ -146,30 +168,20 @@
   color: var(--gray-700);
   margin: 0;
   line-height: 1.5;
-  
-  /* Allow text to wrap properly */
   word-wrap: break-word;
   overflow-wrap: break-word;
   
-  /* CHANGED: Increased max-height significantly to allow growth ("overflow down") */
-  max-height: 300px; 
-  width: 100%;
+  /* Height Safety for stack layout */
+  max-height: 120px;
   overflow-y: auto;
-  
-  /* Custom scrollbar if it somehow exceeds 300px */
   scrollbar-width: thin;
-  scrollbar-color: var(--gray-300) transparent;
+  padding-right: 4px;
 
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--gray-300);
-    border-radius: 4px;
-  }
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb { background-color: var(--gray-300); border-radius: 4px; }
 }
 
+/* OLD STYLE: Close Button */
 .toast-close {
   background: none;
   border: none;
@@ -185,10 +197,9 @@
   justify-content: center;
   border-radius: 4px;
   margin-left: 4px;
-  margin-top: -4px; /* Optical alignment to top right */
 
   i {
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1;
   }
 
@@ -198,7 +209,7 @@
   }
 }
 
-// Action buttons container
+/* Action buttons container */
 .toast-actions {
   display: flex;
   gap: 8px;
@@ -207,13 +218,15 @@
   width: 100%;
 }
 
+/* OLD STYLE: Buttons (Glassmorphism) */
 .toast-action-btn {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(15px);
   color: var(--gray-800);
-  border: var(--border-width) solid var(--gray-300);
-  border-radius: var(--border-radius-md);
-  padding: 6px 12px;
+  border: var(--border-width) solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  padding: 6px 12px; /* Slightly more compact padding */
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -228,9 +241,8 @@
 
   &:hover {
     background: rgba(255, 255, 255, 1);
-    border-color: var(--gray-400);
     transform: translateY(-1px);
-    box-shadow: var(--box-shadow-sm);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
@@ -240,16 +252,18 @@
 
 .toast-expand-btn {
   color: var(--color-info);
+  &:hover { color: var(--color-info); }
 }
 
 .toast-clear-btn {
   color: var(--color-danger);
+  &:hover { color: var(--color-danger); }
 }
 
-// Animations
+/* OLD STYLE: Animations */
 @keyframes slideIn {
   from {
-    transform: translateX(20px) translateZ(0);
+    transform: translateX(100%) translateZ(0);
     opacity: 0;
   }
   to {
@@ -269,15 +283,14 @@
   }
 }
 
-// Responsive - Mobile
+/* Responsive - Mobile */
 @media (max-width: 480px) {
   :host {
-    top: var(--spacing-sm);
-    left: var(--spacing-sm);
-    right: var(--spacing-sm);
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    right: var(--spacing-md);
     width: auto;
-    max-width: none;
-    min-width: 0;
+    max-width: 100%;
     align-items: stretch;
   }
 
@@ -289,20 +302,27 @@
     pointer-events: auto !important;
     width: 100%;
 
-    &:nth-child(n + 4) {
-      display: block;
-      opacity: 1;
-      transform: none;
+    /* Disable stacking on mobile */
+    &:not(.expanded) {
+      &:nth-child(n) {
+        z-index: auto;
+        transform: none;
+        opacity: 1;
+      }
+      
+      /* Hide excessive toasts on mobile */
+      &:nth-child(n + 4) {
+        display: none;
+      }
     }
   }
 
   .toast {
     width: 100%;
-    padding: 12px;
-    box-sizing: border-box;
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   .toast-actions {
-    display: none; 
+    display: none; /* Hide actions on mobile */
   }
 }
