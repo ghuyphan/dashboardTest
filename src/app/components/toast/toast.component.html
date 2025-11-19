@@ -3,9 +3,11 @@
     class="toast-wrapper"
     [id]="'toast-' + toast.id"
     [class.expanded]="isExpanded"
+    (mouseenter)="pauseTimer(toast.id)"
+    (mouseleave)="resumeTimer(toast)"
     (touchstart)="handleTouchStart($event, toast.id)"
     (touchmove)="handleTouchMove($event, toast.id)"
-    (touchend)="handleTouchEnd($event, toast.id)"
+    (touchend)="handleTouchEnd($event, toast)"
   >
     <div class="toast" [ngClass]="'toast-' + toast.type">
       <div class="toast-content">
@@ -26,7 +28,6 @@
       </div>
     </div>
 
-    <!-- Action buttons - only show on first toast when multiple toasts exist -->
     <div *ngIf="i === 0 && toasts.length > 1" class="toast-actions">
       <button
         class="toast-action-btn toast-expand-btn"

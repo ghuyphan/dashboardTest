@@ -1,13 +1,19 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './login/login.component';
-import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component'; // Import new layout
 import { authGuard } from './guards/auth.guard';
 import { permissionGuard } from './guards/permission.guard';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
+{
+    path: '',
+    component: AuthLayoutComponent,
+    children: [
+      { path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) },
+      { path: 'forgot-password', loadComponent: () => import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+      { path: '', redirectTo: 'login', pathMatch: 'full' }
+    ]
+  },
 
   {
     path: 'app',

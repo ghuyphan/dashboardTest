@@ -1,56 +1,50 @@
-<div class="login-card">
-  <div class="logo">
-    <img src="HMSG.ico" alt="Logo Bệnh viện Hoàn Mỹ Sài Gòn" class="logo-image">
-    <h2>Hoàn Mỹ Sài Gòn</h2>
-    <p>Cổng thông tin</p>
+<form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+  
+  <div class="auth-input-group">
+    <label for="username">Tên tài khoản</label>
+    <div class="input-wrapper">
+      <input type="text" id="username" name="username" placeholder="ví dụ: tmt010-pxl" 
+             autocomplete="username" required
+             [(ngModel)]="credentials.username" #usernameInput="ngModel"
+             [ngClass]="{ 'is-invalid': usernameInput.invalid && (usernameInput.dirty || usernameInput.touched) }" />
+      <i class="fas fa-user input-icon" aria-hidden="true"></i>
+    </div>
   </div>
 
-  <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-    <div class="input-group">
-      <label for="username">Tên tài khoản</label>
-      <div class="input-wrapper">
-        <input type="text" id="username" name="username" placeholder="ví dụ: tmt010-pxl" 
-               autocomplete="username" required
-               [(ngModel)]="credentials.username" #usernameInput="ngModel"
-               [ngClass]="{ 'is-invalid': usernameInput.invalid && (usernameInput.dirty || usernameInput.touched) }" />
-        <i class="fas fa-user input-icon" aria-hidden="true"></i>
-      </div>
+  <div class="auth-input-group">
+    <label for="password">Mật khẩu</label>
+    <div class="input-wrapper">
+      <input [type]="passwordFieldType" id="password" name="password" placeholder="••••••••"
+             autocomplete="current-password" required 
+             [(ngModel)]="credentials.password" #passwordInput="ngModel"
+             [ngClass]="{ 'is-invalid': passwordInput.invalid && (passwordInput.dirty || passwordInput.touched) }" />
+      <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+      
+      <button type="button" class="toggle-password" (click)="togglePasswordVisibility()" 
+              aria-label="Toggle password visibility">
+        <i class="fas" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+      </button>
     </div>
-
-    <div class="input-group">
-      <label for="password">Mật khẩu</label>
-      <div class="input-wrapper">
-        <input [type]="passwordFieldType" id="password" name="password" placeholder="••••••••"
-               autocomplete="current-password" required 
-               [(ngModel)]="credentials.password" #passwordInput="ngModel"
-               [ngClass]="{ 'is-invalid': passwordInput.invalid && (passwordInput.dirty || passwordInput.touched) }" />
-        <i class="fas fa-lock input-icon" aria-hidden="true"></i>
-        <button type="button" class="toggle-password" (click)="togglePasswordVisibility()" 
-                aria-label="Toggle password visibility">
-          <i class="fas" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="options">
-      <div class="remember">
-        <input type="checkbox" id="remember" name="remember" [(ngModel)]="credentials.remember" />
-        <label for="remember">Ghi nhớ</label>
-      </div>
-      <a routerLink="/forgot-password" class="forgot">Quên mật khẩu?</a>
-    </div>
-
-    <button type="submit" class="btn-login" [disabled]="isLoading || !loginForm.valid">
-      {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
-    </button>
-  </form>
-
-  <div class="divider">Hoặc</div>
-
-  <div class="support">
-    <p>
-      <i class="fas fa-headset" aria-hidden="true"></i> Hotline hỗ trợ:
-      <a href="tel:1108">1108</a> / <a href="tel:1109">1109</a>
-    </p>
   </div>
+
+  <div class="options">
+    <div class="remember">
+      <input type="checkbox" id="remember" name="remember" [(ngModel)]="credentials.remember" />
+      <label for="remember">Ghi nhớ</label>
+    </div>
+    <a routerLink="/forgot-password" class="auth-link">Quên mật khẩu?</a>
+  </div>
+
+  <button type="submit" class="auth-btn" [disabled]="isLoading || !loginForm.valid">
+    {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
+  </button>
+</form>
+
+<div class="divider">Hoặc</div>
+
+<div class="support">
+  <p>
+    <i class="fas fa-headset" aria-hidden="true"></i> Hotline hỗ trợ:
+    <a href="tel:1108">1108</a> / <a href="tel:1109">1109</a>
+  </p>
 </div>

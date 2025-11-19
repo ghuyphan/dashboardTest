@@ -66,15 +66,7 @@ export class ToastComponent implements OnInit, OnDestroy {
               setTimeout(() => wrapper.classList.remove('new'), 250);
             }
 
-            // Use default duration if not specified
-            const duration = toast.duration ?? this.DEFAULT_DURATION;
-            if (duration > 0) {
-              const timer = setTimeout(() => {
-                this.closeToast(toast.id);
-                this.activeTimers.delete(toast.id);
-              }, duration);
-              this.activeTimers.set(toast.id, timer);
-            }
+            this.startTimer(toast);
           });
         }, 0);
       }
@@ -85,16 +77,40 @@ export class ToastComponent implements OnInit, OnDestroy {
     if (this.toastSub) {
       this.toastSub.unsubscribe();
     }
-    this.activeTimers.forEach((timer) => clearTimeout(timer));
-    this.activeTimers.clear();
+    this.clearAllTimers();
   }
 
-  closeToast(id: number): void {
-    // Clear timer if exists
+  // --- Timer Logic for Pause on Hover ---
+
+  startTimer(toast: ToastMessage): void {
+    const duration = toast.duration ?? this.DEFAULT_DURATION;
+    if (duration > 0 && !this.activeTimers.has(toast.id)) {
+      const timer = setTimeout(() => {
+        this.closeToast(toast.id);
+      }, duration);
+      this.activeTimers.set(toast.id, timer);
+    }
+  }
+
+  pauseTimer(id: number): void {
     if (this.activeTimers.has(id)) {
       clearTimeout(this.activeTimers.get(id));
       this.activeTimers.delete(id);
     }
+  }
+
+  resumeTimer(toast: ToastMessage): void {
+    // Only resume if the toast actually still exists in our list
+    if (this.toasts.find(t => t.id === toast.id)) {
+      this.startTimer(toast);
+    }
+  }
+
+  // ---------------------------------------
+
+  closeToast(id: number): void {
+    // Clear timer if exists
+    this.pauseTimer(id);
 
     const wrapper = document.getElementById('toast-' + id);
     const toast = wrapper?.querySelector('.toast');
@@ -121,15 +137,18 @@ export class ToastComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Clear all timers
-    this.activeTimers.forEach((timer) => clearTimeout(timer));
-    this.activeTimers.clear();
+    this.clearAllTimers();
 
     // Remove all toasts after animation
     setTimeout(() => {
       this.toastService.clearAll();
       this.isExpanded = false;
     }, 250);
+  }
+
+  private clearAllTimers(): void {
+    this.activeTimers.forEach((timer) => clearTimeout(timer));
+    this.activeTimers.clear();
   }
 
   toggleExpanded(event: MouseEvent): void {
@@ -169,6 +188,9 @@ export class ToastComponent implements OnInit, OnDestroy {
   handleTouchStart(event: TouchEvent, toastId: number): void {
     if (event.touches.length !== 1) return;
 
+    // Pause timer on touch interaction too
+    this.pauseTimer(toastId);
+
     this.touchStartX = event.touches[0].clientX;
     this.touchMoveX = this.touchStartX;
     this.swipingToastId = toastId;
@@ -204,23 +226,27 @@ export class ToastComponent implements OnInit, OnDestroy {
     }
   }
 
-  handleTouchEnd(event: TouchEvent, toastId: number): void {
-    if (this.swipingToastId !== toastId || !this.swipedElement) return;
+  handleTouchEnd(event: TouchEvent, toast: ToastMessage): void {
+    if (this.swipingToastId !== toast.id || !this.swipedElement) return;
 
     this.swipedElement.classList.remove('swiping');
     const deltaX = this.touchMoveX - this.touchStartX;
     const dismissThreshold =
       this.swipedElement.offsetWidth * this.SWIPE_DISMISS_THRESHOLD_PERCENT;
 
-    this.swipedElement.style.transform = '';
-    this.swipedElement.style.opacity = '';
-
     if (deltaX > dismissThreshold) {
       this.swipedElement.classList.add('dismissing');
+      this.swipedElement.style.transform = '';
+      this.swipedElement.style.opacity = '';
       setTimeout(() => {
-        this.toastService.removeToast(toastId);
+        this.toastService.removeToast(toast.id);
         this.cdRef.markForCheck();
       }, 250);
+    } else {
+      // Reset position and resume timer if not dismissed
+      this.swipedElement.style.transform = '';
+      this.swipedElement.style.opacity = '';
+      this.resumeTimer(toast);
     }
 
     this.touchStartX = 0;

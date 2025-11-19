@@ -2,8 +2,10 @@
   position: fixed;
   top: var(--spacing-lg);
   right: var(--spacing-lg);
-  width: 380px;
-  max-width: calc(100vw - var(--spacing-lg) * 2);
+  /* CHANGED: Flexible width with a sensible max-width */
+  width: auto;
+  max-width: 420px;
+  min-width: 320px; /* Ensure it doesn't get too skinny */
   z-index: 1050;
   display: flex;
   flex-direction: column;
@@ -12,14 +14,16 @@
 }
 
 .toast-wrapper {
-  position: relative; // Changed from absolute to relative for expanded default
+  position: relative; 
+  /* Ensure wrapper fits the content up to the host max-width */
+  width: 100%; 
   transition: transform 0.3s var(--transition-smooth),
     opacity 0.3s var(--transition-smooth);
   will-change: transform, opacity;
   backface-visibility: hidden;
   transform: translateZ(0);
   pointer-events: auto;
-  margin-bottom: var(--spacing-sm); // Add spacing between toasts
+  margin-bottom: var(--spacing-sm);
   opacity: 1;
 
   // Collapsed state (when NOT expanded)
@@ -53,7 +57,7 @@
     }
   }
 
-  // Expanded state - show all toasts in a vertical list (default)
+  // Expanded state
   &.expanded {
     position: relative !important;
     transform: none !important;
@@ -65,13 +69,13 @@
 }
 
 .toast {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95); /* Slightly increased opacity */
   backdrop-filter: blur(15px);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-lg);
   border: var(--border-width) solid rgba(255, 255, 255, 0.4);
   color: var(--gray-800);
-  padding: 20px;
+  padding: 16px; /* Slightly more compact padding */
   position: relative;
   z-index: 1;
   backface-visibility: hidden;
@@ -79,7 +83,6 @@
   transition: transform 0.3s var(--transition-smooth),
     opacity 0.3s var(--transition-smooth);
 
-  // Disable transitions while swiping
   &.swiping {
     transition: none;
   }
@@ -91,18 +94,19 @@
 
 .toast-content {
   display: flex;
-  align-items: center; // Changed from flex-start to center
+  align-items: flex-start; /* Align to top so icon stays up if text wraps */
   gap: 12px;
 }
 
 .toast-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px; /* Adjusted size */
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 2px; /* Optical alignment with title */
 
   div {
     display: flex;
@@ -110,38 +114,30 @@
     justify-content: center;
 
     ::ng-deep i {
-      font-size: 20px;
+      font-size: 18px;
       color: white;
     }
   }
 
-  &.success {
-    background: var(--color-success);
-  }
-
-  &.error {
-    background: var(--color-danger);
-  }
-
-  &.warning {
-    background: var(--color-warning);
-  }
-
-  &.info {
-    background: var(--color-info);
-  }
+  &.success { background: var(--color-success); }
+  &.error { background: var(--color-danger); }
+  &.warning { background: var(--color-warning); }
+  &.info { background: var(--color-info); }
 }
 
 .toast-text {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .toast-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--gray-900);
-  margin: 0 0 4px 0;
+  margin: 0;
   line-height: 1.3;
 }
 
@@ -150,12 +146,17 @@
   color: var(--gray-700);
   margin: 0;
   line-height: 1.5;
+  
+  /* Allow text to wrap properly */
   word-wrap: break-word;
   overflow-wrap: break-word;
-  max-height: 100px;
-  max-width: 100%;
+  
+  /* CHANGED: Increased max-height significantly to allow growth ("overflow down") */
+  max-height: 300px; 
+  width: 100%;
   overflow-y: auto;
-  padding-right: 4px;
+  
+  /* Custom scrollbar if it somehow exceeds 300px */
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) transparent;
 
@@ -183,9 +184,11 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
+  margin-left: 4px;
+  margin-top: -4px; /* Optical alignment to top right */
 
   i {
-    font-size: 16px;
+    font-size: 14px;
     line-height: 1;
   }
 
@@ -199,19 +202,19 @@
 .toast-actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 12px;
   justify-content: flex-end;
+  width: 100%;
 }
 
 .toast-action-btn {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   color: var(--gray-800);
-  border: var(--border-width) solid rgba(255, 255, 255, 0.4);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-lg);
-  padding: 8px 14px;
-  font-size: 13px;
+  border: var(--border-width) solid var(--gray-300);
+  border-radius: var(--border-radius-md);
+  padding: 6px 12px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -220,13 +223,14 @@
   transition: all 0.2s ease;
 
   i {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   &:hover {
     background: rgba(255, 255, 255, 1);
+    border-color: var(--gray-400);
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--box-shadow-sm);
   }
 
   &:active {
@@ -236,26 +240,16 @@
 
 .toast-expand-btn {
   color: var(--color-info);
-
-  &:hover {
-    color: var(--color-info);
-    background: rgba(255, 255, 255, 1);
-  }
 }
 
 .toast-clear-btn {
   color: var(--color-danger);
-
-  &:hover {
-    color: var(--color-danger);
-    background: rgba(255, 255, 255, 1);
-  }
 }
 
 // Animations
 @keyframes slideIn {
   from {
-    transform: translateX(100%) translateZ(0);
+    transform: translateX(20px) translateZ(0);
     opacity: 0;
   }
   to {
@@ -278,11 +272,12 @@
 // Responsive - Mobile
 @media (max-width: 480px) {
   :host {
-    top: var(--spacing-md);
-    left: var(--spacing-md);
-    right: var(--spacing-md);
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+    right: var(--spacing-sm);
     width: auto;
-    max-width: 100%;
+    max-width: none;
+    min-width: 0;
     align-items: stretch;
   }
 
@@ -292,6 +287,7 @@
     opacity: 1 !important;
     margin-bottom: var(--spacing-sm);
     pointer-events: auto !important;
+    width: 100%;
 
     &:nth-child(n + 4) {
       display: block;
@@ -302,18 +298,11 @@
 
   .toast {
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-
-  .toast-title {
-    font-size: 15px;
-  }
-
-  .toast-message {
-    font-size: 14px;
+    padding: 12px;
+    box-sizing: border-box;
   }
 
   .toast-actions {
-    display: none; // Hide action buttons on mobile
+    display: none; 
   }
 }

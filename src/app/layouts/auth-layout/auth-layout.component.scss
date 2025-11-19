@@ -1,0 +1,109 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  width: 100vw;
+  overflow-y: auto;
+  
+  background-image: url('/assets/images/HMSG.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(5px);
+    z-index: 0;
+  }
+}
+
+.auth-container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-lg);
+}
+
+.auth-card-wrapper {
+  /* --- 1. ANIMATION FIX --- */
+  /* This name tells the browser to morph this specific element during navigation */
+  view-transition-name: auth-card; 
+  
+  width: 100%;
+  max-width: 420px;
+  
+  /* Glassmorphism */
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  padding: clamp(24px, 5vw, 40px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: clamp(24px, 4vw, 32px);
+
+  .logo-image {
+    width: clamp(60px, 15vw, 80px);
+    height: clamp(60px, 15vw, 80px);
+    object-fit: contain;
+    margin-bottom: clamp(16px, 4vw, 24px);
+  }
+
+  h2 {
+    font-weight: 700;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    margin-bottom: 8px;
+    line-height: 1.2;
+    color: var(--peacock-blue);
+    margin-top: 0;
+  }
+
+  p {
+    font-size: clamp(0.875rem, 3.5vw, 15px);
+    color: var(--gray-600);
+    margin: 0;
+  }
+}
+
+/* --- 2. FULLSCREEN FIX --- */
+/* Changed from 768px to 992px to cover Tablets and Small Laptops */
+@media (max-width: 992px) {
+  :host {
+    background: var(--white); /* Remove image on mobile/tablet */
+  }
+  :host::before { display: none; }
+
+  .auth-container {
+    padding: 0;
+    align-items: flex-start; /* Align to top */
+    height: 100%;
+    min-height: 100vh;
+  }
+
+  .auth-card-wrapper {
+    max-width: none;
+    min-height: 100vh; /* Force full height */
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    backdrop-filter: none;
+    
+    /* Center content vertically in full screen mode */
+    justify-content: center; 
+    padding: clamp(20px, 5vw, 32px);
+  }
+}

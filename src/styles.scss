@@ -640,3 +640,104 @@ body > ul.submenu.open {
   50% { opacity: 1; }
   100% { opacity: 0.6; }
 }
+
+// Shared Input Group Styles
+.auth-input-group {
+  margin-bottom: clamp(16px, 4vw, 1.5rem); // var(--spacing-lg)
+
+  label {
+    display: block;
+    font-size: clamp(0.875rem, 3.5vw, 15px);
+    font-weight: 600;
+    margin-bottom: clamp(6px, 2vw, 0.5rem); // var(--spacing-sm)
+    color: var(--gray-700);
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  input {
+    width: 100%;
+    padding: clamp(12px, 3vw, 1rem) clamp(40px, 10vw, 3rem);
+    border: 1px solid var(--gray-300);
+    border-radius: clamp(10px, 3vw, 14px);
+    font-size: clamp(0.875rem, 3.5vw, 1rem);
+    background: rgba(248, 250, 252, 0.75);
+    transition: all 0.3s ease;
+    outline: none;
+    box-sizing: border-box;
+    min-height: 44px;
+
+    &:focus {
+      border-color: var(--teal-blue);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
+
+      ~.input-icon {
+        color: var(--teal-blue);
+      }
+    }
+
+    &.is-invalid {
+      border-color: var(--color-danger);
+      &:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); }
+    }
+  }
+
+  .input-icon {
+    position: absolute;
+    left: clamp(12px, 3vw, 1rem);
+    color: var(--gray-300);
+    font-size: clamp(16px, 4vw, 18px);
+    transition: color 0.25s ease;
+    pointer-events: none;
+  }
+
+  .invalid-feedback {
+    color: var(--color-danger);
+    font-size: clamp(0.75rem, 3vw, 0.875rem);
+    margin-top: clamp(2px, 1vw, 0.25rem);
+  }
+}
+
+// Shared Button Styles
+.auth-btn {
+  width: 100%;
+  padding: clamp(14px, 4vw, 16px) 1rem;
+  background: var(--teal-blue);
+  color: var(--white);
+  border: none;
+  border-radius: clamp(8px, 2.5vw, 12px);
+  font-size: clamp(0.9375rem, 4vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 44px;
+
+  &:hover:not(:disabled) {
+    background: #145248; // Darker teal
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// Links
+.auth-link {
+  color: var(--teal-blue);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+  &:hover {
+    color: var(--peacock-blue);
+    text-decoration: underline;
+  }
+}
+

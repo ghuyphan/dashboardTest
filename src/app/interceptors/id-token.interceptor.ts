@@ -1,89 +1,81 @@
+import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import {
-  HttpInterceptorFn,
-  HttpRequest,
-  HttpHandlerFn,
-  HttpEvent,
-} from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment.development';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../environments/environment';
 
-/**
- * Interceptor that appends user's id_token and id_user to POST, PUT, and DELETE requests.
- * 
- * SPECIAL BEHAVIOR FOR PUT & DELETE to equipment endpoints with an ID:
- * - Original: 'api/DMMay/123' 
- * - Modified: 'api/DMMay/[id_token]/[id_user]/123'
- * 
- * STANDARD BEHAVIOR FOR ALL OTHER MATCHING REQUESTS:
- * - Original: 'api/DMMay' (POST) 
- * - Modified: 'api/DMMay/[id_token]/[id_user]'
- */
 export const idTokenInterceptor: HttpInterceptorFn = (
-  request: HttpRequest<unknown>,
+  req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
   const loginUrl = environment.authUrl;
+  const equipmentCatUrl = environment.equipmentCatUrl;
+  
+  const targetMethods = ['POST', 'PUT', 'DELETE'];
 
-  // Check if the request method is one we need to modify
-  const isTargetMethod = ['POST', 'PUT', 'DELETE'].includes(
-    request.method.toUpperCase()
-  );
-
-  // Skip processing if not a target method or if it's a login request
-  if (!isTargetMethod || request.url.includes(loginUrl)) {
-    return next(request);
+  // Skip if not a target method or if it's a login request
+  if (!targetMethods.includes(req.method.toUpperCase()) || req.url.includes(loginUrl)) {
+    return next(req);
   }
 
-  // Retrieve required authentication tokens
   const idToken = authService.getIdToken();
   const userId = authService.getUserId();
 
-  if (idToken && userId) {
-    // URL-encode tokens to ensure they're safe for use in URL paths
-    const encodedIdToken = encodeURIComponent(idToken);
-    const encodedUserId = encodeURIComponent(userId);
-
-    // Get the equipment API base URL for special handling
-    const equipmentCatUrl = environment.equipmentCatUrl;
-    let newUrl: string;
-
-    // Split URL to separate base path from query parameters
-    const [baseUrlWithParams, ...queryParts] = request.url.split('?');
-    const queryString = queryParts.join('?');
-
-    // Handle special case for PUT/DELETE requests to equipment endpoints with IDs
-    const method = request.method.toUpperCase();
-    if (
-      (method === 'PUT' || method === 'DELETE') &&
-      baseUrlWithParams.startsWith(equipmentCatUrl + '/')
-    ) {
-      // Extract base URL and entity ID for special URL format
-      // Format: base_url/[token]/[user]/[entity_id]
-      const baseUrl = equipmentCatUrl;
-      const entityId = baseUrlWithParams.substring(equipmentCatUrl.length + 1);
-
-      newUrl = queryString
-        ? `${baseUrl}/${encodedIdToken}/${encodedUserId}/${entityId}?${queryString}`
-        : `${baseUrl}/${encodedIdToken}/${encodedUserId}/${entityId}`;
-    } else {
-      // Standard case: append tokens to the end of the URL
-      // Format: original_url/[token]/[user]
-      newUrl = queryString
-        ? `${baseUrlWithParams}/${encodedIdToken}/${encodedUserId}?${queryString}`
-        : `${request.url}/${encodedIdToken}/${encodedUserId}`;
-    }
-
-    // Clone the request with the modified URL
-    const clonedRequest = request.clone({
-      url: newUrl,
-    });
-
-    return next(clonedRequest);
+  // If tokens are missing, force logout (or handle gracefully)
+  if (!idToken || !userId) {
+    authService.logout();
+    return next(req);
   }
+
+  const newUrl = buildAuthenticatedUrl(req.url, req.method, idToken, userId, equipmentCatUrl);
   
-  authService.logout();
-  return next(request);
+  const clonedRequest = req.clone({ url: newUrl });
+  return next(clonedRequest);
 };
+
+/**
+ * Helper to construct the API URL with embedded tokens.
+ * Scenario A (PUT/DELETE on Equipment w/ ID): `api/DMMay/123` -> `api/DMMay/[token]/[user]/123`
+ * Scenario B (Standard): `api/DMMay` -> `api/DMMay/[token]/[user]`
+ */
+function buildAuthenticatedUrl(
+  originalUrl: string,
+  method: string,
+  token: string,
+  userId: string,
+  equipmentBaseUrl: string
+): string {
+  // Encode tokens to ensure URL safety
+  const encToken = encodeURIComponent(token);
+  const encUser = encodeURIComponent(userId);
+
+  // Separate URL from Query Params
+  const [urlPath, queryString] = originalUrl.split('?');
+  const methodUpper = method.toUpperCase();
+
+  // Check for Scenario A: PUT/DELETE with an ID at the end of the equipment URL
+  // We assume the URL starts with the equipmentBaseUrl and has an ID after it.
+  const isEquipmentRequest = urlPath.startsWith(equipmentBaseUrl);
+  const isModification = methodUpper === 'PUT' || methodUpper === 'DELETE';
+
+  let newPath: string;
+
+  if (isModification && isEquipmentRequest && urlPath.length > equipmentBaseUrl.length) {
+    // Extract the ID (everything after the base URL)
+    // e.g. ".../api/DMMay/123" -> idPart = "/123"
+    const idPart = urlPath.substring(equipmentBaseUrl.length);
+    
+    // Insert tokens BEFORE the ID
+    // Result: ".../api/DMMay/[token]/[user]/123"
+    // Note: We remove the leading slash from idPart if needed to avoid double slashes, 
+    // or ensure the base url doesn't end in one. Assuming standard formatting here:
+    newPath = `${equipmentBaseUrl}/${encToken}/${encUser}${idPart}`;
+  } else {
+    // Scenario B: Append tokens to the end
+    newPath = `${urlPath}/${encToken}/${encUser}`;
+  }
+
+  // Re-attach query parameters if they existed
+  return queryString ? `${newPath}?${queryString}` : newPath;
+}

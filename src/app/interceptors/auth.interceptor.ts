@@ -1,50 +1,36 @@
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { AuthService } from '../services/auth.service';
+import { catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment.development';
-import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
-/**
- * HTTP Interceptor that:
- * 1. Automatically attaches authentication tokens to outgoing requests.
- * 2. Catches 401 Unauthorized errors (token expired) and redirects to login.
- */
-export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  
-  // Inject services
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const loginUrl = environment.authUrl;
 
-  // Skip token attachment and error handling for login requests 
-  // (The login component handles its own 401/errors)
-  if (request.url.includes(loginUrl)) {
-    return next(request);
+  // Skip if it's a login request
+  if (req.url.includes(loginUrl)) {
+    return next(req);
   }
 
-  // Retrieve the current access token
   const token = authService.getAccessToken();
-  let authReq = request;
+  let authReq = req;
 
-  // If a token exists, clone the request and attach the Authorization header
-  if (token) {
-    authReq = request.clone({
+  // Attach token if available and header is not already set
+  if (token && !req.headers.has('Authorization')) {
+    authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
       }
     });
   }
 
-  // Proceed with request, but pipe the response to catch errors
   return next(authReq).pipe(
-    catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        // Token has expired or is invalid.
-        // Perform cleanup and redirect to login page.
+    catchError((error: unknown) => {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        // Token expired or invalid
         authService.logout();
       }
-      
-      // Re-throw the error so specific components can still handle it if needed
       return throwError(() => error);
     })
   );
