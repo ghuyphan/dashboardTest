@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { DropdownDataService, DropdownOption } from '../../services/dropdown-data.service';
 import { environment } from '../../../environments/environment.development';
-import { DateUtils } from '../../utils/date.utils'; // Import DateUtils
+import { DateUtils } from '../../utils/date.utils'; 
 
 // Components
 import { DynamicFormComponent } from '../../components/dynamic-form/dynamic-form.component';
@@ -26,50 +26,33 @@ import { ConfirmationModalComponent } from '../../components/confirmation-modal/
   styleUrl: './device-form.component.scss',
 })
 export class DeviceFormComponent implements OnInit {
-  // -------------------------------------------------------------------------
-  // Inputs & ViewChildren
-  // -------------------------------------------------------------------------
+  // ... (Inputs/Dependencies remain the same)
   @Input() device: Device | null = null;
   @Input() title: string = 'Biểu Mẫu Thiết Bị';
 
   @ViewChild(DynamicFormComponent)
   private dynamicForm!: DynamicFormComponent;
 
-  // -------------------------------------------------------------------------
-  // Dependencies (Modern inject() pattern)
-  // -------------------------------------------------------------------------
   private readonly modalService = inject(ModalService);
   private readonly http = inject(HttpClient);
   private readonly dropdownService = inject(DropdownDataService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
 
-  // -------------------------------------------------------------------------
-  // State
-  // -------------------------------------------------------------------------
   public modalRef?: ModalRef;
-  public formConfig: any | null = null; // Consider creating an interface for FormConfig
+  public formConfig: any | null = null;
   public isFormLoading = true;
   public isSaving = false;
 
-  // -------------------------------------------------------------------------
-  // Lifecycle
-  // -------------------------------------------------------------------------
   ngOnInit(): void {
     this.initializeFormData();
     this.setupModalCloseGuard();
   }
 
-  // -------------------------------------------------------------------------
-  // Initialization Logic
-  // -------------------------------------------------------------------------
   private initializeFormData(): void {
     this.isFormLoading = true;
-
-    // 1. Prepare Device Data Stream
     const deviceData$ = this.getDeviceDataStream();
 
-    // 2. Load all dependencies in parallel
     forkJoin({
       deviceTypes: this.dropdownService.getDeviceTypes(),
       deviceStatuses: this.dropdownService.getDeviceStatuses(),
@@ -92,7 +75,6 @@ export class DeviceFormComponent implements OnInit {
     if (this.device?.Id) {
       const url = `${environment.equipmentCatUrl}/${this.device.Id}`;
       return this.http.get<Device[]>(url).pipe(
-        // API returns an array, we need the first item
         map((dataArray) => (dataArray?.length ? dataArray[0] : null))
       );
     }
@@ -114,17 +96,11 @@ export class DeviceFormComponent implements OnInit {
     deviceData: Device | null
   ): void {
     const isEditMode = !!deviceData;
-    const data: Partial<Device> = deviceData || {};
+    const data: any = deviceData || {}; 
 
-    // REFACTOR: Force null for new items, strictly use existing ID for edit.
-    // We removed the logic that looked for "Sẵn sàng".
-    const trangThaiValue = isEditMode && data.TrangThai_Id !== undefined
-      ? data.TrangThai_Id
-      : null; 
-
-    const categoryIdValue = data.LoaiThietBi_Id
-      ? Number(data.LoaiThietBi_Id)
-      : null;
+    // Handle API property name mismatches
+    const trangThaiValue = data.TrangThai_Id ?? data.TrangThai ?? null;
+    const categoryIdValue = data.LoaiThietBi_Id ?? data.CategoryID ?? null;
 
     this.formConfig = {
       entityId: isEditMode ? data.Id : null,
@@ -147,16 +123,18 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Tên thiết bị',
               value: data.Ten || '',
-              validators: { required: true, maxLength: 100 },
+              // MUST HAVE: Name is essential
+              validators: { required: true, maxLength: 100, minLength: 3 },
               validationMessages: {
                 required: 'Tên là bắt buộc.',
                 maxLength: 'Tên không được vượt quá 100 ký tự.',
+                minLength: 'Tên phải ít nhất 3 ký tự' 
               },
               layout_flexGrow: 1,
             },
           ],
         },
-        // Row 2: Model & Serial
+        // Row 2: Model & Serial (UPDATED: Made Required)
         {
           controls: [
             {
@@ -164,8 +142,13 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Model',
               value: data.Model || '',
-              validators: { maxLength: 50 },
-              validationMessages: { maxLength: 'Model không được vượt quá 50 ký tự.' },
+              // RECOMMENDATION: Required for identifying specs
+              validators: { required: true, maxLength: 50, minLength: 2 },
+              validationMessages: { 
+                required: 'Model là bắt buộc.',
+                maxLength: 'Model không được vượt quá 50 ký tự.',
+                minLength: 'Model quá ngắn.'
+              },
               layout_flexGrow: 1,
             },
             {
@@ -173,8 +156,13 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Số Serial',
               value: data.SerialNumber || '',
-              validators: { maxLength: 50 },
-              validationMessages: { maxLength: 'Số Serial không được vượt quá 50 ký tự.' },
+              // RECOMMENDATION: Required for unique identification
+              validators: { required: true, maxLength: 50, minLength: 3 },
+              validationMessages: { 
+                required: 'Số Serial là bắt buộc.',
+                maxLength: 'Số Serial không được vượt quá 50 ký tự.',
+                minLength: 'Serial quá ngắn.'
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -186,7 +174,8 @@ export class DeviceFormComponent implements OnInit {
               controlName: 'CategoryID',
               controlType: 'dropdown',
               label: 'Loại thiết bị',
-              value: categoryIdValue,
+              value: categoryIdValue ? Number(categoryIdValue) : null,
+              // MUST HAVE
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn loại thiết bị.' },
               options: deviceTypes,
@@ -196,7 +185,8 @@ export class DeviceFormComponent implements OnInit {
               controlName: 'TrangThai',
               controlType: 'dropdown',
               label: 'Trạng thái',
-              value: trangThaiValue, // Will be null if new
+              value: trangThaiValue ? Number(trangThaiValue) : null,
+              // MUST HAVE
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn trạng thái.' },
               options: deviceStatuses,
@@ -236,6 +226,7 @@ export class DeviceFormComponent implements OnInit {
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
               value: this.toHtmlDate(data.NgayMua),
+              // Optional, but you might want to make it required if warranty logic depends on it
               layout_flexGrow: 1,
             },
             {
@@ -251,8 +242,11 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'currency',
               label: 'Giá mua (VND)',
               value: data.GiaMua || null,
-              validators: { max: 10000000000 },
-              validationMessages: { max: 'Giá mua không hợp lệ (tối đa 10 tỷ).' },
+              validators: { max: 10000000000, min: 0 },
+              validationMessages: { 
+                max: 'Giá mua không hợp lệ (tối đa 10 tỷ).',
+                min: 'Giá mua không được âm.'
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -276,11 +270,10 @@ export class DeviceFormComponent implements OnInit {
   }
 
   // -------------------------------------------------------------------------
-  // Action Handlers
+  // Action Handlers & Helpers (No changes needed below)
   // -------------------------------------------------------------------------
   public onSave(formData: any): void {
     this.isSaving = true;
-    
     const currentUserId = this.authService.getUserId();
     if (!currentUserId) {
       this.toastService.showError('Lỗi xác thực: Vui lòng đăng nhập lại.');
@@ -291,14 +284,10 @@ export class DeviceFormComponent implements OnInit {
     const payload = this.createSavePayload(formData, currentUserId);
     const request$ = this.getSaveRequest(payload);
 
-    request$.pipe(
-      finalize(() => this.isSaving = false)
-    ).subscribe({
+    request$.pipe(finalize(() => this.isSaving = false)).subscribe({
       next: (response: any) => {
         const msg = response.TenKetQua || 'Lưu thành công!';
         this.toastService.showSuccess(msg);
-        
-        // Allow closing without warning since we saved
         if (this.modalRef) this.modalRef.canClose = () => true;
         this.modalRef?.close(response);
       },
@@ -312,10 +301,8 @@ export class DeviceFormComponent implements OnInit {
 
   private canDeactivate(): Observable<boolean> {
     const isDirty = this.dynamicForm?.dynamicForm?.dirty ?? false;
-
     if (!isDirty && !this.isSaving) return of(true);
     if (this.isSaving) return of(false);
-
     return this.modalService.open(ConfirmationModalComponent, {
       title: 'Thay đổi chưa lưu',
       disableBackdropClose: true,
@@ -330,20 +317,11 @@ export class DeviceFormComponent implements OnInit {
     }).pipe(switchMap((res) => of(!!res)));
   }
 
-  // -------------------------------------------------------------------------
-  // Helpers: Payload Construction & API
-  // -------------------------------------------------------------------------
   private createSavePayload(formData: any, userId: string): any {
-    // Using DateUtils for API date formatting logic if needed, 
-    // but since formData from dynamic form is likely YYYY-MM-DD string from input[type=date],
-    // we need to convert it to ISO string for API.
-    // If your DateUtils has a specific method for this, you can use it.
-    // Otherwise, stick with toApiDate or similar logic.
     const apiNgayMua = this.toApiDate(formData.NgayMua);
     const apiNgayHetHanBH = this.toApiDate(formData.NgayHetHanBH);
 
     return {
-      // Common fields
       Id: this.formConfig.entityId || 0,
       Ma: formData.Ma || null,
       Ten: formData.Ten,
@@ -364,57 +342,42 @@ export class DeviceFormComponent implements OnInit {
   private getSaveRequest(payload: any): Observable<any> {
     const apiUrl = this.formConfig.saveUrl;
     const id = this.formConfig.entityId;
-
-    if (id) {
-      return this.http.put(`${apiUrl}/${id}`, payload);
-    } else {
-      return this.http.post(apiUrl, payload);
-    }
+    return id ? this.http.put(`${apiUrl}/${id}`, payload) : this.http.post(apiUrl, payload);
   }
 
-  // -------------------------------------------------------------------------
-  // Helpers: Date Conversion
-  // -------------------------------------------------------------------------
   private toHtmlDate(dateStr: string | null | undefined): string {
     if (!dateStr || dateStr === '0001-01-01T00:00:00') return '';
-    
-    // Use DateUtils to parse the date string first to ensure valid date object
     const date = DateUtils.parse(dateStr);
-    
     if (date) {
-        // Convert Date object to YYYY-MM-DD string for input[type="date"]
         const year = date.getFullYear();
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const day = date.getDate().toString().padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
-    
     return '';
   }
 
   private toApiDate(htmlDate: string): string | null {
     if (!htmlDate) return null;
-    // DateUtils.parse handles various formats, including YYYY-MM-DD
     const date = DateUtils.parse(htmlDate);
-    return date ? date.toISOString() : null;
+    if (date) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    return null;
   }
 
-  // -------------------------------------------------------------------------
-  // Helpers: Error Handling
-  // -------------------------------------------------------------------------
   private handleSaveError(err: HttpErrorResponse): void {
     let errorMessage = 'Lưu thất bại! Đã có lỗi xảy ra.';
-
     if (err.error?.errors) {
-      // Validation errors (ASP.NET Core style)
       const errors = err.error.errors;
       if (errors.dmThietBi) {
         errorMessage = `Lỗi API: ${errors.dmThietBi[0]}`;
       } else {
-        // Find first error key
         const firstKey = Object.keys(errors)[0];
         const msg = errors[firstKey][0];
-        
         if (firstKey.toLowerCase().includes('ngaymua')) {
           errorMessage = `Ngày Mua: ${msg}`;
         } else {
@@ -428,7 +391,6 @@ export class DeviceFormComponent implements OnInit {
     } else if (err.message) {
       errorMessage = err.message;
     }
-
     console.error('Failed to save device:', err);
     this.toastService.showError(errorMessage);
   }

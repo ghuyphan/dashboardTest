@@ -2,11 +2,15 @@
   <div class="card-header">
     <h3 class="card-title">
       <span class="title-text">
-        <i *ngIf="icon" [class]="icon" [ngClass]="iconClass"></i>
-        {{ title }}
+        @if (icon()) {
+          <i [class]="icon()" [ngClass]="iconClass()"></i>
+        }
+        {{ title() }}
       </span>
       
-      <span class="card-subtitle" *ngIf="subtitle">{{ subtitle }}</span>
+      @if (subtitle()) {
+        <span class="card-subtitle">{{ subtitle() }}</span>
+      }
       
       <div class="header-controls">
         <ng-content select="[header-actions]"></ng-content>
@@ -15,20 +19,23 @@
   </div>
 
   <div class="card-body">
-    <div *ngIf="isLoading" class="skeleton-rect"></div>
+    @if (isLoading()) {
+      <div class="skeleton-rect"></div>
+    }
 
     <div 
       #chartContainer 
       class="chart-container"
-      [class.hidden]="isLoading || !chartOptions">
+      [class.hidden]="!showChart()">
     </div>
     
-    <div *ngIf="!isLoading && !chartOptions" class="no-data-container">
-      <div class="no-data-icon-wrapper">
-        <i [class]="emptyIcon"></i>
+    @if (showEmptyState()) {
+      <div class="no-data-container">
+        <div class="no-data-icon-wrapper">
+          <i [class]="emptyIcon()"></i>
+        </div>
+        <span class="no-data-text">{{ emptyText() }}</span>
       </div>
-      <span class="no-data-text">{{ emptyText }}</span>
-    </div>
-
+    }
   </div>
 </div>

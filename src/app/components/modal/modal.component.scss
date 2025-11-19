@@ -7,14 +7,15 @@
   flex-direction: column;
   box-sizing: border-box;
   margin: auto;
-  background: rgba(255, 255, 255, 1); 
-  /* backdrop-filter: blur(12px); */ /* Optionally re-enable if needed later */
-  /* -webkit-backdrop-filter: blur(12px); */
+  background: var(--white);
   
-  /* border: 1px solid rgba(255, 255, 255, 0.8); */
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 
-              0 0 0 1px rgba(0, 0, 0, 0.05);
+  /* Use global variable for consistency (12px) instead of hardcoded 16px */
+  border-radius: var(--border-radius-lg);
+  
+  /* Consistent depth */
+  box-shadow: var(--box-shadow-lg);
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Subtle border for definition */
+  
   color: var(--gray-800);
   
   position: relative;
@@ -23,8 +24,10 @@
   /* Responsive Sizing */
   width: clamp(300px, 90vw, 600px); 
   max-height: 85vh;
-  animation: modalFadeIn 0.2s ease-out forwards;
-  will-change: opacity; 
+  
+  /* Smoother animation */
+  animation: modalFadeIn 0.25s var(--transition-smooth) forwards;
+  will-change: opacity, transform; 
 
   /* Size Variants */
   &.modal-size-sm { width: clamp(300px, 90vw, 400px); }
@@ -35,7 +38,7 @@
   @media (max-width: 768px) {
     width: 95vw;
     max-height: 80vh;
-    border-radius: 16px;
+    border-radius: var(--border-radius-md);
   }
 }
 
@@ -43,15 +46,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* Adjusted padding: Increased top/left/right (1.5rem), Reduced bottom (1rem) */
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  
+  /* Reduced & Consistent Padding: 
+     Vertical: var(--spacing-md) = 1rem
+     Horizontal: var(--spacing-lg) = 1.5rem
+  */
+  padding: var(--spacing-md) var(--spacing-lg);
+  
   border-bottom: 1px solid var(--gray-200);
   flex-shrink: 0;
+  background-color: var(--white);
 }
 
 .modal-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1.125rem; /* 18px */
   font-weight: 600;
   line-height: 1.4;
   color: var(--gray-900);
@@ -64,14 +73,15 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  /* Adjusted margin to align visually with the reduced padding */
-  margin-right: -4px; 
+  
+  /* Adjusted margin to align optically with the right edge */
+  margin-right: -8px; 
   
   background: transparent;
   border: none;
   border-radius: 50%;
   color: var(--gray-400);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -80,12 +90,21 @@
     background-color: var(--gray-100);
     color: var(--gray-800);
   }
+  
+  &:active {
+    background-color: var(--gray-200);
+  }
 }
 
 .modal-body {
   flex: 1;
-  /* Increased padding for body content (1.5rem -> 2rem) for better breathing room */
-  padding: 2rem;
+  
+  /* Consistent Padding: 
+     Reduced from 2rem to 1.5rem (var(--spacing-lg)) to match header sides 
+     and save space.
+  */
+  padding: var(--spacing-lg);
+  
   overflow-y: auto;
   overscroll-behavior: contain;
   
@@ -106,17 +125,21 @@
     border-radius: 3px;
   }
 
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--gray-400);
+  }
+
   /* Reduce padding on smaller screens */
   @media (max-width: 480px) {
-    padding: 1.5rem;
+    padding: var(--spacing-md);
   }
 }
 
-/* Simple Fade In Animation (Cheaper for GPU when combined with backdrop-filter) */
+/* Simple Fade In Animation */
 @keyframes modalFadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.98); /* Added slight scale effect */
+    transform: scale(0.96); /* Subtle start scale for a "pop" effect */
   }
   100% {
     opacity: 1;

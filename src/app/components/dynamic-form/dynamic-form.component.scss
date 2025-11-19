@@ -1,15 +1,18 @@
 .form-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-md); /* 1rem */
-  margin-bottom: var(--spacing-md); /* 1rem */
+  gap: var(--spacing-md);
+  /* 1rem */
+  margin-bottom: var(--spacing-md);
+  /* 1rem */
 }
 
 /* --- Custom field highlighting --- */
 .form-group.field-highlight .form-control {
   /* Using your variables */
   border-color: var(--teal-blue);
-  background-color: var(--aqua-island-light); /* Lighter theme color */
+  background-color: var(--aqua-island-light);
+  /* Lighter theme color */
 }
 
 .dynamic-form-container {
@@ -25,16 +28,21 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  flex-basis: 150px; /* MODIFIED: Reduced base width for better fit in medium modal */
+  flex-basis: 150px;
+  /* MODIFIED: Reduced base width for better fit in medium modal */
   flex-shrink: 1;
-  flex-grow: 1; /* Allow fields to grow to fill space */
+  flex-grow: 1;
+  /* Allow fields to grow to fill space */
 }
 
 .form-group label {
-  font-weight: 600; /* Bolder than medium */
-  margin-bottom: var(--spacing-xs); /* 0.25rem */
+  font-weight: 600;
+  /* Bolder than medium */
+  margin-bottom: var(--spacing-xs);
+  /* 0.25rem */
   color: var(--gray-700);
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
 }
 
 /* --- START OF FIX: Style for the asterisk --- */
@@ -43,31 +51,36 @@
   font-weight: var(--font-weight-bold);
   margin-left: 2px;
 }
+
 /* --- END OF FIX --- */
 
 /* --- STANDARD INPUT STYLES --- */
 /* Define a mixin for shared input styles to ensure consistency */
 @mixin input-base-styles {
   width: 100%;
-  border-radius: var(--border-radius-md); /* 8px */
+  border-radius: var(--border-radius-md);
+  /* 8px */
   box-sizing: border-box;
   border: var(--border-width) solid var(--gray-300);
   background-color: var(--gray-50);
   color: var(--gray-800);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   min-height: 38px;
-  font-size: 0.9375rem; /* 15px */
+  font-size: 0.9375rem;
+  /* 15px */
   font-family: var(--font-family-sans);
   line-height: var(--line-height-base);
 }
 
 .form-control {
   @include input-base-styles;
-  padding: var(--spacing-sm) 0.75rem; /* 8px 12px */
+  padding: var(--spacing-sm) 0.75rem;
+  /* 8px 12px */
 
   &:focus {
     outline: none;
-    border-color: var(--teal-blue); /* FIX: Use correct variable */
+    border-color: var(--teal-blue);
+    /* FIX: Use correct variable */
     /* FIX: Use correct variable/color for shadow */
     box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2);
   }
@@ -75,6 +88,7 @@
   /* --- START OF FIX: Corrected CSS variables --- */
   &.is-invalid {
     border-color: var(--color-danger);
+
     &:focus {
       /* Added the light red shadow */
       box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
@@ -87,7 +101,8 @@ input[type="datetime-local"].form-control {
   /* Fix for browsers that don't apply height correctly */
   height: 38px;
   min-height: 38px;
-  line-height: 1.5; /* Reset line-height for datetime-local */
+  line-height: 1.5;
+  /* Reset line-height for datetime-local */
 }
 
 /* --- NEW: Ensure textarea height is auto --- */
@@ -106,16 +121,17 @@ textarea.form-control {
 .custom-dropdown-wrapper {
   width: 100%;
   position: relative;
-  
+
   /* If the wrapper has 'is-invalid' class, color the Material border red */
   &.is-invalid {
     ::ng-deep .mat-mdc-notched-outline__stroke {
       stroke: var(--color-danger) !important;
       border-color: var(--color-danger) !important;
     }
+
     /* Focus shadow for error state */
     ::ng-deep .mat-focused .mat-mdc-text-field-wrapper {
-       box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
     }
   }
 }
@@ -125,16 +141,19 @@ textarea.form-control {
 }
 
 ::ng-deep {
+
   /* 1. FORCE HEIGHT & PADDING: 
      Angular Material defaults to 56px. We force it to 38px to match inputs.
      We remove top/bottom padding and adjust the 'infix' (content area).
   */
   .dense-form-field .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
-    padding: 0 0.75rem !important; /* Horizontal padding matches input */
-    height: 38px !important;       /* Exact height match */
+    padding: 0 0.75rem !important;
+    /* Horizontal padding matches input */
+    height: 38px !important;
+    /* Exact height match */
     display: flex;
     align-items: center;
-    
+
     /* Remove Material default background if any */
     background-color: var(--gray-50) !important;
 
@@ -158,23 +177,24 @@ textarea.form-control {
   /* 2. BORDER & OUTLINE OVERRIDES */
   /* We rely on Material's notched outline for the border but style it to match */
   .mat-mdc-form-field {
-    
+
     /* Normal Border Color & Radius */
     .mdc-notched-outline__leading,
     .mdc-notched-outline__notch,
     .mdc-notched-outline__trailing {
-        border-color: var(--gray-300) !important;
-        border-width: var(--border-width) !important;
+      border-color: var(--gray-300) !important;
+      border-width: var(--border-width) !important;
     }
-    
+
     /* Radius fix for outline segments */
     .mdc-notched-outline__leading {
-        border-top-left-radius: var(--border-radius-md) !important;
-        border-bottom-left-radius: var(--border-radius-md) !important;
+      border-top-left-radius: var(--border-radius-md) !important;
+      border-bottom-left-radius: var(--border-radius-md) !important;
     }
+
     .mdc-notched-outline__trailing {
-        border-top-right-radius: var(--border-radius-md) !important;
-        border-bottom-right-radius: var(--border-radius-md) !important;
+      border-top-right-radius: var(--border-radius-md) !important;
+      border-bottom-right-radius: var(--border-radius-md) !important;
     }
 
     /* Hover Border Color */
@@ -186,17 +206,21 @@ textarea.form-control {
 
     /* Focused State: Border Color, Thickness & Shadow */
     &.mat-focused {
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-            border-color: var(--teal-blue) !important;
-            border-width: 1px !important; /* Keep border width consistent */
-        }
-        
-        /* Add our custom focus shadow to the wrapper */
-        .mat-mdc-text-field-wrapper {
-            box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2) !important;
-        }
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: var(--teal-blue) !important;
+        border-width: 1px !important;
+        /* Keep border width consistent */
+      }
+
+      /* Add our custom focus shadow to the wrapper */
+      .mat-mdc-text-field-wrapper {
+        box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2) !important;
+        /* --- FIX: ADD THIS LINE --- */
+        border-radius: var(--border-radius-md) !important;
+      }
     }
 
     /* Text Color inside dropdown */
@@ -211,9 +235,10 @@ textarea.form-control {
       color: var(--gray-500) !important;
       font-family: var(--font-family-sans) !important;
       font-size: 0.9375rem !important;
-      opacity: 1 !important; /* Ensure placeholder is fully visible */
+      opacity: 1 !important;
+      /* Ensure placeholder is fully visible */
     }
-    
+
     /* Arrow Icon Color */
     .mat-mdc-select-arrow {
       color: var(--gray-600) !important;
@@ -226,34 +251,39 @@ textarea.form-control {
     border: 1px solid var(--gray-200);
     box-shadow: var(--box-shadow-md) !important;
     border-radius: var(--border-radius-md) !important;
-    margin-top: 4px; /* Slight offset from input */
-    
+    margin-top: 4px;
+    /* Slight offset from input */
+
     /* Custom Scrollbar for the list */
     &::-webkit-scrollbar {
       width: 6px;
     }
+
     &::-webkit-scrollbar-track {
       background: transparent;
     }
+
     &::-webkit-scrollbar-thumb {
       background-color: var(--gray-300);
       border-radius: 3px;
     }
-    
+
     /* Individual Options */
     .mat-mdc-option {
       font-family: var(--font-family-sans) !important;
       font-size: 0.9375rem !important;
       color: var(--gray-800) !important;
-      min-height: 40px !important; /* Slightly taller for touch targets */
-      
+      min-height: 40px !important;
+      /* Slightly taller for touch targets */
+
       &:hover:not(.mdc-list-item--disabled) {
         background-color: var(--gray-100) !important;
       }
-      
+
       /* Selected Item Highlight */
       &.mdc-list-item--selected {
-        background-color: var(--aqua-island-light) !important; 
+        background-color: var(--aqua-island-light) !important;
+
         .mdc-list-item__primary-text {
           color: var(--teal-blue-dark) !important;
           font-weight: 600 !important;
@@ -265,56 +295,75 @@ textarea.form-control {
 
 .invalid-feedback {
   color: var(--color-danger);
-  font-size: 0.875rem; /* Use rem not em */
-  margin-top: var(--spacing-xs); /* 0.25rem */
+  font-size: 0.875rem;
+  /* Use rem not em */
+  margin-top: var(--spacing-xs);
+  /* 0.25rem */
 }
+
 /* --- END OF FIX --- */
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm); /* 0.5rem */
-  padding-top: var(--spacing-md); /* 1rem */
+  gap: var(--spacing-sm);
+  /* 0.5rem */
+  padding-top: var(--spacing-md);
+  /* 1rem */
   border-top: var(--border-width) solid var(--gray-200);
 
   /* --- NEW: Responsive buttons --- */
   @media (max-width: 480px) {
-    flex-direction: column-reverse; /* Stack buttons, "Save" on bottom */
-    gap: 0.75rem; /* Add more space when stacked */
+    flex-direction: column-reverse;
+    /* Stack buttons, "Save" on bottom */
+    gap: 0.75rem;
+    /* Add more space when stacked */
   }
 }
 
 /* Button styling */
 .btn {
-  padding: var(--spacing-sm) var(--spacing-md); /* 0.5rem 1rem */
+  padding: var(--spacing-sm) var(--spacing-md);
+  /* 0.5rem 1rem */
   border: none;
-  border-radius: var(--border-radius-md); /* 8px */
+  border-radius: var(--border-radius-md);
+  /* 8px */
   cursor: pointer;
-  font-weight: var(--font-weight-medium); /* Use 500 */
-  font-size: 0.9375rem; /* 15px */
+  font-weight: var(--font-weight-medium);
+  /* Use 500 */
+  font-size: 0.9375rem;
+  /* 15px */
   transition: background-color 0.2s ease;
 
   /* --- NEW: Responsive buttons --- */
   @media (max-width: 480px) {
-    width: 100%; /* Make buttons full-width */
-    padding: 0.75rem 1rem; /* Taller tap target */
+    width: 100%;
+    /* Make buttons full-width */
+    padding: 0.75rem 1rem;
+    /* Taller tap target */
   }
 }
+
 .btn-secondary {
   background-color: var(--gray-500);
   color: white;
 }
+
 .btn-secondary:hover {
   background-color: var(--gray-600);
 }
+
 .btn-primary {
   /* Using your variable */
   background-color: var(--teal-blue);
   color: white;
 }
+
 .btn-primary:hover {
-  background-color: var(--peacock-blue); /* FIX: Use correct variable */
+  background-color: var(--peacock-blue);
+  /* FIX: Use correct variable */
 }
+
 .btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;

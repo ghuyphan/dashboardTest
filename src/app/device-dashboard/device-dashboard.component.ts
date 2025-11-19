@@ -600,7 +600,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  private buildDonutOption(data: DeviceStatsData[], highlightName?: string): EChartsCoreOption {
+private buildDonutOption(data: DeviceStatsData[], highlightName?: string): EChartsCoreOption {
     const chartData = data.map((item) => {
       const opacity = (highlightName && item.TenTrangThai !== highlightName) ? 0.2 : 1;
       
@@ -670,11 +670,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
               const percent = ((params.value / totalDevices) * 100).toFixed(1);
               return `${params.name}\n${percent}%`;
             },
-            textStyle: {
-              color: this.cssVars.gray700,
-              fontSize: 12,
-              fontFamily: GLOBAL_FONT_FAMILY,
-            },
+            // FIX: Flattened properties (removed textStyle wrapper)
+            color: this.cssVars.gray700,
+            fontSize: 12,
+            fontFamily: GLOBAL_FONT_FAMILY,
             overflow: 'truncate',
             width: 80,
           },
@@ -704,7 +703,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       ],
     };
   }
-
   private buildBarOption(
     yAxisData: string[],
     seriesData: number[],

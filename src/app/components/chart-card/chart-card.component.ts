@@ -1,43 +1,33 @@
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
   ElementRef,
-  ViewChild,
   AfterViewInit,
-  OnDestroy,
-  OnChanges,
-  SimpleChanges,
-  NgZone,
-  inject,
-  ViewEncapsulation,
   ChangeDetectionStrategy,
+  input,
+  output,
+  viewChild,
+  computed,
+  effect,
+  inject,
+  NgZone,
+  DestroyRef,
+  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// ECharts Types
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
 
 /**
  * Chart Card Component
- * 
- * A reusable card component that displays ECharts visualizations with:
- * - Lazy loading for optimal performance
- * - Intersection observer for viewport-based initialization
- * - Automatic resize handling
- * - Loading and empty states
- * - Click event emission
- * 
- * @example
- * <app-chart-card
- *   [title]="'Sales Overview'"
- *   [subtitle]="'Last 30 days'"
- *   [icon]="'fas fa-chart-line'"
- *   [chartOptions]="myChartOptions"
- *   [isLoading]="loading"
- *   (chartClick)="handleChartClick($event)">
- * </app-chart-card>
+ *
+ * A reusable card component for ECharts with:
+ * - Lazy loading via IntersectionObserver
+ * - Automatic resizing via ResizeObserver
+ * - Signal-based inputs/outputs
+ * - Optimized performance using NgZone
+ * - Robust handling of 0-dimension containers (fixes "Can't get DOM width or height")
  */
 @Component({
   selector: 'app-chart-card',
@@ -48,111 +38,80 @@ import type * as echarts from 'echarts/core';
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
+export class ChartCardComponent implements AfterViewInit {
   // ===================================
-  // UI Configuration Inputs
+  // Dependencies
   // ===================================
-  
-  /** Card title displayed at the top */
-  @Input() title: string = '';
-  
-  /** Optional subtitle displayed below the title */
-  @Input() subtitle: string = '';
-  
-  /** FontAwesome icon class for the card header */
-  @Input() icon: string = '';
-  
-  /** Additional CSS classes for the icon */
-  @Input() iconClass: string = '';
-  
-  /** Shows loading spinner when true */
-  @Input() isLoading: boolean = false;
+  private readonly ngZone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
 
   // ===================================
-  // Empty State Configuration
+  // Inputs (Signals)
   // ===================================
-  
-  /** Text displayed when no data is available */
-  @Input() emptyText: string = 'Không có dữ liệu';
-  
-  /** FontAwesome icon shown in empty state */
-  @Input() emptyIcon: string = 'fas fa-chart-bar';
+  public title = input<string>('');
+  public subtitle = input<string>('');
+  public icon = input<string>('');
+  public iconClass = input<string>('');
+  public isLoading = input<boolean>(false);
+  public emptyText = input<string>('Không có dữ liệu');
+  public emptyIcon = input<string>('fas fa-chart-bar');
+  public chartOptions = input<EChartsCoreOption | null>(null);
 
   // ===================================
-  // Chart Configuration
+  // Outputs
   // ===================================
-  
-  /** ECharts configuration object */
-  @Input() chartOptions: EChartsCoreOption | null = null;
+  public chartClick = output<any>();
 
   // ===================================
-  // Events
+  // View Children
   // ===================================
-  
-  /** Emitted when chart elements are clicked */
-  @Output() chartClick = new EventEmitter<any>();
+  private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
+
+  // ===================================
+  // Computed State
+  // ===================================
+  public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
+  public showChart = computed(() => !this.isLoading() && !!this.chartOptions());
 
   // ===================================
   // Internal State
   // ===================================
-  
-  @ViewChild('chartContainer') chartContainerRef!: ElementRef<HTMLDivElement>;
-
-  /** ECharts library instance */
   private echartsInstance?: typeof echarts;
-  
-  /** Active chart instance */
   private chartInstance?: EChartsType;
-  
-  /** Observer for container resize events */
   private resizeObserver?: ResizeObserver;
-  
-  /** Observer for viewport intersection */
   private intersectionObserver?: IntersectionObserver;
-  
-  /** Tracks if intersection observer has triggered initialization */
+
+  // Flags
   private hasInitialized = false;
-  
-  /** Tracks if ECharts library has been loaded */
   private hasLoadedECharts = false;
 
-  /** Debounce timer for resize events */
   private resizeTimer?: ReturnType<typeof setTimeout>;
-
-  /** Resize debounce delay in milliseconds */
   private readonly RESIZE_DEBOUNCE_MS = 150;
 
-  private readonly ngZone = inject(NgZone);
+  constructor() {
+    // Reactively update chart when options change
+    effect(() => {
+      const options = this.chartOptions();
+      // Only update if chart exists. If it doesn't exist (e.g. 0 height),
+      // the resize observer will handle creation later.
+      if (this.hasLoadedECharts && this.chartInstance && options) {
+        this.updateChart(options);
+      }
+    });
 
-  // ===================================
-  // Lifecycle Hooks
-  // ===================================
+    // Register cleanup logic
+    this.destroyRef.onDestroy(() => this.cleanup());
+  }
 
   ngAfterViewInit(): void {
     this.initializeIntersectionObserver();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    // Only update chart if options changed and chart is ready
-    if (changes['chartOptions'] && this.hasLoadedECharts && this.chartInstance) {
-      this.updateChart();
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.cleanup();
   }
 
   // ===================================
   // Initialization
   // ===================================
 
-  /**
-   * Sets up intersection observer to lazy-load chart when visible
-   * Falls back to immediate initialization if IntersectionObserver is unavailable
-   */
   private initializeIntersectionObserver(): void {
-    // Browser compatibility check
     if (typeof IntersectionObserver === 'undefined') {
       this.initializeChart();
       return;
@@ -168,24 +127,26 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
           }
         });
       },
-      { 
-        rootMargin: '50px', // Start loading slightly before visible
-        threshold: 0.1 
-      }
+      { rootMargin: '50px', threshold: 0.1 }
     );
 
-    this.intersectionObserver.observe(this.chartContainerRef.nativeElement);
+    this.intersectionObserver.observe(this.chartContainerRef().nativeElement);
   }
 
-  /**
-   * Main initialization workflow
-   * Loads ECharts library, creates instance, and sets up observers
-   */
   private async initializeChart(): Promise<void> {
     try {
       await this.loadEChartsLibrary();
+      
+      // Attempt creation. If dimensions are 0, this will safely bail out
+      // and wait for the ResizeObserver to trigger it later.
       this.createChartInstance();
-      this.updateChart();
+      
+      const options = this.chartOptions();
+      if (options && this.chartInstance) {
+        this.updateChart(options);
+      }
+      
+      // Start observing size immediately, even if chart isn't created yet
       this.setupResizeObserver();
     } catch (error) {
       console.error('[ChartCardComponent] Failed to initialize chart:', error);
@@ -193,99 +154,68 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   // ===================================
-  // ECharts Library Management
+  // ECharts Logic
   // ===================================
 
-  /**
-   * Dynamically imports ECharts modules for optimal bundle size
-   */
   private async loadEChartsLibrary(): Promise<void> {
-    if (this.hasLoadedECharts) {
-      return;
-    }
+    if (this.hasLoadedECharts) return;
 
-    try {
-      const [echartsCore, CanvasRenderer, charts, components] = await Promise.all([
-        import('echarts/core'),
-        import('echarts/renderers'),
-        import('echarts/charts'),
-        import('echarts/components'),
-      ]);
+    const [echartsCore, CanvasRenderer, charts, components] = await Promise.all([
+      import('echarts/core'),
+      import('echarts/renderers'),
+      import('echarts/charts'),
+      import('echarts/components'),
+    ]);
 
-      // Store the core instance
-      this.echartsInstance = echartsCore;
+    this.echartsInstance = echartsCore;
 
-      // Register necessary components
-      this.echartsInstance.use([
-        CanvasRenderer.CanvasRenderer,
-        charts.BarChart,
-        charts.LineChart,
-        charts.PieChart,
-        components.TitleComponent,
-        components.TooltipComponent,
-        components.GridComponent,
-        components.LegendComponent,
-        components.DataZoomComponent,
-      ]);
+    this.echartsInstance.use([
+      CanvasRenderer.CanvasRenderer,
+      charts.BarChart,
+      charts.LineChart,
+      charts.PieChart,
+      components.TitleComponent,
+      components.TooltipComponent,
+      components.GridComponent,
+      components.LegendComponent,
+      components.DataZoomComponent,
+    ]);
 
-      this.hasLoadedECharts = true;
-    } catch (error) {
-      console.error('[ChartCardComponent] Failed to load ECharts library:', error);
-      throw error;
-    }
+    this.hasLoadedECharts = true;
   }
 
-  // ===================================
-  // Chart Instance Management
-  // ===================================
-
-  /**
-   * Creates a new ECharts instance and attaches event listeners
-   */
   private createChartInstance(): void {
-    if (!this.echartsInstance || !this.chartContainerRef) {
+    if (!this.echartsInstance) return;
+
+    const el = this.chartContainerRef().nativeElement;
+    
+    // CRITICAL FIX: Do not init if container has no dimensions.
+    // ECharts throws errors if width/height is 0.
+    if (el.clientWidth === 0 || el.clientHeight === 0) {
       return;
     }
 
     this.ngZone.runOutsideAngular(() => {
-      // Initialize chart with optimizations
-      this.chartInstance = this.echartsInstance!.init(
-        this.chartContainerRef.nativeElement,
-        undefined,
-        {
-          renderer: 'canvas',
-          useDirtyRect: true, // Performance optimization
-        }
-      );
+      this.chartInstance = this.echartsInstance!.init(el, undefined, {
+        renderer: 'canvas',
+        useDirtyRect: true,
+      });
 
-      // Register click event handler
       this.chartInstance.on('click', (params) => {
-        this.ngZone.run(() => {
-          this.chartClick.emit(params);
-        });
+        this.ngZone.run(() => this.chartClick.emit(params));
       });
     });
   }
 
-  /**
-   * Updates the chart with new options or clears it if none provided
-   */
-  private updateChart(): void {
-    if (!this.chartInstance) {
-      return;
-    }
+  private updateChart(options: EChartsCoreOption): void {
+    if (!this.chartInstance) return;
 
     this.ngZone.runOutsideAngular(() => {
-      if (this.chartOptions) {
-        this.chartInstance!.setOption(this.chartOptions, {
-          notMerge: false, // Merge with existing options
-          lazyUpdate: true, // Defer visual update for performance
-          silent: false, // Allow events to fire
-        });
-      } else {
-        // Clear chart if no options provided
-        this.chartInstance!.clear();
-      }
+      this.chartInstance!.setOption(options, {
+        notMerge: false,
+        lazyUpdate: true,
+        silent: false,
+      });
     });
   }
 
@@ -293,53 +223,43 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   // Resize Handling
   // ===================================
 
-  /**
-   * Sets up ResizeObserver to handle container size changes
-   * Debounces resize events for better performance
-   */
   private setupResizeObserver(): void {
-    if (!this.chartContainerRef || !this.chartInstance) {
-      return;
-    }
-
-    this.resizeObserver = new ResizeObserver(() => {
-      this.handleResize();
-    });
-
-    this.resizeObserver.observe(this.chartContainerRef.nativeElement);
+    // Observe the container even if chartInstance is null
+    this.resizeObserver = new ResizeObserver(() => this.handleResize());
+    this.resizeObserver.observe(this.chartContainerRef().nativeElement);
   }
 
-  /**
-   * Debounced resize handler to prevent excessive chart redraws
-   */
   private handleResize(): void {
-    // Clear existing timer
-    if (this.resizeTimer) {
-      clearTimeout(this.resizeTimer);
-    }
+    if (this.resizeTimer) clearTimeout(this.resizeTimer);
 
-    // Set new timer
     this.resizeTimer = setTimeout(() => {
-      this.resizeChart();
+      const el = this.chartContainerRef().nativeElement;
+
+      // Scenario 1: Chart doesn't exist, but now we have dimensions -> Create it
+      if (!this.chartInstance && el.clientWidth > 0 && el.clientHeight > 0) {
+        this.createChartInstance();
+        const options = this.chartOptions();
+        if (options && this.chartInstance) {
+          this.updateChart(options);
+        }
+      } 
+      // Scenario 2: Chart exists -> Resize it
+      else if (this.chartInstance) {
+        this.resizeChart();
+      }
     }, this.RESIZE_DEBOUNCE_MS);
   }
 
-  /**
-   * Resizes the chart instance to fit its container
-   */
   private resizeChart(): void {
-    if (!this.chartInstance) {
-      return;
-    }
+    if (!this.chartInstance) return;
 
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
-        this.chartInstance?.resize({
-          animation: {
-            duration: 300,
-            easing: 'cubicOut',
-          },
-        });
+        if (this.chartInstance && !this.chartInstance.isDisposed()) {
+          this.chartInstance.resize({
+            animation: { duration: 300, easing: 'cubicOut' },
+          });
+        }
       });
     });
   }
@@ -348,49 +268,16 @@ export class ChartCardComponent implements AfterViewInit, OnDestroy, OnChanges {
   // Cleanup
   // ===================================
 
-  /**
-   * Cleans up all observers, timers, and chart instances
-   */
   private cleanup(): void {
-    // Clear resize timer
-    if (this.resizeTimer) {
-      clearTimeout(this.resizeTimer);
-      this.resizeTimer = undefined;
-    }
-
-    // Disconnect observers
+    if (this.resizeTimer) clearTimeout(this.resizeTimer);
     this.resizeObserver?.disconnect();
     this.intersectionObserver?.disconnect();
 
-    // Dispose chart instance
     if (this.chartInstance) {
       this.ngZone.runOutsideAngular(() => {
         this.chartInstance?.dispose();
       });
       this.chartInstance = undefined;
     }
-
-    // Clear references
-    this.echartsInstance = undefined;
-    this.resizeObserver = undefined;
-    this.intersectionObserver = undefined;
-  }
-
-  // ===================================
-  // Public API (for template)
-  // ===================================
-
-  /**
-   * Checks if chart should display empty state
-   */
-  get showEmptyState(): boolean {
-    return !this.isLoading && !this.chartOptions;
-  }
-
-  /**
-   * Checks if chart should be displayed
-   */
-  get showChart(): boolean {
-    return !this.isLoading && !!this.chartOptions;
   }
 }
