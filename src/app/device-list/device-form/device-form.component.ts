@@ -26,7 +26,6 @@ import { ConfirmationModalComponent } from '../../components/confirmation-modal/
   styleUrl: './device-form.component.scss',
 })
 export class DeviceFormComponent implements OnInit {
-  // ... (Inputs/Dependencies remain the same)
   @Input() device: Device | null = null;
   @Input() title: string = 'Biểu Mẫu Thiết Bị';
 
@@ -123,7 +122,6 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Tên thiết bị',
               value: data.Ten || '',
-              // MUST HAVE: Name is essential
               validators: { required: true, maxLength: 100, minLength: 3 },
               validationMessages: {
                 required: 'Tên là bắt buộc.',
@@ -134,7 +132,7 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // Row 2: Model & Serial (UPDATED: Made Required)
+        // Row 2: Model & Serial
         {
           controls: [
             {
@@ -142,7 +140,6 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Model',
               value: data.Model || '',
-              // RECOMMENDATION: Required for identifying specs
               validators: { required: true, maxLength: 50, minLength: 2 },
               validationMessages: { 
                 required: 'Model là bắt buộc.',
@@ -156,7 +153,6 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'text',
               label: 'Số Serial',
               value: data.SerialNumber || '',
-              // RECOMMENDATION: Required for unique identification
               validators: { required: true, maxLength: 50, minLength: 3 },
               validationMessages: { 
                 required: 'Số Serial là bắt buộc.',
@@ -175,7 +171,6 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'dropdown',
               label: 'Loại thiết bị',
               value: categoryIdValue ? Number(categoryIdValue) : null,
-              // MUST HAVE
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn loại thiết bị.' },
               options: deviceTypes,
@@ -186,7 +181,6 @@ export class DeviceFormComponent implements OnInit {
               controlType: 'dropdown',
               label: 'Trạng thái',
               value: trangThaiValue ? Number(trangThaiValue) : null,
-              // MUST HAVE
               validators: { required: true },
               validationMessages: { required: 'Vui lòng chọn trạng thái.' },
               options: deviceStatuses,
@@ -226,7 +220,6 @@ export class DeviceFormComponent implements OnInit {
               label: 'Ngày mua',
               placeholder: 'DD/MM/YYYY',
               value: this.toHtmlDate(data.NgayMua),
-              // Optional, but you might want to make it required if warranty logic depends on it
               layout_flexGrow: 1,
             },
             {
@@ -270,9 +263,16 @@ export class DeviceFormComponent implements OnInit {
   }
 
   // -------------------------------------------------------------------------
-  // Action Handlers & Helpers (No changes needed below)
+  // Action Handlers & Helpers
   // -------------------------------------------------------------------------
   public onSave(formData: any): void {
+    // 1. Validate Dates first
+    const dateError = this.validateFormDates(formData);
+    if (dateError) {
+      this.toastService.showWarning(dateError);
+      return;
+    }
+
     this.isSaving = true;
     const currentUserId = this.authService.getUserId();
     if (!currentUserId) {
@@ -299,6 +299,25 @@ export class DeviceFormComponent implements OnInit {
     this.modalRef?.close();
   }
 
+  /**
+   * Validates logical consistency between dates.
+   */
+  private validateFormDates(formData: any): string | null {
+    if (!formData.NgayMua || !formData.NgayHetHanBH) {
+      return null; // Ignore if one is missing (unless required by strict rules)
+    }
+
+    const buyDate = DateUtils.parse(formData.NgayMua);
+    const expiryDate = DateUtils.parse(formData.NgayHetHanBH);
+
+    if (buyDate && expiryDate) {
+      if (expiryDate < buyDate) {
+        return 'Ngày hết hạn bảo hành phải lớn hơn hoặc bằng Ngày mua.';
+      }
+    }
+    return null;
+  }
+
   private canDeactivate(): Observable<boolean> {
     const isDirty = this.dynamicForm?.dynamicForm?.dirty ?? false;
     if (!isDirty && !this.isSaving) return of(true);
@@ -312,7 +331,7 @@ export class DeviceFormComponent implements OnInit {
         confirmText: 'Hủy bỏ thay đổi',
         cancelText: 'Tiếp tục chỉnh sửa',
         icon: 'fas fa-question-circle',
-        iconColor: 'var(--color-info)',
+        iconColor: 'var(--color-danger)',
       },
     }).pipe(switchMap((res) => of(!!res)));
   }

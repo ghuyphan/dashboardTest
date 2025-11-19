@@ -9,36 +9,47 @@
   margin: auto;
   background: var(--white);
   
-  /* Use global variable for consistency (12px) instead of hardcoded 16px */
+  /* Use global variable for consistency */
   border-radius: var(--border-radius-lg);
   
   /* Consistent depth */
   box-shadow: var(--box-shadow-lg);
-  border: 1px solid rgba(0, 0, 0, 0.05); /* Subtle border for definition */
+  border: 1px solid rgba(0, 0, 0, 0.05);
   
   color: var(--gray-800);
   
   position: relative;
   overflow: hidden;
   
-  /* Responsive Sizing */
-  width: clamp(300px, 90vw, 600px); 
+  /* --- UPDATED: Responsive Sizing with explicit Min/Max --- */
+  width: 90vw;         /* Default preferred width */
+  min-width: 320px;    /* Prevent it from getting too small on tiny screens */
+  max-width: 600px;    /* Default max width (effectively 'md') */
+  
   max-height: 85vh;
   
   /* Smoother animation */
   animation: modalFadeIn 0.25s var(--transition-smooth) forwards;
   will-change: opacity, transform; 
 
-  /* Size Variants */
-  &.modal-size-sm { width: clamp(300px, 90vw, 400px); }
-  &.modal-size-md { width: clamp(300px, 90vw, 600px); }
-  &.modal-size-lg { width: clamp(300px, 90vw, 800px); }
-  &.modal-size-xl { width: clamp(300px, 95vw, 1140px); }
+  /* Size Variants - Override max-width */
+  &.modal-size-sm { max-width: 400px; }
+  &.modal-size-md { max-width: 600px; }
+  &.modal-size-lg { max-width: 800px; }
+  &.modal-size-xl { max-width: 1140px; }
 
+  /* Responsive overrides */
   @media (max-width: 768px) {
-    width: 95vw;
+    width: 95vw;      /* Take up more space on tablets/mobile */
+    max-width: 95vw;  /* Ensure it doesn't exceed viewport width */
     max-height: 80vh;
     border-radius: var(--border-radius-md);
+  }
+  
+  /* Ensure min-width doesn't break very small screens */
+  @media (max-width: 360px) {
+    min-width: 0; 
+    width: 100%;
   }
 }
 
@@ -47,10 +58,7 @@
   align-items: center;
   justify-content: space-between;
   
-  /* Reduced & Consistent Padding: 
-     Vertical: var(--spacing-md) = 1rem
-     Horizontal: var(--spacing-lg) = 1.5rem
-  */
+  /* Consistent Padding */
   padding: var(--spacing-md) var(--spacing-lg);
   
   border-bottom: 1px solid var(--gray-200);
@@ -60,7 +68,7 @@
 
 .modal-title {
   margin: 0;
-  font-size: 1.125rem; /* 18px */
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.4;
   color: var(--gray-900);
@@ -73,8 +81,6 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  
-  /* Adjusted margin to align optically with the right edge */
   margin-right: -8px; 
   
   background: transparent;
@@ -99,10 +105,6 @@
 .modal-body {
   flex: 1;
   
-  /* Consistent Padding: 
-     Reduced from 2rem to 1.5rem (var(--spacing-lg)) to match header sides 
-     and save space.
-  */
   padding: var(--spacing-lg);
   
   overflow-y: auto;
@@ -129,7 +131,6 @@
     background-color: var(--gray-400);
   }
 
-  /* Reduce padding on smaller screens */
   @media (max-width: 480px) {
     padding: var(--spacing-md);
   }
@@ -139,7 +140,7 @@
 @keyframes modalFadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.96); /* Subtle start scale for a "pop" effect */
+    transform: scale(0.96);
   }
   100% {
     opacity: 1;

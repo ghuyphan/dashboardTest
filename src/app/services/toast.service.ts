@@ -12,7 +12,7 @@ export class ToastService {
   private currentToasts: ToastMessage[] = [];
   
   private toastIdCounter = 0;
-  private defaultDuration = 4000;
+  private defaultDuration = 3000;
   private MAX_TOASTS = 5;
 
   constructor() { }

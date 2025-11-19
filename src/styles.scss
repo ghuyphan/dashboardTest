@@ -741,3 +741,30 @@ body > ul.submenu.open {
   }
 }
 
+/* ==========================================================
+   MODERN VIEW TRANSITIONS (Auth Card) - Snap Content
+   ========================================================== */
+
+/* 1. Disable the "Old School" Full Page Fade */
+::view-transition-group(root) {
+  animation-duration: 0s; /* Background changes instantly, no blinking */
+}
+
+/* 2. Configure the Card Morph (Geometry) - This animates size/pos */
+::view-transition-group(auth-card) {
+  animation-duration: 0.5s; 
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-like snap */
+  z-index: 100;
+}
+
+/* 3. CONTENT: Snap immediately (No Fade) */
+/* By hiding the old image instantly and showing the new one instantly,
+   we get the geometry morph of the container but the content feels "solid". */
+
+::view-transition-old(auth-card) {
+  display: none; 
+}
+
+::view-transition-new(auth-card) {
+  animation: none; 
+}
