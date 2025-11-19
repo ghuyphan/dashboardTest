@@ -12,6 +12,13 @@ import { ToastMessage, ToastType } from '../../models/toast-message.model';
 import { ToastService } from '../../services/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
+// Helper interface to track individual timer state
+interface ToastTimerState {
+  timerId: any;
+  startTime: number;
+  remaining: number;
+}
+
 @Component({
   selector: 'app-toast',
   standalone: true,
@@ -21,52 +28,63 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent implements OnInit, OnDestroy {
-  // Inject dependencies
   private toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private cdRef = inject(ChangeDetectorRef);
 
   public toasts: ToastMessage[] = [];
-  public isExpanded = false; // Default to collapsed stack
-  private toastSub!: Subscription;
-  private activeTimers = new Map<number, any>();
+  
+  // 1. Default to Expanded
+  public isExpanded = true; 
+  public isHovering = false;
 
-  // Swipe gesture properties
+  private toastSub!: Subscription;
+  
+  // 2. Map to store the state (time left) for each toast
+  private timerState = new Map<number, ToastTimerState>();
+
+  private readonly DEFAULT_DURATION = 5000;
+  private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.4;
+
+  // Swipe state
   private touchStartX = 0;
   private touchMoveX = 0;
   private swipingToastId: number | null = null;
   private swipedElement: HTMLElement | null = null;
-  private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.4;
-  private readonly DEFAULT_DURATION = 5000;
 
   ngOnInit(): void {
     this.toastSub = this.toastService.toasts$.subscribe((newToasts) => {
       const currentIds = new Set(this.toasts.map(t => t.id));
-      
-      // Identify new toasts
       const addedToasts = newToasts.filter(t => !currentIds.has(t.id));
 
-      // Clean up timers for removed toasts
+      // Cleanup removed toasts from our timer map
       const newIds = new Set(newToasts.map((t) => t.id));
-      this.activeTimers.forEach((timer, id) => {
+      this.timerState.forEach((_, id) => {
         if (!newIds.has(id)) {
-          clearTimeout(timer);
-          this.activeTimers.delete(id);
+          this.clearTimer(id);
         }
       });
 
       this.toasts = newToasts;
-      
-      // Auto-expand if there are many errors, otherwise default behavior
-      // or reset expansion state if list becomes empty
-      if (this.toasts.length === 0) {
-        this.isExpanded = false;
-      }
-
       this.cdRef.markForCheck();
 
-      // Start timers for new toasts
-      addedToasts.forEach(toast => this.startTimer(toast));
+      // 3. Initialize new toasts
+      addedToasts.forEach(toast => {
+        const duration = toast.duration ?? this.DEFAULT_DURATION;
+        if (duration > 0) {
+          // Initialize state with full duration
+          this.timerState.set(toast.id, {
+            timerId: null,
+            startTime: Date.now(),
+            remaining: duration
+          });
+          
+          // Only start countdown if we aren't currently hovering
+          if (!this.isHovering) {
+            this.runTimer(toast.id);
+          }
+        }
+      });
     });
   }
 
@@ -77,43 +95,89 @@ export class ToastComponent implements OnInit, OnDestroy {
     this.clearAllTimers();
   }
 
-  // --- Timer Logic ---
+  // ========================================================================
+  // SMART TIMER LOGIC (Tracks Remaining Time)
+  // ========================================================================
 
-  startTimer(toast: ToastMessage): void {
-    const duration = toast.duration ?? this.DEFAULT_DURATION;
-    if (duration > 0 && !this.activeTimers.has(toast.id)) {
-      const timer = setTimeout(() => {
-        this.closeToast(toast.id);
-      }, duration);
-      this.activeTimers.set(toast.id, timer);
-    }
+  /**
+   * Actually executes the setTimeout for a specific toast based on its 'remaining' time.
+   */
+  private runTimer(id: number): void {
+    const state = this.timerState.get(id);
+    if (!state || state.remaining <= 0) return;
+
+    // Clear any existing timer just in case
+    if (state.timerId) clearTimeout(state.timerId);
+
+    state.startTime = Date.now();
+    state.timerId = setTimeout(() => {
+      this.closeToast(id);
+    }, state.remaining);
   }
 
-  pauseTimer(id: number): void {
-    if (this.activeTimers.has(id)) {
-      clearTimeout(this.activeTimers.get(id));
-      this.activeTimers.delete(id);
-    }
+  /**
+   * Pauses all timers and updates their 'remaining' property.
+   * Called on MouseEnter.
+   */
+  pauseAllTimers(): void {
+    this.isHovering = true;
+    
+    this.timerState.forEach((state, id) => {
+      if (state.timerId) {
+        clearTimeout(state.timerId);
+        state.timerId = null;
+        
+        // Calculate how much time passed since we started this specific slice
+        const elapsed = Date.now() - state.startTime;
+        state.remaining = Math.max(0, state.remaining - elapsed);
+      }
+    });
   }
 
-  resumeTimer(toast: ToastMessage): void {
-    // Only resume if the toast still exists and isn't already closing
-    if (this.toasts.find(t => t.id === toast.id)) {
-      this.startTimer(toast);
-    }
+  /**
+   * Resumes all timers using their stored 'remaining' time.
+   * Called on MouseLeave.
+   */
+  resumeAllTimers(): void {
+    this.isHovering = false;
+
+    this.timerState.forEach((state, id) => {
+      // Optional: Give a tiny buffer (e.g. 1s) if it was about to expire instantly, 
+      // so it doesn't vanish the millisecond the mouse leaves.
+      if (state.remaining < 1000) {
+        state.remaining = 1000;
+      }
+      this.runTimer(id);
+    });
   }
 
-  // --- Actions ---
+  private clearTimer(id: number): void {
+    const state = this.timerState.get(id);
+    if (state && state.timerId) {
+      clearTimeout(state.timerId);
+    }
+    this.timerState.delete(id);
+  }
+
+  private clearAllTimers(): void {
+    this.timerState.forEach(state => {
+      if (state.timerId) clearTimeout(state.timerId);
+    });
+    this.timerState.clear();
+  }
+
+  // ========================================================================
+  // ACTIONS
+  // ========================================================================
 
   closeToast(id: number): void {
-    this.pauseTimer(id);
+    this.clearTimer(id); // Stop tracking this one
 
     const wrapper = document.getElementById('toast-' + id);
     const card = wrapper?.querySelector('.toast-card');
 
     if (card) {
       card.classList.add('dismissing');
-      // Wait for animation
       setTimeout(() => {
         this.toastService.removeToast(id);
       }, 300);
@@ -122,29 +186,25 @@ export class ToastComponent implements OnInit, OnDestroy {
     }
   }
 
-  clearAllToasts(event: MouseEvent): void {
-    event.stopPropagation();
-    this.clearAllTimers();
-    this.toastService.clearAll();
-    this.isExpanded = false;
-  }
-
-  private clearAllTimers(): void {
-    this.activeTimers.forEach((timer) => clearTimeout(timer));
-    this.activeTimers.clear();
-  }
-
   toggleExpanded(event: MouseEvent): void {
     event.stopPropagation();
     this.isExpanded = !this.isExpanded;
   }
 
-  // --- Helper Methods ---
+  clearAllToasts(event: MouseEvent): void {
+    event.stopPropagation();
+    this.clearAllTimers();
+    this.toastService.clearAll();
+  }
+
+  // ========================================================================
+  // HELPERS
+  // ========================================================================
 
   getTitle(type: ToastType): string {
     const titles: Record<ToastType, string> = {
       success: 'Thành công',
-      error: 'Đã có lỗi',
+      error: 'Lỗi',
       warning: 'Cảnh báo',
       info: 'Thông tin',
     };
@@ -162,11 +222,15 @@ export class ToastComponent implements OnInit, OnDestroy {
     return this.sanitizer.bypassSecurityTrustHtml(`<i class="${iconClass}"></i>`);
   }
 
-  // --- Swipe Gestures ---
+  // ========================================================================
+  // GESTURES
+  // ========================================================================
 
   handleTouchStart(event: TouchEvent, toastId: number): void {
     if (event.touches.length !== 1) return;
-    this.pauseTimer(toastId);
+    
+    this.pauseAllTimers(); // Touch acts like hover
+
     this.touchStartX = event.touches[0].clientX;
     this.touchMoveX = this.touchStartX;
     this.swipingToastId = toastId;
@@ -185,7 +249,6 @@ export class ToastComponent implements OnInit, OnDestroy {
     this.touchMoveX = event.touches[0].clientX;
     const deltaX = this.touchMoveX - this.touchStartX;
 
-    // Only allow swiping right to dismiss
     if (deltaX > 0) {
       event.preventDefault();
       this.swipedElement.style.transform = `translateX(${deltaX}px)`;
@@ -203,10 +266,9 @@ export class ToastComponent implements OnInit, OnDestroy {
     if (deltaX > width * this.SWIPE_DISMISS_THRESHOLD_PERCENT) {
       this.closeToast(toast.id);
     } else {
-      // Reset
       this.swipedElement.style.transform = '';
       this.swipedElement.style.opacity = '';
-      this.resumeTimer(toast);
+      this.resumeAllTimers();
     }
 
     this.swipingToastId = null;

@@ -31,9 +31,11 @@
   /* --- STACKED STATE (Default) --- */
   &:not(.expanded) {
     /* Calculate position based on index */
+    /* Depth Fix: Removed Z-axis translate to prevent rendering issues */
     transform: 
-      translate3d(0, calc(var(--index) * 12px), calc(var(--index) * -20px)) 
-      scale(calc(1 - var(--index) * 0.04));
+      translate3d(0, calc(var(--index) * 10px), 0) 
+      scale(calc(1 - var(--index) * 0.05));
+      
     opacity: calc(1 - var(--index) * 0.15);
     z-index: calc(100 - var(--index));
     
@@ -72,8 +74,7 @@
 /* The Actual Toast Card (Visuals) */
 .toast-card {
   background: rgba(255, 255, 255, 0.96);
-  // backdrop-filter: blur(12px);
-  // -webkit-backdrop-filter: blur(12px);
+  /* backdrop-filter: blur(12px); */
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -82,16 +83,19 @@
     0 4px 24px -1px rgba(0, 0, 0, 0.1),
     0 2px 8px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border-left-width: 4px;
+  /* REMOVED: border-left-width: 4px; */
   overflow: hidden;
   position: relative;
   min-height: 74px;
 
-  /* Type Variants */
-  &.type-success { border-left-color: var(--color-success); .icon-circle { background: var(--color-success); } }
-  &.type-error   { border-left-color: var(--color-danger);  .icon-circle { background: var(--color-danger); } }
-  &.type-warning { border-left-color: var(--color-warning); .icon-circle { background: var(--color-warning); } }
-  &.type-info    { border-left-color: var(--color-info);    .icon-circle { background: var(--color-info); } }
+  /* Entrance Animation */
+  animation: toastEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+
+  /* Type Variants - Colors applied to icons only */
+  &.type-success { .icon-circle { background: var(--color-success); } }
+  &.type-error   { .icon-circle { background: var(--color-danger); } }
+  &.type-warning { .icon-circle { background: var(--color-warning); } }
+  &.type-info    { .icon-circle { background: var(--color-info); } }
 
   /* Swipe gesture feedback */
   transition: transform 0.1s linear;
@@ -272,6 +276,17 @@
   to { opacity: 1; }
 }
 
+@keyframes toastEntrance {
+  from {
+    opacity: 0;
+    transform: translate3d(40px, 0, 0) scale(0.9); 
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 /* Mobile Optimization */
 @media (max-width: 480px) {
   :host {
@@ -287,12 +302,11 @@
   .toast-wrapper:not(.expanded) {
     /* On mobile, stack from bottom */
     transform: 
-      translate3d(0, calc(var(--index) * -10px), calc(var(--index) * -20px)) 
+      translate3d(0, calc(var(--index) * -10px), 0) 
       scale(calc(1 - var(--index) * 0.05));
   }
 
   .toast-card {
-    /* Make touch target friendly */
     padding: 14px;
   }
 }

@@ -6,8 +6,10 @@
       [class.expanded]="isExpanded"
       [class.is-front]="i === 0"
       [style.--index]="i"
-      (mouseenter)="pauseTimer(toast.id)" 
-      (mouseleave)="resumeTimer(toast)"
+      
+      (mouseenter)="pauseAllTimers()" 
+      (mouseleave)="resumeAllTimers()"
+      
       (touchstart)="handleTouchStart($event, toast.id)" 
       (touchmove)="handleTouchMove($event, toast.id)"
       (touchend)="handleTouchEnd($event, toast)">
@@ -35,14 +37,16 @@
       @if (i === 0 && toasts.length > 1 && !isExpanded) {
         <div class="stack-indicator" (click)="toggleExpanded($event)">
           <span class="badge">{{ toasts.length }}</span>
-          <span class="hint">Bấm để mở rộng</span>
+          <span class="hint">Xem tất cả</span>
         </div>
       }
     </div>
   }
 
   @if (isExpanded && toasts.length > 1) {
-    <div class="toast-global-actions">
+    <div class="toast-global-actions" 
+         (mouseenter)="pauseAllTimers()" 
+         (mouseleave)="resumeAllTimers()">
       <button class="action-btn collapse-btn" (click)="toggleExpanded($event)">
         <i class="fas fa-compress-alt"></i> Thu gọn
       </button>
