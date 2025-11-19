@@ -5,9 +5,7 @@
   min-height: 0;
   height: 100%;
   
-  /* Optimization: Kept from new code for performance */
-  contain: content;
-  content-visibility: auto;
+  /* FIX: Removed contain: content and content-visibility to prevent shadow clipping */
 }
 
 .chart-card {
@@ -15,12 +13,12 @@
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
-  box-shadow: var(--box-shadow-md); /* Restored exact shadow variable */
+  box-shadow: var(--box-shadow-md); 
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; -- Already removed in your code (Correct) */
 }
 
 /* --- HEADER LAYOUT --- */
@@ -87,6 +85,8 @@
   display: flex;
   flex-direction: column;
   min-height: 300px; /* Matched old code */
+  /* FIX: Added overflow: hidden here to ensure content is clipped */
+  overflow: hidden;
 }
 
 .chart-container {
