@@ -1,33 +1,54 @@
-<ng-container *ngFor="let toast of toasts; let i = index; trackBy: trackByToast">
-  <div class="toast-wrapper" [id]="'toast-' + toast.id" [class.expanded]="isExpanded"
-    (mouseenter)="pauseTimer(toast.id)" (mouseleave)="resumeTimer(toast)"
-    (touchstart)="handleTouchStart($event, toast.id)" (touchmove)="handleTouchMove($event, toast.id)"
-    (touchend)="handleTouchEnd($event, toast)">
-    <div class="toast" [ngClass]="'toast-' + toast.type">
-      <div class="toast-content">
-        <div class="toast-icon" [ngClass]="toast.type">
-          <div [innerHTML]="getIcon(toast.type)"></div>
+<div class="toast-container">
+  @for (toast of toasts; track toast.id; let i = $index) {
+    <div 
+      class="toast-wrapper" 
+      [id]="'toast-' + toast.id"
+      [class.expanded]="isExpanded"
+      [class.is-front]="i === 0"
+      [style.--index]="i"
+      (mouseenter)="pauseTimer(toast.id)" 
+      (mouseleave)="resumeTimer(toast)"
+      (touchstart)="handleTouchStart($event, toast.id)" 
+      (touchmove)="handleTouchMove($event, toast.id)"
+      (touchend)="handleTouchEnd($event, toast)">
+      
+      <div class="toast-card" [ngClass]="'type-' + toast.type">
+        
+        <div class="toast-icon-area">
+          <div class="icon-circle">
+            <span [innerHTML]="getIcon(toast.type)"></span>
+          </div>
         </div>
-        <div class="toast-text">
-          <h3 class="toast-title">{{ getTitle(toast.type) }}</h3>
-          <p class="toast-message">{{ toast.message }}</p>
+
+        <div class="toast-content-area">
+          <h4 class="toast-title">{{ getTitle(toast.type) }}</h4>
+          <div class="toast-message scrollable-content">
+            {{ toast.message }}
+          </div>
         </div>
-        <button class="toast-close" (click)="closeToast(toast.id)" aria-label="Dismiss">
+
+        <button class="toast-dismiss-btn" (click)="closeToast(toast.id)" aria-label="Close notification">
           <i class="fas fa-times"></i>
         </button>
       </div>
-    </div>
 
-    <div *ngIf="i === 0 && toasts.length > 1" class="toast-actions">
-      <button class="toast-action-btn toast-expand-btn" (click)="toggleExpanded($event)"
-        [attr.aria-label]="isExpanded ? 'Collapse toasts' : 'Expand all toasts'">
-        <i [class]="isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-        {{ isExpanded ? 'Thu gọn' : 'Mở tất cả' }} ({{ toasts.length }})
+      @if (i === 0 && toasts.length > 1 && !isExpanded) {
+        <div class="stack-indicator" (click)="toggleExpanded($event)">
+          <span class="badge">{{ toasts.length }}</span>
+          <span class="hint">Bấm để mở rộng</span>
+        </div>
+      }
+    </div>
+  }
+
+  @if (isExpanded && toasts.length > 1) {
+    <div class="toast-global-actions">
+      <button class="action-btn collapse-btn" (click)="toggleExpanded($event)">
+        <i class="fas fa-compress-alt"></i> Thu gọn
       </button>
-      <button class="toast-action-btn toast-clear-btn" (click)="clearAllToasts($event)" aria-label="Clear all toasts">
-        <i class="fas fa-trash-alt"></i>
-        Xóa tất cả
+      <button class="action-btn clear-btn" (click)="clearAllToasts($event)">
+        <i class="fas fa-trash-alt"></i> Xóa tất cả
       </button>
     </div>
-  </div>
-</ng-container>
+  }
+</div>
