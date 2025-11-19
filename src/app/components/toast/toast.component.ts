@@ -21,38 +21,32 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent implements OnInit, OnDestroy {
-  // --- Dependencies ---
+  // Inject dependencies
   private toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private cdRef = inject(ChangeDetectorRef);
 
-  // --- State ---
   public toasts: ToastMessage[] = [];
-  
-  // UPDATED: Default to true so toasts list out vertically by default
-  public isExpanded = true; 
-  
+  public isExpanded = false; // Default to collapsed stack
   private toastSub!: Subscription;
   private activeTimers = new Map<number, any>();
-  private isHovered = false; 
 
-  // --- Constants ---
-  private readonly DEFAULT_DURATION = 5000;
-  private readonly SWIPE_THRESHOLD = 0.4; 
-
-  // --- Swipe State ---
+  // Swipe gesture properties
   private touchStartX = 0;
   private touchMoveX = 0;
   private swipingToastId: number | null = null;
   private swipedElement: HTMLElement | null = null;
+  private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.4;
+  private readonly DEFAULT_DURATION = 5000;
 
   ngOnInit(): void {
     this.toastSub = this.toastService.toasts$.subscribe((newToasts) => {
       const currentIds = new Set(this.toasts.map(t => t.id));
       
+      // Identify new toasts
       const addedToasts = newToasts.filter(t => !currentIds.has(t.id));
 
-      // Cleanup removed timers
+      // Clean up timers for removed toasts
       const newIds = new Set(newToasts.map((t) => t.id));
       this.activeTimers.forEach((timer, id) => {
         if (!newIds.has(id)) {
@@ -63,17 +57,16 @@ export class ToastComponent implements OnInit, OnDestroy {
 
       this.toasts = newToasts;
       
-      // UPDATED: Reset to expanded state if list becomes empty
+      // Auto-expand if there are many errors, otherwise default behavior
+      // or reset expansion state if list becomes empty
       if (this.toasts.length === 0) {
-        this.isExpanded = true;
+        this.isExpanded = false;
       }
 
       this.cdRef.markForCheck();
 
-      // Start timers only if we aren't currently hovering the container
-      if (!this.isHovered) {
-        addedToasts.forEach(toast => this.startTimer(toast));
-      }
+      // Start timers for new toasts
+      addedToasts.forEach(toast => this.startTimer(toast));
     });
   }
 
@@ -84,24 +77,11 @@ export class ToastComponent implements OnInit, OnDestroy {
     this.clearAllTimers();
   }
 
-  // --- Timer Logic (Global Pause) ---
-
-  onContainerMouseEnter(): void {
-    this.isHovered = true;
-    this.clearAllTimers(); 
-  }
-
-  onContainerMouseLeave(): void {
-    this.isHovered = false;
-    this.toasts.forEach(toast => this.startTimer(toast));
-  }
+  // --- Timer Logic ---
 
   startTimer(toast: ToastMessage): void {
-    if (this.isHovered || this.activeTimers.has(toast.id)) return;
-
     const duration = toast.duration ?? this.DEFAULT_DURATION;
-    
-    if (duration > 0) {
+    if (duration > 0 && !this.activeTimers.has(toast.id)) {
       const timer = setTimeout(() => {
         this.closeToast(toast.id);
       }, duration);
@@ -109,24 +89,31 @@ export class ToastComponent implements OnInit, OnDestroy {
     }
   }
 
-  private clearAllTimers(): void {
-    this.activeTimers.forEach((timer) => clearTimeout(timer));
-    this.activeTimers.clear();
-  }
-
-  // --- Interaction Methods ---
-
-  closeToast(id: number): void {
+  pauseTimer(id: number): void {
     if (this.activeTimers.has(id)) {
       clearTimeout(this.activeTimers.get(id));
       this.activeTimers.delete(id);
     }
+  }
+
+  resumeTimer(toast: ToastMessage): void {
+    // Only resume if the toast still exists and isn't already closing
+    if (this.toasts.find(t => t.id === toast.id)) {
+      this.startTimer(toast);
+    }
+  }
+
+  // --- Actions ---
+
+  closeToast(id: number): void {
+    this.pauseTimer(id);
 
     const wrapper = document.getElementById('toast-' + id);
     const card = wrapper?.querySelector('.toast-card');
 
     if (card) {
       card.classList.add('dismissing');
+      // Wait for animation
       setTimeout(() => {
         this.toastService.removeToast(id);
       }, 300);
@@ -138,11 +125,13 @@ export class ToastComponent implements OnInit, OnDestroy {
   clearAllToasts(event: MouseEvent): void {
     event.stopPropagation();
     this.clearAllTimers();
-    
-    // Clear instantly
     this.toastService.clearAll();
-    // We keep isExpanded true so next toasts appear expanded
-    this.isExpanded = true; 
+    this.isExpanded = false;
+  }
+
+  private clearAllTimers(): void {
+    this.activeTimers.forEach((timer) => clearTimeout(timer));
+    this.activeTimers.clear();
   }
 
   toggleExpanded(event: MouseEvent): void {
@@ -150,12 +139,12 @@ export class ToastComponent implements OnInit, OnDestroy {
     this.isExpanded = !this.isExpanded;
   }
 
-  // --- Display Helpers ---
+  // --- Helper Methods ---
 
   getTitle(type: ToastType): string {
     const titles: Record<ToastType, string> = {
       success: 'Thành công',
-      error: 'Đã xảy ra lỗi',
+      error: 'Đã có lỗi',
       warning: 'Cảnh báo',
       info: 'Thông tin',
     };
@@ -165,21 +154,19 @@ export class ToastComponent implements OnInit, OnDestroy {
   getIcon(type: ToastType): SafeHtml {
     const icons: Record<ToastType, string> = {
       success: 'fas fa-check',
-      error: 'fas fa-times',
-      warning: 'fas fa-exclamation',
+      error: 'fas fa-exclamation',
+      warning: 'fas fa-bell',
       info: 'fas fa-info',
     };
-    const iconClass = icons[type] || 'fas fa-bell';
+    const iconClass = icons[type] || 'fas fa-circle';
     return this.sanitizer.bypassSecurityTrustHtml(`<i class="${iconClass}"></i>`);
   }
 
-  // --- Swipe Gestures (Mobile) ---
+  // --- Swipe Gestures ---
 
   handleTouchStart(event: TouchEvent, toastId: number): void {
     if (event.touches.length !== 1) return;
-    
-    this.onContainerMouseEnter(); 
-
+    this.pauseTimer(toastId);
     this.touchStartX = event.touches[0].clientX;
     this.touchMoveX = this.touchStartX;
     this.swipingToastId = toastId;
@@ -198,25 +185,28 @@ export class ToastComponent implements OnInit, OnDestroy {
     this.touchMoveX = event.touches[0].clientX;
     const deltaX = this.touchMoveX - this.touchStartX;
 
+    // Only allow swiping right to dismiss
     if (deltaX > 0) {
-      event.preventDefault(); 
+      event.preventDefault();
       this.swipedElement.style.transform = `translateX(${deltaX}px)`;
       this.swipedElement.style.opacity = `${1 - (deltaX / 300)}`;
     }
   }
 
-  handleTouchEnd(event: TouchEvent, toastId: number): void {
-    if (this.swipingToastId !== toastId || !this.swipedElement) return;
+  handleTouchEnd(event: TouchEvent, toast: ToastMessage): void {
+    if (this.swipingToastId !== toast.id || !this.swipedElement) return;
 
     this.swipedElement.classList.remove('swiping');
     const deltaX = this.touchMoveX - this.touchStartX;
     const width = this.swipedElement.offsetWidth;
 
-    if (deltaX > width * this.SWIPE_THRESHOLD) {
-      this.closeToast(toastId);
+    if (deltaX > width * this.SWIPE_DISMISS_THRESHOLD_PERCENT) {
+      this.closeToast(toast.id);
     } else {
+      // Reset
       this.swipedElement.style.transform = '';
       this.swipedElement.style.opacity = '';
+      this.resumeTimer(toast);
     }
 
     this.swipingToastId = null;
