@@ -1,22 +1,20 @@
 <div class="widget-card">
-  <ng-container *ngIf="isLoading; else content">
+  @if (isLoading()) {
     <div class="widget-icon-wrapper skeleton"></div>
     <div class="widget-content">
       <div class="skeleton skeleton-text" style="width: 60%; height: 1.5rem; margin-bottom: 0.5rem;"></div>
       <div class="skeleton skeleton-text" style="width: 40%; height: 0.875rem; margin-bottom: 0.25rem;"></div>
       <div class="skeleton skeleton-text" style="width: 50%; height: 0.75rem;"></div>
     </div>
-  </ng-container>
-
-  <ng-template #content>
-    <div class="widget-icon-wrapper" [style.background-color]="accentColor + '33'">
-      <i [class]="icon" [style.color]="accentColor" aria-hidden="true"></i>
+  } @else {
+    <div class="widget-icon-wrapper" [ngStyle]="iconWrapperStyle()">
+      <i [class]="icon()" [ngStyle]="iconStyle()" aria-hidden="true"></i>
     </div>
 
     <div class="widget-content">
       <div class="widget-value" #valueDisplay></div>
-      <p class="widget-title">{{ title }}</p>
-      <p class="widget-caption">{{ caption }}</p>
+      <p class="widget-title">{{ title() }}</p>
+      <p class="widget-caption">{{ caption() }}</p>
     </div>
-  </ng-template>
+  }
 </div>

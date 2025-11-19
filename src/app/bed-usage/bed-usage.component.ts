@@ -1,16 +1,16 @@
 import {
   Component,
   OnInit,
-  OnDestroy,
   inject,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  NgZone,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { EChartsCoreOption } from 'echarts/core';
 
 import { WidgetCardComponent } from '../components/widget-card/widget-card.component';
@@ -22,7 +22,6 @@ const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 const AUTO_REFRESH_INTERVAL = 60_000; // 1 minute
 const CHART_BAR_WIDTH = '60%';
-const INITIAL_ZOOM_END_VALUE = 8;
 
 // Interfaces
 interface ApiResponseData {
@@ -105,11 +104,11 @@ function getCssVar(name: string): string {
   styleUrl: './bed-usage.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BedUsageComponent implements OnInit, OnDestroy {
+export class BedUsageComponent implements OnInit {
   // Dependency Injection
   private readonly http = inject(HttpClient);
   private readonly cd = inject(ChangeDetectorRef);
-  private readonly ngZone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Public Properties
   public isLoading = false;
@@ -119,42 +118,21 @@ export class BedUsageComponent implements OnInit, OnDestroy {
   public widgetData: WidgetData[] = [];
 
   // Private Properties
-  private readonly destroy$ = new Subject<void>();
-  private dataRefreshInterval?: ReturnType<typeof setInterval>;
   private bedStatusSeries: BedStatusSeries[] = [];
   private cssVars: CssVariables = {} as CssVariables;
 
   ngOnInit(): void {
     this.initializeColors();
-    this.loadData(true);
-    this.startAutoRefresh();
-  }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.clearRefreshInterval();
-  }
-
-  /**
-   * Starts automatic data refresh at specified intervals
-   */
-  private startAutoRefresh(): void {
-    this.ngZone.runOutsideAngular(() => {
-      this.dataRefreshInterval = setInterval(() => {
-        this.ngZone.run(() => this.loadData(false));
-      }, AUTO_REFRESH_INTERVAL);
-    });
-  }
-
-  /**
-   * Clears the refresh interval
-   */
-  private clearRefreshInterval(): void {
-    if (this.dataRefreshInterval) {
-      clearInterval(this.dataRefreshInterval);
-      this.dataRefreshInterval = undefined;
-    }
+    // Use RxJS timer for initial load (0ms) and auto-refresh (60s)
+    // takeUntilDestroyed automatically cleans up when component is destroyed
+    timer(0, AUTO_REFRESH_INTERVAL)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        // Only show full skeleton on first load (when widgets are empty)
+        const showSkeleton = this.widgetData.length === 0;
+        this.loadData(showSkeleton);
+      });
   }
 
   /**
@@ -301,14 +279,14 @@ export class BedUsageComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = showSkeleton;
-    this.isRefreshing = true;
+    this.isRefreshing = !showSkeleton;
     this.cd.markForCheck();
 
     this.http
       .get<ApiResponseData[]>(environment.bedUsageUrl)
       .pipe(
         finalize(() => this.handleRequestComplete()),
-        takeUntil(this.destroy$)
+        takeUntilDestroyed(this.destroyRef) // Added safety for manual refresh
       )
       .subscribe({
         next: (data) => this.handleDataSuccess(data),
