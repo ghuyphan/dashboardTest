@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, Location } from '@angular/common'; 
+import { CommonModule, Location } from '@angular/common';
 import {
   Router,
   RouterModule,
@@ -46,9 +46,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
-  
+
   showSearchBar: boolean = false;
-  showBackButton: boolean = false; 
+  showBackButton: boolean = false;
 
   isContentLoaded = false;
 
@@ -56,10 +56,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private searchService: SearchService, 
+    private searchService: SearchService,
     private location: Location,
-    private footerService: FooterActionService 
-  ) {}
+    private footerService: FooterActionService
+  ) { }
 
   ngOnInit(): void {
     // Subscribe to dynamic nav items
@@ -83,7 +83,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        startWith(null), 
+        startWith(null),
         map(() => this.activatedRoute),
         map(route => {
           while (route.firstChild) {
@@ -95,15 +95,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         mergeMap(route => route.data)
       )
       .subscribe((data: any) => {
-        // Clear the footer on EVERY navigation.
         this.footerService.clearActions();
-
         this.currentScreenName = data['title'] || 'Dashboard';
-        
         this.showSearchBar = data['showSearchBar'] === true;
-        this.showBackButton = data['showBackButton'] === true; 
-        
+        this.showBackButton = data['showBackButton'] === true;
+
         if (!this.showSearchBar) {
+          // This works perfectly with the new Signal service
           this.searchService.setSearchTerm('');
         }
       });
@@ -114,7 +112,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
       this.isContentLoaded = true;
-    }, 50); 
+    }, 50);
   }
 
   private deepCopyNavItems(items: NavItem[]): NavItem[] {
@@ -135,7 +133,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private checkWindowSize(): void {
-      this.isSidebarOpen = false;
+    this.isSidebarOpen = false;
   }
 
   private getInitials(username: string): string {

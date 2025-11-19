@@ -381,11 +381,11 @@ return this.modalService
         USER_: currentUserId,
       };
 
-      const wrapperPayload = {
-        dmThietBi: devicePayloadForPost,
-      };
+      // const wrapperPayload = {
+      //   dmThietBi: devicePayloadForPost,
+      // };
 
-      saveObservable = this.http.post(apiUrl, wrapperPayload);
+      saveObservable = this.http.post(apiUrl, devicePayloadForPost);
     }
 
     saveObservable

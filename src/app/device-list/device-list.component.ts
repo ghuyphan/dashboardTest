@@ -5,19 +5,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   inject,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Router, NavigationEnd } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
-import {
-  Subscription,
-  Subject,
-  of,
-  Observable,
-  merge,
-  combineLatest,
-} from 'rxjs';
+import { Subject, of, Observable } from 'rxjs';
 import {
   finalize,
   switchMap,
@@ -44,6 +39,7 @@ import { DeviceFormComponent } from './device-form/device-form.component';
 import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../models/device.model';
 import { environment } from '../../environments/environment.development';
+import { DateUtils } from '../utils/date.utils';
 
 // Constants
 const DEFAULT_PAGE_SIZE = 25;
@@ -88,6 +84,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Public Properties
   public readonly deviceColumns: GridColumn[] = this.initializeColumns();
@@ -102,9 +99,10 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   public selectedDevice: Device | null = null;
 
   // Private Properties
-  private readonly destroy$ = new Subject<void>();
   private readonly reloadTrigger$ = new Subject<void>();
-  private subscriptions = new Subscription();
+
+  // FIX: Initialize the observable here (in the class field) to satisfy Injection Context
+  private readonly searchTerm$ = toObservable(this.searchService.searchTerm);
 
   ngOnInit(): void {
     this.initializeSubscriptions();
@@ -112,9 +110,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.subscriptions.unsubscribe();
+    // Footer cleanup only; subscriptions handled by takeUntilDestroyed
     this.footerService.clearActions();
   }
 
@@ -171,9 +167,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
    * Initializes all component subscriptions
    */
   private initializeSubscriptions(): void {
-    // Search subscription
-    const searchSub = this.searchService.searchTerm$
-      .pipe(debounceTime(SEARCH_DEBOUNCE_TIME))
+    // FIX: Subscribe to the pre-initialized observable
+    this.searchTerm$
+      .pipe(
+        debounceTime(SEARCH_DEBOUNCE_TIME),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe((term) => {
         if (term !== this.currentSearchTerm) {
           this.currentSearchTerm = term;
@@ -182,30 +181,28 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       });
 
     // Data loading subscription
-    const dataLoadSub = this.reloadTrigger$
+    this.reloadTrigger$
       .pipe(
         startWith(null),
         tap(() => this.handleLoadStart()),
-        switchMap(() => this.loadDevices())
+        switchMap(() => this.loadDevices()),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
 
     // Router subscription
-    const routerSub = this.router.events
+    this.router.events
       .pipe(
         filter(
           (event): event is NavigationEnd => event instanceof NavigationEnd
         ),
-        filter((event) => event.urlAfterRedirects === DEVICE_LIST_ROUTE)
+        filter((event) => event.urlAfterRedirects === DEVICE_LIST_ROUTE),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => {
         this.updateFooterActions();
         this.cdr.markForCheck();
       });
-
-    this.subscriptions.add(searchSub);
-    this.subscriptions.add(dataLoadSub);
-    this.subscriptions.add(routerSub);
   }
 
   /**
@@ -256,7 +253,9 @@ export class DeviceListComponent implements OnInit, OnDestroy {
    */
   private buildApiUrl(): string {
     const baseUrl = environment.equipmentCatUrl;
-    return this.currentSearchTerm ? `${baseUrl}/page/search` : `${baseUrl}/page`;
+    return this.currentSearchTerm
+      ? `${baseUrl}/page/search`
+      : `${baseUrl}/page`;
   }
 
   /**
@@ -277,9 +276,9 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private formatDeviceDates(device: Device): Device {
     return {
       ...device,
-      NgayTao: this.formatDate(device.NgayTao),
-      NgayMua: this.formatDate(device.NgayMua),
-      NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
+      NgayTao: DateUtils.formatToDisplay(device.NgayTao),
+      NgayMua: DateUtils.formatToDisplay(device.NgayMua),
+      NgayHetHanBH: DateUtils.formatToDisplay(device.NgayHetHanBH),
     };
   }
 
@@ -434,7 +433,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       })
       .subscribe((result) => {
         if (result) {
-          this.toastService.showSuccess('Tạo mới thiết bị thành công.');
           this.resetToFirstPage();
         }
       });

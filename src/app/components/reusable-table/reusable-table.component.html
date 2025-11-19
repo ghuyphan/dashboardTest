@@ -1,11 +1,15 @@
 <div class="reusable-table-wrapper">
   
-  <div class="loading-shade" *ngIf="isLoadingWithDelay">
-    <div class="app-loading-container">
-      <div class="app-loading-spinner"></div>
-      <p *ngIf="showLoadingText">Đang tải dữ liệu...</p>
+  @if (isLoadingWithDelay) {
+    <div class="loading-shade">
+      <div class="app-loading-container">
+        <div class="app-loading-spinner"></div>
+        @if (showLoadingText) {
+          <p>Đang tải dữ liệu...</p>
+        }
+      </div>
     </div>
-  </div>
+  }
 
   <div class="table-container" #tableContainer>
     <table
@@ -36,69 +40,69 @@
           </mat-checkbox>
         </td>
       </ng-container>
-      <ng-container *ngFor="let col of columns" [matColumnDef]="col.key">
-        
-        <th
-          mat-header-cell
-          *matHeaderCellDef
-          [mat-sort-header]="col.key"
-          [disabled]="!col.sortable"
-          class="compact-header"
+
+      @for (col of columns; track col.key) {
+        <ng-container [matColumnDef]="col.key">
           
-          [style.width]="col.width"
-          [style.min-width]="col.width"
-          [style.max-width]="col.width"
-        >
-          <div class="header-content" [appTooltip]="col.label">
-            {{ col.label }}
-          </div>
-        </th>
-        
-        <td mat-cell *matCellDef="let element" class="compact-cell"
-        
-          [style.width]="col.width"
-          [style.min-width]="col.width"
-          [style.max-width]="col.width"
-        >
-          <div class="cell-content" [appTooltip]="element[col.key]" [ngSwitch]="col.key">
-
-            <ng-container *ngSwitchCase="'actions'">
-              <button class="action-menu-btn" [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
-                <mat-icon>more_horiz</mat-icon>
-              </button>
-              <mat-menu #rowMenu="matMenu">
-                <button mat-menu-item (click)="onRowAction('view', element, $event)">
-                  <mat-icon>remove_red_eye</mat-icon>
-                  <span>Xem</span>
-                </button>
-                <button mat-menu-item (click)="onRowAction('edit', element, $event)">
-                  <mat-icon>edit</mat-icon>
-                  <span>Sửa</span>
-                </button>
-                <button mat-menu-item (click)="onRowAction('delete', element, $event)" color="warn">
-                  <mat-icon>delete</mat-icon>
-                  <span>Xóa</span>
-                </button>
-              </mat-menu>
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'TrangThai_Ten'">
-              <span class="status-chip" [ngClass]="getStatusClass(element.TrangThai_Ten)" 
-                    [innerHTML]="element.TrangThai_Ten | highlightSearch: searchTerm">
-              </span>
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'GiaMua'">
-              {{ element[col.key] | currency:'VND':'symbol':'1.0-0':'vi' }}
-            </ng-container>
-
-            <ng-container *ngSwitchDefault>
-              <span [innerHTML]="element[col.key] | highlightSearch: searchTerm"></span>
-            </ng-container>
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="col.key"
+            [disabled]="!col.sortable"
+            class="compact-header"
             
-          </div>
-        </td>
+            [style.width]="col.width"
+            [style.min-width]="col.width"
+            [style.max-width]="col.width"
+          >
+            <div class="header-content" [appTooltip]="col.label">
+              {{ col.label }}
+            </div>
+          </th>
+          
+          <td mat-cell *matCellDef="let element" class="compact-cell"
+          
+            [style.width]="col.width"
+            [style.min-width]="col.width"
+            [style.max-width]="col.width"
+          >
+            <div class="cell-content" [appTooltip]="element[col.key]">
+              @switch (col.key) {
+                @case ('actions') {
+                  <button class="action-menu-btn" [matMenuTriggerFor]="rowMenu" (click)="$event.stopPropagation()">
+                    <mat-icon>more_horiz</mat-icon>
+                  </button>
+                  <mat-menu #rowMenu="matMenu">
+                    <button mat-menu-item (click)="onRowAction('view', element, $event)">
+                      <mat-icon>remove_red_eye</mat-icon>
+                      <span>Xem</span>
+                    </button>
+                    <button mat-menu-item (click)="onRowAction('edit', element, $event)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Sửa</span>
+                    </button>
+                    <button mat-menu-item (click)="onRowAction('delete', element, $event)" color="warn">
+                      <mat-icon>delete</mat-icon>
+                      <span>Xóa</span>
+                    </button>
+                  </mat-menu>
+                }
+                @case ('TrangThai_Ten') {
+                  <span class="status-chip" [ngClass]="getStatusClass(element.TrangThai_Ten)" 
+                        [innerHTML]="element.TrangThai_Ten | highlightSearch: searchTerm">
+                  </span>
+                }
+                @case ('GiaMua') {
+                  {{ element[col.key] | currency:'VND':'symbol':'1.0-0':'vi' }}
+                }
+                @default {
+                  <span [innerHTML]="element[col.key] | highlightSearch: searchTerm"></span>
+                }
+              }
+            </div>
+          </td>
         </ng-container>
+      }
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true" class="compact-header-row"></tr>
       
@@ -116,32 +120,35 @@
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell no-data-cell" [attr.colspan]="displayedColumns.length">
           
-          <div class="no-data-container" *ngIf="!isLoading">
-          <div class="no-data-icon-container">
-              <mat-icon class="no-data-icon">inbox</mat-icon>
+          @if (!isLoading) {
+            <div class="no-data-container">
+              <div class="no-data-icon-container">
+                <mat-icon class="no-data-icon">inbox</mat-icon>
+              </div>
+              <p class="no-data-text">{{ getEmptyStateMessage() }}</p>
+              @if (searchTerm) {
+                <button class="reset-btn" (click)="clearSearch()">
+                  <mat-icon>refresh</mat-icon>
+                  Đặt lại tìm kiếm
+                </button>
+              }
             </div>
-            <p class="no-data-text">{{ getEmptyStateMessage() }}</p>
-            <button *ngIf="searchTerm" class="reset-btn" (click)="clearSearch()">
-              <mat-icon>refresh</mat-icon>
-              Đặt lại tìm kiếm
-            </button>
-          </div>
+          }
         </td>
       </tr>
     </table>
   </div>
 
-  <mat-paginator
-    *ngIf="showPaginator"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="pageSizeOptions"
-    
-    [length]="totalDataLength" 
-
-    (page)="onPageChange($event)"
-    showFirstLastButtons
-    aria-label="Select page of results"
-    class="compact-paginator"
-  >
-  </mat-paginator>
+  @if (showPaginator) {
+    <mat-paginator
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      [length]="totalDataLength" 
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+      aria-label="Select page of results"
+      class="compact-paginator"
+    >
+    </mat-paginator>
+  }
 </div>
