@@ -18,14 +18,16 @@ export class ModalService {
   /**
    * Opens the modal with a specified component and configuration.
    *
-   * @param component The component class (Type<any>) to render inside the modal.
+   * @template T The component type to render
+   * @template R The return type of the modal result
+   * @param component The component class (Type<T>) to render inside the modal.
    * @param options Optional configuration (title, context, etc.)
-   * @returns An Observable that emits data when the modal is closed.
+   * @returns An Observable<R> that emits data when the modal is closed.
    */
-  open(
-    component: Type<any>,
+  open<T, R = any>(
+    component: Type<T>,
     options?: Omit<ModalOptions, 'component'>
-  ): Observable<any> {
+  ): Observable<R | undefined> {
     
     // Combine component and options
     const modalOptions: ModalOptions = {
@@ -56,7 +58,8 @@ export class ModalService {
     }
 
     // Return the observable for the caller to subscribe to
-    return modalRef.afterClosed;
+    // Cast to Observable<R> to match the generic signature
+    return modalRef.afterClosed as Observable<R | undefined>;
   }
 
   /**

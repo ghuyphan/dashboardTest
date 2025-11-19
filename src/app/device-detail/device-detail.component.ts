@@ -16,6 +16,7 @@ import { ConfirmationModalComponent } from '../components/confirmation-modal/con
 import { WordExportService } from '../services/word-export.service';
 import { CustomRouteReuseStrategy } from '../custom-route-reuse-strategy';
 import { DocxPrintViewerComponent } from '../components/docx-print-viewer/docx-print-viewer.component';
+import { DateUtils } from '../utils/date.utils'; // <--- IMPORT DATE UTILS
 
 @Component({
   selector: 'app-device-detail',
@@ -98,21 +99,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     });
   }
   
-  private parseDate(dateString: string | null | undefined): Date | null {
-    if (!dateString) return null;
-    try {
-      if (dateString.includes('/')) {
-        const parts = dateString.substring(0, 10).split('/');
-        const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-        return isNaN(d.getTime()) ? null : d;
-      } else {
-        const d = new Date(dateString);
-        return isNaN(d.getTime()) ? null : d;
-      }
-    } catch (e) {
-      return null;
-    }
-  }
+  // Removed private parseDate(...)
 
   private checkWarrantyStatus(device: Device): void {
     this.isWarrantyExpiring = false;
@@ -123,7 +110,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }
 
     try {
-      const expiryDate = this.parseDate(device.NgayHetHanBH);
+      // Use DateUtils.parse instead of local method
+      const expiryDate = DateUtils.parse(device.NgayHetHanBH);
       if (!expiryDate) return;
       
       const today = new Date();
@@ -142,7 +130,37 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- FUNCTION 1: Word Report Preview ---
+  // ... rest of the code remains the same
+
+  formatDate(isoDate: string | null | undefined): string {
+    // Use DateUtils for consistent formatting
+    return DateUtils.formatToDisplay(isoDate);
+  }
+
+  // ... getStatusClass, getDeviceIconClass etc.
+  public getStatusClass(status: string | null | undefined): string {
+    if (!status) return 'status-default';
+    const lower = status.toLowerCase();
+    if (lower.includes('đang sử dụng')) return 'status-in-use';
+    if (lower.includes('sẵn sàng')) return 'status-ready';
+    if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
+    if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
+    return 'status-default';
+  }
+
+  public getDeviceIconClass(deviceType: string | null | undefined): string {
+    if (!deviceType) return 'fas fa-question-circle';
+    const lower = deviceType.toLowerCase();
+    if (lower.includes('laptop') || lower.includes('máy tính')) return 'fas fa-laptop-medical';
+    if (lower.includes('printer') || lower.includes('máy in')) return 'fas fa-print';
+    if (lower.includes('server') || lower.includes('máy chủ')) return 'fas fa-server';
+    if (lower.includes('monitor')) return 'fas fa-desktop';
+    return 'fas fa-hdd';
+  }
+  
+  // --- Other methods (onPrintWordReport, onPrintQrCode, setupFooterActions, goBack, onEdit, onDelete) ---
+  // Paste the rest of the original file content here if copying, or just ensure they are preserved.
+  // For brevity, I assumed the existing methods are kept as is.
   onPrintWordReport(device: Device): void {
     if (!device) return;
     this.isLoading = true;
@@ -183,16 +201,9 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  // --- FUNCTION 2: QR Code Print (Scoped) ---
   onPrintQrCode(): void {
-    // 1. Add the special class to body so CSS knows we are printing QR
     this.document.body.classList.add('print-mode-qr');
-
-    // 2. Trigger print
     window.print();
-
-    // 3. Remove the class immediately after (or after short delay)
-    // Note: 'onafterprint' is cleaner, but setTimeout covers most cases
     setTimeout(() => {
       this.document.body.classList.remove('print-mode-qr');
     }, 500);
@@ -243,7 +254,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }).subscribe((result) => {
       if (result) {
         CustomRouteReuseStrategy.clearCache('equipment/catalog');
-        // this.toastService.showSuccess('Cập nhật thiết bị thành công.');
         this.loadDevice(device.Id!.toString());
       }
     });
@@ -283,30 +293,5 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
-  }
-
-  formatDate(isoDate: string | null | undefined): string {
-    if (!isoDate || isoDate === '0001-01-01T00:00:00') return 'N/A';
-    return new DatePipe('en-GB').transform(isoDate, 'dd/MM/yyyy') || 'N/A';
-  }
-
-  public getStatusClass(status: string | null | undefined): string {
-    if (!status) return 'status-default';
-    const lower = status.toLowerCase();
-    if (lower.includes('đang sử dụng')) return 'status-in-use';
-    if (lower.includes('sẵn sàng')) return 'status-ready';
-    if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
-    if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
-    return 'status-default';
-  }
-
-  public getDeviceIconClass(deviceType: string | null | undefined): string {
-    if (!deviceType) return 'fas fa-question-circle';
-    const lower = deviceType.toLowerCase();
-    if (lower.includes('laptop') || lower.includes('máy tính')) return 'fas fa-laptop-medical';
-    if (lower.includes('printer') || lower.includes('máy in')) return 'fas fa-print';
-    if (lower.includes('server') || lower.includes('máy chủ')) return 'fas fa-server';
-    if (lower.includes('monitor')) return 'fas fa-desktop';
-    return 'fas fa-hdd';
   }
 }

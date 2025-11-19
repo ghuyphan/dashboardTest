@@ -7,11 +7,13 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
-  HostListener,
-  Renderer2,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { BreakpointObserver } from '@angular/cdk/layout'; // <--- IMPORT THIS
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // <--- IMPORT THIS
+
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
 import { TooltipDirective } from '../../directives/tooltip.directive';
@@ -39,27 +41,23 @@ export class SidebarComponent implements OnChanges {
 
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
-  private isMobileView: boolean = false;
+  public isMobileView: boolean = false; // Changed to public for template usage if needed
 
-  constructor(private renderer: Renderer2, private el: ElementRef) {
-    this.checkIfMobile();
-  }
+  // Inject BreakpointObserver
+  private breakpointObserver = inject(BreakpointObserver);
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any): void {
-    this.checkIfMobile();
-  }
-
-  private checkIfMobile(): void {
-    // 992px is the breakpoint used in your CSS
-    this.isMobileView = window.innerWidth <= 992;
+  constructor() {
+    // Use BreakpointObserver to track screen size changes reactively
+    this.breakpointObserver
+      .observe(['(max-width: 992px)']) // Matches your SCSS breakpoint
+      .pipe(takeUntilDestroyed())
+      .subscribe((state) => {
+        this.isMobileView = state.matches;
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']) {
-      // On mobile, check window size when sidebar state changes
-      this.checkIfMobile();
-      
       if (changes['isOpen'].firstChange) {
         return;
       }
@@ -102,11 +100,12 @@ export class SidebarComponent implements OnChanges {
   }
 
   private restoreScrollPosition(): void {
-    setTimeout(() => {
+    // Use requestAnimationFrame for smoother timing
+    requestAnimationFrame(() => {
       if (this.navContentEl?.nativeElement) {
         this.navContentEl.nativeElement.scrollTop = this.lastScrollTop;
       }
-    }, 50);
+    });
   }
 
   onToggleSidebarClick(): void {

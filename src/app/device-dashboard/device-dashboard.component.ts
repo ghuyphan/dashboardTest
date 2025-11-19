@@ -24,6 +24,7 @@ import {
   ReusableTableComponent,
   GridColumn,
 } from '../components/reusable-table/reusable-table.component';
+import { DateUtils } from '../utils/date.utils'; // <--- IMPORT DATE UTILS
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -273,7 +274,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           this.toastService.showError(
             'Không thể tải dữ liệu thống kê thiết bị.'
           );
-          // Set to null to trigger empty state
           this.statusChartOptions = null;
           this.categoryChartOptions = null;
           this.locationChartOptions = null;
@@ -285,7 +285,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private refilterAndRenderAll(): void {
     let filteredDevices = this.allDevices;
 
-    // 1. Apply Filters to create the "Filtered Set" (Used for Grids, Widgets, and Drill-down charts)
     if (this.currentFilter) {
       const { type, name } = this.currentFilter;
       
@@ -302,7 +301,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           break;
         case 'location':
           filteredDevices = this.allDevices.filter((d) => {
-             // Special location logic
             const statusLower = (d.TrangThai_Ten || '').toLowerCase();
             const needsAttention =
               statusLower.includes('bảo trì') ||
@@ -316,28 +314,21 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       }
     }
 
-    // 2. Calculate Widgets & Grids (Always use filtered set)
     const filteredAggregates = this.aggregateGeneralData(filteredDevices);
     this.updateWidgets(filteredAggregates.widgetData);
     this.attentionDevices = filteredAggregates.attentionDevices;
     this.expiringDevices = filteredAggregates.expiringDevices;
 
-    // 3. Calculate Charts
-    // STRATEGY: If a chart represents the ACTIVE FILTER, use ALL data + Highlight (Fade out others).
-    // Otherwise, use FILTERED data (Drill-down behavior).
-
-    // --- Status Chart Data ---
     let statusData: DeviceStatsData[];
     let highlightStatus: string | undefined;
 
     if (this.currentFilter?.type === 'status') {
-       statusData = this.aggregateStatus(this.allDevices); // Show context (Full set)
-       highlightStatus = this.currentFilter.name; // Highlight selected
+       statusData = this.aggregateStatus(this.allDevices); 
+       highlightStatus = this.currentFilter.name; 
     } else {
-       statusData = this.aggregateStatus(filteredDevices); // Show filtered subset
+       statusData = this.aggregateStatus(filteredDevices); 
     }
 
-    // --- Category Chart Data ---
     let categoryData: AggregatedData[];
     let highlightCategory: string | undefined;
 
@@ -348,7 +339,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
         categoryData = this.aggregateCategory(filteredDevices);
     }
 
-    // --- Location Chart Data ---
     let locationData: AggregatedData[];
     let highlightLocation: string | undefined;
 
@@ -359,16 +349,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
         locationData = this.aggregateLocation(filteredDevices);
     }
     
-    // Sort/Slice chart data
     categoryData.sort((a, b) => b.value - a.value);
-    locationData.sort((a, b) => b.value - a.value).slice(0, 10); // Top 10 locations only
+    locationData.sort((a, b) => b.value - a.value).slice(0, 10); 
 
-    // --- Trend Chart (Always uses filtered context) ---
     const trendData = filteredAggregates.trendData; 
 
-    // 4. Render Charts (Assign Options or NULL for Empty State)
-
-    // Status Chart
     const totalStatus = statusData.reduce((sum, item) => sum + item.SoLuong, 0);
     this.statusChartSubtext = this.currentFilter
       ? `Tổng (đã lọc): ${this.formatNumber(totalStatus)}`
@@ -376,9 +361,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
     this.statusChartOptions = statusData.length > 0
       ? this.buildDonutOption(statusData, highlightStatus)
-      : null; // Trigger empty state icon
+      : null; 
 
-    // Category Chart
     this.categoryChartOptions = categoryData.length > 0
       ? this.buildBarOption(
           categoryData.map((d) => d.name).reverse(),
@@ -388,7 +372,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
         )
       : null;
 
-    // Location Chart
     this.locationChartTitle = this.currentFilter
       ? `Vị trí (Đã lọc)`
       : `Vị trí có TB cần chú ý (Top 10)`;
@@ -402,7 +385,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
         )
       : null;
 
-    // Trend Chart
     this.trendChartOptions = trendData.length > 0
       ? this.buildLineOption(
           trendData.map((d) => d.month),
@@ -412,8 +394,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
     this.cd.markForCheck();
   }
-
-  // --- Aggregation Helpers ---
 
   private aggregateStatus(devices: Device[]): DeviceStatsData[] {
     const statusMap = new Map<string, number>();
@@ -436,7 +416,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private aggregateLocation(devices: Device[]): AggregatedData[] {
     const map = new Map<string, number>();
     devices.forEach(d => {
-      // Special logic: Location chart only shows devices that need attention
       const statusLower = (d.TrangThai_Ten || '').toLowerCase();
       if (
         statusLower.includes('bảo trì') ||
@@ -451,7 +430,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   private aggregateGeneralData(filteredDevices: Device[]) {
-    // Reuses logic to calculate widgets, attention list, expiring list, and trend
     const trendMap = new Map<string, number>();
     const attentionDevices: ActionableDevice[] = [];
     const expiringDevices: ActionableDevice[] = [];
@@ -473,10 +451,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       if (statusLower.includes('đang sử dụng')) inUse++;
       else if (statusLower.includes('sẵn sàng')) ready++;
 
-      // Trend
+      // Trend - Using DateUtils
       if (device.NgayTao) {
         try {
-          const createdDate = this.parseDate(device.NgayTao);
+          // Refactored to use DateUtils
+          const createdDate = DateUtils.parse(device.NgayTao);
           if (createdDate && createdDate >= oneYearAgo) {
             const monthKey = `${createdDate.getFullYear()}-${(createdDate.getMonth() + 1).toString().padStart(2, '0')}`;
             trendMap.set(monthKey, (trendMap.get(monthKey) || 0) + 1);
@@ -498,10 +477,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
         if (!isNaN(price)) attentionValue += price;
       }
 
-      // Expiring
+      // Expiring - Using DateUtils
       if (device.NgayHetHanBH) {
         try {
-          const expiryDate = this.parseDate(device.NgayHetHanBH);
+          // Refactored to use DateUtils
+          const expiryDate = DateUtils.parse(device.NgayHetHanBH);
           const isExpiringCheck = expiryDate && expiryDate <= thirtyDaysFromNow && expiryDate >= today;
           if (isExpiringCheck) {
             expiringDevices.push({
@@ -509,7 +489,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
               Ten: `${device.Ten} (${device.Ma})`,
               Ma: device.Ma,
               ViTri: device.ViTri || 'N/A',
-              NgayHetHanBH: this.formatDate(device.NgayHetHanBH),
+              // Use DateUtils for display formatting
+              NgayHetHanBH: DateUtils.formatToDisplay(device.NgayHetHanBH),
             });
           }
         } catch (e) {}
@@ -518,7 +499,12 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
     const trendData = Array.from(trendMap, ([month, value]) => ({ month, value })).sort((a, b) => a.month.localeCompare(b.month));
 
-    expiringDevices.sort((a, b) => this.parseDate(a.NgayHetHanBH!)!.getTime() - this.parseDate(b.NgayHetHanBH!)!.getTime());
+    // Sort expiring devices using DateUtils
+    expiringDevices.sort((a, b) => {
+        const dA = DateUtils.parse(a.NgayHetHanBH);
+        const dB = DateUtils.parse(b.NgayHetHanBH);
+        return (dA?.getTime() || 0) - (dB?.getTime() || 0);
+    });
 
     const widgetData = {
       totalDevices: filteredDevices.length,
@@ -547,7 +533,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
     clearTimeout(this.filterTransitionTimer);
 
-    // Toggle logic: If clicking the same filter, clear it.
     if (
       this.currentFilter &&
       this.currentFilter.type === type &&
@@ -574,35 +559,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     }, 300);
   }
 
-  private parseDate(dateString: string | null | undefined): Date | null {
-    if (!dateString) return null;
-    try {
-      if (dateString.includes('/')) {
-        const parts = dateString.substring(0, 10).split('/');
-        const d = new Date(
-          Number(parts[2]),
-          Number(parts[1]) - 1,
-          Number(parts[0])
-        );
-        return isNaN(d.getTime()) ? null : d;
-      } else {
-        const d = new Date(dateString);
-        return isNaN(d.getTime()) ? null : d;
-      }
-    } catch (e) {
-      return null;
-    }
-  }
-
-  public formatDate(dateString: string | null | undefined): string {
-    const date = this.parseDate(dateString);
-    if (!date) return 'N/A';
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  }
+  // REMOVED private parseDate() - using DateUtils
+  // REMOVED public formatDate() - using DateUtils
 
   private updateWidgetValue(id: string, value: string): void {
     const widget = this.widgetData.find((w) => w.id === id);
@@ -642,11 +600,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- CHART BUILDER FUNCTIONS ---
-
   private buildDonutOption(data: DeviceStatsData[], highlightName?: string): EChartsCoreOption {
     const chartData = data.map((item) => {
-      // Fade out items that don't match the highlightName (if one exists)
       const opacity = (highlightName && item.TenTrangThai !== highlightName) ? 0.2 : 1;
       
       return {
@@ -757,10 +712,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     highlightName?: string
   ): EChartsCoreOption {
     
-    // Map simple data to object with styles to apply fading
     const formattedData = seriesData.map((val, index) => {
       const name = yAxisData[index];
-      // Fade out items that don't match the highlightName
       const opacity = (highlightName && name !== highlightName) ? 0.2 : 1;
       
       return {
@@ -805,7 +758,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           name: 'Số lượng',
           type: 'bar',
           data: formattedData,
-          // Global itemStyle is fallback, specific itemStyle in data overrides it
           label: {
             show: true,
             position: 'right',

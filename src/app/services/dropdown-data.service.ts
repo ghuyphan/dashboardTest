@@ -1,18 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { map, shareReplay, tap, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, shareReplay, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 
 // --- Interfaces ---
-
-// The target format for your Dynamic Form
 export interface DropdownOption {
   key: string | number;
   value: string;
 }
 
-// Raw API shapes (matches your backend exactly)
 interface ApiDeviceType {
   Id: number;
   TenThietBi: string;
@@ -32,11 +29,12 @@ export class DropdownDataService {
 
   // --- Caching ---
   private deviceTypes$: Observable<DropdownOption[]> | null = null;
-  private deviceStatuses$: Observable<DropdownOption[]> | null = null;
+  
+  // IMPROVED: Map cache for different status groups
+  private deviceStatusesCache = new Map<number, Observable<DropdownOption[]>>();
 
   /**
    * Gets the list of device types.
-   * Caches the result until clearCache() is called.
    */
   getDeviceTypes(): Observable<DropdownOption[]> {
     if (this.deviceTypes$) {
@@ -47,8 +45,8 @@ export class DropdownDataService {
 
     this.deviceTypes$ = this.http.get<ApiDeviceType[]>(url).pipe(
       map(items => items.map(item => ({
-        key: item.Id,           // Maps "Id" -> key
-        value: item.TenThietBi  // Maps "TenThietBi" -> value
+        key: item.Id,
+        value: item.TenThietBi
       }))),
       shareReplay(1),
       catchError(err => this.handleError('Device Types', err))
@@ -59,27 +57,26 @@ export class DropdownDataService {
 
   /**
    * Gets the list of device statuses.
-   * @param groupId The status group ID (defaults to 1105 as per your requirement)
+   * @param groupId The status group ID (defaults to 1105)
    */
   getDeviceStatuses(groupId = 1105): Observable<DropdownOption[]> {
-    // If we need to support different groupIds, we might need a Map<id, Observable> 
-    // instead of a single variable. For now, assuming singleton usage:
-    if (this.deviceStatuses$) {
-      return this.deviceStatuses$;
+    if (this.deviceStatusesCache.has(groupId)) {
+      return this.deviceStatusesCache.get(groupId)!;
     }
 
     const url = `${environment.statusListUrl}/${groupId}`;
 
-    this.deviceStatuses$ = this.http.get<ApiDeviceStatus[]>(url).pipe(
+    const statusObs$ = this.http.get<ApiDeviceStatus[]>(url).pipe(
       map(items => items.map(item => ({
-        key: item.ID,  // Maps "ID" -> key
-        value: item.TEN // Maps "TEN" -> value
+        key: item.ID,
+        value: item.TEN
       }))),
       shareReplay(1),
-      catchError(err => this.handleError('Device Statuses', err))
+      catchError(err => this.handleError(`Device Statuses (Group ${groupId})`, err))
     );
 
-    return this.deviceStatuses$;
+    this.deviceStatusesCache.set(groupId, statusObs$);
+    return statusObs$;
   }
 
   /**
@@ -87,7 +84,7 @@ export class DropdownDataService {
    */
   clearCache(): void {
     this.deviceTypes$ = null;
-    this.deviceStatuses$ = null;
+    this.deviceStatusesCache.clear();
   }
 
   /**
@@ -95,7 +92,6 @@ export class DropdownDataService {
    */
   private handleError(context: string, error: HttpErrorResponse) {
     console.error(`Error fetching ${context}:`, error);
-    // Return an empty array so the UI doesn't break, or re-throw if you want to show a toast
     return of([]); 
   }
 }

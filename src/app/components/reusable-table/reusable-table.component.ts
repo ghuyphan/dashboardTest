@@ -14,7 +14,6 @@ import {
   HostBinding,
   OnDestroy,
   ChangeDetectionStrategy,
-  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -58,9 +57,10 @@ export interface SortChangedEvent {
   direction: SortDirection;
 }
 
-export interface RowActionEvent {
+// Make RowActionEvent generic
+export interface RowActionEvent<T = any> {
   action: string;
-  data: any;
+  data: T;
 }
 
 interface SortState {
@@ -119,11 +119,11 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ReusableTableComponent
+export class ReusableTableComponent<T> // <--- Generic T added here
   implements OnInit, OnChanges, AfterViewInit, OnDestroy
 {
-  // Inputs
-  @Input() data: any[] = [];
+  // Inputs - Types updated to T
+  @Input() data: T[] = [];
   @Input() columns: GridColumn[] = [];
   @Input() searchTerm = '';
   @Input() isLoading = false;
@@ -139,13 +139,13 @@ export class ReusableTableComponent
   @Input() clientSideSort = false;
   @Input() headerColor: string | null = null;
 
-  // Outputs
-  @Output() rowClick = new EventEmitter<any>();
+  // Outputs - Emitters updated to T
+  @Output() rowClick = new EventEmitter<T>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
   @Output() pageChanged = new EventEmitter<PageEvent>();
   @Output() searchCleared = new EventEmitter<void>();
-  @Output() rowAction = new EventEmitter<RowActionEvent>();
-  @Output() selectionChanged = new EventEmitter<any[]>();
+  @Output() rowAction = new EventEmitter<RowActionEvent<T>>();
+  @Output() selectionChanged = new EventEmitter<T[]>();
 
   // Host Binding
   @HostBinding('style.--table-header-bg')
@@ -158,12 +158,12 @@ export class ReusableTableComponent
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
 
-  // Public Properties
-  public readonly dataSource = new MatTableDataSource<any>();
+  // Public Properties - Types updated to T
+  public readonly dataSource = new MatTableDataSource<T>();
   public displayedColumns: string[] = [];
-  public selectedRow: any | null = null;
+  public selectedRow: T | null = null;
   public isLoadingWithDelay = false;
-  public readonly selection = new SelectionModel<any>(true, []);
+  public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = {
     active: '',
     direction: '',
@@ -321,7 +321,7 @@ export class ReusableTableComponent
   /**
    * Handles row click events
    */
-  public onRowClick(row: any): void {
+  public onRowClick(row: T): void {
     if (this.enableMultiSelect) {
       this.toggleRowSelection(row, null);
     } else {
@@ -332,9 +332,9 @@ export class ReusableTableComponent
   /**
    * Toggles single row selection
    */
-  private toggleSingleRowSelection(row: any): void {
+  private toggleSingleRowSelection(row: T): void {
     this.selectedRow = this.selectedRow === row ? null : row;
-    this.rowClick.emit(row);
+    this.rowClick.emit(this.selectedRow || undefined);
   }
 
   /**
@@ -431,7 +431,7 @@ export class ReusableTableComponent
   /**
    * Calculates new row index for navigation
    */
-  private calculateNewRowIndex(rows: any[], down: boolean): number {
+  private calculateNewRowIndex(rows: T[], down: boolean): number {
     const currentIndex = rows.findIndex((row) => row === this.selectedRow);
     let newIndex = down ? currentIndex + 1 : currentIndex - 1;
 
@@ -507,7 +507,7 @@ export class ReusableTableComponent
   /**
    * Handles row action button clicks
    */
-  public onRowAction(action: string, element: any, event: MouseEvent): void {
+  public onRowAction(action: string, element: T, event: MouseEvent): void {
     event.stopPropagation();
     this.rowAction.emit({ action, data: element });
   }
@@ -522,13 +522,13 @@ export class ReusableTableComponent
   /**
    * Toggles row selection in multi-select mode
    */
-  public toggleRowSelection(row: any, event: MouseEvent | null): void {
+  public toggleRowSelection(row: T, event: MouseEvent | null): void {
     if (event) {
       event.stopPropagation();
     }
 
     this.selectedRow = null;
-    this.rowClick.emit(null);
+    this.rowClick.emit(undefined); // emit nothing for single click in multi-select
     this.selection.toggle(row);
   }
 
@@ -546,7 +546,7 @@ export class ReusableTableComponent
    */
   public masterToggle(): void {
     this.selectedRow = null;
-    this.rowClick.emit(null);
+    this.rowClick.emit(undefined);
 
     if (this.isAllSelected()) {
       this.selection.clear();
@@ -572,14 +572,14 @@ export class ReusableTableComponent
   /**
    * Gets selected rows
    */
-  public getSelectedRows(): any[] {
+  public getSelectedRows(): T[] {
     return this.selection.selected;
   }
 
   /**
    * Checks if a row is selected
    */
-  public isRowSelected(row: any): boolean {
+  public isRowSelected(row: T): boolean {
     return this.selection.isSelected(row);
   }
 
@@ -593,7 +593,7 @@ export class ReusableTableComponent
   /**
    * Selects specific rows
    */
-  public selectRows(rows: any[]): void {
+  public selectRows(rows: T[]): void {
     this.selection.clear();
     this.selection.select(...rows);
   }
@@ -601,7 +601,7 @@ export class ReusableTableComponent
   /**
    * Gets current page data
    */
-  public getCurrentPageData(): any[] {
+  public getCurrentPageData(): T[] {
     return this.dataSource.filteredData;
   }
 
