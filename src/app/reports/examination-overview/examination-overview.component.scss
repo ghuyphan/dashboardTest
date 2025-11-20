@@ -1,0 +1,132 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--gray-50);
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  scrollbar-width: none; // Hide scrollbar for cleaner look
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Filter Bar */
+.filter-section {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+  background-color: var(--white);
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow-sm);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+  }
+
+  .form-control-sm {
+    padding: 6px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9rem;
+    min-height: 36px;
+    
+    &:focus {
+      outline: none;
+      border-color: var(--teal-blue);
+      box-shadow: 0 0 0 2px rgba(0, 131, 155, 0.1);
+    }
+  }
+  
+  .btn {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Widget Grid */
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* Dashboard Main Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+  
+  .span-full {
+    grid-column: 1 / -1;
+  }
+  
+  .span-half {
+    grid-column: span 1;
+  }
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    .span-half {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+/* Table Card Style */
+.table-card {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .table-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}

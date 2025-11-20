@@ -74,6 +74,18 @@ export const routes: Routes = [
         }
       },
 
+      {
+        path: 'reports/examination-overview',
+        loadComponent: () => 
+          import('./reports/examination-overview/examination-overview.component').then(m => m.ExaminationOverviewComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.TongQuanKCB',
+          title: 'Tổng quan khám chữa bệnh',
+          showSearchBar: false
+        }
+      },
+
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
