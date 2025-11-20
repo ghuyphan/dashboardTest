@@ -15,79 +15,85 @@
       </svg>
     </button>
     
-    <button
-      *ngIf="showBackButton"
-      class="header-icon-btn header-back-btn"
-      (click)="onBackClick()"
-      aria-label="Go back"
-    >
-      <i class="fas fa-arrow-left"></i>
-    </button>
+    @if (showBackButton()) {
+      <button
+        class="header-icon-btn header-back-btn"
+        (click)="onBackClick()"
+        aria-label="Go back"
+      >
+        <i class="fas fa-arrow-left"></i>
+      </button>
+    }
 
-    <h2 class="header-title">{{ currentScreenName }}</h2>
+    <h2 class="header-title">{{ currentScreenName() }}</h2>
   </div>
 
-  <div class="header-search-container" *ngIf="showSearchBar">
-    <div class="search-icon-wrapper">
-      <i class="fas fa-search search-icon"></i>
+  @if (showSearchBar()) {
+    <div class="header-search-container">
+      <div class="search-icon-wrapper">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <input
+        type="text"
+        class="header-search-input"
+        placeholder="Tìm kiếm..."
+        [value]="searchTerm"
+        (input)="onSearchChange($event)"
+        aria-label="Search"
+      />
+      @if (searchTerm) {
+        <button
+          type="button"
+          class="search-clear-btn"
+          (click)="onClearSearch()"
+          aria-label="Clear search"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      }
     </div>
-    <input
-      type="text"
-      class="header-search-input"
-      placeholder="Tìm kiếm..."
-      [value]="searchTerm"
-      (input)="onSearchChange($event)"
-      aria-label="Search"
-    />
-    <button
-      *ngIf="searchTerm"
-      type="button"
-      class="search-clear-btn"
-      (click)="onClearSearch()"
-      aria-label="Clear search"
-    >
-      <i class="fas fa-times"></i>
-    </button>
-  </div>
+  }
 
   <div class="header-right-controls">
-    <div class="user-menu" *ngIf="currentUser">
-      
-      <button class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
-        <div class="header-avatar-initials">{{ userInitials }}</div>
-        <i class="fas fa-chevron-down chevron-icon"></i>
-      </button>
-
-      <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before">
+    @if (currentUser()) {
+      <div class="user-menu">
         
-        <div class="menu-section-wrapper" (click)="$event.stopPropagation()">
-          <div class="dropdown-profile-header">
-            <div class="dropdown-avatar-initials">{{ userInitials }}</div>
-            <div class="dropdown-profile-text">
-              <span class="username">{{ currentUser.fullName }}</span>
-              <span class="user-role">{{ rolesDisplay }}</span>
+        <button class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
+          <div class="header-avatar-initials">{{ userInitials() }}</div>
+          <i class="fas fa-chevron-down chevron-icon"></i>
+        </button>
+  
+        <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before">
+          
+          <div class="menu-section-wrapper" (click)="$event.stopPropagation()">
+            <div class="dropdown-profile-header">
+              <div class="dropdown-avatar-initials">{{ userInitials() }}</div>
+              <div class="dropdown-profile-text">
+                <span class="username">{{ currentUser()?.fullName }}</span>
+                <span class="user-role">{{ rolesDisplay() }}</span>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div class="menu-items-wrapper">
-          <button mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
-            <div class="menu-icon-bg"><i class="fas fa-gear"></i></div>
-            <span>Cài đặt</span>
-          </button>
-
-          <button mat-menu-item (click)="onSupportClick()" class="custom-menu-item">
-            <div class="menu-icon-bg"><i class="fas fa-question-circle"></i></div>
-            <span>Hỗ trợ</span>
-          </button>
-
-          <button mat-menu-item (click)="onLogoutClick()" class="custom-menu-item logout-item">
-            <div class="menu-icon-bg"><i class="fas fa-sign-out-alt"></i></div>
-            <span>Đăng xuất</span>
-          </button>
-        </div>
-
-      </mat-menu>
-    </div>
+  
+          <div class="menu-items-wrapper">
+            <button mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
+              <div class="menu-icon-bg"><i class="fas fa-gear"></i></div>
+              <span>Cài đặt</span>
+            </button>
+  
+            <button mat-menu-item (click)="onSupportClick()" class="custom-menu-item">
+              <div class="menu-icon-bg"><i class="fas fa-question-circle"></i></div>
+              <span>Hỗ trợ</span>
+            </button>
+  
+            <button mat-menu-item (click)="onLogoutClick()" class="custom-menu-item logout-item">
+              <div class="menu-icon-bg"><i class="fas fa-sign-out-alt"></i></div>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+  
+        </mat-menu>
+      </div>
+    }
   </div>
 </header>

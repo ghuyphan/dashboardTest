@@ -26,16 +26,16 @@
     ></app-header>
 
     <main class="dashboard-content">
-      <div *ngIf="isContentLoaded; else loading" class="content-fade-wrapper">
-        <router-outlet></router-outlet>
-      </div>
-
-      <ng-template #loading>
+      @if (isContentLoaded) {
+        <div class="content-fade-wrapper">
+          <router-outlet></router-outlet>
+        </div>
+      } @else {
         <div class="app-loading-container">
           <div class="app-loading-spinner"></div>
           <p>Đang tải hệ thống...</p> 
         </div>
-      </ng-template>
+      }
     </main>
     
     <app-action-footer></app-action-footer>

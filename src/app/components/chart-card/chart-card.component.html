@@ -1,12 +1,9 @@
 <div class="chart-card">
-  <!-- Header: Only rendered if title, subtitle, or actions exist -->
   @if (title() || subtitle() || icon()) {
     <div class="card-header">
-      <!-- Wrapper handles the One-Line Title + Subtitle layout -->
       <div class="card-title-wrapper">
         <h3 class="card-title">
           @if (icon()) {
-            <!-- [ngClass] allows your old classes like 'icon-info' to work -->
             <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
           }
           {{ title() }}
@@ -17,7 +14,6 @@
         }
       </div>
       
-      <!-- Content Projection for Buttons/Dropdowns -->
       <div class="header-controls">
         <ng-content select="[header-actions]"></ng-content>
       </div>
@@ -25,15 +21,33 @@
   }
 
   <div class="card-body">
-    <!-- Loading Skeleton (Uses absolute positioning from SCSS) -->
     @if (isLoading()) {
       <div class="skeleton-overlay" aria-label="Loading chart">
-        <div class="skeleton-rect"></div>
+        <div class="sk-legend">
+          <div class="sk-legend-item skeleton"></div>
+          <div class="sk-legend-item skeleton"></div>
+        </div>
+        
+        <div class="sk-chart-area">
+          <div class="sk-y-axis">
+            <div class="sk-y-label skeleton"></div>
+            <div class="sk-y-label skeleton"></div>
+            <div class="sk-y-label skeleton"></div>
+            <div class="sk-y-label skeleton"></div>
+          </div>
+
+          <div class="sk-plot-area">
+            <div class="sk-bar skeleton" style="--h: 60%"></div>
+            <div class="sk-bar skeleton" style="--h: 40%"></div>
+            <div class="sk-bar skeleton" style="--h: 75%"></div>
+            <div class="sk-bar skeleton" style="--h: 50%"></div>
+            <div class="sk-bar skeleton" style="--h: 85%"></div>
+            <div class="sk-bar skeleton" style="--h: 30%"></div>
+          </div>
+        </div>
       </div>
     }
 
-    <!-- Chart Container -->
-    <!-- class.invisible matches the SCSS (visibility: hidden) for better ECharts init -->
     <div 
       #chartContainer 
       class="chart-container"
@@ -42,7 +56,6 @@
       [attr.aria-label]="title() ? 'Chart showing ' + title() : 'Data visualization'">
     </div>
     
-    <!-- Empty State -->
     @if (showEmptyState()) {
       <div class="no-data-container">
         <div class="no-data-icon-wrapper">

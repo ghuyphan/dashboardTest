@@ -4,12 +4,9 @@
   flex: 1;
   min-height: 0;
   height: 100%;
-  
-  /* FIX: Removed contain: content and content-visibility to prevent shadow clipping */
 }
 
 .chart-card {
-  /* Exact variables from old code */
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
@@ -18,7 +15,6 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  /* overflow: hidden; -- Already removed in your code (Correct) */
 }
 
 /* --- HEADER LAYOUT --- */
@@ -27,8 +23,6 @@
   margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--gray-200);
-  
-  /* Layout adjustment: Allows Title, Subtitle, and Controls to sit in one line */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,7 +31,7 @@
 .card-title-wrapper {
   display: flex;
   align-items: center;
-  flex: 1; /* Takes available space to allow subtitle to push right */
+  flex: 1;
   min-width: 0;
 }
 
@@ -53,7 +47,6 @@
 
   i {
     font-size: 1rem;
-    /* Restored Old Color Classes */
     &.icon-info { color: var(--color-info); }
     &.icon-warning { color: var(--color-warning); }
     &.icon-danger { color: var(--color-danger); }
@@ -65,8 +58,6 @@
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--gray-700);
-  
-  /* Pushes subtitle to the right side of the title wrapper */
   margin-left: auto; 
   padding-left: var(--spacing-sm);
 }
@@ -84,8 +75,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 300px; /* Matched old code */
-  /* FIX: Added overflow: hidden here to ensure content is clipped */
+  min-height: 200px; 
   overflow: hidden;
 }
 
@@ -95,42 +85,108 @@
   height: 100%;
   min-height: 0;
   
-  /* Functionality: Use visibility instead of display:none for ECharts */
   &.invisible {
     visibility: hidden;
   }
 }
 
-/* --- LOADING STATE --- */
-/* Structure: New (Overlay), Visuals: Old */
+/* --- POLISHED SKELETON STATE --- */
 .skeleton-overlay {
   position: absolute;
   inset: 0;
   z-index: 10;
   background-color: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
 }
 
-.skeleton-rect {
-  width: 100%;
+/* Fake Legend Row */
+.sk-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  height: 12px;
+  flex-shrink: 0;
+
+  .sk-legend-item {
+    width: 60px;
+    height: 100%;
+    border-radius: 4px;
+  }
+}
+
+/* Chart Area: Y-Axis + Bars */
+.sk-chart-area {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end; /* Align bars to bottom */
+  overflow: hidden;
+}
+
+/* Fake Y-Axis Labels */
+.sk-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   height: 100%;
-  background-color: var(--gray-200);
-  border-radius: var(--border-radius-md);
+  width: 30px;
+  padding-bottom: 10px; /* Space for X-axis */
+
+  .sk-y-label {
+    width: 100%;
+    height: 8px;
+    border-radius: 2px;
+  }
+}
+
+/* Fake Plot Area with Bars */
+.sk-plot-area {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 100%;
+  border-left: 2px solid var(--gray-200);
+  border-bottom: 2px solid var(--gray-200);
+  padding-left: 8px;
+  padding-bottom: 2px;
+  
+  .sk-bar {
+    width: 12%; /* Responsive width */
+    height: var(--h); /* Custom height var */
+    border-radius: 4px 4px 0 0;
+    min-height: 10%; /* Ensure visible */
+    
+    /* Delay animations for wave effect */
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.1s; }
+    &:nth-child(3) { animation-delay: 0.2s; }
+    &:nth-child(4) { animation-delay: 0.3s; }
+    &:nth-child(5) { animation-delay: 0.4s; }
+    &:nth-child(6) { animation-delay: 0.5s; }
+  }
+}
+
+/* Global Skeleton Animation */
+.skeleton {
+  background-color: var(--gray-100);
   animation: skeleton-pulse 1.5s infinite ease-in-out;
-  will-change: opacity;
 }
 
 @keyframes skeleton-pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0% { opacity: 0.5; background-color: var(--gray-100); }
+  50% { opacity: 1; background-color: var(--gray-200); }
+  100% { opacity: 0.5; background-color: var(--gray-100); }
 }
 
-/* --- EMPTY STATE (Matched Exact Old Code) --- */
+/* --- EMPTY STATE --- */
 .no-data-container {
-  /* Position absolute ensures it centers perfectly in the relative body */
   position: absolute; 
   inset: 0;
-  
   display: flex;
   flex-direction: column;
   align-items: center;

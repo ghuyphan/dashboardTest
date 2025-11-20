@@ -1,13 +1,16 @@
-<div *ngIf="isFormLoading" class="app-loading-container">
-  <div class="app-loading-spinner"></div>
-  <span>Đang tải dữ liệu...</span>
-</div>
+@if (isFormLoading) {
+  <div class="app-loading-container">
+    <div class="app-loading-spinner"></div>
+    <span>Đang tải dữ liệu...</span>
+  </div>
+}
 
-<app-dynamic-form
-  *ngIf="!isFormLoading && formConfig"
-  [formConfig]="formConfig"
-  [isLoading]="isSaving"
-  (formSubmitted)="onSave($event)"
-  (formCancelled)="onCancel()"
->
-</app-dynamic-form>
+@if (!isFormLoading && formConfig) {
+  <app-dynamic-form
+    [formConfig]="formConfig"
+    [isLoading]="isSaving"
+    (formSubmitted)="onSave($event)"
+    (formCancelled)="onCancel()"
+  >
+  </app-dynamic-form>
+}

@@ -1,13 +1,12 @@
 import {
   Component,
-  Input,
   Output,
   EventEmitter,
   OnInit,
-  OnChanges,
-  SimpleChanges,
   ChangeDetectionStrategy,
   inject,
+  input,
+  effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -20,17 +19,14 @@ import {
   AbstractControl,
 } from '@angular/forms';
 
-// --- Add Material Imports ---
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
-// Constants
 const CURRENCY_LOCALE = 'en-US';
 const CURRENCY_CLEAN_REGEX = /[^0-9.]+/g;
 const DEFAULT_VALIDATION_MESSAGE = 'Trường này không hợp lệ.';
 
-// Interfaces
 export interface FormControlConfig {
   controlName: string;
   controlType: string;
@@ -41,7 +37,7 @@ export interface FormControlConfig {
   validationMessages?: Record<string, string>;
   placeholder?: string;
   options?: any[];
-  layout_flexGrow?: number; // Added to support layout config if passed
+  layout_flexGrow?: number;
 }
 
 export interface FormRowConfig {
@@ -67,7 +63,6 @@ export type DynamicFormValue = Record<string, any>;
 @Component({
   selector: 'app-dynamic-form',
   standalone: true,
-  // --- Add Modules here ---
   imports: [
     CommonModule, 
     ReactiveFormsModule, 
@@ -79,9 +74,10 @@ export type DynamicFormValue = Record<string, any>;
   styleUrl: './dynamic-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DynamicFormComponent implements OnInit, OnChanges {
-  @Input() formConfig?: FormConfig;
-  @Input() isLoading = false;
+export class DynamicFormComponent implements OnInit {
+  // Signal Inputs
+  public formConfig = input<FormConfig | undefined>();
+  public isLoading = input<boolean>(false);
 
   @Output() formSubmitted = new EventEmitter<DynamicFormValue>();
   @Output() formCancelled = new EventEmitter<void>();
@@ -93,37 +89,28 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
   constructor() {
     this.dynamicForm = this.fb.group<Record<string, FormControl<any>>>({});
+    
+    effect(() => {
+      const config = this.formConfig();
+      if (config) {
+        this.buildForm(config);
+      }
+    });
   }
 
   ngOnInit(): void {
-    if (this.formConfig) {
-      this.buildForm();
-    }
+    // Logic moved to constructor effect
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['formConfig']?.currentValue) {
-      this.buildForm();
-    }
-  }
-
-  private buildForm(): void {
-    if (!this.formConfig) {
-      return;
-    }
-
-    const formControls = this.createFormControls();
+  private buildForm(config: FormConfig): void {
+    const formControls = this.createFormControls(config);
     this.dynamicForm = new FormGroup(formControls);
   }
 
-  private createFormControls(): Record<string, FormControl<any>> {
+  private createFormControls(config: FormConfig): Record<string, FormControl<any>> {
     const formGroup: Record<string, FormControl<any>> = {};
 
-    if (!this.formConfig) {
-      return formGroup;
-    }
-
-    for (const row of this.formConfig.formRows) {
+    for (const row of config.formRows) {
       for (const control of row.controls) {
         formGroup[control.controlName] = this.createFormControl(control);
       }
@@ -141,25 +128,17 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
   private prepareControlValue(config: FormControlConfig): any {
     const value = config.value ?? null;
-
     if (config.controlType === 'currency') {
       return this.cleanCurrency(value);
     }
-
     return value;
   }
 
   private buildValidators(validatorsConfig?: ValidatorsConfig): ValidatorFn[] {
-    if (!validatorsConfig) {
-      return [];
-    }
+    if (!validatorsConfig) return [];
 
     const validators: ValidatorFn[] = [];
-
-    const validatorMap: Record<
-      keyof ValidatorsConfig,
-      (value: any) => ValidatorFn | null
-    > = {
+    const validatorMap: Record<keyof ValidatorsConfig, (value: any) => ValidatorFn | null> = {
       required: () => Validators.required,
       minLength: (val) => Validators.minLength(val),
       maxLength: (val) => Validators.maxLength(val),
@@ -173,9 +152,7 @@ export class DynamicFormComponent implements OnInit, OnChanges {
       const configValue = validatorsConfig[key as keyof ValidatorsConfig];
       if (configValue !== undefined && configValue !== false) {
         const validator = createValidator(configValue);
-        if (validator) {
-          validators.push(validator);
-        }
+        if (validator) validators.push(validator);
       }
     }
 
@@ -201,18 +178,14 @@ export class DynamicFormComponent implements OnInit, OnChanges {
 
   public isInvalid(controlName: string): boolean {
     const control = this.getControl(controlName);
-    return control
-      ? control.invalid && (control.dirty || control.touched)
-      : false;
+    return control ? control.invalid && (control.dirty || control.touched) : false;
   }
 
   public getErrorMessage(controlConfig: FormControlConfig): string {
     const control = this.getControl(controlConfig.controlName);
-
     if (!control?.errors || !controlConfig.validationMessages) {
       return '';
     }
-
     return this.findFirstErrorMessage(control, controlConfig.validationMessages);
   }
 
@@ -220,16 +193,12 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     control: AbstractControl,
     validationMessages: Record<string, string>
   ): string {
-    if (!control.errors) {
-      return '';
-    }
-
+    if (!control.errors) return '';
     for (const errorKey of Object.keys(control.errors)) {
       if (validationMessages[errorKey]) {
         return validationMessages[errorKey];
       }
     }
-
     return DEFAULT_VALIDATION_MESSAGE;
   }
 
@@ -241,31 +210,21 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     if (value === null || value === undefined || value === '') {
       return null;
     }
-
     const stringValue = String(value).replace(CURRENCY_CLEAN_REGEX, '');
     const numberValue = parseFloat(stringValue);
-
     return isNaN(numberValue) ? null : numberValue;
   }
 
   public formatCurrency(value: any): string {
     const numberValue = this.cleanCurrency(value);
-
-    if (numberValue === null) {
-      return '';
-    }
-
+    if (numberValue === null) return '';
     return this.currencyFormatter.format(numberValue);
   }
 
   public onCurrencyInput(event: Event, controlName: string): void {
     const inputElement = event.target as HTMLInputElement;
     const control = this.getControl(controlName);
-
-    if (!control) {
-      return;
-    }
-
+    if (!control) return;
     this.updateCurrencyControl(control, inputElement);
   }
 
@@ -274,13 +233,8 @@ export class DynamicFormComponent implements OnInit, OnChanges {
     inputElement: HTMLInputElement
   ): void {
     const rawValue = this.cleanCurrency(inputElement.value);
-
     control.setValue(rawValue, { emitEvent: false });
-
-    if (!control.touched) {
-      control.markAsTouched();
-    }
-
+    if (!control.touched) control.markAsTouched();
     this.dynamicForm.markAsDirty();
     inputElement.value = this.formatCurrency(rawValue);
   }

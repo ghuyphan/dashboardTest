@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, ViewEncapsulation } from '@angular/core';
+import { Component, Output, EventEmitter, inject, ViewEncapsulation, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router'; 
 import { MatMenuModule } from '@angular/material/menu';
@@ -22,16 +22,16 @@ import { SearchService } from '../../services/search.service';
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
-  // Important: Allows us to style the floating menu panel
   encapsulation: ViewEncapsulation.None 
 })
 export class HeaderComponent {
-  @Input() currentUser: User | null = null;
-  @Input() userInitials: string = '';
-  @Input() rolesDisplay: string = '';
-  @Input() currentScreenName: string = 'Dashboard';
-  @Input() showSearchBar: boolean = false;
-  @Input() showBackButton: boolean = false;
+  // Signal Inputs
+  public currentUser = input<User | null>(null);
+  public userInitials = input<string>('');
+  public rolesDisplay = input<string>('');
+  public currentScreenName = input<string>('Dashboard');
+  public showSearchBar = input<boolean>(false);
+  public showBackButton = input<boolean>(false);
 
   @Output() sidebarToggled = new EventEmitter<void>();
   @Output() logoutClicked = new EventEmitter<void>();
@@ -39,9 +39,6 @@ export class HeaderComponent {
 
   public searchService = inject(SearchService);
 
-  constructor() {}
-
-  // Getter to read the signal value directly in the template
   get searchTerm(): string {
     return this.searchService.searchTerm();
   }
@@ -58,13 +55,9 @@ export class HeaderComponent {
     this.logoutClicked.emit();
   }
 
-  onSettingsClick(): void { 
-    // Example action for MatMenu click
-  }
+  onSettingsClick(): void {}
 
-  onSupportClick(): void {
-    // Example action for MatMenu click
-  }
+  onSupportClick(): void {}
 
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;

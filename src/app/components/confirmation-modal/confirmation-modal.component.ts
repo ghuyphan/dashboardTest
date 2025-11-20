@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalRef } from '../../models/modal-ref.model';
 
@@ -10,13 +10,13 @@ import { ModalRef } from '../../models/modal-ref.model';
   styleUrls: ['./confirmation-modal.component.scss'],
 })
 export class ConfirmationModalComponent {
-  @Input() layout: 'center' | 'standard' = 'center';
-  @Input() title: string = ''; 
-  @Input() message: string = '';
-  @Input() confirmText: string = 'OK';
-  @Input() cancelText: string = 'Cancel';
-  @Input() icon: string = '';
-  @Input() iconColor: string = '';
+  public layout = input<'center' | 'standard'>('center');
+  public title = input<string>(''); 
+  public message = input<string>('');
+  public confirmText = input<string>('OK');
+  public cancelText = input<string>('Cancel');
+  public icon = input<string>('');
+  public iconColor = input<string>('');
 
   public modalRef!: ModalRef;
 

@@ -2,10 +2,10 @@
   <form [formGroup]="dynamicForm" (ngSubmit)="onSave()" novalidate>
     <div class="form-body">
 
-      @if (formConfig) {
+      @if (formConfig()) {
         <div class="dynamic-form-layout">
 
-          @for (row of formConfig.formRows; track $index) {
+          @for (row of formConfig()?.formRows; track $index) {
             <div class="form-row">
 
               @for (control of row.controls; track control.controlName) {
@@ -20,7 +20,6 @@
                     }
                   </label>
 
-                  <!-- CONTROL SWITCH -->
                   @switch (control.controlType) {
 
                     @case ('text') {
@@ -50,7 +49,6 @@
                         [disabled]="dynamicForm.get(control.controlName)?.disabled || false" />
                     }
 
-                    <!-- MATERIAL DROPDOWN -->
                     @case ('dropdown') {
                       <div class="custom-dropdown-wrapper" [class.is-invalid]="isInvalid(control.controlName)">
                         <mat-form-field appearance="outline" class="full-width-field dense-form-field" subscriptSizing="dynamic">
@@ -86,7 +84,6 @@
                     }
                   }
 
-                  <!-- VALIDATION ERROR -->
                   @if (isInvalid(control.controlName)) {
                     <div class="invalid-feedback">
                       {{ getErrorMessage(control) }}
@@ -102,19 +99,19 @@
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isLoading">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isLoading()">
         <span class="btn-content-wrapper">
           <i class="fas fa-times"></i> Hủy bỏ
         </span>
       </button>
 
-      <button type="submit" class="btn btn-primary" [disabled]="dynamicForm.invalid || isLoading">
-        @if (!isLoading) {
+      <button type="submit" class="btn btn-primary" [disabled]="dynamicForm.invalid || isLoading()">
+        @if (!isLoading()) {
           <span class="btn-content-wrapper">
             <i class="fas fa-save"></i> Lưu
           </span>
         }
-        @if (isLoading) {
+        @if (isLoading()) {
           <span class="btn-content-wrapper">
             <i class="fas fa-spinner fa-spin"></i> Đang lưu...
           </span>

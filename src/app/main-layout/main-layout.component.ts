@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
   Router,
@@ -14,10 +14,8 @@ import { AuthService } from '../services/auth.service';
 import { User } from '../models/user.model';
 import { NavItem } from '../models/nav-item.model';
 import { ActionFooterComponent } from '../components/action-footer/action-footer.component';
-
 import { SidebarComponent } from '../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../components/header/header.component';
-
 import { SearchService } from '../services/search.service';
 import { FooterActionService } from '../services/footer-action.service';
 
@@ -36,38 +34,33 @@ import { FooterActionService } from '../services/footer-action.service';
   styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
-  isSidebarOpen = false;
+  // Dependency Injection via inject()
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private activatedRoute = inject(ActivatedRoute);
+  private searchService = inject(SearchService);
+  private location = inject(Location);
+  private footerService = inject(FooterActionService);
 
+  isSidebarOpen = false;
   currentUser: User | null = null;
   rolesDisplay: string = '';
   userInitials: string = '';
+  
   private userSubscription: Subscription | null = null;
   private navSubscription: Subscription | null = null;
 
   navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
-
   showSearchBar: boolean = false;
   showBackButton: boolean = false;
-
   isContentLoaded = false;
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private activatedRoute: ActivatedRoute,
-    private searchService: SearchService,
-    private location: Location,
-    private footerService: FooterActionService
-  ) { }
-
   ngOnInit(): void {
-    // Subscribe to dynamic nav items
     this.navSubscription = this.authService.navItems$.subscribe(items => {
       this.navItems = this.deepCopyNavItems(items);
     });
 
-    // Subscribe to get User Info
     this.userSubscription = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user && user.roles) {
@@ -79,7 +72,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to Router Events for Screen Title
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -101,12 +93,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.showBackButton = data['showBackButton'] === true;
 
         if (!this.showSearchBar) {
-          // This works perfectly with the new Signal service
           this.searchService.setSearchTerm('');
         }
       });
 
-    // Check window size
     this.checkWindowSize();
     window.addEventListener('resize', this.checkWindowSize.bind(this));
 

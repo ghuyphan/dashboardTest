@@ -1,18 +1,17 @@
 import {
   Component,
-  Input,
   Output,
   EventEmitter,
-  OnChanges,
-  SimpleChanges,
   ViewChild,
   ElementRef,
   inject,
+  input,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout'; // <--- IMPORT THIS
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // <--- IMPORT THIS
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { NavItem } from '../../models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
@@ -32,53 +31,45 @@ import { FlyoutDirective } from '../../directives/flyout.directive';
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
 })
-export class SidebarComponent implements OnChanges {
-  @Input() navItems: NavItem[] = [];
-  @Input() isOpen: boolean = false;
+export class SidebarComponent {
+  // Signal Inputs
+  public navItems = input<NavItem[]>([]);
+  public isOpen = input<boolean>(false);
+  
   @Output() toggleSidebar = new EventEmitter<void>();
 
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
-  public isMobileView: boolean = false; // Changed to public for template usage if needed
+  public isMobileView: boolean = false;
 
-  // Inject BreakpointObserver
   private breakpointObserver = inject(BreakpointObserver);
 
   constructor() {
-    // Use BreakpointObserver to track screen size changes reactively
     this.breakpointObserver
-      .observe(['(max-width: 992px)']) // Matches your SCSS breakpoint
+      .observe(['(max-width: 992px)'])
       .pipe(takeUntilDestroyed())
       .subscribe((state) => {
         this.isMobileView = state.matches;
       });
-  }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isOpen']) {
-      if (changes['isOpen'].firstChange) {
-        return;
-      }
-
-      const isNowOpen = changes['isOpen'].currentValue;
-
-      if (isNowOpen) {
-        // === IS OPENING ===
+    // React to isOpen changes
+    effect(() => {
+      const open = this.isOpen();
+      if (open) {
         this.hideAllSubmenus();
         this.restoreAccordionState();
         this.restoreScrollPosition();
       } else {
-        // === IS CLOSING ===
         this.saveScrollPosition();
         this.hideAllSubmenus();
       }
-    }
+    });
   }
 
   hideAllSubmenus(): void {
-    this.navItems.forEach((item) => {
+    this.navItems().forEach((item) => {
       if (item.children) {
         item.isOpen = false;
       }
@@ -86,7 +77,7 @@ export class SidebarComponent implements OnChanges {
   }
 
   restoreAccordionState(): void {
-    this.navItems.forEach((item) => {
+    this.navItems().forEach((item) => {
       if (item.children) {
         item.isOpen = this.openAccordionItems.has(item);
       }
@@ -100,7 +91,6 @@ export class SidebarComponent implements OnChanges {
   }
 
   private restoreScrollPosition(): void {
-    // Use requestAnimationFrame for smoother timing
     requestAnimationFrame(() => {
       if (this.navContentEl?.nativeElement) {
         this.navContentEl.nativeElement.scrollTop = this.lastScrollTop;
@@ -116,9 +106,7 @@ export class SidebarComponent implements OnChanges {
     event.preventDefault();
     event.stopPropagation();
 
-    // On mobile, isOpen is always true (when the panel is out)
-    // On desktop, we only toggle accordion if isOpen is true
-    if (!this.isOpen && !this.isMobileView) {
+    if (!this.isOpen() && !this.isMobileView) {
       return;
     }
 
@@ -131,12 +119,8 @@ export class SidebarComponent implements OnChanges {
     item.isOpen = this.openAccordionItems.has(item);
   }
 
-  /**
-   * Handles navigation link clicks.
-   * Closes the sidebar on mobile after navigation.
-   */
   public onNavLinkClick(): void {
-    if (this.isMobileView && this.isOpen) {
+    if (this.isMobileView && this.isOpen()) {
       this.toggleSidebar.emit();
     }
   }

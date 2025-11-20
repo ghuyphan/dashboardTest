@@ -1,18 +1,14 @@
 <div class="page-container">
   <div class="page-content">
     
-    @if (isLoading && widgetData.length === 0) {
-      <div class="widget-section">
-        <div class="widget-grid">
-          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+    <div class="widget-section">
+      <div class="widget-grid">
+        @if (isLoading && widgetData.length === 0) {
+           @for (i of [1, 2, 3, 4, 5, 6]; track i) {
             <app-widget-card [title]="'Loading'" [isLoading]="true"></app-widget-card>
           }
-        </div>
-      </div>
-    } @else {
-      <div class="widget-section">
-        <div class="widget-grid">
-          @for (widget of widgetData; track trackByWidgetId($index, widget)) {
+        } @else {
+           @for (widget of widgetData; track trackByWidgetId($index, widget)) {
             <app-widget-card
               [icon]="widget.icon"
               [title]="widget.title"
@@ -23,119 +19,124 @@
             >
             </app-widget-card>
           }
+        }
+      </div>
+    </div>
+
+    <div class="dashboard-main-content">
+      
+      <div class="filter-bar-container" [class.filter-bar-container--active]="currentFilter">
+        <div class="filter-bar">
+          @if (visibleFilter) {
+            <span>
+              Đang lọc theo:
+              <strong>{{ visibleFilter.name }}</strong>
+            </span>
+            <button class="clear-filter-btn" (click)="clearFilter()">
+              <i class="fas fa-times"></i> Xóa bộ lọc
+            </button>
+          }
         </div>
       </div>
-    }
 
-    @if (!isLoading || widgetData.length > 0) {
-      <div class="dashboard-main-content">
-        <div class="filter-bar-container" [class.filter-bar-container--active]="currentFilter">
-          <div class="filter-bar">
-            @if (visibleFilter) {
-              <span>
-                Đang lọc theo:
-                <strong>{{ visibleFilter.name }}</strong>
-              </span>
-              <button class="clear-filter-btn" (click)="clearFilter()">
-                <i class="fas fa-times"></i> Xóa bộ lọc
-              </button>
+      <div class="dashboard-main-grid">
+        
+        <app-chart-card class="span-2"
+          title="Thống Kê Trạng Thái"
+          [subtitle]="statusChartSubtext"
+          icon="fas fa-pie-chart"
+          iconClass="icon-info"
+          [isLoading]="isLoading" 
+          [chartOptions]="statusChartOptions"
+          (chartClick)="onChartClick('status', $event)">
+        </app-chart-card>
+
+        <app-chart-card class="span-1"
+          title="Số lượng theo Loại (Top 10)"
+          icon="fas fa-tags"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="categoryChartOptions"
+          (chartClick)="onChartClick('category', $event)">
+        </app-chart-card>
+
+        <app-chart-card class="span-1"
+          [title]="locationChartTitle"
+          icon="fas fa-map-marker-alt"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="locationChartOptions"
+          (chartClick)="onChartClick('location', $event)">
+        </app-chart-card>
+
+        <div class="action-list-card span-2">
+          <h3 class="card-title">
+            <span>
+              <i class="fas fa-tools icon-warning"></i>
+              Thiết bị cần Chú ý
+            </span>
+          </h3>
+          <div class="action-list-body">
+            @if (isLoading) {
+              <div class="skeleton-rect" style="height: 100%; width: 100%; min-height: 200px;"></div>
+            } @else if (attentionDevices.length > 0) {
+              <app-reusable-table
+                [data]="attentionDevices"
+                [columns]="attentionTableColumns"
+                [showPaginator]="false"
+                [clientSideSort]="true"
+                (rowClick)="navigateToDetail($event)"
+                emptyStateText="Không có thiết bị nào cần bảo trì."
+              >
+              </app-reusable-table>
+            } @else {
+              <div class="list-empty-state">
+                <i class="fas fa-check-circle icon-success"></i>
+                <span>Không có thiết bị nào cần bảo trì.</span>
+              </div>
             }
           </div>
         </div>
 
-        <div class="dashboard-main-grid">
-          
-          <app-chart-card class="span-2"
-            title="Thống Kê Trạng Thái"
-            [subtitle]="statusChartSubtext"
-            icon="fas fa-pie-chart"
-            iconClass="icon-info"
-            [isLoading]="isLoading" 
-            [chartOptions]="statusChartOptions"
-            (chartClick)="onChartClick('status', $event)">
-          </app-chart-card>
+        <app-chart-card class="span-3"
+          title="Thiết bị mới theo Tháng"
+          icon="fas fa-chart-line"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="trendChartOptions">
+        </app-chart-card>
 
-          <app-chart-card class="span-1"
-            title="Số lượng theo Loại (Top 10)"
-            icon="fas fa-tags"
-            iconClass="icon-info"
-            [isLoading]="isLoading"
-            [chartOptions]="categoryChartOptions"
-            (chartClick)="onChartClick('category', $event)">
-          </app-chart-card>
-
-          <app-chart-card class="span-1"
-            [title]="locationChartTitle"
-            icon="fas fa-map-marker-alt"
-            iconClass="icon-info"
-            [isLoading]="isLoading"
-            [chartOptions]="locationChartOptions"
-            (chartClick)="onChartClick('location', $event)">
-          </app-chart-card>
-
-          <div class="action-list-card span-2">
-            <h3 class="card-title">
-              <span>
-                <i class="fas fa-tools icon-warning"></i>
-                Thiết bị cần Chú ý
-              </span>
-            </h3>
-            <div class="action-list-body">
-              @if (attentionDevices.length > 0) {
-                <app-reusable-table
-                  [data]="attentionDevices"
-                  [columns]="attentionTableColumns"
-                  [showPaginator]="false"
-                  [clientSideSort]="true"
-                  (rowClick)="navigateToDetail($event)"
-                  emptyStateText="Không có thiết bị nào cần bảo trì."
-                >
-                </app-reusable-table>
-              } @else {
-                <div class="list-empty-state">
-                  <i class="fas fa-check-circle icon-success"></i>
-                  <span>Không có thiết bị nào cần bảo trì.</span>
-                </div>
-              }
-            </div>
-          </div>
-
-          <app-chart-card class="span-3"
-            title="Thiết bị mới theo Tháng"
-            icon="fas fa-chart-line"
-            iconClass="icon-info"
-            [isLoading]="isLoading"
-            [chartOptions]="trendChartOptions">
-          </app-chart-card>
-
-          <div class="action-list-card span-3">
-            <h3 class="card-title">
-              <span>
-                <i class="fas fa-calendar-times icon-danger"></i>
-                Sắp hết hạn Bảo hành (30 ngày tới)
-              </span>
-            </h3>
-            <div class="action-list-body">
-              @if (expiringDevices.length > 0) {
-                <app-reusable-table
-                  [data]="expiringDevices"
-                  [columns]="expiringTableColumns"
-                  [showPaginator]="false"
-                  [clientSideSort]="true"
-                  (rowClick)="navigateToDetail($event)"
-                  emptyStateText="Không có thiết bị nào sắp hết hạn."
-                >
-                </app-reusable-table>
-              } @else {
-                <div class="list-empty-state">
-                  <i class="fas fa-check-circle icon-success"></i>
-                  <span>Không có thiết bị nào sắp hết hạn.</span>
-                </div>
-              }
-            </div>
+        <div class="action-list-card span-3">
+          <h3 class="card-title">
+            <span>
+              <i class="fas fa-calendar-times icon-danger"></i>
+              Sắp hết hạn Bảo hành (30 ngày tới)
+            </span>
+          </h3>
+          <div class="action-list-body">
+            @if (isLoading) {
+               <div class="skeleton-rect" style="height: 100%; width: 100%; min-height: 200px;"></div>
+            } @else if (expiringDevices.length > 0) {
+              <app-reusable-table
+                [data]="expiringDevices"
+                [columns]="expiringTableColumns"
+                [showPaginator]="false"
+                [clientSideSort]="true"
+                (rowClick)="navigateToDetail($event)"
+                emptyStateText="Không có thiết bị nào sắp hết hạn."
+              >
+              </app-reusable-table>
+            } @else {
+              <div class="list-empty-state">
+                <i class="fas fa-check-circle icon-success"></i>
+                <span>Không có thiết bị nào sắp hết hạn.</span>
+              </div>
+            }
           </div>
         </div>
+
       </div>
-    }
+    </div>
+
   </div>
 </div>
