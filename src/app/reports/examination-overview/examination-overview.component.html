@@ -2,27 +2,39 @@
   <div class="page-content">
     
     <div class="filter-section">
-      <div class="filter-group">
-        <label for="fromDate">Từ ngày:</label>
-        <input type="date" id="fromDate" [(ngModel)]="fromDate" class="form-control-sm">
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="fromDate">Từ ngày</label>
+          <input type="date" id="fromDate" [(ngModel)]="fromDate" class="form-control-sm">
+        </div>
+        <div class="filter-group">
+          <label for="toDate">Đến ngày</label>
+          <input type="date" id="toDate" [(ngModel)]="toDate" class="form-control-sm">
+        </div>
+        
+        <div class="quick-actions">
+          <button class="btn-pill" [class.active]="activeRange === 'today'" (click)="setRange('today')">Hôm nay</button>
+          <button class="btn-pill" [class.active]="activeRange === 'thisMonth'" (click)="setRange('thisMonth')">Tháng này</button>
+          <button class="btn-pill" [class.active]="activeRange === 'thisQuarter'" (click)="setRange('thisQuarter')">Quý này</button>
+          <button class="btn-pill" [class.active]="activeRange === 'thisYear'" (click)="setRange('thisYear')">Năm nay</button>
+        </div>
       </div>
-      <div class="filter-group">
-        <label for="toDate">Đến ngày:</label>
-        <input type="date" id="toDate" [(ngModel)]="toDate" class="form-control-sm">
+
+      <div class="action-buttons">
+        <button class="btn btn-primary" (click)="loadData()" [disabled]="isLoading">
+          @if (isLoading) {
+            <i class="fas fa-spinner fa-spin"></i>
+          } @else {
+            <i class="fas fa-filter"></i>
+          }
+          Lọc dữ liệu
+        </button>
       </div>
-      <button class="btn btn-primary" (click)="loadData()" [disabled]="isLoading">
-        @if (isLoading) {
-          <i class="fas fa-spinner fa-spin"></i>
-        } @else {
-          <i class="fas fa-search"></i>
-        }
-        Xem báo cáo
-      </button>
     </div>
 
     <div class="widget-section">
       <div class="widget-grid">
-        @if (isLoading && widgetData.length === 0) {
+        @if (isInitialLoad) {
            @for (i of [1, 2, 3, 4]; track i) {
             <app-widget-card [title]="'Loading'" [isLoading]="true"></app-widget-card>
           }
@@ -33,8 +45,7 @@
               [title]="widget.title"
               [value]="widget.value"
               [caption]="widget.caption"
-              [accentColor]="widget.accentColor"
-              [isLoading]="isLoading">
+              [accentColor]="widget.accentColor">
             </app-widget-card>
           }
         }
@@ -42,48 +53,68 @@
     </div>
 
     <div class="dashboard-grid">
-      <app-chart-card class="span-full"
+      <app-chart-card class="chart-full-width"
         title="Biểu đồ Tiếp nhận theo Ngày"
         icon="fas fa-chart-line"
-        [isLoading]="isLoading"
         iconClass="icon-info"
+        [isLoading]="isLoading"
+        iconClass="text-teal"
         [chartOptions]="trendChartOptions"
         skeletonType="line">
       </app-chart-card>
 
-      <app-chart-card class="span-half"
-        title="Cơ cấu Đối tượng (BHYT/VP)"
+      <app-chart-card class="chart-half-width"
+        title="Cơ cấu Đối tượng"
         icon="fas fa-chart-pie"
         iconClass="icon-info"
+        iconClass="text-blue"
         [isLoading]="isLoading"
         [chartOptions]="typeChartOptions"
         skeletonType="pie">
       </app-chart-card>
 
-      <app-chart-card class="span-half"
-        title="Phân bổ theo Hình thức"
+      <app-chart-card class="chart-half-width"
+        title="Phân bổ Hình thức"
         icon="fas fa-chart-bar"
-        [isLoading]="isLoading"
         iconClass="icon-info"
+        [isLoading]="isLoading"
+        iconClass="text-orange"
         [chartOptions]="admissionChartOptions"
         skeletonType="bar">
       </app-chart-card>
 
-      <div class="table-card span-full">
-        <h3 class="card-title"><i class="fas fa-table"></i> Dữ liệu chi tiết</h3>
-        <div class="table-wrapper">
-          <app-reusable-table
-            [data]="rawData"
-            [columns]="tableColumns"
-            [isLoading]="isLoading"
-            [showPaginator]="false"
-            [pageSize]="10"
-            [clientSideSort]="true"
-            emptyStateText="Không có dữ liệu cho khoảng thời gian này.">
-          </app-reusable-table>
+      <div class="content-card chart-full-width">
+        
+        <div class="card-header">
+          <div class="card-title-wrapper">
+            <h3 class="card-title">
+              <i class="fas fa-table text-teal" aria-hidden="true"></i>
+              Dữ liệu chi tiết
+            </h3>
+          </div>
+          <div class="header-controls">
+            <button class="btn-icon" (click)="onExport()" title="Xuất Excel">
+              <i class="fas fa-file-excel"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body table-body">
+          @if (isInitialLoad) {
+             <div class="skeleton-rect" style="height: 400px; width: 100%;"></div>
+          } @else {
+            <app-reusable-table
+              [data]="rawData"
+              [columns]="tableColumns"
+              [isLoading]="isLoading" 
+              [showPaginator]="false"
+              [clientSideSort]="true"
+              emptyStateText="Không có dữ liệu cho khoảng thời gian này.">
+            </app-reusable-table>
+          }
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
 </div>

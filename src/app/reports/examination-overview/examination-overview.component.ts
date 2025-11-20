@@ -45,12 +45,14 @@ export class ExaminationOverviewComponent implements OnInit {
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
 
-  public isLoading = false;
+  public isLoading = false;      
+  public isInitialLoad = true;   
   public rawData: ExaminationStat[] = [];
   
   // Filter State
   public fromDate: string = '';
   public toDate: string = '';
+  public activeRange: string = 'thisMonth'; 
 
   // UI Data
   public widgetData: WidgetData[] = [];
@@ -58,7 +60,6 @@ export class ExaminationOverviewComponent implements OnInit {
   public typeChartOptions: EChartsCoreOption | null = null;
   public admissionChartOptions: EChartsCoreOption | null = null;
 
-  // Table Config
   public tableColumns: GridColumn[] = [
     { key: 'NGAY_TIEP_NHAN', label: 'Ngày', sortable: true, width: '120px' },
     { key: 'TONG_LUOT_TIEP_NHAN', label: 'Tổng Lượt', sortable: true },
@@ -70,14 +71,43 @@ export class ExaminationOverviewComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    // Default to current month
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    this.fromDate = this.formatDateInput(firstDay);
-    this.toDate = this.formatDateInput(lastDay);
+    this.setRange('thisMonth');
+  }
 
+  public setRange(range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'): void {
+    this.activeRange = range;
+    const now = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    switch (range) {
+      case 'today':
+        // start/end are already now
+        break;
+      case 'thisWeek':
+        // Assume Monday start
+        const day = now.getDay(), diff = now.getDate() - day + (day == 0 ? -6 : 1);
+        start = new Date(now.setDate(diff));
+        end = new Date();
+        break;
+      case 'thisMonth':
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case 'thisQuarter':
+        const currMonth = now.getMonth();
+        const startMonth = Math.floor(currMonth / 3) * 3;
+        start = new Date(now.getFullYear(), startMonth, 1);
+        end = new Date(now.getFullYear(), startMonth + 3, 0);
+        break;
+      case 'thisYear':
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31);
+        break;
+    }
+
+    this.fromDate = this.formatDateInput(start);
+    this.toDate = this.formatDateInput(end);
     this.loadData();
   }
 
@@ -88,14 +118,15 @@ export class ExaminationOverviewComponent implements OnInit {
     }
 
     this.isLoading = true;
+    
     this.reportService.getExaminationOverview(this.fromDate, this.toDate)
       .pipe(finalize(() => {
         this.isLoading = false;
+        this.isInitialLoad = false; 
         this.cd.markForCheck();
       }))
       .subscribe({
         next: (data) => {
-          // Process dates for display in table
           this.rawData = data.map(item => ({
              ...item,
              NGAY_TIEP_NHAN: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
@@ -107,6 +138,7 @@ export class ExaminationOverviewComponent implements OnInit {
         error: (err) => {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu báo cáo.');
+          this.isInitialLoad = false; 
         }
       });
   }
@@ -126,7 +158,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Tổng Tiếp Nhận',
         value: this.formatNumber(totals.total),
         caption: 'Lượt khám',
-        accentColor: '#00839B' // teal-blue
+        accentColor: '#00839B' 
       },
       {
         id: 'bhyt',
@@ -134,7 +166,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Bảo Hiểm Y Tế',
         value: this.formatNumber(totals.bhyt),
         caption: 'Lượt',
-        accentColor: '#006E96' // peacock-blue
+        accentColor: '#006E96' 
       },
       {
         id: 'emergency',
@@ -142,7 +174,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Cấp Cứu',
         value: this.formatNumber(totals.emergency),
         caption: 'Lượt',
-        accentColor: '#DC2626' // color-danger
+        accentColor: '#7C3AED' // Violet
       },
       {
         id: 'inpatient',
@@ -150,13 +182,12 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Nội Trú',
         value: this.formatNumber(totals.inpatient),
         caption: 'Lượt nhập viện',
-        accentColor: '#F59E0B' // color-warning
+        accentColor: '#F59E0B' 
       }
     ];
   }
 
   private buildCharts(data: ExaminationStat[]): void {
-    // Sort by date ensures correct line chart order
     const sortedData = [...data].sort((a, b) => 
       new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime()
     );
@@ -166,30 +197,48 @@ export class ExaminationOverviewComponent implements OnInit {
     const newSeries = sortedData.map(d => d.BENH_MOI || 0);
     const oldSeries = sortedData.map(d => d.BENH_CU || 0);
 
-    // 1. Trend Chart
     this.trendChartOptions = {
-      tooltip: { trigger: 'axis' },
-      legend: { data: ['Tổng', 'Bệnh Mới', 'Bệnh Cũ'], bottom: 0 },
-      grid: { left: '3%', right: '4%', bottom: '10%', top: '3%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: dates },
-      yAxis: { type: 'value' },
+      tooltip: { 
+        trigger: 'axis',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#E2E8F0',
+        textStyle: { color: '#1E293B' }
+      },
+      legend: { data: ['Tổng', 'Bệnh Mới', 'Bệnh Cũ'], bottom: 0, icon: 'circle' },
+      grid: { left: '2%', right: '3%', bottom: '10%', top: '5%', containLabel: true },
+      xAxis: { 
+        type: 'category', 
+        boundaryGap: false, 
+        data: dates,
+        axisLine: { show: false },
+        axisTick: { show: false }
+      },
+      yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [
         {
-          name: 'Tổng', type: 'line', smooth: true, data: totalSeries,
-          itemStyle: { color: '#00839B' }, areaStyle: { opacity: 0.1 }
+          name: 'Tổng', type: 'line', smooth: true, showSymbol: false, data: totalSeries,
+          itemStyle: { color: '#00839B' }, 
+          areaStyle: {
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(0, 131, 155, 0.3)' },
+                { offset: 1, color: 'rgba(0, 131, 155, 0.01)' }
+              ]
+            }
+          }
         },
         {
-          name: 'Bệnh Mới', type: 'line', smooth: true, data: newSeries,
+          name: 'Bệnh Mới', type: 'line', smooth: true, showSymbol: false, data: newSeries,
           itemStyle: { color: '#16A34A' }
         },
         {
-          name: 'Bệnh Cũ', type: 'line', smooth: true, data: oldSeries,
+          name: 'Bệnh Cũ', type: 'line', smooth: true, showSymbol: false, data: oldSeries,
           itemStyle: { color: '#64748B' }, lineStyle: { type: 'dashed' }
         }
       ]
     };
 
-    // Aggregates for Pie/Bar
     const totals = sortedData.reduce((acc, cur) => ({
       bhyt: acc.bhyt + (cur.BHYT || 0),
       service: acc.service + (cur.VIEN_PHI || 0),
@@ -199,18 +248,18 @@ export class ExaminationOverviewComponent implements OnInit {
       clinic: acc.clinic + (cur.LUOT_KHAM_CK || 0)
     }), { bhyt: 0, service: 0, emergency: 0, inpatient: 0, daycare: 0, clinic: 0 });
 
-    // 2. Breakdown by Type (Pie)
     this.typeChartOptions = {
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-      legend: { orient: 'vertical', left: 'left' },
+      legend: { orient: 'horizontal', bottom: 0, icon: 'circle' },
       series: [{
         name: 'Đối tượng',
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: ['45%', '70%'],
+        center: ['50%', '45%'],
         avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+        itemStyle: { borderRadius: 5, borderColor: '#fff', borderWidth: 2 },
         label: { show: false, position: 'center' },
-        emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+        emphasis: { label: { show: true, fontSize: 18, fontWeight: 'bold' } },
         data: [
           { value: totals.bhyt, name: 'BHYT', itemStyle: { color: '#006E96' } },
           { value: totals.service, name: 'Viện Phí', itemStyle: { color: '#F59E0B' } }
@@ -218,19 +267,19 @@ export class ExaminationOverviewComponent implements OnInit {
       }]
     };
 
-    // 3. Admission Source (Bar)
     this.admissionChartOptions = {
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
       xAxis: { type: 'category', data: ['Phòng Khám', 'Cấp Cứu', 'Nội Trú', 'DNT'] },
-      yAxis: { type: 'value' },
+      yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [{
         name: 'Lượt',
         type: 'bar',
-        barWidth: '50%',
+        barWidth: '40%',
+        itemStyle: { borderRadius: [4, 4, 0, 0] },
         data: [
           { value: totals.clinic, itemStyle: { color: '#00839B' } },
-          { value: totals.emergency, itemStyle: { color: '#DC2626' } },
+          { value: totals.emergency, itemStyle: { color: '#7C3AED' } },
           { value: totals.inpatient, itemStyle: { color: '#F59E0B' } },
           { value: totals.daycare, itemStyle: { color: '#64748B' } }
         ]
@@ -251,5 +300,9 @@ export class ExaminationOverviewComponent implements OnInit {
 
   public trackByWidget(index: number, item: WidgetData): string {
     return item.id;
+  }
+  
+  public onExport(): void {
+    this.toastService.showInfo('Tính năng xuất Excel đang được phát triển.');
   }
 }

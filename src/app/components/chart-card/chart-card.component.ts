@@ -48,7 +48,7 @@ export class ChartCardComponent implements AfterViewInit {
   public icon = input<string>('');
   public iconClass = input<string>(''); // e.g. 'text-primary'
   public isLoading = input<boolean>(false);
-  public emptyText = input<string>('No data available');
+  public emptyText = input<string>('Không có dữ liệu');
   public emptyIcon = input<string>('fas fa-chart-bar');
   
   // NEW: Allow configuring the skeleton look ('bar' is default)

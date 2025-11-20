@@ -20,113 +20,201 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  scrollbar-width: none; // Hide scrollbar for cleaner look
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  
+  /* Hide scrollbar but allow scrolling */
+  scrollbar-width: none; 
+  &::-webkit-scrollbar { display: none; }
 }
 
-/* Filter Bar */
+/* --- 1. Filter Section --- */
 .filter-section {
   display: flex;
   align-items: flex-end;
-  gap: var(--spacing-md);
+  justify-content: space-between;
   background-color: var(--white);
-  padding: var(--spacing-xs);
-  border-radius: var(--border-radius-md);
+  // padding: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-sm);
-  flex-shrink: 0;
   flex-wrap: wrap;
+  gap: var(--spacing-md);
+
+  .filter-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
 
   .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 
     label {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      color: var(--gray-700);
+      text-transform: uppercase;
+      color: var(--gray-500);
+      letter-spacing: 0.5px;
     }
   }
 
+  /* Quick Action Pills */
+  .quick-actions {
+    display: flex;
+    gap: 6px;
+    padding-bottom: 3px; /* Align with input baseline */
+    
+    .btn-pill {
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 99px;
+      border: 1px solid var(--gray-200);
+      background-color: var(--white);
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background-color: var(--gray-50);
+        color: var(--teal-blue);
+        border-color: var(--teal-blue-light);
+      }
+
+      &.active {
+        background-color: var(--teal-blue);
+        color: var(--white);
+        border-color: var(--teal-blue);
+        box-shadow: var(--box-shadow-sm);
+      }
+    }
+  }
+
+  /* Standard Inputs */
   .form-control-sm {
-    padding: 6px 12px;
+    padding: 8px 12px;
     border: 1px solid var(--gray-300);
     border-radius: var(--border-radius-sm);
     font-size: 0.9rem;
-    min-height: 36px;
+    color: var(--gray-800);
     
     &:focus {
       outline: none;
       border-color: var(--teal-blue);
-      box-shadow: 0 0 0 2px rgba(0, 131, 155, 0.1);
+      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
     }
   }
   
   .btn {
-    min-height: 36px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    height: 38px;
+    padding: 0 20px;
   }
 }
 
-/* Widget Grid */
+/* --- 2. Widget Grid --- */
 .widget-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--spacing-md);
 }
 
-/* Dashboard Main Grid */
+/* --- 3. Dashboard Grid Layout --- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   gap: var(--spacing-md);
-  
-  .span-full {
-    grid-column: 1 / -1;
+  padding-bottom: var(--spacing-xl);
+
+  .chart-full-width {
+    grid-column: span 12;
   }
-  
-  .span-half {
-    grid-column: span 1;
+
+  .chart-half-width {
+    grid-column: span 6;
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 1fr;
-    .span-half {
-      grid-column: 1 / -1;
+    .chart-half-width {
+      grid-column: span 12;
+    }
+    
+    .quick-actions {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 8px;
     }
   }
 }
 
-/* Table Card Style */
-.table-card {
-  background: var(--white);
+/* --- 4. Content Card (Matches ChartCard) --- */
+.content-card {
+  background-color: var(--white);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-md);
   padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-md);
   display: flex;
   flex-direction: column;
   min-height: 400px;
 
-  .card-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0 0 var(--spacing-md) 0;
-    color: var(--gray-800);
+  .card-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid var(--gray-200);
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
     padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--gray-200);
+    flex-shrink: 0;
   }
 
-  .table-wrapper {
+  .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    
+    i { font-size: 1rem; }
+  }
+
+  .card-body {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    position: relative;
   }
+
+  .table-body {
+    overflow: hidden;
+    /* Ensure table takes full height */
+    ::ng-deep app-reusable-table {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+/* Helpers */
+.text-teal { color: var(--teal-blue); }
+.text-blue { color: var(--peacock-blue); }
+.text-orange { color: var(--color-warning); }
+.text-success { color: var(--color-success); }
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: color 0.2s;
+  padding: 4px;
+  
+  &:hover { color: var(--color-success); }
 }
