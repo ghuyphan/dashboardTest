@@ -111,23 +111,22 @@ export class BedUsageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   // Public Properties
-  public isLoading = true; // <-- MODIFIED: Set to TRUE initially for skeleton
+  public isLoading = true; 
   public isRefreshing = false;
   public currentDateTime = '';
   public chartOptions: EChartsCoreOption | null = null;
-  public widgetData: WidgetData[] = []; // <-- Initialized as empty
+  public widgetData: WidgetData[] = []; 
 
   // Private Properties
   private bedStatusSeries: BedStatusSeries[] = [];
   private cssVars: CssVariables = {} as CssVariables;
-  private widgetDefinitions: WidgetData[] = []; // <-- ADDED: Holds widget definitions
+  private widgetDefinitions: WidgetData[] = [];
 
   ngOnInit(): void {
-    this.initializeColors(); // This now populates widgetDefinitions
-    this.cd.markForCheck(); // Trigger initial check to show skeleton
+    this.initializeColors(); 
+    this.cd.markForCheck(); 
 
     // Use RxJS timer for initial load (0ms) and auto-refresh (60s)
-    // takeUntilDestroyed automatically cleans up when component is destroyed
     timer(0, AUTO_REFRESH_INTERVAL)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -155,15 +154,15 @@ export class BedUsageComponent implements OnInit {
       tealBlue: getCssVar('--teal-blue'),
     };
 
-    this.initializeWidgetDefinitions(); // <-- Call renamed method
+    this.initializeWidgetDefinitions();
     this.initializeBedStatusSeries();
   }
 
   /**
-   * Initializes widget data with default values (Moved from widgetData to widgetDefinitions)
+   * Initializes widget data with default values
    */
   private initializeWidgetDefinitions(): void {
-    this.widgetDefinitions = [ // <-- Populates the definition list
+    this.widgetDefinitions = [
       {
         id: 'occupancyRate',
         title: 'Công Suất',
@@ -277,17 +276,23 @@ export class BedUsageComponent implements OnInit {
       return;
     }
 
-    // Set flags based on whether widgetData is currently empty (i.e., initial load)
+    // [FIXED] Only set isLoading (skeleton) on initial load. 
+    // For updates, use isRefreshing (spinner).
     const isInitialLoad = this.widgetData.length === 0;
-    this.isLoading = true; 
-    this.isRefreshing = !isInitialLoad; 
+    
+    if (isInitialLoad) {
+      this.isLoading = true;
+    } else {
+      this.isRefreshing = true;
+    }
+    
     this.cd.markForCheck();
 
     this.http
       .get<ApiResponseData[]>(environment.bedUsageUrl)
       .pipe(
         finalize(() => this.handleRequestComplete()),
-        takeUntilDestroyed(this.destroyRef) // Added safety for manual refresh
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (data) => this.handleDataSuccess(data),
@@ -299,7 +304,7 @@ export class BedUsageComponent implements OnInit {
    * Handles successful data retrieval
    */
   private handleDataSuccess(rawData: ApiResponseData[]): void {
-    // FIX: Initialize widgetData only after first successful data fetch
+    // Initialize widgetData only after first successful data fetch if empty
     if (this.widgetData.length === 0) {
       this.widgetData = [...this.widgetDefinitions];
     }
