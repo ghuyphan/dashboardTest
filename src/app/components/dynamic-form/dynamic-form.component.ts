@@ -123,7 +123,8 @@ export class DynamicFormComponent implements OnInit {
     const value = this.prepareControlValue(config);
     const validators = this.buildValidators(config.validators);
     
-    return new FormControl<any>({ value, disabled: config.disabled }, validators);
+    // [FIX] Use '?? false' to ensure disabled is strictly boolean
+    return new FormControl<any>({ value, disabled: config.disabled ?? false }, validators);
   }
 
   private prepareControlValue(config: FormControlConfig): any {

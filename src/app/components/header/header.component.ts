@@ -22,10 +22,9 @@ import { SearchService } from '../../services/search.service';
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
-  encapsulation: ViewEncapsulation.None 
+  encapsulation: ViewEncapsulation.Emulated 
 })
 export class HeaderComponent {
-  // Signal Inputs
   public currentUser = input<User | null>(null);
   public userInitials = input<string>('');
   public rolesDisplay = input<string>('');

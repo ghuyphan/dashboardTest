@@ -6,7 +6,6 @@
   --header-height: 50px;
 }
 
-/* --- Main Header Container --- */
 .dashboard-header {
   display: flex;
   align-items: center;
@@ -19,7 +18,6 @@
   gap: 1rem;
 }
 
-/* --- Left Controls --- */
 .header-left-controls {
   display: flex;
   align-items: center;
@@ -38,7 +36,6 @@
   text-overflow: ellipsis;
 }
 
-/* Base Icon Button Style */
 .header-icon-btn {
   display: flex;
   align-items: center;
@@ -58,20 +55,15 @@
   }
 }
 
-/* FIX #2: Mobile Toggle Visibility 
-   Strictly hidden on desktop, shown on screens < 992px
-*/
 .mobile-sidebar-toggle {
-  display: none; /* Hidden by default */
+  display: none; 
   
   @media (max-width: 992px) {
-    display: flex; /* Shown only on mobile/tablet */
-    
+    display: flex; 
     i, svg { font-size: 1.25rem; }
   }
 }
 
-/* --- Search Bar --- */
 .header-search-container {
   display: flex;
   align-items: center;
@@ -112,7 +104,6 @@
   }
 }
 
-/* --- Right Controls --- */
 .header-right-controls {
   position: relative;
   display: flex;
@@ -121,7 +112,6 @@
   flex: 1;
 }
 
-/* --- User Menu Trigger Button --- */
 .user-menu-toggle {
   display: flex;
   align-items: center;
@@ -155,17 +145,14 @@
     flex-shrink: 0;
   }
 
-  /* FIX #3 Part A: Chevron Animation (Updated for Font Awesome) */
   .chevron-icon {
-    font-size: 0.8rem; /* Font size controls icon size */
-    width: 0.8rem; /* Explicit width/height for layout stability */
+    font-size: 0.8rem; 
+    width: 0.8rem; 
     height: 0.8rem; 
     color: var(--gray-500);
-    /* Smooth rotation for both open and close */
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Rotate when Material menu is open */
   &[aria-expanded="true"] .chevron-icon {
     transform: rotate(180deg);
   }
@@ -174,16 +161,14 @@
 /* =================================================================
    CUSTOM MAT-MENU PANEL STYLING
    ================================================================= */
-
-/* Target the global panel class */
-.header-user-menu-panel.mat-mdc-menu-panel {
+/* [BEST PRACTICE] Use ::ng-deep to target the overlay panel */
+::ng-deep .header-user-menu-panel.mat-mdc-menu-panel {
   background-color: var(--gray-100) !important;
   border-radius: 12px !important;
   padding: 8px !important;
   min-width: 280px !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
 
-  /* FIX #3 Part B: Panel Entry Animation */
   transform-origin: top right !important;
   animation: menuScaleFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -191,7 +176,6 @@
     padding: 0 !important;
   }
 
-  /* 1. Profile Card Section */
   .menu-section-wrapper {
     background-color: var(--white);
     border-radius: 8px;
@@ -206,13 +190,12 @@
     padding: 12px;
     gap: 12px;
 
-    /* FIX #1: Avatar Circle Fix */
     .dropdown-avatar-initials {
       width: 40px;
       height: 40px;
-      min-width: 40px; /* Prevents squashing */
-      flex-shrink: 0;  /* Prevents squashing */
-      border-radius: 50%; /* Ensures perfect circle */
+      min-width: 40px; 
+      flex-shrink: 0;  
+      border-radius: 50%; 
       
       background: var(--aqua-island);
       color: white;
@@ -242,7 +225,6 @@
     }
   }
 
-  /* 2. Menu Items */
   .menu-items-wrapper {
     display: flex;
     flex-direction: column;
@@ -266,7 +248,6 @@
       & > span { flex-grow: 1; }
     }
 
-    /* Icon Box */
     .menu-icon-bg {
       width: 32px;
       height: 32px;
@@ -288,7 +269,6 @@
       .menu-icon-bg { background: var(--gray-300); color: var(--gray-900); }
     }
 
-    /* Logout Style */
     &.logout-item {
       margin-top: 4px;
       .mat-mdc-menu-item-text { color: var(--color-danger); }
@@ -302,7 +282,6 @@
   }
 }
 
-/* New Smooth Animation */
 @keyframes menuScaleFadeIn {
   from {
     opacity: 0;
@@ -314,7 +293,6 @@
   }
 }
 
-/* Media Queries */
 @media (max-width: 992px) {
   .header-search-container { display: none; }
   .header-title { display: block; }
