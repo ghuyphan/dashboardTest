@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, NgClass } from '@angular/common';
 import { AuthService } from '../services/auth.service';
@@ -17,9 +17,12 @@ import { ConfirmationModalComponent } from '../components/confirmation-modal/con
     RouterLink
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush // <--- 1. Enable OnPush
 })
 export class LoginComponent {
+  // Inject ChangeDetectorRef
+  private cd = inject(ChangeDetectorRef); 
 
   public isLoading = false;
   public credentials = {
@@ -41,12 +44,14 @@ export class LoginComponent {
   onSubmit() {
     if (this.isLoading) return;
     this.isLoading = true;
+    // No need to markForCheck here because the event (submit) triggers detection automatically
 
     this.authService.login(this.credentials).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.toastService.showSuccess('Đăng nhập thành công!');
         this.router.navigate(['/app']);
+        this.cd.markForCheck(); // <--- 2. Update view after async
       },
       error: (err: any) => {
         this.isLoading = false;
@@ -58,12 +63,10 @@ export class LoginComponent {
             size: 'sm',
             disableBackdropClose: true,
             context: {
-              layout: 'center', // Explicitly center this alert
-
-              title: '', // Keep empty if you just want the icon
+              layout: 'center',
+              title: '',
               icon: 'fas fa-user-shield',
               iconColor: 'var(--color-danger)',
-
               message: `${err.message}\n\nVui lòng liên hệ bộ phận IT qua hotline:\n☎ 1108 / 1109 để mở khóa.`,
               confirmText: 'Đã hiểu',
               cancelText: ''
@@ -76,6 +79,7 @@ export class LoginComponent {
         }
 
         console.error('Login failed', err);
+        this.cd.markForCheck(); // <--- 3. Update view after async error
       }
     });
   }
@@ -83,5 +87,6 @@ export class LoginComponent {
   togglePasswordVisibility(): void {
     this.passwordVisible = !this.passwordVisible;
     this.passwordFieldType = this.passwordVisible ? 'text' : 'password';
+    // No markForCheck needed here as it's a direct DOM event
   }
 }

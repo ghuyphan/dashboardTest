@@ -1,15 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router'; // <--- IMPORT THIS
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: true,
   imports: [
     CommonModule,
-    RouterOutlet // <--- ADD THIS
+    RouterOutlet
   ],
   templateUrl: './auth-layout.component.html',
-  styleUrls: ['./auth-layout.component.scss']
+  styleUrls: ['./auth-layout.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush // <--- Added this
 })
 export class AuthLayoutComponent {}
