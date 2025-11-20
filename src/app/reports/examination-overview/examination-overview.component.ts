@@ -65,9 +65,10 @@ export class ExaminationOverviewComponent implements OnInit {
     { key: 'TONG_LUOT_TIEP_NHAN', label: 'Tổng Lượt', sortable: true },
     { key: 'BHYT', label: 'BHYT', sortable: true },
     { key: 'VIEN_PHI', label: 'Viện Phí', sortable: true },
+    { key: 'LUOT_KHAM_CK', label: 'Khám Bệnh (CK)', sortable: true },
     { key: 'LUOT_CC', label: 'Cấp Cứu', sortable: true },
     { key: 'LUOT_NT', label: 'Nội Trú', sortable: true },
-    { key: 'LUOT_KHAM_CK', label: 'Phòng Khám', sortable: true }
+    { key: 'LUOT_DNT', label: 'ĐT Ngoại Trú', sortable: true },
   ];
 
   ngOnInit(): void {
@@ -145,11 +146,11 @@ export class ExaminationOverviewComponent implements OnInit {
   private calculateWidgets(data: ExaminationStat[]): void {
     const totals = data.reduce((acc, cur) => ({
       total: acc.total + (cur.TONG_LUOT_TIEP_NHAN || 0),
-      bhyt: acc.bhyt + (cur.BHYT || 0),
+      ck: acc.ck + (cur.LUOT_KHAM_CK || 0),
       emergency: acc.emergency + (cur.LUOT_CC || 0),
       inpatient: acc.inpatient + (cur.LUOT_NT || 0),
       daycare: acc.daycare + (cur.LUOT_DNT || 0),
-    }), { total: 0, bhyt: 0, emergency: 0, inpatient: 0, daycare: 0 });
+    }), { total: 0, ck: 0, emergency: 0, inpatient: 0, daycare: 0 });
 
     this.widgetData = [
       {
@@ -157,16 +158,16 @@ export class ExaminationOverviewComponent implements OnInit {
         icon: 'fas fa-users',
         title: 'Tổng Tiếp Nhận',
         value: this.formatNumber(totals.total),
-        caption: 'Total Admissions',
-        accentColor: '#00839B'
+        caption: 'Total',
+        accentColor: '#006E96'
       },
       {
-        id: 'bhyt',
-        icon: 'fas fa-address-card',
-        title: 'Bảo Hiểm Y Tế',
-        value: this.formatNumber(totals.bhyt),
-        caption: 'Health Insurance',
-        accentColor: '#006E96'
+        id: 'ck',
+        icon: 'fas fa-stethoscope',
+        title: 'Khám Bệnh (CK)',
+        value: this.formatNumber(totals.ck),
+        caption: 'Clinic',
+        accentColor: '#00839B'
       },
       {
         id: 'emergency',
@@ -174,7 +175,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Cấp Cứu',
         value: this.formatNumber(totals.emergency),
         caption: 'Emergency',
-        accentColor: '#FFB3BA' // Violet
+        accentColor: '#FFB3BA' // Pink/Violet
       },
       {
         id: 'inpatient',
@@ -182,15 +183,15 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Nội Trú',
         value: this.formatNumber(totals.inpatient),
         caption: 'Inpatient',
-        accentColor: '#F59E0B'
+        accentColor: '#F59E0B' // Orange
       },
       {
         id: 'daycare',
         icon: 'fas fa-clinic-medical',
-        title: 'ĐT Ngoại Trú (DNT)',
+        title: 'ĐT Ngoại Trú',
         value: this.formatNumber(totals.daycare),
         caption: 'Daycares',
-        accentColor: '#52C3D7' // Teal Midtone (Distinct from main teal)
+        accentColor: '#52C3D7' // Teal
       }
     ];
   }
@@ -224,10 +225,10 @@ export class ExaminationOverviewComponent implements OnInit {
       yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [
         {
-          name: 'Tổng', 
-          type: 'line', 
-          smooth: true, 
-          showSymbol: false, 
+          name: 'Tổng',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
           data: totalSeries,
           itemStyle: { color: '#00839B' }
           // Removed areaStyle here to remove the gradient
@@ -274,7 +275,7 @@ export class ExaminationOverviewComponent implements OnInit {
     this.admissionChartOptions = {
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['Phòng Khám', 'Cấp Cứu', 'Nội Trú', 'DNT'] },
+      xAxis: { type: 'category', data: ['Khám Bệnh (CK)', 'Cấp Cứu', 'Nội Trú', 'DNT'] },
       yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [{
         name: 'Lượt',

@@ -14,6 +14,8 @@
 
         <div class="quick-actions">
           <button class="btn-pill" [class.active]="activeRange === 'today'" (click)="setRange('today')">Hôm nay</button>
+                    <button class="btn-pill" [class.active]="activeRange === 'thisWeek'" (click)="setRange('thisWeek')">Tuần
+            này</button>
           <button class="btn-pill" [class.active]="activeRange === 'thisMonth'" (click)="setRange('thisMonth')">Tháng
             này</button>
           <button class="btn-pill" [class.active]="activeRange === 'thisQuarter'" (click)="setRange('thisQuarter')">Quý
@@ -60,7 +62,7 @@
         [isLoading]="isLoading" [chartOptions]="typeChartOptions" skeletonType="pie">
       </app-chart-card>
 
-      <app-chart-card class="grid-item span-half" title="Phân Bổ Hình Thức" icon="fas fa-chart-bar"
+      <app-chart-card class="grid-item span-half" title="Lý Do Tiếp Nhận" icon="fas fa-chart-bar"
         iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="admissionChartOptions" skeletonType="bar">
       </app-chart-card>
 

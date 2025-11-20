@@ -1,56 +1,100 @@
 :host {
   display: block;
-  min-height: 100vh;
   width: 100vw;
-  /* Removed original problematic overflow */
-  
-  background-image: url('/assets/images/HMSG.png');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  height: 100vh;
   position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    backdrop-filter: blur(5px);
-    z-index: 0;
-  }
+  overflow: hidden; /* Master scroll control */
 }
 
+/* ==========================================================================
+   1. THE "BEST PERFORMANCE" BACKGROUND
+   ========================================================================== */
+.auth-background-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  
+  /* PERFORMANCE HINTS: */
+  /* 1. Isolate layout/paint from the rest of the app */
+  contain: strict; 
+  /* 2. Force onto GPU layer */
+  transform: translateZ(0);
+  /* 3. Prevent any mouse events from causing recalc */
+  pointer-events: none;
+  
+  /* Fix for white edges on blur in some browsers by scaling slightly */
+  transform: scale(1.02); 
+}
+
+.bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  
+  /* THE EXPENSIVE BLUR (Hardware Accelerated here) */
+  filter: blur(8px); 
+  
+  /* Tell browser this doesn't change often */
+  will-change: transform; 
+}
+
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  /* The static tint */
+  background-color: rgba(255, 255, 255, 0.1); 
+  /* Force overlay to stick to GPU layer too */
+  transform: translateZ(0); 
+}
+
+/* ==========================================================================
+   2. THE CONTENT LAYER
+   ========================================================================== */
 .auth-container {
   position: relative;
-  z-index: 1;
-  min-height: 100vh;
+  z-index: 1; /* Floating above the fixed background */
+  width: 100%;
+  height: 100%;
+  
   display: flex;
   justify-content: center;
   align-items: center;
   padding: var(--spacing-lg);
   
-  /* Prevent scrollbar from desktop content if the window is resized just a bit smaller */
-  overflow: hidden; 
+  /* Allow content scrolling if window is too short */
+  overflow-y: auto; 
+  overflow-x: hidden;
+  
+  /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch;
 }
 
 .auth-card-wrapper {
-  /* --- 1. ANIMATION FIX --- */
+  /* View Transition Optimization */
   view-transition-name: auth-card; 
   
   width: 100%;
   max-width: 420px;
   
-  /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  /* --- NO BLUR HERE --- */
+  /* High opacity white for best readability and rendering speed */
+  background: rgba(255, 255, 255, 0.94); 
+  
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-lg);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  /* Static shadow, no spread expansion */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   
   padding: clamp(24px, 5vw, 40px);
   display: flex;
   flex-direction: column;
-  overflow: hidden; 
+  
+  /* Isolate card repaints from container */
+  contain: content; 
+  will-change: transform, opacity;
 }
 
 .auth-logo {
@@ -62,6 +106,7 @@
     height: clamp(60px, 15vw, 80px);
     object-fit: contain;
     margin-bottom: clamp(16px, 4vw, 24px);
+    aspect-ratio: 1 / 1;
   }
 
   h2 {
@@ -80,42 +125,53 @@
   }
 }
 
-/* --- 2. FULLSCREEN FIX (Mobile/Tablet) --- */
-/* Changed from 768px to 992px to cover Tablets and Small Laptops */
+/* ==========================================================================
+   3. MOBILE OPTIMIZATIONS
+   ========================================================================== */
 @media (max-width: 992px) {
-  :host {
-    background: var(--white); /* Remove image on mobile/tablet */
+  /* Disable the background layer entirely on mobile to save battery/perf */
+  .auth-background-layer {
+    display: none !important;
   }
-  :host::before { display: none; }
+  
+  :host {
+    background-color: var(--white);
+  }
 
   .auth-container {
     padding: 0;
-    /* Align to top, ensuring content starts high for natural scrolling */
-    align-items: flex-start; 
-    
-    /* Allow the container to shrink/grow based on content */
-    height: auto; 
-    min-height: 100vh;
-    
-    /* Re-enable scrolling specifically for mobile/tablet view */
-    overflow-y: auto; 
-    overflow-x: hidden;
+    align-items: flex-start; /* Top align for mobile scrolling */
   }
 
   .auth-card-wrapper {
     max-width: none;
-    
-    /* Allow card wrapper to expand its height past viewport if needed for scrolling */
-    min-height: auto; 
-    
+    min-height: 100vh;
     border-radius: 0;
     border: none;
     box-shadow: none;
     background: transparent;
-    backdrop-filter: none;
-    
-    /* Align content to start when overflow is possible */
-    justify-content: flex-start; 
+    justify-content: center; 
     padding: clamp(20px, 5vw, 32px);
   }
+}
+
+/* ==========================================================================
+   4. ANIMATION CURVES
+   ========================================================================== */
+::view-transition-group(root) {
+  animation-duration: 0s;
+}
+
+::view-transition-group(auth-card) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
+  z-index: 100;
+}
+
+::view-transition-old(auth-card) {
+  display: none; 
+}
+
+::view-transition-new(auth-card) {
+  animation: none; 
 }
