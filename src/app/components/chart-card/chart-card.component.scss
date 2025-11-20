@@ -118,15 +118,40 @@
   }
 }
 
-/* Chart Area: Y-Axis + Bars */
+/* Chart Area: Generic Container */
 .sk-chart-area {
   flex: 1;
   display: flex;
   gap: 0.75rem;
   align-items: flex-end; /* Align bars to bottom */
   overflow: hidden;
+  position: relative;
 }
 
+/* --- PIE SKELETON --- */
+.sk-pie-area {
+  align-items: center;
+  justify-content: center;
+}
+
+.sk-pie {
+  width: 60%;
+  max-width: 200px;
+  aspect-ratio: 1 / 1; /* Keeps it square */
+  border-radius: 50%;
+  /* Optional: donut hole */
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 30%; /* Inner circle size */
+    background-color: var(--white);
+    border-radius: 50%;
+  }
+}
+
+/* --- LINE / BAR COMMON AXIS --- */
 /* Fake Y-Axis Labels */
 .sk-y-axis {
   display: flex;
@@ -143,7 +168,7 @@
   }
 }
 
-/* Fake Plot Area with Bars */
+/* --- BAR SKELETON PLOT --- */
 .sk-plot-area {
   flex: 1;
   display: flex;
@@ -154,7 +179,9 @@
   border-bottom: 2px solid var(--gray-200);
   padding-left: 8px;
   padding-bottom: 2px;
+  position: relative;
   
+  /* BAR SPECIFIC */
   .sk-bar {
     width: 12%; /* Responsive width */
     height: var(--h); /* Custom height var */
@@ -169,6 +196,36 @@
     &:nth-child(5) { animation-delay: 0.4s; }
     &:nth-child(6) { animation-delay: 0.5s; }
   }
+
+  /* LINE SPECIFIC */
+  &.line-mode {
+    display: block; /* SVG needs block/absolute context usually */
+    padding: 0;
+    border: none; /* We'll draw axis in standard container or assume transparent */
+    border-left: 2px solid var(--gray-200);
+    border-bottom: 2px solid var(--gray-200);
+  }
+}
+
+.sk-line-svg, .sk-area-svg {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 10px 0 0 10px; /* Offset from axes */
+  box-sizing: border-box;
+}
+
+/* Skeleton pulse animation specifically for the stroke */
+.skeleton-stroke {
+  animation: stroke-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes stroke-pulse {
+  0% { stroke: var(--gray-200); opacity: 0.5; }
+  50% { stroke: var(--gray-300); opacity: 1; }
+  100% { stroke: var(--gray-200); opacity: 0.5; }
 }
 
 /* Global Skeleton Animation */

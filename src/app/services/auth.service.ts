@@ -517,4 +517,12 @@ export class AuthService {
     const user = this.currentUserSubject.getValue();
     return user ? user.id : null;
   }
+
+  /**
+   * Gets the username of the currently logged-in user.
+   */
+  public getUsername(): string | null {
+    const user = this.currentUserSubject.getValue();
+    return user ? user.username : null;
+  }
 }

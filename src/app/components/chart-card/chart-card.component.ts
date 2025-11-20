@@ -20,6 +20,8 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
 
+export type ChartSkeletonType = 'bar' | 'line' | 'pie';
+
 @Component({
   selector: 'app-chart-card',
   standalone: true,
@@ -49,6 +51,9 @@ export class ChartCardComponent implements AfterViewInit {
   public emptyText = input<string>('No data available');
   public emptyIcon = input<string>('fas fa-chart-bar');
   
+  // NEW: Allow configuring the skeleton look ('bar' is default)
+  public skeletonType = input<ChartSkeletonType>('bar');
+
   // Theme input for dark mode support (e.g., 'dark', 'light', or object)
   public theme = input<string | object | null>(null); 
   
