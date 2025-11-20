@@ -2,6 +2,8 @@
   display: block;
   min-height: 100vh;
   width: 100vw;
+  /* Removed original problematic overflow */
+  
   background-image: url('/assets/images/HMSG.png');
   background-size: cover;
   background-position: center center;
@@ -25,11 +27,13 @@
   justify-content: center;
   align-items: center;
   padding: var(--spacing-lg);
+  
+  /* Prevent scrollbar from desktop content if the window is resized just a bit smaller */
+  overflow: hidden; 
 }
 
 .auth-card-wrapper {
   /* --- 1. ANIMATION FIX --- */
-  /* This name tells the browser to morph this specific element during navigation */
   view-transition-name: auth-card; 
   
   width: 100%;
@@ -76,7 +80,7 @@
   }
 }
 
-/* --- 2. FULLSCREEN FIX --- */
+/* --- 2. FULLSCREEN FIX (Mobile/Tablet) --- */
 /* Changed from 768px to 992px to cover Tablets and Small Laptops */
 @media (max-width: 992px) {
   :host {
@@ -86,22 +90,32 @@
 
   .auth-container {
     padding: 0;
-    align-items: flex-start; /* Align to top */
-    height: 100%;
+    /* Align to top, ensuring content starts high for natural scrolling */
+    align-items: flex-start; 
+    
+    /* Allow the container to shrink/grow based on content */
+    height: auto; 
     min-height: 100vh;
+    
+    /* Re-enable scrolling specifically for mobile/tablet view */
+    overflow-y: auto; 
+    overflow-x: hidden;
   }
 
   .auth-card-wrapper {
     max-width: none;
-    min-height: 100vh; /* Force full height */
+    
+    /* Allow card wrapper to expand its height past viewport if needed for scrolling */
+    min-height: auto; 
+    
     border-radius: 0;
     border: none;
     box-shadow: none;
     background: transparent;
     backdrop-filter: none;
     
-    /* Center content vertically in full screen mode */
-    justify-content: center; 
+    /* Align content to start when overflow is possible */
+    justify-content: flex-start; 
     padding: clamp(20px, 5vw, 32px);
   }
 }

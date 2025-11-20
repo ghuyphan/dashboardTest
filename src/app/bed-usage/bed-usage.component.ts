@@ -111,27 +111,27 @@ export class BedUsageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   // Public Properties
-  public isLoading = false;
+  public isLoading = true; // <-- MODIFIED: Set to TRUE initially for skeleton
   public isRefreshing = false;
   public currentDateTime = '';
   public chartOptions: EChartsCoreOption | null = null;
-  public widgetData: WidgetData[] = [];
+  public widgetData: WidgetData[] = []; // <-- Initialized as empty
 
   // Private Properties
   private bedStatusSeries: BedStatusSeries[] = [];
   private cssVars: CssVariables = {} as CssVariables;
+  private widgetDefinitions: WidgetData[] = []; // <-- ADDED: Holds widget definitions
 
   ngOnInit(): void {
-    this.initializeColors();
+    this.initializeColors(); // This now populates widgetDefinitions
+    this.cd.markForCheck(); // Trigger initial check to show skeleton
 
     // Use RxJS timer for initial load (0ms) and auto-refresh (60s)
     // takeUntilDestroyed automatically cleans up when component is destroyed
     timer(0, AUTO_REFRESH_INTERVAL)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        // Only show full skeleton on first load (when widgets are empty)
-        const showSkeleton = this.widgetData.length === 0;
-        this.loadData(showSkeleton);
+        this.loadData();
       });
   }
 
@@ -155,15 +155,15 @@ export class BedUsageComponent implements OnInit {
       tealBlue: getCssVar('--teal-blue'),
     };
 
-    this.initializeWidgets();
+    this.initializeWidgetDefinitions(); // <-- Call renamed method
     this.initializeBedStatusSeries();
   }
 
   /**
-   * Initializes widget data with default values
+   * Initializes widget data with default values (Moved from widgetData to widgetDefinitions)
    */
-  private initializeWidgets(): void {
-    this.widgetData = [
+  private initializeWidgetDefinitions(): void {
+    this.widgetDefinitions = [ // <-- Populates the definition list
       {
         id: 'occupancyRate',
         title: 'Công Suất',
@@ -271,15 +271,16 @@ export class BedUsageComponent implements OnInit {
 
   /**
    * Loads bed usage data from API
-   * @param showSkeleton - Whether to show loading skeleton
    */
-  public loadData(showSkeleton = false): void {
-    if (this.isLoading || this.isRefreshing) {
+  public loadData(): void {
+    if (this.isRefreshing) {
       return;
     }
 
-    this.isLoading = showSkeleton;
-    this.isRefreshing = !showSkeleton;
+    // Set flags based on whether widgetData is currently empty (i.e., initial load)
+    const isInitialLoad = this.widgetData.length === 0;
+    this.isLoading = true; 
+    this.isRefreshing = !isInitialLoad; 
     this.cd.markForCheck();
 
     this.http
@@ -298,6 +299,11 @@ export class BedUsageComponent implements OnInit {
    * Handles successful data retrieval
    */
   private handleDataSuccess(rawData: ApiResponseData[]): void {
+    // FIX: Initialize widgetData only after first successful data fetch
+    if (this.widgetData.length === 0) {
+      this.widgetData = [...this.widgetDefinitions];
+    }
+
     this.calculateWidgets(rawData);
 
     const chartData = this.transformApiData(rawData);

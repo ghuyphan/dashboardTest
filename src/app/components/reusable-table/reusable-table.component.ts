@@ -14,6 +14,8 @@ import {
   HostBinding,
   OnDestroy,
   ChangeDetectionStrategy,
+  ChangeDetectorRef, // <--- 1. Import ChangeDetectorRef
+  inject // <--- 2. Import inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -119,9 +121,13 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ReusableTableComponent<T> // <--- Generic T added here
+export class ReusableTableComponent<T>
   implements OnInit, OnChanges, AfterViewInit, OnDestroy {
-  // Inputs - Types updated to T
+    
+  // --- 3. Inject ChangeDetectorRef ---
+  private cdr = inject(ChangeDetectorRef);
+
+  // Inputs
   @Input() data: T[] = [];
   @Input() columns: GridColumn[] = [];
   @Input() searchTerm = '';
@@ -138,7 +144,7 @@ export class ReusableTableComponent<T> // <--- Generic T added here
   @Input() clientSideSort = false;
   @Input() headerColor: string | null = null;
 
-  // Outputs - Emitters updated to T
+  // Outputs
   @Output() rowClick = new EventEmitter<T>();
   @Output() sortChanged = new EventEmitter<SortChangedEvent>();
   @Output() pageChanged = new EventEmitter<PageEvent>();
@@ -157,7 +163,7 @@ export class ReusableTableComponent<T> // <--- Generic T added here
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild('tableContainer') tableContainer!: ElementRef;
 
-  // Public Properties - Types updated to T
+  // Public Properties
   public readonly dataSource = new MatTableDataSource<T>();
   public displayedColumns: string[] = [];
   public selectedRow: T | null = null;
@@ -257,6 +263,7 @@ export class ReusableTableComponent<T> // <--- Generic T added here
   private startLoadingWithDelay(): void {
     this.loadingTimer = setTimeout(() => {
       this.isLoadingWithDelay = true;
+      this.cdr.markForCheck(); // <--- 4. Trigger change detection
     }, LOADING_DEBOUNCE_MS);
   }
 
@@ -268,6 +275,7 @@ export class ReusableTableComponent<T> // <--- Generic T added here
 
     setTimeout(() => {
       this.isLoadingWithDelay = false;
+      this.cdr.markForCheck(); // <--- 5. Trigger change detection (Fixes the bug)
     }, LOADING_HIDE_DELAY_MS);
   }
 

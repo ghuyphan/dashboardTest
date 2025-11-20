@@ -33,16 +33,17 @@
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 40px;
+  bottom: 40px; // Leave space for paginator
   right: 0;
-  // Use the global overlay logic mostly, but positioned specific to table body
-  background: rgba(255, 255, 255, 0.92);
+  // PERFORMANCE FIX: Removed 'backdrop-filter: blur(2px)' as it causes severe lag during transitions
+  background: rgba(255, 255, 255, 0.95); 
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(2px);
   transition: opacity 0.2s var(--transition-smooth);
+  // Ensure it's on its own layer for performance
+  will-change: opacity;
 }
 
 .table-container {
@@ -53,16 +54,10 @@
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) var(--gray-100);
 
-  background:
-    linear-gradient(to right, var(--white) 30%, rgba(255, 255, 255, 0)),
-    linear-gradient(to left, var(--white) 30%, rgba(255, 255, 255, 0)) 100% 0,
-    radial-gradient(farthest-side at 0% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0)) 0 0,
-    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0)) 100% 0;
-  background-repeat: no-repeat;
+  /* PERFORMANCE FIX: Removed complex 'background-attachment: local' gradients 
+     which caused layout thrashing on navigation. 
+     Replaced with a simple background color. */
   background-color: var(--white);
-  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
-  background-position: 0 0, 100%, 0 0, 100%;
-  background-attachment: local, local, scroll, scroll;
 }
 
 .header-content,
@@ -112,6 +107,11 @@
   background-color: var(--color-danger);
 }
 .status-default {
+  color: #ffffff;
+  background-color: var(--gray-500);
+}
+// Added for completeness based on component logic
+.status-maintenance {
   color: #ffffff;
   background-color: var(--gray-500);
 }
@@ -285,6 +285,8 @@
     .no-data-icon-container {
       margin-bottom: var(--spacing-md);
       animation: pulse 2s infinite;
+      // Performance optimization for animation
+      will-change: transform, opacity; 
     }
 
     .no-data-icon {
