@@ -373,8 +373,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       : null;
 
     this.locationChartTitle = this.currentFilter
-      ? `Vị trí (Đã lọc)`
-      : `Vị trí có TB cần chú ý (Top 10)`;
+      ? `Vị Trí (Đã lọc)`
+      : `Vị Trí Có TB Cần Chú Ý (Top 10)`;
 
     this.locationChartOptions = locationData.length > 0
       ? this.buildBarOption(

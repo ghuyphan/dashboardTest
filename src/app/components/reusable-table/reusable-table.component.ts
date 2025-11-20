@@ -151,7 +151,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = { active: '', direction: '' };
 
-  // [BEST PRACTICE] Replaced setTimeout with RxJS pipeline
   private loadingSubject = new Subject<boolean>();
   private loadingSubscription: Subscription;
 
@@ -159,10 +158,8 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
     this.loadingSubscription = this.loadingSubject.pipe(
       switchMap(isLoading => {
         if (isLoading) {
-          // Debounce showing loader to prevent flicker on fast loads
           return timer(LOADING_DEBOUNCE_MS).pipe(map(() => true));
         } else {
-          // Minimum display time or smooth fade out
           return timer(LOADING_HIDE_DELAY_MS).pipe(map(() => false));
         }
       })
@@ -178,7 +175,7 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   ngAfterViewInit(): void {
-    this.initializeSort();
+    this.initializeTableFeatures(); 
     this.initializeSortState();
   }
 
@@ -206,9 +203,15 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
     });
   }
 
-  private initializeSort(): void {
+  private initializeTableFeatures(): void {
+    // Setup Sort
     if (this.clientSideSort && this.sort) {
       this.dataSource.sort = this.sort;
+    }
+
+    // Setup Paginator (Fix for client-side pagination)
+    if (this.clientSideSort && this.paginator) {
+      this.dataSource.paginator = this.paginator;
     }
   }
 
@@ -231,19 +234,23 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   private handleDataChange(): void {
     this.dataSource.data = this.data;
     this.clearSelection();
-    this.reinitializeSort();
+    
+    // Re-attach features if they were lost during data refresh
+    if (this.clientSideSort) {
+       if (this.paginator && !this.dataSource.paginator) {
+         this.dataSource.paginator = this.paginator;
+       }
+       if (this.sort && !this.dataSource.sort) {
+         this.dataSource.sort = this.sort;
+       }
+    }
+
     this.scrollToTop();
   }
 
   private clearSelection(): void {
     this.selectedRow = null;
     this.selection.clear();
-  }
-
-  private reinitializeSort(): void {
-    if (this.clientSideSort && this.sort) {
-      this.dataSource.sort = this.sort;
-    }
   }
 
   private scrollToTop(): void {
