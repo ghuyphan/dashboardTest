@@ -41,9 +41,7 @@
 }
 
 .widget-skeleton {
-  /* Local styling for size only */
   height: 80px;
-  /* Animation is now handled by global .skeleton class */
 }
 
 .widget-grid {
@@ -60,8 +58,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
-/* Removed redundant @keyframes skeleton-pulse and spinner styles */
 
 .dashboard-main-content {
   display: flex;
@@ -95,7 +91,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   border: 1px solid var(--border-color);
- box-shadow: var(--box-shadow-md);
+  box-shadow: var(--box-shadow-md);
 
   strong {
     color: var(--peacock-blue);
@@ -164,6 +160,7 @@
   }
 }
 
+/* Keep chart cards tall to show data properly */
 app-chart-card {
   min-height: 400px;
   
@@ -176,6 +173,7 @@ app-chart-card {
   }
 }
 
+/* FIX: Removed min-height: 400px so list cards shrink when empty */
 .action-list-card {
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
@@ -183,16 +181,9 @@ app-chart-card {
   padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
-  min-height: 400px;
+  /* min-height: 400px;  <-- REMOVED THIS */
+  min-height: auto; /* Added this to be explicit */
   overflow: hidden;
-
-  @media (max-width: 768px) {
-    min-height: 350px;
-  }
-
-  @media (max-width: 480px) {
-    min-height: 300px;
-  }
 }
 
 .card-title {
@@ -240,6 +231,7 @@ app-chart-card {
   min-height: 0;
   @include hidden-scrollbar;
 
+  /* Ensure empty state has a reasonable height */
   .list-empty-state {
     display: flex;
     flex-direction: column;
@@ -250,7 +242,7 @@ app-chart-card {
     color: var(--gray-500);
     gap: var(--spacing-sm);
     height: 100%;
-    min-height: 150px;
+    min-height: 150px; /* Keeps a nice minimum size without being huge */
     box-sizing: border-box;
 
     i {

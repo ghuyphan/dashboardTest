@@ -189,7 +189,7 @@ export class ExaminationOverviewComponent implements OnInit {
         icon: 'fas fa-clinic-medical',
         title: 'ĐT Ngoại Trú (DNT)',
         value: this.formatNumber(totals.daycare),
-        caption: 'Lượt',
+        caption: 'Daycares',
         accentColor: '#52C3D7' // Teal Midtone (Distinct from main teal)
       }
     ];
@@ -224,17 +224,13 @@ export class ExaminationOverviewComponent implements OnInit {
       yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [
         {
-          name: 'Tổng', type: 'line', smooth: true, showSymbol: false, data: totalSeries,
-          itemStyle: { color: '#00839B' },
-          areaStyle: {
-            color: {
-              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(0, 131, 155, 0.3)' },
-                { offset: 1, color: 'rgba(0, 131, 155, 0.01)' }
-              ]
-            }
-          }
+          name: 'Tổng', 
+          type: 'line', 
+          smooth: true, 
+          showSymbol: false, 
+          data: totalSeries,
+          itemStyle: { color: '#00839B' }
+          // Removed areaStyle here to remove the gradient
         },
         {
           name: 'Bệnh Mới', type: 'line', smooth: true, showSymbol: false, data: newSeries,
@@ -289,7 +285,7 @@ export class ExaminationOverviewComponent implements OnInit {
           { value: totals.clinic, itemStyle: { color: '#00839B' } },
           { value: totals.emergency, itemStyle: { color: '#FFB3BA' } },
           { value: totals.inpatient, itemStyle: { color: '#F59E0B' } },
-          { value: totals.daycare, itemStyle: { color: '#64748B' } }
+          { value: totals.daycare, itemStyle: { color: '#52C3D7' } }
         ]
       }]
     };
