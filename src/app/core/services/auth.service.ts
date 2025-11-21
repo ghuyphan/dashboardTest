@@ -292,8 +292,12 @@ export class AuthService {
     this.currentUserSubject.next(null);
     this.navItemsSubject.next([]);
 
-    if (navigate) {
-      this.router.navigate(['/login']);
+if (navigate) {
+      this.router.navigate(['/login']).then(() => {
+        CustomRouteReuseStrategy.clearAllHandles();
+      });
+    } else {
+      CustomRouteReuseStrategy.clearAllHandles();
     }
   }
 

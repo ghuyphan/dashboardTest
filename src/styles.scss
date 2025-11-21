@@ -104,6 +104,10 @@ html {
   --surface-toast: rgba(255, 255, 255, 0.96);
   --border-color: var(--gray-200);
   --input-bg: #F8FAFC;
+
+  /* === COMPONENT SPECIFIC (Light Mode) === */
+  --table-header-bg: var(--teal-blue);
+  --table-header-text: #FFFFFF;
   
   /* Semantic Text Colors */
   --text-primary: var(--gray-900);
@@ -211,6 +215,11 @@ html {
   --teal-blue: #22d3ee;    /* Cyan 400 - Brighter/Neon */
   --peacock-blue: #38bdf8; /* Sky 400 */
   --dark-teal: #67e8f9;
+
+  /* --- Fix for Table Headers in Dark Mode --- */
+  /* Using a darker teal to ensure white text remains readable */
+  --table-header-bg: #164e63; /* Cyan 900 */
+  --table-header-text: #ecfeff; /* Cyan 50 */
 
   /* --- 2. Apply Angular Material Dark COLORS Only (Mixin LAST) --- */
   @include mat.all-component-colors($dark-theme);
@@ -789,4 +798,28 @@ body > ul.submenu.open {
 
 ::view-transition-new(auth-card) {
   animation: none; 
+}
+
+/* === ANGULAR MATERIAL OVERRIDES (COLOR ONLY) === */
+/* Force Material Popups (Select, Menu, Dialog) to use Theme Variables */
+.mat-mdc-menu-panel, 
+.mat-mdc-dialog-surface, 
+.mat-mdc-select-panel {
+  background-color: var(--surface-card) !important;
+  color: var(--gray-700) !important;
+}
+
+.mat-mdc-option {
+  color: var(--gray-800) !important;
+  &:hover:not(.mdc-list-item--disabled) {
+    background-color: var(--gray-100) !important;
+  }
+  &.mdc-list-item--selected {
+    background-color: rgba(0, 131, 155, 0.1) !important;
+  }
+}
+
+/* Fix Input Text Color in Dark Mode */
+.mat-mdc-form-field, .mat-mdc-input-element {
+  caret-color: var(--teal-blue) !important;
 }
