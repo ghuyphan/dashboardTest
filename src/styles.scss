@@ -1,118 +1,107 @@
 @use '@angular/material' as mat;
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+app-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  overflow: hidden;
+}
+
+router-outlet+* {
+  height: 100%;
+}
+
+html {
+  @include mat.theme((color: (theme-type: light,
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    ));
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import '@angular/cdk/overlay-prebuilt.css';
 
-/* =========================================================
-   1. ANGULAR MATERIAL CONFIG
-   ========================================================= */
-html {
-  @include mat.theme((
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
-}
-
-html, body { height: 100%; margin: 0; overflow: hidden; }
-app-root { height: 100%; display: flex; flex-direction: column; }
-main { flex: 1; overflow: hidden; }
-router-outlet+* { height: 100%; }
-
-/* =========================================================
-   2. THEME VARIABLES (CSS CUSTOM PROPERTIES)
-   ========================================================= */
 :root {
-  /* -------------------------------------------------------
-     PRIMITIVE PALETTE (The Raw Colors)
-     ------------------------------------------------------- */
+  /* COLOR PALETTE */
+
   /* Brand Colors */
-  --base-aqua-island: #9BDAD9;
-  --base-teal-blue: #00839B;
-  --base-peacock-blue: #006E96;
-  --base-deep-sapphire: #082567;
-  
-  /* Brand Secondary */
-  --base-white: #FFFFFF;
-  --base-desert-storm: #F8F8F7;
-  --base-pale-aqua: #9CD4E6;
-  --base-dawn-pink: #F5F1ED;
-  --base-peppermint: #E6F5E9;
-  --base-dark-gray: #4A4A4A;
+  --aqua-island: #9BDAD9;
+  --teal-blue: #00839B;
+  --peacock-blue: #006E96;
+  --dark-teal: var(--teal-blue);
 
-  /* Neutrals */
-  --base-gray-100: #F8FAFC;
-  --base-gray-200: #E2E8F0;
-  --base-gray-300: #CBD5E1;
-  --base-gray-400: #94A3B8;
-  --base-gray-500: #64748B;
-  --base-gray-600: #475569;
-  --base-gray-700: #334155;
-  --base-gray-800: #1E293B;
-  --base-gray-900: #0F172A;
+  /* Brand Colors - Secondary */
+  --desert-storm: #F8F8F7;
+  --white: #FFFFFF;
+  --pale-aqua: #9CD4E6;
+  --deep-sapphire: #082567;
+  --dawn-pink: #F5F1ED;
+  --peppermint: #E6F5E9;
+  --dark-gray: #4A4A4A;
 
-  /* Functional */
-  --base-danger: #dc3545;
-  --base-success: #16A34A;
-  --base-warning: #F59E0B;
+  /* Pastel Colors */
+  --pastel-lavender: #E6E6FA;
+  --pastel-mint: #B2F2E6;
+  --pastel-peach: #FFD1B3;
+  --pastel-rose: #FFB6C1;
+  --pastel-sky: #B3D9FF;
+  --pastel-lemon: #FFF5B3;
+  --pastel-lilac: #DDA0DD;
+  --pastel-sage: #C9E4CA;
+  --pastel-coral: #FFB3BA;
+  --pastel-powder: #BDB3FF;
 
-  /* Charting Specifics (Light Mode) */
-  --chart-teal-light: #66B9C9;
-  --chart-teal-dark: #005E70;
-  --chart-beige: #F9B88A;
-  --chart-teal-mid: #52C3D7;
-  --chart-peacock-light: #66A9C5;
-  --chart-peacock-dark: #004D6A;
-  
-  /* -------------------------------------------------------
-     SEMANTIC VARIABLES (Light Theme Defaults)
-     ------------------------------------------------------- */
-  
-  /* Backgrounds */
-  --bg-body: var(--base-gray-100);
-  --bg-card: var(--base-white);
-  --bg-surface: rgba(248, 250, 252, 0.75); /* Input backgrounds */
-  --bg-surface-hover: var(--base-gray-200);
-  --bg-tooltip: rgba(255, 255, 255, 0.92);
-  --bg-tooltip-backdrop: blur(10px);
+  /* Functional Palette */
+  --gray-100: #F8FAFC;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
+  --gray-900: #0F172A;
 
-  /* Text */
-  --text-header: var(--base-peacock-blue);
-  --text-body: var(--base-gray-700);
-  --text-muted: var(--base-gray-500);
-  --text-inverse: var(--base-white);
-  --text-link: var(--base-teal-blue);
-  --text-link-hover: var(--base-peacock-blue);
+  /* Semantic Colors */
+  --color-danger: #dc3545;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-info: var(--teal-blue);
 
-  /* Borders & Dividers */
-  --border-color: var(--base-gray-200);
-  --input-border: var(--base-gray-300);
-  --input-border-focus: var(--base-teal-blue);
+  /* Charting Palette */
+  --teal-blue-light: #66B9C9;
+  --teal-blue-dark: #005E70;
+  --beige-midtone: #F9B88A;
+  --teal-midtone: #52C3D7;
+  --peacock-blue-light: #66A9C5;
+  --peacock-blue-dark: #004D6A;
+  --aqua-island-light: #CDECEB;
+  --aqua-island-dark: #70B4B3;
+  --deep-sapphire-light: #5A6DA3;
 
-  /* Functional Colors */
-  --color-primary: var(--base-teal-blue);
-  --color-primary-hover: var(--base-peacock-blue);
-  --color-danger: var(--base-danger);
-  --color-success: var(--base-success);
-  --color-warning: var(--base-warning);
-  --color-info: var(--base-teal-blue);
+  /* TYPOGRAPHY */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-base: 1rem;
+  --line-height-base: 1.5;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
 
-  /* Chart Colors (Mapped for Light Mode) */
-  --chart-color-1: var(--base-teal-blue);
-  --chart-color-2: var(--base-peacock-blue);
-  --chart-color-3: var(--base-aqua-island);
-  --chart-color-4: var(--base-dawn-pink);
-  --chart-color-5: var(--base-pale-aqua);
-  --chart-color-6: #F89C5B;
-  --chart-color-7: var(--base-dark-gray);
-  --chart-color-8: var(--chart-teal-mid);
-  --chart-color-9: var(--chart-beige);
-  --chart-color-10: #FFB3BA;
-
-  /* Layout & Spacing */
+  /* LAYOUT & SPACING */
   --header-height: 50px;
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 60px;
@@ -124,81 +113,40 @@ router-outlet+* { height: 100%; }
   --spacing-xl: 2rem;
   --spacing-xxl: 3rem;
 
-  /* Borders & Shadows */
+  /* BORDERS & SHADOWS */
   --border-radius-sm: 0.25rem;
   --border-radius-md: 0.5rem;
   --border-radius-lg: 0.75rem;
   --border-radius-full: 9999px;
   --border-width: 1px;
-  
+  --border-color: var(--gray-200);
   --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-  /* Transitions */
+  /* TRANSITIONS */
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
 
-  /* Typography Defaults */
-  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-size-base: 1rem;
-  --line-height-base: 1.5;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-bold: 700;
-}
-
-/* =========================================================
-   3. DARK THEME OVERRIDES
-   ========================================================= */
-[data-theme="dark"] {
-  /* Backgrounds */
-  --bg-body: #0f172a;       /* Deep Navy */
-  --bg-card: #1e293b;       /* Slate Blue */
-  --bg-surface: #334155;    /* Lighter Slate (Inputs) */
-  --bg-surface-hover: #475569;
-  --bg-tooltip: rgba(30, 41, 59, 0.95);
-  
-  /* Text */
-  --text-header: #f8fafc;   /* White */
-  --text-body: #cbd5e1;     /* Light Gray */
-  --text-muted: #94a3b8;    /* Muted Blue-Gray */
-  --text-link: #22d3ee;     /* Cyan */
-  --text-link-hover: #67e8f9;
-  
-  /* Borders */
-  --border-color: #334155;
-  --input-border: #475569;
-  --input-border-focus: #22d3ee;
-
-  /* Brand Overrides */
-  --color-primary: #22d3ee;       /* Cyan */
-  --color-primary-hover: #67e8f9;
-
-  /* Chart Colors (Brightened for Contrast) */
-  --chart-color-1: #22d3ee; /* Cyan */
-  --chart-color-2: #60a5fa; /* Blue */
-  --chart-color-3: #9BDAD9; /* Aqua */
-  --chart-color-4: #fbbf24; /* Amber (replaces dawn-pink) */
-  --chart-color-5: #c084fc; /* Purple (replaces pale-aqua) */
+  /* CHART COLORS */
+  --chart-color-1: var(--teal-blue);
+  --chart-color-2: var(--peacock-blue);
+  --chart-color-3: var(--aqua-island);
+  --chart-color-4: var(--dawn-pink);
+  --chart-color-5: var(--pale-aqua);
   --chart-color-6: #F89C5B;
-  --chart-color-7: #94a3b8; /* Light Gray */
-  --chart-color-8: #2dd4bf; /* Teal */
-  --chart-color-9: #fdba74; /* Orange */
-  --chart-color-10: #f472b6; /* Pink */
-
-  /* Shadow Adjustment (Subtler in dark mode) */
-  --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
-  --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+  --chart-color-7: var(--dark-gray);
+  --chart-color-8: var(--teal-midtone);
+  --chart-color-9: var(--beige-midtone);
+  --chart-color-10: var(--pastel-coral);
 }
 
-/* =========================================================
-   4. GLOBAL RESETS & BASE STYLES
-   ========================================================= */
-*, *::before, *::after {
+/* GLOBAL RESETS & BASE STYLES */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -215,18 +163,22 @@ body {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-base);
-  color: var(--text-body);              /* UPDATED: Semantic Var */
-  background-color: var(--bg-body);     /* UPDATED: Semantic Var */
+  color: var(--gray-700);
+  background-color: var(--gray-100);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  color: var(--text-header);            /* UPDATED: Semantic Var */
+  color: var(--peacock-blue);
 }
 
 h1 { font-size: 2.25rem; }
@@ -234,14 +186,17 @@ h2 { font-size: 1.875rem; }
 h3 { font-size: 1.5rem; }
 h4 { font-size: 1.25rem; }
 
-p { margin-bottom: var(--spacing-md); }
+p {
+  margin-bottom: var(--spacing-md);
+}
 
 a {
-  color: var(--text-link);              /* UPDATED: Semantic Var */
+  color: var(--teal-blue);
   text-decoration: none;
+
   &:hover {
     text-decoration: underline;
-    color: var(--text-link-hover);      /* UPDATED: Semantic Var */
+    color: var(--peacock-blue);
   }
 }
 
@@ -250,22 +205,26 @@ a {
   width: 8px;
   height: 8px;
 }
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
 *::-webkit-scrollbar-thumb {
-  background-color: var(--base-gray-300); /* Keep consistent or use semantic */
+  background-color: var(--gray-300);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
   min-height: 40px;
 }
+
 *::-webkit-scrollbar-thumb:hover {
-  background-color: var(--base-gray-400);
+  background-color: var(--gray-400);
 }
 
-/* === UI POLISH: Input Autofill Fix === */
-/* Updates shadow color to match card background in Dark Mode */
+/* === UI POLISH: Input Autofill Fix === 
+   Prevents the browser default yellow background on autofilled inputs
+*/
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -275,23 +234,18 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--text-body);
-  /* This ensures the yellow background matches your theme card color */
-  -webkit-box-shadow: 0 0 0px 1000px var(--bg-card) inset; 
+  -webkit-text-fill-color: var(--gray-800);
+  -webkit-box-shadow: 0 0 0px 1000px var(--white) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* =========================================================
-   5. COMPONENT STYLES
-   ========================================================= */
-
-/* Chart */
+/* COMPONENT STYLES: CHART */
 .chart-container {
-  background-color: var(--bg-card);     /* UPDATED */
+  background-color: var(--white);
   border-radius: var(--border-radius-md);
 }
 
-/* Buttons */
+/* COMPONENT STYLES: BUTTON */
 .btn {
   display: inline-block;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -307,87 +261,91 @@ select:-webkit-autofill:focus {
 }
 
 .btn-primary {
-  background-color: var(--color-primary);
-  color: var(--text-inverse);
+  background-color: var(--teal-blue);
+  color: var(--white);
 
   &:hover {
-    background-color: var(--color-primary-hover);
+    background-color: var(--peacock-blue);
+    color: var(--white);
     box-shadow: var(--box-shadow-sm);
   }
 }
 
 .btn-secondary {
-  background-color: var(--base-aqua-island); /* Keep specific brand color or map to semantic */
-  color: var(--base-gray-800);
+  background-color: var(--aqua-island);
+  color: var(--gray-800);
 
   &:hover {
-    background-color: var(--base-aqua-island-dark); /* Need to define or use hex */
-    color: var(--base-gray-900);
+    background-color: var(--aqua-island-dark);
+    color: var(--gray-900);
     box-shadow: var(--box-shadow-sm);
   }
 }
 
 .btn-ghost {
   background-color: transparent;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--teal-blue);
+  border-color: var(--teal-blue);
 
   &:hover {
-    background-color: rgba(0, 131, 155, 0.1); /* Slight tint */
-    color: var(--color-primary-hover);
+    background-color: var(--teal-blue-light);
+    color: var(--teal-blue-dark);
   }
 }
 
-/* Keyframe Animations */
+/* KEYFRAME ANIMATIONS */
 @keyframes slideDownFade {
   from { opacity: 0; transform: translateY(-0.75rem); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
 }
+
 @keyframes modal-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-/* Accessibility & Focus */
+/* ACCESSIBILITY & FOCUS STATES */
 .sidebar-nav ul li a:focus-visible,
 .sidebar-nav ul li button:focus-visible,
 .user-menu-toggle:focus-visible,
 .user-menu-items li button:focus-visible,
 .mobile-sidebar-toggle:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--aqua-island);
   outline-offset: 2px;
 }
 
-/* Loading States */
+/* LOADING STATES */
 .loading-shimmer {
   background: linear-gradient(90deg,
-      var(--border-color) 0%,
-      var(--bg-surface-hover) 50%,
-      var(--border-color) 100%);
+      var(--gray-200) 0%,
+      var(--gray-300) 50%,
+      var(--gray-200) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
-/* Custom Tooltip */
+/* CUSTOM TOOLTIP STYLES */
 .app-tooltip-container {
   position: fixed;
-  background: var(--bg-tooltip);
-  backdrop-filter: var(--bg-tooltip-backdrop);
-  color: var(--text-header); /* Strong text for tooltip */
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  color: var(--gray-900);
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--border-radius-md);
   font-size: 0.875rem;
   box-shadow: var(--box-shadow-lg);
-  border: var(--border-width) solid var(--border-color);
+  border: var(--border-width) solid rgba(255, 255, 255, 0.4);
   z-index: 1052;
   opacity: 0;
   transition: opacity 0.15s var(--transition-smooth), transform 0.15s var(--transition-smooth);
@@ -400,41 +358,49 @@ select:-webkit-autofill:focus {
   }
 }
 
-/* Unified Loading States */
+/* ==================================================
+   UNIFIED LOADING STATES
+   ================================================== */
+
+/* 1. The Spinner Animation */
 @keyframes app-spin {
   to { transform: rotate(360deg); }
 }
 
+/* 2. The Spinner Element */
 .app-loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--color-primary);
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--teal-blue);
   border-radius: 50%;
   animation: app-spin 0.8s linear infinite;
   flex-shrink: 0;
 }
 
+/* 3. The Container (Text + Spinner) */
 .app-loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-md);
-  color: var(--text-muted);
+  color: var(--gray-600);
   font-size: 0.95rem;
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-xl);
   height: 100%;
   width: 100%;
   min-height: 200px;
+
   p { margin: 0; }
 }
 
+/* 4. The Overlay (for covering content) */
 .app-loading-overlay {
   position: absolute;
   inset: 0;
-  background-color: var(--bg-tooltip); /* Uses semi-transparent bg */
+  background-color: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(2px);
   z-index: 50;
   display: flex;
@@ -449,23 +415,28 @@ select:-webkit-autofill:focus {
   }
 }
 
-/* =========================================================
-   6. PRINT STYLES
-   ========================================================= */
+
+/* GLOBAL PRINT STYLES */
 @media print {
-  app-sidebar, app-header, app-action-footer { display: none !important; }
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  
-  /* Force Light Mode Colors for Print */
-  :root {
-    --bg-body: #FFFFFF !important;
-    --bg-card: #FFFFFF !important;
-    --text-body: #000000 !important;
-    --text-header: #000000 !important;
+  /* Hide navigation elements */
+  app-sidebar,
+  app-header,
+  app-action-footer {
+    display: none !important;
   }
 
+  /* === UI POLISH: Exact Color Printing === */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* DEFAULT PRINT MODE */
   body:not(.print-mode-qr):not(.print-mode-docx) {
-    app-root, .main-panel, main, .dashboard-content {
+    app-root,
+    .main-panel,
+    main,
+    .dashboard-content {
       overflow: visible !important;
       height: auto !important;
       width: auto !important;
@@ -474,10 +445,17 @@ select:-webkit-autofill:focus {
     }
   }
 
-  body.print-mode-docx app-root { display: none !important; }
-  
+  /* DOCX PRINT MODE */
+  body.print-mode-docx app-root {
+    display: none !important;
+  }
+
+  /* QR PRINT MODE */
   body.print-mode-qr {
-    app-root, .main-panel, main, .dashboard-content {
+    app-root,
+    .main-panel,
+    main,
+    .dashboard-content {
       visibility: visible !important;
       height: auto !important;
       overflow: visible !important;
@@ -485,76 +463,101 @@ select:-webkit-autofill:focus {
   }
 }
 
-/* =========================================================
-   7. FLYOUT SUBMENU
-   ========================================================= */
+/* FLYOUT SUBMENU STYLES */
 body > ul.submenu.open {
   list-style: none;
   margin: 0;
-  background-color: var(--bg-card);     /* UPDATED */
+  background-color: var(--gray-100);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
-  box-shadow: var(--box-shadow-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   width: 220px;
   z-index: 1040;
   overflow: hidden;
-  padding: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-xs) 0 var(--spacing-xs);
   animation: flyout-menu-fade-in 0.2s ease-out;
 
   li {
     list-style: none;
-    margin: 0; padding: 0; width: 100%; position: relative;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    position: relative;
 
     a {
-      display: flex; align-items: center; white-space: nowrap; text-decoration: none;
-      padding: 0.75rem 0.75rem; margin: 0 0 var(--spacing-xs) 0;
-      font-size: 0.875rem; border-radius: 0.375rem;
-      color: var(--text-body);          /* UPDATED */
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      text-decoration: none;
+      padding: 0.75rem 0.75rem;
+      margin: 0 0 var(--spacing-xs) 0;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      color: var(--gray-700);
       font-weight: var(--font-weight-normal);
       transition: background-color 0.2s ease, color 0.2s ease;
-      overflow: hidden; width: 100%;
+      overflow: hidden;
+      width: 100%;
 
       i {
-        font-size: var(--font-size-base); margin-right: 0.75rem;
-        min-width: 1.25rem; width: 1.25rem; text-align: center;
+        font-size: var(--font-size-base);
+        margin-right: 0.75rem;
+        min-width: 1.25rem;
+        width: 1.25rem;
+        text-align: center;
         transition: transform 0.2s var(--transition-spring);
       }
-      span { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; }
+
+      span {
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 1;
+        transform: none;
+        position: static;
+        pointer-events: auto;
+      }
 
       &:hover {
-        background-color: var(--bg-surface-hover); /* UPDATED */
-        color: var(--text-header);                 /* UPDATED */
+        background-color: var(--gray-200);
+        color: var(--gray-900);
         i { transform: scale(1.15); }
       }
 
       &.active {
-        color: var(--text-header);
-        background-color: var(--bg-surface-hover);
+        color: var(--gray-900);
+        background-color: var(--gray-200);
         font-weight: 600;
 
         &::before {
-          content: ''; position: absolute; left: 0; top: var(--spacing-xs); bottom: var(--spacing-xs);
+          content: '';
+          position: absolute;
+          left: 0;
+          top: var(--spacing-xs);
+          bottom: var(--spacing-xs);
           width: var(--spacing-xs);
-          background-color: var(--color-primary);
+          background-color: var(--aqua-island);
           border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
           display: block;
         }
       }
     }
-    &:last-child a { margin-bottom: var(--spacing-xs); }
+
+    &:last-child a {
+      margin-bottom: var(--spacing-xs);
+    }
   }
 }
 
+/* Flyout menu entrance animation */
 @keyframes flyout-menu-fade-in {
   from { opacity: 0; transform: translateX(-8px) scale(0.95); }
   to { opacity: 1; transform: translateX(0) scale(1); }
 }
 
-/* =========================================================
-   8. MODAL OVERLAY
-   ========================================================= */
+/* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
-  background: rgba(0, 0, 0, 0.4); /* Slightly darker for better contrast */
+  background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   transition: none !important;
@@ -562,12 +565,13 @@ body > ul.submenu.open {
 }
 
 .app-modal-panel {
-  padding: 0; background: none; box-shadow: none; border-radius: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-/* =========================================================
-   9. STATUS CHIPS
-   ========================================================= */
+/* Global Status Chip Styles */
 .status-chip {
   padding: 2px 10px;
   border-radius: 12px;
@@ -577,27 +581,64 @@ body > ul.submenu.open {
   text-transform: capitalize;
   line-height: 1.5;
   white-space: nowrap;
-  color: #FFFFFF; /* Chips usually keep white text even in dark mode */
 }
 
-.status-in-use { background-color: var(--chart-peacock-light); } /* Or map to var */
-.status-ready { background-color: var(--color-success); }
-.status-maintenance { background-color: var(--base-dark-gray); }
-.status-repair { background-color: var(--color-warning); }
-.status-broken { background-color: var(--color-danger); }
-.status-default { background-color: var(--base-gray-500); }
+.status-in-use {
+  color: #FFFFFF;
+  background-color: var(--peacock-blue-light);
+}
 
-/* =========================================================
-   10. SKELETON LOADER
-   ========================================================= */
+.status-ready {
+  color: #FFFFFF;
+  background-color: var(--color-success);
+}
+
+.status-maintenance {
+  color: #FFFFFF;
+  background-color: var(--dark-gray);
+}
+
+.status-repair {
+  color: #FFFFFF;
+  background-color: var(--color-warning);
+}
+
+.status-broken {
+  color: #FFFFFF;
+  background-color: var(--color-danger);
+}
+
+.status-default {
+  color: #FFFFFF;
+  background-color: var(--gray-500);
+}
+
+/* ==================================================
+   GLOBAL SKELETON LOADER
+   ================================================== */
 .skeleton {
-  background-color: var(--bg-surface-hover); /* Adapts to dark mode */
+  background-color: var(--gray-200);
   border-radius: var(--border-radius-md);
   animation: skeleton-pulse 1.5s infinite ease-in-out;
 }
-.skeleton-text { height: 1em; width: 100%; margin-bottom: 0.5rem; @extend .skeleton; }
-.skeleton-circle { border-radius: 50%; @extend .skeleton; }
-.skeleton-rect { width: 100%; height: 100%; @extend .skeleton; }
+
+.skeleton-text {
+  height: 1em;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  @extend .skeleton;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+  @extend .skeleton;
+}
+
+.skeleton-rect {
+  width: 100%;
+  height: 100%;
+  @extend .skeleton;
+}
 
 @keyframes skeleton-pulse {
   0% { opacity: 0.6; }
@@ -605,43 +646,44 @@ body > ul.submenu.open {
   100% { opacity: 0.6; }
 }
 
-/* =========================================================
-   11. SHARED INPUTS & AUTH (UPDATED FOR DARK MODE)
-   ========================================================= */
+// Shared Input Group Styles
 .auth-input-group {
-  margin-bottom: clamp(16px, 4vw, 1.5rem);
+  margin-bottom: clamp(16px, 4vw, 1.5rem); // var(--spacing-lg)
 
   label {
     display: block;
     font-size: clamp(0.875rem, 3.5vw, 15px);
     font-weight: 600;
-    margin-bottom: clamp(6px, 2vw, 0.5rem);
-    color: var(--text-secondary);      /* UPDATED */
+    margin-bottom: clamp(6px, 2vw, 0.5rem); // var(--spacing-sm)
+    color: var(--gray-700);
   }
 
   .input-wrapper {
-    position: relative; display: flex; align-items: center;
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
   input {
     width: 100%;
     padding: clamp(12px, 3vw, 1rem) clamp(40px, 10vw, 3rem);
-    border: 1px solid var(--input-border); /* UPDATED */
+    border: 1px solid var(--gray-300);
     border-radius: clamp(10px, 3vw, 14px);
     font-size: clamp(0.875rem, 3.5vw, 1rem);
-    background: var(--bg-surface);     /* UPDATED */
-    color: var(--text-main);           /* UPDATED */
+    background: rgba(248, 250, 252, 0.75);
     transition: all 0.3s ease;
     outline: none;
     box-sizing: border-box;
     min-height: 44px;
 
     &:focus {
-      border-color: var(--input-border-focus);
-      background: var(--bg-card);
-      box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2); /* Could be a var */
+      border-color: var(--teal-blue);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
 
-      ~.input-icon { color: var(--color-primary); }
+      ~.input-icon {
+        color: var(--teal-blue);
+      }
     }
 
     &.is-invalid {
@@ -651,10 +693,12 @@ body > ul.submenu.open {
   }
 
   .input-icon {
-    position: absolute; left: clamp(12px, 3vw, 1rem);
-    color: var(--text-muted);          /* UPDATED */
+    position: absolute;
+    left: clamp(12px, 3vw, 1rem);
+    color: var(--gray-300);
     font-size: clamp(16px, 4vw, 18px);
-    transition: color 0.25s ease; pointer-events: none;
+    transition: color 0.25s ease;
+    pointer-events: none;
   }
 
   .invalid-feedback {
@@ -664,11 +708,12 @@ body > ul.submenu.open {
   }
 }
 
+// Shared Button Styles
 .auth-btn {
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
-  background: var(--color-primary);
-  color: var(--text-inverse);
+  background: var(--teal-blue);
+  color: var(--white);
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
   font-size: clamp(0.9375rem, 4vw, 16px);
@@ -678,34 +723,53 @@ body > ul.submenu.open {
   min-height: 44px;
 
   &:hover:not(:disabled) {
-    background: var(--color-primary-hover);
+    background: #145248; // Darker teal
     transform: translateY(-1px);
   }
 
   &:disabled {
-    opacity: 0.7; cursor: not-allowed; transform: none;
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
   }
 }
 
+// Links
 .auth-link {
-  color: var(--text-link);
-  text-decoration: none; font-weight: 600; transition: color 0.2s;
+  color: var(--teal-blue);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
   &:hover {
-    color: var(--text-link-hover);
+    color: var(--peacock-blue);
     text-decoration: underline;
   }
 }
 
-/* =========================================================
-   12. VIEW TRANSITIONS
-   ========================================================= */
+/* ==========================================================
+   MODERN VIEW TRANSITIONS (Auth Card) - Snap Content
+   ========================================================== */
+
+/* 1. Disable the "Old School" Full Page Fade */
 ::view-transition-group(root) {
-  animation-duration: 0s;
+  animation-duration: 0s; /* Background changes instantly, no blinking */
 }
+
+/* 2. Configure the Card Morph (Geometry) - This animates size/pos */
 ::view-transition-group(auth-card) {
-  animation-duration: 0.5s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-duration: 0.5s; 
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-like snap */
   z-index: 100;
 }
-::view-transition-old(auth-card) { display: none; }
-::view-transition-new(auth-card) { animation: none; }
+
+/* 3. CONTENT: Snap immediately (No Fade) */
+/* By hiding the old image instantly and showing the new one instantly,
+   we get the geometry morph of the container but the content feels "solid". */
+
+::view-transition-old(auth-card) {
+  display: none; 
+}
+
+::view-transition-new(auth-card) {
+  animation: none; 
+}

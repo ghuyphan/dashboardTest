@@ -11,11 +11,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
+  
+  /* Adaptive Glassmorphism */
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
+  
   height: var(--header-height);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   gap: 1rem;
+
+  /* Dark Mode Override for Glass Effect */
+  :host-context([data-theme="dark"]) & {
+    background: rgba(30, 41, 59, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
 }
 
 .header-left-controls {
@@ -30,7 +39,7 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--text-header); /* Was var(--gray-900) */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -43,21 +52,20 @@
   background: none;
   border: none;
   font-size: 1.25rem;
-  color: var(--gray-600);
+  color: var(--text-muted); /* Was var(--gray-600) */
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
   transition: all 0.2s;
 
   &:hover {
-    background: var(--gray-100);
-    color: var(--teal-blue);
+    background: var(--bg-surface-hover); /* Was var(--gray-100) */
+    color: var(--color-primary); /* Was var(--teal-blue) */
   }
 }
 
 .mobile-sidebar-toggle {
   display: none; 
-  
   @media (max-width: 992px) {
     display: flex; 
     i, svg { font-size: 1.25rem; }
@@ -68,7 +76,7 @@
   display: flex;
   align-items: center;
   position: relative;
-  background: var(--gray-100);
+  background: var(--bg-surface); /* Was var(--gray-100) */
   border-radius: 99px;
   border: 1px solid transparent;
   flex: 2;
@@ -77,8 +85,8 @@
   transition: all 0.2s;
 
   &:focus-within {
-    background: var(--white);
-    border-color: var(--teal-blue);
+    background: var(--bg-card); /* Was var(--white) */
+    border-color: var(--color-primary); /* Was var(--teal-blue) */
     box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
   }
 
@@ -89,6 +97,8 @@
     padding: 0.5rem;
     outline: none;
     font-size: 0.875rem;
+    color: var(--text-body);
+    &::placeholder { color: var(--text-muted); }
   }
 
   .search-clear-btn {
@@ -99,8 +109,8 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--gray-400);
-    &:hover { color: var(--gray-800); }
+    color: var(--text-muted); /* Was var(--gray-400) */
+    &:hover { color: var(--text-body); /* Was var(--gray-800) */ }
   }
 }
 
@@ -116,8 +126,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
+  background: var(--bg-surface); /* Was var(--gray-50) */
+  border: 1px solid var(--border-color); /* Was var(--gray-200) */
   padding: 4px;
   padding-right: 12px;
   border-radius: 99px;
@@ -126,16 +136,16 @@
 
   &:hover,
   &[aria-expanded="true"] {
-    background: var(--white);
-    border-color: var(--gray-300);
+    background: var(--bg-surface-hover); /* Was var(--white) */
+    border-color: var(--color-primary); /* Was var(--gray-300) */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
   .header-avatar-initials {
     width: 32px;
     height: 32px;
-    background: var(--aqua-island);
-    color: white;
+    background: var(--color-primary); /* Was var(--aqua-island) */
+    color: var(--text-inverse); /* Was white */
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -149,7 +159,7 @@
     font-size: 0.8rem; 
     width: 0.8rem; 
     height: 0.8rem; 
-    color: var(--gray-500);
+    color: var(--text-muted); /* Was var(--gray-500) */
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -161,9 +171,8 @@
 /* =================================================================
    CUSTOM MAT-MENU PANEL STYLING
    ================================================================= */
-/* [BEST PRACTICE] Use ::ng-deep to target the overlay panel */
 ::ng-deep .header-user-menu-panel.mat-mdc-menu-panel {
-  background-color: var(--gray-100) !important;
+  background-color: var(--bg-card) !important; /* Was var(--gray-100) */
   border-radius: 12px !important;
   padding: 8px !important;
   min-width: 280px !important;
@@ -177,7 +186,7 @@
   }
 
   .menu-section-wrapper {
-    background-color: var(--white);
+    background-color: var(--bg-surface); /* Was var(--white) */
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     margin-bottom: 8px;
@@ -197,8 +206,8 @@
       flex-shrink: 0;  
       border-radius: 50%; 
       
-      background: var(--aqua-island);
-      color: white;
+      background: var(--color-primary); /* Was var(--aqua-island) */
+      color: var(--text-inverse); /* Was white */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -213,14 +222,14 @@
       .username {
         font-weight: 600;
         font-size: 0.95rem;
-        color: var(--gray-900);
+        color: var(--text-header); /* Was var(--gray-900) */
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;
       }
       .user-role {
         font-size: 0.8rem;
-        color: var(--gray-500);
+        color: var(--text-muted); /* Was var(--gray-500) */
       }
     }
   }
@@ -241,7 +250,7 @@
       align-items: center;
       gap: 12px;
       width: 100%;
-      color: var(--gray-700);
+      color: var(--text-body); /* Was var(--gray-700) */
       font-weight: 500;
       font-size: 0.9rem;
       
@@ -253,11 +262,11 @@
       height: 32px;
       min-width: 32px;
       border-radius: 50%;
-      background: var(--gray-200);
+      background: var(--bg-surface); /* Was var(--gray-200) */
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gray-700);
+      color: var(--text-muted); /* Was var(--gray-700) */
       transition: all 0.2s;
       flex-shrink: 0;
       
@@ -265,8 +274,8 @@
     }
 
     &:hover {
-      background-color: var(--gray-200);
-      .menu-icon-bg { background: var(--gray-300); color: var(--gray-900); }
+      background-color: var(--bg-surface-hover); /* Was var(--gray-200) */
+      .menu-icon-bg { background: var(--bg-card); color: var(--color-primary); }
     }
 
     &.logout-item {
