@@ -52,7 +52,7 @@ export class ExaminationOverviewComponent implements OnInit {
   // Filter State
   public fromDate: string = '';
   public toDate: string = '';
-  public activeRange: string = 'thisMonth';
+  public activeRange: string = 'thisWeek'; // CHANGED: Default to thisWeek
 
   // UI Data
   public widgetData: WidgetData[] = [];
@@ -71,8 +71,18 @@ export class ExaminationOverviewComponent implements OnInit {
     { key: 'LUOT_DNT', label: 'ĐT Ngoại Trú', sortable: true },
   ];
 
+  // Defined colors to ensure consistency between Widgets and Charts
+  private readonly colors = {
+    total: '#082567',      // Deep Sapphire (Distinct from Teal)
+    ck: '#00839B',         // Teal Blue
+    emergency: '#FFB3BA',  // Pink/Violet
+    inpatient: '#F59E0B',  // Orange
+    daycare: '#52C3D7'     // Light Teal
+  };
+
   ngOnInit(): void {
-    this.setRange('thisMonth');
+    // CHANGED: Initialize with 'thisWeek'
+    this.setRange('thisWeek');
   }
 
   public setRange(range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'): void {
@@ -143,6 +153,7 @@ export class ExaminationOverviewComponent implements OnInit {
         }
       });
   }
+
   private calculateWidgets(data: ExaminationStat[]): void {
     const totals = data.reduce((acc, cur) => ({
       total: acc.total + (cur.TONG_LUOT_TIEP_NHAN || 0),
@@ -159,7 +170,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Tổng Tiếp Nhận',
         value: this.formatNumber(totals.total),
         caption: 'Total',
-        accentColor: '#006E96'
+        accentColor: this.colors.total // Updated Color
       },
       {
         id: 'ck',
@@ -167,7 +178,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Khám Bệnh (CK)',
         value: this.formatNumber(totals.ck),
         caption: 'Clinic',
-        accentColor: '#00839B'
+        accentColor: this.colors.ck
       },
       {
         id: 'emergency',
@@ -175,7 +186,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Cấp Cứu',
         value: this.formatNumber(totals.emergency),
         caption: 'Emergency',
-        accentColor: '#FFB3BA' // Pink/Violet
+        accentColor: this.colors.emergency
       },
       {
         id: 'inpatient',
@@ -183,7 +194,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Nội Trú',
         value: this.formatNumber(totals.inpatient),
         caption: 'Inpatient',
-        accentColor: '#F59E0B' // Orange
+        accentColor: this.colors.inpatient
       },
       {
         id: 'daycare',
@@ -191,7 +202,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'ĐT Ngoại Trú',
         value: this.formatNumber(totals.daycare),
         caption: 'Daycares',
-        accentColor: '#52C3D7' // Teal
+        accentColor: this.colors.daycare
       }
     ];
   }
@@ -202,9 +213,13 @@ export class ExaminationOverviewComponent implements OnInit {
     );
 
     const dates = sortedData.map(d => this.datePipe.transform(d.NGAY_TIEP_NHAN, 'dd/MM'));
+    
+    // Extract data series
     const totalSeries = sortedData.map(d => d.TONG_LUOT_TIEP_NHAN || 0);
-    const newSeries = sortedData.map(d => d.BENH_MOI || 0);
-    const oldSeries = sortedData.map(d => d.BENH_CU || 0);
+    const clinicSeries = sortedData.map(d => d.LUOT_KHAM_CK || 0);
+    const emergencySeries = sortedData.map(d => d.LUOT_CC || 0);
+    const inpatientSeries = sortedData.map(d => d.LUOT_NT || 0);
+    const daycareSeries = sortedData.map(d => d.LUOT_DNT || 0);
 
     this.trendChartOptions = {
       tooltip: {
@@ -213,7 +228,11 @@ export class ExaminationOverviewComponent implements OnInit {
         borderColor: '#E2E8F0',
         textStyle: { color: '#1E293B' }
       },
-      legend: { data: ['Tổng', 'Bệnh Mới', 'Bệnh Cũ'], bottom: 0, icon: 'circle' },
+      legend: { 
+        data: ['Tổng Tiếp Nhận', 'Khám Bệnh (CK)', 'Cấp Cứu', 'Nội Trú', 'ĐT Ngoại Trú'], 
+        bottom: 0, 
+        icon: 'circle' 
+      },
       grid: { left: '2%', right: '3%', bottom: '10%', top: '5%', containLabel: true },
       xAxis: {
         type: 'category',
@@ -225,21 +244,44 @@ export class ExaminationOverviewComponent implements OnInit {
       yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [
         {
-          name: 'Tổng',
+          name: 'Tổng Tiếp Nhận',
           type: 'line',
           smooth: true,
           showSymbol: false,
           data: totalSeries,
-          itemStyle: { color: '#00839B' }
-          // Removed areaStyle here to remove the gradient
+          itemStyle: { color: this.colors.total } // Deep Sapphire
         },
         {
-          name: 'Bệnh Mới', type: 'line', smooth: true, showSymbol: false, data: newSeries,
-          itemStyle: { color: '#16A34A' }
+          name: 'Khám Bệnh (CK)',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          data: clinicSeries,
+          itemStyle: { color: this.colors.ck } // Teal Blue
         },
         {
-          name: 'Bệnh Cũ', type: 'line', smooth: true, showSymbol: false, data: oldSeries,
-          itemStyle: { color: '#64748B' }, lineStyle: { type: 'dashed' }
+          name: 'Cấp Cứu',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          data: emergencySeries,
+          itemStyle: { color: this.colors.emergency } // Pink/Violet
+        },
+        {
+          name: 'Nội Trú',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          data: inpatientSeries,
+          itemStyle: { color: this.colors.inpatient } // Orange
+        },
+        {
+          name: 'ĐT Ngoại Trú',
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          data: daycareSeries,
+          itemStyle: { color: this.colors.daycare } // Light Teal
         }
       ]
     };
@@ -247,11 +289,11 @@ export class ExaminationOverviewComponent implements OnInit {
     const totals = sortedData.reduce((acc, cur) => ({
       bhyt: acc.bhyt + (cur.BHYT || 0),
       service: acc.service + (cur.VIEN_PHI || 0),
+      clinic: acc.clinic + (cur.LUOT_KHAM_CK || 0),
       emergency: acc.emergency + (cur.LUOT_CC || 0),
       inpatient: acc.inpatient + (cur.LUOT_NT || 0),
-      daycare: acc.daycare + (cur.LUOT_DNT || 0),
-      clinic: acc.clinic + (cur.LUOT_KHAM_CK || 0)
-    }), { bhyt: 0, service: 0, emergency: 0, inpatient: 0, daycare: 0, clinic: 0 });
+      daycare: acc.daycare + (cur.LUOT_DNT || 0)
+    }), { bhyt: 0, service: 0, clinic: 0, emergency: 0, inpatient: 0, daycare: 0 });
 
     this.typeChartOptions = {
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
@@ -275,7 +317,7 @@ export class ExaminationOverviewComponent implements OnInit {
     this.admissionChartOptions = {
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['Khám Bệnh (CK)', 'Cấp Cứu', 'Nội Trú', 'DNT'] },
+      xAxis: { type: 'category', data: ['Khám Bệnh (CK)', 'Cấp Cứu', 'Nội Trú', 'ĐT Ngoại Trú'] },
       yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: '#E2E8F0' } } },
       series: [{
         name: 'Lượt',
@@ -283,10 +325,10 @@ export class ExaminationOverviewComponent implements OnInit {
         barWidth: '40%',
         itemStyle: { borderRadius: [4, 4, 0, 0] },
         data: [
-          { value: totals.clinic, itemStyle: { color: '#00839B' } },
-          { value: totals.emergency, itemStyle: { color: '#FFB3BA' } },
-          { value: totals.inpatient, itemStyle: { color: '#F59E0B' } },
-          { value: totals.daycare, itemStyle: { color: '#52C3D7' } }
+          { value: totals.clinic, itemStyle: { color: this.colors.ck } },
+          { value: totals.emergency, itemStyle: { color: this.colors.emergency } },
+          { value: totals.inpatient, itemStyle: { color: this.colors.inpatient } },
+          { value: totals.daycare, itemStyle: { color: this.colors.daycare } }
         ]
       }]
     };

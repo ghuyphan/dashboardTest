@@ -24,7 +24,7 @@ import { DateUtils } from '../../../shared/utils/date.utils';
   imports: [
     CommonModule,
     QRCodeComponent,
-    DatePipe,
+    // DatePipe,
     CurrencyPipe
   ],
   templateUrl: './device-detail.component.html',

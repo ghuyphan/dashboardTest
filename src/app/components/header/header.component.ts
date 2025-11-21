@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { User } from '../../core/models/user.model';
 import { SearchService } from '../../core/services/search.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-header',
@@ -37,6 +38,7 @@ export class HeaderComponent {
   @Output() backClicked = new EventEmitter<void>();
 
   public searchService = inject(SearchService);
+  public themeService = inject(ThemeService);
 
   get searchTerm(): string {
     return this.searchService.searchTerm();
@@ -52,6 +54,13 @@ export class HeaderComponent {
 
   onLogoutClick(): void {
     this.logoutClicked.emit();
+  }
+
+  // FIXED: Added 'event' parameter here to match the HTML template
+  onThemeToggle(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.themeService.toggleTheme();
   }
 
   onSettingsClick(): void {}
