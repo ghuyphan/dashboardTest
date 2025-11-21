@@ -5,7 +5,7 @@
 
 /* Ensure input labels are visible in dark mode */
 .auth-input-group label {
-  /* Assuming global styles handled this, but forcing color mapping here ensures it works */
+  /* variable --gray-700 maps to Primary Text in both Light and Dark modes */
   color: var(--gray-700); 
 }
 
@@ -17,7 +17,10 @@
   border: none;
   padding: 0 clamp(12px, 3vw, 1rem);
   cursor: pointer;
+  
+  /* Default Icon Color (Muted) */
   color: var(--gray-400);
+  
   font-size: clamp(15px, 4vw, 17px);
   line-height: 1;
   min-height: 44px;
@@ -30,6 +33,7 @@
 
   &:hover,
   &:focus {
+    /* Brand color on interaction */
     color: var(--teal-blue);
   }
 }
@@ -48,6 +52,8 @@
   display: flex;
   align-items: center;
   gap: clamp(6px, 2vw, 0.5rem);
+  
+  /* Use Semantic Variable */
   color: var(--gray-700);
   cursor: pointer;
 
@@ -67,7 +73,13 @@
     margin-right: clamp(2px, 1vw, 0.25rem);
     vertical-align: middle;
     flex-shrink: 0;
-    border: 1px solid var(--gray-400); 
+    
+    /* 
+       Updated to use --gray-300 
+       This ensures the checkbox border matches your Input borders 
+       (Light: #CBD5E1, Dark: #30363d)
+    */
+    border: 1px solid var(--gray-300); 
   }
 }
 
@@ -75,7 +87,10 @@
   display: flex;
   align-items: center;
   margin: clamp(20px, 5vw, 2rem) 0;
+  
+  /* Muted text for the "OR" label */
   color: var(--gray-500);
+  
   font-size: clamp(0.875rem, 3.5vw, 15px);
   gap: clamp(8px, 2vw, 12px);
 
@@ -83,14 +98,22 @@
   &::after {
     content: "";
     flex: 1;
-    border-bottom: 1px solid var(--gray-300);
+    
+    /* 
+       Updated to use --border-color
+       Ensures the lines blend perfectly with the card borders
+    */
+    border-bottom: 1px solid var(--border-color);
   }
 }
 
 .support {
   text-align: center;
   font-size: clamp(0.875rem, 3.5vw, 15px);
-  color: var(--gray-600);
+  
+  /* Use Semantic Variable for Secondary Text */
+  color: var(--text-secondary);
+  
   line-height: 1.6;
 
   a+a {

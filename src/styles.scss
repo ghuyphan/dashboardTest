@@ -46,7 +46,7 @@ $dark-theme: mat.define-theme((
   )
 ));
 
-/* Apply Light Theme (Base Styles + Color + Typography + Density) to root */
+/* Apply Light Theme Defaults */
 html {
   @include mat.all-component-themes($light-theme);
 }
@@ -56,9 +56,9 @@ html {
 
 /* 3. ROOT VARIABLES (Light Mode Defaults) */
 :root {
-  /* === COLOR PALETTE === */
+  /* === COLOR PALETTE (Light Mode) === */
 
-  /* Brand Colors */
+  /* Brand Colors - Professional & Crisp */
   --aqua-island: #9BDAD9;
   --teal-blue: #00839B;
   --peacock-blue: #006E96;
@@ -73,7 +73,7 @@ html {
   --peppermint: #E6F5E9;
   --dark-gray: #4A4A4A;
 
-  /* Pastel Colors */
+  /* Pastel Colors (Backgrounds/Accents) */
   --pastel-lavender: #E6E6FA;
   --pastel-mint: #B2F2E6;
   --pastel-peach: #FFD1B3;
@@ -97,7 +97,7 @@ html {
   --gray-800: #1E293B;      /* Headings */
   --gray-900: #0F172A;      /* High Contrast */
 
-  /* === SEMANTIC SURFACES (The Magic Layer) === */
+  /* === SEMANTIC SURFACES === */
   --surface-background: var(--gray-50);
   --surface-card: var(--white);
   --surface-overlay: rgba(255, 255, 255, 0.95);
@@ -105,7 +105,7 @@ html {
   --border-color: var(--gray-200);
   --input-bg: #F8FAFC;
 
-  /* === COMPONENT SPECIFIC (Light Mode) === */
+  /* === COMPONENT SPECIFIC === */
   --table-header-bg: var(--teal-blue);
   --table-header-text: #FFFFFF;
   
@@ -120,7 +120,7 @@ html {
   --color-warning: #F59E0B;
   --color-info: var(--teal-blue);
 
-  /* Charting Palette */
+  /* Charting Palette (Light Mode) */
   --teal-blue-light: #66B9C9;
   --teal-blue-dark: #005E70;
   --beige-midtone: #F9B88A;
@@ -130,6 +130,7 @@ html {
   --aqua-island-light: #CDECEB;
   --aqua-island-dark: #70B4B3;
   --deep-sapphire-light: #5A6DA3;
+  
   --chart-color-1: var(--teal-blue);
   --chart-color-2: var(--peacock-blue);
   --chart-color-3: var(--aqua-island);
@@ -166,9 +167,13 @@ html {
   --border-radius-full: 9999px;
   --border-width: 1px;
   
+  /* Light Mode Shadows - Crisp and directional */
   --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Special Elevation for Light Mode */
+  --shadow-elevation: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   /* TRANSITIONS */
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
@@ -177,51 +182,104 @@ html {
   --transition-fast: 0.2s;
 }
 
-/* 4. DARK MODE OVERRIDES */
+/* 4. DARK MODE OVERRIDES - REFINED & BALANCED */
 [data-theme='dark'] {
-  /* --- 1. Re-map Functional Palette (Inverted) FIRST --- */
+  /* --- 1. FUNCTIONAL PALETTE (Deep Slate) --- */
   --white: #1e293b;           /* Card Background (Slate 800) */
   --gray-50: #0f172a;         /* Page Background (Slate 900) */
   
-  --gray-100: #1e293b;        /* Sidebar/Header Background */
+  --gray-100: #1e293b;        /* Header/Sidebar (Slate 800) */
   --gray-200: #334155;        /* Borders (Slate 700) */
-  --gray-300: #475569;        /* Inputs Borders (Slate 600) */
-  --gray-400: #94A3B8;        /* Placeholders */
-  --gray-500: #A3B6CC;        /* Icons */
-  --gray-600: #CBD5E1;        /* Secondary Text */
-  --gray-700: #E2E8F0;        /* Primary Text */
-  --gray-800: #F1F5F9;        /* Headings */
-  --gray-900: #FFFFFF;        /* High Contrast */
+  --gray-300: #475569;        /* Input Borders (Slate 600) */
+  --gray-400: #64748b;        /* Placeholders (Slate 500) */
+  --gray-500: #94a3b8;        /* Icons (Slate 400) */
+  --gray-600: #cbd5e1;        /* Secondary Text (Slate 300) */
+  --gray-700: #e2e8f0;        /* Primary Text (Slate 200) */
+  --gray-800: #f1f5f9;        /* Headings (Slate 100) */
+  --gray-900: #f8fafc;        /* High Contrast (Slate 50) */
 
-  /* --- Re-map Semantic Surfaces --- */
+  /* --- 2. SEMANTIC SURFACES --- */
   --surface-background: var(--gray-50);
   --surface-card: var(--white);
-  --surface-overlay: rgba(30, 41, 59, 0.95); /* Dark Slate Overlay */
-  --surface-toast: #334155;                  /* Lighter than card for pop */
-  --border-color: var(--gray-200);
-  --input-bg: #0f172a;                       /* Deepest input background */
+  --surface-overlay: rgba(15, 23, 42, 0.9); 
+  --surface-toast: #334155; 
   
-  /* --- Re-map Text --- */
-  --text-primary: var(--gray-900);
-  --text-secondary: var(--gray-600);
+  --border-color: var(--gray-200);
+  --input-bg: #0f172a; 
+  
+  /* --- 3. SEMANTIC TEXT --- */
+  --text-primary: var(--gray-800);
+  --text-secondary: var(--gray-500);
   --text-disabled: var(--gray-400);
 
-  /* --- Shadows (Stronger for dark mode depth) --- */
-  --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  /* --- 4. BRAND COLORS (Softer, More Professional) --- */
+  --teal-blue: #5eead4;       /* Teal 300 - softer, easier on eyes */
+  --peacock-blue: #7dd3fc;    /* Sky 300 - gentler blue */
+  --dark-teal: #5eead4;       /* Consistent with teal-blue */
+  --aqua-island: #99f6e4;     /* Teal 200 - lighter, calmer */
   
-  /* --- Adjust Brand Colors for Visibility --- */
-  --teal-blue: #22d3ee;    /* Cyan 400 - Brighter/Neon */
-  --peacock-blue: #38bdf8; /* Sky 400 */
-  --dark-teal: #67e8f9;
+  /* Secondary Brand Colors */
+  --desert-storm: #1e293b;
+  --pale-aqua: #67e8f9;       /* Cyan 300 */
+  --deep-sapphire: #93c5fd;   /* Blue 300 */
+  --dawn-pink: #2d3748;
+  --peppermint: #34d399;      /* Emerald 400 */
 
-  /* --- Fix for Table Headers in Dark Mode --- */
-  /* Using a darker teal to ensure white text remains readable */
-  --table-header-bg: #164e63; /* Cyan 900 */
-  --table-header-text: #ecfeff; /* Cyan 50 */
+  /* Pastel Colors (adjusted for dark mode) */
+  --pastel-lavender: #a78bfa; /* Violet 400 */
+  --pastel-mint: #6ee7b7;     /* Emerald 300 */
+  --pastel-peach: #fdba74;    /* Orange 300 */
+  --pastel-rose: #f9a8d4;     /* Pink 300 */
+  --pastel-sky: #7dd3fc;      /* Sky 300 */
+  --pastel-lemon: #fde047;    /* Yellow 300 */
+  --pastel-lilac: #c4b5fd;    /* Violet 300 */
+  --pastel-sage: #86efac;     /* Green 300 */
+  --pastel-coral: #fca5a5;    /* Red 300 */
+  --pastel-powder: #a5b4fc;   /* Indigo 300 */
 
-  /* --- 2. Apply Angular Material Dark COLORS Only (Mixin LAST) --- */
+  /* --- 5. STATUS & CHART COLORS (Balanced) --- */
+  --color-danger: #f87171;    /* Red 400 */
+  --color-success: #4ade80;   /* Green 400 */
+  --color-warning: #fbbf24;   /* Amber 400 */
+  --color-info: #7dd3fc;      /* Sky 300 */
+  
+  /* Table Headers */
+  --table-header-bg: #1e293b;
+  --table-header-text: var(--teal-blue);
+  
+  /* Charting Palette (Dark Mode Adjusted) */
+  --teal-blue-light: #99f6e4;
+  --teal-blue-dark: #14b8a6;
+  --beige-midtone: #fdba74;
+  --teal-midtone: #67e8f9;
+  --peacock-blue-light: #bae6fd;
+  --peacock-blue-dark: #0284c7;
+  --aqua-island-light: #ccfbf1;
+  --aqua-island-dark: #2dd4bf;
+  --deep-sapphire-light: #bfdbfe;
+  
+  --chart-color-1: var(--teal-blue);
+  --chart-color-2: var(--peacock-blue);
+  --chart-color-3: var(--aqua-island);
+  --chart-color-6: #fb923c;   /* Orange 400 */
+  --chart-color-7: #94a3b8;   /* Slate 400 */
+  --chart-color-8: var(--teal-midtone);
+  --chart-color-9: var(--beige-midtone);
+  --chart-color-10: var(--pastel-coral);
+
+  /* --- 6. SHADOWS & ELEVATION (Subtle & Refined) --- */
+  --box-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+
+  /* Refined Elevation Shadow - Subtle glow that complements rather than overwhelms */
+  --shadow-elevation: 
+     0 20px 25px -5px rgba(0, 0, 0, 0.5), 
+     0 8px 10px -6px rgba(0, 0, 0, 0.5),
+     0 0 0 1px rgba(94, 234, 212, 0.1),      /* Subtle teal rim */
+     0 0 30px -5px rgba(94, 234, 212, 0.08); /* Gentle ambient glow */
+
+  /* --- 7. Angular Material Mixin --- */
   @include mat.all-component-colors($dark-theme);
 }
 
@@ -245,11 +303,8 @@ body {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-base);
-  
-  /* Use semantic variables */
   color: var(--text-secondary);
   background-color: var(--surface-background);
-  
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -259,7 +314,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  color: var(--text-primary); /* Semantic color */
+  color: var(--text-primary); 
 }
 
 h1 { font-size: 2.25rem; }
@@ -267,9 +322,7 @@ h2 { font-size: 1.875rem; }
 h3 { font-size: 1.5rem; }
 h4 { font-size: 1.25rem; }
 
-p {
-  margin-bottom: var(--spacing-md);
-}
+p { margin-bottom: var(--spacing-md); }
 
 a {
   color: var(--teal-blue);
@@ -282,29 +335,26 @@ a {
   }
 }
 
-/* === UI POLISH: Global Custom Scrollbar (Dark Mode Compatible) === */
+/* SCROLLBARS */
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 *::-webkit-scrollbar-track {
   background: transparent;
 }
-
 *::-webkit-scrollbar-thumb {
-  background-color: var(--gray-300); /* Auto-flips based on mode */
+  background-color: var(--gray-300);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
   min-height: 40px;
 }
-
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--gray-400);
 }
 
-/* === UI POLISH: Input Autofill Fix === */
+/* INPUT AUTOFILL */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -314,18 +364,18 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--gray-800);
-  -webkit-box-shadow: 0 0 0px 1000px var(--surface-card) inset; /* Matches card background */
+  -webkit-text-fill-color: var(--gray-700); 
+  -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* COMPONENT STYLES: CHART */
+/* COMPONENTS */
 .chart-container {
   background-color: var(--surface-card);
   border-radius: var(--border-radius-md);
 }
 
-/* COMPONENT STYLES: BUTTON */
+/* BUTTONS */
 .btn {
   display: inline-block;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -342,7 +392,7 @@ select:-webkit-autofill:focus {
 
 .btn-primary {
   background-color: var(--teal-blue);
-  color: #FFFFFF; /* Force white on primary */
+  color: #FFFFFF;
   border-color: var(--teal-blue);
 
   &:hover {
@@ -351,21 +401,24 @@ select:-webkit-autofill:focus {
     box-shadow: var(--box-shadow-sm);
   }
   
-  /* Dark mode adjustment */
   [data-theme='dark'] & {
-    color: #0F172A; /* Dark text on neon button */
+    color: #020617; 
     font-weight: 600;
+    &:hover {
+       background-color: var(--peacock-blue);
+       color: #000000;
+       /* Glow effect for primary button in dark mode */
+       box-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
+    }
   }
 }
 
 .btn-secondary {
   background-color: var(--gray-200);
   color: var(--gray-800);
-
   &:hover {
     background-color: var(--gray-300);
     color: var(--gray-900);
-    box-shadow: var(--box-shadow-sm);
   }
 }
 
@@ -373,34 +426,29 @@ select:-webkit-autofill:focus {
   background-color: transparent;
   color: var(--teal-blue);
   border-color: var(--teal-blue);
-
   &:hover {
     background-color: rgba(0, 131, 155, 0.1);
+    [data-theme='dark'] & {
+       background-color: rgba(45, 212, 191, 0.1);
+    }
   }
 }
 
-/* KEYFRAME ANIMATIONS */
+/* ANIMATIONS */
 @keyframes slideDownFade {
   from { opacity: 0; transform: translateY(-0.75rem); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
-
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
 }
 
-@keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* ACCESSIBILITY & FOCUS STATES */
+/* FOCUS STATES */
 .sidebar-nav ul li a:focus-visible,
 .sidebar-nav ul li button:focus-visible,
 .user-menu-toggle:focus-visible,
@@ -410,7 +458,7 @@ select:-webkit-autofill:focus {
   outline-offset: 2px;
 }
 
-/* LOADING STATES */
+/* LOADING SHIMMER */
 .loading-shimmer {
   background: linear-gradient(90deg,
       var(--gray-200) 0%,
@@ -420,18 +468,21 @@ select:-webkit-autofill:focus {
   animation: shimmer 1.5s infinite;
 }
 
-/* CUSTOM TOOLTIP STYLES */
+/* ==================================================
+   UPDATED: FLOATING TOOLTIP
+   ================================================== */
 .app-tooltip-container {
   position: fixed;
-  background: var(--gray-800);
+  background: var(--gray-800); 
   color: var(--gray-100);
   border-color: var(--gray-600);
   
-  /* Dark mode tooltip adjustments */
+  /* DARK MODE FIX: Use Elevation Shadow instead of Inverting Colors */
   [data-theme='dark'] & {
-     background: var(--gray-200); /* Light tooltip in dark mode */
-     color: var(--gray-900);
-     border-color: var(--gray-300);
+     background: var(--gray-100); /* Matches Card Background */
+     color: var(--gray-700);
+     border: none; /* Shadow handles the definition now */
+     box-shadow: var(--shadow-elevation); /* The colored glow */
   }
 
   backdrop-filter: blur(10px);
@@ -453,16 +504,7 @@ select:-webkit-autofill:focus {
   }
 }
 
-/* ==================================================
-   UNIFIED LOADING STATES
-   ================================================== */
-
-/* 1. The Spinner Animation */
-@keyframes app-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* 2. The Spinner Element */
+/* LOADERS */
 .app-loading-spinner {
   width: 40px;
   height: 40px;
@@ -472,8 +514,8 @@ select:-webkit-autofill:focus {
   animation: app-spin 0.8s linear infinite;
   flex-shrink: 0;
 }
+@keyframes app-spin { to { transform: rotate(360deg); } }
 
-/* 3. The Container (Text + Spinner) */
 .app-loading-container {
   display: flex;
   flex-direction: column;
@@ -487,11 +529,9 @@ select:-webkit-autofill:focus {
   height: 100%;
   width: 100%;
   min-height: 200px;
-
   p { margin: 0; }
 }
 
-/* 4. The Overlay (for covering content) */
 .app-loading-overlay {
   position: absolute;
   inset: 0;
@@ -502,43 +542,36 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: center;
   border-radius: inherit;
-  
-  .app-loading-container {
-    height: auto;
-    min-height: 0;
-    padding: 0;
-  }
+  .app-loading-container { height: auto; min-height: 0; padding: 0; }
 }
 
-/* GLOBAL PRINT STYLES */
+/* PRINT */
 @media print {
-  app-sidebar,
-  app-header,
-  app-action-footer {
-    display: none !important;
-  }
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    background-color: #FFFFFF !important; 
-    color: #000000 !important;
-  }
-  /* Force reset containers to block for printing */
-  app-root, .main-panel, main, .dashboard-content {
-     display: block !important;
-     height: auto !important;
-     overflow: visible !important;
-  }
+  app-sidebar, app-header, app-action-footer { display: none !important; }
+  body { background-color: #FFFFFF !important; color: #000000 !important; }
+  app-root, .main-panel, main, .dashboard-content { display: block !important; height: auto !important; overflow: visible !important; }
 }
 
-/* FLYOUT SUBMENU STYLES */
+/* ==================================================
+   UPDATED: FLYOUT SUBMENUS
+   ================================================== */
 body > ul.submenu.open {
   list-style: none;
   margin: 0;
-  background-color: var(--gray-100);
+  
+  /* Use Surface Card variable so it updates automatically */
+  background-color: var(--surface-card); 
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
-  box-shadow: var(--box-shadow-md);
+  
+  /* Apply the GLOW shadow in Dark Mode, Normal in Light */
+  box-shadow: var(--box-shadow-lg);
+  
+  [data-theme='dark'] & {
+      border: none; /* Border ring in shadow handles this */
+      box-shadow: var(--shadow-elevation);
+  }
+
   width: 220px;
   z-index: 1040;
   overflow: hidden;
@@ -561,7 +594,7 @@ body > ul.submenu.open {
       margin: 0 0 var(--spacing-xs) 0;
       font-size: 0.875rem;
       border-radius: 0.375rem;
-      color: var(--gray-700);
+      color: var(--text-primary);
       font-weight: var(--font-weight-normal);
       transition: background-color 0.2s ease, color 0.2s ease;
       overflow: hidden;
@@ -583,15 +616,27 @@ body > ul.submenu.open {
       }
 
       &:hover {
-        background-color: var(--gray-200);
-        color: var(--gray-900);
+        background-color: var(--gray-100);
+        color: var(--text-primary);
         i { transform: scale(1.15); }
+        
+        /* Subtle text glow on hover in dark mode */
+        [data-theme='dark'] & {
+           background-color: rgba(45, 212, 191, 0.1); /* Teal low opacity */
+           color: var(--teal-blue);
+        }
       }
 
       &.active {
-        color: var(--gray-900);
-        background-color: var(--gray-200);
+        color: var(--text-primary);
+        background-color: var(--gray-100);
         font-weight: 600;
+        
+        [data-theme='dark'] & {
+           background-color: rgba(45, 212, 191, 0.15); 
+           color: var(--teal-blue);
+        }
+
         &::before {
           content: '';
           position: absolute;
@@ -619,11 +664,9 @@ body > ul.submenu.open {
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
   background: rgba(0, 0, 0, 0.4);
-  
   [data-theme='dark'] & {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.75);
   }
-
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   transition: none !important;
@@ -637,7 +680,7 @@ body > ul.submenu.open {
   border-radius: 0;
 }
 
-/* Global Status Chip Styles */
+/* CHIPS */
 .status-chip {
   padding: 2px 10px;
   border-radius: 12px;
@@ -648,23 +691,19 @@ body > ul.submenu.open {
   line-height: 1.5;
   white-space: nowrap;
 }
-/* Status colors remain vivid for identification */
-.status-in-use { color: #FFFFFF; background-color: var(--peacock-blue-light); }
+.status-in-use { color: #FFFFFF; background-color: var(--peacock-blue); }
 .status-ready { color: #FFFFFF; background-color: var(--color-success); }
-.status-maintenance { color: #FFFFFF; background-color: var(--dark-gray); }
-.status-repair { color: #FFFFFF; background-color: var(--color-warning); }
+.status-maintenance { color: #FFFFFF; background-color: var(--gray-500); } 
+.status-repair { color: #000; background-color: var(--color-warning); } 
 .status-broken { color: #FFFFFF; background-color: var(--color-danger); }
 .status-default { color: #FFFFFF; background-color: var(--gray-500); }
 
-/* ==================================================
-   GLOBAL SKELETON LOADER
-   ================================================== */
+/* SKELETON LOADER */
 .skeleton {
   background-color: var(--gray-200);
   border-radius: var(--border-radius-md);
   animation: skeleton-pulse 1.5s infinite ease-in-out;
 }
-
 .skeleton-text { height: 1em; width: 100%; margin-bottom: 0.5rem; @extend .skeleton; }
 .skeleton-circle { border-radius: 50%; @extend .skeleton; }
 .skeleton-rect { width: 100%; height: 100%; @extend .skeleton; }
@@ -675,7 +714,7 @@ body > ul.submenu.open {
   100% { opacity: 0.6; }
 }
 
-// Shared Input Group Styles (Auth)
+/* AUTH STYLES */
 .auth-input-group {
   margin-bottom: clamp(16px, 4vw, 1.5rem);
   label {
@@ -690,26 +729,25 @@ body > ul.submenu.open {
   input {
     width: 100%;
     padding: clamp(12px, 3vw, 1rem) clamp(40px, 10vw, 3rem);
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--gray-300); 
+    background: var(--input-bg);
+    color: var(--gray-700);
     border-radius: clamp(10px, 3vw, 14px);
     font-size: clamp(0.875rem, 3.5vw, 1rem);
-    background: rgba(248, 250, 252, 0.75);
     transition: all 0.3s ease;
     outline: none;
     box-sizing: border-box;
     min-height: 44px;
-
-    [data-theme='dark'] & {
-      background: var(--surface-card); 
-      color: var(--gray-900);
-      border-color: var(--gray-300);
-    }
 
     &:focus {
       border-color: var(--teal-blue);
       background: var(--surface-card);
       box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
       ~.input-icon { color: var(--teal-blue); }
+      
+      [data-theme='dark'] & {
+         box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
+      }
     }
 
     &.is-invalid {
@@ -734,7 +772,6 @@ body > ul.submenu.open {
   }
 }
 
-// Shared Button Styles
 .auth-btn {
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
@@ -754,13 +791,16 @@ body > ul.submenu.open {
   }
 
   [data-theme='dark'] & {
-    color: #0F172A; 
+    color: #020617; 
+    &:hover:not(:disabled) {
+       background: var(--peacock-blue);
+       box-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
+    }
   }
 
   &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 }
 
-// Links
 .auth-link {
   color: var(--teal-blue);
   text-decoration: none;
@@ -772,54 +812,47 @@ body > ul.submenu.open {
   }
 }
 
-/* ==========================================================
-   MODERN VIEW TRANSITIONS (Auth Card) - Snap Content
-   ========================================================== */
-
-/* 1. Disable the "Old School" Full Page Fade */
-::view-transition-group(root) {
-  animation-duration: 0s; /* Background changes instantly, no blinking */
-}
-
-/* 2. Configure the Card Morph (Geometry) - This animates size/pos */
+/* VIEW TRANSITIONS */
+::view-transition-group(root) { animation-duration: 0s; }
 ::view-transition-group(auth-card) {
   animation-duration: 0.5s; 
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-like snap */
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 100;
 }
+::view-transition-old(auth-card) { display: none; }
+::view-transition-new(auth-card) { animation: none; }
 
-/* 3. CONTENT: Snap immediately (No Fade) */
-/* By hiding the old image instantly and showing the new one instantly,
-   we get the geometry morph of the container but the content feels "solid". */
-
-::view-transition-old(auth-card) {
-  display: none; 
-}
-
-::view-transition-new(auth-card) {
-  animation: none; 
-}
-
-/* === ANGULAR MATERIAL OVERRIDES (COLOR ONLY) === */
-/* Force Material Popups (Select, Menu, Dialog) to use Theme Variables */
+/* ==================================================
+   UPDATED: ANGULAR MATERIAL OVERRIDES
+   ================================================== */
 .mat-mdc-menu-panel, 
 .mat-mdc-dialog-surface, 
-.mat-mdc-select-panel {
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel {
   background-color: var(--surface-card) !important;
-  color: var(--gray-700) !important;
+  color: var(--text-primary) !important;
+  
+  /* Dark Mode: Remove Angular's default shadow and apply the Glow */
+  [data-theme='dark'] & {
+    box-shadow: var(--shadow-elevation) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Extra subtle border definition */
+  }
 }
 
 .mat-mdc-option {
-  color: var(--gray-800) !important;
+  color: var(--text-primary) !important;
   &:hover:not(.mdc-list-item--disabled) {
     background-color: var(--gray-100) !important;
   }
   &.mdc-list-item--selected {
     background-color: rgba(0, 131, 155, 0.1) !important;
+    [data-theme='dark'] & {
+        background-color: rgba(45, 212, 191, 0.15) !important;
+        color: var(--teal-blue) !important;
+    }
   }
 }
 
-/* Fix Input Text Color in Dark Mode */
 .mat-mdc-form-field, .mat-mdc-input-element {
   caret-color: var(--teal-blue) !important;
 }

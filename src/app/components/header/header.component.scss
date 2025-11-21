@@ -10,11 +10,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
-  // background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem 1rem; /* Kept exact */
+  
+  /* COLOR UPDATE: Adapts to Dark Mode Slate */
+  background-color: var(--surface-card);
+  
   height: var(--header-height);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   gap: 1rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .header-left-controls {
@@ -29,7 +32,10 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-900);
+  
+  /* COLOR UPDATE: White in Dark Mode */
+  color: var(--text-primary); 
+  
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -42,9 +48,12 @@
   background: none;
   border: none;
   font-size: 1.25rem;
-  color: var(--gray-600);
+  
+  /* COLOR UPDATE */
+  color: var(--text-secondary);
+  
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.5rem; /* Kept exact */
   border-radius: 50%;
   transition: all 0.2s;
 
@@ -56,6 +65,7 @@
 
 .mobile-sidebar-toggle {
   display: none; 
+  color: var(--text-primary);
   
   @media (max-width: 992px) {
     display: flex; 
@@ -67,16 +77,22 @@
   display: flex;
   align-items: center;
   position: relative;
-  background: var(--gray-100);
+  
+  /* 
+     COLOR UPDATE: Distinct Background 
+     Light: #F8FAFC | Dark: #020617 (Deep Cutout)
+  */
+  background: var(--input-bg);
+  
   border-radius: 99px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color); /* Added border for definition */
   flex: 2;
   max-width: 400px;
-  padding: 0 0.75rem;
+  padding: 0 0.75rem; /* Kept exact */
   transition: all 0.2s;
 
   &:focus-within {
-    background: var(--white);
+    background: var(--surface-card);
     border-color: var(--teal-blue);
     box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
   }
@@ -85,9 +101,17 @@
     width: 100%;
     border: none;
     background: none;
-    padding: 0.5rem;
+    padding: 0.5rem; /* Kept exact */
     outline: none;
     font-size: 0.875rem;
+    
+    /* COLOR UPDATE: Text visibility */
+    color: var(--text-primary);
+    caret-color: var(--teal-blue);
+    
+    &::placeholder {
+      color: var(--text-disabled);
+    }
   }
 
   .search-clear-btn {
@@ -98,8 +122,11 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--gray-400);
-    &:hover { color: var(--gray-800); }
+    color: var(--gray-400); /* Icon color */
+    
+    &:hover { 
+      color: var(--text-primary); 
+    }
   }
 }
 
@@ -115,26 +142,29 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  padding: 4px;
-  padding-right: 12px;
+  
+  /* COLOR UPDATE: Transparent by default, slightly distinct */
+  background: transparent;
+  border: 1px solid transparent;
+  
+  padding: 4px; /* Kept exact */
+  padding-right: 12px; /* Kept exact */
   border-radius: 99px;
   cursor: pointer;
   transition: all 0.2s;
 
+  /* Hover State */
   &:hover,
   &[aria-expanded="true"] {
-    background: var(--white);
-    border-color: var(--gray-300);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: var(--gray-100);
+    border-color: var(--border-color);
   }
 
   .header-avatar-initials {
     width: 32px;
     height: 32px;
     background: var(--aqua-island);
-    color: white;
+    color: #FFFFFF;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -148,25 +178,31 @@
     font-size: 0.8rem; 
     width: 0.8rem; 
     height: 0.8rem; 
-    color: var(--gray-500);
+    
+    /* COLOR UPDATE */
+    color: var(--text-secondary);
+    
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &[aria-expanded="true"] .chevron-icon {
     transform: rotate(180deg);
+    color: var(--text-primary);
   }
 }
 
 /* =================================================================
    CUSTOM MAT-MENU PANEL STYLING
    ================================================================= */
-/* [BEST PRACTICE] Use ::ng-deep to target the overlay panel */
 ::ng-deep .header-user-menu-panel.mat-mdc-menu-panel {
-  background-color: var(--gray-100) !important;
+  /* COLOR UPDATE: Card Surface */
+  background-color: var(--surface-card) !important;
+  border: 1px solid var(--border-color) !important;
+  
   border-radius: 12px !important;
-  padding: 8px !important;
+  padding: 8px !important; /* Kept exact */
   min-width: 280px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: var(--box-shadow-lg) !important;
 
   transform-origin: top right !important;
   animation: menuScaleFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -176,18 +212,18 @@
   }
 
   .menu-section-wrapper {
-    background-color: var(--white);
+    background-color: var(--surface-card);
     border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    margin-bottom: 8px;
+    margin-bottom: 8px; /* Kept exact */
     overflow: hidden;
   }
 
   .dropdown-profile-header {
     display: flex;
     align-items: center;
-    padding: 12px;
-    gap: 12px;
+    padding: 12px; /* Kept exact */
+    gap: 12px; /* Kept exact */
+    border-bottom: 1px solid var(--border-color);
 
     .dropdown-avatar-initials {
       width: 40px;
@@ -212,14 +248,18 @@
       .username {
         font-weight: 600;
         font-size: 0.95rem;
-        color: var(--gray-900);
+        
+        /* COLOR UPDATE */
+        color: var(--text-primary);
+        
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;
       }
       .user-role {
         font-size: 0.8rem;
-        color: var(--gray-500);
+        /* COLOR UPDATE */
+        color: var(--text-secondary);
       }
     }
   }
@@ -227,20 +267,23 @@
   .menu-items-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 2px; /* Kept exact */
   }
 
   .custom-menu-item {
     border-radius: 6px;
-    margin: 0;
-    min-height: 44px;
+    margin: 0; /* Kept exact */
+    min-height: 44px; /* Kept exact */
 
     .mat-mdc-menu-item-text {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 12px; /* Kept exact */
       width: 100%;
-      color: var(--gray-700);
+      
+      /* COLOR UPDATE */
+      color: var(--text-primary);
+      
       font-weight: 500;
       font-size: 0.9rem;
       
@@ -252,11 +295,14 @@
       height: 32px;
       min-width: 32px;
       border-radius: 50%;
-      background: var(--gray-200);
+      
+      /* COLOR UPDATE */
+      background: var(--gray-100);
+      color: var(--gray-600);
+      
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gray-700);
       transition: all 0.2s;
       flex-shrink: 0;
       
@@ -264,12 +310,22 @@
     }
 
     &:hover {
-      background-color: var(--gray-200);
-      .menu-icon-bg { background: var(--gray-300); color: var(--gray-900); }
+      background-color: var(--gray-100);
+      .menu-icon-bg { 
+        background: var(--surface-background); 
+        color: var(--gray-900); 
+        
+        /* Dark mode adjustment */
+        [data-theme='dark'] & {
+           color: var(--white);
+        }
+      }
     }
 
     &.logout-item {
-      margin-top: 4px;
+      margin-top: 4px; /* Kept exact */
+      border-top: 1px solid var(--border-color);
+      
       .mat-mdc-menu-item-text { color: var(--color-danger); }
       .menu-icon-bg { background: rgba(220, 53, 69, 0.1); i { color: var(--color-danger); } }
       
