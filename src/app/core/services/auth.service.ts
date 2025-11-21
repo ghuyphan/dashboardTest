@@ -6,7 +6,9 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment.development';
 import { User } from '../models/user.model';
 import { NavItem } from '../models/nav-item.model';
+import { CustomRouteReuseStrategy } from '../strategies/custom-route-reuse-strategy'; // [1] Import Strategy
 
+// ... (Keep existing interfaces LoginResponse, ApiPermissionNode etc.) ...
 interface LoginResponse {
   MaKetQua: number;
   TenKetQua?: string;
@@ -72,6 +74,8 @@ export class AuthService {
     this.initializeAuthState();
   }
 
+  // ... (Keep initializeAuthState, getStoredToken, getStoredIdToken, getStoredItem, init, login, fetchAndSetPermissions methods AS IS) ...
+
   private initializeAuthState(): void {
     const storedToken = this.getStoredToken();
     const storedIdToken = this.getStoredIdToken();
@@ -79,7 +83,6 @@ export class AuthService {
     const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY);
     const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY);
 
-    // [BEST PRACTICE] Safe JSON Parsing
     let roles: string[] = [];
     let permissions: string[] = [];
     let navItems: NavItem[] = [];
@@ -258,6 +261,9 @@ export class AuthService {
   }
 
   logout(): void {
+    // [2] Clear the Route Reuse Cache globally here
+    CustomRouteReuseStrategy.clearAllHandles();
+    
     this.clearLocalAuthData(true);
   }
 
@@ -291,6 +297,7 @@ export class AuthService {
     }
   }
 
+  // ... (Keep getters and helper methods AS IS) ...
   getAccessToken(): string | null {
     if (this.accessToken) return this.accessToken;
     const token = this.getStoredItem(TOKEN_STORAGE_KEY);

@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Router, NavigationEnd, NavigationStart, Event as RouterEvent } from '@angular/router'; // Import RouterEvent and NavigationStart
+import { Router, NavigationEnd, NavigationStart, Event as RouterEvent } from '@angular/router'; 
 import { PageEvent } from '@angular/material/paginator';
 import { Subject, of, Observable } from 'rxjs';
 import {
@@ -34,7 +34,6 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
 import { Device } from '../../../shared/models/device.model';
 import { environment } from '../../../../environments/environment.development';
 import { DateUtils } from '../../../shared/utils/date.utils';
-import { CustomRouteReuseStrategy } from '../../../core/strategies/custom-route-reuse-strategy';
 
 // Constants
 const DEFAULT_PAGE_SIZE = 25;

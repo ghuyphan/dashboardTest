@@ -16,6 +16,12 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     this.storedHandles.delete(path);
   }
 
+  // --- NEW METHOD: Used by AuthService on Logout ---
+  public static clearAllHandles(): void {
+    this.storedHandles.clear();
+  }
+  // ------------------------------------------------
+
   shouldReuseRoute(
     future: ActivatedRouteSnapshot,
     curr: ActivatedRouteSnapshot
