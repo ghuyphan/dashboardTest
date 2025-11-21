@@ -23,17 +23,32 @@ router-outlet + * {
   height: 100%;
 }
 
-/* 2. MATERIAL THEME CONFIGURATION (Default Light) */
+/* 2. MATERIAL THEME CONFIGURATION */
+$light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  density: (
+    scale: 0
+  )
+));
+
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  density: (
+    scale: 0
+  )
+));
+
+/* Apply Light Theme (Base Styles + Color + Typography + Density) to root */
 html {
-  @include mat.theme((
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
+  @include mat.all-component-themes($light-theme);
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -41,7 +56,7 @@ html {
 
 /* 3. ROOT VARIABLES (Light Mode Defaults) */
 :root {
-  /* COLOR PALETTE */
+  /* === COLOR PALETTE === */
 
   /* Brand Colors */
   --aqua-island: #9BDAD9;
@@ -70,18 +85,32 @@ html {
   --pastel-coral: #FFB3BA;
   --pastel-powder: #BDB3FF;
 
-  /* Functional Palette */
-  --gray-100: #F8FAFC;
-  --gray-200: #E2E8F0;
-  --gray-300: #CBD5E1;
-  --gray-400: #94A3B8;
-  --gray-500: #64748B;
-  --gray-600: #475569;
-  --gray-700: #334155;
-  --gray-800: #1E293B;
-  --gray-900: #0F172A;
+  /* === FUNCTIONAL PALETTE (Light Mode Base) === */
+  --gray-50: #F8FAFC;       /* Page Background */
+  --gray-100: #F1F5F9;      /* Sidebar / Header / Hover */
+  --gray-200: #E2E8F0;      /* Borders */
+  --gray-300: #CBD5E1;      /* Input Borders */
+  --gray-400: #94A3B8;      /* Disabled / Placeholder */
+  --gray-500: #64748B;      /* Secondary Icons */
+  --gray-600: #475569;      /* Secondary Text */
+  --gray-700: #334155;      /* Primary Text */
+  --gray-800: #1E293B;      /* Headings */
+  --gray-900: #0F172A;      /* High Contrast */
 
-  /* Semantic Colors */
+  /* === SEMANTIC SURFACES (The Magic Layer) === */
+  --surface-background: var(--gray-50);
+  --surface-card: var(--white);
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  --surface-toast: rgba(255, 255, 255, 0.96);
+  --border-color: var(--gray-200);
+  --input-bg: #F8FAFC;
+  
+  /* Semantic Text Colors */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-disabled: var(--gray-400);
+
+  /* Semantic Status Colors */
   --color-danger: #dc3545;
   --color-success: #16A34A;
   --color-warning: #F59E0B;
@@ -97,6 +126,14 @@ html {
   --aqua-island-light: #CDECEB;
   --aqua-island-dark: #70B4B3;
   --deep-sapphire-light: #5A6DA3;
+  --chart-color-1: var(--teal-blue);
+  --chart-color-2: var(--peacock-blue);
+  --chart-color-3: var(--aqua-island);
+  --chart-color-6: #F89C5B;
+  --chart-color-7: var(--dark-gray);
+  --chart-color-8: var(--teal-midtone);
+  --chart-color-9: var(--beige-midtone);
+  --chart-color-10: var(--pastel-coral);
 
   /* TYPOGRAPHY */
   --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -124,7 +161,7 @@ html {
   --border-radius-lg: 0.75rem;
   --border-radius-full: 9999px;
   --border-width: 1px;
-  --border-color: var(--gray-200);
+  
   --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -134,56 +171,49 @@ html {
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
-
-  /* CHART COLORS */
-  --chart-color-1: var(--teal-blue);
-  --chart-color-2: var(--peacock-blue);
-  --chart-color-3: var(--aqua-island);
-  --chart-color-4: var(--dawn-pink);
-  --chart-color-5: var(--pale-aqua);
-  --chart-color-6: #F89C5B;
-  --chart-color-7: var(--dark-gray);
-  --chart-color-8: var(--teal-midtone);
-  --chart-color-9: var(--beige-midtone);
-  --chart-color-10: var(--pastel-coral);
-
-  /* --- ADDED: Semantic Variables for Dark Mode --- */
-  --overlay-bg: rgba(255, 255, 255, 0.85);
 }
 
 /* 4. DARK MODE OVERRIDES */
 [data-theme='dark'] {
-  /* Backgrounds: Flip light to dark */
-  --white: #1e293b;         /* Card background */
-  --gray-50: #0f172a;       /* Page background (Deepest) */
-  --gray-100: #1e293b;      /* Sidebar/Header background */
-  --gray-200: #334155;      /* Borders */
-  --gray-300: #475569;      /* Inputs borders */
+  /* --- 1. Re-map Functional Palette (Inverted) FIRST --- */
+  --white: #1e293b;           /* Card Background (Slate 800) */
+  --gray-50: #0f172a;         /* Page Background (Slate 900) */
+  
+  --gray-100: #1e293b;        /* Sidebar/Header Background */
+  --gray-200: #334155;        /* Borders (Slate 700) */
+  --gray-300: #475569;        /* Inputs Borders (Slate 600) */
+  --gray-400: #94A3B8;        /* Placeholders */
+  --gray-500: #A3B6CC;        /* Icons */
+  --gray-600: #CBD5E1;        /* Secondary Text */
+  --gray-700: #E2E8F0;        /* Primary Text */
+  --gray-800: #F1F5F9;        /* Headings */
+  --gray-900: #FFFFFF;        /* High Contrast */
 
-  /* Text: Flip dark to light */
-  --gray-400: #64748B;
-  --gray-500: #94A3B8;
-  --gray-600: #CBD5E1;
-  --gray-700: #E2E8F0;      /* Primary text */
-  --gray-800: #F1F5F9;      /* Headings */
-  --gray-900: #FFFFFF;      /* High contrast text */
+  /* --- Re-map Semantic Surfaces --- */
+  --surface-background: var(--gray-50);
+  --surface-card: var(--white);
+  --surface-overlay: rgba(30, 41, 59, 0.95); /* Dark Slate Overlay */
+  --surface-toast: #334155;                  /* Lighter than card for pop */
+  --border-color: var(--gray-200);
+  --input-bg: #0f172a;                       /* Deepest input background */
+  
+  /* --- Re-map Text --- */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-disabled: var(--gray-400);
 
-  /* Shadows: Make them subtler but visible on dark bg */
+  /* --- Shadows (Stronger for dark mode depth) --- */
   --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
   
-  /* Semantic Overrides */
-  --overlay-bg: rgba(15, 23, 42, 0.9); 
-  
-  /* Angular Material Dark Theme Override */
-  @include mat.theme((
-    color: (
-      theme-type: dark,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    )
-  ));
+  /* --- Adjust Brand Colors for Visibility --- */
+  --teal-blue: #22d3ee;    /* Cyan 400 - Brighter/Neon */
+  --peacock-blue: #38bdf8; /* Sky 400 */
+  --dark-teal: #67e8f9;
+
+  /* --- 2. Apply Angular Material Dark COLORS Only (Mixin LAST) --- */
+  @include mat.all-component-colors($dark-theme);
 }
 
 /* GLOBAL RESETS & BASE STYLES */
@@ -206,22 +236,21 @@ body {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-base);
-  color: var(--gray-700);
-  background-color: var(--gray-100);
+  
+  /* Use semantic variables */
+  color: var(--text-secondary);
+  background-color: var(--surface-background);
+  
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  color: var(--peacock-blue);
+  color: var(--text-primary); /* Semantic color */
 }
 
 h1 { font-size: 2.25rem; }
@@ -236,6 +265,7 @@ p {
 a {
   color: var(--teal-blue);
   text-decoration: none;
+  transition: color 0.2s;
 
   &:hover {
     text-decoration: underline;
@@ -243,7 +273,7 @@ a {
   }
 }
 
-/* === UI POLISH: Global Custom Scrollbar === */
+/* === UI POLISH: Global Custom Scrollbar (Dark Mode Compatible) === */
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -254,7 +284,7 @@ a {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: var(--gray-300);
+  background-color: var(--gray-300); /* Auto-flips based on mode */
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -265,9 +295,7 @@ a {
   background-color: var(--gray-400);
 }
 
-/* === UI POLISH: Input Autofill Fix === 
-   Prevents the browser default yellow background on autofilled inputs
-*/
+/* === UI POLISH: Input Autofill Fix === */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -278,13 +306,13 @@ select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--gray-800);
-  -webkit-box-shadow: 0 0 0px 1000px var(--white) inset;
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-card) inset; /* Matches card background */
   transition: background-color 5000s ease-in-out 0s;
 }
 
 /* COMPONENT STYLES: CHART */
 .chart-container {
-  background-color: var(--white);
+  background-color: var(--surface-card);
   border-radius: var(--border-radius-md);
 }
 
@@ -305,21 +333,28 @@ select:-webkit-autofill:focus {
 
 .btn-primary {
   background-color: var(--teal-blue);
-  color: var(--white);
+  color: #FFFFFF; /* Force white on primary */
+  border-color: var(--teal-blue);
 
   &:hover {
     background-color: var(--peacock-blue);
-    color: var(--white);
+    color: #FFFFFF;
     box-shadow: var(--box-shadow-sm);
+  }
+  
+  /* Dark mode adjustment */
+  [data-theme='dark'] & {
+    color: #0F172A; /* Dark text on neon button */
+    font-weight: 600;
   }
 }
 
 .btn-secondary {
-  background-color: var(--aqua-island);
+  background-color: var(--gray-200);
   color: var(--gray-800);
 
   &:hover {
-    background-color: var(--aqua-island-dark);
+    background-color: var(--gray-300);
     color: var(--gray-900);
     box-shadow: var(--box-shadow-sm);
   }
@@ -331,8 +366,7 @@ select:-webkit-autofill:focus {
   border-color: var(--teal-blue);
 
   &:hover {
-    background-color: var(--teal-blue-light);
-    color: var(--teal-blue-dark);
+    background-color: rgba(0, 131, 155, 0.1);
   }
 }
 
@@ -380,17 +414,18 @@ select:-webkit-autofill:focus {
 /* CUSTOM TOOLTIP STYLES */
 .app-tooltip-container {
   position: fixed;
-  background: rgba(255, 255, 255, 0.92);
-
-  /* --- ADDED: Dark Mode Tooltip --- */
+  background: var(--gray-800);
+  color: var(--gray-100);
+  border-color: var(--gray-600);
+  
+  /* Dark mode tooltip adjustments */
   [data-theme='dark'] & {
-    background: rgba(30, 41, 59, 0.95);
-    border-color: var(--gray-600);
-    color: var(--gray-100);
+     background: var(--gray-200); /* Light tooltip in dark mode */
+     color: var(--gray-900);
+     border-color: var(--gray-300);
   }
 
   backdrop-filter: blur(10px);
-  color: var(--gray-900);
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--border-radius-md);
@@ -451,10 +486,7 @@ select:-webkit-autofill:focus {
 .app-loading-overlay {
   position: absolute;
   inset: 0;
-  
-  /* --- UPDATED: Use var for dark mode support --- */
-  background-color: var(--overlay-bg); 
-
+  background-color: var(--surface-overlay); 
   backdrop-filter: blur(2px);
   z-index: 50;
   display: flex;
@@ -469,51 +501,24 @@ select:-webkit-autofill:focus {
   }
 }
 
-
 /* GLOBAL PRINT STYLES */
 @media print {
-  /* Hide navigation elements */
   app-sidebar,
   app-header,
   app-action-footer {
     display: none !important;
   }
-
-  /* === UI POLISH: Exact Color Printing === */
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background-color: #FFFFFF !important; 
+    color: #000000 !important;
   }
-
-  /* DEFAULT PRINT MODE */
-  body:not(.print-mode-qr):not(.print-mode-docx) {
-    app-root,
-    .main-panel,
-    main,
-    .dashboard-content {
-      overflow: visible !important;
-      height: auto !important;
-      width: auto !important;
-      position: static !important;
-      display: block !important;
-    }
-  }
-
-  /* DOCX PRINT MODE */
-  body.print-mode-docx app-root {
-    display: none !important;
-  }
-
-  /* QR PRINT MODE */
-  body.print-mode-qr {
-    app-root,
-    .main-panel,
-    main,
-    .dashboard-content {
-      visibility: visible !important;
-      height: auto !important;
-      overflow: visible !important;
-    }
+  /* Force reset containers to block for printing */
+  app-root, .main-panel, main, .dashboard-content {
+     display: block !important;
+     height: auto !important;
+     overflow: visible !important;
   }
 }
 
@@ -524,7 +529,7 @@ body > ul.submenu.open {
   background-color: var(--gray-100);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--box-shadow-md);
   width: 220px;
   z-index: 1040;
   overflow: hidden;
@@ -566,10 +571,6 @@ body > ul.submenu.open {
         flex-grow: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        opacity: 1;
-        transform: none;
-        position: static;
-        pointer-events: auto;
       }
 
       &:hover {
@@ -582,7 +583,6 @@ body > ul.submenu.open {
         color: var(--gray-900);
         background-color: var(--gray-200);
         font-weight: 600;
-
         &::before {
           content: '';
           position: absolute;
@@ -596,14 +596,12 @@ body > ul.submenu.open {
         }
       }
     }
-
     &:last-child a {
       margin-bottom: var(--spacing-xs);
     }
   }
 }
 
-/* Flyout menu entrance animation */
 @keyframes flyout-menu-fade-in {
   from { opacity: 0; transform: translateX(-8px) scale(0.95); }
   to { opacity: 1; transform: translateX(0) scale(1); }
@@ -611,15 +609,14 @@ body > ul.submenu.open {
 
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
-  background: rgba(0, 0, 0, 0.2);
-
-  /* --- ADDED: Dark Mode Backdrop --- */
+  background: rgba(0, 0, 0, 0.4);
+  
   [data-theme='dark'] & {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
   }
 
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   transition: none !important;
   animation: none !important;
 }
@@ -642,36 +639,13 @@ body > ul.submenu.open {
   line-height: 1.5;
   white-space: nowrap;
 }
-
-.status-in-use {
-  color: #FFFFFF;
-  background-color: var(--peacock-blue-light);
-}
-
-.status-ready {
-  color: #FFFFFF;
-  background-color: var(--color-success);
-}
-
-.status-maintenance {
-  color: #FFFFFF;
-  background-color: var(--dark-gray);
-}
-
-.status-repair {
-  color: #FFFFFF;
-  background-color: var(--color-warning);
-}
-
-.status-broken {
-  color: #FFFFFF;
-  background-color: var(--color-danger);
-}
-
-.status-default {
-  color: #FFFFFF;
-  background-color: var(--gray-500);
-}
+/* Status colors remain vivid for identification */
+.status-in-use { color: #FFFFFF; background-color: var(--peacock-blue-light); }
+.status-ready { color: #FFFFFF; background-color: var(--color-success); }
+.status-maintenance { color: #FFFFFF; background-color: var(--dark-gray); }
+.status-repair { color: #FFFFFF; background-color: var(--color-warning); }
+.status-broken { color: #FFFFFF; background-color: var(--color-danger); }
+.status-default { color: #FFFFFF; background-color: var(--gray-500); }
 
 /* ==================================================
    GLOBAL SKELETON LOADER
@@ -682,23 +656,9 @@ body > ul.submenu.open {
   animation: skeleton-pulse 1.5s infinite ease-in-out;
 }
 
-.skeleton-text {
-  height: 1em;
-  width: 100%;
-  margin-bottom: 0.5rem;
-  @extend .skeleton;
-}
-
-.skeleton-circle {
-  border-radius: 50%;
-  @extend .skeleton;
-}
-
-.skeleton-rect {
-  width: 100%;
-  height: 100%;
-  @extend .skeleton;
-}
+.skeleton-text { height: 1em; width: 100%; margin-bottom: 0.5rem; @extend .skeleton; }
+.skeleton-circle { border-radius: 50%; @extend .skeleton; }
+.skeleton-rect { width: 100%; height: 100%; @extend .skeleton; }
 
 @keyframes skeleton-pulse {
   0% { opacity: 0.6; }
@@ -706,23 +666,17 @@ body > ul.submenu.open {
   100% { opacity: 0.6; }
 }
 
-// Shared Input Group Styles
+// Shared Input Group Styles (Auth)
 .auth-input-group {
-  margin-bottom: clamp(16px, 4vw, 1.5rem); // var(--spacing-lg)
-
+  margin-bottom: clamp(16px, 4vw, 1.5rem);
   label {
     display: block;
     font-size: clamp(0.875rem, 3.5vw, 15px);
     font-weight: 600;
-    margin-bottom: clamp(6px, 2vw, 0.5rem); // var(--spacing-sm)
+    margin-bottom: clamp(6px, 2vw, 0.5rem);
     color: var(--gray-700);
   }
-
-  .input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
+  .input-wrapper { position: relative; display: flex; align-items: center; }
 
   input {
     width: 100%;
@@ -736,21 +690,17 @@ body > ul.submenu.open {
     box-sizing: border-box;
     min-height: 44px;
 
-    /* --- ADDED: Dark Mode overrides for Input --- */
     [data-theme='dark'] & {
-      background: var(--white); 
+      background: var(--surface-card); 
       color: var(--gray-900);
       border-color: var(--gray-300);
     }
 
     &:focus {
       border-color: var(--teal-blue);
-      background: var(--white);
+      background: var(--surface-card);
       box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
-
-      ~.input-icon {
-        color: var(--teal-blue);
-      }
+      ~.input-icon { color: var(--teal-blue); }
     }
 
     &.is-invalid {
@@ -767,7 +717,7 @@ body > ul.submenu.open {
     transition: color 0.25s ease;
     pointer-events: none;
   }
-
+  
   .invalid-feedback {
     color: var(--color-danger);
     font-size: clamp(0.75rem, 3vw, 0.875rem);
@@ -780,7 +730,7 @@ body > ul.submenu.open {
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
   background: var(--teal-blue);
-  color: var(--white);
+  color: #FFFFFF;
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
   font-size: clamp(0.9375rem, 4vw, 16px);
@@ -790,15 +740,15 @@ body > ul.submenu.open {
   min-height: 44px;
 
   &:hover:not(:disabled) {
-    background: #145248; // Darker teal
+    background: #145248; 
     transform: translateY(-1px);
   }
 
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
+  [data-theme='dark'] & {
+    color: #0F172A; 
   }
+
+  &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 }
 
 // Links

@@ -84,7 +84,7 @@
 
 .dashboard-content {
   flex-grow: 1;
-  margin: var(--spacing-sm) var(--spacing-mds);
+  padding: var(--spacing-sm) var(--spacing-mds);
   overflow-y: auto;
   min-height: 0;
   position: relative;

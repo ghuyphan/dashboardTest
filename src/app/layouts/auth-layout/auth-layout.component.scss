@@ -39,7 +39,7 @@
   
   /* DARK MODE FIX: Use :host-context to see the HTML tag attribute */
   :host-context([data-theme='dark']) & {
-    background-color: rgba(15, 23, 42, 0.85); /* Much darker overlay */
+    background-color: rgba(15, 23, 42, 0.7); /* Much darker overlay */
   }
   
   transform: translateZ(0); 
