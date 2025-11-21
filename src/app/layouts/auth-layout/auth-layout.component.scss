@@ -4,18 +4,20 @@
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background-color: var(--bg-body); /* UPDATED: Semantic Var */
+  background-color: var(--gray-100); /* Fallback color */
 }
 
 /* ==========================================================================
-   1. THE BACKGROUND LAYER
+   1. THE "BEST PERFORMANCE" BACKGROUND
    ========================================================================== */
 .auth-background-layer {
   position: fixed;
   inset: 0;
   z-index: 0;
+  
+  /* PERFORMANCE HINTS: */
   contain: strict; 
-  transform: translateZ(0); 
+  transform: translateZ(0); /* Force GPU layer */
   pointer-events: none;
   overflow: hidden;
 }
@@ -26,23 +28,22 @@
   object-fit: cover;
   object-position: center;
   display: block;
+  
+  /* OPTIMIZATION: Scale slightly to hide any potential edge artifacts */
   transform: scale(1.02);
   will-change: transform, opacity;
-  filter: blur(12px); /* Keep the blur */
+
+  /* Pre-blurred image used, so no CSS filter needed here */
+  filter: blur(12xp);
+  /* Optional: Fade in image to mask loading jank */
   animation: imageFadeIn 0.8s ease-out forwards;
 }
 
 .bg-overlay {
   position: absolute;
   inset: 0;
-  /* UPDATED: Semantic overlay that adapts slightly, or keep distinct for auth */
-  background-color: rgba(255, 255, 255, 0.3); 
+  background-color: rgba(255, 255, 255, 0.4); 
   transform: translateZ(0); 
-
-  /* Dark Mode Overlay adjustment */
-  :host-context([data-theme="dark"]) & {
-    background-color: rgba(15, 23, 42, 0.6); /* Darker overlay for dark mode */
-  }
 }
 
 /* ==========================================================================
@@ -53,10 +54,12 @@
   z-index: 1;
   width: 100%;
   height: 100%;
+  
   display: flex;
   justify-content: center;
   align-items: center;
   padding: var(--spacing-lg);
+  
   overflow-y: auto; 
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -64,31 +67,24 @@
 
 .auth-card-wrapper {
   view-transition-name: auth-card; 
+  
   width: 100%;
   max-width: 420px;
   
-  /* --- GLASSMORPHISM (LIGHT MODE) --- */
-  background: rgba(255, 255, 255, 0.75); /* Slightly more opaque for contrast */
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
-  color: var(--text-body);
+  /* High opacity for text readability and rendering speed */
+  background: rgba(255, 255, 255, 0.6); 
   
   border-radius: var(--border-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
   
   padding: clamp(24px, 5vw, 40px);
   display: flex;
   flex-direction: column;
+  
   contain: content; 
   will-change: transform, opacity;
-
-  /* --- GLASSMORPHISM (DARK MODE) --- */
-  :host-context([data-theme="dark"]) & {
-    background: rgba(30, 41, 59, 0.8); /* Dark Slate Glass */
-    border: 1px solid rgba(51, 65, 85, 0.5);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  }
 }
 
 .auth-logo {
@@ -101,6 +97,7 @@
     object-fit: contain;
     margin-bottom: clamp(16px, 4vw, 24px);
     aspect-ratio: 1 / 1;
+    /* Prevent layout shift */
     display: inline-block;
   }
 
@@ -109,15 +106,13 @@
     font-size: clamp(1.5rem, 5vw, 2rem);
     margin-bottom: 8px;
     line-height: 1.2;
-    /* UPDATED: Use semantic header color */
-    color: var(--text-header); 
+    color: var(--peacock-blue);
     margin-top: 0;
   }
 
   p {
     font-size: clamp(0.875rem, 3.5vw, 15px);
-    /* UPDATED: Use semantic muted color */
-    color: var(--text-muted);
+    color: var(--gray-600);
     margin: 0;
   }
 }
@@ -126,8 +121,10 @@
    3. MOBILE OPTIMIZATIONS
    ========================================================================== */
 @media (max-width: 992px) {
+  /* Enabled background image on mobile (removed display: none) */
+  
   :host {
-    background-color: transparent;
+    background-color: transparent; /* Let image show through */
   }
 
   .auth-container {
@@ -141,19 +138,22 @@
     border-radius: 0;
     border: none;
     box-shadow: none;
+    
+    /* Removed 'background: transparent' so it uses the rgba(255,255,255,0.6) from desktop.
+       This ensures readability over the background image. 
+       If you want it clearer/more opaque on mobile, override it here. */
+       
     justify-content: center; 
     padding: clamp(20px, 5vw, 32px);
-    
-    /* Mobile: Ensure good contrast on top of image */
-    background: var(--bg-card); 
-    opacity: 0.98; 
   }
 }
 
 /* ==========================================================================
    4. ANIMATION CURVES
    ========================================================================== */
-::view-transition-group(root) { animation-duration: 0s; }
+::view-transition-group(root) {
+  animation-duration: 0s;
+}
 
 ::view-transition-group(auth-card) {
   animation-duration: 0.4s;
@@ -161,8 +161,13 @@
   z-index: 100;
 }
 
-::view-transition-old(auth-card) { display: none; }
-::view-transition-new(auth-card) { animation: none; }
+::view-transition-old(auth-card) {
+  display: none; 
+}
+
+::view-transition-new(auth-card) {
+  animation: none; 
+}
 
 @keyframes imageFadeIn {
   from { opacity: 0; }

@@ -12,13 +12,10 @@
   border: none;
   padding: 0 clamp(12px, 3vw, 1rem);
   cursor: pointer;
-  
-  /* UPDATED: Semantic Muted Color */
-  color: var(--text-muted); 
-  
+  color: var(--gray-300);
   font-size: clamp(15px, 4vw, 17px);
   line-height: 1;
-  min-height: 44px;
+  min-height: 44px; /* Matches input height */
   height: 100%;
   display: flex;
   align-items: center;
@@ -28,8 +25,7 @@
 
   &:hover,
   &:focus {
-    /* UPDATED: Semantic Primary Color */
-    color: var(--color-primary);
+    color: var(--teal-blue);
   }
 }
 
@@ -48,10 +44,7 @@
   display: flex;
   align-items: center;
   gap: clamp(6px, 2vw, 0.5rem);
-  
-  /* UPDATED: Semantic Body Color */
-  color: var(--text-body);
-  
+  color: var(--gray-700);
   cursor: pointer;
 
   label {
@@ -63,7 +56,7 @@
   }
 
   input[type="checkbox"] {
-    accent-color: var(--color-primary); /* UPDATED */
+    accent-color: var(--teal-blue);
     width: clamp(14px, 4vw, 1rem);
     height: clamp(14px, 4vw, 1rem);
     padding: 0;
@@ -78,9 +71,7 @@
   display: flex;
   align-items: center;
   margin: clamp(20px, 5vw, 2rem) 0;
-  
-  /* UPDATED: Semantic colors */
-  color: var(--text-muted);
+  color: var(--gray-300);
   font-size: clamp(0.875rem, 3.5vw, 15px);
   gap: clamp(8px, 2vw, 12px);
 
@@ -88,7 +79,7 @@
   &::after {
     content: "";
     flex: 1;
-    border-bottom: 1px solid var(--border-color); /* UPDATED */
+    border-bottom: 1px solid var(--gray-200);
   }
 }
 
@@ -96,7 +87,7 @@
 .support {
   text-align: center;
   font-size: clamp(0.875rem, 3.5vw, 15px);
-  color: var(--text-secondary); /* UPDATED */
+  color: var(--gray-700);
   line-height: 1.6;
 
   a+a {
@@ -104,13 +95,12 @@
   }
 
   a {
-    color: var(--text-link); /* UPDATED */
+    color: var(--teal-blue);
     text-decoration: none;
     font-weight: 600;
     word-break: break-word;
 
     &:hover {
-      color: var(--text-link-hover); /* UPDATED */
       text-decoration: underline;
     }
   }
