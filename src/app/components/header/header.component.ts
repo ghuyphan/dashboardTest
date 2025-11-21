@@ -6,8 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon'; 
 
-import { User } from '../../models/user.model';
-import { SearchService } from '../../services/search.service';
+import { User } from '../../core/models/user.model';
+import { SearchService } from '../../core/services/search.service';
 
 @Component({
   selector: 'app-header',

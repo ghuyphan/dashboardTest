@@ -12,12 +12,12 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
 
 import { routes } from './app.routes';
-import { authInterceptor } from './interceptors/auth.interceptor';
-import { idTokenInterceptor } from './interceptors/id-token.interceptor';
-import { AuthService } from './services/auth.service';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { idTokenInterceptor } from './core/interceptors/id-token.interceptor';
+import { AuthService } from './core/services/auth.service';
 import localeVi from '@angular/common/locales/vi';
 
-import { CustomRouteReuseStrategy } from './custom-route-reuse-strategy';
+import { CustomRouteReuseStrategy } from './core/strategies/custom-route-reuse-strategy';
 
 registerLocaleData(localeVi);
 

@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, Inject } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { renderAsync } from 'docx-preview';
-import { ModalRef } from '../../models/modal-ref.model';
+import { ModalRef } from '../../core/models/modal-ref.model';
 import { saveAs } from 'file-saver';
 
 @Component({

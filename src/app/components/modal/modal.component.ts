@@ -7,8 +7,8 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
-import { ModalOptions } from '../../models/modal-options.model';
-import { ModalRef, MODAL_OPTIONS } from '../../models/modal-ref.model';
+import { ModalOptions } from '../../core/models/modal-options.model';
+import { ModalRef, MODAL_OPTIONS } from '../../core/models/modal-ref.model';
 
 @Component({
   selector: 'app-modal',

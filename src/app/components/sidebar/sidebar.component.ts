@@ -13,10 +13,10 @@ import { RouterModule } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { NavItem } from '../../models/nav-item.model';
-import { HasPermissionDirective } from '../../directives/has-permission.directive';
-import { TooltipDirective } from '../../directives/tooltip.directive';
-import { FlyoutDirective } from '../../directives/flyout.directive';
+import { NavItem } from '../../core/models/nav-item.model';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+import { FlyoutDirective } from '../../shared/directives/flyout.directive';
 
 @Component({
   selector: 'app-sidebar',

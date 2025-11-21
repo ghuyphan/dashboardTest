@@ -34,8 +34,8 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { Subject, timer, Subscription } from 'rxjs';
 import { debounce, delay, switchMap, map } from 'rxjs/operators';
 
-import { TooltipDirective } from '../../directives/tooltip.directive';
-import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+import { HighlightSearchPipe } from '../../shared/pipes/highlight-search.pipe';
 
 const LOADING_DEBOUNCE_MS = 200;
 const LOADING_HIDE_DELAY_MS = 150;

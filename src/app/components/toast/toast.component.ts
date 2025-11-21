@@ -9,8 +9,8 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ToastMessage, ToastType } from '../../models/toast-message.model';
-import { ToastService } from '../../services/toast.service';
+import { ToastMessage, ToastType } from '../../core/models/toast-message.model';
+import { ToastService } from '../../core/services/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface ToastTimerState {

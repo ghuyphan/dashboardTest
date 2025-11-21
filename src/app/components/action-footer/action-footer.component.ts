@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
-import { FooterActionService } from '../../services/footer-action.service';
-import { FooterAction } from '../../models/footer-action.model';
-import { HasPermissionDirective } from '../../directives/has-permission.directive'; // <-- IMPORTANT
+import { FooterActionService } from '../../core/services/footer-action.service';
+import { FooterAction } from '../../core/models/footer-action.model';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive'; // <-- IMPORTANT
 
 @Component({
   selector: 'app-action-footer',

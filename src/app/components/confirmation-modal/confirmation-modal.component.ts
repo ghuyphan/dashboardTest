@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ModalRef } from '../../models/modal-ref.model';
+import { ModalRef } from '../../core/models/modal-ref.model';
 
 @Component({
   selector: 'app-confirmation-modal',

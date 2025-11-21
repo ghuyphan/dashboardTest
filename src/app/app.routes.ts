@@ -1,16 +1,16 @@
 import { Routes } from '@angular/router';
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component'; // Import new layout
-import { authGuard } from './guards/auth.guard';
-import { permissionGuard } from './guards/permission.guard';
-import { MainLayoutComponent } from './main-layout/main-layout.component';
+import { authGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
+import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 
 export const routes: Routes = [
 {
     path: '',
     component: AuthLayoutComponent,
     children: [
-      { path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) },
-      { path: 'forgot-password', loadComponent: () => import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+      { path: 'login', loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent) },
+      { path: 'forgot-password', loadComponent: () => import('./features/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },
       { path: '', redirectTo: 'login', pathMatch: 'full' }
     ]
   },
@@ -23,14 +23,14 @@ export const routes: Routes = [
       {
         path: 'home',
         loadComponent: () => 
-          import('./home/home.component').then(m => m.HomeComponent),
+          import('./features/dashboard/home/home.component').then(m => m.HomeComponent),
         data: { title: 'Trang chủ' }
       },
 
       {
         path: 'equipment/catalog',
         loadComponent: () => 
-          import('./device-list/device-list.component').then(m => m.DeviceListComponent),
+          import('./features/equipment/device-list/device-list.component').then(m => m.DeviceListComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'QLThietBi.DMThietBi',
@@ -41,7 +41,7 @@ export const routes: Routes = [
       {
         path: 'equipment/catalog/:id',
         loadComponent: () => 
-          import('./device-detail/device-detail.component').then(m => m.DeviceDetailComponent),
+          import('./features/equipment/device-detail/device-detail.component').then(m => m.DeviceDetailComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'QLThietBi.DMThietBi', 
@@ -53,7 +53,7 @@ export const routes: Routes = [
             {
         path: 'equipment/dashboard',
         loadComponent: () => 
-          import('./device-dashboard/device-dashboard.component').then(m => m.DeviceDashboardComponent),
+          import('./features/equipment/device-dashboard/device-dashboard.component').then(m => m.DeviceDashboardComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'QLThietBi.TQThietBi', 
@@ -65,7 +65,7 @@ export const routes: Routes = [
       {
         path: 'reports/bed-usage',
         loadComponent: () => 
-          import('./bed-usage/bed-usage.component').then(m => m.BedUsageComponent),
+          import('./features/reports/bed-usage/bed-usage.component').then(m => m.BedUsageComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'BaoCao.CongSuatGiuongBenh',
@@ -77,7 +77,7 @@ export const routes: Routes = [
       {
         path: 'reports/examination-overview',
         loadComponent: () => 
-          import('./reports/examination-overview/examination-overview.component').then(m => m.ExaminationOverviewComponent),
+          import('./features/examination-overview/examination-overview.component').then(m => m.ExaminationOverviewComponent),
         canActivate: [permissionGuard],
         data: {
           permission: 'BaoCao.TongQuanKCB',
