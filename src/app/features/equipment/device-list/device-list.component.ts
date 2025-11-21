@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Router, NavigationEnd, NavigationStart, Event as RouterEvent } from '@angular/router'; 
+import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router'; 
 import { PageEvent } from '@angular/material/paginator';
 import { Subject, of, Observable } from 'rxjs';
 import {
@@ -21,6 +21,7 @@ import {
   startWith,
   debounceTime,
   map,
+  filter,
 } from 'rxjs/operators';
 
 import { ReusableTableComponent, GridColumn, SortChangedEvent, SortDirection } from '../../../components/reusable-table/reusable-table.component';
@@ -88,16 +89,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private readonly reloadTrigger$ = new Subject<void>();
   private readonly searchTerm$ = toObservable(this.searchService.searchTerm);
 
-  // --- CACHE OPTIMIZATION: Temporary storage for data while navigating ---
-  private cachedDataBackup: Device[] = [];
-
   ngOnInit(): void {
     this.initializeSubscriptions();
     this.updateFooterActions();
   }
 
   ngOnDestroy(): void {
-    // Footer cleanup only; subscriptions handled by takeUntilDestroyed
     this.footerService.clearActions();
   }
 
@@ -146,34 +143,20 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       )
       .subscribe();
 
-    // 3. Router Subscription (Optimized for Cache Lag)
+    // 3. Router Subscription (RESTORED FOR FOOTER)
+    // This ensures footer actions reappear when returning to this cached view
     this.router.events
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((event: RouterEvent) => {
-        
-        // CASE A: Leaving the page
-        // We backup the data and CLEAR the table. This makes the DOM tiny
-        // so Angular can detach/cache it instantly without lag.
-        if (event instanceof NavigationStart && event.url !== DEVICE_LIST_ROUTE) {
-          this.cachedDataBackup = [...this.pagedDeviceData];
-          this.pagedDeviceData = []; 
-          this.cdr.markForCheck();
-        }
-
-        // CASE B: Returning to the page
-        // The page loads instantly (empty). Then we fill it.
-        if (event instanceof NavigationEnd && event.urlAfterRedirects === DEVICE_LIST_ROUTE) {
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((event: NavigationEnd) => {
+        // Strict check to ensure we are exactly on the list page
+        // (or a paginated version of it) and not a child detail page
+        if (event.urlAfterRedirects === DEVICE_LIST_ROUTE || 
+            event.urlAfterRedirects.split('?')[0] === DEVICE_LIST_ROUTE) {
           this.updateFooterActions();
-
-          // If we have data backed up, restore it after a tiny delay
-          if (this.cachedDataBackup.length > 0) {
-             // 50ms delay lets the navigation animation finish smoothly first
-             setTimeout(() => {
-               this.pagedDeviceData = this.cachedDataBackup;
-               this.isLoading = false;
-               this.cdr.markForCheck();
-             }, 50);
-          }
+          this.cdr.markForCheck();
         }
       });
   }
@@ -221,8 +204,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     );
     this.pagedDeviceData = formattedData;
     this.totalDeviceCount = response.TotalCount;
-    // Clear backup on fresh load so we don't overwrite fresh data later
-    this.cachedDataBackup = []; 
   }
 
   private formatDeviceDates(device: Device): Device {

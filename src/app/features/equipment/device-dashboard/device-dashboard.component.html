@@ -1,25 +1,33 @@
 <div class="page-container">
   <div class="page-content">
-
     <div class="widget-section">
       <div class="widget-grid">
-        @if (isLoading && widgetData.length === 0) {
-        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-        <app-widget-card [title]="'Loading'" [isLoading]="true"></app-widget-card>
-        }
-        } @else {
-        @for (widget of widgetData; track trackByWidgetId($index, widget)) {
-        <app-widget-card [icon]="widget.icon" [title]="widget.title" [value]="widget.value" [caption]="widget.caption"
-          [accentColor]="widget.accentColor" [isLoading]="isLoading">
+        @if (isLoading && widgetData.length === 0) { @for (i of [1, 2, 3, 4, 5,
+        6]; track i) {
+        <app-widget-card
+          [title]="'Loading'"
+          [isLoading]="true"
+        ></app-widget-card>
+        } } @else { @for (widget of widgetData; track trackByWidgetId($index,
+        widget)) {
+        <app-widget-card
+          [icon]="widget.icon"
+          [title]="widget.title"
+          [value]="widget.value"
+          [caption]="widget.caption"
+          [accentColor]="widget.accentColor"
+          [isLoading]="isLoading"
+        >
         </app-widget-card>
-        }
-        }
+        } }
       </div>
     </div>
 
     <div class="dashboard-main-content">
-
-      <div class="filter-bar-container" [class.filter-bar-container--active]="currentFilter">
+      <div
+        class="filter-bar-container"
+        [class.filter-bar-container--active]="currentFilter"
+      >
         <div class="filter-bar">
           @if (visibleFilter) {
           <span>
@@ -34,19 +42,43 @@
       </div>
 
       <div class="dashboard-main-grid">
-
-        <app-chart-card class="span-2" title="Thống Kê Trạng Thái" [subtitle]="statusChartSubtext"
-          icon="fas fa-pie-chart" iconClass="icon-info" [isLoading]="isLoading" skeletonType="pie"
-          [chartOptions]="statusChartOptions" (chartClick)="onChartClick('status', $event)">
+        <app-chart-card
+          class="span-2"
+          title="Thống Kê Trạng Thái"
+          [subtitle]="statusChartSubtext"
+          icon="fas fa-pie-chart"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          skeletonType="pie"
+          [chartOptions]="statusChartOptions"
+          (chartClick)="onChartClick('status', $event)"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        >
         </app-chart-card>
 
-        <app-chart-card class="span-1" title="Số Lượng Theo Loại (Top 10)" icon="fas fa-tags" iconClass="icon-info"
-          [isLoading]="isLoading" skeletonType="bar" [chartOptions]="categoryChartOptions"
-          (chartClick)="onChartClick('category', $event)">
+        <app-chart-card
+          class="span-1"
+          title="Số Lượng Theo Loại (Top 10)"
+          icon="fas fa-tags"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          skeletonType="bar"
+          [chartOptions]="categoryChartOptions"
+          (chartClick)="onChartClick('category', $event)"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        >
         </app-chart-card>
 
-        <app-chart-card class="span-1" [title]="locationChartTitle" icon="fas fa-map-marker-alt" iconClass="icon-info"
-          [isLoading]="isLoading" [chartOptions]="locationChartOptions" (chartClick)="onChartClick('location', $event)">
+        <app-chart-card
+          class="span-1"
+          [title]="locationChartTitle"
+          icon="fas fa-map-marker-alt"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="locationChartOptions"
+          (chartClick)="onChartClick('location', $event)"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        >
         </app-chart-card>
 
         <div class="action-list-card span-2">
@@ -58,11 +90,20 @@
           </h3>
           <div class="action-list-body">
             @if (isLoading) {
-            <div class="skeleton-rect" style="height: 100%; width: 100%; min-height: 200px;"></div>
+            <div
+              class="skeleton-rect"
+              style="height: 100%; width: 100%; min-height: 200px"
+            ></div>
             } @else if (attentionDevices.length > 0) {
-            <app-reusable-table [data]="attentionDevices" [columns]="attentionTableColumns" [clientSideSort]="true"
-              (rowClick)="navigateToDetail($event)" emptyStateText="Không có thiết bị nào cần bảo trì."
-              [showPaginator]="true" [pageSize]="10">
+            <app-reusable-table
+              [data]="attentionDevices"
+              [columns]="attentionTableColumns"
+              [clientSideSort]="true"
+              (rowClick)="navigateToDetail($event)"
+              emptyStateText="Không có thiết bị nào cần bảo trì."
+              [showPaginator]="true"
+              [pageSize]="10"
+            >
             </app-reusable-table>
             } @else {
             <div class="list-empty-state">
@@ -73,8 +114,16 @@
           </div>
         </div>
 
-        <app-chart-card class="span-3" title="Thiết Bị Mới Theo Tháng" icon="fas fa-chart-line" iconClass="icon-info"
-          [isLoading]="isLoading" skeletonType="line" [chartOptions]="trendChartOptions">
+        <app-chart-card
+          class="span-3"
+          title="Thiết Bị Mới Theo Tháng"
+          icon="fas fa-chart-line"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          skeletonType="line"
+          [chartOptions]="trendChartOptions"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        >
         </app-chart-card>
 
         <div class="action-list-card span-3">
@@ -86,11 +135,19 @@
           </h3>
           <div class="action-list-body">
             @if (isLoading) {
-            <div class="skeleton-rect" style="height: 100%; width: 100%; min-height: 200px;"></div>
+            <div
+              class="skeleton-rect"
+              style="height: 100%; width: 100%; min-height: 200px"
+            ></div>
             } @else if (expiringDevices.length > 0) {
-            <app-reusable-table [data]="expiringDevices" [columns]="expiringTableColumns" [showPaginator]="false"
-              [clientSideSort]="true" (rowClick)="navigateToDetail($event)"
-              emptyStateText="Không có thiết bị nào sắp hết hạn.">
+            <app-reusable-table
+              [data]="expiringDevices"
+              [columns]="expiringTableColumns"
+              [showPaginator]="false"
+              [clientSideSort]="true"
+              (rowClick)="navigateToDetail($event)"
+              emptyStateText="Không có thiết bị nào sắp hết hạn."
+            >
             </app-reusable-table>
             } @else {
             <div class="list-empty-state">
@@ -100,9 +157,7 @@
             }
           </div>
         </div>
-
       </div>
     </div>
-
   </div>
 </div>

@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   DestroyRef,
+  effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -16,6 +17,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { environment } from '../../../../environments/environment.development';
+import { ThemeService } from '../../../core/services/theme.service';
 
 // Constants
 const GLOBAL_FONT_FAMILY =
@@ -116,11 +118,29 @@ export class BedUsageComponent implements OnInit {
   public currentDateTime = '';
   public chartOptions: EChartsCoreOption | null = null;
   public widgetData: WidgetData[] = []; 
+  public readonly themeService = inject(ThemeService);
 
   // Private Properties
   private bedStatusSeries: BedStatusSeries[] = [];
   private cssVars: CssVariables = {} as CssVariables;
   private widgetDefinitions: WidgetData[] = [];
+
+  constructor() {
+    // 1. React to theme changes to re-initialize colors and rebuild chart options
+    effect(() => {
+        // Track the theme state
+        const isDark = this.themeService.isDarkTheme();
+
+        // Re-initialize colors to fetch new CSS variables
+        this.initializeColors();
+        
+        // Skip on initial call if we haven't loaded data yet
+        if (!this.isLoading && this.widgetData.length > 0) {
+            this.loadData(); // Forced refresh to redraw charts with new palette
+        }
+        this.cd.markForCheck();
+    });
+  }
 
   ngOnInit(): void {
     this.initializeColors(); 

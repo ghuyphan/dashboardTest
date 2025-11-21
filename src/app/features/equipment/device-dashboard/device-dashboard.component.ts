@@ -5,6 +5,7 @@ import {
   inject,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -24,7 +25,8 @@ import {
   ReusableTableComponent,
   GridColumn,
 } from '../../../components/reusable-table/reusable-table.component';
-import { DateUtils } from '../../../shared/utils/date.utils'; // <--- IMPORT DATE UTILS
+import { DateUtils } from '../../../shared/utils/date.utils';
+import { ThemeService } from '../../../core/services/theme.service';
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -88,6 +90,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
   private toastService = inject(ToastService);
   private router = inject(Router);
+  public readonly themeService = inject(ThemeService);
 
   public isLoading: boolean = false;
 
@@ -152,6 +155,17 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   };
 
   private destroy$ = new Subject<void>();
+
+  constructor() {
+    effect(() => {
+        const isDark = this.themeService.isDarkTheme();
+        this.initColors();
+        if (!this.isLoading && this.allDevices.length > 0) {
+            this.refilterAndRenderAll();
+        }
+        this.cd.markForCheck();
+    });
+  }
 
   ngOnInit(): void {
     // Safely get CSS variables if in browser

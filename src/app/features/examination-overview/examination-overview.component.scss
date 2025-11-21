@@ -34,7 +34,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  background-color: var(--white);
+  // background-color: var(--white);
   // padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   flex-wrap: wrap;
@@ -192,7 +192,6 @@
 
 /* --- 4. Content Card --- */
 .content-card {
-  background-color: var(--white);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);

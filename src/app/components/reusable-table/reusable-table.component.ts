@@ -37,8 +37,7 @@ import { debounce, delay, switchMap, map } from 'rxjs/operators';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 import { HighlightSearchPipe } from '../../shared/pipes/highlight-search.pipe';
 
-const LOADING_DEBOUNCE_MS = 200;
-const LOADING_HIDE_DELAY_MS = 150;
+// FIX: Debounce set to 0 for instant loading feedback
 const ROW_NAVIGATION_DELAY_MS = 50;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
@@ -151,27 +150,12 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = { active: '', direction: '' };
 
-  private loadingSubject = new Subject<boolean>();
-  private loadingSubscription: Subscription;
-
-  constructor() {
-    this.loadingSubscription = this.loadingSubject.pipe(
-      switchMap(isLoading => {
-        if (isLoading) {
-          return timer(LOADING_DEBOUNCE_MS).pipe(map(() => true));
-        } else {
-          return timer(LOADING_HIDE_DELAY_MS).pipe(map(() => false));
-        }
-      })
-    ).subscribe(shouldShow => {
-      this.isLoadingWithDelay = shouldShow;
-      this.cdr.markForCheck();
-    });
-  }
+  constructor() {}
 
   ngOnInit(): void {
     this.initializeSelectionListener();
     this.updateDisplayedColumns();
+    this.isLoadingWithDelay = this.isLoading;
   }
 
   ngAfterViewInit(): void {
@@ -181,7 +165,8 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isLoading']) {
-      this.loadingSubject.next(this.isLoading);
+      this.isLoadingWithDelay = this.isLoading;
+      this.cdr.markForCheck();
     }
 
     if (changes['data']) {
@@ -194,7 +179,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   ngOnDestroy(): void {
-    this.loadingSubscription.unsubscribe();
   }
 
   private initializeSelectionListener(): void {

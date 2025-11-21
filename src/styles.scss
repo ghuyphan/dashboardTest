@@ -182,102 +182,69 @@ html {
   --transition-fast: 0.2s;
 }
 
-/* 4. DARK MODE OVERRIDES - REFINED & BALANCED */
+/* 4. DARK MODE OVERRIDES - THE "GLOW" UPDATE */
 [data-theme='dark'] {
   /* --- 1. FUNCTIONAL PALETTE (Deep Slate) --- */
-  --white: #1e293b;           /* Card Background (Slate 800) */
-  --gray-50: #0f172a;         /* Page Background (Slate 900) */
+  /* Made backgrounds slightly deeper for contrast */
   
-  --gray-100: #1e293b;        /* Header/Sidebar (Slate 800) */
-  --gray-200: #334155;        /* Borders (Slate 700) */
-  --gray-300: #475569;        /* Input Borders (Slate 600) */
-  --gray-400: #64748b;        /* Placeholders (Slate 500) */
-  --gray-500: #94a3b8;        /* Icons (Slate 400) */
-  --gray-600: #cbd5e1;        /* Secondary Text (Slate 300) */
-  --gray-700: #e2e8f0;        /* Primary Text (Slate 200) */
-  --gray-800: #f1f5f9;        /* Headings (Slate 100) */
-  --gray-900: #f8fafc;        /* High Contrast (Slate 50) */
+  --white: #1e293b;           /* Card Background (Slate 800) */
+  --gray-50: #0b1120;         /* Page Background (Very Deep Slate) */
+  
+  --gray-100: #1e293b;        /* Header/Sidebar */
+  --gray-200: #334155;        /* Borders */
+  --gray-300: #475569;        /* Input Borders */
+  --gray-400: #94a3b8;        /* Placeholders */
+  --gray-500: #94a3b8;        /* Icons */
+  --gray-600: #cbd5e1;        /* Secondary Text */
+  --gray-700: #e2e8f0;        /* Primary Text */
+  --gray-800: #f1f5f9;        /* Headings */
+  --gray-900: #ffffff;        /* High Contrast */
 
   /* --- 2. SEMANTIC SURFACES --- */
   --surface-background: var(--gray-50);
   --surface-card: var(--white);
-  --surface-overlay: rgba(15, 23, 42, 0.9); 
+  --surface-overlay: rgba(11, 17, 32, 0.85); 
   --surface-toast: #334155; 
   
   --border-color: var(--gray-200);
-  --input-bg: #0f172a; 
+  --input-bg: #020617; 
   
   /* --- 3. SEMANTIC TEXT --- */
   --text-primary: var(--gray-800);
   --text-secondary: var(--gray-500);
   --text-disabled: var(--gray-400);
 
-  /* --- 4. BRAND COLORS (Softer, More Professional) --- */
-  --teal-blue: #5eead4;       /* Teal 300 - softer, easier on eyes */
-  --peacock-blue: #7dd3fc;    /* Sky 300 - gentler blue */
-  --dark-teal: #5eead4;       /* Consistent with teal-blue */
-  --aqua-island: #99f6e4;     /* Teal 200 - lighter, calmer */
-  
-  /* Secondary Brand Colors */
-  --desert-storm: #1e293b;
-  --pale-aqua: #67e8f9;       /* Cyan 300 */
-  --deep-sapphire: #93c5fd;   /* Blue 300 */
-  --dawn-pink: #2d3748;
-  --peppermint: #34d399;      /* Emerald 400 */
+  /* --- 4. BRAND COLORS --- */
+  --teal-blue: #2dd4bf;    /* Teal 400 */
+  --peacock-blue: #38bdf8; /* Sky 400 */
+  --dark-teal: #5eead4;    
+  --aqua-island: #14b8a6; 
 
-  /* Pastel Colors (adjusted for dark mode) */
-  --pastel-lavender: #a78bfa; /* Violet 400 */
-  --pastel-mint: #6ee7b7;     /* Emerald 300 */
-  --pastel-peach: #fdba74;    /* Orange 300 */
-  --pastel-rose: #f9a8d4;     /* Pink 300 */
-  --pastel-sky: #7dd3fc;      /* Sky 300 */
-  --pastel-lemon: #fde047;    /* Yellow 300 */
-  --pastel-lilac: #c4b5fd;    /* Violet 300 */
-  --pastel-sage: #86efac;     /* Green 300 */
-  --pastel-coral: #fca5a5;    /* Red 300 */
-  --pastel-powder: #a5b4fc;   /* Indigo 300 */
+  /* --- 5. STATUS & CHART COLORS --- */
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-info: #38bdf8;
+  
+  --chart-color-1: #2dd4bf;
+  --chart-color-2: #60a5fa;
 
-  /* --- 5. STATUS & CHART COLORS (Balanced) --- */
-  --color-danger: #f87171;    /* Red 400 */
-  --color-success: #4ade80;   /* Green 400 */
-  --color-warning: #fbbf24;   /* Amber 400 */
-  --color-info: #7dd3fc;      /* Sky 300 */
-  
-  /* Table Headers */
-  --table-header-bg: #1e293b;
-  --table-header-text: var(--teal-blue);
-  
-  /* Charting Palette (Dark Mode Adjusted) */
-  --teal-blue-light: #99f6e4;
-  --teal-blue-dark: #14b8a6;
-  --beige-midtone: #fdba74;
-  --teal-midtone: #67e8f9;
-  --peacock-blue-light: #bae6fd;
-  --peacock-blue-dark: #0284c7;
-  --aqua-island-light: #ccfbf1;
-  --aqua-island-dark: #2dd4bf;
-  --deep-sapphire-light: #bfdbfe;
-  
-  --chart-color-1: var(--teal-blue);
-  --chart-color-2: var(--peacock-blue);
-  --chart-color-3: var(--aqua-island);
-  --chart-color-6: #fb923c;   /* Orange 400 */
-  --chart-color-7: #94a3b8;   /* Slate 400 */
-  --chart-color-8: var(--teal-midtone);
-  --chart-color-9: var(--beige-midtone);
-  --chart-color-10: var(--pastel-coral);
-
-  /* --- 6. SHADOWS & ELEVATION (Subtle & Refined) --- */
-  --box-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  /* --- 6. SHADOWS & ELEVATION (THE FIX) --- */
+  /* Standard Shadows: Darker + subtle teal tint */
+  --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
 
-  /* Refined Elevation Shadow - Subtle glow that complements rather than overwhelms */
+  /* MAGIC FLOATING SHADOW: 
+     1. Deep dark shadow for separation (rgba(0,0,0,0.6))
+     2. Colored Ambient Glow (rgba(45, 212, 191, 0.15)) - This matches Teal Brand
+     3. Border Ring (rgba(255,255,255,0.1)) - To define edges cleanly
+  */
   --shadow-elevation: 
-     0 20px 25px -5px rgba(0, 0, 0, 0.5), 
-     0 8px 10px -6px rgba(0, 0, 0, 0.5),
-     0 0 0 1px rgba(94, 234, 212, 0.1),      /* Subtle teal rim */
-     0 0 30px -5px rgba(94, 234, 212, 0.08); /* Gentle ambient glow */
+     0 20px 25px -5px rgba(0, 0, 0, 0.6), 
+     0 8px 10px -6px rgba(0, 0, 0, 0.6),
+     0 0 0 1px rgba(255, 255, 255, 0.1), /* Rim light */
+     0 0 20px 0px rgba(45, 212, 191, 0.15); /* Color Glow */
 
   /* --- 7. Angular Material Mixin --- */
   @include mat.all-component-colors($dark-theme);

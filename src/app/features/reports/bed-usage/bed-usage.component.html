@@ -31,7 +31,8 @@
       icon="fas fa-bed-pulse"
       iconClass="icon-info"
       [isLoading]="isLoading"
-      [chartOptions]="chartOptions">
+      [chartOptions]="chartOptions"
+      [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
 
       <div
         header-actions

@@ -1,3 +1,4 @@
+// src/app/components/chart-card/chart-card.component.ts
 import {
   Component,
   ElementRef,
@@ -7,7 +8,7 @@ import {
   output,
   viewChild,
   computed,
-  effect,
+  effect, // <-- Keep
   inject,
   NgZone,
   DestroyRef,
@@ -100,12 +101,17 @@ export class ChartCardComponent implements AfterViewInit {
     // Reactively handle Theme changes (requires dispose & re-init)
     effect(() => {
       const currentTheme = this.theme(); // Track dependency
-      if (this.chartInstance && this.hasLoadedECharts) {
-        // We must dispose and recreate to change the ECharts theme
+      const options = this.chartOptions(); // Track dependency
+      
+      // Only proceed if ECharts library has loaded and the component has initialized
+      if (this.hasLoadedECharts && this.hasInitialized) {
         this.disposeChart();
+        // Force the creation of a new chart instance with the new theme
         this.createChartInstance();
-        const options = this.chartOptions();
-        if (options) this.updateChart(options);
+        // Apply options if available
+        if (options && this.chartInstance) {
+          this.updateChart(options);
+        }
       }
     });
 
@@ -205,13 +211,14 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.isBrowser || !this.echartsInstance) return;
 
     const el = this.chartContainerRef().nativeElement;
+    // Check if element has dimensions to avoid error
     if (el.clientWidth === 0 || el.clientHeight === 0) return;
 
     this.ngZone.runOutsideAngular(() => {
       // Safety: Dispose if exists
-      if (this.chartInstance) this.chartInstance.dispose();
+      if (this.chartInstance && !this.chartInstance.isDisposed()) this.chartInstance.dispose();
 
-      this.chartInstance = this.echartsInstance!.init(el, this.theme(), {
+      this.chartInstance = this.echartsInstance!.init(el, this.theme(), { // <-- Pass the reactive theme() here
         renderer: 'canvas',
         useDirtyRect: true,
       });
@@ -223,7 +230,10 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private updateChart(options: EChartsCoreOption): void {
-    if (!this.chartInstance) return;
+    if (!this.chartInstance || this.chartInstance.isDisposed()) {
+       // If instance doesn't exist yet, it will be handled on creation.
+       return; 
+    }
 
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance!.setOption(options, {
