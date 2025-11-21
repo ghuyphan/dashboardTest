@@ -1,5 +1,6 @@
 @use '@angular/material' as mat;
 
+/* 1. GLOBAL RESET & LAYOUT */
 html,
 body {
   height: 100%;
@@ -18,23 +19,27 @@ main {
   overflow: hidden;
 }
 
-router-outlet+* {
+router-outlet + * {
   height: 100%;
 }
 
+/* 2. MATERIAL THEME CONFIGURATION (Default Light) */
 html {
-  @include mat.theme((color: (theme-type: light,
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    ));
+  @include mat.theme((
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import '@angular/cdk/overlay-prebuilt.css';
 
+/* 3. ROOT VARIABLES (Light Mode Defaults) */
 :root {
   /* COLOR PALETTE */
 
@@ -141,6 +146,44 @@ html {
   --chart-color-8: var(--teal-midtone);
   --chart-color-9: var(--beige-midtone);
   --chart-color-10: var(--pastel-coral);
+
+  /* --- ADDED: Semantic Variables for Dark Mode --- */
+  --overlay-bg: rgba(255, 255, 255, 0.85);
+}
+
+/* 4. DARK MODE OVERRIDES */
+[data-theme='dark'] {
+  /* Backgrounds: Flip light to dark */
+  --white: #1e293b;         /* Card background */
+  --gray-50: #0f172a;       /* Page background (Deepest) */
+  --gray-100: #1e293b;      /* Sidebar/Header background */
+  --gray-200: #334155;      /* Borders */
+  --gray-300: #475569;      /* Inputs borders */
+
+  /* Text: Flip dark to light */
+  --gray-400: #64748B;
+  --gray-500: #94A3B8;
+  --gray-600: #CBD5E1;
+  --gray-700: #E2E8F0;      /* Primary text */
+  --gray-800: #F1F5F9;      /* Headings */
+  --gray-900: #FFFFFF;      /* High contrast text */
+
+  /* Shadows: Make them subtler but visible on dark bg */
+  --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  
+  /* Semantic Overrides */
+  --overlay-bg: rgba(15, 23, 42, 0.9); 
+  
+  /* Angular Material Dark Theme Override */
+  @include mat.theme((
+    color: (
+      theme-type: dark,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    )
+  ));
 }
 
 /* GLOBAL RESETS & BASE STYLES */
@@ -338,6 +381,14 @@ select:-webkit-autofill:focus {
 .app-tooltip-container {
   position: fixed;
   background: rgba(255, 255, 255, 0.92);
+
+  /* --- ADDED: Dark Mode Tooltip --- */
+  [data-theme='dark'] & {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: var(--gray-600);
+    color: var(--gray-100);
+  }
+
   backdrop-filter: blur(10px);
   color: var(--gray-900);
   font-weight: var(--font-weight-medium);
@@ -400,7 +451,10 @@ select:-webkit-autofill:focus {
 .app-loading-overlay {
   position: absolute;
   inset: 0;
-  background-color: rgba(255, 255, 255, 0.85);
+  
+  /* --- UPDATED: Use var for dark mode support --- */
+  background-color: var(--overlay-bg); 
+
   backdrop-filter: blur(2px);
   z-index: 50;
   display: flex;
@@ -558,6 +612,12 @@ body > ul.submenu.open {
 /* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
   background: rgba(0, 0, 0, 0.2);
+
+  /* --- ADDED: Dark Mode Backdrop --- */
+  [data-theme='dark'] & {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   transition: none !important;
@@ -675,6 +735,13 @@ body > ul.submenu.open {
     outline: none;
     box-sizing: border-box;
     min-height: 44px;
+
+    /* --- ADDED: Dark Mode overrides for Input --- */
+    [data-theme='dark'] & {
+      background: var(--white); 
+      color: var(--gray-900);
+      border-color: var(--gray-300);
+    }
 
     &:focus {
       border-color: var(--teal-blue);

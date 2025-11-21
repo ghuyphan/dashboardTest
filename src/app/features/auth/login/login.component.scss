@@ -3,7 +3,12 @@
   width: 100%;
 }
 
-/* --- Password Toggle Eye (Specific to Login) --- */
+/* Ensure input labels are visible in dark mode */
+.auth-input-group label {
+  /* Assuming global styles handled this, but forcing color mapping here ensures it works */
+  color: var(--gray-700); 
+}
+
 .toggle-password {
   position: absolute;
   right: 1px;
@@ -12,10 +17,10 @@
   border: none;
   padding: 0 clamp(12px, 3vw, 1rem);
   cursor: pointer;
-  color: var(--gray-300);
+  color: var(--gray-400);
   font-size: clamp(15px, 4vw, 17px);
   line-height: 1;
-  min-height: 44px; /* Matches input height */
+  min-height: 44px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -29,7 +34,6 @@
   }
 }
 
-/* --- "Remember Me" & "Forgot Password" Row --- */
 .options {
   display: flex;
   justify-content: space-between;
@@ -63,15 +67,15 @@
     margin-right: clamp(2px, 1vw, 0.25rem);
     vertical-align: middle;
     flex-shrink: 0;
+    border: 1px solid var(--gray-400); 
   }
 }
 
-/* --- Divider ("Hoặc") --- */
 .divider {
   display: flex;
   align-items: center;
   margin: clamp(20px, 5vw, 2rem) 0;
-  color: var(--gray-300);
+  color: var(--gray-500);
   font-size: clamp(0.875rem, 3.5vw, 15px);
   gap: clamp(8px, 2vw, 12px);
 
@@ -79,15 +83,14 @@
   &::after {
     content: "";
     flex: 1;
-    border-bottom: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-300);
   }
 }
 
-/* --- Support / Footer Info --- */
 .support {
   text-align: center;
   font-size: clamp(0.875rem, 3.5vw, 15px);
-  color: var(--gray-700);
+  color: var(--gray-600);
   line-height: 1.6;
 
   a+a {
