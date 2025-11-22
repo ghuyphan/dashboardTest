@@ -1,0 +1,129 @@
+:host {
+  display: block;
+}
+
+.filter-card {
+  /* Use theme variables */
+  background-color: var(--surface-card);
+  box-shadow: var(--box-shadow-md);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  border: 1px solid var(--border-color);
+}
+
+.filter-inputs {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+}
+
+.form-control-sm {
+  padding: 8px 12px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--gray-300);
+  color: var(--text-primary);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--teal-blue);
+    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
+  }
+}
+
+.quick-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-pill {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 99px;
+  background-color: var(--surface-background);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--gray-100);
+    color: var(--teal-blue);
+    border-color: var(--teal-blue);
+  }
+
+  &.active {
+    background-color: var(--teal-blue);
+    color: #ffffff;
+    border-color: var(--teal-blue);
+  }
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 20px;
+  border-radius: var(--border-radius-md);
+  font-weight: 500;
+  background-color: var(--teal-blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--peacock-blue);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-inputs {
+    width: 100%;
+  }
+  .filter-group {
+    flex: 1;
+  }
+  .quick-actions {
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    &::-webkit-scrollbar { display: none; }
+  }
+  .action-buttons .btn {
+    width: 100%;
+  }
+}

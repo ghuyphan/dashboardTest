@@ -8,6 +8,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="HMSG.ico">
 
+  <script>
+    (function() {
+      try {
+        var localTheme = localStorage.getItem('theme');
+        var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Apply dark mode if explicitly set, or if no preference is set but system is dark
+        if (localTheme === 'dark' || (!localTheme && supportDarkMode)) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {
+        console.error('Theme loader failed', e);
+      }
+    })();
+  </script>
+
+  <style>
+    html, body { height: 100%; margin: 0; }
+    
+    /* Default (Light) */
+    body { background-color: #F8FAFC; color: #334155; }
+
+    /* Dark Mode Override */
+    [data-theme="dark"] body {
+      background-color: #0b1120; /* Matches --gray-50 in dark mode */
+      color: #e2e8f0;            /* Matches --text-primary in dark mode */
+    }
+  </style>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print"
     onload="this.media='all'">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">

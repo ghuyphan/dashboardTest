@@ -19,6 +19,7 @@ export class ReportService {
   private summaryUrl = environment.outpatientSumUrl;
   private detailUrl = environment.outpatientDetailUrl;
 
+
   constructor() {}
 
   getExaminationOverview(

@@ -1,0 +1,46 @@
+<div class="filter-card">
+  <div class="filter-inputs">
+    <div class="filter-group">
+      <label for="fromDate">Từ ngày</label>
+      <input 
+        type="date" 
+        id="fromDate" 
+        [ngModel]="fromDate()" 
+        (ngModelChange)="onDateChange('from', $event)" 
+        class="form-control-sm" 
+      />
+    </div>
+    <div class="filter-group">
+      <label for="toDate">Đến ngày</label>
+      <input 
+        type="date" 
+        id="toDate" 
+        [ngModel]="toDate()" 
+        (ngModelChange)="onDateChange('to', $event)" 
+        class="form-control-sm" 
+      />
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    @for (range of quickRanges; track range.key) {
+      <button 
+        class="btn-pill" 
+        [class.active]="activeRange() === range.key"
+        (click)="setRange(range.key)">
+        {{ range.label }}
+      </button>
+    }
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn btn-primary" (click)="applyFilter()" [disabled]="isLoading()">
+      @if (isLoading()) {
+        <i class="fas fa-spinner fa-spin"></i>
+      } @else {
+        <i class="fas fa-filter"></i>
+      }
+      <span>{{ buttonLabel() }}</span>
+    </button>
+  </div>
+</div>
