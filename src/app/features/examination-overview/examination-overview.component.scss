@@ -3,7 +3,6 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  // background-color: var(--gray-50);
 }
 
 .page-container {
@@ -29,13 +28,18 @@
   }
 }
 
-/* --- 1. Filter Section (Responsive) --- */
+/* --- 1. Filter Section (Responsive & Themed) --- */
 .filter-section {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  // background-color: var(--white);
-  // padding: var(--spacing-md);
+  
+  /* THEME FIX: Use semantic variables */
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow-sm);
+  
+  padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   flex-wrap: wrap;
   gap: var(--spacing-md);
@@ -52,13 +56,13 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    min-width: 140px; // Prevent shrinking too much
+    min-width: 140px;
 
     label {
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
-      color: var(--gray-500);
+      color: var(--text-secondary); /* Use variable */
       letter-spacing: 0.5px;
     }
   }
@@ -74,22 +78,25 @@
       font-size: 0.85rem;
       font-weight: 500;
       border-radius: 99px;
-      border: 1px solid var(--gray-200);
-      background-color: var(--white);
-      color: var(--gray-600);
+      
+      /* THEME FIX: Button Colors */
+      background-color: var(--surface-background); /* Slightly darker than card */
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      
       cursor: pointer;
       transition: all 0.2s;
       white-space: nowrap;
 
       &:hover {
-        background-color: var(--gray-50);
+        background-color: var(--gray-100);
         color: var(--teal-blue);
-        border-color: var(--teal-blue-light);
+        border-color: var(--teal-blue);
       }
 
       &.active {
         background-color: var(--teal-blue);
-        color: var(--white);
+        color: #ffffff; /* Always white text on active primary */
         border-color: var(--teal-blue);
         box-shadow: var(--box-shadow-sm);
       }
@@ -98,10 +105,14 @@
 
   .form-control-sm {
     padding: 8px 12px;
+    
+    /* THEME FIX: Input Colors */
+    background-color: var(--input-bg);
     border: 1px solid var(--gray-300);
+    color: var(--text-primary);
+    
     border-radius: var(--border-radius-sm);
     font-size: 0.9rem;
-    color: var(--gray-800);
     width: 100%;
     
     &:focus {
@@ -160,10 +171,10 @@
   }
 }
 
-/* --- 3. Dashboard Grid Layout (Responsive) --- */
+/* --- 3. Dashboard Grid Layout --- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); // Default 2 columns
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-lg);
   padding-bottom: var(--spacing-xl);
 
@@ -172,14 +183,13 @@
   }
 
   .span-full {
-    grid-column: 1 / -1; // Span all columns
+    grid-column: 1 / -1;
   }
 
   .span-half {
     grid-column: span 1;
   }
 
-  /* Tablet & Mobile: Stack everything */
   @media (max-width: 992px) {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
@@ -190,11 +200,16 @@
   }
 }
 
-/* --- 4. Content Card --- */
+/* --- 4. Content Card (Table) --- */
 .content-card {
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
+  
+  /* THEME FIX: Card Surface */
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-color); /* Optional border definition */
   box-shadow: var(--box-shadow-md);
+  
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -205,14 +220,14 @@
     justify-content: space-between;
     margin-bottom: var(--spacing-sm);
     padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--border-color); /* Use variable */
     flex-shrink: 0;
   }
 
   .card-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--gray-800);
+    color: var(--text-primary); /* Use variable */
     margin: 0;
     display: flex;
     align-items: center;
@@ -240,6 +255,8 @@
       .reusable-table-wrapper {
          box-shadow: none;
          border-radius: 0;
+         border: none; /* Remove table wrapper border inside card */
+         background: transparent; /* Let card background show */
       }
     }
   }
@@ -251,10 +268,15 @@
 .text-orange { color: var(--color-warning); }
 .text-success { color: var(--color-success); }
 
+/* Dark mode specific overrides for helper text if needed */
+:host-context([data-theme='dark']) {
+  .text-teal { color: var(--dark-teal); }
+}
+
 .btn-icon {
   background: none;
   border: none;
-  color: var(--gray-500);
+  color: var(--text-secondary); /* Use variable */
   cursor: pointer;
   font-size: 1.1rem;
   transition: color 0.2s;

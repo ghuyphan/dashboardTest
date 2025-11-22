@@ -5,7 +5,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   DestroyRef,
-  effect
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -17,12 +17,17 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { environment } from '../../../../environments/environment.development';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
 
-const GLOBAL_FONT_FAMILY = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-const AUTO_REFRESH_INTERVAL = 60_000; 
+const GLOBAL_FONT_FAMILY =
+  'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+const AUTO_REFRESH_INTERVAL = 60_000;
 const CHART_BAR_WIDTH = '60%';
 
+// ... (Interfaces remain the same)
 interface ApiResponseData {
   TenPhongBan: string;
   Tong: number;
@@ -85,37 +90,32 @@ export class BedUsageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
-  public isLoading = true; 
+  public isLoading = true;
   public isRefreshing = false;
   public currentDateTime = '';
   public chartOptions: EChartsCoreOption | null = null;
-  public widgetData: WidgetData[] = []; 
+  public widgetData: WidgetData[] = [];
 
   private bedStatusSeries: BedStatusSeries[] = [];
   private palette!: ThemePalette;
 
   constructor() {
-    // Polished logic: React to theme changes using the service
+    // UNIFIED: React to currentPalette changes
     effect(() => {
-        const isDark = this.themeService.isDarkTheme(); // Dependency
-        
-        // Add a small timeout to ensure CSS variables have updated in DOM
-        setTimeout(() => {
-          this.palette = this.themeService.getColors();
-          this.initializeBedStatusSeries();
-          
-          // Re-render if data exists
-          if (!this.isLoading && this.widgetData.length > 0) {
-             this.loadData(); 
-          }
-          this.cd.markForCheck();
-        }, 0);
+      this.palette = this.themeService.currentPalette();
+      this.initializeBedStatusSeries();
+
+      // Re-render if data exists to update colors
+      if (!this.isLoading && this.widgetData.length > 0) {
+        this.loadData();
+      }
+      this.cd.markForCheck();
     });
   }
 
   ngOnInit(): void {
-    // Initial palette fetch
-    this.palette = this.themeService.getColors();
+    // Initial palette fetch (sync)
+    this.palette = this.themeService.currentPalette();
     this.initializeBedStatusSeries();
 
     timer(0, AUTO_REFRESH_INTERVAL)
@@ -126,7 +126,6 @@ export class BedUsageComponent implements OnInit {
   }
 
   private initializeBedStatusSeries(): void {
-    // Using centralized palette
     this.bedStatusSeries = [
       {
         name: 'Giường trống (Vacant)',
@@ -172,7 +171,8 @@ export class BedUsageComponent implements OnInit {
     }
     this.cd.markForCheck();
 
-    this.http.get<ApiResponseData[]>(environment.bedUsageUrl)
+    this.http
+      .get<ApiResponseData[]>(environment.bedUsageUrl)
       .pipe(
         finalize(() => this.handleRequestComplete()),
         takeUntilDestroyed(this.destroyRef)
@@ -282,8 +282,13 @@ export class BedUsageComponent implements OnInit {
 
   private updateCurrentDateTime(): void {
     this.currentDateTime = new Date().toLocaleString('vi-VN', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     });
   }
 
@@ -298,10 +303,23 @@ export class BedUsageComponent implements OnInit {
         choMuonGiuong: acc.choMuonGiuong + item.ChoMuonGiuong,
         totalBeds: acc.totalBeds + item.Tong,
       }),
-      { giuongTrong: 0, dangDieuTri: 0, choXuatVien: 0, daBook: 0, chuaSanSang: 0, choMuonGiuong: 0, totalBeds: 0 }
+      {
+        giuongTrong: 0,
+        dangDieuTri: 0,
+        choXuatVien: 0,
+        daBook: 0,
+        chuaSanSang: 0,
+        choMuonGiuong: 0,
+        totalBeds: 0,
+      }
     );
 
-    const occupied = totals.dangDieuTri + totals.choXuatVien + totals.daBook + totals.chuaSanSang + totals.choMuonGiuong;
+    const occupied =
+      totals.dangDieuTri +
+      totals.choXuatVien +
+      totals.daBook +
+      totals.chuaSanSang +
+      totals.choMuonGiuong;
     const rate = totals.totalBeds > 0 ? (occupied / totals.totalBeds) * 100 : 0;
     const occupancyRate = `${rate.toFixed(1).replace('.', ',')}%`;
 
@@ -318,40 +336,55 @@ export class BedUsageComponent implements OnInit {
 
     this.widgetData.forEach((widget) => {
       if (updates[widget.id]) widget.value = updates[widget.id];
-      // Ensure widget colors update dynamically
-      const key = widget.id as keyof BedTotals;
-      // Re-map accent colors just in case
-      switch(widget.id) {
-          case 'occupancyRate': widget.accentColor = this.palette.chart1; break;
-          case 'totalBeds': widget.accentColor = this.palette.chart2; break;
-          case 'giuongTrong': widget.accentColor = this.palette.chart3; break;
-          case 'dangDieuTri': widget.accentColor = this.palette.chart1; break;
-          case 'choXuatVien': widget.accentColor = this.palette.chart8; break;
-          case 'daBook': widget.accentColor = this.palette.chart6; break;
-          case 'chuaSanSang': widget.accentColor = this.palette.chart7; break;
-          case 'choMuonGiuong': widget.accentColor = this.palette.chart9; break;
+
+      switch (widget.id) {
+        case 'occupancyRate':
+          widget.accentColor = this.palette.chart1;
+          break;
+        case 'totalBeds':
+          widget.accentColor = this.palette.chart2;
+          break;
+        case 'giuongTrong':
+          widget.accentColor = this.palette.chart3;
+          break;
+        case 'dangDieuTri':
+          widget.accentColor = this.palette.chart1;
+          break;
+        case 'choXuatVien':
+          widget.accentColor = this.palette.chart8;
+          break;
+        case 'daBook':
+          widget.accentColor = this.palette.chart6;
+          break;
+        case 'chuaSanSang':
+          widget.accentColor = this.palette.chart7;
+          break;
+        case 'choMuonGiuong':
+          widget.accentColor = this.palette.chart9;
+          break;
       }
     });
   }
 
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
     return apiData.map((item) => {
-      // Simple parsing logic
-      let cleanName = item.TenPhongBan.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
+      let cleanName = item.TenPhongBan.replace(
+        /\s*-?\s*\(Σ:\s*\d+\)\s*$/,
+        ''
+      ).trim();
       let viName = cleanName;
       let enName = '';
 
-      // Try to extract english part
       if (cleanName.includes('\n')) {
-          const parts = cleanName.split('\n');
-          viName = parts[0].trim();
-          enName = parts.slice(1).join(' ').trim();
+        const parts = cleanName.split('\n');
+        viName = parts[0].trim();
+        enName = parts.slice(1).join(' ').trim();
       } else {
-          const match = cleanName.match(/^(.+?)\s+([A-Z][a-zA-Z\s&()]+)$/);
-          if (match) {
-              viName = match[1].trim();
-              enName = match[2].trim();
-          }
+        const match = cleanName.match(/^(.+?)\s+([A-Z][a-zA-Z\s&()]+)$/);
+        if (match) {
+          viName = match[1].trim();
+          enName = match[2].trim();
+        }
       }
 
       return {
@@ -399,14 +432,21 @@ export class BedUsageComponent implements OnInit {
         textStyle: { fontSize: 10, color: this.palette.textSecondary },
       },
       grid: {
-        left: '5%', right: '5%', top: '15%', containLabel: true,
+        left: '5%',
+        right: '5%',
+        top: '15%',
+        containLabel: true,
       },
       xAxis: {
         type: 'category',
         data: xAxisData,
         axisLabel: {
-          interval: 0, rotate: 45, fontSize: 10, fontWeight: 'bold', overflow: 'truncate',
-          color: this.palette.textPrimary
+          interval: 0,
+          rotate: 45,
+          fontSize: 10,
+          fontWeight: 'bold',
+          overflow: 'truncate',
+          color: this.palette.textPrimary,
         },
         axisLine: {
           lineStyle: { color: this.palette.secondary },
@@ -433,14 +473,17 @@ export class BedUsageComponent implements OnInit {
           itemStyle: {
             color: config.color,
             borderRadius: [4, 4, 0, 0],
-            borderColor: this.palette.bgCard, 
+            borderColor: this.palette.bgCard,
             borderWidth: 1,
           },
           data: data.map((item) => item[config.dataKey]),
           label: {
-             show: true, position: 'inside', color: '#fff', fontSize: 9,
-             formatter: (p: any) => p.value > 0 ? p.value : ''
-          }
+            show: true,
+            position: 'inside',
+            color: '#fff',
+            fontSize: 9,
+            formatter: (p: any) => (p.value > 0 ? p.value : ''),
+          },
         })),
         {
           name: 'Tổng (Total)',
@@ -450,13 +493,17 @@ export class BedUsageComponent implements OnInit {
           data: data.map((item) => item.totalBeds),
           itemStyle: { color: 'transparent' },
           label: {
-            show: true, position: 'top', color: this.palette.textPrimary, fontWeight: 'bold', fontSize: 10,
-            formatter: '{c}'
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+            fontWeight: 'bold',
+            fontSize: 10,
+            formatter: '{c}',
           },
           tooltip: { show: false },
           z: 10,
           silent: true,
-        }
+        },
       ],
     };
   }
@@ -466,9 +513,10 @@ export class BedUsageComponent implements OnInit {
       if (!params?.length) return '';
       const idx = params[0].dataIndex;
       const item = data[idx];
-      
+
       let result = `<div style="font-weight:bold;margin-bottom:5px;">${item.viName}</div>`;
-      if (item.enName) result += `<div style="color:${this.palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
+      if (item.enName)
+        result += `<div style="color:${this.palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
 
       params.forEach((p: any) => {
         if (p.seriesName === 'Tổng (Total)' || p.value === 0) return;

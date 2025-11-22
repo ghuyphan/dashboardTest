@@ -1,3 +1,4 @@
+// src/app/features/equipment/device-dashboard/device-dashboard.component.ts
 import {
   Component,
   OnInit,
@@ -33,7 +34,7 @@ import {
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-// Interfaces ... (keeping existing interfaces for brevity)
+// ... (Interfaces remain the same)
 interface WidgetData {
   id: string;
   icon: string;
@@ -120,28 +121,32 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     },
   ];
 
-  // Polished properties
   private palette!: ThemePalette;
   private statusColorMap = new Map<string, string>();
   private destroy$ = new Subject<void>();
 
   constructor() {
+    // UNIFIED: React to currentPalette changes directly from the service
     effect(() => {
-      const isDark = this.themeService.isDarkTheme();
+      this.palette = this.themeService.currentPalette();
 
-      // Using setTimeout to ensure DOM variables are applied
-      setTimeout(() => {
-        this.initializePalette();
-        if (!this.isLoading && this.allDevices.length > 0) {
-          this.refilterAndRenderAll();
-        }
-        this.cd.markForCheck();
-      }, 0);
+      // Update color maps and widget colors immediately
+      this.initializePaletteMaps();
+
+      // Re-render charts/widgets if data is already loaded
+      if (!this.isLoading && this.allDevices.length > 0) {
+        this.refilterAndRenderAll();
+      }
+      this.cd.markForCheck();
     });
   }
 
   ngOnInit(): void {
-    this.initializePalette();
+    // Initialize palette synchronously first to avoid undefined errors before effect runs
+    this.palette = this.themeService.currentPalette();
+    this.initializePaletteMaps();
+    this.initializeWidgetsStructure(); // Set up widget structure with initial colors
+
     this.isLoading = true;
     this.cd.markForCheck();
     this.loadData();
@@ -153,12 +158,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     clearTimeout(this.filterTransitionTimer);
   }
 
-  private initializePalette(): void {
-    this.palette = this.themeService.getColors();
-
-    // Map Statuses to Theme Colors
+  private initializePaletteMaps(): void {
+    // Map Statuses to Theme Colors using the active palette
     this.statusColorMap.set('Sẵn sàng', this.palette.success);
-    this.statusColorMap.set('Đang sử dụng', this.palette.peacockLight); // Custom var from theme
+    this.statusColorMap.set('Đang sử dụng', this.palette.peacockLight);
     this.statusColorMap.set('Cần bảo trì', this.palette.warning);
     this.statusColorMap.set('Đang bảo trì', this.palette.gray500);
     this.statusColorMap.set('Hỏng', this.palette.danger);
@@ -167,7 +170,22 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     this.statusColorMap.set('Cho mượn', this.palette.chart9);
     this.statusColorMap.set('Khác', this.palette.gray400);
 
-    // Initialize Widgets with colors
+    // Update accent colors for existing widgets (if re-rendering after theme switch)
+    if (this.widgetData.length > 0) {
+      const w = this.widgetData;
+      w.find((x) => x.id === 'totalDevices')!.accentColor =
+        this.palette.primary;
+      w.find((x) => x.id === 'attentionValue')!.accentColor =
+        this.palette.warning;
+      w.find((x) => x.id === 'inUse')!.accentColor = this.palette.info;
+      w.find((x) => x.id === 'ready')!.accentColor = this.palette.success;
+      w.find((x) => x.id === 'needsAttention')!.accentColor =
+        this.palette.warning;
+      w.find((x) => x.id === 'expiring')!.accentColor = this.palette.danger;
+    }
+  }
+
+  private initializeWidgetsStructure(): void {
     this.widgetData = [
       {
         id: 'totalDevices',
@@ -243,7 +261,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   private refilterAndRenderAll(): void {
-    // ... (Filter logic stays the same as previous code) ...
     let filteredDevices = this.allDevices;
 
     if (this.currentFilter) {
@@ -274,7 +291,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     this.attentionDevices = stats.attentionDevices;
     this.expiringDevices = stats.expiringDevices;
 
-    // Chart Data Aggregation
     const statusData =
       this.currentFilter?.type === 'status'
         ? this.aggregateStatus(this.allDevices)
@@ -294,7 +310,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
 
-    // Chart Building using Palette
     const highlight = this.currentFilter?.name;
 
     this.statusChartOptions = statusData.length
@@ -610,12 +625,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ... Helpers ...
   formatNumber(val: number) {
     return new Intl.NumberFormat('vi-VN').format(val);
   }
+
   onChartClick(type: FilterType, params: any) {
-    /* ... keep existing logic ... */
     const name = params.name;
     if (!name) return;
     clearTimeout(this.filterTransitionTimer);
@@ -627,8 +641,8 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       this.refilterAndRenderAll();
     }
   }
+
   clearFilter() {
-    /* ... keep existing logic ... */
     this.currentFilter = null;
     this.refilterAndRenderAll();
     this.filterTransitionTimer = setTimeout(() => {
@@ -636,9 +650,11 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
       this.cd.markForCheck();
     }, 300);
   }
+
   navigateToDetail(d: any) {
     if (d?.Id) this.router.navigate(['/app/equipment/catalog', d.Id]);
   }
+
   trackByWidgetId(i: number, item: WidgetData) {
     return item.id;
   }

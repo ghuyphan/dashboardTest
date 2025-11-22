@@ -84,29 +84,23 @@ export class ExaminationOverviewComponent implements OnInit {
   private palette!: ThemePalette;
 
   constructor() {
+    // UNIFIED: React to currentPalette changes
     effect(() => {
-      const isDark = this.themeService.isDarkTheme(); // Trigger dependency
+      this.palette = this.themeService.currentPalette();
 
-      setTimeout(() => {
-        this.initializePalette();
-
-        // Only rebuild charts if we already have data
-        if (!this.isLoading && this.rawData.length > 0) {
-          this.calculateWidgets(this.rawData);
-          this.buildCharts(this.rawData);
-          this.cd.markForCheck();
-        }
-      }, 0);
+      // Only rebuild charts if we already have data (to reflect new colors)
+      if (!this.isLoading && this.rawData.length > 0) {
+        this.calculateWidgets(this.rawData);
+        this.buildCharts(this.rawData);
+        this.cd.markForCheck();
+      }
     });
   }
 
   ngOnInit(): void {
-    this.initializePalette();
+    // Initialize palette synchronously first
+    this.palette = this.themeService.currentPalette();
     this.setRange('thisWeek');
-  }
-
-  private initializePalette(): void {
-    this.palette = this.themeService.getColors();
   }
 
   public setRange(
@@ -252,7 +246,7 @@ export class ExaminationOverviewComponent implements OnInit {
     };
 
     const commonOps = {
-     backgroundColor: 'transparent',
+      backgroundColor: 'transparent',
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         color: this.palette.textSecondary,

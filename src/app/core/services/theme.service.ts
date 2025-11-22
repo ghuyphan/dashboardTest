@@ -55,18 +55,31 @@ export class ThemeService {
   private platformId = inject(PLATFORM_ID);
 
   public isDarkTheme = signal<boolean>(this.getInitialTheme());
+  
+  // [UNIFIED SOURCE] Components should read this signal
+  // We initialize it with the current CSS variables
+  public currentPalette = signal<ThemePalette>(this.getColors());
 
   constructor() {
     this.renderer = this.rendererFactory.createRenderer(null, null);
 
     effect(() => {
-      if (this.isDarkTheme()) {
+      const isDark = this.isDarkTheme();
+      
+      // 1. Apply the theme class/attribute immediately
+      if (isDark) {
         this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'dark');
         localStorage.setItem('theme', 'dark');
       } else {
         this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'light');
         localStorage.setItem('theme', 'light');
       }
+
+      // 2. Wait for styles to propagate to DOM (0ms timeout puts it at end of event loop), 
+      // then update the palette signal. This centralizes the "wait for CSS" logic.
+      setTimeout(() => {
+        this.currentPalette.set(this.getColors());
+      }, 0);
     });
   }
 
@@ -96,7 +109,6 @@ export class ThemeService {
 
   /**
    * Returns the full application color palette based on current CSS variables.
-   * Call this inside an effect or after a timeout to ensure DOM is updated.
    */
   public getColors(): ThemePalette {
     // Helper for brevity

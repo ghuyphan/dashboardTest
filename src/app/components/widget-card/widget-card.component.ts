@@ -12,6 +12,7 @@ import {
   NgZone
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ThemeService, ThemePalette } from '../../core/services/theme.service';
 
 type ValueFormat = 'number' | 'currency' | 'string' | 'percent';
 type CurrencyCode = 'VND' | 'USD' | 'EUR';
@@ -25,24 +26,39 @@ type CurrencyCode = 'VND' | 'USD' | 'EUR';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetCardComponent implements AfterViewInit, OnDestroy {
-  // Dependency Injection
   private ngZone = inject(NgZone);
+  private themeService = inject(ThemeService); // [1] Inject ThemeService
 
-  // Signal Inputs
+  // Inputs
   public icon = input<string>('fas fa-question-circle');
   public title = input.required<string>();
   public value = input<string>('0');
   public caption = input<string>('Caption');
-  public accentColor = input<string>('#64748B');
   public isLoading = input<boolean>(false);
 
-  // Computed styles
+  /**
+   * Accepts a hex code (e.g. '#00839b') OR a semantic key (e.g. 'primary', 'success', 'chart1')
+   */
+  public accentColor = input<string>('primary');
+
+  // [2] Resolve the color: Try to find it in the palette, otherwise use raw string
+  private resolvedAccentColor = computed(() => {
+    const rawInput = this.accentColor();
+    const palette = this.themeService.currentPalette(); // Reactive!
+    
+    if (rawInput in palette) {
+      return palette[rawInput as keyof ThemePalette];
+    }
+    return rawInput;
+  });
+
+  // [3] Use the resolved color for styles
   public iconWrapperStyle = computed(() => ({
-    'background-color': this.accentColor() + '33'
+    'background-color': this.resolvedAccentColor() + '33' // Add 20% opacity (hex alpha)
   }));
   
   public iconStyle = computed(() => ({
-    'color': this.accentColor()
+    'color': this.resolvedAccentColor()
   }));
 
   @ViewChild('valueDisplay', { static: false })
@@ -57,13 +73,12 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   private readonly LOCALE = 'vi-VN';
 
   constructor() {
-    // Replace ngOnChanges with effect
     effect(() => {
-      // Track signals
       const loading = this.isLoading();
       const val = this.value();
+      // Note: We don't need to manually track resolvedAccentColor here
+      // because the template uses the signal directly.
 
-      // Only animate if view is ready and we are not loading
       if (this.hasViewInitialized && !loading) {
         this.processValue(val, true);
       }
@@ -72,7 +87,6 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.hasViewInitialized = true;
-    // Initial render
     if (!this.isLoading()) {
       this.processValue(this.value(), true);
     }
@@ -150,10 +164,6 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     return parseFloat(cleaned);
   }
 
-  /**
-   * Animates the value counter.
-   * IMPORTANT: Runs outside Angular zone to prevent Change Detection thrashing.
-   */
   private animate(start: number, end: number): void {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     
@@ -163,24 +173,19 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Run outside Angular to prevent global CD on every frame
     this.ngZone.runOutsideAngular(() => {
       const startTime = performance.now();
-      
       const animationStep = (currentTime: number) => {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / this.ANIMATION_DURATION_MS, 1);
-        // Ease Out Quart: 1 - (1 - x)^4
         const easedProgress = 1 - Math.pow(1 - progress, 4); 
         
         let interpolatedValue = start + (end - start) * easedProgress;
         
-        // Round numbers (unless it's a percentage which might have decimals)
         if (this.valueFormat !== 'percent') {
           interpolatedValue = Math.round(interpolatedValue);
         }
 
-        // Direct DOM manipulation (Safe because we are outside Angular and it's a leaf node)
         this.renderNumericValue(interpolatedValue);
 
         if (progress < 1) {
@@ -191,7 +196,6 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
           this.animationFrameId = undefined;
         }
       };
-      
       this.animationFrameId = requestAnimationFrame(animationStep);
     });
   }

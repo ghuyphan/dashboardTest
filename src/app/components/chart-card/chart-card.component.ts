@@ -1,4 +1,3 @@
-// src/app/components/chart-card/chart-card.component.ts
 import {
   Component,
   ElementRef,
@@ -8,7 +7,7 @@ import {
   output,
   viewChild,
   computed,
-  effect, // <-- Keep
+  effect,
   inject,
   NgZone,
   DestroyRef,
@@ -20,6 +19,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 // ECharts Types
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import type * as echarts from 'echarts/core';
+import { ThemeService } from '../../core/services/theme.service';
 
 export type ChartSkeletonType = 'bar' | 'line' | 'pie';
 
@@ -39,6 +39,7 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly ngZone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly themeService = inject(ThemeService); // [1] Inject ThemeService
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // ===================================
@@ -47,18 +48,18 @@ export class ChartCardComponent implements AfterViewInit {
   public title = input<string>('');
   public subtitle = input<string>('');
   public icon = input<string>('');
-  public iconClass = input<string>(''); // e.g. 'text-primary'
+  public iconClass = input<string>('');
   public isLoading = input<boolean>(false);
   public emptyText = input<string>('Không có dữ liệu');
   public emptyIcon = input<string>('fas fa-chart-bar');
-  
-  // NEW: Allow configuring the skeleton look ('bar' is default)
   public skeletonType = input<ChartSkeletonType>('bar');
-
-  // Theme input for dark mode support (e.g., 'dark', 'light', or object)
-  public theme = input<string | object | null>(null); 
-  
   public chartOptions = input<EChartsCoreOption | null>(null);
+
+  /**
+   * Optional override. If not provided, uses ThemeService.isDarkTheme()
+   * Accepts: 'dark' | 'light' | object (echarts theme) | null
+   */
+  public theme = input<string | object | null>(null); 
 
   // ===================================
   // Outputs
@@ -76,6 +77,13 @@ export class ChartCardComponent implements AfterViewInit {
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
   public showChart = computed(() => !this.isLoading() && !!this.chartOptions());
 
+  // [2] Automatically derive the effective theme
+  private effectiveTheme = computed(() => {
+    const override = this.theme();
+    if (override) return override;
+    return this.themeService.isDarkTheme() ? 'dark' : 'light';
+  });
+
   // ===================================
   // Internal State
   // ===================================
@@ -90,7 +98,7 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly RESIZE_DEBOUNCE_MS = 150;
 
   constructor() {
-    // Reactively update chart when options change
+    // Effect 1: Update Data
     effect(() => {
       const options = this.chartOptions();
       if (this.hasLoadedECharts && this.chartInstance && options) {
@@ -98,17 +106,15 @@ export class ChartCardComponent implements AfterViewInit {
       }
     });
 
-    // Reactively handle Theme changes (requires dispose & re-init)
+    // Effect 2: Handle Theme Changes (Re-init required)
     effect(() => {
-      const currentTheme = this.theme(); // Track dependency
-      const options = this.chartOptions(); // Track dependency
+      const activeTheme = this.effectiveTheme(); // Track computed theme
+      const options = this.chartOptions();
       
-      // Only proceed if ECharts library has loaded and the component has initialized
+      // Only proceed if already initialized
       if (this.hasLoadedECharts && this.hasInitialized) {
         this.disposeChart();
-        // Force the creation of a new chart instance with the new theme
-        this.createChartInstance();
-        // Apply options if available
+        this.createChartInstance(); // Uses effectiveTheme() internally
         if (options && this.chartInstance) {
           this.updateChart(options);
         }
@@ -119,7 +125,6 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // SSR Guard: Don't run intersection observer on server
     if (this.isBrowser) {
       this.initializeIntersectionObserver();
     }
@@ -154,14 +159,11 @@ export class ChartCardComponent implements AfterViewInit {
   private async initializeChart(): Promise<void> {
     try {
       await this.loadEChartsLibrary();
-      
       this.createChartInstance();
-      
       const options = this.chartOptions();
       if (options && this.chartInstance) {
         this.updateChart(options);
       }
-      
       this.setupResizeObserver();
     } catch (error) {
       console.error('[ChartCardComponent] Failed to initialize chart:', error);
@@ -183,18 +185,14 @@ export class ChartCardComponent implements AfterViewInit {
     ]);
 
     this.echartsInstance = echartsCore;
-
     this.echartsInstance.use([
       CanvasRenderer.CanvasRenderer,
-      // Basic Charts
       charts.BarChart,
       charts.LineChart,
       charts.PieChart,
-      // Extended Charts (Added for flexibility)
       charts.ScatterChart,
       charts.RadarChart,
       charts.GaugeChart,
-      // Components
       components.TitleComponent,
       components.TooltipComponent,
       components.GridComponent,
@@ -211,14 +209,13 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.isBrowser || !this.echartsInstance) return;
 
     const el = this.chartContainerRef().nativeElement;
-    // Check if element has dimensions to avoid error
     if (el.clientWidth === 0 || el.clientHeight === 0) return;
 
     this.ngZone.runOutsideAngular(() => {
-      // Safety: Dispose if exists
       if (this.chartInstance && !this.chartInstance.isDisposed()) this.chartInstance.dispose();
 
-      this.chartInstance = this.echartsInstance!.init(el, this.theme(), { // <-- Pass the reactive theme() here
+      // [3] Pass the effectiveTheme() signal value
+      this.chartInstance = this.echartsInstance!.init(el, this.effectiveTheme(), {
         renderer: 'canvas',
         useDirtyRect: true,
       });
@@ -230,15 +227,12 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private updateChart(options: EChartsCoreOption): void {
-    if (!this.chartInstance || this.chartInstance.isDisposed()) {
-       // If instance doesn't exist yet, it will be handled on creation.
-       return; 
-    }
+    if (!this.chartInstance || this.chartInstance.isDisposed()) return;
 
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance!.setOption(options, {
-        notMerge: true, // OPTIMIZATION: Prevents "ghost data" by resetting state
-        lazyUpdate: true, // Optimizes rendering performance
+        notMerge: true,
+        lazyUpdate: true,
         silent: false,
       });
     });
@@ -260,9 +254,7 @@ export class ChartCardComponent implements AfterViewInit {
 
     this.resizeTimer = setTimeout(() => {
       const el = this.chartContainerRef().nativeElement;
-
       if (!this.chartInstance && el.clientWidth > 0 && el.clientHeight > 0) {
-        // Lazy Creation: Dimensions are finally available
         this.createChartInstance();
         const options = this.chartOptions();
         if (options && this.chartInstance) {
@@ -276,7 +268,6 @@ export class ChartCardComponent implements AfterViewInit {
 
   private resizeChart(): void {
     if (!this.chartInstance) return;
-
     this.ngZone.runOutsideAngular(() => {
       requestAnimationFrame(() => {
         if (this.chartInstance && !this.chartInstance.isDisposed()) {
@@ -296,7 +287,7 @@ export class ChartCardComponent implements AfterViewInit {
     if (this.chartInstance) {
       this.ngZone.runOutsideAngular(() => {
         if (!this.chartInstance?.isDisposed()) {
-          this.chartInstance?.off('click'); // Remove listeners
+          this.chartInstance?.off('click');
           this.chartInstance?.dispose();
         }
       });
