@@ -13,14 +13,30 @@ import {
   DestroyRef,
   ViewEncapsulation,
   PLATFORM_ID,
-  untracked, // [1] Import untracked
+  untracked,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 // ECharts Types
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
-import type * as echarts from 'echarts/core';
+import * as echarts from 'echarts/core';
+import { BarChart, LineChart, PieChart, ScatterChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  DataZoomComponent,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 import { ThemeService } from '../../core/services/theme.service';
+
+// Register components immediately to prevent lazy load flash
+echarts.use([
+  BarChart, LineChart, PieChart, ScatterChart,
+  TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
+  CanvasRenderer
+]);
 
 export type ChartSkeletonType = 'bar' | 'line' | 'pie';
 
@@ -34,93 +50,68 @@ export type ChartSkeletonType = 'bar' | 'line' | 'pie';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartCardComponent implements AfterViewInit {
-  // ===================================
-  // Dependencies
-  // ===================================
   private readonly ngZone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly themeService = inject(ThemeService);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
-  // ===================================
-  // Inputs (Signals)
-  // ===================================
+  // --- INPUTS ---
   public title = input<string>('');
   public subtitle = input<string>('');
   public icon = input<string>('');
   public iconClass = input<string>('');
+  
   public isLoading = input<boolean>(false);
+  public chartOptions = input<EChartsCoreOption | null>(null);
+  
   public emptyText = input<string>('Không có dữ liệu');
   public emptyIcon = input<string>('fas fa-chart-bar');
   public skeletonType = input<ChartSkeletonType>('bar');
-  public chartOptions = input<EChartsCoreOption | null>(null);
 
-  /**
-   * Optional override. If not provided, uses ThemeService.isDarkTheme()
-   * Accepts: 'dark' | 'light' | object (echarts theme) | null
-   */
   public theme = input<string | object | null>(null);
 
-  // ===================================
-  // Outputs
-  // ===================================
+  // --- OUTPUTS ---
   public chartClick = output<any>();
 
-  // ===================================
-  // View Children
-  // ===================================
+  // --- VIEW CHILD ---
   private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
 
-  // ===================================
-  // Computed State
-  // ===================================
+  // --- COMPUTED ---
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
+  
+  // Only show chart when NOT loading and HAS options
   public showChart = computed(() => !this.isLoading() && !!this.chartOptions());
 
   private effectiveTheme = computed(() => {
-    const override = this.theme();
-    if (override) return override;
-    return this.themeService.isDarkTheme() ? 'dark' : 'light';
+    return this.theme() || (this.themeService.isDarkTheme() ? 'dark' : 'light');
   });
 
-  // ===================================
-  // Internal State
-  // ===================================
-  private echartsInstance?: typeof echarts;
   private chartInstance?: EChartsType;
   private resizeObserver?: ResizeObserver;
-  private intersectionObserver?: IntersectionObserver;
-
-  private hasInitialized = false;
-  private hasLoadedECharts = false;
   private resizeTimer?: ReturnType<typeof setTimeout>;
-  private readonly RESIZE_DEBOUNCE_MS = 150;
+  private readonly RESIZE_DEBOUNCE_MS = 200;
 
   constructor() {
-    // Effect 1: Update Data (Only runs when chartOptions changes)
+    // Effect: Update Chart Data
     effect(() => {
       const options = this.chartOptions();
-      if (this.hasLoadedECharts && this.chartInstance && options) {
+      // Only update if chart exists and we are not loading
+      // (Though options usually come after loading finishes)
+      if (this.chartInstance && options && !this.isLoading()) {
         this.updateChart(options);
       }
     });
 
-    // Effect 2: Handle Theme Changes (Re-init required)
+    // Effect: Theme Change (Re-init)
     effect(() => {
-      const activeTheme = this.effectiveTheme(); // Track computed theme
-
-      // [2] CRITICAL FIX: Use untracked() so this effect DOES NOT run when chartOptions changes.
-      // This prevents the chart from being disposed/recreated during data updates.
+      const currentTheme = this.effectiveTheme();
+      // Untrack options to avoid double trigger
       const options = untracked(() => this.chartOptions());
       
-      // Only proceed if already initialized
-      if (this.hasLoadedECharts && this.hasInitialized) {
+      if (this.chartInstance) {
         this.disposeChart();
-        this.createChartInstance(); // Uses effectiveTheme() internally
-        if (options && this.chartInstance) {
-          this.updateChart(options);
-        }
+        this.initChart(options);
       }
     });
 
@@ -129,98 +120,26 @@ export class ChartCardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.isBrowser) {
-      this.initializeIntersectionObserver();
-    }
-  }
-
-  // ===================================
-  // Initialization
-  // ===================================
-
-  private initializeIntersectionObserver(): void {
-    if (typeof IntersectionObserver === 'undefined') {
-      this.initializeChart();
-      return;
-    }
-
-    this.intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !this.hasInitialized) {
-            this.hasInitialized = true;
-            this.intersectionObserver?.disconnect();
-            this.initializeChart();
-          }
-        });
-      },
-      { rootMargin: '50px', threshold: 0.1 }
-    );
-
-    this.intersectionObserver.observe(this.chartContainerRef().nativeElement);
-  }
-
-  private async initializeChart(): Promise<void> {
-    try {
-      await this.loadEChartsLibrary();
-      this.createChartInstance();
-      const options = this.chartOptions();
-      if (options && this.chartInstance) {
-        this.updateChart(options);
+      // Initialize immediately if data is ready, otherwise wait for effect
+      if (this.chartOptions()) {
+        this.initChart(this.chartOptions());
       }
       this.setupResizeObserver();
-    } catch (error) {
-      console.error('[ChartCardComponent] Failed to initialize chart:', error);
     }
   }
 
-  // ===================================
-  // ECharts Logic
-  // ===================================
-
-  private async loadEChartsLibrary(): Promise<void> {
-    if (this.hasLoadedECharts) return;
-
-    const [echartsCore, CanvasRenderer, charts, components] = await Promise.all([
-      import('echarts/core'),
-      import('echarts/renderers'),
-      import('echarts/charts'),
-      import('echarts/components'),
-    ]);
-
-    this.echartsInstance = echartsCore;
-    this.echartsInstance.use([
-      CanvasRenderer.CanvasRenderer,
-      charts.BarChart,
-      charts.LineChart,
-      charts.PieChart,
-      charts.ScatterChart,
-      charts.RadarChart,
-      charts.GaugeChart,
-      components.TitleComponent,
-      components.TooltipComponent,
-      components.GridComponent,
-      components.LegendComponent,
-      components.DataZoomComponent,
-      components.MarkLineComponent,
-      components.MarkPointComponent,
-    ]);
-
-    this.hasLoadedECharts = true;
-  }
-
-  private createChartInstance(): void {
-    if (!this.isBrowser || !this.echartsInstance) return;
+  private initChart(options: EChartsCoreOption | null): void {
+    if (!this.isBrowser || !this.chartContainerRef() || !options) return;
 
     const el = this.chartContainerRef().nativeElement;
-    if (el.clientWidth === 0 || el.clientHeight === 0) return;
 
     this.ngZone.runOutsideAngular(() => {
-      if (this.chartInstance && !this.chartInstance.isDisposed()) this.chartInstance.dispose();
-
-      this.chartInstance = this.echartsInstance!.init(el, this.effectiveTheme(), {
+      this.chartInstance = echarts.init(el, this.effectiveTheme(), {
         renderer: 'canvas',
-        useDirtyRect: true,
+        useDirtyRect: true 
       });
+
+      this.chartInstance.setOption(options);
 
       this.chartInstance.on('click', (params) => {
         this.ngZone.run(() => this.chartClick.emit(params));
@@ -229,71 +148,35 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private updateChart(options: EChartsCoreOption): void {
-    if (!this.chartInstance || this.chartInstance.isDisposed()) return;
-
+    if (!this.chartInstance) return;
+    
     this.ngZone.runOutsideAngular(() => {
-      // notMerge: false ensures smooth transition (diffing) instead of full redraw
-      this.chartInstance!.setOption(options, {
-        notMerge: false,
-        lazyUpdate: true,
-        silent: false,
+      this.chartInstance?.setOption(options, {
+        notMerge: false, // Merge updates for smooth transitions
+        lazyUpdate: true
       });
     });
   }
 
-  // ===================================
-  // Resize Handling
-  // ===================================
-
   private setupResizeObserver(): void {
-    if (!this.isBrowser || this.resizeObserver) return;
-
-    this.resizeObserver = new ResizeObserver(() => this.handleResize());
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.resizeTimer) clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => {
+        if (this.chartInstance) {
+          this.ngZone.runOutsideAngular(() => this.chartInstance?.resize());
+        } else if (this.chartOptions()) {
+            // If chart wasn't created because of 0x0 size initially
+            this.initChart(this.chartOptions());
+        }
+      }, this.RESIZE_DEBOUNCE_MS);
+    });
+    
     this.resizeObserver.observe(this.chartContainerRef().nativeElement);
   }
 
-  private handleResize(): void {
-    if (this.resizeTimer) clearTimeout(this.resizeTimer);
-
-    this.resizeTimer = setTimeout(() => {
-      const el = this.chartContainerRef().nativeElement;
-      if (!this.chartInstance && el.clientWidth > 0 && el.clientHeight > 0) {
-        this.createChartInstance();
-        const options = this.chartOptions();
-        if (options && this.chartInstance) {
-          this.updateChart(options);
-        }
-      } else if (this.chartInstance) {
-        this.resizeChart();
-      }
-    }, this.RESIZE_DEBOUNCE_MS);
-  }
-
-  private resizeChart(): void {
-    if (!this.chartInstance) return;
-    this.ngZone.runOutsideAngular(() => {
-      requestAnimationFrame(() => {
-        if (this.chartInstance && !this.chartInstance.isDisposed()) {
-          this.chartInstance.resize({
-            animation: { duration: 300, easing: 'cubicOut' },
-          });
-        }
-      });
-    });
-  }
-
-  // ===================================
-  // Cleanup
-  // ===================================
-
   private disposeChart(): void {
     if (this.chartInstance) {
-      this.ngZone.runOutsideAngular(() => {
-        if (!this.chartInstance?.isDisposed()) {
-          this.chartInstance?.off('click');
-          this.chartInstance?.dispose();
-        }
-      });
+      this.chartInstance.dispose();
       this.chartInstance = undefined;
     }
   }
@@ -301,7 +184,6 @@ export class ChartCardComponent implements AfterViewInit {
   private cleanup(): void {
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
     this.resizeObserver?.disconnect();
-    this.intersectionObserver?.disconnect();
     this.disposeChart();
   }
 }

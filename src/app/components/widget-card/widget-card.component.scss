@@ -1,35 +1,76 @@
 :host {
   display: block;
-  /* 1. Define the container context */
   container-type: inline-size;
   container-name: widget;
-  height: 100%; /* Ensure host takes full height of grid cell */
+  height: 100%;
 }
 
 .widget-card {
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
   transition: all 0.2s ease-in-out;
-  border-left: none;
-  height: 100%; /* Fill the host */
-  box-sizing: border-box;
+  height: 100%;
+  overflow: hidden;
 
-  /* --- DEFAULT STATE (Compact / Mobile / Narrow Grid) --- */
-  flex-direction: column;
-  text-align: center;
-  justify-content: center;
-
+  /* --- GRID STACKING TRICK --- */
+  /* This forces both the Skeleton and Content to sit on top of each other */
+  /* The card height will naturally equal the TALLEST of the two */
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: 100%; /* Or auto, depending on if you want it to grow */
+  
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-lg);
   }
 }
 
+/* --- SHARED LAYER STYLES --- */
+.widget-layer {
+  /* Both layers occupy Row 1, Column 1 */
+  grid-area: 1 / 1; 
+  
+  /* Layout Logic */
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  
+  /* Default: Column Mode */
+  flex-direction: column;
+  text-align: center;
+  justify-content: center;
+
+  /* Smooth Fade Transition */
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* --- SKELETON LAYER --- */
+.skeleton-layer {
+  z-index: 2; /* Sits on top */
+  background-color: var(--white); /* Opaque background to hide content below */
+  pointer-events: none;
+  
+  &.hide {
+    opacity: 0;
+  }
+}
+
+/* --- CONTENT LAYER --- */
+.content-layer {
+  z-index: 1;
+  opacity: 1;
+
+  &.invisible {
+    opacity: 0;
+  }
+}
+
+/* --- ELEMENT STYLES (Same as before) --- */
 .widget-icon-wrapper {
   width: 40px;
   height: 40px;
@@ -38,11 +79,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.3s ease;
-
-  i {
-    font-size: 1.125rem; /* 18px */
-  }
+  
+  i { font-size: 1.125rem; }
   
   &.skeleton {
     background-color: var(--gray-200);
@@ -55,52 +93,49 @@
   overflow: hidden;
   min-width: 0;
   width: 100%;
-  
-  /* Flex layout for content to handle centering in column mode */
   display: flex;
   flex-direction: column;
   justify-content: center;
 
+  /* Fine-tuned Margins to match Skeleton exactly */
   .widget-value {
-    font-size: 1.25rem; /* ~20px */
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--gray-900);
-    margin: 0;
     line-height: 1.2;
-    font-feature-settings: "tnum";
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-bottom: 4px; /* Match skeleton gap */
   }
 
   .widget-title {
-    font-size: 0.8125rem; /* 13px */
+    font-size: 0.8125rem;
     color: var(--gray-600);
-    margin: 2px 0 0 0;
     line-height: 1.3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-bottom: 2px;
   }
 
   .widget-caption {
-    font-size: 0.75rem; /* 12px */
+    font-size: 0.75rem;
     color: var(--gray-500);
-    margin: 0;
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin: 0;
   }
 }
 
+/* Skeleton Text Bars */
+.skeleton-text {
+  background-color: var(--gray-200);
+  border-radius: 4px;
+  animation: skeleton-pulse 1.5s infinite ease-in-out;
+  margin-left: auto; 
+  margin-right: auto;
+}
+
 /* --- CONTAINER QUERY: Wide Layout --- */
-/* When the card has at least 220px of width, switch to horizontal layout */
 @container widget (min-width: 220px) {
-  .widget-card {
+  .widget-layer {
     flex-direction: row;
     text-align: left;
-    padding: var(--spacing-md); /* Increase padding for breathing room */
+    padding: var(--spacing-md);
     justify-content: flex-start;
     gap: var(--spacing-md);
   }
@@ -108,28 +143,26 @@
   .widget-icon-wrapper {
     width: 48px;
     height: 48px;
-    
-    i {
-      font-size: 1.5rem; /* 24px */
-    }
+    i { font-size: 1.5rem; }
   }
 
   .widget-content {
-    /* Align items to start for row layout */
     align-items: flex-start; 
     
     .widget-value {
-      font-size: 1.5rem; /* 24px */
+      font-size: 1.5rem;
       margin-bottom: 2px;
     }
 
-    .widget-title {
-      font-size: 0.875rem; /* 14px */
+    .widget-title { font-size: 0.875rem; }
+    
+    .skeleton-text {
+      margin-left: 0;
+      margin-right: 0;
     }
   }
 }
 
-/* Global skeleton animation */
 @keyframes skeleton-pulse {
   0% { opacity: 0.6; }
   50% { opacity: 1; }

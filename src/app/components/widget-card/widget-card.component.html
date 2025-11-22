@@ -1,12 +1,14 @@
 <div class="widget-card">
-  @if (isLoading()) {
+  <div class="widget-layer skeleton-layer" [class.hide]="!isLoading()">
     <div class="widget-icon-wrapper skeleton"></div>
     <div class="widget-content">
-      <div class="skeleton skeleton-text" style="width: 60%; height: 1.5rem; margin-bottom: 0.5rem;"></div>
-      <div class="skeleton skeleton-text" style="width: 40%; height: 0.875rem; margin-bottom: 0.25rem;"></div>
+      <div class="skeleton skeleton-text" style="width: 60%; height: 1.5rem; margin-bottom: 4px;"></div>
+      <div class="skeleton skeleton-text" style="width: 40%; height: 0.875rem; margin-bottom: 2px;"></div>
       <div class="skeleton skeleton-text" style="width: 50%; height: 0.75rem;"></div>
     </div>
-  } @else {
+  </div>
+
+  <div class="widget-layer content-layer" [class.invisible]="isLoading()">
     <div class="widget-icon-wrapper" [ngStyle]="iconWrapperStyle()">
       <i [class]="icon()" [ngStyle]="iconStyle()" aria-hidden="true"></i>
     </div>
@@ -16,5 +18,5 @@
       <p class="widget-title">{{ title() }}</p>
       <p class="widget-caption">{{ caption() }}</p>
     </div>
-  }
+  </div>
 </div>

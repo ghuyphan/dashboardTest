@@ -3,21 +3,56 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { ExaminationStat } from '../../shared/models/examination-stat.model';
+import {
+  MedicalRecordSummary,
+  MedicalRecordDetail,
+} from '../../shared/models/medical-record-stat.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ReportService {
   private http = inject(HttpClient);
+
   private apiUrl = environment.examinationOvUrl;
 
-  constructor() { }
+  private summaryUrl = environment.outpatientSumUrl;
+  private detailUrl = environment.outpatientDetailUrl;
 
-  getExaminationOverview(fromDate: string, toDate: string): Observable<ExaminationStat[]> {
+  constructor() {}
+
+  getExaminationOverview(
+    fromDate: string,
+    toDate: string
+  ): Observable<ExaminationStat[]> {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate);
 
     return this.http.get<ExaminationStat[]>(this.apiUrl, { params });
+  }
+
+  getMedicalRecordStatusSummary(
+    fromDate: string,
+    toDate: string
+  ): Observable<MedicalRecordSummary[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+
+    // Note: Update 'this.summaryUrl' with environment variable when you create it
+    return this.http.get<MedicalRecordSummary[]>(this.summaryUrl, { params });
+  }
+
+  getMedicalRecordStatusDetail(
+    fromDate: string,
+    toDate: string
+  ): Observable<MedicalRecordDetail[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+
+    // Note: Update 'this.detailUrl' with environment variable when you create it
+    return this.http.get<MedicalRecordDetail[]>(this.detailUrl, { params });
   }
 }

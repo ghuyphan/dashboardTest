@@ -121,6 +121,20 @@ export const routes: Routes = [
         },
       },
 
+      {
+        path: 'reports/missing-medical-records',
+        loadComponent: () =>
+          import(
+            './features/reports/medical-records-status/medical-records-status.component'
+          ).then((m) => m.MedicalRecordsStatusComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'KHTH.ChuaTaoHSBANgoaiTru',
+          title: 'Chưa tạo HSBA (OP)',
+          showSearchBar: false,
+        },
+      },
+
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],
   },
