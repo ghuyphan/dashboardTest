@@ -339,7 +339,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     this.cd.markForCheck();
   }
 
-  // ... (Aggregation methods stay the same, keeping them brief) ...
   private aggregateStatus(devices: Device[]) {
     const map = new Map<string, number>();
     devices.forEach((d) => {
@@ -483,7 +482,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     }));
 
     return {
-      backgroundColor: this.palette.bgCard,
+      backgroundColor: 'transparent',
       textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
       tooltip: {
         trigger: 'item',
@@ -529,7 +528,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     }));
 
     return {
-      backgroundColor: this.palette.bgCard,
+      backgroundColor: 'transparent',
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         color: this.palette.textSecondary,
@@ -568,7 +567,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
   private buildLineOption(x: string[], y: number[]): EChartsCoreOption {
     return {
-      backgroundColor: this.palette.bgCard,
+      backgroundColor: 'transparent',
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         color: this.palette.textSecondary,

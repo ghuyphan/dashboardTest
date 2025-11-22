@@ -374,7 +374,7 @@ export class BedUsageComponent implements OnInit {
     );
 
     return {
-      backgroundColor: this.palette.bgCard,
+      backgroundColor: 'transparent',
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         fontSize: 12,
