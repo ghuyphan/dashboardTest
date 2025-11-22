@@ -30,161 +30,51 @@
   }
 }
 
-/* --- Filter Section --- */
-.filter-section {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  background-color: var(--surface-card);
-  box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-lg);
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-
-  .filter-controls {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--spacing-md);
-    flex-wrap: wrap;
-    flex: 1;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 140px;
-
-    label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      letter-spacing: 0.5px;
-    }
-  }
-
-  .form-control-sm {
-    padding: 8px 12px;
-    background-color: var(--input-bg);
-    border: 1px solid var(--gray-300);
-    color: var(--text-primary);
-    border-radius: var(--border-radius-sm);
-    font-size: 0.9rem;
-    width: 100%;
-
-    &:focus {
-      outline: none;
-      border-color: var(--teal-blue);
-      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
-    }
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 38px;
-    padding: 0 20px;
-    border-radius: var(--border-radius-md);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-}
-
 /* --- Dashboard Grid --- */
 .dashboard-grid {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  padding-bottom: var(--spacing-xl);
+  /* Reduced padding to keep content tighter */
+  padding-bottom: var(--spacing-md); 
 
   .grid-item {
-    min-height: 400px;
+    /* Increased height for Vertical chart to allow space for rotated X-axis labels */
+    min-height: 500px; 
   }
 }
 
-/* --- Content Card (Table) --- */
-.content-card {
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
-  background-color: var(--surface-card);
-  box-shadow: var(--box-shadow-md);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 500px; /* Ensure table has space */
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-sm);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-  }
-
-  .card-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-
-    i {
-      font-size: 1rem;
-    }
-  }
-  
-  .card-subtitle {
-    margin-left: 10px;
-    padding-left: 10px;
-    border-left: 2px solid var(--gray-300);
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-  }
-
-  .card-body {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-  }
-
-  .table-body {
-    overflow: hidden;
-
-    ::ng-deep app-reusable-table {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-
-      .reusable-table-wrapper {
-        box-shadow: none;
-        border-radius: 0;
-        border: none;
-        background: transparent;
-      }
-    }
-  }
-}
-
-.text-teal { color: var(--teal-blue); }
-.text-danger { color: var(--color-danger); }
+/* Helper Classes */
+.text-primary { color: var(--teal-blue); }
 .text-success { color: var(--color-success); }
 
-.btn-icon {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
+/* Header Button Style */
+.btn-icon-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 5px 12px;
   cursor: pointer;
-  font-size: 1.1rem;
-  padding: 4px;
-  &:hover { color: var(--color-success); }
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 1rem;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--gray-100);
+    color: var(--text-primary);
+    border-color: var(--gray-300);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

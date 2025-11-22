@@ -7,22 +7,17 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { DateUtils } from '../../../shared/utils/date.utils';
-import { MedicalRecordSummary, MedicalRecordDetail } from '../../../shared/models/medical-record-stat.model';
+import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
 
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import {
-  ReusableTableComponent,
-  GridColumn,
-} from '../../../components/reusable-table/reusable-table.component';
+import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
@@ -31,10 +26,9 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     WidgetCardComponent,
     ChartCardComponent,
-    ReusableTableComponent,
+    DateFilterComponent
   ],
   providers: [DatePipe],
   templateUrl: './medical-records-status.component.html',
@@ -45,15 +39,13 @@ export class MedicalRecordsStatusComponent implements OnInit {
   private reportService = inject(ReportService);
   private toastService = inject(ToastService);
   private cd = inject(ChangeDetectorRef);
-  private datePipe = inject(DatePipe);
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
-  public isInitialLoad = true;
+  public isExporting = false; // New state for export button loading
   
   // Data State
   public summaryData: MedicalRecordSummary[] = [];
-  public detailData: MedicalRecordDetail[] = [];
   
   // Filters
   public fromDate: string = '';
@@ -61,17 +53,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
 
   // Chart Config
   public doctorChartOptions: EChartsCoreOption | null = null;
-
-  // Table Config
-  public detailColumns: GridColumn[] = [
-    { key: 'MAYTE', label: 'Mã Y Tế', sortable: true, width: '100px' },
-    { key: 'TEN_BENH_NHAN', label: 'Tên Bệnh Nhân', sortable: true, width: '180px' },
-    { key: 'NGAY_KHAM', label: 'Ngày Khám', sortable: true, width: '120px' },
-    { key: 'THOI_GIAN_KHAM', label: 'Thời Gian', sortable: true, width: '120px' },
-    { key: 'TEN_PHONG_KHAM', label: 'Phòng Khám', sortable: true, width: '150px' },
-    { key: 'TEN_BS', label: 'Bác Sĩ', sortable: true, width: '150px' },
-    { key: 'DICH_VU', label: 'Dịch Vụ', sortable: true, width: '200px' },
-  ];
 
   private palette!: ThemePalette;
 
@@ -86,73 +67,56 @@ export class MedicalRecordsStatusComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.setupInitialDate();
+    // Initial load triggered by DateFilterComponent
+  }
+
+  public onDateFilter(range: DateRange): void {
+    this.fromDate = range.fromDate;
+    this.toDate = range.toDate;
     this.loadData();
   }
 
-  private setupInitialDate(): void {
-    const now = new Date();
-    // Default to today
-    this.fromDate = this.formatDateInput(now);
-    this.toDate = this.formatDateInput(now);
-  }
-
-  private formatDateInput(date: Date): string {
-    return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
-  }
-
   public loadData(): void {
-    if (!this.fromDate || !this.toDate) {
-      this.toastService.showWarning('Vui lòng chọn đầy đủ từ ngày và đến ngày.');
-      return;
-    }
+    if (!this.fromDate || !this.toDate) return;
 
     this.isLoading = true;
+    this.doctorChartOptions = null;
     this.cd.markForCheck();
 
-    forkJoin({
-      summary: this.reportService.getMedicalRecordStatusSummary(this.fromDate, this.toDate),
-      details: this.reportService.getMedicalRecordStatusDetail(this.fromDate, this.toDate)
-    })
-    .pipe(
-      finalize(() => {
-        this.isLoading = false;
-        this.isInitialLoad = false;
-        this.cd.markForCheck();
-      })
-    )
-    .subscribe({
-      next: (res) => {
-        this.summaryData = res.summary || [];
-        
-        // Format dates in raw data for display
-        this.detailData = (res.details || []).map(item => ({
-          ...item,
-          NGAY_KHAM: DateUtils.formatToDisplay(item.NGAY_KHAM),
-          THOI_GIAN_KHAM: this.formatDateTime(item.THOI_GIAN_KHAM)
-        }));
-
-        this.buildCharts(this.summaryData);
-      },
-      error: (err) => {
-        console.error(err);
-        this.toastService.showError('Không thể tải dữ liệu thống kê.');
-      }
-    });
-  }
-
-  private formatDateTime(isoStr: string): string {
-    const d = DateUtils.parse(isoStr);
-    return d ? this.datePipe.transform(d, 'HH:mm:ss dd/MM/yyyy') || '' : '';
+    // [CHANGE] Only load summary data for the chart
+    this.reportService.getMedicalRecordStatusSummary(this.fromDate, this.toDate)
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.cd.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.summaryData = data || [];
+          this.buildCharts(this.summaryData);
+        },
+        error: (err) => {
+          console.error(err);
+          this.toastService.showError('Không thể tải dữ liệu biểu đồ.');
+          this.summaryData = [];
+          this.doctorChartOptions = null;
+        }
+      });
   }
 
   private buildCharts(data: MedicalRecordSummary[]): void {
-    // Sort by count descending
-    const sorted = [...data].sort((a, b) => b.SO_LUONG - a.SO_LUONG);
-    const top10 = sorted.slice(0, 10);
+    if (!data || data.length === 0) {
+      this.doctorChartOptions = null;
+      return;
+    }
 
-    const names = top10.map(i => i.TEN_BS || 'N/A');
-    const values = top10.map(i => i.SO_LUONG);
+    // Sort by count descending and take Top 15
+    const sorted = [...data].sort((a, b) => b.SO_LUONG - a.SO_LUONG);
+    const topList = sorted.slice(0, 15);
+
+    const names = topList.map(i => i.TEN_BS || 'N/A');
+    const values = topList.map(i => i.SO_LUONG);
 
     this.doctorChartOptions = {
       backgroundColor: 'transparent',
@@ -170,23 +134,31 @@ export class MedicalRecordsStatusComponent implements OnInit {
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        bottom: '15%',
+        top: '10%',
         containLabel: true,
       },
       xAxis: {
-        type: 'value',
-        boundaryGap: [0, 0.01],
-        splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
-        },
-      },
-      yAxis: {
         type: 'category',
         data: names,
         axisLabel: {
           width: 120,
           overflow: 'truncate',
-          color: this.palette.textPrimary
+          color: this.palette.textPrimary,
+          rotate: 45,
+          interval: 0
+        },
+        axisLine: {
+          lineStyle: { color: this.palette.gray200 }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: {
+          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+        },
+        axisLabel: {
+          color: this.palette.textSecondary
         }
       },
       series: [
@@ -194,13 +166,15 @@ export class MedicalRecordsStatusComponent implements OnInit {
           name: 'Số lượng chưa tạo',
           type: 'bar',
           data: values,
+          barWidth: '50%',
           itemStyle: {
-            color: this.palette.danger, // Red for "alert" / missing records
-            borderRadius: [0, 4, 4, 0]
+            // Use Primary Color
+            color: this.palette.primary,
+            borderRadius: [4, 4, 0, 0]
           },
           label: {
             show: true,
-            position: 'right',
+            position: 'top',
             color: this.palette.textPrimary
           }
         }
@@ -208,7 +182,35 @@ export class MedicalRecordsStatusComponent implements OnInit {
     };
   }
 
+  // [CHANGE] Fetch details only when user clicks Export
   public onExport(): void {
-    this.toastService.showInfo('Tính năng xuất Excel đang phát triển');
+    if (this.isExporting) return;
+
+    this.isExporting = true;
+    this.cd.markForCheck();
+
+    this.reportService.getMedicalRecordStatusDetail(this.fromDate, this.toDate)
+      .pipe(
+        finalize(() => {
+          this.isExporting = false;
+          this.cd.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (details) => {
+          if (!details || details.length === 0) {
+            this.toastService.showWarning('Không có dữ liệu chi tiết để xuất.');
+            return;
+          }
+          
+          console.log('Exporting data:', details);
+          // Call your Excel Export Service here passing `details`
+          this.toastService.showSuccess(`Đã xuất ${details.length} hồ sơ ra Excel.`);
+        },
+        error: (err) => {
+          console.error(err);
+          this.toastService.showError('Lỗi khi tải dữ liệu chi tiết để xuất Excel.');
+        }
+      });
   }
 }

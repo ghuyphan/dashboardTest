@@ -1,75 +1,43 @@
 <div class="page-container">
   <div class="page-content">
     
-    <div class="filter-section">
-      <div class="filter-controls">
-        <div class="filter-group">
-          <label for="fromDate">Từ ngày</label>
-          <input type="date" id="fromDate" [(ngModel)]="fromDate" class="form-control-sm" />
-        </div>
-        <div class="filter-group">
-          <label for="toDate">Đến ngày</label>
-          <input type="date" id="toDate" [(ngModel)]="toDate" class="form-control-sm" />
-        </div>
-      </div>
-
-      <div class="action-buttons">
-        <button class="btn btn-primary" (click)="loadData()" [disabled]="isLoading">
-          @if (isLoading) { <i class="fas fa-spinner fa-spin"></i> } 
-          @else { <i class="fas fa-filter"></i> }
-          <span>Xem Báo Cáo</span>
-        </button>
-      </div>
-    </div>
+    <app-date-filter
+      (filterSubmit)="onDateFilter($event)"
+      [isLoading]="isLoading"
+      buttonLabel="Xem Báo Cáo"
+    ></app-date-filter>
 
     <div class="dashboard-grid">
       
       <app-chart-card
         class="grid-item span-full"
-        title="Bác Sĩ Chưa Tạo Bệnh Án"
-        icon="fas fa-user-md"
-        iconClass="text-danger"
+        title="Thống Kê Bác Sĩ Chưa Tạo Bệnh Án"
+        icon="fas fa-chart-bar"
+        iconClass="text-primary"
         [isLoading]="isLoading"
         [chartOptions]="doctorChartOptions"
         skeletonType="bar"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        emptyText="Không có dữ liệu trong khoảng thời gian này."
       >
-      </app-chart-card>
-
-      <div class="content-card grid-item span-full">
-        <div class="card-header">
-          <div class="card-title-wrapper">
-            <h3 class="card-title">
-              <i class="fas fa-file-medical-alt text-teal" aria-hidden="true"></i>
-              Danh Sách Chi Tiết
-            </h3>
-            <span class="card-subtitle">Tổng số: {{ detailData.length }} hồ sơ</span>
-          </div>
-          <div class="header-controls">
-            <button class="btn-icon" (click)="onExport()" title="Xuất Excel">
+        <div header-actions>
+          <button 
+            class="btn-icon-text" 
+            (click)="onExport()" 
+            title="Tải dữ liệu chi tiết và xuất Excel"
+            [disabled]="isLoading || isExporting || !summaryData.length">
+            
+            @if (isExporting) {
+              <i class="fas fa-spinner fa-spin text-success"></i>
+              <span>Đang xử lý...</span>
+            } @else {
               <i class="fas fa-file-excel text-success"></i>
-            </button>
-          </div>
+              <span>Xuất Excel Chi Tiết</span>
+            }
+          </button>
         </div>
 
-        <div class="card-body table-body">
-          @if (isInitialLoad) {
-            <div class="skeleton-rect" style="height: 400px; width: 100%"></div>
-          } @else {
-            <app-reusable-table
-              [data]="detailData"
-              [columns]="detailColumns"
-              [isLoading]="isLoading"
-              [showPaginator]="true"
-              [pageSize]="20"
-              [pageSizeOptions]="[10, 20, 50, 100]"
-              [clientSideSort]="true"
-              emptyStateText="Không có dữ liệu chưa tạo bệnh án trong khoảng thời gian này."
-            >
-            </app-reusable-table>
-          }
-        </div>
-      </div>
+      </app-chart-card>
 
     </div>
   </div>
