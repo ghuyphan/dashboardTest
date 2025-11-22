@@ -61,7 +61,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     'color': this.resolvedAccentColor()
   }));
 
-  @ViewChild('valueDisplay', { static: false })
+  @ViewChild('valueDisplay', { static: true }) // Changed to static: true as it's always in DOM now
   valueDisplay!: ElementRef<HTMLDivElement>;
 
   private currentValue: number = 0;
@@ -74,27 +74,20 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const loading = this.isLoading();
       const val = this.value();
 
-      if (this.hasViewInitialized && !loading) {
-        // [FIX] Wrap in setTimeout to ensure the @if block in template 
-        // has switched and the ViewChild is available.
-        setTimeout(() => {
-            this.processValue(val, true);
-        }, 0);
+      // OPTIMIZATION: Process value immediately regardless of loading state.
+      // This ensures text is ready underneath the skeleton overlay.
+      if (this.hasViewInitialized) {
+        this.processValue(val, true);
       }
     });
   }
 
   ngAfterViewInit(): void {
     this.hasViewInitialized = true;
-    if (!this.isLoading()) {
-      // [FIX] Also wrap initial load for safety
-      setTimeout(() => {
-          this.processValue(this.value(), true);
-      }, 0);
-    }
+    // Initial process without animation to set initial state
+    this.processValue(this.value(), false);
   }
 
   private processValue(newValue: string, shouldAnimate: boolean): void {

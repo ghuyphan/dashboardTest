@@ -14,11 +14,10 @@
   overflow: hidden;
 
   /* --- GRID STACKING TRICK --- */
-  /* This forces both the Skeleton and Content to sit on top of each other */
-  /* The card height will naturally equal the TALLEST of the two */
+  /* Forces both layers to occupy the same space */
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: 100%; /* Or auto, depending on if you want it to grow */
+  grid-template-rows: 100%; 
   
   &:hover {
     transform: translateY(-2px);
@@ -28,10 +27,7 @@
 
 /* --- SHARED LAYER STYLES --- */
 .widget-layer {
-  /* Both layers occupy Row 1, Column 1 */
   grid-area: 1 / 1; 
-  
-  /* Layout Logic */
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -39,24 +35,28 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  
-  /* Default: Column Mode */
   flex-direction: column;
   text-align: center;
   justify-content: center;
-
-  /* Smooth Fade Transition */
-  transition: opacity 0.3s ease-in-out;
 }
 
 /* --- SKELETON LAYER --- */
 .skeleton-layer {
   z-index: 2; /* Sits on top */
-  background-color: var(--white); /* Opaque background to hide content below */
-  pointer-events: none;
+  background-color: var(--white); /* Opaque to hide content below */
+  
+  /* TRANSITION LOGIC */
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.4s ease-in-out, visibility 0s 0s;
+  will-change: opacity;
+  pointer-events: none; /* Always allow clicks to pass through if strictly visual */
   
   &.hide {
     opacity: 0;
+    visibility: hidden;
+    /* Delay visibility hidden until opacity fade completes */
+    transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
   }
 }
 
@@ -64,13 +64,9 @@
 .content-layer {
   z-index: 1;
   opacity: 1;
-
-  &.invisible {
-    opacity: 0;
-  }
 }
 
-/* --- ELEMENT STYLES (Same as before) --- */
+/* --- ELEMENT STYLES --- */
 .widget-icon-wrapper {
   width: 40px;
   height: 40px;
@@ -83,7 +79,7 @@
   i { font-size: 1.125rem; }
   
   &.skeleton {
-    background-color: var(--gray-200);
+    background-color: var(--gray-100);
     animation: skeleton-pulse 1.5s infinite ease-in-out;
   }
 }
@@ -97,13 +93,12 @@
   flex-direction: column;
   justify-content: center;
 
-  /* Fine-tuned Margins to match Skeleton exactly */
   .widget-value {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--gray-900);
     line-height: 1.2;
-    margin-bottom: 4px; /* Match skeleton gap */
+    margin-bottom: 4px;
   }
 
   .widget-title {
@@ -123,11 +118,17 @@
 
 /* Skeleton Text Bars */
 .skeleton-text {
-  background-color: var(--gray-200);
+  background-color: var(--gray-100);
   border-radius: 4px;
   animation: skeleton-pulse 1.5s infinite ease-in-out;
   margin-left: auto; 
   margin-right: auto;
+}
+
+@keyframes skeleton-pulse {
+  0% { opacity: 0.5; background-color: var(--gray-100); }
+  50% { opacity: 1; background-color: var(--gray-200); }
+  100% { opacity: 0.5; background-color: var(--gray-100); }
 }
 
 /* --- CONTAINER QUERY: Wide Layout --- */
@@ -161,10 +162,4 @@
       margin-right: 0;
     }
   }
-}
-
-@keyframes skeleton-pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
 }

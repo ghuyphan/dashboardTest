@@ -80,8 +80,9 @@ export class ChartCardComponent implements AfterViewInit {
   // --- COMPUTED ---
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
   
-  // Only show chart when NOT loading and HAS options
-  public showChart = computed(() => !this.isLoading() && !!this.chartOptions());
+  // [OPTIMIZATION]: Show chart container as soon as options exist, 
+  // allowing it to render behind the skeleton for a seamless reveal.
+  public showChart = computed(() => !!this.chartOptions());
 
   private effectiveTheme = computed(() => {
     return this.theme() || (this.themeService.isDarkTheme() ? 'dark' : 'light');
@@ -96,16 +97,17 @@ export class ChartCardComponent implements AfterViewInit {
     // Effect: Update Chart Data
     effect(() => {
       const options = this.chartOptions();
-      // Only update if chart exists and we are not loading
-      // (Though options usually come after loading finishes)
-      if (this.chartInstance && options && !this.isLoading()) {
+      // [OPTIMIZATION]: Update chart even if isLoading is true.
+      // This ensures the canvas is painted before we fade out the skeleton.
+      if (this.chartInstance && options) {
         this.updateChart(options);
       }
     });
 
     // Effect: Theme Change (Re-init)
     effect(() => {
-      const currentTheme = this.effectiveTheme();
+      // Dependency on theme
+      this.effectiveTheme();
       // Untrack options to avoid double trigger
       const options = untracked(() => this.chartOptions());
       
@@ -120,7 +122,7 @@ export class ChartCardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.isBrowser) {
-      // Initialize immediately if data is ready, otherwise wait for effect
+      // Initialize immediately if data is ready
       if (this.chartOptions()) {
         this.initChart(this.chartOptions());
       }

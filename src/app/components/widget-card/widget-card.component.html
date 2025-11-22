@@ -1,5 +1,5 @@
 <div class="widget-card">
-  <div class="widget-layer skeleton-layer" [class.hide]="!isLoading()">
+  <div class="widget-layer skeleton-layer" [class.hide]="!isLoading()" aria-hidden="true">
     <div class="widget-icon-wrapper skeleton"></div>
     <div class="widget-content">
       <div class="skeleton skeleton-text" style="width: 60%; height: 1.5rem; margin-bottom: 4px;"></div>
@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <div class="widget-layer content-layer" [class.invisible]="isLoading()">
+  <div class="widget-layer content-layer">
     <div class="widget-icon-wrapper" [ngStyle]="iconWrapperStyle()">
       <i [class]="icon()" [ngStyle]="iconStyle()" aria-hidden="true"></i>
     </div>

@@ -31,8 +31,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { SelectionModel } from '@angular/cdk/collections';
-import { Subject, timer, Subscription } from 'rxjs';
-import { debounce, delay, switchMap, map } from 'rxjs/operators';
 
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 import { HighlightSearchPipe } from '../../shared/pipes/highlight-search.pipe';
@@ -146,7 +144,8 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   public readonly dataSource = new MatTableDataSource<T>();
   public displayedColumns: string[] = [];
   public selectedRow: T | null = null;
-  public isLoadingWithDelay = false;
+  
+  // REMOVED: isLoadingWithDelay logic. Using pure isLoading allows for CSS transition.
   public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = { active: '', direction: '' };
 
@@ -155,7 +154,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   ngOnInit(): void {
     this.initializeSelectionListener();
     this.updateDisplayedColumns();
-    this.isLoadingWithDelay = this.isLoading;
   }
 
   ngAfterViewInit(): void {
@@ -164,11 +162,8 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isLoading']) {
-      this.isLoadingWithDelay = this.isLoading;
-      this.cdr.markForCheck();
-    }
-
+    // Removed isLoadingWithDelay logic block
+    
     if (changes['data']) {
       this.handleDataChange();
     }

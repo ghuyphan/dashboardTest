@@ -1,15 +1,13 @@
 <div class="reusable-table-wrapper">
   
-  @if (isLoadingWithDelay) {
-    <div class="loading-shade">
-      <div class="app-loading-container">
-        <div class="app-loading-spinner"></div>
-        @if (showLoadingText) {
-          <p>Đang tải dữ liệu...</p>
-        }
-      </div>
+  <div class="loading-shade" [class.hidden]="!isLoading" aria-hidden="true">
+    <div class="app-loading-container">
+      <div class="app-loading-spinner"></div>
+      @if (showLoadingText) {
+        <p>Đang tải dữ liệu...</p>
+      }
     </div>
-  }
+  </div>
 
   <div class="table-container" #tableContainer>
     <table
@@ -120,20 +118,18 @@
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell no-data-cell" [attr.colspan]="displayedColumns.length">
           
-          @if (!isLoading) {
-            <div class="no-data-container">
-              <div class="no-data-icon-container">
-                <mat-icon class="no-data-icon">inbox</mat-icon>
-              </div>
-              <p class="no-data-text">{{ getEmptyStateMessage() }}</p>
-              @if (searchTerm) {
-                <button class="reset-btn" (click)="clearSearch()">
-                  <mat-icon>refresh</mat-icon>
-                  Đặt lại tìm kiếm
-                </button>
-              }
+          <div class="no-data-container">
+            <div class="no-data-icon-container">
+              <mat-icon class="no-data-icon">inbox</mat-icon>
             </div>
-          }
+            <p class="no-data-text">{{ getEmptyStateMessage() }}</p>
+            @if (searchTerm) {
+              <button class="reset-btn" (click)="clearSearch()">
+                <mat-icon>refresh</mat-icon>
+                Đặt lại tìm kiếm
+              </button>
+            }
+          </div>
         </td>
       </tr>
     </table>

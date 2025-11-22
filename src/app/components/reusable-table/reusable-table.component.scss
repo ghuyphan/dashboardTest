@@ -11,8 +11,7 @@
   --header-text-local: var(--table-header-text);
 }
 
-/* 
-   DARK MODE CONTEXT OVERRIDE 
+/* DARK MODE CONTEXT OVERRIDE 
    Adjusts header specific to this component
 */
 :host-context([data-theme="dark"]) {
@@ -20,8 +19,7 @@
   --header-text-local: var(--gray-900);
 }
 
-/* 
-   HIGHLIGHTING
+/* HIGHLIGHTING
 */
 :host ::ng-deep .highlight {
   background-color: var(--pastel-lemon);
@@ -48,15 +46,31 @@
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 40px;
+  /* OPTIMIZATION: changed bottom to 0 to cover the whole table 
+     including paginator area if needed, or keep at 40px if paginator 
+     should remain visible. Let's cover all to prevent interaction.
+  */
+  bottom: 0; 
   right: 0;
   background: var(--surface-overlay);
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s var(--transition-smooth);
+
+  /* OPTIMIZATION: Smooth Transitions */
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s var(--transition-smooth), visibility 0s 0s;
   will-change: opacity;
+
+  &.hidden {
+    opacity: 0;
+    visibility: hidden;
+    /* Delay visibility hide until opacity transition finishes (0.3s) */
+    transition: opacity 0.3s var(--transition-smooth), visibility 0s 0.3s;
+    pointer-events: none;
+  }
 }
 
 .table-container {
@@ -195,8 +209,7 @@
     height: 36px !important;
     transition: background-color 0.2s var(--transition-smooth);
 
-    /* 
-       EVEN ROWS: Use Card Background
+    /* EVEN ROWS: Use Card Background
        Light: White
        Dark: Slate 800 (#1e293b)
     */
@@ -204,8 +217,7 @@
       background-color: var(--gray-50);
     }
 
-    /* 
-       ODD ROWS: Use Page Background (Zebra Stripe)
+    /* ODD ROWS: Use Page Background (Zebra Stripe)
        Light: Very Light Gray (#F8FAFC)
        Dark: Deep Slate (#0f172a)
     */

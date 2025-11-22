@@ -21,69 +21,70 @@
   }
 
   <div class="card-body">
-    @if (isLoading()) {
-      <div class="skeleton-overlay" aria-label="Loading chart">
-        <div class="sk-legend">
-          <div class="sk-legend-item skeleton"></div>
-          <div class="sk-legend-item skeleton"></div>
-        </div>
-        
-        @switch (skeletonType()) {
-          @case ('pie') {
-            <div class="sk-chart-area sk-pie-area">
-              <div class="sk-pie skeleton"></div>
-            </div>
-          }
-
-          @case ('line') {
-            <div class="sk-chart-area">
-              <div class="sk-y-axis">
-                <div class="sk-y-label skeleton"></div>
-                <div class="sk-y-label skeleton"></div>
-                <div class="sk-y-label skeleton"></div>
-                <div class="sk-y-label skeleton"></div>
-              </div>
-    
-              <div class="sk-plot-area line-mode">
-                <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-line-svg">
-                  <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25" 
-                        fill="none" 
-                        stroke="var(--gray-200)" 
-                        stroke-width="3" 
-                        vector-effect="non-scaling-stroke"
-                        class="skeleton-stroke" />
-                </svg>
-                <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-area-svg">
-                  <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25 V50 H0 Z" 
-                        fill="var(--gray-100)" 
-                        style="opacity: 0.5;" />
-                </svg>
-              </div>
-            </div>
-          }
-
-          @default {
-            <div class="sk-chart-area">
-              <div class="sk-y-axis">
-                <div class="sk-y-label skeleton"></div>
-                <div class="sk-y-label skeleton"></div>
-                <div class="sk-y-label skeleton"></div>
-                <div class="sk-y-label skeleton"></div>
-              </div>
-    
-              <div class="sk-plot-area">
-                <div class="sk-bar skeleton" style="--h: 60%"></div>
-                <div class="sk-bar skeleton" style="--h: 40%"></div>
-                <div class="sk-bar skeleton" style="--h: 75%"></div>
-                <div class="sk-bar skeleton" style="--h: 50%"></div>
-                <div class="sk-bar skeleton" style="--h: 85%"></div>
-                <div class="sk-bar skeleton" style="--h: 30%"></div>
-              </div>
-            </div>
-          }
-        }
+    <div class="skeleton-overlay" 
+         [class.hidden]="!isLoading()" 
+         aria-hidden="true">
+      
+      <div class="sk-legend">
+        <div class="sk-legend-item skeleton"></div>
+        <div class="sk-legend-item skeleton"></div>
       </div>
-    }
+      
+      @switch (skeletonType()) {
+        @case ('pie') {
+          <div class="sk-chart-area sk-pie-area">
+            <div class="sk-pie skeleton"></div>
+          </div>
+        }
+
+        @case ('line') {
+          <div class="sk-chart-area">
+            <div class="sk-y-axis">
+              <div class="sk-y-label skeleton"></div>
+              <div class="sk-y-label skeleton"></div>
+              <div class="sk-y-label skeleton"></div>
+              <div class="sk-y-label skeleton"></div>
+            </div>
+  
+            <div class="sk-plot-area line-mode">
+              <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-line-svg">
+                <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25" 
+                      fill="none" 
+                      stroke="var(--gray-200)" 
+                      stroke-width="3" 
+                      vector-effect="non-scaling-stroke"
+                      class="skeleton-stroke" />
+              </svg>
+              <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-area-svg">
+                <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25 V50 H0 Z" 
+                      fill="var(--gray-100)" 
+                      style="opacity: 0.5;" />
+              </svg>
+            </div>
+          </div>
+        }
+
+        @default {
+          <div class="sk-chart-area">
+            <div class="sk-y-axis">
+              <div class="sk-y-label skeleton"></div>
+              <div class="sk-y-label skeleton"></div>
+              <div class="sk-y-label skeleton"></div>
+              <div class="sk-y-label skeleton"></div>
+            </div>
+  
+            <div class="sk-plot-area">
+              <div class="sk-bar skeleton" style="--h: 60%"></div>
+              <div class="sk-bar skeleton" style="--h: 40%"></div>
+              <div class="sk-bar skeleton" style="--h: 75%"></div>
+              <div class="sk-bar skeleton" style="--h: 50%"></div>
+              <div class="sk-bar skeleton" style="--h: 85%"></div>
+              <div class="sk-bar skeleton" style="--h: 30%"></div>
+            </div>
+          </div>
+        }
+      }
+    </div>
 
     <div 
       #chartContainer 
