@@ -15,7 +15,8 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  inject
+  inject,
+  ViewEncapsulation // <--- IMPORTED
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -35,7 +36,6 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 import { HighlightSearchPipe } from '../../shared/pipes/highlight-search.pipe';
 
-// FIX: Debounce set to 0 for instant loading feedback
 const ROW_NAVIGATION_DELAY_MS = 50;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
@@ -104,6 +104,7 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   styleUrls: ['./reusable-table.component.scss'],
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None // <--- ENABLED NO ENCAPSULATION
 })
 export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewInit, OnDestroy {
     
@@ -145,7 +146,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   public displayedColumns: string[] = [];
   public selectedRow: T | null = null;
   
-  // REMOVED: isLoadingWithDelay logic. Using pure isLoading allows for CSS transition.
   public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = { active: '', direction: '' };
 
@@ -162,8 +162,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Removed isLoadingWithDelay logic block
-    
     if (changes['data']) {
       this.handleDataChange();
     }
@@ -183,12 +181,9 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   private initializeTableFeatures(): void {
-    // Setup Sort
     if (this.clientSideSort && this.sort) {
       this.dataSource.sort = this.sort;
     }
-
-    // Setup Paginator (Fix for client-side pagination)
     if (this.clientSideSort && this.paginator) {
       this.dataSource.paginator = this.paginator;
     }
@@ -214,7 +209,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
     this.dataSource.data = this.data;
     this.clearSelection();
     
-    // Re-attach features if they were lost during data refresh
     if (this.clientSideSort) {
        if (this.paginator && !this.dataSource.paginator) {
          this.dataSource.paginator = this.paginator;

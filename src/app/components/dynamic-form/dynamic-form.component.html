@@ -52,9 +52,11 @@
                     @case ('dropdown') {
                       <div class="custom-dropdown-wrapper" [class.is-invalid]="isInvalid(control.controlName)">
                         <mat-form-field appearance="outline" class="full-width-field dense-form-field" subscriptSizing="dynamic">
-                          <mat-select [formControlName]="control.controlName" [id]="control.controlName"
-                                      [placeholder]="control.placeholder || 'Chọn ' + (control.label || '...')">
-                            <mat-option [value]="null">
+                          <mat-select 
+                            [formControlName]="control.controlName" 
+                            [id]="control.controlName"
+                            [placeholder]="control.placeholder || 'Chọn ' + (control.label || '...')"
+                            panelClass="dynamic-form-select-panel"> <mat-option [value]="null">
                               -- {{ control.placeholder ? control.placeholder : 'Chọn ' + (control.label || 'Vui lòng chọn') }} --
                             </mat-option>
                             @for (opt of control.options; track opt.key) {

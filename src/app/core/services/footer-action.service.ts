@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { FooterAction } from '../models/footer-action.model';
 
 @Injectable({
@@ -7,8 +7,11 @@ import { FooterAction } from '../models/footer-action.model';
 })
 export class FooterActionService {
 
-  // null = footer is hidden. An array = footer is visible.
-  public actions$ = new BehaviorSubject<FooterAction[] | null>(null);
+  private _actions = signal<FooterAction[] | null>(null);
+
+  public actions = this._actions.asReadonly();
+
+  public actions$ = toObservable(this._actions);
 
   constructor() { }
 
@@ -17,13 +20,13 @@ export class FooterActionService {
    * @param actions An array of actions, or null to hide the footer.
    */
   setActions(actions: FooterAction[] | null): void {
-    this.actions$.next(actions);
+    this._actions.set(actions);
   }
 
   /**
    * Clears all actions and hides the footer.
    */
   clearActions(): void {
-    this.actions$.next(null);
+    this._actions.set(null);
   }
 }

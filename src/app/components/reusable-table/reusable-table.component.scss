@@ -1,4 +1,5 @@
-:host {
+/* COMPONENT HOST */
+app-reusable-table {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -11,17 +12,14 @@
   --header-text-local: var(--table-header-text);
 }
 
-/* DARK MODE CONTEXT OVERRIDE 
-   Adjusts header specific to this component
-*/
-:host-context([data-theme="dark"]) {
+/* DARK MODE CONTEXT */
+[data-theme="dark"] app-reusable-table {
   --header-bg-local: var(--gray-200);
   --header-text-local: var(--gray-900);
 }
 
-/* HIGHLIGHTING
-*/
-:host ::ng-deep .highlight {
+/* GLOBAL HIGHLIGHT (Used by pipe) */
+.highlight {
   background-color: var(--pastel-lemon);
   color: var(--gray-900);
   font-weight: 700;
@@ -30,6 +28,7 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
+/* WRAPPER SCOPE */
 .reusable-table-wrapper {
   flex: 1;
   display: flex;
@@ -40,87 +39,8 @@
   border-radius: var(--border-radius-md);
   box-shadow: none;
   overflow: hidden;
-}
 
-.loading-shade {
-  position: absolute;
-  top: 0;
-  left: 0;
-  /* OPTIMIZATION: changed bottom to 0 to cover the whole table 
-     including paginator area if needed, or keep at 40px if paginator 
-     should remain visible. Let's cover all to prevent interaction.
-  */
-  bottom: 0; 
-  right: 0;
-  background: var(--surface-overlay);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  /* OPTIMIZATION: Smooth Transitions */
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.3s var(--transition-smooth), visibility 0s 0s;
-  will-change: opacity;
-
-  &.hidden {
-    opacity: 0;
-    visibility: hidden;
-    /* Delay visibility hide until opacity transition finishes (0.3s) */
-    transition: opacity 0.3s var(--transition-smooth), visibility 0s 0.3s;
-    pointer-events: none;
-  }
-}
-
-.table-container {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  position: relative;
-  background-color: var(--surface-card);
-}
-
-.header-content,
-.cell-content {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  max-width: 100%;
-  font-weight: inherit;
-}
-
-.action-menu-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background-color: transparent;
-  color: var(--gray-500);
-  border-radius: 50%;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 0.2s ease, color 0.2s ease;
-
-  .mat-icon {
-    font-size: 18px;
-    line-height: 1;
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background-color: var(--gray-100);
-    color: var(--text-primary);
-  }
-}
-
-/* MATERIAL TABLE OVERRIDES */
-:host ::ng-deep {
+  /* --- MATERIAL TABLE OVERRIDES (Scoped) --- */
   /* Checkbox Column Sizing */
   .mat-column-select {
     width: 48px !important;
@@ -146,7 +66,7 @@
     border-bottom: none !important;
     border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
 
-    /* Dark Mode Border adjustment */
+    /* Dark Mode Border adjustment via body attr or ancestor */
     [data-theme="dark"] & {
       border-right: 1px solid rgba(0, 0, 0, 0.2) !important;
     }
@@ -202,25 +122,15 @@
     }
   }
 
-  /* =========================================
-     ROW STYLING & ZEBRA STRIPING
-     ========================================= */
+  /* ROW STYLING */
   .mat-mdc-row {
     height: 36px !important;
     transition: background-color 0.2s var(--transition-smooth);
 
-    /* EVEN ROWS: Use Card Background
-       Light: White
-       Dark: Slate 800 (#1e293b)
-    */
     &:nth-child(even) {
       background-color: var(--gray-50);
     }
 
-    /* ODD ROWS: Use Page Background (Zebra Stripe)
-       Light: Very Light Gray (#F8FAFC)
-       Dark: Deep Slate (#0f172a)
-    */
     &:nth-child(odd) {
       background-color: var(--surface-card);
     }
@@ -228,15 +138,11 @@
     &.clickable-row {
       cursor: pointer;
 
-      /* Hover State - Must be distinct in both modes */
       &:hover {
-        /* Light: Gray 100 | Dark: Gray 200 (Lighter than card) */
         background-color: var(--gray-100) !important;
-
         [data-theme="dark"] & {
           background-color: var(--gray-200) !important;
         }
-
         transform: translateY(-1px);
         box-shadow: var(--box-shadow-sm);
         position: relative;
@@ -248,24 +154,20 @@
         background-color: var(--gray-200) !important;
       }
 
-      /* Selected State (Single) */
       &.selected {
         background-color: rgba(0, 131, 155, 0.08) !important;
         box-shadow: inset 3px 0 0 var(--teal-blue) !important;
-
         .mat-mdc-cell {
           color: var(--teal-blue) !important;
           font-weight: var(--font-weight-medium) !important;
         }
       }
 
-      /* Selected State (Multi) */
       &.multi-selected {
         background-color: var(--pastel-sky) !important;
         [data-theme="dark"] & {
           background-color: rgba(99, 179, 237, 0.2) !important;
         }
-
         .mat-mdc-cell {
           color: var(--deep-sapphire) !important;
           [data-theme="dark"] & {
@@ -281,67 +183,9 @@
     &:nth-child(even) {
       background-color: var(--gray-50) !important;
     }
-
     .mat-mdc-cell {
       border-bottom: none !important;
       padding: var(--spacing-xl) !important;
-    }
-  }
-
-  /* No Data State */
-  .no-data-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    padding: var(--spacing-xl) var(--spacing-md);
-    text-align: center;
-
-    .no-data-icon-container {
-      margin-bottom: var(--spacing-md);
-      animation: pulse 2s infinite;
-      will-change: transform, opacity;
-    }
-
-    .no-data-icon {
-      font-size: 42px !important;
-      height: 42px !important;
-      width: 42px !important;
-      color: var(--gray-300) !important;
-    }
-
-    .no-data-text {
-      font-size: 1.125rem !important;
-      margin: 0 !important;
-      font-weight: var(--font-weight-medium) !important;
-      color: var(--text-secondary) !important;
-      margin-bottom: var(--spacing-sm) !important;
-    }
-
-    .reset-btn {
-      background: none !important;
-      border: none !important;
-      color: var(--teal-blue) !important;
-      cursor: pointer !important;
-      font-weight: var(--font-weight-medium) !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: var(--spacing-xs) !important;
-      padding: var(--spacing-xs) var(--spacing-sm) !important;
-      border-radius: var(--border-radius-sm) !important;
-      transition: all 0.2s var(--transition-smooth) !important;
-
-      &:hover {
-        background-color: var(--gray-100) !important;
-        transform: scale(1.05) !important;
-      }
-
-      mat-icon {
-        font-size: 16px !important;
-        width: 16px !important;
-        height: 16px !important;
-      }
     }
   }
 
@@ -383,13 +227,11 @@
         border-radius: var(--border-radius-sm) !important;
         background-color: var(--gray-100) !important;
       }
-
       .mat-mdc-form-field-infix {
         padding-top: 2px !important;
         padding-bottom: 2px !important;
         min-height: 28px !important;
       }
-
       .mat-mdc-form-field-subscript-wrapper {
         display: none !important;
       }
@@ -400,24 +242,22 @@
       height: 28px !important;
       padding: 2px !important;
       color: var(--gray-500) !important;
-
       .mat-icon {
         font-size: 18px !important;
         width: 18px !important;
         height: 18px !important;
       }
-
       &[disabled] {
         opacity: 0.4 !important;
         color: var(--text-disabled) !important;
       }
-
       &:hover:not([disabled]) {
         background-color: var(--gray-100) !important;
         color: var(--text-primary) !important;
       }
     }
 
+    /* Dropdown panel (global but might work if inline, usually global) */
     .mat-mdc-select-panel {
       font-family: var(--font-family-sans) !important;
       background-color: var(--surface-card) !important;
@@ -430,7 +270,7 @@
     }
   }
 
-  /* Focus States for Accessibility */
+  /* Focus States */
   .mat-mdc-header-cell:focus-visible,
   .mat-mdc-cell:focus-visible,
   .mat-mdc-icon-button:focus-visible {
@@ -440,24 +280,139 @@
   }
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
+/* Normal Local Styles */
+.loading-shade {
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: var(--surface-overlay);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s var(--transition-smooth), visibility 0s 0s;
+  will-change: opacity;
+
+  &.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s var(--transition-smooth), visibility 0s 0.3s;
+    pointer-events: none;
   }
 }
 
-/* Media Queries for Mobile */
+.table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  position: relative;
+  background-color: var(--surface-card);
+}
+
+.header-content,
+.cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  font-weight: inherit;
+}
+
+.action-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background-color: transparent;
+  color: var(--gray-500);
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  .mat-icon {
+    font-size: 18px;
+    line-height: 1;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background-color: var(--gray-100);
+    color: var(--text-primary);
+  }
+}
+
+.no-data-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+
+  .no-data-icon-container {
+    margin-bottom: var(--spacing-md);
+    animation: pulse 2s infinite;
+    will-change: transform, opacity;
+  }
+
+  .no-data-icon {
+    font-size: 42px !important;
+    height: 42px !important;
+    width: 42px !important;
+    color: var(--gray-300) !important;
+  }
+
+  .no-data-text {
+    font-size: 1.125rem !important;
+    margin: 0 !important;
+    font-weight: var(--font-weight-medium) !important;
+    color: var(--text-secondary) !important;
+    margin-bottom: var(--spacing-sm) !important;
+  }
+
+  .reset-btn {
+    background: none !important;
+    border: none !important;
+    color: var(--teal-blue) !important;
+    cursor: pointer !important;
+    font-weight: var(--font-weight-medium) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-xs) !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    border-radius: var(--border-radius-sm) !important;
+    transition: all 0.2s var(--transition-smooth) !important;
+
+    &:hover {
+      background-color: var(--gray-100) !important;
+      transform: scale(1.05) !important;
+    }
+
+    mat-icon {
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.6; }
+}
+
+/* Media Queries */
 @media (max-width: 768px) {
-  :host ::ng-deep {
+  .reusable-table-wrapper {
     .mat-mdc-header-cell,
     .mat-mdc-cell {
       padding: var(--spacing-xs) var(--spacing-xs) !important;

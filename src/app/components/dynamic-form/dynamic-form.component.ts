@@ -6,7 +6,8 @@ import {
   ChangeDetectionStrategy,
   inject,
   input,
-  effect
+  effect,
+  ViewEncapsulation // <--- IMPORTED
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -73,9 +74,9 @@ export type DynamicFormValue = Record<string, any>;
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None // <--- ENABLED NO ENCAPSULATION
 })
 export class DynamicFormComponent implements OnInit {
-  // Signal Inputs
   public formConfig = input<FormConfig | undefined>();
   public isLoading = input<boolean>(false);
 
@@ -98,9 +99,7 @@ export class DynamicFormComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    // Logic moved to constructor effect
-  }
+  ngOnInit(): void {}
 
   private buildForm(config: FormConfig): void {
     const formControls = this.createFormControls(config);
@@ -122,8 +121,6 @@ export class DynamicFormComponent implements OnInit {
   private createFormControl(config: FormControlConfig): FormControl<any> {
     const value = this.prepareControlValue(config);
     const validators = this.buildValidators(config.validators);
-    
-    // [FIX] Use '?? false' to ensure disabled is strictly boolean
     return new FormControl<any>({ value, disabled: config.disabled ?? false }, validators);
   }
 
