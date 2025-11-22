@@ -52,18 +52,16 @@ export class SettingsComponent implements OnInit {
   constructor() {
     this.form = this.fb.group({
       OldPassword: ['', Validators.required],
-      NewPassword: ['', [Validators.required]], // Validators handled manually for custom UI feedback
+      NewPassword: ['', [Validators.required]],
       ConfirmPassword: ['', Validators.required]
     }, { validators: this.passwordMatchValidator });
 
-    // Listen to password changes to update criteria UI
     this.form.get('NewPassword')?.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(val => this.updatePasswordCriteria(val));
   }
 
   ngOnInit(): void {
-    // Load current user data for the read-only section
     this.authService.currentUser$.subscribe(user => {
       this.currentUser.set(user);
     });
@@ -84,7 +82,6 @@ export class SettingsComponent implements OnInit {
       hasUpper: /[A-Z]/.test(value),
       hasLower: /[a-z]/.test(value),
       hasNumber: /[0-9]/.test(value),
-      // Special chars: ~!@#$%^&*<>?/-
       hasSpecial: /[~!@#$%^&*<>?/\-]/.test(value)
     });
   }
@@ -104,7 +101,6 @@ export class SettingsComponent implements OnInit {
   public onSubmit(): void {
     if (this.form.invalid) return;
     
-    // Check if all criteria are met before submitting
     const criteria = this.passwordCriteria();
     const allCriteriaMet = Object.values(criteria).every(Boolean);
     
@@ -113,21 +109,50 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
+    // 1. Ensure Username exists
+    const username = this.authService.getUsername();
+    if (!username) {
+      this.toastService.showError('Lỗi phiên làm việc. Vui lòng đăng nhập lại.');
+      return;
+    }
+
     this.isLoading.set(true);
+    
     this.authService.changePassword(this.form.value)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (res) => {
-           // Handle API specific response codes if needed
+           // 2. Handle API Logic Success/Fail logic if status is 200 but body has error code
            if (res && res.MaKetQua && res.MaKetQua !== 200) {
-             this.toastService.showError(res.ErrorMessage || 'Đổi mật khẩu thất bại.');
+             const msg = res.TenKetQua || res.ErrorMessage || 'Đổi mật khẩu thất bại.';
+             this.toastService.showError(msg);
              return;
            }
            this.toastService.showSuccess('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.');
            this.authService.logout();
         },
         error: (err) => {
-          const msg = err.error?.ErrorMessage || 'Đổi mật khẩu thất bại. Kiểm tra lại mật khẩu cũ.';
+          console.error('Change Password Error:', err);
+          
+          // 3. Expanded Error Parsing Logic
+          let msg = 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.';
+
+          if (err.error) {
+            // Check specifically for the structure often returned by backend
+            if (typeof err.error === 'string') {
+               msg = err.error;
+            } else if (err.error.TenKetQua) {
+               // "Đổi mật khẩu thất bại. Kiểm tra lại mật khẩu cũ" usually comes here
+               msg = err.error.TenKetQua;
+            } else if (err.error.ErrorMessage) {
+               msg = err.error.ErrorMessage;
+            } else if (err.error.message) {
+               msg = err.error.message;
+            }
+          } else if (err.message) {
+             msg = err.message;
+          }
+
           this.toastService.showError(msg);
         }
       });

@@ -2,73 +2,100 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden; /* Prevent double scrollbars on the host */
+  overflow: hidden;
 }
 
-/* --- Main Scrollable Container --- */
 .settings-container {
-  flex: 1; /* Take up all available vertical space */
-  overflow-y: auto; /* Enable vertical scrolling */
-  
+  flex: 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  padding: var(--spacing-xs);
-  padding-bottom: var(--spacing-xl);
-
-  /* Full Screen / Full Width settings */
+  padding: var(--spacing-xs); /* Use md padding for container */
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
 
-  /* Hide scrollbar for cleaner UI (matches other pages) */
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
 
-/* --- Card Styles --- */
+/* --- UPDATED SETTINGS CARD (MATCHING CHART-CARD DESIGN) --- */
 .settings-card {
-  background-color: var(--surface-card);
+  background-color: var(--white);
   border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md); /* Inner padding creates whitespace around header/body */
   box-shadow: var(--box-shadow-md);
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  
-  /* Removed hover transition and effect as requested */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* Removed border: 1px solid var(--border-color); */
 
   .card-header {
+    flex-shrink: 0;
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--gray-200);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--surface-card);
 
-    h3 {
-      margin: 0;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      
-      i { 
-        color: var(--teal-blue); 
-        font-size: 1.1rem;
-      }
+    /* Removed old full-width styling */
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+    background-color: transparent;
+  }
+
+  .card-title-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap; /* Allow wrapping if subtitle is long on mobile */
+  }
+
+  /* Map h3 to .card-title styles */
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    white-space: nowrap;
+
+    i {
+      font-size: 1rem;
+      color: var(--teal-blue); /* Keep brand color for settings icons */
     }
+  }
 
-    .subtitle {
-      margin: 4px 0 0 0;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      font-weight: 400;
+  .card-subtitle {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--gray-700);
+    margin-left: var(--spacing-sm); 
+    padding-left: var(--spacing-sm);
+    border-left: 1px solid var(--gray-300);
+    
+    @media (max-width: 576px) {
+      border-left: none;
+      padding-left: 0;
+      margin-left: 0;
+      margin-top: 4px;
+      width: 100%;
+      display: block;
     }
   }
 
   .card-body {
-    padding: var(--spacing-lg);
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* Removed padding because card container has padding now */
+    padding: 0;
   }
 }
 
@@ -128,12 +155,9 @@
       font-size: 0.75rem;
       font-weight: 600;
       line-height: 1.2;
-      
-      /* Style matches "Status Chips" */
       background-color: var(--teal-blue-light); 
       color: #003d4d; 
       
-      /* Dark mode tweak for badge */
       :host-context([data-theme='dark']) & {
         background-color: rgba(45, 212, 191, 0.2);
         color: var(--teal-blue);
@@ -142,7 +166,7 @@
   }
 }
 
-/* --- Form Styles (Matches Dynamic Form) --- */
+/* --- Form Styles --- */
 .form-group {
   margin-bottom: var(--spacing-md);
 
@@ -153,10 +177,7 @@
     color: var(--gray-700);
     font-size: 0.875rem;
 
-    .req { 
-      color: var(--color-danger); 
-      margin-left: 2px;
-    }
+    .req { color: var(--color-danger); margin-left: 2px; }
   }
 
   .input-group {
@@ -168,20 +189,16 @@
   .form-control {
     width: 100%;
     min-height: 38px;
-    padding: 8px 40px 8px 12px; /* Right padding for eye icon */
-    
+    padding: 8px 40px 8px 12px;
     background-color: var(--input-bg);
     border: 1px solid var(--gray-300);
     color: var(--text-primary);
-    
     border-radius: var(--border-radius-md);
     font-size: 0.9375rem;
     font-family: var(--font-family-sans);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
-    &::placeholder {
-      color: var(--text-disabled);
-    }
+    &::placeholder { color: var(--text-disabled); }
 
     &:focus {
       outline: none;
@@ -191,9 +208,7 @@
 
     &.is-invalid {
       border-color: var(--color-danger);
-      &:focus { 
-        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); 
-      }
+      &:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); }
     }
   }
 
@@ -204,12 +219,10 @@
     transform: translateY(-50%);
     height: 30px;
     width: 30px;
-    
     background: transparent;
     border: none;
     color: var(--gray-400);
     cursor: pointer;
-    
     display: flex;
     align-items: center;
     justify-content: center;
@@ -229,10 +242,10 @@
   }
 }
 
-/* --- Password Requirements List --- */
+/* --- Requirements List --- */
 .requirements-list {
-  background-color: var(--surface-background);
-  border: 1px solid var(--border-color);
+  background-color: var(--gray-50); /* Slightly distinct from white card */
+  border: 1px solid var(--gray-200);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
   margin-top: var(--spacing-lg);
@@ -268,19 +281,12 @@
       &.valid {
         color: var(--color-success);
         font-weight: 500;
-        
-        i {
-          color: var(--color-success);
-          font-size: 0.9rem; 
-        }
+        i { color: var(--color-success); font-size: 0.9rem; }
       }
       
       &.static-rule {
         color: var(--text-secondary);
-        i { 
-          font-size: 0.9rem; 
-          color: var(--color-info); 
-        }
+        i { font-size: 0.9rem; color: var(--color-info); }
       }
     }
   }
@@ -298,7 +304,6 @@
     gap: 8px;
     min-width: 140px;
     padding: 10px 20px;
-    
     i { font-size: 1rem; }
   }
 }
