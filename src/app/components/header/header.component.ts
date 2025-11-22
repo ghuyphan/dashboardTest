@@ -1,11 +1,18 @@
-import { Component, Output, EventEmitter, inject, ViewEncapsulation, input } from '@angular/core';
+import {
+  Component,
+  Output,
+  EventEmitter,
+  inject,
+  ViewEncapsulation,
+  input,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; 
+import { RouterModule } from '@angular/router';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon'; 
+import { MatIconModule } from '@angular/material/icon';
 
 import { User } from '../../core/models/user.model';
 import { SearchService } from '../../core/services/search.service';
@@ -20,11 +27,11 @@ import { ThemeService } from '../../core/services/theme.service';
     MatMenuModule,
     MatButtonModule,
     MatDividerModule,
-    MatIconModule
+    MatIconModule,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
-  encapsulation: ViewEncapsulation.Emulated 
+  encapsulation: ViewEncapsulation.Emulated,
 })
 export class HeaderComponent {
   public currentUser = input<User | null>(null);
@@ -65,10 +72,9 @@ export class HeaderComponent {
     this.themeService.toggleTheme();
   }
 
-onSettingsClick(): void {
-    this.router.navigate(['/app/profile/change-password']);
+  onSettingsClick(): void {
+    this.router.navigate(['/app/settings']);
   }
-
   onSupportClick(): void {}
 
   onSearchChange(event: Event): void {

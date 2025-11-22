@@ -1,3 +1,4 @@
+// src/app/features/examination-overview/examination-overview.component.ts
 import {
   Component,
   OnInit,
@@ -85,30 +86,97 @@ export class ExaminationOverviewComponent implements OnInit {
 
   constructor() {
     // UNIFIED: React to currentPalette changes
+    // Matches the logic in DeviceDashboardComponent for consistency
     effect(() => {
       this.palette = this.themeService.currentPalette();
 
-      // Only rebuild charts if we already have data (to reflect new colors)
+      // Update widget colors immediately
+      this.updateWidgetColors();
+
+      // Only rebuild charts/widgets if we actually have data
+      // This prevents empty charts from trying to render with new colors before data exists
       if (!this.isLoading && this.rawData.length > 0) {
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
-        
-        // FIX: Use detectChanges() instead of markForCheck() to ensure the view updates
-        // immediately after the effect runs in the microtask queue.
-        this.cd.detectChanges();
       }
+
+      // Always mark for check at the end of the effect
+      // This ensures the component catches the theme update event
+      this.cd.markForCheck();
     });
   }
 
   ngOnInit(): void {
-    // Initialize palette synchronously first
+    // Initialize palette synchronously first to avoid undefined errors before effect runs
     this.palette = this.themeService.currentPalette();
-    this.setRange('thisWeek');
+    
+    // Initialize widgets structure with proper colors
+    this.initializeWidgetsStructure();
+    
+    // Set up the date range without loading data yet
+    this.setupInitialRange('thisWeek');
+    
+    // Now load data after everything is initialized
+    this.loadData();
   }
 
-  public setRange(
-    range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'
-  ): void {
+  private initializeWidgetsStructure(): void {
+    this.widgetData = [
+      {
+        id: 'total',
+        icon: 'fas fa-users',
+        title: 'Tổng Tiếp Nhận',
+        value: '0',
+        caption: 'Total',
+        accentColor: this.palette.deepSapphire,
+      },
+      {
+        id: 'ck',
+        icon: 'fas fa-stethoscope',
+        title: 'Khám Bệnh (CK)',
+        value: '0',
+        caption: 'Clinic',
+        accentColor: this.palette.primary,
+      },
+      {
+        id: 'emergency',
+        icon: 'fas fa-ambulance',
+        title: 'Cấp Cứu',
+        value: '0',
+        caption: 'Emergency',
+        accentColor: this.palette.pastelCoral,
+      },
+      {
+        id: 'inpatient',
+        icon: 'fas fa-procedures',
+        title: 'Nội Trú',
+        value: '0',
+        caption: 'Inpatient',
+        accentColor: this.palette.warning,
+      },
+      {
+        id: 'daycare',
+        icon: 'fas fa-clinic-medical',
+        title: 'ĐT Ngoại Trú',
+        value: '0',
+        caption: 'Daycares',
+        accentColor: this.palette.tealMidtone,
+      },
+    ];
+  }
+
+  private updateWidgetColors(): void {
+    if (this.widgetData.length > 0) {
+      const w = this.widgetData;
+      w.find((x) => x.id === 'total')!.accentColor = this.palette.deepSapphire;
+      w.find((x) => x.id === 'ck')!.accentColor = this.palette.primary;
+      w.find((x) => x.id === 'emergency')!.accentColor = this.palette.pastelCoral;
+      w.find((x) => x.id === 'inpatient')!.accentColor = this.palette.warning;
+      w.find((x) => x.id === 'daycare')!.accentColor = this.palette.tealMidtone;
+    }
+  }
+
+  private setupInitialRange(range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'): void {
     this.activeRange = range;
     const now = new Date();
     let start = new Date(),
@@ -139,6 +207,12 @@ export class ExaminationOverviewComponent implements OnInit {
         .padStart(2, '0')}`;
     this.fromDate = fmt(start);
     this.toDate = fmt(end);
+  }
+
+  public setRange(
+    range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'
+  ): void {
+    this.setupInitialRange(range);
     this.loadData();
   }
 
@@ -182,49 +256,17 @@ export class ExaminationOverviewComponent implements OnInit {
 
     const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
-    // Colors aligned with ThemeService
-    this.widgetData = [
-      {
-        id: 'total',
-        icon: 'fas fa-users',
-        title: 'Tổng Tiếp Nhận',
-        value: fmt(t.total),
-        caption: 'Total',
-        accentColor: this.palette.deepSapphire,
-      },
-      {
-        id: 'ck',
-        icon: 'fas fa-stethoscope',
-        title: 'Khám Bệnh (CK)',
-        value: fmt(t.ck),
-        caption: 'Clinic',
-        accentColor: this.palette.primary,
-      },
-      {
-        id: 'emergency',
-        icon: 'fas fa-ambulance',
-        title: 'Cấp Cứu',
-        value: fmt(t.cc),
-        caption: 'Emergency',
-        accentColor: this.palette.pastelCoral,
-      },
-      {
-        id: 'inpatient',
-        icon: 'fas fa-procedures',
-        title: 'Nội Trú',
-        value: fmt(t.nt),
-        caption: 'Inpatient',
-        accentColor: this.palette.warning,
-      },
-      {
-        id: 'daycare',
-        icon: 'fas fa-clinic-medical',
-        title: 'ĐT Ngoại Trú',
-        value: fmt(t.dnt),
-        caption: 'Daycares',
-        accentColor: this.palette.tealMidtone,
-      },
-    ];
+    // Update widget values while preserving the accent colors
+    const updateWidget = (id: string, value: string) => {
+      const widget = this.widgetData.find((w) => w.id === id);
+      if (widget) widget.value = value;
+    };
+
+    updateWidget('total', fmt(t.total));
+    updateWidget('ck', fmt(t.ck));
+    updateWidget('emergency', fmt(t.cc));
+    updateWidget('inpatient', fmt(t.nt));
+    updateWidget('daycare', fmt(t.dnt));
   }
 
   private buildCharts(data: ExaminationStat[]): void {
@@ -420,6 +462,7 @@ export class ExaminationOverviewComponent implements OnInit {
   public trackByWidget(index: number, item: WidgetData): string {
     return item.id;
   }
+  
   public onExport(): void {
     this.toastService.showInfo('Tính năng đang phát triển');
   }
