@@ -1,4 +1,3 @@
-// src/app/features/examination-overview/examination-overview.component.ts
 import {
   Component,
   OnInit,
@@ -270,14 +269,18 @@ export class ExaminationOverviewComponent implements OnInit {
   }
 
   private buildCharts(data: ExaminationStat[]): void {
-    const sorted = [...data].sort(
-      (a, b) =>
-        new Date(a.NGAY_TIEP_NHAN).getTime() -
-        new Date(b.NGAY_TIEP_NHAN).getTime()
-    );
-    const dates = sorted.map((d) =>
-      this.datePipe.transform(d.NGAY_TIEP_NHAN, 'dd/MM')
-    );
+    // UPDATED: Use DateUtils.parse to safely handle both ISO and dd/MM/yyyy
+    const sorted = [...data].sort((a, b) => {
+      const dateA = DateUtils.parse(a.NGAY_TIEP_NHAN);
+      const dateB = DateUtils.parse(b.NGAY_TIEP_NHAN);
+      return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+    });
+
+    // UPDATED: Convert parsed date objects for display
+    const dates = sorted.map((d) => {
+      const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
+      return dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : '';
+    });
 
     // Local color mapping for cleaner chart config
     const c = {

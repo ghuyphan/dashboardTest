@@ -73,12 +73,8 @@ export class AuthService {
     this.initializeAuthState();
   }
 
-  // --- [NEW] Change Password Method ---
   changePassword(payload: { OldPassword: string, NewPassword: string, ConfirmPassword: string }): Observable<any> {
-    // Construct the URL. Assuming API_URL_LOGIN ends in '/login', we remove it to get the base auth path
-    // e.g., "api/auth/login" -> "api/auth/change-password"
-    // If your API structure is different, adjust this string.
-    const url = this.API_URL_LOGIN.replace(/\/login\/?$/i, '') + '/change-password';
+    const url = environment.changePassUrl;
 
     const body = {
       UserName: this.getUsername(), // Auto-fill from the service
@@ -87,7 +83,7 @@ export class AuthService {
       ConfirmPassword: payload.ConfirmPassword
     };
 
-    return this.http.post(url, body).pipe(
+    return this.http.put(url, body).pipe(
       tap(() => {
         // Optional: Logout user to force re-login with new password
         // this.logout(); 

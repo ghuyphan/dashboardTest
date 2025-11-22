@@ -17,6 +17,7 @@
   width: var(--sidebar-width);
   height: 100vh;
   background-color: var(--gray-100);
+  
   color: var(--gray-700);
   padding: 0 0 var(--spacing-md) 0;
   transition: transform var(--transition-duration) var(--transition-smooth),
@@ -30,6 +31,10 @@
 
   * {
     white-space: nowrap;
+  }
+
+  :host-context([data-theme='dark']) & {
+    background-color: var(--gray-50);
   }
 }
 

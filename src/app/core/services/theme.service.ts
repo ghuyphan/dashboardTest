@@ -75,11 +75,12 @@ export class ThemeService {
         localStorage.setItem('theme', 'light');
       }
 
-      // 2. Wait for styles to propagate to DOM (0ms timeout puts it at end of event loop), 
-      // then update the palette signal. This centralizes the "wait for CSS" logic.
+      // 2. [FIX] Wait for styles to propagate to DOM. 
+      // A 50ms delay ensures the browser has time to recalculate CSS variables 
+      // before we read them via getComputedStyle().
       setTimeout(() => {
         this.currentPalette.set(this.getColors());
-      }, 0);
+      }, 50);
     });
   }
 

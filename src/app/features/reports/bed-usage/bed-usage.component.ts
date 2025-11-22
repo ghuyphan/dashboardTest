@@ -434,7 +434,8 @@ export class BedUsageComponent implements OnInit {
       grid: {
         left: '5%',
         right: '5%',
-        top: '15%',
+        // top: '15%',
+        bottom: '15%',
         containLabel: true,
       },
       xAxis: {

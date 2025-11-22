@@ -13,6 +13,7 @@ import {
   DestroyRef,
   ViewEncapsulation,
   PLATFORM_ID,
+  untracked, // [1] Import untracked
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 
@@ -39,7 +40,7 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly ngZone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly themeService = inject(ThemeService); // [1] Inject ThemeService
+  private readonly themeService = inject(ThemeService);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // ===================================
@@ -59,7 +60,7 @@ export class ChartCardComponent implements AfterViewInit {
    * Optional override. If not provided, uses ThemeService.isDarkTheme()
    * Accepts: 'dark' | 'light' | object (echarts theme) | null
    */
-  public theme = input<string | object | null>(null); 
+  public theme = input<string | object | null>(null);
 
   // ===================================
   // Outputs
@@ -77,7 +78,6 @@ export class ChartCardComponent implements AfterViewInit {
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
   public showChart = computed(() => !this.isLoading() && !!this.chartOptions());
 
-  // [2] Automatically derive the effective theme
   private effectiveTheme = computed(() => {
     const override = this.theme();
     if (override) return override;
@@ -98,7 +98,7 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly RESIZE_DEBOUNCE_MS = 150;
 
   constructor() {
-    // Effect 1: Update Data
+    // Effect 1: Update Data (Only runs when chartOptions changes)
     effect(() => {
       const options = this.chartOptions();
       if (this.hasLoadedECharts && this.chartInstance && options) {
@@ -109,7 +109,10 @@ export class ChartCardComponent implements AfterViewInit {
     // Effect 2: Handle Theme Changes (Re-init required)
     effect(() => {
       const activeTheme = this.effectiveTheme(); // Track computed theme
-      const options = this.chartOptions();
+
+      // [2] CRITICAL FIX: Use untracked() so this effect DOES NOT run when chartOptions changes.
+      // This prevents the chart from being disposed/recreated during data updates.
+      const options = untracked(() => this.chartOptions());
       
       // Only proceed if already initialized
       if (this.hasLoadedECharts && this.hasInitialized) {
@@ -214,7 +217,6 @@ export class ChartCardComponent implements AfterViewInit {
     this.ngZone.runOutsideAngular(() => {
       if (this.chartInstance && !this.chartInstance.isDisposed()) this.chartInstance.dispose();
 
-      // [3] Pass the effectiveTheme() signal value
       this.chartInstance = this.echartsInstance!.init(el, this.effectiveTheme(), {
         renderer: 'canvas',
         useDirtyRect: true,
@@ -230,8 +232,9 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.chartInstance || this.chartInstance.isDisposed()) return;
 
     this.ngZone.runOutsideAngular(() => {
+      // notMerge: false ensures smooth transition (diffing) instead of full redraw
       this.chartInstance!.setOption(options, {
-        notMerge: true,
+        notMerge: false,
         lazyUpdate: true,
         silent: false,
       });
