@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   ReactiveFormsModule, 
@@ -14,8 +14,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
-import { ModalService } from '../../core/services/modal.service'; // Imported
-import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component'; // Imported
+import { ModalService } from '../../core/services/modal.service';
+import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { User } from '../../core/models/user.model';
 
 @Component({
@@ -30,7 +30,7 @@ export class SettingsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
-  private modalService = inject(ModalService); // Injected
+  private modalService = inject(ModalService);
   private router = inject(Router);
 
   public currentUser = signal<User | null>(null);
@@ -62,13 +62,14 @@ export class SettingsComponent implements OnInit {
     this.form.get('NewPassword')?.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(val => this.updatePasswordCriteria(val));
-  }
 
-  ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser.set(user);
+    // [FIX] Use effect to sync with AuthService signal
+    effect(() => {
+      this.currentUser.set(this.authService.currentUser());
     });
   }
+
+  ngOnInit(): void {}
 
   private updatePasswordCriteria(value: string): void {
     if (!value) {
@@ -118,7 +119,6 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
-    // 1. Show Confirmation Modal
     this.modalService.open(ConfirmationModalComponent, {
       title: 'Xác nhận đổi mật khẩu',
       size: 'sm',
@@ -132,7 +132,6 @@ export class SettingsComponent implements OnInit {
         cancelText: 'Hủy bỏ'
       }
     }).subscribe((confirmed) => {
-      // 2. Execute if Confirmed
       if (confirmed) {
         this.performChangePassword();
       }

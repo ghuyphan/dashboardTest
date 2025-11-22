@@ -1,11 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { signal, computed } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
-
 import { environment } from '../../../environments/environment.development';
 import { User } from '../models/user.model';
 import { NavItem } from '../models/nav-item.model';
@@ -56,29 +53,24 @@ const USER_ID_STORAGE_KEY = 'userId';
 export class AuthService {
   private API_URL_LOGIN = environment.authUrl;
   private API_URL_PERMISSIONS_BASE = environment.permissionsUrl;
-  private http = inject(HttpClient);
-  private router = inject(Router);
 
   private accessToken: string | null = null;
   private idToken: string | null = null;
 
-  // --- STATE MANAGEMENT: SIGNALS ---
+  // 1. Define internal writable signals
   private _isLoggedIn = signal<boolean>(false);
   private _currentUser = signal<User | null>(null);
   private _navItems = signal<NavItem[]>([]);
 
-  // --- PUBLIC SIGNALS (Read-only) ---
-  public isLoggedIn = this._isLoggedIn.asReadonly();
-  public currentUser = this._currentUser.asReadonly();
-  public navItems = this._navItems.asReadonly();
+  // 2. Expose public read-only signals
+  public readonly isLoggedIn = this._isLoggedIn.asReadonly();
+  public readonly currentUser = this._currentUser.asReadonly();
+  public readonly navItems = this._navItems.asReadonly();
 
-  // --- BACKWARD COMPATIBILITY (Observables) ---
-  // These maintain compatibility with existing Guards/Interceptors using .pipe() or .subscribe()
-  public isLoggedIn$ = toObservable(this._isLoggedIn);
-  public currentUser$ = toObservable(this._currentUser);
-  public navItems$ = toObservable(this._navItems);
-
-  constructor() {
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
     this.initializeAuthState();
   }
 
@@ -86,14 +78,20 @@ export class AuthService {
     const url = environment.changePassUrl;
 
     const body = {
-      UserName: this.getUsername(),
+      UserName: this.getUsername(), // Auto-fill from the service
       OldPassword: payload.OldPassword,
       NewPassword: payload.NewPassword,
       ConfirmPassword: payload.ConfirmPassword
     };
 
-    return this.http.put(url, body);
+    return this.http.put(url, body).pipe(
+      tap(() => {
+        // Optional: Logout user to force re-login with new password
+        // this.logout(); 
+      })
+    );
   }
+  // ------------------------------------
 
   private initializeAuthState(): void {
     const storedToken = this.getStoredToken();
@@ -135,7 +133,7 @@ export class AuthService {
         fullName: storedFullName || ''
       };
 
-      // Update Signals
+      // Update signals
       this._currentUser.set(user);
       this._navItems.set(navItems);
       this._isLoggedIn.set(true);
@@ -161,8 +159,8 @@ export class AuthService {
   }
 
   public init(): Observable<any> {
-    // Access signal value directly
-    if (this.isLoggedIn()) {
+    // Access signal value with parenthesis ()
+    if (this._isLoggedIn()) {
       const userId = this.getUserId();
       if (userId) {
         return this.fetchAndSetPermissions(userId).pipe(
@@ -256,7 +254,7 @@ export class AuthService {
           console.error('Failed to save permissions/nav data to web storage', e);
         }
 
-        // Update Signals
+        // Update signals
         this._isLoggedIn.set(true);
         this._currentUser.set(user);
         this._navItems.set(navTree);
@@ -308,7 +306,7 @@ export class AuthService {
       console.error('Failed to remove auth data from web storage', e);
     }
 
-    // Update Signals
+    // Update signals
     this._isLoggedIn.set(false);
     this._currentUser.set(null);
     this._navItems.set([]);
@@ -337,27 +335,27 @@ export class AuthService {
   }
 
   hasRole(role: string): boolean {
-    const currentUser = this.currentUser();
+    const currentUser = this._currentUser();
     return currentUser ? currentUser.roles.includes(role) : false;
   }
 
   getUserRoles(): string[] {
-    const currentUser = this.currentUser();
+    const currentUser = this._currentUser();
     return currentUser ? [...currentUser.roles] : [];
   }
 
   hasPermission(permission: string): boolean {
-    const currentUser = this.currentUser();
+    const currentUser = this._currentUser();
     return currentUser ? currentUser.permissions.includes(permission) : false;
   }
 
   getUserPermissions(): string[] {
-    const currentUser = this.currentUser();
+    const currentUser = this._currentUser();
     return currentUser ? [...currentUser.permissions] : [];
   }
 
   hasActionPermission(modulePrefix: string, action: string): boolean {
-    const currentUser = this.currentUser();
+    const currentUser = this._currentUser();
     if (!currentUser) return false;
     
     const permissionString = currentUser.permissions.find(p => p.startsWith(modulePrefix));
@@ -422,12 +420,12 @@ export class AuthService {
   }
 
   public getUserId(): string | null {
-    const user = this.currentUser();
+    const user = this._currentUser();
     return user ? user.id : null;
   }
 
   public getUsername(): string | null {
-    const user = this.currentUser();
+    const user = this._currentUser();
     return user ? user.username : null;
   }
 }

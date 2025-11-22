@@ -1,20 +1,20 @@
-import { Injectable } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
 import { ToastMessage, ToastType } from '../models/toast-message.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ToastService {
-  private toastsSubject = new Subject<ToastMessage[]>();
-  toasts$: Observable<ToastMessage[]> = this.toastsSubject.asObservable();
+  // Internal writable signal for state management
+  private _toasts = signal<ToastMessage[]>([]);
 
-  private currentToasts: ToastMessage[] = [];
-  
+  // Expose read-only signal for components to consume
+  public readonly toasts = this._toasts.asReadonly();
+
   private toastIdCounter = 0;
-  private defaultDuration = 5000;
+  private readonly defaultDuration = 5000;
   // INCREASED LIMIT to demonstrate optimized stacking
-  private MAX_TOASTS = 8; 
+  private readonly MAX_TOASTS = 8; 
 
   constructor() { }
 
@@ -30,15 +30,16 @@ export class ToastService {
       duration: effectiveDuration
     };
 
-    // Check if we're at the limit
-    if (this.currentToasts.length >= this.MAX_TOASTS) {
-      // Remove the oldest toast (which is at the end of the array)
-      this.currentToasts.pop();
-    }
+    this._toasts.update(currentToasts => {
+      // If we've reached the limit, remove the oldest (last one in the array)
+      // We slice 0 to MAX - 1 to make room for the new one
+      const filtered = currentToasts.length >= this.MAX_TOASTS
+        ? currentToasts.slice(0, this.MAX_TOASTS - 1)
+        : currentToasts;
 
-    // Add the new toast to the beginning of the array
-    this.currentToasts = [newToast, ...this.currentToasts];
-    this.toastsSubject.next(this.currentToasts);
+      // Add the new toast to the beginning
+      return [newToast, ...filtered];
+    });
   }
 
   showSuccess(message: string, duration?: number): void {
@@ -58,12 +59,10 @@ export class ToastService {
   }
 
   removeToast(id: number): void {
-    this.currentToasts = this.currentToasts.filter(toast => toast.id !== id);
-    this.toastsSubject.next(this.currentToasts);
+    this._toasts.update(toasts => toasts.filter(toast => toast.id !== id));
   }
 
   clearAll(): void {
-    this.currentToasts = [];
-    this.toastsSubject.next(this.currentToasts);
+    this._toasts.set([]);
   }
 }

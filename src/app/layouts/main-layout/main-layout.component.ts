@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
   Router,
@@ -7,7 +7,6 @@ import {
   NavigationEnd,
   ActivatedRoute,
 } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { filter, map, mergeMap, startWith } from 'rxjs/operators';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -34,7 +33,6 @@ import { FooterActionService } from '../../core/services/footer-action.service';
   styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
-  // Dependency Injection via inject()
   private authService = inject(AuthService);
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
@@ -43,25 +41,28 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private footerService = inject(FooterActionService);
 
   isSidebarOpen = false;
+  
+  // Use signals from service directly or local copies
+  navItems: NavItem[] = [];
   currentUser: User | null = null;
   rolesDisplay: string = '';
   userInitials: string = '';
   
-  private userSubscription: Subscription | null = null;
-  private navSubscription: Subscription | null = null;
-
-  navItems: NavItem[] = [];
   currentScreenName: string = 'LOADING TITLE...';
   showSearchBar: boolean = false;
   showBackButton: boolean = false;
   isContentLoaded = false;
 
-  ngOnInit(): void {
-    this.navSubscription = this.authService.navItems$.subscribe(items => {
+  constructor() {
+    // [FIX] Use effect to react to signal changes
+    effect(() => {
+      const items = this.authService.navItems();
       this.navItems = this.deepCopyNavItems(items);
     });
 
-    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+    // [FIX] Use effect for user updates
+    effect(() => {
+      const user = this.authService.currentUser();
       this.currentUser = user;
       if (user && user.roles) {
         this.rolesDisplay = user.roles.join(', ');
@@ -71,7 +72,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.userInitials = '';
       }
     });
+  }
 
+  ngOnInit(): void {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -113,12 +116,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.userSubscription) {
-      this.userSubscription.unsubscribe();
-    }
-    if (this.navSubscription) {
-      this.navSubscription.unsubscribe();
-    }
     window.removeEventListener('resize', this.checkWindowSize.bind(this));
   }
 

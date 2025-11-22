@@ -2,12 +2,11 @@ import {
   Component,
   ChangeDetectorRef,
   OnDestroy,
-  OnInit,
   ChangeDetectionStrategy,
   inject,
-  DestroyRef
+  DestroyRef,
+  effect
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ToastMessage, ToastType } from '../../core/models/toast-message.model';
 import { ToastService } from '../../core/services/toast.service';
@@ -27,11 +26,13 @@ interface ToastTimerState {
   styleUrl: './toast.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ToastComponent implements OnInit, OnDestroy {
+export class ToastComponent implements OnDestroy {
   private toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private cdRef = inject(ChangeDetectorRef);
-  private destroyRef = inject(DestroyRef); // [BEST PRACTICE]
+  
+  // Not strictly needed for effect(), but good to keep if you add other subscriptions later
+  private destroyRef = inject(DestroyRef); 
 
   public toasts: ToastMessage[] = [];
   public isExpanded = true; 
@@ -47,40 +48,43 @@ export class ToastComponent implements OnInit, OnDestroy {
   private swipingToastId: number | null = null;
   private swipedElement: HTMLElement | null = null;
 
-  ngOnInit(): void {
-    // [BEST PRACTICE] Automatic unsubscription
-    this.toastService.toasts$
-      .pipe(takeUntilDestroyed(this.destroyRef)) 
-      .subscribe((newToasts) => {
-        const currentIds = new Set(this.toasts.map(t => t.id));
-        const addedToasts = newToasts.filter(t => !currentIds.has(t.id));
+  constructor() {
+    // [FIX] Use effect() to listen to the Signal instead of subscribe()
+    effect(() => {
+      // Reading the signal registers this effect to run whenever the signal changes
+      const newToasts = this.toastService.toasts();
+      
+      // Calculate diffs based on the previous local state
+      const currentIds = new Set(this.toasts.map(t => t.id));
+      const addedToasts = newToasts.filter(t => !currentIds.has(t.id));
 
-        // Cleanup removed toasts
-        const newIds = new Set(newToasts.map((t) => t.id));
-        this.timerState.forEach((_, id) => {
-          if (!newIds.has(id)) {
-            this.clearTimer(id);
+      // Cleanup removed toasts
+      const newIds = new Set(newToasts.map((t) => t.id));
+      this.timerState.forEach((_, id) => {
+        if (!newIds.has(id)) {
+          this.clearTimer(id);
+        }
+      });
+
+      // Update local state
+      this.toasts = newToasts;
+      this.cdRef.markForCheck();
+
+      // Initialize timers for newly added toasts
+      addedToasts.forEach(toast => {
+        const duration = toast.duration ?? this.DEFAULT_DURATION;
+        if (duration > 0) {
+          this.timerState.set(toast.id, {
+            timerId: null,
+            startTime: Date.now(),
+            remaining: duration
+          });
+          
+          if (!this.isHovering) {
+            this.runTimer(toast.id);
           }
-        });
-
-        this.toasts = newToasts;
-        this.cdRef.markForCheck();
-
-        // Initialize new toasts
-        addedToasts.forEach(toast => {
-          const duration = toast.duration ?? this.DEFAULT_DURATION;
-          if (duration > 0) {
-            this.timerState.set(toast.id, {
-              timerId: null,
-              startTime: Date.now(),
-              remaining: duration
-            });
-            
-            if (!this.isHovering) {
-              this.runTimer(toast.id);
-            }
-          }
-        });
+        }
+      });
     });
   }
 
