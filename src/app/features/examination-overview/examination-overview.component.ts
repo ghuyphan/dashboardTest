@@ -7,7 +7,6 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import type { EChartsCoreOption } from 'echarts/core';
 
@@ -19,6 +18,7 @@ import { DateUtils } from '../../shared/utils/date.utils';
 
 import { WidgetCardComponent } from '../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../components/chart-card/chart-card.component';
+import { DateFilterComponent, DateRange } from '../../components/date-filter/date-filter.component';
 import {
   ReusableTableComponent,
   GridColumn,
@@ -41,10 +41,10 @@ interface WidgetData {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     WidgetCardComponent,
     ChartCardComponent,
     ReusableTableComponent,
+    DateFilterComponent
   ],
   providers: [DatePipe],
   templateUrl: './examination-overview.component.html',
@@ -61,9 +61,11 @@ export class ExaminationOverviewComponent implements OnInit {
   public isLoading = false;
   public isInitialLoad = true;
   public rawData: ExaminationStat[] = [];
+  
+  // Date state
   public fromDate: string = '';
   public toDate: string = '';
-  public activeRange: string = 'thisWeek';
+
   public widgetData: WidgetData[] = [];
 
   public trendChartOptions: EChartsCoreOption | null = null;
@@ -85,7 +87,6 @@ export class ExaminationOverviewComponent implements OnInit {
 
   constructor() {
     // UNIFIED: React to currentPalette changes
-    // Matches the logic in DeviceDashboardComponent for consistency
     effect(() => {
       this.palette = this.themeService.currentPalette();
 
@@ -93,29 +94,41 @@ export class ExaminationOverviewComponent implements OnInit {
       this.updateWidgetColors();
 
       // Only rebuild charts/widgets if we actually have data
-      // This prevents empty charts from trying to render with new colors before data exists
       if (!this.isLoading && this.rawData.length > 0) {
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
       }
 
-      // Always mark for check at the end of the effect
-      // This ensures the component catches the theme update event
       this.cd.markForCheck();
     });
   }
 
   ngOnInit(): void {
-    // Initialize palette synchronously first to avoid undefined errors before effect runs
     this.palette = this.themeService.currentPalette();
-    
-    // Initialize widgets structure with proper colors
     this.initializeWidgetsStructure();
     
-    // Set up the date range without loading data yet
-    this.setupInitialRange('thisWeek');
+    // Calculate default "This Week" range for initial load
+    this.setDefaultDateRange();
     
-    // Now load data after everything is initialized
+    // Load data
+    this.loadData();
+  }
+
+  private setDefaultDateRange(): void {
+    const now = new Date();
+    const day = now.getDay(); 
+    const diff = now.getDate() - day + (day == 0 ? -6 : 1); // Adjust for Monday start
+    const start = new Date(now.setDate(diff));
+    const end = new Date(now.setDate(start.getDate() + 6)); // Sunday
+
+    this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
+    this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
+  }
+
+  // Handles output event from app-date-filter
+  public onDateFilter(range: DateRange): void {
+    this.fromDate = range.fromDate;
+    this.toDate = range.toDate;
     this.loadData();
   }
 
@@ -175,46 +188,6 @@ export class ExaminationOverviewComponent implements OnInit {
     }
   }
 
-  private setupInitialRange(range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'): void {
-    this.activeRange = range;
-    const now = new Date();
-    let start = new Date(),
-      end = new Date();
-
-    if (range === 'today') {
-      /* defaults to now */
-    } else if (range === 'thisWeek') {
-      const day = now.getDay(),
-        diff = now.getDate() - day + (day == 0 ? -6 : 1);
-      start = new Date(now.setDate(diff));
-    } else if (range === 'thisMonth') {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    } else if (range === 'thisQuarter') {
-      const qMonth = Math.floor(now.getMonth() / 3) * 3;
-      start = new Date(now.getFullYear(), qMonth, 1);
-      end = new Date(now.getFullYear(), qMonth + 3, 0);
-    } else if (range === 'thisYear') {
-      start = new Date(now.getFullYear(), 0, 1);
-      end = new Date(now.getFullYear(), 11, 31);
-    }
-
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d
-        .getDate()
-        .toString()
-        .padStart(2, '0')}`;
-    this.fromDate = fmt(start);
-    this.toDate = fmt(end);
-  }
-
-  public setRange(
-    range: 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear'
-  ): void {
-    this.setupInitialRange(range);
-    this.loadData();
-  }
-
   public loadData(): void {
     if (!this.fromDate || !this.toDate) return;
     this.isLoading = true;
@@ -255,7 +228,6 @@ export class ExaminationOverviewComponent implements OnInit {
 
     const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
-    // Update widget values while preserving the accent colors
     const updateWidget = (id: string, value: string) => {
       const widget = this.widgetData.find((w) => w.id === id);
       if (widget) widget.value = value;
@@ -269,20 +241,18 @@ export class ExaminationOverviewComponent implements OnInit {
   }
 
   private buildCharts(data: ExaminationStat[]): void {
-    // UPDATED: Use DateUtils.parse to safely handle both ISO and dd/MM/yyyy
+    // Sort by date
     const sorted = [...data].sort((a, b) => {
       const dateA = DateUtils.parse(a.NGAY_TIEP_NHAN);
       const dateB = DateUtils.parse(b.NGAY_TIEP_NHAN);
       return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
     });
 
-    // UPDATED: Convert parsed date objects for display
     const dates = sorted.map((d) => {
       const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
       return dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : '';
     });
 
-    // Local color mapping for cleaner chart config
     const c = {
       total: this.palette.deepSapphire,
       ck: this.palette.primary,

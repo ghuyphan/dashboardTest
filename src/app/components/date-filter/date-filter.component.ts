@@ -3,6 +3,7 @@ import {
   inject,
   signal,
   output,
+  input,
   ViewEncapsulation
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -25,15 +26,17 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
   encapsulation: ViewEncapsulation.Emulated
 })
 export class DateFilterComponent {
-  // Signals for internal state
+  // INPUTS: Received from Parent
+  public isLoading = input<boolean>(false);
+  public buttonLabel = input<string>('Xem Báo Cáo');
+
+  // OUTPUTS: Sent to Parent
+  public filterSubmit = output<DateRange>();
+
+  // Internal Signals
   public fromDate = signal<string>('');
   public toDate = signal<string>('');
   public activeRange = signal<QuickRange>('thisWeek');
-  public isLoading = signal<boolean>(false);
-  public buttonLabel = signal<string>('Xem Báo Cáo');
-
-  // Outputs
-  public filterSubmit = output<DateRange>();
 
   public quickRanges: { key: QuickRange, label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
@@ -46,7 +49,7 @@ export class DateFilterComponent {
   private datePipe = inject(DatePipe);
 
   constructor() {
-    // Initialize with "This Week"
+    // Initialize default view state (UI only, parent handles initial data load usually)
     this.setRange('thisWeek', false);
   }
 
@@ -70,6 +73,9 @@ export class DateFilterComponent {
         const day = now.getDay();
         const diff = now.getDate() - day + (day == 0 ? -6 : 1); // Adjust when day is Sunday
         start = new Date(now.setDate(diff));
+        // End of week (Sunday)
+        const lastDay = start.getDate() + 6;
+        end = new Date(now.setDate(lastDay));
         break;
       case 'thisMonth':
         start = new Date(now.getFullYear(), now.getMonth(), 1);

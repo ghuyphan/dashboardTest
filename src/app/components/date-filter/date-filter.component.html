@@ -27,7 +27,7 @@
       <button 
         class="btn-pill" 
         [class.active]="activeRange() === range.key"
-        (click)="setRange(range.key)">
+        (click)="setRange(range.key, true)"> 
         {{ range.label }}
       </button>
     }
