@@ -6,9 +6,8 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment.development';
 import { User } from '../models/user.model';
 import { NavItem } from '../models/nav-item.model';
-import { CustomRouteReuseStrategy } from '../strategies/custom-route-reuse-strategy'; // [1] Import Strategy
+import { CustomRouteReuseStrategy } from '../strategies/custom-route-reuse-strategy';
 
-// ... (Keep existing interfaces LoginResponse, ApiPermissionNode etc.) ...
 interface LoginResponse {
   MaKetQua: number;
   TenKetQua?: string;
@@ -74,7 +73,28 @@ export class AuthService {
     this.initializeAuthState();
   }
 
-  // ... (Keep initializeAuthState, getStoredToken, getStoredIdToken, getStoredItem, init, login, fetchAndSetPermissions methods AS IS) ...
+  // --- [NEW] Change Password Method ---
+  changePassword(payload: { OldPassword: string, NewPassword: string, ConfirmPassword: string }): Observable<any> {
+    // Construct the URL. Assuming API_URL_LOGIN ends in '/login', we remove it to get the base auth path
+    // e.g., "api/auth/login" -> "api/auth/change-password"
+    // If your API structure is different, adjust this string.
+    const url = this.API_URL_LOGIN.replace(/\/login\/?$/i, '') + '/change-password';
+
+    const body = {
+      UserName: this.getUsername(), // Auto-fill from the service
+      OldPassword: payload.OldPassword,
+      NewPassword: payload.NewPassword,
+      ConfirmPassword: payload.ConfirmPassword
+    };
+
+    return this.http.post(url, body).pipe(
+      tap(() => {
+        // Optional: Logout user to force re-login with new password
+        // this.logout(); 
+      })
+    );
+  }
+  // ------------------------------------
 
   private initializeAuthState(): void {
     const storedToken = this.getStoredToken();
@@ -261,9 +281,7 @@ export class AuthService {
   }
 
   logout(): void {
-    // [2] Clear the Route Reuse Cache globally here
     CustomRouteReuseStrategy.clearAllHandles();
-    
     this.clearLocalAuthData(true);
   }
 
@@ -292,7 +310,7 @@ export class AuthService {
     this.currentUserSubject.next(null);
     this.navItemsSubject.next([]);
 
-if (navigate) {
+    if (navigate) {
       this.router.navigate(['/login']).then(() => {
         CustomRouteReuseStrategy.clearAllHandles();
       });
@@ -301,7 +319,6 @@ if (navigate) {
     }
   }
 
-  // ... (Keep getters and helper methods AS IS) ...
   getAccessToken(): string | null {
     if (this.accessToken) return this.accessToken;
     const token = this.getStoredItem(TOKEN_STORAGE_KEY);

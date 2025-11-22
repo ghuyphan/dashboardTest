@@ -36,8 +36,8 @@
   
   /* THEME FIX: Use semantic variables */
   background-color: var(--surface-card);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--box-shadow-sm);
+  // border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow-md);
   
   padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);

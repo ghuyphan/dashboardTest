@@ -92,7 +92,10 @@ export class ExaminationOverviewComponent implements OnInit {
       if (!this.isLoading && this.rawData.length > 0) {
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
-        this.cd.markForCheck();
+        
+        // FIX: Use detectChanges() instead of markForCheck() to ensure the view updates
+        // immediately after the effect runs in the microtask queue.
+        this.cd.detectChanges();
       }
     });
   }

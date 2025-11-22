@@ -1,4 +1,5 @@
 import { Component, Output, EventEmitter, inject, ViewEncapsulation, input } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router'; 
 import { MatMenuModule } from '@angular/material/menu';
@@ -32,6 +33,7 @@ export class HeaderComponent {
   public currentScreenName = input<string>('Dashboard');
   public showSearchBar = input<boolean>(false);
   public showBackButton = input<boolean>(false);
+  private router = inject(Router);
 
   @Output() sidebarToggled = new EventEmitter<void>();
   @Output() logoutClicked = new EventEmitter<void>();
@@ -63,7 +65,9 @@ export class HeaderComponent {
     this.themeService.toggleTheme();
   }
 
-  onSettingsClick(): void {}
+onSettingsClick(): void {
+    this.router.navigate(['/app/profile/change-password']);
+  }
 
   onSupportClick(): void {}
 

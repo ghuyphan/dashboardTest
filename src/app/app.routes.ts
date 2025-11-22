@@ -26,6 +26,13 @@ export const routes: Routes = [
           import('./features/dashboard/home/home.component').then(m => m.HomeComponent),
         data: { title: 'Trang chủ' }
       },
+      {
+        path: 'profile/change-password',
+        loadComponent: () => 
+          import('./features/profile/change-password/change-password.component')
+            .then(m => m.ChangePasswordComponent),
+        data: { title: 'Đổi mật khẩu' }
+      },
 
       {
         path: 'equipment/catalog',

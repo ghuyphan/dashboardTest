@@ -27,7 +27,7 @@ type CurrencyCode = 'VND' | 'USD' | 'EUR';
 })
 export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   private ngZone = inject(NgZone);
-  private themeService = inject(ThemeService); // [1] Inject ThemeService
+  private themeService = inject(ThemeService);
 
   // Inputs
   public icon = input<string>('fas fa-question-circle');
@@ -41,8 +41,8 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
    */
   public accentColor = input<string>('primary');
 
-  // [2] Resolve the color: Try to find it in the palette, otherwise use raw string
-  private resolvedAccentColor = computed(() => {
+  // Resolve the color: Try to find it in the palette, otherwise use raw string
+  public resolvedAccentColor = computed(() => {
     const rawInput = this.accentColor();
     const palette = this.themeService.currentPalette(); // Reactive!
     
@@ -52,7 +52,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     return rawInput;
   });
 
-  // [3] Use the resolved color for styles
+  // Use the resolved color for styles
   public iconWrapperStyle = computed(() => ({
     'background-color': this.resolvedAccentColor() + '33' // Add 20% opacity (hex alpha)
   }));
@@ -76,11 +76,13 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       const loading = this.isLoading();
       const val = this.value();
-      // Note: We don't need to manually track resolvedAccentColor here
-      // because the template uses the signal directly.
 
       if (this.hasViewInitialized && !loading) {
-        this.processValue(val, true);
+        // [FIX] Wrap in setTimeout to ensure the @if block in template 
+        // has switched and the ViewChild is available.
+        setTimeout(() => {
+            this.processValue(val, true);
+        }, 0);
       }
     });
   }
@@ -88,7 +90,10 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.hasViewInitialized = true;
     if (!this.isLoading()) {
-      this.processValue(this.value(), true);
+      // [FIX] Also wrap initial load for safety
+      setTimeout(() => {
+          this.processValue(this.value(), true);
+      }, 0);
     }
   }
 
