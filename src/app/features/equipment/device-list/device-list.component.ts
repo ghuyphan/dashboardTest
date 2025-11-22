@@ -6,6 +6,7 @@ import {
   ChangeDetectorRef,
   inject,
   DestroyRef,
+  AfterViewInit,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -62,7 +63,7 @@ interface RowActionEvent {
   styleUrl: './device-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DeviceListComponent implements OnInit, OnDestroy {
+export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   // Dependency Injection
   private readonly footerService = inject(FooterActionService);
   private readonly http = inject(HttpClient);
@@ -92,6 +93,15 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeSubscriptions();
     this.updateFooterActions();
+  }
+
+  ngAfterViewInit(): void {
+    // [PERFORMANCE FIX]
+    // Delay data loading slightly to allow the View Transition animation to complete smoothly.
+    // Without this, the heavy table rendering blocks the main thread during the slide animation.
+    setTimeout(() => {
+      this.triggerReload();
+    }, 300);
   }
 
   ngOnDestroy(): void {
@@ -136,23 +146,20 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     // 2. Data Reload Subscription
     this.reloadTrigger$
       .pipe(
-        startWith(null),
+        // [PERFORMANCE FIX] Removed startWith(null) to prevent immediate loading during init
         tap(() => this.handleLoadStart()),
         switchMap(() => this.loadDevices()),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
 
-    // 3. Router Subscription (RESTORED FOR FOOTER)
-    // This ensures footer actions reappear when returning to this cached view
+    // 3. Router Subscription
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((event: NavigationEnd) => {
-        // Strict check to ensure we are exactly on the list page
-        // (or a paginated version of it) and not a child detail page
         if (event.urlAfterRedirects === DEVICE_LIST_ROUTE || 
             event.urlAfterRedirects.split('?')[0] === DEVICE_LIST_ROUTE) {
           this.updateFooterActions();

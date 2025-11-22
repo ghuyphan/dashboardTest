@@ -78,25 +78,22 @@
 
     <div class="widget-section">
       <div class="widget-grid">
-        @if (isInitialLoad) { 
-          @for (i of [1, 2, 3, 4, 5]; track i) {
-            <app-widget-card
-              [title]="'Loading...'"
-              [isLoading]="true"
-            ></app-widget-card>
-          } 
-        } @else { 
-          @for (widget of widgetData; track trackByWidget($index, widget)) {
-            <app-widget-card
-              [icon]="widget.icon"
-              [title]="widget.title"
-              [value]="widget.value"
-              [caption]="widget.caption"
-              [accentColor]="widget.accentColor"
-            >
-            </app-widget-card>
-          } 
-        }
+        @if (isInitialLoad) { @for (i of [1, 2, 3, 4, 5]; track i) {
+        <app-widget-card
+          [title]="'Loading...'"
+          [isLoading]="true"
+        ></app-widget-card>
+        } } @else { @for (widget of widgetData; track trackByWidget($index,
+        widget)) {
+        <app-widget-card
+          [icon]="widget.icon"
+          [title]="widget.title"
+          [value]="widget.value"
+          [caption]="widget.caption"
+          [accentColor]="widget.accentColor"
+        >
+        </app-widget-card>
+        } }
       </div>
     </div>
 
@@ -105,7 +102,7 @@
         class="grid-item span-full"
         title="Biểu Đồ Tiếp Nhận Theo Ngày"
         icon="fas fa-chart-line"
-        iconClass="text-primary"
+        iconClass="icon-info"
         [isLoading]="isLoading"
         [chartOptions]="trendChartOptions"
         skeletonType="line"
@@ -117,7 +114,7 @@
         class="grid-item span-half"
         title="Đối Tượng (BHYT / Viện Phí)"
         icon="fas fa-chart-pie"
-        iconClass="text-info"
+        iconClass="icon-info"
         [isLoading]="isLoading"
         [chartOptions]="typeChartOptions"
         skeletonType="pie"
@@ -129,7 +126,7 @@
         class="grid-item span-half"
         title="Hình Thức Tiếp Nhận"
         icon="fas fa-chart-bar"
-        iconClass="text-warning"
+        iconClass="icon-info"
         [isLoading]="isLoading"
         [chartOptions]="admissionChartOptions"
         skeletonType="bar"
@@ -154,19 +151,19 @@
 
         <div class="card-body table-body">
           @if (isInitialLoad) {
-            <div class="skeleton-rect" style="height: 400px; width: 100%"></div>
+          <div class="skeleton-rect" style="height: 400px; width: 100%"></div>
           } @else {
-            <app-reusable-table
-              [data]="rawData"
-              [columns]="tableColumns"
-              [isLoading]="isLoading"
-              [showPaginator]="true"
-              [pageSize]="10"
-              [pageSizeOptions]="[5, 10, 25, 50]"
-              [clientSideSort]="true"
-              emptyStateText="Không có dữ liệu cho khoảng thời gian này."
-            >
-            </app-reusable-table>
+          <app-reusable-table
+            [data]="rawData"
+            [columns]="tableColumns"
+            [isLoading]="isLoading"
+            [showPaginator]="true"
+            [pageSize]="10"
+            [pageSizeOptions]="[5, 10, 25, 50]"
+            [clientSideSort]="true"
+            emptyStateText="Không có dữ liệu cho khoảng thời gian này."
+          >
+          </app-reusable-table>
           }
         </div>
       </div>

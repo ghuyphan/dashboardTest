@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   ReactiveFormsModule, 
@@ -10,11 +10,13 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ModalService } from '../../core/services/modal.service'; // Imported
+import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component'; // Imported
 import { User } from '../../core/models/user.model';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-settings',
@@ -28,6 +30,7 @@ export class SettingsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private modalService = inject(ModalService); // Injected
   private router = inject(Router);
 
   public currentUser = signal<User | null>(null);
@@ -109,40 +112,59 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
-    // 1. Ensure Username exists
     const username = this.authService.getUsername();
     if (!username) {
       this.toastService.showError('Lỗi phiên làm việc. Vui lòng đăng nhập lại.');
       return;
     }
 
+    // 1. Show Confirmation Modal
+    this.modalService.open(ConfirmationModalComponent, {
+      title: 'Xác nhận đổi mật khẩu',
+      size: 'sm',
+      context: {
+        layout: 'standard',
+        icon: 'fas fa-sign-out-alt',
+        iconColor: 'var(--color-warning)',
+        title: 'Đổi mật khẩu?',
+        message: 'Bạn có chắc chắn muốn đổi mật khẩu không? Để đảm bảo an toàn, bạn sẽ được đăng xuất và cần đăng nhập lại.',
+        confirmText: 'Đổi & Đăng xuất',
+        cancelText: 'Hủy bỏ'
+      }
+    }).subscribe((confirmed) => {
+      // 2. Execute if Confirmed
+      if (confirmed) {
+        this.performChangePassword();
+      }
+    });
+  }
+
+  private performChangePassword(): void {
     this.isLoading.set(true);
     
     this.authService.changePassword(this.form.value)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (res) => {
-           // 2. Handle API Logic Success/Fail logic if status is 200 but body has error code
-           if (res && res.MaKetQua && res.MaKetQua !== 200) {
+           if (res && res.MaKetQua && Number(res.MaKetQua) !== 200) {
              const msg = res.TenKetQua || res.ErrorMessage || 'Đổi mật khẩu thất bại.';
              this.toastService.showError(msg);
              return;
            }
-           this.toastService.showSuccess('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.');
-           this.authService.logout();
+           this.toastService.showSuccess('Đổi mật khẩu thành công. Đang chuyển hướng...');
+           setTimeout(() => {
+             this.authService.logout();
+           }, 1500);
         },
         error: (err) => {
           console.error('Change Password Error:', err);
           
-          // 3. Expanded Error Parsing Logic
           let msg = 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.';
 
           if (err.error) {
-            // Check specifically for the structure often returned by backend
             if (typeof err.error === 'string') {
                msg = err.error;
             } else if (err.error.TenKetQua) {
-               // "Đổi mật khẩu thất bại. Kiểm tra lại mật khẩu cũ" usually comes here
                msg = err.error.TenKetQua;
             } else if (err.error.ErrorMessage) {
                msg = err.error.ErrorMessage;

@@ -93,10 +93,6 @@
               <i class="fas" [class]="passwordCriteria().maxLength ? 'fa-check-circle' : 'fa-circle'"></i>
               Có tối đa 20 ký tự
             </li>
-            <li class="static-rule">
-              <i class="fas fa-info-circle"></i>
-              Không trùng với 5 lần gần nhất
-            </li>
             <li [class.valid]="passwordCriteria().hasUpper">
               <i class="fas" [class]="passwordCriteria().hasUpper ? 'fa-check-circle' : 'fa-circle'"></i>
               Có ít nhất một chữ in hoa
@@ -114,6 +110,11 @@
               Có ít nhất một ký tự số
             </li>
           </ul>
+        </div>
+
+        <div class="login-warning" style="margin: 1rem 0; padding: 0.75rem; background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404; display: flex; gap: 0.5rem; border-radius: 4px;">
+            <i class="fas fa-info-circle" style="margin-top: 3px;"></i>
+            <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để tiếp tục sử dụng.</span>
         </div>
 
         <div class="form-actions">
