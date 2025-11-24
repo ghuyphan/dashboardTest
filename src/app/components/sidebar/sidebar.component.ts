@@ -7,6 +7,7 @@ import {
   inject,
   input,
   effect,
+  ChangeDetectionStrategy, // <--- Import this
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -30,12 +31,13 @@ import { FlyoutDirective } from '../../shared/directives/flyout.directive';
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush, // <--- CRITICAL PERFORMANCE FIX
 })
 export class SidebarComponent {
   // Signal Inputs
   public navItems = input<NavItem[]>([]);
   public isOpen = input<boolean>(false);
-  
+
   @Output() toggleSidebar = new EventEmitter<void>();
 
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;

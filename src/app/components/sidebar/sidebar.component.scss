@@ -6,7 +6,7 @@
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
-  --scrollbar-width: 8px; /* Critical addition */
+  --scrollbar-width: 8px;
 }
 
 /* ========== SIDEBAR STYLES ========== */
@@ -20,13 +20,20 @@
   
   color: var(--gray-700);
   padding: 0 0 var(--spacing-md) 0;
+  
   transition: transform var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
   z-index: 1000;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
-  overflow: visible;
+  
+  /* display: flex; */ /* Flex is fine, but ensure overflow works */
   display: flex;
   flex-direction: column;
+  
+  /* === PERFORMANCE OPTIMIZATION === */
+  /* Tells browser to treat this element as an independent layout boundary */
+  /* 'size' cannot be used here because width animates */
+  contain: layout style; 
   will-change: transform, width;
 
   * {
@@ -134,22 +141,23 @@
 .sidebar-nav-content {
   flex-grow: 1;
   min-height: 0;
-  position: relative; /* Critical for proper overlay */
+  position: relative; 
+  
+  /* Performance: Content Visibility skips rendering offscreen items */
+  content-visibility: auto;
+  contain-intrinsic-size: 100px 500px; /* Estimate dimensions */
 
-  /* DESKTOP SCROLLBAR FIXES */
   @media (min-width: 992.01px) {
-    scrollbar-gutter: stable both-edges; /* Reserve space on both sides */
+    scrollbar-gutter: stable both-edges;
     overflow-y: auto;
     overflow-x: hidden;
     
-    /* Firefox scrollbar */
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     
-    /* WebKit scrollbar */
     &::-webkit-scrollbar {
       width: var(--scrollbar-width);
-      position: absolute; /* Overlay mode */
+      position: absolute;
     }
     
     &::-webkit-scrollbar-track {
@@ -168,7 +176,6 @@
 
 /* DESKTOP SCROLLBAR BEHAVIOR */
 @media (min-width: 992.01px) {
-  /* Show scrollbar only when expanded sidebar is hovered */
   .sidebar:not(.collapsed):hover .sidebar-nav-content::-webkit-scrollbar-thumb {
     background-color: var(--gray-400);
   }
@@ -177,19 +184,15 @@
     scrollbar-color: var(--gray-400) transparent;
   }
   
-  /* Critical fixes for collapsed state */
   .sidebar.collapsed .sidebar-nav-content {
-    /* Counteract reserved gutter space */
     margin-right: calc(-1 * var(--scrollbar-width));
     padding-right: var(--scrollbar-width);
     
-    /* Hide scrollbar completely in collapsed state */
     &::-webkit-scrollbar-thumb {
       background-color: transparent !important;
     }
   }
   
-  /* Ensure inner nav doesn't overflow */
   .sidebar.collapsed .sidebar-nav {
     padding-right: var(--scrollbar-width) !important;
   }
@@ -207,7 +210,6 @@
   margin: 0;
 }
 
-/* --- Parent Nav Item <li> --- */
 .sidebar-nav ul li {
   position: relative;
   overflow: visible;
@@ -217,7 +219,23 @@
   z-index: 10;
 }
 
-/* --- Regular Links & Submenu Toggles --- */
+/* --- Loading Skeleton for Defer Block --- */
+.nav-skeleton {
+  height: 50px;
+  margin: 10px 0;
+  background: var(--gray-200);
+  border-radius: 8px;
+  opacity: 0.6;
+  animation: skeleton-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes skeleton-pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.4; }
+}
+
+/* --- Links & Buttons --- */
 .sidebar-nav ul li a,
 .sidebar-nav ul li button {
   align-items: center;
@@ -226,11 +244,6 @@
   display: flex;
   padding: 0.75rem 0.625rem;
   border-radius: var(--border-radius-md);
-  
-  /* === OPTIMIZATION ===
-   * Removed 'padding', 'width', 'height', 'margin', 'justify-content'
-   * from the transition to prevent layout thrashing on collapse/expand.
-   */
   transition: background-color var(--transition-fast) ease,
     color var(--transition-fast) ease,
     transform var(--transition-fast) ease;
@@ -240,7 +253,6 @@
   width: 100%;
   background: none;
   border: none;
-  // font-family: inherit;
   font-size: 0.875rem;
   font-weight: var(--font-weight-normal);
   text-align: left;
@@ -249,7 +261,7 @@
   justify-content: flex-start;
 }
 
-/* General icons */
+/* Icons */
 .sidebar-nav ul li a i:not(.toggle-icon),
 .sidebar-nav ul li button i:not(.toggle-icon) {
   margin-right: 0.75rem;
@@ -259,11 +271,6 @@
   font-size: var(--font-size-base);
   flex-shrink: 0;
   transform: scale(1);
-
-  /* === OPTIMIZATION ===
-   * Removed 'font-size' from the transition.
-   * Animating font-size causes layout recalculation.
-   */
   transition: transform var(--transition-fast) var(--transition-spring);
 }
 
@@ -272,20 +279,18 @@
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* This is already optimized! 'opacity' and 'transform' are fast. */
   transition: opacity var(--transition-fast) var(--transition-smooth),
     transform var(--transition-fast) var(--transition-smooth);
   transform-origin: left center;
 }
 
-/* Default hover state */
+/* Hover States */
 .sidebar-nav ul li a:hover,
 .sidebar-nav ul li button:hover {
   background-color: var(--gray-200);
   color: var(--gray-800);
 }
 
-/* Icon pop effect on hover */
 .sidebar-nav ul li a:hover i:not(.toggle-icon),
 .sidebar-nav ul li button:hover i:not(.toggle-icon) {
   transform: scale(1.15);
@@ -296,7 +301,7 @@
   transform: scale(0.98);
 }
 
-/* Active state for direct links (not submenu toggles) */
+/* Active States */
 .sidebar-nav ul li a.active,
 .sidebar-nav ul li button.active {
   background-color: var(--gray-200);
@@ -317,19 +322,17 @@
   border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
 }
 
-/* Keep consistent hover on active items */
 .sidebar-nav ul li a.active:hover,
 .sidebar-nav ul li button.active:hover {
   background-color: var(--gray-200);
 }
 
-/* Keep pop effect on active item hover */
 .sidebar-nav ul li a.active:hover i:not(.toggle-icon),
 .sidebar-nav ul li button.active:hover i:not(.toggle-icon) {
   transform: scale(1.15);
 }
 
-/* --- Submenu Parent Styling --- */
+/* --- Submenu Styling --- */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] {
   background-color: transparent;
   color: var(--gray-700);
@@ -347,23 +350,17 @@
   font-weight: 600;
 }
 
-/* * **** 2. ADD THIS NEW RULE ****
- * When a child route is active, the <li> gets '.active-parent'.
- * This rule styles the button inside that <li>.
-*/
 .sidebar-nav ul li.active-parent > button {
   background-color: var(--gray-200);
   color: var(--gray-800);
   font-weight: 600;
 }
 
-/* FIXED TYPO: .sidebar.nav -> .sidebar-nav */
 .sidebar-nav ul li.has-submenu button.active::before,
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']::before {
   display: none;
 }
 
-/* --- Submenu Arrow Icon --- */
 .toggle-icon {
   margin-left: auto;
   margin-right: 0 !important;
@@ -376,12 +373,11 @@
   flex-shrink: 0;
 }
 
-/* --- Arrow Rotation (for Accordion) --- */
 .sidebar-nav ul li.open > button .toggle-icon {
   transform: rotate(180deg);
 }
 
-/* --- Submenu Container (ACCORDION default) --- */
+/* --- Accordion Submenu --- */
 .submenu {
   list-style: none;
   padding: 0;
@@ -405,11 +401,6 @@
   overflow: visible;
 }
 
-/* --- Submenu Items (ACCORDION default) --- */
-.submenu li {
-  position: relative;
-}
-
 .submenu li a {
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   font-size: 0.875rem;
@@ -430,18 +421,14 @@
   transition: transform var(--transition-fast) var(--transition-spring);
 }
 
-.submenu li a::before {
-  display: none;
-}
+.submenu li a::before { display: none; }
 
 .submenu li a:hover {
   background-color: var(--gray-200);
   color: var(--gray-900);
 }
 
-.submenu li a:hover i {
-  transform: scale(1.15);
-}
+.submenu li a:hover i { transform: scale(1.15); }
 
 .submenu li a.active {
   color: var(--gray-900);
@@ -461,19 +448,7 @@
   display: block;
 }
 
-.submenu li a.active:hover {
-  background-color: var(--gray-200);
-}
-
-.submenu li a.active:hover i {
-  transform: scale(1.15);
-}
-
-/* * ====================================
- * === COLLAPSED STATE STYLES
- * ====================================
-*/
-
+/* --- COLLAPSED STATE --- */
 .sidebar.collapsed {
   padding-left: 0;
   padding-right: 0;
@@ -486,9 +461,7 @@
   padding: 0;
 }
 
-.sidebar.collapsed .sidebar-header {
-  padding: 0 0.625rem;
-}
+.sidebar.collapsed .sidebar-header { padding: 0 0.625rem; }
 
 .sidebar.collapsed .sidebar-header h2 {
   opacity: 0;
@@ -516,20 +489,14 @@
   opacity: 0.3;
 }
 
-.sidebar.collapsed
-  .sidebar-header
-  .sidebar-logo-wrapper:hover
-  .sidebar-toggle-btn {
+.sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
   opacity: 1;
   pointer-events: auto;
   background-color: var(--gray-100);
 }
 
-.sidebar.collapsed .sidebar-header .sidebar-logo {
-  margin-right: 0;
-}
+.sidebar.collapsed .sidebar-header .sidebar-logo { margin-right: 0; }
 
-/* FIXED: Only apply icon dimensions to TOP-LEVEL items */
 .sidebar.collapsed .sidebar-nav > ul > li > a,
 .sidebar.collapsed .sidebar-nav > ul > li > button {
   width: 2.5rem;
@@ -553,18 +520,8 @@
   margin: 0;
   font-size: 1.1rem;
   transform: none;
-  /*
-   * The 'transition' property was already removed from this
-   * element via the optimization higher up, so the
-   * font-size change here will be instant (which is good).
-   */
 }
 
-/*
-* This rule *only* hides the spans on the *top-level* items.
-* The '>' combinators are crucial. They prevent this rule
-* from applying to spans deep inside a .submenu.
-*/
 .sidebar.collapsed .sidebar-nav > ul > li > a > span,
 .sidebar.collapsed .sidebar-nav > ul > li > button > span {
   opacity: 0;
@@ -573,7 +530,6 @@
   pointer-events: none;
 }
 
-/* FIXED: Properly show submenu labels in flyout */
 .sidebar.collapsed .sidebar-nav ul li .submenu li a {
   width: auto !important;
   height: auto !important;
@@ -585,7 +541,6 @@
   margin: 0 0 0.25rem 0 !important;
 }
 
-/* Allow overflow for flyout parent buttons when collapsed */
 .sidebar.collapsed .sidebar-nav > ul > li.has-submenu > button {
   overflow: visible;
 }
@@ -595,22 +550,12 @@
   display: none;
 }
 
-/* Hide accordion chevron */
 .sidebar.collapsed .sidebar-nav ul li .toggle-icon {
   display: none !important;
   opacity: 0 !important;
 }
 
-/* * ===========================================
- * === Collapsed State FLY-OUT Overrides
- * ===========================================
-*/
-
-/*
- * ALL FLYOUT STYLES REMOVED FOR DEBUGGING
-*/
-
-/* --- Mobile (Responsive) Overrides --- */
+/* --- Mobile Overrides --- */
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
@@ -618,6 +563,8 @@
     overflow-x: hidden;
     overflow-y: auto;
     padding: 0 0.625rem var(--spacing-md) 0.625rem;
+    /* Mobile doesn't need strict layout containment as it overlays */
+    contain: none; 
   }
 
   .sidebar.open {
@@ -634,14 +581,10 @@
     overflow-y: auto;
   }
   
-  .sidebar-header {
-    padding: 0 var(--spacing-xs);
-  }
+  .sidebar-header { padding: 0 var(--spacing-xs); }
+  .sidebar-nav { padding: 0; }
 
-  .sidebar-nav {
-    padding: 0;
-  }
-
+  /* Accordion behavior for mobile collapsed state (technically mobile menu) */
   .sidebar.collapsed .sidebar-nav ul li .submenu {
     position: relative;
     left: auto;
@@ -668,10 +611,6 @@
     margin-bottom: 0.25rem;
     margin-top: 0.25rem;
     overflow: visible !important;
-    transition: max-height var(--transition-duration) var(--transition-smooth),
-      opacity var(--transition-duration) ease,
-      margin var(--transition-duration) var(--transition-smooth);
-    transition-delay: 0s;
   }
 
   .sidebar.collapsed .sidebar-header {
@@ -703,19 +642,8 @@
     opacity: 1;
   }
 
-  .sidebar.collapsed
-    .sidebar-header
-    .sidebar-logo-wrapper:hover
-    .sidebar-toggle-btn {
+  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
     background-color: transparent;
-  }
-
-  .sidebar.collapsed .sidebar-header .logo {
-    margin-right: 0.625rem;
-  }
-
-  .sidebar.collapsed .sidebar-nav {
-     padding: 0;
   }
 
   .sidebar.collapsed .sidebar-nav ul li a,
@@ -732,16 +660,8 @@
     margin-right: 0.75rem;
     font-size: var(--font-size-base);
     transform: scale(1);
-    /*
-     * The 'transition' property was already removed from this
-     * element via the optimization higher up.
-     */
   }
 
-  /*
-  * This rule specifically overrides the desktop hiding rule
-  * when in collapsed mobile view (which is the accordion)
-  */
   .sidebar.collapsed .sidebar-nav ul li a span,
   .sidebar.collapsed .sidebar-nav ul li button span {
     opacity: 1;

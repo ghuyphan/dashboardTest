@@ -34,61 +34,65 @@
   <div class="sidebar-nav-content" #navContent>
     <nav class="sidebar-nav" role="navigation">
       <ul>
-        @for (item of navItems(); track item.label) {
-          <ng-container *appHasPermission="item.permissions">
-            
-            @if (!item.children) {
-              <li>
-                <a
-                  [routerLink]="item.link"
-                  routerLinkActive="active"
-                  [appTooltip]="!isOpen() ? item.label : ''"
-                  (click)="onNavLinkClick()" 
-                >
-                  <i [class]="item.icon"></i>
-                  <span>{{ item.label }}</span>
-                </a>
-              </li>
-            }
+        @defer (on viewport) {
+          @for (item of navItems(); track item.label) {
+            <ng-container *appHasPermission="item.permissions">
+              
+              @if (!item.children) {
+                <li>
+                  <a
+                    [routerLink]="item.link"
+                    routerLinkActive="active"
+                    [appTooltip]="!isOpen() ? item.label : ''"
+                    (click)="onNavLinkClick()" 
+                  >
+                    <i [class]="item.icon"></i>
+                    <span>{{ item.label }}</span>
+                  </a>
+                </li>
+              }
 
-            @if (item.children) {
-              <li
-                [class.has-submenu]="true"
-                [class.open]="item.isOpen"
-                routerLinkActive="active-parent"
-              >
-                <button
-                  (click)="toggleSubmenu(item, $event)"
-                  [attr.aria-expanded]="item.isOpen"
-                  [appTooltip]="item.label"
-                  [appFlyout]="submenuEl"
-                  [flyoutEnabled]="!isOpen()"
+              @if (item.children) {
+                <li
+                  [class.has-submenu]="true"
+                  [class.open]="item.isOpen"
+                  routerLinkActive="active-parent"
                 >
-                  <i [class]="item.icon"></i>
-                  <span>{{ item.label }}</span>
-                  <i class="fas fa-chevron-down toggle-icon"></i>
-                </button>
-  
-                <ul class="submenu" [class.open]="item.isOpen" #submenuEl>
-                  @for (child of item.children; track child.label) {
-                    <ng-container *appHasPermission="child.permissions">
-                      <li>
-                        <a
-                          [routerLink]="child.link"
-                          routerLinkActive="active"
-                          [appTooltip]="child.label"
-                          (click)="onNavLinkClick()"
-                        >
-                          <i [class]="child.icon"></i>
-                          <span>{{ child.label }}</span>
-                        </a>
-                      </li>
-                    </ng-container>
-                  }
-                </ul>
-              </li>
-            }
-          </ng-container>
+                  <button
+                    (click)="toggleSubmenu(item, $event)"
+                    [attr.aria-expanded]="item.isOpen"
+                    [appTooltip]="item.label"
+                    [appFlyout]="submenuEl"
+                    [flyoutEnabled]="!isOpen()"
+                  >
+                    <i [class]="item.icon"></i>
+                    <span>{{ item.label }}</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                  </button>
+    
+                  <ul class="submenu" [class.open]="item.isOpen" #submenuEl>
+                    @for (child of item.children; track child.label) {
+                      <ng-container *appHasPermission="child.permissions">
+                        <li>
+                          <a
+                            [routerLink]="child.link"
+                            routerLinkActive="active"
+                            [appTooltip]="child.label"
+                            (click)="onNavLinkClick()"
+                          >
+                            <i [class]="child.icon"></i>
+                            <span>{{ child.label }}</span>
+                          </a>
+                        </li>
+                      </ng-container>
+                    }
+                  </ul>
+                </li>
+              }
+            </ng-container>
+          }
+        } @placeholder {
+           <div style="height: 50px; margin: 10px; background: rgba(0,0,0,0.05); border-radius: 8px;"></div>
         }
       </ul>
     </nav>

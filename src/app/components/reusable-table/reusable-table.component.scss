@@ -40,6 +40,30 @@ app-reusable-table {
   box-shadow: none;
   overflow: hidden;
 
+  /* === PERFORMANCE OPTIMIZATION START === */
+  
+  /* 1. Isolate Layout: Tells browser this container paints independently */
+  .table-container {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+    position: relative;
+    background-color: var(--surface-card);
+    
+    /* contain: strict is fastest, but 'layout style' is safer if contents might scroll */
+    contain: layout style; 
+    will-change: scroll-position;
+  }
+
+  /* 2. Fixed Layout: Browser calculates column widths ONCE based on headers, 
+        ignoring body content. Massive speedup for resizes. */
+  table.mat-table {
+    table-layout: fixed !important; 
+    width: 100%;
+  }
+  
+  /* === PERFORMANCE OPTIMIZATION END === */
+
   /* --- MATERIAL TABLE OVERRIDES (Scoped) --- */
   /* Checkbox Column Sizing */
   .mat-column-select {
@@ -47,6 +71,7 @@ app-reusable-table {
     min-width: 48px !important;
     max-width: 48px !important;
     padding: 0 0 0 4px !important;
+    box-sizing: border-box; /* Ensure padding doesn't break fixed layout */
   }
 
   .mat-mdc-header-cell.mat-column-select,
@@ -71,7 +96,11 @@ app-reusable-table {
       border-right: 1px solid rgba(0, 0, 0, 0.2) !important;
     }
 
+    /* Fixed Layout Requirements: Hide overflow */
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
     height: 32px !important;
     min-height: 32px !important;
     line-height: 32px !important;
@@ -108,10 +137,16 @@ app-reusable-table {
     border-bottom: none !important;
     font-size: 0.8125rem !important;
     height: 36px !important;
+    
+    /* Fixed Layout Requirements: Hide overflow */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     &.mat-column-actions {
       padding: 0 4px !important;
       width: 40px;
+      overflow: visible; /* Allow menu trigger to be visible if needed */
     }
 
     &:first-of-type:not(.mat-column-select) {
@@ -257,7 +292,6 @@ app-reusable-table {
       }
     }
 
-    /* Dropdown panel (global but might work if inline, usually global) */
     .mat-mdc-select-panel {
       font-family: var(--font-family-sans) !important;
       background-color: var(--surface-card) !important;
@@ -300,14 +334,6 @@ app-reusable-table {
     transition: opacity 0.3s var(--transition-smooth), visibility 0s 0.3s;
     pointer-events: none;
   }
-}
-
-.table-container {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  position: relative;
-  background-color: var(--surface-card);
 }
 
 .header-content,

@@ -49,27 +49,34 @@
   }
 }
 
+/* --- OPTIMIZATION START --- */
+/* Changed from margin/width animation to padding animation for better performance */
 .main-panel {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  margin-left: var(--sidebar-width);
-  width: calc(100% - var(--sidebar-width));
+  
+  /* Use padding for spacing instead of physically moving the element with margin */
+  width: 100%; 
+  margin-left: 0;
+  padding-left: var(--sidebar-width);
+  
   background-color: var(--white);
-  transition: margin-left var(--transition-duration) var(--transition-smooth),
-    width var(--transition-duration) var(--transition-smooth);
-  will-change: margin-left, width;
+  
+  /* Animate padding-left */
+  transition: padding-left var(--transition-duration) var(--transition-smooth);
+  will-change: padding-left;
 }
 
 .main-panel.collapsed {
-  margin-left: var(--sidebar-width-collapsed);
-  width: calc(100% - var(--sidebar-width-collapsed));
+  padding-left: var(--sidebar-width-collapsed);
 }
+/* --- OPTIMIZATION END --- */
 
 @media (max-width: 992px) {
   .main-panel {
-    margin-left: 0;
+    padding-left: 0;
     width: 100%;
     transition: none;
     contain: none;
@@ -77,7 +84,7 @@
   }
 
   .main-panel.collapsed {
-    margin-left: 0;
+    padding-left: 0;
     width: 100%;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, forkJoin, map } from 'rxjs';
@@ -24,6 +24,8 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
   imports: [CommonModule, DynamicFormComponent],
   templateUrl: './device-form.component.html',
   styleUrl: './device-form.component.scss',
+  // OnPush requires manual marking for async updates
+  changeDetection: ChangeDetectionStrategy.OnPush 
 })
 export class DeviceFormComponent implements OnInit {
   @Input() device: Device | null = null;
@@ -32,14 +34,14 @@ export class DeviceFormComponent implements OnInit {
   @ViewChild(DynamicFormComponent)
   private dynamicForm!: DynamicFormComponent;
 
-  // [FIX] Inject ModalRef directly instead of waiting for parent assignment
   private readonly modalRef = inject(ModalRef);
-  
   private readonly modalService = inject(ModalService);
   private readonly http = inject(HttpClient);
   private readonly dropdownService = inject(DropdownDataService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
+  // [FIX] Inject ChangeDetectorRef
+  private readonly cdr = inject(ChangeDetectorRef);
 
   public formConfig: any | null = null;
   public isFormLoading = true;
@@ -59,7 +61,13 @@ export class DeviceFormComponent implements OnInit {
       deviceStatuses: this.dropdownService.getDeviceStatuses(),
       deviceData: deviceData$,
     })
-      .pipe(finalize(() => (this.isFormLoading = false)))
+      .pipe(
+        finalize(() => {
+          this.isFormLoading = false;
+          // [FIX] Manually mark for check to update view after async load
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
         next: ({ deviceTypes, deviceStatuses, deviceData }) => {
           this.buildFormConfig(deviceTypes, deviceStatuses, deviceData);
@@ -67,7 +75,7 @@ export class DeviceFormComponent implements OnInit {
         error: (error) => {
           console.error('Failed to load form data', error);
           this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
-          this.modalRef.close(); // Use injected ref
+          this.modalRef.close();
         },
       });
   }
@@ -83,12 +91,11 @@ export class DeviceFormComponent implements OnInit {
   }
 
   private setupModalCloseGuard(): void {
-    // [FIX] modalRef is now guaranteed to exist via injection
     this.modalRef.canClose = () => this.canDeactivate();
   }
 
   // -------------------------------------------------------------------------
-  // Form Configuration (Kept same as before)
+  // Form Configuration
   // -------------------------------------------------------------------------
   private buildFormConfig(
     deviceTypes: DropdownOption[],
@@ -267,22 +274,31 @@ export class DeviceFormComponent implements OnInit {
     }
 
     this.isSaving = true;
+    // [FIX] Update loading state immediately for button spinner
+    this.cdr.markForCheck(); 
+
     const currentUserId = this.authService.getUserId();
     if (!currentUserId) {
       this.toastService.showError('Lỗi xác thực: Vui lòng đăng nhập lại.');
       this.isSaving = false;
+      this.cdr.markForCheck();
       return;
     }
 
     const payload = this.createSavePayload(formData, currentUserId);
     const request$ = this.getSaveRequest(payload);
 
-    request$.pipe(finalize(() => this.isSaving = false)).subscribe({
+    request$.pipe(
+      finalize(() => {
+        this.isSaving = false;
+        // [FIX] Ensure button state updates on success/error
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
       next: (response: any) => {
         const msg = response.TenKetQua || 'Lưu thành công!';
         this.toastService.showSuccess(msg);
         
-        // [FIX] Use injected ref to disable guard before closing
         this.modalRef.canClose = () => true;
         this.modalRef.close(response);
       },
@@ -291,7 +307,6 @@ export class DeviceFormComponent implements OnInit {
   }
 
   public onCancel(): void {
-    // [FIX] Use injected ref
     this.modalRef.close();
   }
 
