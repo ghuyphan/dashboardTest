@@ -31,14 +31,14 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import { ThemeService } from '../../core/services/theme.service';
 
-// Register components immediately to prevent lazy load flash
 echarts.use([
   BarChart, LineChart, PieChart, ScatterChart,
   TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
   CanvasRenderer
 ]);
 
-export type ChartSkeletonType = 'bar' | 'line' | 'pie';
+// [UPDATED] Expanded types for more realistic loading states
+export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
 
 @Component({
   selector: 'app-chart-card',
@@ -80,8 +80,6 @@ export class ChartCardComponent implements AfterViewInit {
   // --- COMPUTED ---
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
   
-  // [OPTIMIZATION]: Show chart container as soon as options exist, 
-  // allowing it to render behind the skeleton for a seamless reveal.
   public showChart = computed(() => !!this.chartOptions());
 
   private effectiveTheme = computed(() => {
@@ -94,21 +92,15 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly RESIZE_DEBOUNCE_MS = 200;
 
   constructor() {
-    // Effect: Update Chart Data
     effect(() => {
       const options = this.chartOptions();
-      // [OPTIMIZATION]: Update chart even if isLoading is true.
-      // This ensures the canvas is painted before we fade out the skeleton.
       if (this.chartInstance && options) {
         this.updateChart(options);
       }
     });
 
-    // Effect: Theme Change (Re-init)
     effect(() => {
-      // Dependency on theme
       this.effectiveTheme();
-      // Untrack options to avoid double trigger
       const options = untracked(() => this.chartOptions());
       
       if (this.chartInstance) {
@@ -122,7 +114,6 @@ export class ChartCardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.isBrowser) {
-      // Initialize immediately if data is ready
       if (this.chartOptions()) {
         this.initChart(this.chartOptions());
       }
@@ -154,7 +145,7 @@ export class ChartCardComponent implements AfterViewInit {
     
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance?.setOption(options, {
-        notMerge: false, // Merge updates for smooth transitions
+        notMerge: false,
         lazyUpdate: true
       });
     });
@@ -167,7 +158,6 @@ export class ChartCardComponent implements AfterViewInit {
         if (this.chartInstance) {
           this.ngZone.runOutsideAngular(() => this.chartInstance?.resize());
         } else if (this.chartOptions()) {
-            // If chart wasn't created because of 0x0 size initially
             this.initChart(this.chartOptions());
         }
       }, this.RESIZE_DEBOUNCE_MS);

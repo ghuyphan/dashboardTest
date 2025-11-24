@@ -10,11 +10,12 @@
   background-color: var(--white);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
-  box-shadow: var(--box-shadow-md); 
+  box-shadow: var(--box-shadow-md);
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 /* --- HEADER LAYOUT --- */
@@ -58,7 +59,7 @@
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--gray-700);
-  margin-left: auto; 
+  margin-left: auto;
   padding-left: var(--spacing-sm);
 }
 
@@ -75,7 +76,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 200px; 
+  min-height: 200px;
   overflow: hidden;
 }
 
@@ -84,19 +85,16 @@
   width: 100%;
   height: 100%;
   min-height: 0;
-  
-  /* Chart remains visible underneath. 
-     We use opacity 0 only when strictly no data/not initialized. */
   opacity: 1;
   transition: opacity 0.3s ease-in-out;
-  
+
   &.invisible {
     opacity: 0;
-    pointer-events: none; 
+    pointer-events: none;
   }
 }
 
-/* --- POLISHED SKELETON STATE --- */
+/* --- SKELETON OVERLAY --- */
 .skeleton-overlay {
   position: absolute;
   inset: 0;
@@ -107,19 +105,16 @@
   gap: 1rem;
   padding: 0.5rem;
   box-sizing: border-box;
-  
-  /* OPTIMIZATION: Smooth Fade Out */
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.4s ease-in-out, visibility 0s 0s;
+  transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
   will-change: opacity;
-  
+
   &.hidden {
     opacity: 0;
     visibility: hidden;
-    /* Delay visibility:hidden until opacity transition finishes (0.4s) */
     transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
-    pointer-events: none; /* Allow clicks to pass through immediately if needed, or after fade */
+    pointer-events: none;
   }
 }
 
@@ -130,6 +125,7 @@
   gap: 1rem;
   height: 12px;
   flex-shrink: 0;
+  margin-bottom: 4px;
 
   .sk-legend-item {
     width: 60px;
@@ -143,41 +139,51 @@
   flex: 1;
   display: flex;
   gap: 0.75rem;
-  align-items: flex-end; /* Align bars to bottom */
   overflow: hidden;
   position: relative;
+
+  &.horizontal-mode {
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 0 1rem;
+  }
 }
 
-/* --- PIE SKELETON --- */
+/* --- PIE / DOUGHNUT SKELETON --- */
 .sk-pie-area {
   align-items: center;
   justify-content: center;
 }
 
 .sk-pie {
-  width: 60%;
-  max-width: 200px;
-  aspect-ratio: 1 / 1; /* Keeps it square */
+  width: 50%;         
+  max-width: 180px;   /* Cap max size so it doesn't look huge on wide screens */
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
-    inset: 30%; /* Inner circle size */
+    inset: 30%; /* Standard Pie Cutout (small) */
     background-color: var(--white);
     border-radius: 50%;
   }
+
+  &.sk-doughnut::after {
+    inset: 65%; /* Thinner ring for Doughnut */
+  }
 }
 
-/* --- LINE / BAR COMMON AXIS --- */
+/* --- LINE / BAR / SCATTER COMMON AXIS --- */
 .sk-y-axis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
   width: 30px;
-  padding-bottom: 10px; /* Space for X-axis */
+  padding-bottom: 20px;
+  flex-shrink: 0;
 
   .sk-y-label {
     width: 100%;
@@ -186,69 +192,111 @@
   }
 }
 
-/* --- BAR SKELETON PLOT --- */
+/* --- PLOT AREA --- */
 .sk-plot-area {
   flex: 1;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
   height: 100%;
   border-left: 2px solid var(--gray-200);
   border-bottom: 2px solid var(--gray-200);
-  padding-left: 8px;
-  padding-bottom: 2px;
   position: relative;
+  padding-bottom: 2px;
   
-  /* BAR SPECIFIC */
-  .sk-bar {
-    width: 12%; 
-    height: var(--h); 
-    border-radius: 4px 4px 0 0;
-    min-height: 10%; 
-    
-    &:nth-child(1) { animation-delay: 0s; }
-    &:nth-child(2) { animation-delay: 0.1s; }
-    &:nth-child(3) { animation-delay: 0.2s; }
-    &:nth-child(4) { animation-delay: 0.3s; }
-    &:nth-child(5) { animation-delay: 0.4s; }
-    &:nth-child(6) { animation-delay: 0.5s; }
+  /* Standard Vertical Bar Layout */
+  &.bar-mode {
+    align-items: flex-end;
+    justify-content: space-around; /* [CRITICAL] Distribute bars evenly with gaps */
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
-  /* LINE SPECIFIC */
   &.line-mode {
-    display: block; 
-    padding: 0;
-    border: none; 
+    display: block;
+    border: none;
+    border-left: 2px solid var(--gray-200);
+    border-bottom: 2px solid var(--gray-200);
+  }
+  
+  &.scatter-mode {
+    position: relative;
+    border: none;
     border-left: 2px solid var(--gray-200);
     border-bottom: 2px solid var(--gray-200);
   }
 }
 
-.sk-line-svg, .sk-area-svg {
+/* --- VERTICAL BAR SKELETON --- */
+.sk-bar {
+  flex: 1;
+  max-width: 40px; /* [CRITICAL] Cap bar width so they don't look blocky */
+  min-width: 8px;
+  margin: 0 4px;
+  height: var(--h);
+  border-radius: 4px 4px 0 0;
+  min-height: 5%;
+
+  &:nth-child(odd) { animation-duration: 1.8s; }
+  &:nth-child(even) { animation-duration: 1.5s; }
+}
+
+/* --- HORIZONTAL BAR SKELETON --- */
+.sk-h-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  
+  .sk-h-label {
+    width: 40px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  
+  .sk-h-bar {
+    height: 16px;
+    border-radius: 0 4px 4px 0;
+    animation-duration: 2s;
+  }
+}
+
+/* --- SCATTER DOTS --- */
+.sk-dot {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.7;
+}
+
+/* --- SVG LINES --- */
+.sk-line-svg {
   position: absolute;
   left: 0;
   bottom: 0;
   width: 100%;
   height: 100%;
-  padding: 10px 0 0 10px; 
+  padding: 10px 0 0 10px;
   box-sizing: border-box;
 }
 
-/* Skeleton pulse animation specifically for the stroke */
+/* ANIMATIONS */
 .skeleton-stroke {
-  animation: stroke-pulse 1.5s infinite ease-in-out;
+  animation: stroke-pulse 2s infinite ease-in-out;
 }
 
-@keyframes stroke-pulse {
-  0% { stroke: var(--gray-200); opacity: 0.5; }
-  50% { stroke: var(--gray-300); opacity: 1; }
-  100% { stroke: var(--gray-200); opacity: 0.5; }
+.skeleton-pulse-fast {
+  animation: skeleton-pulse 1s infinite alternate;
 }
 
-/* Global Skeleton Animation */
 .skeleton {
   background-color: var(--gray-100);
   animation: skeleton-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes stroke-pulse {
+  0% { stroke: var(--gray-200); opacity: 0.4; }
+  50% { stroke: var(--gray-300); opacity: 1; }
+  100% { stroke: var(--gray-200); opacity: 0.4; }
 }
 
 @keyframes skeleton-pulse {
@@ -259,7 +307,7 @@
 
 /* --- EMPTY STATE --- */
 .no-data-container {
-  position: absolute; 
+  position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
@@ -270,7 +318,7 @@
   text-align: center;
   gap: var(--spacing-sm);
   background-color: var(--white);
-  
+
   .no-data-icon-wrapper {
     i {
       font-size: 2rem;
