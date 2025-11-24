@@ -250,8 +250,10 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.triggerReload();
   }
 
-  public onDeviceSelected(device: Device): void {
-    this.selectedDevice = this.selectedDevice === device ? null : device;
+  public onDeviceSelected(device: Device | undefined): void {
+    // The table component handles toggling, so if we receive undefined, it means deselect.
+    // If we receive a device, it means that device is selected.
+    this.selectedDevice = device || null;
     this.updateFooterActions();
     this.cdr.markForCheck();
   }

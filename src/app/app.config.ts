@@ -1,12 +1,10 @@
-// src/app/app.config.ts
-
 import { ApplicationConfig, provideAppInitializer, inject, LOCALE_ID } from '@angular/core';
 import {
   provideRouter,
   RouteReuseStrategy,
   withPreloading,
   PreloadAllModules,
-  withViewTransitions, // <--- IMPORT THIS
+  withViewTransitions,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
@@ -23,12 +21,11 @@ registerLocaleData(localeVi);
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Add withViewTransitions() to the provider list
     provideRouter(
-      routes, 
+      routes,
       withPreloading(PreloadAllModules),
-      withViewTransitions() // <--- ENABLE VIEW TRANSITIONS HERE
-    ), 
+      withViewTransitions()
+    ),
 
     provideHttpClient(
       withInterceptors([authInterceptor, idTokenInterceptor])

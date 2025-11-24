@@ -3,9 +3,9 @@ import {
   OnInit,
   inject,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   DestroyRef,
-  effect,
+  signal,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -27,7 +27,7 @@ const GLOBAL_FONT_FAMILY =
 const AUTO_REFRESH_INTERVAL = 60_000;
 const CHART_BAR_WIDTH = '60%';
 
-// ... (Interfaces remain the same)
+// --- Interfaces ---
 interface ApiResponseData {
   TenPhongBan: string;
   Tong: number;
@@ -66,16 +66,6 @@ interface BedStatusSeries {
   color: string;
 }
 
-interface BedTotals {
-  giuongTrong: number;
-  dangDieuTri: number;
-  choXuatVien: number;
-  daBook: number;
-  chuaSanSang: number;
-  choMuonGiuong: number;
-  totalBeds: number;
-}
-
 @Component({
   selector: 'app-bed-usage',
   standalone: true,
@@ -86,38 +76,44 @@ interface BedTotals {
 })
 export class BedUsageComponent implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly cd = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
-  public isLoading = true;
-  public isRefreshing = false;
-  public currentDateTime = '';
-  public chartOptions: EChartsCoreOption | null = null;
-  public widgetData: WidgetData[] = [];
+  // --- Signals ---
+  public isLoading = signal<boolean>(true);
+  public currentDateTime = signal<string>('');
+  
+  // Stores raw API data. When this updates, widgets and charts re-compute automatically.
+  private rawData = signal<ApiResponseData[]>([]);
 
-  private bedStatusSeries: BedStatusSeries[] = [];
-  private palette!: ThemePalette;
+  // Derived State: Widgets
+  // Re-calculates whenever rawData OR theme palette changes
+  public widgetData = computed<WidgetData[]>(() => {
+    const data = this.rawData();
+    const palette = this.themeService.currentPalette();
+    const totals = this.calculateTotals(data);
+    
+    return this.buildWidgetList(totals, palette);
+  });
 
-  constructor() {
-    // UNIFIED: React to currentPalette changes
-    effect(() => {
-      this.palette = this.themeService.currentPalette();
-      this.initializeBedStatusSeries();
+  // Derived State: Charts
+  // Re-calculates whenever rawData OR theme palette changes
+  public chartOptions = computed<EChartsCoreOption | null>(() => {
+    const data = this.rawData();
+    const palette = this.themeService.currentPalette();
+    
+    if (data.length === 0) return null;
 
-      // Re-render if data exists to update colors
-      if (!this.isLoading && this.widgetData.length > 0) {
-        this.loadData();
-      }
-      this.cd.markForCheck();
-    });
-  }
+    const chartData = this.transformApiData(data);
+    chartData.sort((a, b) => a.viName.localeCompare(b.viName));
+    
+    return this.buildChartOptions(chartData, palette);
+  });
+
+  private isRefreshing = false;
 
   ngOnInit(): void {
-    // Initial palette fetch (sync)
-    this.palette = this.themeService.currentPalette();
-    this.initializeBedStatusSeries();
-
+    // Start polling loop
     timer(0, AUTO_REFRESH_INTERVAL)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -125,51 +121,15 @@ export class BedUsageComponent implements OnInit {
       });
   }
 
-  private initializeBedStatusSeries(): void {
-    this.bedStatusSeries = [
-      {
-        name: 'Giường trống (Vacant)',
-        dataKey: 'giuongTrong',
-        color: this.palette.chart3,
-      },
-      {
-        name: 'Đang điều trị (In Treatment)',
-        dataKey: 'dangDieuTri',
-        color: this.palette.chart1,
-      },
-      {
-        name: 'Chờ xuất viện (Awaiting Discharge)',
-        dataKey: 'choXuatVien',
-        color: this.palette.chart8,
-      },
-      {
-        name: 'Đã book (Booked)',
-        dataKey: 'daBook',
-        color: this.palette.chart6,
-      },
-      {
-        name: 'Chưa sẵn sàng (Not Ready)',
-        dataKey: 'chuaSanSang',
-        color: this.palette.chart7,
-      },
-      {
-        name: 'Cho mượn giường (On Loan)',
-        dataKey: 'choMuonGiuong',
-        color: this.palette.chart9,
-      },
-    ];
-  }
-
   public loadData(): void {
     if (this.isRefreshing) return;
 
-    const isInitialLoad = this.widgetData.length === 0;
-    if (isInitialLoad) {
-      this.isLoading = true;
+    // Only show full loading state on first load
+    if (this.rawData().length === 0) {
+      this.isLoading.set(true);
     } else {
       this.isRefreshing = true;
     }
-    this.cd.markForCheck();
 
     this.http
       .get<ApiResponseData[]>(environment.bedUsageUrl)
@@ -178,110 +138,21 @@ export class BedUsageComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (data) => this.handleDataSuccess(data),
+        next: (data) => {
+          this.rawData.set(data);
+        },
         error: (error) => this.handleDataError(error),
       });
   }
 
-  private handleDataSuccess(rawData: ApiResponseData[]): void {
-    if (this.widgetData.length === 0) {
-      this.initializeWidgets();
-    }
-
-    this.calculateWidgets(rawData);
-
-    const chartData = this.transformApiData(rawData);
-    chartData.sort((a, b) => a.viName.localeCompare(b.viName));
-
-    this.chartOptions = this.buildChartOptions(chartData);
-  }
-
-  private initializeWidgets(): void {
-    this.widgetData = [
-      {
-        id: 'occupancyRate',
-        title: 'Công Suất',
-        value: '0,0%',
-        caption: 'Occupancy Rate',
-        icon: 'fas fa-chart-pie',
-        accentColor: this.palette.chart1,
-      },
-      {
-        id: 'totalBeds',
-        title: 'Tổng Số',
-        value: '0',
-        caption: 'Total Beds',
-        icon: 'fas fa-hospital',
-        accentColor: this.palette.chart2,
-      },
-      {
-        id: 'giuongTrong',
-        title: 'Giường Trống',
-        value: '0',
-        caption: 'Vacant Beds',
-        icon: 'fas fa-check-circle',
-        accentColor: this.palette.chart3,
-      },
-      {
-        id: 'dangDieuTri',
-        title: 'Đang Điều Trị',
-        value: '0',
-        caption: 'In Treatment',
-        icon: 'fas fa-user-injured',
-        accentColor: this.palette.chart1,
-      },
-      {
-        id: 'choXuatVien',
-        title: 'Chờ Xuất Viện',
-        value: '0',
-        caption: 'Awaiting Discharge',
-        icon: 'fas fa-door-open',
-        accentColor: this.palette.chart8,
-      },
-      {
-        id: 'daBook',
-        title: 'Đã Book',
-        value: '0',
-        caption: 'Booked Beds',
-        icon: 'fas fa-bookmark',
-        accentColor: this.palette.chart6,
-      },
-      {
-        id: 'chuaSanSang',
-        title: 'Chưa Sẵn Sàng',
-        value: '0',
-        caption: 'Not Ready',
-        icon: 'fas fa-tools',
-        accentColor: this.palette.chart7,
-      },
-      {
-        id: 'choMuonGiuong',
-        title: 'Cho Mượn Giường',
-        value: '0',
-        caption: 'On Loan',
-        icon: 'fas fa-hand-holding-medical',
-        accentColor: this.palette.chart9,
-      },
-    ];
-  }
-
-  private handleDataError(error: HttpErrorResponse): void {
-    console.error('Failed to load bed usage data:', error);
-    this.chartOptions = null;
-    this.widgetData.forEach((widget) => {
-      widget.value = widget.id === 'occupancyRate' ? '0,0%' : '0';
-    });
-  }
-
   private handleRequestComplete(): void {
-    this.isLoading = false;
+    this.isLoading.set(false);
     this.isRefreshing = false;
     this.updateCurrentDateTime();
-    this.cd.markForCheck();
   }
 
   private updateCurrentDateTime(): void {
-    this.currentDateTime = new Date().toLocaleString('vi-VN', {
+    const now = new Date().toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -290,10 +161,18 @@ export class BedUsageComponent implements OnInit {
       second: '2-digit',
       hour12: false,
     });
+    this.currentDateTime.set(now);
   }
 
-  private calculateWidgets(apiData: ApiResponseData[]): void {
-    const totals = apiData.reduce(
+  private handleDataError(error: HttpErrorResponse): void {
+    console.error('Failed to load bed usage data:', error);
+    this.rawData.set([]); // Clear data on error, which triggers computed empty states
+  }
+
+  // --- Calculation Helpers ---
+
+  private calculateTotals(apiData: ApiResponseData[]) {
+    return apiData.reduce(
       (acc, item) => ({
         giuongTrong: acc.giuongTrong + item.GiuongTrong,
         dangDieuTri: acc.dangDieuTri + item.DangSuDung,
@@ -313,57 +192,87 @@ export class BedUsageComponent implements OnInit {
         totalBeds: 0,
       }
     );
+  }
 
+  private buildWidgetList(totals: any, palette: ThemePalette): WidgetData[] {
     const occupied =
       totals.dangDieuTri +
       totals.choXuatVien +
       totals.daBook +
       totals.chuaSanSang +
       totals.choMuonGiuong;
+    
     const rate = totals.totalBeds > 0 ? (occupied / totals.totalBeds) * 100 : 0;
     const occupancyRate = `${rate.toFixed(1).replace('.', ',')}%`;
 
-    const updates: Record<string, string> = {
-      occupancyRate,
-      totalBeds: this.formatNumber(totals.totalBeds),
-      giuongTrong: this.formatNumber(totals.giuongTrong),
-      dangDieuTri: this.formatNumber(totals.dangDieuTri),
-      choXuatVien: this.formatNumber(totals.choXuatVien),
-      daBook: this.formatNumber(totals.daBook),
-      chuaSanSang: this.formatNumber(totals.chuaSanSang),
-      choMuonGiuong: this.formatNumber(totals.choMuonGiuong),
-    };
+    const format = (val: number) => new Intl.NumberFormat('vi-VN').format(val);
 
-    this.widgetData.forEach((widget) => {
-      if (updates[widget.id]) widget.value = updates[widget.id];
-
-      switch (widget.id) {
-        case 'occupancyRate':
-          widget.accentColor = this.palette.chart1;
-          break;
-        case 'totalBeds':
-          widget.accentColor = this.palette.chart2;
-          break;
-        case 'giuongTrong':
-          widget.accentColor = this.palette.chart3;
-          break;
-        case 'dangDieuTri':
-          widget.accentColor = this.palette.chart1;
-          break;
-        case 'choXuatVien':
-          widget.accentColor = this.palette.chart8;
-          break;
-        case 'daBook':
-          widget.accentColor = this.palette.chart6;
-          break;
-        case 'chuaSanSang':
-          widget.accentColor = this.palette.chart7;
-          break;
-        case 'choMuonGiuong':
-          widget.accentColor = this.palette.chart9;
-          break;
-      }
-    });
+    return [
+      {
+        id: 'occupancyRate',
+        title: 'Công Suất',
+        value: occupancyRate,
+        caption: 'Occupancy Rate',
+        icon: 'fas fa-chart-pie',
+        accentColor: palette.chart1,
+      },
+      {
+        id: 'totalBeds',
+        title: 'Tổng Số',
+        value: format(totals.totalBeds),
+        caption: 'Total Beds',
+        icon: 'fas fa-hospital',
+        accentColor: palette.chart2,
+      },
+      {
+        id: 'giuongTrong',
+        title: 'Giường Trống',
+        value: format(totals.giuongTrong),
+        caption: 'Vacant Beds',
+        icon: 'fas fa-check-circle',
+        accentColor: palette.chart3,
+      },
+      {
+        id: 'dangDieuTri',
+        title: 'Đang Điều Trị',
+        value: format(totals.dangDieuTri),
+        caption: 'In Treatment',
+        icon: 'fas fa-user-injured',
+        accentColor: palette.chart1,
+      },
+      {
+        id: 'choXuatVien',
+        title: 'Chờ Xuất Viện',
+        value: format(totals.choXuatVien),
+        caption: 'Awaiting Discharge',
+        icon: 'fas fa-door-open',
+        accentColor: palette.chart8,
+      },
+      {
+        id: 'daBook',
+        title: 'Đã Book',
+        value: format(totals.daBook),
+        caption: 'Booked Beds',
+        icon: 'fas fa-bookmark',
+        accentColor: palette.chart6,
+      },
+      {
+        id: 'chuaSanSang',
+        title: 'Chưa Sẵn Sàng',
+        value: format(totals.chuaSanSang),
+        caption: 'Not Ready',
+        icon: 'fas fa-tools',
+        accentColor: palette.chart7,
+      },
+      {
+        id: 'choMuonGiuong',
+        title: 'Cho Mượn Giường',
+        value: format(totals.choMuonGiuong),
+        caption: 'On Loan',
+        icon: 'fas fa-hand-holding-medical',
+        accentColor: palette.chart9,
+      },
+    ];
   }
 
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
@@ -401,40 +310,49 @@ export class BedUsageComponent implements OnInit {
     });
   }
 
-  private buildChartOptions(data: DepartmentChartData[]): EChartsCoreOption {
+  private buildChartOptions(data: DepartmentChartData[], palette: ThemePalette): EChartsCoreOption {
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
+
+    // Define series config locally to use current palette
+    const bedStatusSeries: BedStatusSeries[] = [
+      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: palette.chart3 },
+      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: palette.chart1 },
+      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: palette.chart8 },
+      { name: 'Đã book (Booked)', dataKey: 'daBook', color: palette.chart6 },
+      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: palette.chart7 },
+      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: palette.chart9 },
+    ];
 
     return {
       backgroundColor: 'transparent',
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         fontSize: 12,
-        color: this.palette.textPrimary,
+        color: palette.textPrimary,
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: this.palette.bgCard,
-        borderColor: this.palette.gray200,
-        textStyle: { color: this.palette.textPrimary },
+        backgroundColor: palette.bgCard,
+        borderColor: palette.gray200,
+        textStyle: { color: palette.textPrimary },
         axisPointer: {
           type: 'shadow',
           shadowStyle: { color: 'rgba(0, 0, 0, 0.05)' },
         },
-        formatter: this.createTooltipFormatter(data),
+        formatter: this.createTooltipFormatter(data, palette),
       },
       legend: {
-        data: this.bedStatusSeries.map((s) => s.name),
+        data: bedStatusSeries.map((s) => s.name),
         top: '2%',
         left: 'center',
         type: 'scroll',
-        textStyle: { fontSize: 10, color: this.palette.textSecondary },
+        textStyle: { fontSize: 10, color: palette.textSecondary },
       },
       grid: {
         left: '5%',
         right: '5%',
-        // top: '15%',
         bottom: '15%',
         containLabel: true,
       },
@@ -447,10 +365,10 @@ export class BedUsageComponent implements OnInit {
           fontSize: 10,
           fontWeight: 'bold',
           overflow: 'truncate',
-          color: this.palette.textPrimary,
+          color: palette.textPrimary,
         },
         axisLine: {
-          lineStyle: { color: this.palette.secondary },
+          lineStyle: { color: palette.secondary },
         },
       },
       yAxis: {
@@ -460,13 +378,13 @@ export class BedUsageComponent implements OnInit {
         nameGap: 40,
         splitLine: {
           lineStyle: {
-            color: this.palette.gray200,
+            color: palette.gray200,
             type: 'dotted',
           },
         },
       },
       series: [
-        ...this.bedStatusSeries.map((config) => ({
+        ...bedStatusSeries.map((config) => ({
           name: config.name,
           type: 'bar',
           stack: 'beds',
@@ -474,7 +392,7 @@ export class BedUsageComponent implements OnInit {
           itemStyle: {
             color: config.color,
             borderRadius: [4, 4, 0, 0],
-            borderColor: this.palette.bgCard,
+            borderColor: palette.bgCard,
             borderWidth: 1,
           },
           data: data.map((item) => item[config.dataKey]),
@@ -496,7 +414,7 @@ export class BedUsageComponent implements OnInit {
           label: {
             show: true,
             position: 'top',
-            color: this.palette.textPrimary,
+            color: palette.textPrimary,
             fontWeight: 'bold',
             fontSize: 10,
             formatter: '{c}',
@@ -504,12 +422,12 @@ export class BedUsageComponent implements OnInit {
           tooltip: { show: false },
           z: 10,
           silent: true,
-        },
+        } as any, // Cast as any if strict ECharts type check fails on custom series props
       ],
     };
   }
 
-  private createTooltipFormatter(data: DepartmentChartData[]) {
+  private createTooltipFormatter(data: DepartmentChartData[], palette: ThemePalette) {
     return (params: any): string => {
       if (!params?.length) return '';
       const idx = params[0].dataIndex;
@@ -517,19 +435,15 @@ export class BedUsageComponent implements OnInit {
 
       let result = `<div style="font-weight:bold;margin-bottom:5px;">${item.viName}</div>`;
       if (item.enName)
-        result += `<div style="color:${this.palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
+        result += `<div style="color:${palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
 
       params.forEach((p: any) => {
         if (p.seriesName === 'Tổng (Total)' || p.value === 0) return;
         result += `<div>${p.marker} ${p.seriesName}: <b>${p.value}</b></div>`;
       });
-      result += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid ${this.palette.gray200};">Total: <b>${item.totalBeds}</b></div>`;
+      result += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid ${palette.gray200};">Total: <b>${item.totalBeds}</b></div>`;
       return result;
     };
-  }
-
-  private formatNumber(value: number): string {
-    return new Intl.NumberFormat('vi-VN').format(value);
   }
 
   public trackByWidgetId(_index: number, item: WidgetData): string {

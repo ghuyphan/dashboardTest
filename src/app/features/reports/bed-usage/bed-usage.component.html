@@ -1,7 +1,7 @@
 <div class="page-container">
   <div class="page-content">
 
-    @if (isLoading && widgetData.length === 0) {
+    @if (isLoading() && widgetData().length === 0) {
       <div class="widget-section">
         <div class="widget-grid">
           @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
@@ -12,14 +12,14 @@
     } @else {
       <div class="widget-section">
         <div class="widget-grid">
-          @for (widget of widgetData; track trackByWidgetId($index, widget)) {
+          @for (widget of widgetData(); track trackByWidgetId($index, widget)) {
             <app-widget-card
               [icon]="widget.icon"
               [title]="widget.title"
               [value]="widget.value"
               [caption]="widget.caption"
               [accentColor]="widget.accentColor"
-              [isLoading]="isLoading">
+              [isLoading]="isLoading()">
             </app-widget-card>
           }
         </div>
@@ -30,28 +30,28 @@
       title="Tình Hình Sử Dụng Giường Bệnh"
       icon="fas fa-bed-pulse"
       iconClass="icon-info"
-      [isLoading]="isLoading"
-      [chartOptions]="chartOptions"
+      [isLoading]="isLoading()"
+      [chartOptions]="chartOptions()"
       [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
 
       <div
         header-actions
         class="refresh-control"
         (click)="loadData()"
-        [class.loading]="isLoading"
-        [attr.aria-label]="isLoading ? 'Loading data' : 'Refresh data'"
+        [class.loading]="isLoading()"
+        [attr.aria-label]="isLoading() ? 'Loading data' : 'Refresh data'"
         role="button"
         tabindex="0"
         (keydown.enter)="loadData()"
         (keydown.space)="loadData()">
 
         <div class="refresh-icon">
-          <i class="fas" [ngClass]="{'fa-sync': !isLoading, 'fa-spinner fa-spin': isLoading}"></i>
+          <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
         </div>
         
-        @if (currentDateTime) {
+        @if (currentDateTime()) {
           <span class="refresh-text">
-            Cập nhập: {{ currentDateTime }}
+            Cập nhập: {{ currentDateTime() }}
           </span>
         }
       </div>

@@ -1,9 +1,9 @@
 <div class="reusable-table-wrapper">
   
-  <div class="loading-shade" [class.hidden]="!isLoading" aria-hidden="true">
+  <div class="loading-shade" [class.hidden]="!isLoading()" aria-hidden="true">
     <div class="app-loading-container">
       <div class="app-loading-spinner"></div>
-      @if (showLoadingText) {
+      @if (showLoadingText()) {
         <p>Đang tải dữ liệu...</p>
       }
     </div>
@@ -39,7 +39,7 @@
         </td>
       </ng-container>
 
-      @for (col of columns; track col.key) {
+      @for (col of columns(); track col.key) {
         <ng-container [matColumnDef]="col.key">
           
           <th
@@ -87,14 +87,14 @@
                 }
                 @case ('TrangThai_Ten') {
                   <span class="status-chip" [ngClass]="getStatusClass(element.TrangThai_Ten)" 
-                        [innerHTML]="element.TrangThai_Ten | highlightSearch: searchTerm">
+                        [innerHTML]="element.TrangThai_Ten | highlightSearch: searchTerm()">
                   </span>
                 }
                 @case ('GiaMua') {
                   {{ element[col.key] | currency:'VND':'symbol':'1.0-0':'vi' }}
                 }
                 @default {
-                  <span [innerHTML]="element[col.key] | highlightSearch: searchTerm"></span>
+                  <span [innerHTML]="element[col.key] | highlightSearch: searchTerm()"></span>
                 }
               }
             </div>
@@ -110,7 +110,7 @@
         (click)="onRowClick(row)"
         class="clickable-row"
         [ngClass]="{ 
-          'selected': row === selectedRow && !enableMultiSelect,
+          'selected': row === selectedRow && !enableMultiSelect(),
           'multi-selected': selection.isSelected(row)
         }"
       ></tr>
@@ -123,7 +123,7 @@
               <mat-icon class="no-data-icon">inbox</mat-icon>
             </div>
             <p class="no-data-text">{{ getEmptyStateMessage() }}</p>
-            @if (searchTerm) {
+            @if (searchTerm()) {
               <button class="reset-btn" (click)="clearSearch()">
                 <mat-icon>refresh</mat-icon>
                 Đặt lại tìm kiếm
@@ -135,11 +135,11 @@
     </table>
   </div>
 
-  @if (showPaginator) {
+  @if (showPaginator()) {
     <mat-paginator
-      [pageSize]="pageSize"
-      [pageSizeOptions]="pageSizeOptions"
-      [length]="totalDataLength" 
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions()"
+      [length]="totalDataLength()" 
       (page)="onPageChange($event)"
       showFirstLastButtons
       aria-label="Select page of results"

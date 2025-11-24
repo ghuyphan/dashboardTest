@@ -7,7 +7,7 @@ import {
   inject,
   input,
   effect,
-  ViewEncapsulation // <--- IMPORTED
+  ViewEncapsulation
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -74,12 +74,17 @@ export type DynamicFormValue = Record<string, any>;
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None // <--- ENABLED NO ENCAPSULATION
+  // Keep ViewEncapsulation.None if absolutely necessary for Material overrides, 
+  // but ensure all styles are scoped under .dynamic-form-container in SCSS
+  encapsulation: ViewEncapsulation.None 
 })
 export class DynamicFormComponent implements OnInit {
+  // Signal inputs
   public formConfig = input<FormConfig | undefined>();
   public isLoading = input<boolean>(false);
 
+  // Regular outputs are still standard in Angular, but you can use output() function if preferred
+  // for consistency with signal inputs. 
   @Output() formSubmitted = new EventEmitter<DynamicFormValue>();
   @Output() formCancelled = new EventEmitter<void>();
 
@@ -237,6 +242,7 @@ export class DynamicFormComponent implements OnInit {
     inputElement.value = this.formatCurrency(rawValue);
   }
 
+  // Public API methods (can be kept if needed by parent via viewChild)
   public resetForm(): void {
     this.dynamicForm.reset();
   }

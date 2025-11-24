@@ -1,22 +1,19 @@
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
-  ViewChild,
-  OnChanges,
-  AfterViewInit,
-  SimpleChanges,
   Injectable,
   HostListener,
   ElementRef,
   OnInit,
-  HostBinding,
-  OnDestroy,
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   inject,
-  ViewEncapsulation // <--- IMPORTED
+  ViewEncapsulation,
+  input,
+  output,
+  viewChild,
+  effect,
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -104,44 +101,46 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   styleUrls: ['./reusable-table.component.scss'],
   providers: [{ provide: MatPaginatorIntl, useClass: VietnamesePaginatorIntl }],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None // <--- ENABLED NO ENCAPSULATION
+  encapsulation: ViewEncapsulation.None,
+  host: {
+    '[style.--table-header-bg]': 'headerColor()'
+  }
 })
-export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewInit, OnDestroy {
-    
+export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
+  
   private cdr = inject(ChangeDetectorRef);
 
-  @Input() data: T[] = [];
-  @Input() columns: GridColumn[] = [];
-  @Input() searchTerm = '';
-  @Input() isLoading = false;
-  @Input() pageSize = DEFAULT_PAGE_SIZE;
-  @Input() pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS;
-  @Input() showLoadingText = true;
-  @Input() emptyStateText = 'Không có dữ liệu';
-  @Input() noResultsText = 'Không tìm thấy kết quả phù hợp';
-  @Input() trackByField = DEFAULT_TRACK_BY_FIELD;
-  @Input() enableMultiSelect = false;
-  @Input() totalDataLength = 0;
-  @Input() showPaginator = true;
-  @Input() clientSideSort = false;
-  @Input() headerColor: string | null = null;
+  // --- Inputs (Signals) ---
+  public data = input<T[]>([]);
+  public columns = input<GridColumn[]>([]);
+  public searchTerm = input('');
+  public isLoading = input(false);
+  public pageSize = input(DEFAULT_PAGE_SIZE);
+  public pageSizeOptions = input(DEFAULT_PAGE_SIZE_OPTIONS);
+  public showLoadingText = input(true);
+  public emptyStateText = input('Không có dữ liệu');
+  public noResultsText = input('Không tìm thấy kết quả phù hợp');
+  public trackByField = input(DEFAULT_TRACK_BY_FIELD);
+  public enableMultiSelect = input(false);
+  public totalDataLength = input(0);
+  public showPaginator = input(true);
+  public clientSideSort = input(false);
+  public headerColor = input<string | null>(null);
 
-  @Output() rowClick = new EventEmitter<T>();
-  @Output() sortChanged = new EventEmitter<SortChangedEvent>();
-  @Output() pageChanged = new EventEmitter<PageEvent>();
-  @Output() searchCleared = new EventEmitter<void>();
-  @Output() rowAction = new EventEmitter<RowActionEvent<T>>();
-  @Output() selectionChanged = new EventEmitter<T[]>();
+  // --- Outputs (Signals) ---
+  public rowClick = output<T | undefined>();
+  public sortChanged = output<SortChangedEvent>();
+  public pageChanged = output<PageEvent>();
+  public searchCleared = output<void>();
+  public rowAction = output<RowActionEvent<T>>();
+  public selectionChanged = output<T[]>();
 
-  @HostBinding('style.--table-header-bg')
-  get tableHeaderBg(): string | null {
-    return this.headerColor;
-  }
+  // --- View Queries (Signals) ---
+  public sort = viewChild(MatSort);
+  public paginator = viewChild(MatPaginator);
+  public tableContainer = viewChild<ElementRef>('tableContainer');
 
-  @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild('tableContainer') tableContainer!: ElementRef;
-
+  // --- Public Properties ---
   public readonly dataSource = new MatTableDataSource<T>();
   public displayedColumns: string[] = [];
   public selectedRow: T | null = null;
@@ -149,29 +148,40 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = { active: '', direction: '' };
 
-  constructor() {}
+  constructor() {
+    // Effect: React to Data Changes
+    effect(() => {
+      const currentData = this.data();
+      this.handleDataChange(currentData);
+    });
+
+    // Effect: React to Column/Selection Mode Changes
+    effect(() => {
+      // Dependency tracking: accessing signals registers this effect
+      const cols = this.columns();
+      const multiSelect = this.enableMultiSelect();
+      this.updateDisplayedColumns(cols, multiSelect);
+    });
+
+    // Effect: React to Client-Side Features availability
+    effect(() => {
+      const sortInstance = this.sort();
+      const paginatorInstance = this.paginator();
+      const isClientSort = this.clientSideSort();
+
+      if (isClientSort) {
+        if (sortInstance) this.dataSource.sort = sortInstance;
+        if (paginatorInstance) this.dataSource.paginator = paginatorInstance;
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initializeSelectionListener();
-    this.updateDisplayedColumns();
   }
 
   ngAfterViewInit(): void {
-    this.initializeTableFeatures(); 
     this.initializeSortState();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data']) {
-      this.handleDataChange();
-    }
-
-    if (changes['columns'] || changes['enableMultiSelect']) {
-      this.updateDisplayedColumns();
-    }
-  }
-
-  ngOnDestroy(): void {
   }
 
   private initializeSelectionListener(): void {
@@ -180,44 +190,29 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
     });
   }
 
-  private initializeTableFeatures(): void {
-    if (this.clientSideSort && this.sort) {
-      this.dataSource.sort = this.sort;
-    }
-    if (this.clientSideSort && this.paginator) {
-      this.dataSource.paginator = this.paginator;
-    }
-  }
-
   private initializeSortState(): void {
-    if (this.sort) {
+    const sortInstance = this.sort();
+    if (sortInstance) {
       this.sortState = {
-        active: this.sort.active,
-        direction: this.sort.direction as SortDirection,
+        active: sortInstance.active,
+        direction: sortInstance.direction as SortDirection,
       };
     }
   }
 
-  private updateDisplayedColumns(): void {
-    const baseColumns = this.columns.map((col) => col.key);
-    this.displayedColumns = this.enableMultiSelect
+  private updateDisplayedColumns(cols: GridColumn[], enableMultiSelect: boolean): void {
+    const baseColumns = cols.map((col) => col.key);
+    this.displayedColumns = enableMultiSelect
       ? ['select', ...baseColumns]
       : baseColumns;
+      
+    // Trigger change detection since displayedColumns isn't a signal itself yet
+    this.cdr.markForCheck();
   }
 
-  private handleDataChange(): void {
-    this.dataSource.data = this.data;
+  private handleDataChange(data: T[]): void {
+    this.dataSource.data = data;
     this.clearSelection();
-    
-    if (this.clientSideSort) {
-       if (this.paginator && !this.dataSource.paginator) {
-         this.dataSource.paginator = this.paginator;
-       }
-       if (this.sort && !this.dataSource.sort) {
-         this.dataSource.sort = this.sort;
-       }
-    }
-
     this.scrollToTop();
   }
 
@@ -227,13 +222,14 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   private scrollToTop(): void {
-    if (this.tableContainer?.nativeElement) {
-      this.tableContainer.nativeElement.scrollTop = 0;
+    const container = this.tableContainer();
+    if (container?.nativeElement) {
+      container.nativeElement.scrollTop = 0;
     }
   }
 
   public onRowClick(row: T): void {
-    if (this.enableMultiSelect) {
+    if (this.enableMultiSelect()) {
       this.toggleRowSelection(row, null);
     } else {
       this.toggleSingleRowSelection(row);
@@ -247,7 +243,7 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
 
   public onMatSortChange(sort: Sort): void {
     this.updateSortState(sort);
-    if (!this.clientSideSort) {
+    if (!this.clientSideSort()) {
       this.emitSortChange(sort);
     }
   }
@@ -272,16 +268,19 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   public clearSearch(): void {
-    this.searchTerm = '';
+    // Search term is an input signal, we can't set it directly.
+    // We emit the event to parent to clear it.
     this.searchCleared.emit();
-    if (this.paginator) {
-      this.paginator.firstPage();
+    
+    const paginatorInstance = this.paginator();
+    if (paginatorInstance) {
+      paginatorInstance.firstPage();
     }
   }
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent): void {
-    if (this.enableMultiSelect) return;
+    if (this.enableMultiSelect()) return;
     if (this.isNavigationKey(event.key)) {
       event.preventDefault();
       this.handleRowNavigation(event.key === 'ArrowDown');
@@ -324,11 +323,11 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   public getEmptyStateMessage(): string {
-    return this.searchTerm ? `${this.noResultsText} "${this.searchTerm}"` : this.emptyStateText;
+    return this.searchTerm() ? `${this.noResultsText()} "${this.searchTerm()}"` : this.emptyStateText();
   }
 
   public trackByFn = (index: number, item: any): any => {
-    return item[this.trackByField] ?? index;
+    return item[this.trackByField()] ?? index;
   };
 
   public getStatusClass(status: string): string {
@@ -378,7 +377,7 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    const rowId = row[this.trackByField] || '';
+    const rowId = row[this.trackByField()] || '';
     const action = this.selection.isSelected(row) ? 'deselect' : 'select';
     return `${action} row ${rowId}`;
   }
@@ -405,6 +404,6 @@ export class ReusableTableComponent<T> implements OnInit, OnChanges, AfterViewIn
   }
 
   public refresh(): void {
-    this.dataSource.data = [...this.data];
+    this.dataSource.data = [...this.data()];
   }
 }

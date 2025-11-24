@@ -9,7 +9,8 @@ import {
   computed,
   OnDestroy,
   inject,
-  NgZone
+  NgZone,
+  viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, ThemePalette } from '../../core/services/theme.service';
@@ -61,8 +62,8 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     'color': this.resolvedAccentColor()
   }));
 
-  @ViewChild('valueDisplay', { static: true }) // Changed to static: true as it's always in DOM now
-  valueDisplay!: ElementRef<HTMLDivElement>;
+  // View Child with new signal API
+  public valueDisplay = viewChild.required<ElementRef<HTMLDivElement>>('valueDisplay');
 
   private currentValue: number = 0;
   private hasViewInitialized = false;
@@ -199,8 +200,9 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderNumericValue(value: number): void {
-    if (!this.isElementAvailable()) return;
-    this.valueDisplay.nativeElement.textContent = this.formatNumericValue(value);
+    const el = this.valueDisplay()?.nativeElement;
+    if (!el) return;
+    el.textContent = this.formatNumericValue(value);
   }
 
   private formatNumericValue(value: number): string {
@@ -217,11 +219,12 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderStringValue(value: string): void {
-    if (this.isElementAvailable()) this.valueDisplay.nativeElement.textContent = value;
+    const el = this.valueDisplay()?.nativeElement;
+    if (el) el.textContent = value;
   }
 
   private isElementAvailable(): boolean {
-    return !!(this.valueDisplay?.nativeElement);
+    return !!(this.valueDisplay()?.nativeElement);
   }
 
   ngOnDestroy(): void {
