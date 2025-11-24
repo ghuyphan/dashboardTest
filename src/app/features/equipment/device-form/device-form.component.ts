@@ -32,13 +32,15 @@ export class DeviceFormComponent implements OnInit {
   @ViewChild(DynamicFormComponent)
   private dynamicForm!: DynamicFormComponent;
 
+  // [FIX] Inject ModalRef directly instead of waiting for parent assignment
+  private readonly modalRef = inject(ModalRef);
+  
   private readonly modalService = inject(ModalService);
   private readonly http = inject(HttpClient);
   private readonly dropdownService = inject(DropdownDataService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
 
-  public modalRef?: ModalRef;
   public formConfig: any | null = null;
   public isFormLoading = true;
   public isSaving = false;
@@ -65,7 +67,7 @@ export class DeviceFormComponent implements OnInit {
         error: (error) => {
           console.error('Failed to load form data', error);
           this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
-          this.modalRef?.close();
+          this.modalRef.close(); // Use injected ref
         },
       });
   }
@@ -81,13 +83,12 @@ export class DeviceFormComponent implements OnInit {
   }
 
   private setupModalCloseGuard(): void {
-    if (this.modalRef) {
-      this.modalRef.canClose = () => this.canDeactivate();
-    }
+    // [FIX] modalRef is now guaranteed to exist via injection
+    this.modalRef.canClose = () => this.canDeactivate();
   }
 
   // -------------------------------------------------------------------------
-  // Form Configuration
+  // Form Configuration (Kept same as before)
   // -------------------------------------------------------------------------
   private buildFormConfig(
     deviceTypes: DropdownOption[],
@@ -97,7 +98,6 @@ export class DeviceFormComponent implements OnInit {
     const isEditMode = !!deviceData;
     const data: any = deviceData || {}; 
 
-    // Handle API property name mismatches
     const trangThaiValue = data.TrangThai_Id ?? data.TrangThai ?? null;
     const categoryIdValue = data.LoaiThietBi_Id ?? data.CategoryID ?? null;
 
@@ -105,7 +105,6 @@ export class DeviceFormComponent implements OnInit {
       entityId: isEditMode ? data.Id : null,
       saveUrl: environment.equipmentCatUrl,
       formRows: [
-        // Row 1: Code & Name
         {
           controls: [
             {
@@ -132,7 +131,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // Row 2: Model & Serial
         {
           controls: [
             {
@@ -163,7 +161,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // Row 3: Type & Status
         {
           controls: [
             {
@@ -188,7 +185,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // Row 4: Hostname & Location
         {
           controls: [
             {
@@ -211,7 +207,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // Row 5: Dates & Price
         {
           controls: [
             {
@@ -244,7 +239,6 @@ export class DeviceFormComponent implements OnInit {
             },
           ],
         },
-        // Row 6: Description
         {
           controls: [
             {
@@ -266,7 +260,6 @@ export class DeviceFormComponent implements OnInit {
   // Action Handlers & Helpers
   // -------------------------------------------------------------------------
   public onSave(formData: any): void {
-    // 1. Validate Dates first
     const dateError = this.validateFormDates(formData);
     if (dateError) {
       this.toastService.showWarning(dateError);
@@ -288,23 +281,23 @@ export class DeviceFormComponent implements OnInit {
       next: (response: any) => {
         const msg = response.TenKetQua || 'Lưu thành công!';
         this.toastService.showSuccess(msg);
-        if (this.modalRef) this.modalRef.canClose = () => true;
-        this.modalRef?.close(response);
+        
+        // [FIX] Use injected ref to disable guard before closing
+        this.modalRef.canClose = () => true;
+        this.modalRef.close(response);
       },
       error: (err: HttpErrorResponse) => this.handleSaveError(err)
     });
   }
 
   public onCancel(): void {
-    this.modalRef?.close();
+    // [FIX] Use injected ref
+    this.modalRef.close();
   }
 
-  /**
-   * Validates logical consistency between dates.
-   */
   private validateFormDates(formData: any): string | null {
     if (!formData.NgayMua || !formData.NgayHetHanBH) {
-      return null; // Ignore if one is missing (unless required by strict rules)
+      return null;
     }
 
     const buyDate = DateUtils.parse(formData.NgayMua);

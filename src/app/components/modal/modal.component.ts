@@ -1,31 +1,31 @@
 import {
   Component,
-  ViewChild,
-  ViewContainerRef,
-  Inject,
   AfterViewInit,
   inject,
+  viewChild,
+  ViewContainerRef,
+  ChangeDetectionStrategy,
+  ElementRef
 } from '@angular/core';
-import { CommonModule } from '@angular/common'; 
 import { ModalOptions } from '../../core/models/modal-options.model';
 import { ModalRef, MODAL_OPTIONS } from '../../core/models/modal-ref.model';
 
 @Component({
   selector: 'app-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [], // CommonModule removed; use @if in template
   templateUrl: './modal.component.html',
-  styleUrl: './modal.component.scss'
+  styleUrl: './modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush // [1] Performance optimization
 })
 export class ModalComponent implements AfterViewInit {
   
-  @ViewChild('modalContentHost', { read: ViewContainerRef, static: true })
-  modalContentHost!: ViewContainerRef;
+  // [2] Use Signal-based viewChild
+  // We use { read: ViewContainerRef } to get the container specifically
+  private modalContentHost = viewChild.required('modalContentHost', { read: ViewContainerRef });
 
-  // Using inject() for ModalRef is cleaner
+  // Inject services/tokens
   private modalRef = inject(ModalRef);
-  
-  // MODAL_OPTIONS is a token, so we use inject with it
   public options = inject<ModalOptions>(MODAL_OPTIONS);
 
   constructor() {}
@@ -35,22 +35,35 @@ export class ModalComponent implements AfterViewInit {
   }
 
   private loadModalContent(): void {
-    this.modalContentHost.clear(); 
+    const container = this.modalContentHost();
+    container.clear(); 
 
     if (this.options?.component) {
-      const componentRef = this.modalContentHost.createComponent(this.options.component);
+      // Create the component
+      const componentRef = container.createComponent(this.options.component);
 
+      // [3] Use setInput() instead of Object.assign
+      // This ensures it works if the child component uses signal inputs: public data = input();
       if (this.options.context) {
-        Object.assign(componentRef.instance, this.options.context);
+        Object.entries(this.options.context).forEach(([key, value]) => {
+          componentRef.setInput(key, value);
+        });
       }
       
-      componentRef.instance.modalRef = this.modalRef;
+      // [4] Optimization: REMOVED manual assignment of modalRef.
+      // The Child component should inject ModalRef via DI, which is cleaner and strictly typed.
+      // componentRef.instance.modalRef = this.modalRef; <--- DELETED
 
-      if (componentRef.instance.closeModal) {
-        componentRef.instance.closeModal.subscribe((data: any) => {
+      // [5] Legacy Support: Handle Output Emitters automatically
+      // Ideally, the child should call modalRef.close(), but if you support @Output() close:
+      if ('closeModal' in componentRef.instance && (componentRef.instance as any).closeModal?.subscribe) {
+        (componentRef.instance as any).closeModal.subscribe((data: any) => {
           this.closeModal(data);
         });
       }
+      
+      // Trigger change detection for the new component
+      componentRef.changeDetectorRef.markForCheck();
     }
   }
 
