@@ -3,7 +3,6 @@
 }
 
 .filter-card {
-  /* Use theme variables */
   background-color: var(--surface-card);
   box-shadow: var(--box-shadow-md);
   padding: var(--spacing-md);
@@ -65,18 +64,33 @@
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  
+  /* UPDATED: Standard transition */
+  transition: all 0.2s var(--transition-spring);
 
   &:hover {
     background-color: var(--gray-100);
     color: var(--teal-blue);
     border-color: var(--teal-blue);
+    
+    /* ADDED: Standard Lift */
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-sm);
+  }
+  
+  &:active {
+    /* ADDED: Press down */
+    transform: translateY(0);
   }
 
   &.active {
     background-color: var(--teal-blue);
     color: #ffffff;
     border-color: var(--teal-blue);
+    
+    /* Active pill stays flat */
+    transform: translateY(0);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
   }
 }
 
@@ -93,15 +107,26 @@
   color: #fff;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
+  
+  /* UPDATED: Standard transition */
+  transition: all 0.2s var(--transition-spring);
 
   &:hover:not(:disabled) {
     background-color: var(--peacock-blue);
+    /* ADDED: Standard Lift */
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-md);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--box-shadow-sm);
   }
 
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+    transform: none;
   }
 }
 
@@ -119,7 +144,7 @@
   .quick-actions {
     overflow-x: auto;
     padding-bottom: 4px;
-    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    scrollbar-width: none;
     &::-webkit-scrollbar { display: none; }
   }
   .action-buttons .btn {

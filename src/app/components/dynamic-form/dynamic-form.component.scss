@@ -104,6 +104,7 @@
     }
   }
 
+  /* --- UPDATED BUTTON STYLES --- */
   .btn {
     padding: var(--spacing-sm) var(--spacing-md);
     border: none;
@@ -111,7 +112,21 @@
     cursor: pointer;
     font-weight: var(--font-weight-medium);
     font-size: 0.9375rem;
-    transition: background-color 0.2s ease;
+    
+    /* Standard Transition */
+    transition: all 0.2s var(--transition-spring);
+
+    /* Standard Hover: Lift */
+    &:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: var(--box-shadow-md);
+    }
+
+    /* Standard Active: Press */
+    &:not(:disabled):active {
+      transform: translateY(0);
+      box-shadow: var(--box-shadow-sm);
+    }
 
     @media (max-width: 480px) {
       width: 100%;
@@ -122,18 +137,20 @@
   .btn-secondary {
     background-color: var(--gray-500);
     color: white;
-    &:hover { background-color: var(--gray-600); }
+    &:hover:not(:disabled) { background-color: var(--gray-600); }
   }
 
   .btn-primary {
     background-color: var(--teal-blue);
     color: white;
-    &:hover { background-color: var(--peacock-blue); }
+    &:hover:not(:disabled) { background-color: var(--peacock-blue); }
   }
 
   .btn:disabled {
     opacity: 0.65;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 
   .btn-content-wrapper {

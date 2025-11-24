@@ -1,7 +1,7 @@
 @use '@angular/material' as mat;
 
 /* ==================================================
-   1. THEME CONFIGURATION (Must be defined first)
+   1. THEME CONFIGURATION
    ================================================== */
 $light-theme: mat.define-theme((
   color: (
@@ -30,21 +30,17 @@ $dark-theme: mat.define-theme((
    ================================================== */
 html {
   height: 100%;
-  /* Modern fix for mobile browser address bars (Safari/Chrome Android) */
-  height: 100dvh; 
+  height: 100dvh;
   margin: 0;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  
-  /* Apply the theme mixin NOW that $light-theme is defined */
   @include mat.all-component-themes($light-theme);
 }
 
 body {
   height: 100%;
   margin: 0;
-  /* Prevent body scroll, let main-content handle it */
-  overflow: hidden; 
+  overflow: hidden;
   background-color: var(--surface-background);
   color: var(--text-secondary);
   font-family: var(--font-family-sans);
@@ -78,15 +74,12 @@ router-outlet + * {
    3. ROOT VARIABLES (Light Mode Defaults)
    ================================================== */
 :root {
-  /* === COLOR PALETTE (Light Mode) === */
-
-  /* Brand Colors - Professional & Crisp */
+  /* === COLOR PALETTE === */
   --aqua-island: #9BDAD9;
   --teal-blue: #00839B;
   --peacock-blue: #006E96;
   --dark-teal: var(--teal-blue);
 
-  /* Brand Colors - Secondary */
   --desert-storm: #F8F8F7;
   --white: #FFFFFF;
   --pale-aqua: #9CD4E6;
@@ -95,7 +88,7 @@ router-outlet + * {
   --peppermint: #E6F5E9;
   --dark-gray: #4A4A4A;
 
-  /* Pastel Colors (Backgrounds/Accents) */
+  /* === PASTELS === */
   --pastel-lavender: #E6E6FA;
   --pastel-mint: #B2F2E6;
   --pastel-peach: #FFD1B3;
@@ -107,19 +100,19 @@ router-outlet + * {
   --pastel-coral: #FFB3BA;
   --pastel-powder: #BDB3FF;
 
-  /* === FUNCTIONAL PALETTE (Light Mode Base) === */
-  --gray-50: #F8FAFC;       /* Page Background */
-  --gray-100: #F1F5F9;      /* Sidebar / Header / Hover */
-  --gray-200: #E2E8F0;      /* Borders */
-  --gray-300: #CBD5E1;      /* Input Borders */
-  --gray-400: #94A3B8;      /* Disabled / Placeholder */
-  --gray-500: #64748B;      /* Secondary Icons */
-  --gray-600: #475569;      /* Secondary Text */
-  --gray-700: #334155;      /* Primary Text */
-  --gray-800: #1E293B;      /* Headings */
-  --gray-900: #0F172A;      /* High Contrast */
+  /* === FUNCTIONAL PALETTE === */
+  --gray-50: #F8FAFC;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
+  --gray-900: #0F172A;
 
-  /* === SEMANTIC SURFACES === */
+  /* === SURFACES === */
   --surface-background: var(--gray-50);
   --surface-card: var(--white);
   --surface-overlay: rgba(255, 255, 255, 0.95);
@@ -130,19 +123,17 @@ router-outlet + * {
   /* === COMPONENT SPECIFIC === */
   --table-header-bg: var(--teal-blue);
   --table-header-text: #FFFFFF;
-  
-  /* Semantic Text Colors */
+
   --text-primary: var(--gray-900);
   --text-secondary: var(--gray-600);
   --text-disabled: var(--gray-400);
 
-  /* Semantic Status Colors */
   --color-danger: #dc3545;
   --color-success: #16A34A;
   --color-warning: #F59E0B;
   --color-info: var(--teal-blue);
 
-  /* Charting Palette (Light Mode) */
+  /* Charting Palette */
   --teal-blue-light: #66B9C9;
   --teal-blue-dark: #005E70;
   --beige-midtone: #F9B88A;
@@ -152,7 +143,7 @@ router-outlet + * {
   --aqua-island-light: #CDECEB;
   --aqua-island-dark: #70B4B3;
   --deep-sapphire-light: #5A6DA3;
-  
+
   --chart-color-1: var(--teal-blue);
   --chart-color-2: var(--peacock-blue);
   --chart-color-3: var(--aqua-island);
@@ -188,13 +179,10 @@ router-outlet + * {
   --border-radius-lg: 0.75rem;
   --border-radius-full: 9999px;
   --border-width: 1px;
-  
-  /* Light Mode Shadows - Crisp and directional */
+
   --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  
-  /* Special Elevation for Light Mode */
   --shadow-elevation: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   /* TRANSITIONS */
@@ -208,165 +196,122 @@ router-outlet + * {
    4. DARK MODE OVERRIDES
    ================================================== */
 [data-theme='dark'] {
-  /* --- 1. FUNCTIONAL PALETTE (Deep Slate) --- */
-  --white: #1e293b;           /* Card Background (Slate 800) */
-  --gray-50: #0b1120;         /* Page Background (Very Deep Slate) */
-  
-  --gray-100: #1e293b;        /* Header/Sidebar */
-  --gray-200: #334155;        /* Borders */
-  --gray-300: #475569;        /* Input Borders */
-  --gray-400: #94a3b8;        /* Placeholders */
-  --gray-500: #94a3b8;        /* Icons */
-  --gray-600: #cbd5e1;        /* Secondary Text */
-  --gray-700: #e2e8f0;        /* Primary Text */
-  --gray-800: #f1f5f9;        /* Headings */
-  --gray-900: #ffffff;        /* High Contrast */
+  --white: #1e293b;
+  --gray-50: #0b1120;
+  --gray-100: #1e293b;
+  --gray-200: #334155;
+  --gray-300: #475569;
+  --gray-400: #94a3b8;
+  --gray-500: #94a3b8;
+  --gray-600: #cbd5e1;
+  --gray-700: #e2e8f0;
+  --gray-800: #f1f5f9;
+  --gray-900: #ffffff;
 
-  /* --- 2. SEMANTIC SURFACES --- */
   --surface-background: var(--gray-50);
   --surface-card: var(--white);
-  --surface-overlay: rgba(11, 17, 32, 0.85); 
-  --surface-toast: #334155; 
-  
+  --surface-overlay: rgba(11, 17, 32, 0.85);
+  --surface-toast: #334155;
   --border-color: var(--gray-200);
-  --input-bg: #020617; 
-  
-  /* --- 3. SEMANTIC TEXT --- */
+  --input-bg: #020617;
+
   --text-primary: var(--gray-800);
   --text-secondary: var(--gray-500);
   --text-disabled: var(--gray-400);
 
-  /* --- 4. BRAND COLORS --- */
-  --teal-blue: #2dd4bf;    /* Teal 400 */
-  --peacock-blue: #38bdf8; /* Sky 400 */
-  --dark-teal: #5eead4;    
-  --aqua-island: #14b8a6; 
+  --teal-blue: #2dd4bf;
+  --peacock-blue: #38bdf8;
+  --dark-teal: #5eead4;
+  --aqua-island: #14b8a6;
 
-  /* --- 5. STATUS & CHART COLORS --- */
   --color-danger: #f87171;
   --color-success: #4ade80;
   --color-warning: #fbbf24;
   --color-info: #38bdf8;
-
-  --deep-sapphire: #818cf8;      
-  --teal-midtone: #2dd4bf;        
-  --pastel-coral: #fb7185;       
+  
+  --deep-sapphire: #818cf8;
+  --teal-midtone: #2dd4bf;
+  --pastel-coral: #fb7185;
   --peacock-blue-light: #38bdf8;
   --chart-color-1: #2dd4bf;
   --chart-color-2: #60a5fa;
-  --chart-color-3: #14b8a6;     
-  --chart-color-6: #fb923c;       
-  --chart-color-7: #94a3b8;      
-  --chart-color-8: #818cf8;      
-  --chart-color-9: #f472b6;       
+  --chart-color-3: #14b8a6;
+  --chart-color-6: #fb923c;
+  --chart-color-7: #94a3b8;
+  --chart-color-8: #818cf8;
+  --chart-color-9: #f472b6;
 
-  /* --- 6. SHADOWS & ELEVATION --- */
   --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
   --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
-
   --shadow-elevation: 
      0 20px 25px -5px rgba(0, 0, 0, 0.6), 
      0 8px 10px -6px rgba(0, 0, 0, 0.6),
      0 0 0 1px rgba(255, 255, 255, 0.1), 
      0 0 20px 0px rgba(45, 212, 191, 0.15); 
 
-  /* --- 7. Angular Material Mixin --- */
   @include mat.all-component-colors($dark-theme);
 }
 
 /* ==================================================
-   5. MOBILE RESPONSIVENESS HELPERS & UTILITIES
+   5. MOBILE RESPONSIVENESS & UTILITIES
    ================================================== */
-
-/* Prevent iOS Zoom on inputs when focusing */
 @media (max-width: 768px) {
   input, select, textarea, .mat-mdc-select-value-text {
     font-size: 16px !important; 
   }
 }
 
-/* Hide Scrollbars on Touch Devices for cleaner UI */
 @media (hover: none) and (pointer: coarse) {
-  *::-webkit-scrollbar {
-    display: none; 
-  }
-  * {
-    scrollbar-width: none; 
-  }
+  *::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
 }
 
-/* Safe Area Insets for iPhone X+ (Notch support) */
 .safe-area-padding {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
 
-/* GLOBAL RESETS & BASE STYLES */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* GLOBAL RESETS */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
   line-height: 1.2;
-  color: var(--text-primary); 
+  color: var(--text-primary);
 }
-
 h1 { font-size: 2.25rem; }
 h2 { font-size: 1.875rem; }
 h3 { font-size: 1.5rem; }
 h4 { font-size: 1.25rem; }
-
 p { margin-bottom: var(--spacing-md); }
 
 a {
   color: var(--teal-blue);
   text-decoration: none;
   transition: color 0.2s;
-
-  &:hover {
-    text-decoration: underline;
-    color: var(--peacock-blue);
-  }
+  &:hover { text-decoration: underline; color: var(--peacock-blue); }
 }
 
 /* SCROLLBARS */
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
   background-color: var(--gray-300);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: content-box;
   min-height: 40px;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background-color: var(--gray-400);
+  &:hover { background-color: var(--gray-400); }
 }
 
-/* INPUT AUTOFILL */
+/* AUTOFILL */
 input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus,
-select:-webkit-autofill,
-select:-webkit-autofill:hover,
-select:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--gray-700); 
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--gray-700);
   -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
@@ -377,66 +322,134 @@ select:-webkit-autofill:focus {
   border-radius: var(--border-radius-md);
 }
 
-/* BUTTONS */
+/* ==================================================
+   6. BUTTONS SYSTEM
+   Standardized interactions and styles for all buttons.
+   ================================================== */
 .btn {
-  display: inline-block;
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
+
+  /* Typography */
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-base);
   text-align: center;
   text-decoration: none;
+
+  /* Appearance */
   cursor: pointer;
   border: var(--border-width) solid transparent;
   border-radius: var(--border-radius-md);
-  transition: all 0.2s ease-in-out;
+  position: relative; /* REQUIRED for pseudo-element stability fix */
+
+  /* Interaction Physics (Lift & Spring) */
+  transition: transform 0.2s var(--transition-spring), 
+              box-shadow 0.2s var(--transition-smooth), 
+              background-color 0.2s ease, 
+              color 0.2s ease, 
+              border-color 0.2s ease;
+
+  /* STABILITY FIX: DEAD SPOT PREVENTION
+     Creates an invisible extension at the bottom of the button.
+     When the button lifts up (-2px), this extension ensures the mouse
+     is still "touching" the element, preventing the flicker loop. */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: -6px; /* Extends hit area downwards to catch cursor during lift */
+    z-index: -1;  /* Keeps it behind visual content */
+    background: transparent;
+    border-radius: inherit;
+  }
+
+  /* Focus State */
+  &:focus-visible {
+    outline: 2px solid var(--aqua-island);
+    outline-offset: 2px;
+  }
+
+  /* Hover State: Lift Up */
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-md);
+  }
+
+  /* Active State: Press Down */
+  &:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: var(--box-shadow-sm);
+  }
+
+  /* Disabled State */
+  &:disabled, &.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
+/* -- Primary Button -- */
 .btn-primary {
   background-color: var(--teal-blue);
   color: #FFFFFF;
   border-color: var(--teal-blue);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--peacock-blue);
     color: #FFFFFF;
-    box-shadow: var(--box-shadow-sm);
   }
-  
+
   [data-theme='dark'] & {
-    color: #020617; 
+    color: #020617;
     font-weight: 600;
-    &:hover {
-       background-color: var(--peacock-blue);
-       color: #000000;
-       /* Glow effect for primary button in dark mode */
-       box-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
+    &:hover:not(:disabled) {
+      background-color: var(--peacock-blue);
+      color: #000000;
+      box-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
     }
   }
 }
 
+/* -- Secondary Button -- */
 .btn-secondary {
   background-color: var(--gray-200);
   color: var(--gray-800);
-  &:hover {
+  border-color: var(--gray-200);
+
+  &:hover:not(:disabled) {
     background-color: var(--gray-300);
     color: var(--gray-900);
   }
 }
 
+/* -- Ghost Button -- */
 .btn-ghost {
   background-color: transparent;
   color: var(--teal-blue);
-  border-color: var(--teal-blue);
-  &:hover {
+  border-color: transparent;
+  box-shadow: none;
+
+  &:hover:not(:disabled) {
     background-color: rgba(0, 131, 155, 0.1);
+    box-shadow: var(--box-shadow-sm);
     [data-theme='dark'] & {
-       background-color: rgba(45, 212, 191, 0.1);
+      background-color: rgba(45, 212, 191, 0.1);
     }
   }
 }
 
-/* ANIMATIONS */
+/* ==================================================
+   7. ANIMATIONS
+   ================================================== */
 @keyframes slideDownFade {
   from { opacity: 0; transform: translateY(-0.75rem); }
   to { opacity: 1; transform: translateY(0); }
@@ -471,20 +484,19 @@ select:-webkit-autofill:focus {
 }
 
 /* ==================================================
-   UPDATED: FLOATING TOOLTIP
+   8. FLOATING TOOLTIP
    ================================================== */
 .app-tooltip-container {
   position: fixed;
-  background: var(--gray-800); 
+  background: var(--gray-800);
   color: var(--gray-100);
   border-color: var(--gray-600);
-  
-  /* DARK MODE FIX: Use Elevation Shadow instead of Inverting Colors */
+
   [data-theme='dark'] & {
-     background: var(--gray-100); /* Matches Card Background */
-     color: var(--gray-700);
-     border: none; /* Shadow handles the definition now */
-     box-shadow: var(--shadow-elevation); /* The colored glow */
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: none;
+    box-shadow: var(--shadow-elevation);
   }
 
   backdrop-filter: blur(10px);
@@ -537,7 +549,7 @@ select:-webkit-autofill:focus {
 .app-loading-overlay {
   position: absolute;
   inset: 0;
-  background-color: var(--surface-overlay); 
+  background-color: var(--surface-overlay);
   backdrop-filter: blur(2px);
   z-index: 50;
   display: flex;
@@ -555,22 +567,18 @@ select:-webkit-autofill:focus {
 }
 
 /* ==================================================
-   UPDATED: FLYOUT SUBMENUS
+   9. COMPONENTS & OVERRIDES
    ================================================== */
 body > ul.submenu.open {
   list-style: none;
   margin: 0;
-  
-  /* Use Surface Card variable so it updates automatically */
-  background-color: var(--surface-card); 
+  background-color: var(--surface-card);
   border: var(--border-width) solid var(--border-color);
   border-radius: var(--border-radius-md);
-  
-  /* Apply the GLOW shadow in Dark Mode, Normal in Light */
   box-shadow: var(--box-shadow-lg);
   
   [data-theme='dark'] & {
-      border: none; /* Border ring in shadow handles this */
+      border: none;
       box-shadow: var(--shadow-elevation);
   }
 
@@ -611,20 +619,14 @@ body > ul.submenu.open {
         transition: transform 0.2s var(--transition-spring);
       }
 
-      span {
-        flex-grow: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+      span { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; }
 
       &:hover {
         background-color: var(--gray-100);
         color: var(--text-primary);
         i { transform: scale(1.15); }
-        
-        /* Subtle text glow on hover in dark mode */
         [data-theme='dark'] & {
-           background-color: rgba(45, 212, 191, 0.1); /* Teal low opacity */
+           background-color: rgba(45, 212, 191, 0.1);
            color: var(--teal-blue);
         }
       }
@@ -633,18 +635,14 @@ body > ul.submenu.open {
         color: var(--text-primary);
         background-color: var(--gray-100);
         font-weight: 600;
-        
         [data-theme='dark'] & {
            background-color: rgba(45, 212, 191, 0.15); 
            color: var(--teal-blue);
         }
-
         &::before {
           content: '';
           position: absolute;
-          left: 0;
-          top: var(--spacing-xs);
-          bottom: var(--spacing-xs);
+          left: 0; top: var(--spacing-xs); bottom: var(--spacing-xs);
           width: var(--spacing-xs);
           background-color: var(--aqua-island);
           border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
@@ -652,9 +650,7 @@ body > ul.submenu.open {
         }
       }
     }
-    &:last-child a {
-      margin-bottom: var(--spacing-xs);
-    }
+    &:last-child a { margin-bottom: var(--spacing-xs); }
   }
 }
 
@@ -663,12 +659,9 @@ body > ul.submenu.open {
   to { opacity: 1; transform: translateX(0) scale(1); }
 }
 
-/* MODAL OVERLAY STYLES */
 .app-modal-backdrop {
   background: rgba(0, 0, 0, 0.4);
-  [data-theme='dark'] & {
-    background: rgba(0, 0, 0, 0.75);
-  }
+  [data-theme='dark'] & { background: rgba(0, 0, 0, 0.75); }
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   transition: none !important;
@@ -682,7 +675,6 @@ body > ul.submenu.open {
   border-radius: 0;
 }
 
-/* CHIPS */
 .status-chip {
   padding: 2px 10px;
   border-radius: 12px;
@@ -700,7 +692,6 @@ body > ul.submenu.open {
 .status-broken { color: #FFFFFF; background-color: var(--color-danger); }
 .status-default { color: #FFFFFF; background-color: var(--gray-500); }
 
-/* SKELETON LOADER */
 .skeleton {
   background-color: var(--gray-200);
   border-radius: var(--border-radius-md);
@@ -716,7 +707,6 @@ body > ul.submenu.open {
   100% { opacity: 0.6; }
 }
 
-/* AUTH STYLES */
 .auth-input-group {
   margin-bottom: clamp(16px, 4vw, 1.5rem);
   label {
@@ -746,12 +736,10 @@ body > ul.submenu.open {
       background: var(--surface-card);
       box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
       ~.input-icon { color: var(--teal-blue); }
-      
       [data-theme='dark'] & {
          box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
       }
     }
-
     &.is-invalid {
       border-color: var(--color-danger);
       &:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); }
@@ -791,7 +779,6 @@ body > ul.submenu.open {
     background: #145248; 
     transform: translateY(-1px);
   }
-
   [data-theme='dark'] & {
     color: #020617; 
     &:hover:not(:disabled) {
@@ -799,7 +786,6 @@ body > ul.submenu.open {
        box-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
     }
   }
-
   &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 }
 
@@ -814,7 +800,6 @@ body > ul.submenu.open {
   }
 }
 
-/* VIEW TRANSITIONS */
 ::view-transition-group(root) { animation-duration: 0s; }
 ::view-transition-group(auth-card) {
   animation-duration: 0.5s; 
@@ -824,9 +809,6 @@ body > ul.submenu.open {
 ::view-transition-old(auth-card) { display: none; }
 ::view-transition-new(auth-card) { animation: none; }
 
-/* ==================================================
-   UPDATED: ANGULAR MATERIAL OVERRIDES
-   ================================================== */
 .mat-mdc-menu-panel, 
 .mat-mdc-dialog-surface, 
 .mat-mdc-select-panel,
@@ -834,10 +816,9 @@ body > ul.submenu.open {
   background-color: var(--surface-card) !important;
   color: var(--text-primary) !important;
   
-  /* Dark Mode: Remove Angular's default shadow and apply the Glow */
   [data-theme='dark'] & {
     box-shadow: var(--shadow-elevation) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05); /* Extra subtle border definition */
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 }
 

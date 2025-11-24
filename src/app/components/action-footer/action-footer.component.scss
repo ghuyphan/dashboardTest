@@ -48,36 +48,25 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.875rem;
-  transition: transform 0.2s var(--transition-smooth),
+  
+  /* UPDATED: Use standard spring transition for consistency */
+  transition: transform 0.2s var(--transition-spring),
     box-shadow 0.2s var(--transition-smooth);
+    
   text-align: center;
 
   @media (max-width: 767px) {
-    /* --- MOBILE ICON BUTTON STYLES (CORRECTED) --- */
-    
-    /* Don't grow or shrink */
+    /* --- MOBILE ICON BUTTON STYLES --- */
     flex: 0 0 auto;
-    
-    /* Enforce a fixed size for a good tap target
-       (2.25rem = 36px, same as header avatar) 
-    */
     width: 2.25rem;
     height: 2.25rem;
-
-    /* Reset padding/gap to center the icon */
     padding: 0;
     gap: 0;
-    
-    /* Center the icon */
     justify-content: center;
-    line-height: 1; /* Helps vertical centering */
-
-    /* We DO NOT override border-radius, so it
-      uses the default var(--border-radius-md) 
-      from the .btn class, keeping it consistent.
-    */
+    line-height: 1; 
   }
 
+  /* UPDATED: Apply standard interaction physics */
   &:not(:disabled):hover {
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-md);

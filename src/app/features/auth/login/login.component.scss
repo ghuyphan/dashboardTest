@@ -74,11 +74,6 @@
     vertical-align: middle;
     flex-shrink: 0;
     
-    /* 
-       Updated to use --gray-300 
-       This ensures the checkbox border matches your Input borders 
-       (Light: #CBD5E1, Dark: #30363d)
-    */
     border: 1px solid var(--gray-300); 
   }
 }
@@ -98,11 +93,6 @@
   &::after {
     content: "";
     flex: 1;
-    
-    /* 
-       Updated to use --border-color
-       Ensures the lines blend perfectly with the card borders
-    */
     border-bottom: 1px solid var(--border-color);
   }
 }
@@ -134,5 +124,50 @@
   i {
     margin-right: clamp(4px, 1.5vw, 6px);
     font-size: clamp(12px, 3.5vw, 14px);
+  }
+}
+
+/* --- UPDATED AUTH BUTTON --- */
+.auth-btn {
+  width: 100%;
+  padding: clamp(14px, 4vw, 16px) 1rem;
+  background: var(--teal-blue);
+  color: #FFFFFF;
+  border: none;
+  border-radius: clamp(8px, 2.5vw, 12px);
+  font-size: clamp(0.9375rem, 4vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  
+  /* Standard Transition */
+  transition: all 0.2s var(--transition-spring);
+
+  &:hover:not(:disabled) {
+    background: #145248; 
+    /* Standard Lift */
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-md);
+  }
+  
+  &:active:not(:disabled) {
+    /* Press Down */
+    transform: translateY(0);
+    box-shadow: var(--box-shadow-sm);
+  }
+
+  [data-theme='dark'] & {
+    color: #020617; 
+    &:hover:not(:disabled) {
+       background: var(--peacock-blue);
+       box-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
+    }
+  }
+
+  &:disabled { 
+    opacity: 0.7; 
+    cursor: not-allowed; 
+    transform: none;
+    box-shadow: none;
   }
 }
