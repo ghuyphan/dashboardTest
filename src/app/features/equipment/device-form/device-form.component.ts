@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, ChangeDetectorRef, ChangeDetectionStrategy, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, forkJoin, map } from 'rxjs';
@@ -24,12 +24,12 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
   imports: [CommonModule, DynamicFormComponent],
   templateUrl: './device-form.component.html',
   styleUrl: './device-form.component.scss',
-  // OnPush requires manual marking for async updates
   changeDetection: ChangeDetectionStrategy.OnPush 
 })
 export class DeviceFormComponent implements OnInit {
-  @Input() device: Device | null = null;
-  @Input() title: string = 'Biểu Mẫu Thiết Bị';
+  // --- MODERN SIGNALS ---
+  public device = input<Device | null>(null);
+  public title = input<string>('Biểu Mẫu Thiết Bị');
 
   @ViewChild(DynamicFormComponent)
   private dynamicForm!: DynamicFormComponent;
@@ -40,7 +40,6 @@ export class DeviceFormComponent implements OnInit {
   private readonly dropdownService = inject(DropdownDataService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
-  // [FIX] Inject ChangeDetectorRef
   private readonly cdr = inject(ChangeDetectorRef);
 
   public formConfig: any | null = null;
@@ -64,7 +63,6 @@ export class DeviceFormComponent implements OnInit {
       .pipe(
         finalize(() => {
           this.isFormLoading = false;
-          // [FIX] Manually mark for check to update view after async load
           this.cdr.markForCheck();
         })
       )
@@ -81,8 +79,10 @@ export class DeviceFormComponent implements OnInit {
   }
 
   private getDeviceDataStream(): Observable<Device | null> {
-    if (this.device?.Id) {
-      const url = `${environment.equipmentCatUrl}/${this.device.Id}`;
+    // Access signal value
+    const currentDevice = this.device();
+    if (currentDevice?.Id) {
+      const url = `${environment.equipmentCatUrl}/${currentDevice.Id}`;
       return this.http.get<Device[]>(url).pipe(
         map((dataArray) => (dataArray?.length ? dataArray[0] : null))
       );
@@ -274,7 +274,6 @@ export class DeviceFormComponent implements OnInit {
     }
 
     this.isSaving = true;
-    // [FIX] Update loading state immediately for button spinner
     this.cdr.markForCheck(); 
 
     const currentUserId = this.authService.getUserId();
@@ -291,7 +290,6 @@ export class DeviceFormComponent implements OnInit {
     request$.pipe(
       finalize(() => {
         this.isSaving = false;
-        // [FIX] Ensure button state updates on success/error
         this.cdr.markForCheck();
       })
     ).subscribe({

@@ -1,11 +1,10 @@
 import {
   Component,
-  Output,
-  EventEmitter,
   OnInit,
   ChangeDetectionStrategy,
   inject,
   input,
+  output, // Import output function
   effect,
   ViewEncapsulation
 } from '@angular/core';
@@ -74,19 +73,16 @@ export type DynamicFormValue = Record<string, any>;
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // Keep ViewEncapsulation.None if absolutely necessary for Material overrides, 
-  // but ensure all styles are scoped under .dynamic-form-container in SCSS
   encapsulation: ViewEncapsulation.None 
 })
 export class DynamicFormComponent implements OnInit {
-  // Signal inputs
+  // --- MODERN SIGNALS ---
   public formConfig = input<FormConfig | undefined>();
   public isLoading = input<boolean>(false);
 
-  // Regular outputs are still standard in Angular, but you can use output() function if preferred
-  // for consistency with signal inputs. 
-  @Output() formSubmitted = new EventEmitter<DynamicFormValue>();
-  @Output() formCancelled = new EventEmitter<void>();
+  // Modern Outputs
+  public formSubmitted = output<DynamicFormValue>();
+  public formCancelled = output<void>();
 
   public dynamicForm: FormGroup<Record<string, FormControl<any>>>;
 
@@ -119,7 +115,6 @@ export class DynamicFormComponent implements OnInit {
         formGroup[control.controlName] = this.createFormControl(control);
       }
     }
-
     return formGroup;
   }
 
@@ -158,7 +153,6 @@ export class DynamicFormComponent implements OnInit {
         if (validator) validators.push(validator);
       }
     }
-
     return validators;
   }
 
@@ -242,7 +236,7 @@ export class DynamicFormComponent implements OnInit {
     inputElement.value = this.formatCurrency(rawValue);
   }
 
-  // Public API methods (can be kept if needed by parent via viewChild)
+  // Public API methods (kept for compatibility with parent via viewChild)
   public resetForm(): void {
     this.dynamicForm.reset();
   }

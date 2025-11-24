@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, effect, signal } from '@angular/core';
+import { Directive, TemplateRef, ViewContainerRef, effect, input } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 
 @Directive({
@@ -7,35 +7,32 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class HasPermissionDirective {
   private hasView = false;
-  // Use a signal for the input to react nicely inside effect()
-  private requiredPermissions = signal<string[]>([]);
+
+  public appHasPermission = input<string | string[] | undefined>(undefined, { alias: 'appHasPermission' });
 
   constructor(
     private templateRef: TemplateRef<unknown>,
     private viewContainer: ViewContainerRef,
     private authService: AuthService
   ) {
-    // Reactive Effect: Runs when EITHER currentUser changes OR requiredPermissions input changes
+    // Effect tracks signal changes automatically
     effect(() => {
       const user = this.authService.currentUser();
-      const required = this.requiredPermissions();
+      const permissionInput = this.appHasPermission();
+      
+      // Normalize input to array
+      const required = permissionInput 
+        ? (Array.isArray(permissionInput) ? permissionInput : [permissionInput]) 
+        : [];
+
       const userPermissions = user?.permissions || [];
 
-      // Check if user has ANY of the required permissions (OR logic)
-      // If required array is empty, we assume access is allowed (or denied, depending on your requirement. Usually empty = public)
+      // If required array is empty, assume access is allowed
       const hasPermission = required.length === 0 || 
                             required.some(p => userPermissions.includes(p));
 
       this.updateView(hasPermission);
     });
-  }
-
-  @Input() set appHasPermission(permission: string | string[] | undefined) {
-    if (!permission) {
-      this.requiredPermissions.set([]);
-    } else {
-      this.requiredPermissions.set(Array.isArray(permission) ? permission : [permission]);
-    }
   }
 
   private updateView(shouldShow: boolean): void {

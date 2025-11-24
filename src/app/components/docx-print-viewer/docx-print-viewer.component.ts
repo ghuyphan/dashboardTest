@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, Inject } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, Inject, input } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { renderAsync } from 'docx-preview';
 import { ModalRef } from '../../core/models/modal-ref.model';
@@ -176,8 +176,10 @@ import { saveAs } from 'file-saver';
   `]
 })
 export class DocxPrintViewerComponent implements AfterViewInit, OnDestroy {
-  @Input() docBlob!: Blob;
-  @Input() fileName: string = 'document.docx';
+  // --- MODERN SIGNALS ---
+  public docBlob = input.required<Blob>();
+  public fileName = input<string>('document.docx');
+
   @ViewChild('documentContainer', { static: false }) container!: ElementRef<HTMLDivElement>;
 
   public modalRef = inject(ModalRef);
@@ -187,8 +189,9 @@ export class DocxPrintViewerComponent implements AfterViewInit, OnDestroy {
   constructor(@Inject(DOCUMENT) private document: Document) {}
 
   ngAfterViewInit(): void {
-    if (this.docBlob) {
-      this.renderDocument();
+    const blob = this.docBlob();
+    if (blob) {
+      this.renderDocument(blob);
     } else {
       this.isLoading = false;
       this.hasError = true;
@@ -199,7 +202,7 @@ export class DocxPrintViewerComponent implements AfterViewInit, OnDestroy {
     this.document.body.classList.remove('print-mode-docx');
   }
 
-  private renderDocument(): void {
+  private renderDocument(blob: Blob): void {
     const options = {
       className: 'docx',
       inWrapper: true,
@@ -213,7 +216,7 @@ export class DocxPrintViewerComponent implements AfterViewInit, OnDestroy {
       renderChanges: false // UPDATED: Hide track changes comments if any
     };
 
-    renderAsync(this.docBlob, this.container.nativeElement, undefined, options)
+    renderAsync(blob, this.container.nativeElement, undefined, options)
       .then(() => { this.hasError = false; })
       .catch(error => { console.error('Error rendering:', error); this.hasError = true; })
       .finally(() => { this.isLoading = false; });
@@ -230,7 +233,7 @@ export class DocxPrintViewerComponent implements AfterViewInit, OnDestroy {
 
   onDownload(): void {
     if (this.isLoading || this.hasError) return;
-    saveAs(this.docBlob, this.fileName);
+    saveAs(this.docBlob(), this.fileName());
   }
 
   close(): void {
