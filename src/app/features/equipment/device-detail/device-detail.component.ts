@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation, Inject } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe, DOCUMENT } from '@angular/common';
+import { CommonModule, CurrencyPipe, DOCUMENT } from '@angular/common'; // Removed DatePipe as it wasn't used in imports
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, finalize, map, switchMap, of } from 'rxjs';
@@ -13,10 +13,11 @@ import { ToastService } from '../../../core/services/toast.service';
 import { FooterAction } from '../../../core/models/footer-action.model';
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
-import { WordExportService } from '../../../core/services/word-export.service';
 import { CustomRouteReuseStrategy } from '../../../core/strategies/custom-route-reuse-strategy';
-import { DocxPrintViewerComponent } from '../../../components/docx-print-viewer/docx-print-viewer.component';
 import { DateUtils } from '../../../shared/utils/date.utils';
+
+// NEW IMPORT
+import { PdfService } from '../../../core/services/pdf.service';
 
 @Component({
   selector: 'app-device-detail',
@@ -24,7 +25,6 @@ import { DateUtils } from '../../../shared/utils/date.utils';
   imports: [
     CommonModule,
     QRCodeComponent,
-    // DatePipe,
     CurrencyPipe
   ],
   templateUrl: './device-detail.component.html',
@@ -48,7 +48,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     private footerService: FooterActionService,
     private modalService: ModalService,
     private toastService: ToastService,
-    private wordExportService: WordExportService,
+    private pdfService: PdfService, // CHANGED: Injected PdfService
     @Inject(DOCUMENT) private document: Document
   ) { }
 
@@ -99,8 +99,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Removed private parseDate(...)
-
   private checkWarrantyStatus(device: Device): void {
     this.isWarrantyExpiring = false;
     this.warrantyExpiresInDays = 0;
@@ -110,7 +108,6 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Use DateUtils.parse instead of local method
       const expiryDate = DateUtils.parse(device.NgayHetHanBH);
       if (!expiryDate) return;
 
@@ -130,14 +127,10 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ... rest of the code remains the same
-
   formatDate(isoDate: string | null | undefined): string {
-    // Use DateUtils for consistent formatting
     return DateUtils.formatToDisplay(isoDate);
   }
 
-  // ... getStatusClass, getDeviceIconClass etc.
   public getStatusClass(status: string | null | undefined): string {
     if (!status) return 'status-default';
     const lower = status.toLowerCase();
@@ -160,47 +153,36 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     return 'fas fa-hdd';
   }
 
-  // --- Other methods (onPrintWordReport, onPrintQrCode, setupFooterActions, goBack, onEdit, onDelete) ---
-  // Paste the rest of the original file content here if copying, or just ensure they are preserved.
-  // For brevity, I assumed the existing methods are kept as is.
-  onPrintWordReport(device: Device): void {
+  // CHANGED: New Method for PDF Printing
+async onPrintReport(device: Device): Promise<void> {
     if (!device) return;
-    this.isLoading = true;
-
-    const templatePath = 'assets/templates/01-10-2025 - Bien ban ban giao- Signpad - Khoa CĐHA.docx';
     const reportData = {
-      ...device,
-      PrintDate: new Date().toLocaleDateString('vi-VN'),
-      GiaMuaFormatted: new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-      }).format(device.GiaMua || 0),
-      Model: device.Model || '',
-      SerialNumber: device.SerialNumber || '',
-      ViTri: device.ViTri || '',
-      TrangThai_Ten: device.TrangThai_Ten || '',
-      MoTa: device.MoTa || ''
+      device_name: device.Ten || '',
+      device_code: device.Ma || '',
+      model: device.Model || '',
+      serial: device.SerialNumber || '',
+      department: device.ViTri || '', 
+      status: device.TrangThai_Ten || '',
+      description: device.MoTa || '',
+      price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(device.GiaMua || 0),
+      created_date: new Date().toLocaleDateString('vi-VN')
     };
 
-    this.wordExportService.generateReportBlob(templatePath, reportData)
-      .pipe(finalize(() => this.isLoading = false))
-      .subscribe({
-        next: (blob) => {
-          this.modalService.open(DocxPrintViewerComponent, {
-            title: 'Xem trước bản in',
-            size: 'lg',
-            hideHeader: true,
-            disableBackdropClose: true,
-            context: {
-              docBlob: blob,
-              fileName: `Bien_Ban_${device.Ma}.docx`
-            }
-          });
-        },
-        error: (err) => {
-          this.toastService.showError('Không thể tạo báo cáo: ' + err.message);
-        }
-      });
+    try {
+      this.toastService.showInfo('Đang chuẩn bị bản in...');
+
+      await this.pdfService.generatePdf(
+        'assets/templates/device_test.pdf', 
+        reportData, 
+        `Bien_Ban_${device.Ma}.pdf`,
+        'print'
+      );
+
+      this.toastService.showSuccess('Đã mở hộp thoại in');
+    } catch (error) {
+      console.error(error);
+      this.toastService.showError('Lỗi khi in. Kiểm tra file mẫu PDF trong assets.');
+    }
   }
 
   onPrintQrCode(): void {
@@ -236,8 +218,8 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       },
       {
         label: 'In Biên Bản',
-        icon: 'fas fa-file-word',
-        action: () => this.onPrintWordReport(device),
+        icon: 'fas fa-file-pdf', // Changed icon to PDF
+        action: () => this.onPrintReport(device), // Changed to new method
         permission: 'QLThietBi.DMThietBi.RPRINT',
         className: 'btn-primary',
       },
