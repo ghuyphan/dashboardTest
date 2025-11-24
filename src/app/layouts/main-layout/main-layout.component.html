@@ -1,32 +1,32 @@
 <div class="dashboard-container">
   <app-sidebar
-    [navItems]="navItems"
-    [isOpen]="isSidebarOpen"
+    [navItems]="navItems()"
+    [isOpen]="sidebarOpen()"
     (toggleSidebar)="toggleSidebar()"
   ></app-sidebar>
 
   <div
     class="sidebar-backdrop"
-    [class.show]="isSidebarOpen"
+    [class.show]="sidebarOpen()"
     (click)="toggleSidebar()"
   ></div>
 
-
-  <div class="main-panel" [ngClass]="{ 'collapsed': !isSidebarOpen }">
+  <div class="main-panel" [ngClass]="{ 'collapsed': !sidebarOpen() }">
+    
     <app-header
-      [currentUser]="currentUser"
-      [userInitials]="userInitials"
-      [rolesDisplay]="rolesDisplay"
-      [currentScreenName]="currentScreenName"
-      [showSearchBar]="showSearchBar" 
-      [showBackButton]="showBackButton" 
+      [currentUser]="currentUser()"
+      [userInitials]="userInitials()"
+      [rolesDisplay]="rolesDisplay()"
+      [currentScreenName]="screenTitle()"
+      [showSearchBar]="searchVisible()" 
+      [showBackButton]="backButtonVisible()" 
       (sidebarToggled)="toggleSidebar()"
       (logoutClicked)="logout()"
       (backClicked)="onBackClicked()" 
     ></app-header>
 
     <main class="dashboard-content">
-      @if (isContentLoaded) {
+      @if (contentLoaded()) {
         <div class="content-fade-wrapper">
           <router-outlet></router-outlet>
         </div>

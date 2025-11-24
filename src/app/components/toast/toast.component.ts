@@ -1,11 +1,10 @@
 import {
   Component,
-  ChangeDetectorRef,
   OnDestroy,
   ChangeDetectionStrategy,
   inject,
-  DestroyRef,
-  effect
+  effect,
+  signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastMessage, ToastType } from '../../core/models/toast-message.model';
@@ -27,50 +26,45 @@ interface ToastTimerState {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent implements OnDestroy {
-  private toastService = inject(ToastService);
+  public toastService = inject(ToastService); // Public to access signal in template
   private sanitizer = inject(DomSanitizer);
-  private cdRef = inject(ChangeDetectorRef);
-  
-  // Not strictly needed for effect(), but good to keep if you add other subscriptions later
-  private destroyRef = inject(DestroyRef); 
 
-  public toasts: ToastMessage[] = [];
-  public isExpanded = true; 
-  public isHovering = false;
+  // --- UI State Signals ---
+  public isExpanded = signal(true);
+  public isHovering = signal(false);
 
+  // Private cache for diffing inside effect (not used in template)
+  private _previousToasts: ToastMessage[] = [];
   private timerState = new Map<number, ToastTimerState>();
 
   private readonly DEFAULT_DURATION = 5000;
   private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.4;
 
+  // Touch handling state (non-reactive)
   private touchStartX = 0;
   private touchMoveX = 0;
   private swipingToastId: number | null = null;
   private swipedElement: HTMLElement | null = null;
 
   constructor() {
-    // [FIX] Use effect() to listen to the Signal instead of subscribe()
+    // Best Practice: Effects for side effects (timers), not for data copying
     effect(() => {
-      // Reading the signal registers this effect to run whenever the signal changes
       const newToasts = this.toastService.toasts();
       
-      // Calculate diffs based on the previous local state
-      const currentIds = new Set(this.toasts.map(t => t.id));
-      const addedToasts = newToasts.filter(t => !currentIds.has(t.id));
+      // Diffing logic to identify added/removed toasts
+      const previousIds = new Set(this._previousToasts.map(t => t.id));
+      const currentIds = new Set(newToasts.map(t => t.id));
 
-      // Cleanup removed toasts
-      const newIds = new Set(newToasts.map((t) => t.id));
+      // 1. Cleanup removed toasts
       this.timerState.forEach((_, id) => {
-        if (!newIds.has(id)) {
+        if (!currentIds.has(id)) {
           this.clearTimer(id);
         }
       });
 
-      // Update local state
-      this.toasts = newToasts;
-      this.cdRef.markForCheck();
-
-      // Initialize timers for newly added toasts
+      // 2. Initialize timers for added toasts
+      const addedToasts = newToasts.filter(t => !previousIds.has(t.id));
+      
       addedToasts.forEach(toast => {
         const duration = toast.duration ?? this.DEFAULT_DURATION;
         if (duration > 0) {
@@ -80,11 +74,15 @@ export class ToastComponent implements OnDestroy {
             remaining: duration
           });
           
-          if (!this.isHovering) {
+          // Only start if not currently paused by hover/touch
+          if (!this.isHovering()) {
             this.runTimer(toast.id);
           }
         }
       });
+
+      // Update private cache
+      this._previousToasts = newToasts;
     });
   }
 
@@ -92,9 +90,12 @@ export class ToastComponent implements OnDestroy {
     this.clearAllTimers();
   }
 
+  // --- Timer Logic ---
+
   private runTimer(id: number): void {
     const state = this.timerState.get(id);
     if (!state || state.remaining <= 0) return;
+    
     if (state.timerId) clearTimeout(state.timerId);
 
     state.startTime = Date.now();
@@ -104,8 +105,8 @@ export class ToastComponent implements OnDestroy {
   }
 
   pauseAllTimers(): void {
-    this.isHovering = true;
-    this.timerState.forEach((state, id) => {
+    this.isHovering.set(true); // Update signal
+    this.timerState.forEach((state) => {
       if (state.timerId) {
         clearTimeout(state.timerId);
         state.timerId = null;
@@ -116,10 +117,10 @@ export class ToastComponent implements OnDestroy {
   }
 
   resumeAllTimers(): void {
-    this.isHovering = false;
+    this.isHovering.set(false); // Update signal
     this.timerState.forEach((state, id) => {
       if (state.remaining < 1000) {
-        state.remaining = 1000;
+        state.remaining = 1000; // Ensure visible minimum time
       }
       this.runTimer(id);
     });
@@ -127,7 +128,7 @@ export class ToastComponent implements OnDestroy {
 
   private clearTimer(id: number): void {
     const state = this.timerState.get(id);
-    if (state && state.timerId) {
+    if (state?.timerId) {
       clearTimeout(state.timerId);
     }
     this.timerState.delete(id);
@@ -140,15 +141,19 @@ export class ToastComponent implements OnDestroy {
     this.timerState.clear();
   }
 
+  // --- User Actions ---
+
   closeToast(id: number): void {
     this.clearTimer(id); 
     const wrapper = document.getElementById('toast-' + id);
     const card = wrapper?.querySelector('.toast-card');
+    
+    // Add exit animation class before removing
     if (card) {
       card.classList.add('dismissing');
       setTimeout(() => {
         this.toastService.removeToast(id);
-      }, 300);
+      }, 300); // Match CSS animation duration
     } else {
       this.toastService.removeToast(id);
     }
@@ -156,7 +161,7 @@ export class ToastComponent implements OnDestroy {
 
   toggleExpanded(event: MouseEvent): void {
     event.stopPropagation();
-    this.isExpanded = !this.isExpanded;
+    this.isExpanded.update(v => !v);
   }
 
   clearAllToasts(event: MouseEvent): void {
@@ -164,6 +169,8 @@ export class ToastComponent implements OnDestroy {
     this.clearAllTimers();
     this.toastService.clearAll();
   }
+
+  // --- Helpers ---
 
   getTitle(type: ToastType): string {
     const titles: Record<ToastType, string> = {
@@ -186,14 +193,18 @@ export class ToastComponent implements OnDestroy {
     return this.sanitizer.bypassSecurityTrustHtml(`<i class="${iconClass}"></i>`);
   }
 
+  // --- Touch Handling ---
+
   handleTouchStart(event: TouchEvent, toastId: number): void {
     if (event.touches.length !== 1) return;
     this.pauseAllTimers(); 
     this.touchStartX = event.touches[0].clientX;
     this.touchMoveX = this.touchStartX;
     this.swipingToastId = toastId;
+    
     const wrapper = document.getElementById('toast-' + toastId);
     this.swipedElement = wrapper?.querySelector('.toast-card') as HTMLElement;
+    
     if (this.swipedElement) {
       this.swipedElement.classList.add('swiping');
     }
@@ -201,8 +212,11 @@ export class ToastComponent implements OnDestroy {
 
   handleTouchMove(event: TouchEvent, toastId: number): void {
     if (this.swipingToastId !== toastId || !this.swipedElement) return;
+    
     this.touchMoveX = event.touches[0].clientX;
     const deltaX = this.touchMoveX - this.touchStartX;
+    
+    // Only allow swiping right
     if (deltaX > 0) {
       event.preventDefault();
       this.swipedElement.style.transform = `translateX(${deltaX}px)`;
@@ -212,16 +226,21 @@ export class ToastComponent implements OnDestroy {
 
   handleTouchEnd(event: TouchEvent, toast: ToastMessage): void {
     if (this.swipingToastId !== toast.id || !this.swipedElement) return;
+    
     this.swipedElement.classList.remove('swiping');
     const deltaX = this.touchMoveX - this.touchStartX;
     const width = this.swipedElement.offsetWidth;
+    
+    // Dismiss if swiped more than 40% width
     if (deltaX > width * this.SWIPE_DISMISS_THRESHOLD_PERCENT) {
       this.closeToast(toast.id);
     } else {
+      // Reset position
       this.swipedElement.style.transform = '';
       this.swipedElement.style.opacity = '';
       this.resumeAllTimers();
     }
+    
     this.swipingToastId = null;
     this.swipedElement = null;
   }

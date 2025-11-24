@@ -1,4 +1,13 @@
-import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
+import { 
+  Component, 
+  OnInit, 
+  OnDestroy, 
+  inject, 
+  effect, 
+  signal, 
+  computed, 
+  ChangeDetectionStrategy 
+} from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
   Router,
@@ -8,9 +17,9 @@ import {
   ActivatedRoute,
 } from '@angular/router';
 import { filter, map, mergeMap, startWith } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // Best Practice: Auto-cleanup
 
 import { AuthService } from '../../core/services/auth.service';
-import { User } from '../../core/models/user.model';
 import { NavItem } from '../../core/models/nav-item.model';
 import { ActionFooterComponent } from '../../components/action-footer/action-footer.component';
 import { SidebarComponent } from '../../components/sidebar/sidebar.component';
@@ -31,6 +40,7 @@ import { FooterActionService } from '../../core/services/footer-action.service';
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush // Best Practice: Optimize rendering cycles
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
@@ -40,72 +50,83 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private location = inject(Location);
   private footerService = inject(FooterActionService);
 
-  isSidebarOpen = false;
+  // --- State Signals (Best Practice: Reactive State) ---
+  public sidebarOpen = signal(false);
+  public contentLoaded = signal(false);
   
-  // Use signals from service directly or local copies
-  navItems: NavItem[] = [];
-  currentUser: User | null = null;
-  rolesDisplay: string = '';
-  userInitials: string = '';
-  
-  currentScreenName: string = 'LOADING TITLE...';
-  showSearchBar: boolean = false;
-  showBackButton: boolean = false;
-  isContentLoaded = false;
+  public screenTitle = signal('Đang tải...');
+  public searchVisible = signal(false);
+  public backButtonVisible = signal(false);
+
+  // --- Derived State (Best Practice: Computed Signals) ---
+  // Automatically updates when authService.currentUser signal emits
+  public currentUser = this.authService.currentUser; 
+
+  public rolesDisplay = computed(() => {
+    const user = this.currentUser();
+    return user?.roles ? user.roles.join(', ') : '';
+  });
+
+  public userInitials = computed(() => {
+    const name = this.currentUser()?.username || '';
+    return this.getInitials(name);
+  });
+
+  // Writable signal for local nav items (copied to allow mutation by sidebar accordion)
+  public navItems = signal<NavItem[]>([]);
 
   constructor() {
-    // [FIX] Use effect to react to signal changes
+    // Best Practice: Use effects to sync state instead of manual subscribe()
     effect(() => {
       const items = this.authService.navItems();
-      this.navItems = this.deepCopyNavItems(items);
+      // Deep copy remains necessary if the sidebar component mutates 'isOpen' state internally
+      this.navItems.set(this.deepCopyNavItems(items));
     });
 
-    // [FIX] Use effect for user updates
-    effect(() => {
-      const user = this.authService.currentUser();
-      this.currentUser = user;
-      if (user && user.roles) {
-        this.rolesDisplay = user.roles.join(', ');
-        this.userInitials = this.getInitials(user.username);
-      } else {
-        this.rolesDisplay = '';
-        this.userInitials = '';
-      }
-    });
+    this.initializeRouterEvents();
   }
 
   ngOnInit(): void {
+    this.checkWindowSize();
+    window.addEventListener('resize', this.checkWindowSize.bind(this));
+
+    // Simulate content loading (or replace with actual logic)
+    setTimeout(() => {
+      this.contentLoaded.set(true);
+    }, 50);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.checkWindowSize.bind(this));
+  }
+
+  private initializeRouterEvents(): void {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
         startWith(null),
         map(() => this.activatedRoute),
         map(route => {
-          while (route.firstChild) {
-            route = route.firstChild;
-          }
+          while (route.firstChild) route = route.firstChild;
           return route;
         }),
         filter(route => route.outlet === 'primary'),
-        mergeMap(route => route.data)
+        mergeMap(route => route.data),
+        // Best Practice: RxJS Interop for auto-unsubscription
+        takeUntilDestroyed() 
       )
       .subscribe((data: any) => {
         this.footerService.clearActions();
-        this.currentScreenName = data['title'] || 'Dashboard';
-        this.showSearchBar = data['showSearchBar'] === true;
-        this.showBackButton = data['showBackButton'] === true;
+        
+        // Best Practice: Update signals instead of primitive properties
+        this.screenTitle.set(data['title'] || 'Dashboard');
+        this.searchVisible.set(data['showSearchBar'] === true);
+        this.backButtonVisible.set(data['showBackButton'] === true);
 
-        if (!this.showSearchBar) {
+        if (!this.searchVisible()) {
           this.searchService.setSearchTerm('');
         }
       });
-
-    this.checkWindowSize();
-    window.addEventListener('resize', this.checkWindowSize.bind(this));
-
-    setTimeout(() => {
-      this.isContentLoaded = true;
-    }, 50);
   }
 
   private deepCopyNavItems(items: NavItem[]): NavItem[] {
@@ -115,12 +136,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }));
   }
 
-  ngOnDestroy(): void {
-    window.removeEventListener('resize', this.checkWindowSize.bind(this));
-  }
-
   private checkWindowSize(): void {
-    this.isSidebarOpen = false;
+    // Auto-collapse on small screens
+    this.sidebarOpen.set(false);
   }
 
   private getInitials(username: string): string {
@@ -132,8 +150,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return '??';
   }
 
+  // --- Event Handlers ---
+
   toggleSidebar(): void {
-    this.isSidebarOpen = !this.isSidebarOpen;
+    this.sidebarOpen.update(v => !v); // Best Practice: signal.update()
   }
 
   logout(): void {

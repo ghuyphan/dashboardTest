@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalRef } from '../../core/models/modal-ref.model';
 
@@ -8,25 +8,25 @@ import { ModalRef } from '../../core/models/modal-ref.model';
   imports: [CommonModule],
   templateUrl: './confirmation-modal.component.html',
   styleUrls: ['./confirmation-modal.component.scss'],
+  // Signals automatically notify Angular when to update the view.
+  changeDetection: ChangeDetectionStrategy.OnPush, 
 })
 export class ConfirmationModalComponent {
-  @Input() layout: 'center' | 'standard' = 'center';
-  @Input() title: string = ''; 
-  @Input() message: string = '';
-  @Input() confirmText: string = 'OK';
-  @Input() cancelText: string = 'Cancel';
-  @Input() icon: string = '';
-  @Input() iconColor: string = '';
+  protected modalRef = inject(ModalRef);
 
-  public modalRef!: ModalRef;
-
-  constructor() {}
+  public layout = input<'center' | 'standard'>('center');
+  public title = input<string>('');
+  public message = input<string>('');
+  public confirmText = input<string>('OK');
+  public cancelText = input<string>('Cancel');
+  public icon = input<string>('');
+  public iconColor = input<string>('');
 
   onConfirm(): void {
-    this.modalRef?.close(true);
+    this.modalRef.close(true);
   }
 
   onCancel(): void {
-    this.modalRef?.close(false);
+    this.modalRef.close(false);
   }
 }

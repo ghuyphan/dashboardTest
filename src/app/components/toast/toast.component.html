@@ -1,9 +1,9 @@
 <div class="toast-container">
-  @for (toast of toasts; track toast.id; let i = $index) {
+  @for (toast of toastService.toasts(); track toast.id; let i = $index) {
     <div 
       class="toast-wrapper" 
       [id]="'toast-' + toast.id"
-      [class.expanded]="isExpanded"
+      [class.expanded]="isExpanded()"
       [class.is-front]="i === 0"
       [style.--index]="i"
       
@@ -34,16 +34,16 @@
         </button>
       </div>
 
-      @if (i === 0 && toasts.length > 1 && !isExpanded) {
+      @if (i === 0 && toastService.toasts().length > 1 && !isExpanded()) {
         <div class="stack-indicator" (click)="toggleExpanded($event)">
-          <span class="badge">{{ toasts.length }}</span>
+          <span class="badge">{{ toastService.toasts().length }}</span>
           <span class="hint">Xem tất cả</span>
         </div>
       }
     </div>
   }
 
-  @if (isExpanded && toasts.length > 1) {
+  @if (isExpanded() && toastService.toasts().length > 1) {
     <div class="toast-global-actions" 
          (mouseenter)="pauseAllTimers()" 
          (mouseleave)="resumeAllTimers()">

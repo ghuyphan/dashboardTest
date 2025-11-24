@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap, switchMap } from 'rxjs/operators';
@@ -14,7 +14,7 @@ interface LoginResponse {
   ErrorMessage?: string;
   APIKey: {
     access_token: string;
-    id_token?: string;
+    id_token?: string; // OPTIONAL: Not all APIs return this
     date_token?: string;
     expires_in?: string;
     token_type?: string;
@@ -76,26 +76,21 @@ export class AuthService {
 
   changePassword(payload: { OldPassword: string, NewPassword: string, ConfirmPassword: string }): Observable<any> {
     const url = environment.changePassUrl;
-
     const body = {
-      UserName: this.getUsername(), // Auto-fill from the service
+      UserName: this.getUsername(),
       OldPassword: payload.OldPassword,
       NewPassword: payload.NewPassword,
       ConfirmPassword: payload.ConfirmPassword
     };
 
-    return this.http.put(url, body).pipe(
-      tap(() => {
-        // Optional: Logout user to force re-login with new password
-        // this.logout(); 
-      })
-    );
+    return this.http.put(url, body);
   }
+
   // ------------------------------------
 
   private initializeAuthState(): void {
     const storedToken = this.getStoredToken();
-    const storedIdToken = this.getStoredIdToken();
+    const storedIdToken = this.getStoredIdToken(); // Might be null
     const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY);
     const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY);
     const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY);
@@ -106,24 +101,25 @@ export class AuthService {
     let isDataValid = false;
 
     try {
-      const storedRolesJson = this.getStoredItem(ROLES_STORAGE_KEY);
-      const storedPermissionsJson = this.getStoredItem(PERMISSIONS_STORAGE_KEY);
-      const storedNavItemsJson = this.getStoredItem(NAV_ITEMS_STORAGE_KEY);
+      const r = this.getStoredItem(ROLES_STORAGE_KEY);
+      const p = this.getStoredItem(PERMISSIONS_STORAGE_KEY);
+      const n = this.getStoredItem(NAV_ITEMS_STORAGE_KEY);
 
-      if (storedRolesJson) roles = JSON.parse(storedRolesJson);
-      if (storedPermissionsJson) permissions = JSON.parse(storedPermissionsJson);
-      if (storedNavItemsJson) navItems = JSON.parse(storedNavItemsJson);
+      if (r) roles = JSON.parse(r);
+      if (p) permissions = JSON.parse(p);
+      if (n) navItems = JSON.parse(n);
       
       isDataValid = true;
     } catch (e) {
-      console.error('Error parsing auth data from storage, clearing session.', e);
+      console.error('Auth data corrupted, clearing session.', e);
       this.clearLocalAuthData(false);
       return;
     }
 
-    if (storedToken && storedIdToken && storedUsername && isDataValid) {
+    // BUG FIX: Do not check for storedIdToken here, as it is optional
+    if (storedToken && storedUsername && isDataValid) {
       this.accessToken = storedToken;
-      this.idToken = storedIdToken;
+      this.idToken = storedIdToken; // Accept null
 
       const user: User = {
         id: storedUserId || '',
@@ -133,40 +129,25 @@ export class AuthService {
         fullName: storedFullName || ''
       };
 
-      // Update signals
       this._currentUser.set(user);
       this._navItems.set(navItems);
       this._isLoggedIn.set(true);
     }
   }
 
-  private getStoredToken(): string | null {
-    return this.getStoredItem(TOKEN_STORAGE_KEY);
-  }
-
-  private getStoredIdToken(): string | null {
-    return this.getStoredItem(ID_TOKEN_STORAGE_KEY);
-  }
-
-  private getStoredItem(key: string): string | null {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(key)) {
-      return localStorage.getItem(key);
-    }
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) {
-      return sessionStorage.getItem(key);
-    }
-    return null;
-  }
-
   public init(): Observable<any> {
-    // Access signal value with parenthesis ()
     if (this._isLoggedIn()) {
       const userId = this.getUserId();
       if (userId) {
         return this.fetchAndSetPermissions(userId).pipe(
           catchError((err) => {
-            console.error("Failed to refresh permissions on init, logging out.", err);
-            this.logout();
+            // Only logout if strictly unauthorized (Session expired)
+            if (err.status === 401) {
+                console.warn("Session expired during init, logging out.");
+                this.logout();
+            } else {
+                console.error("Failed to refresh permissions (Network/Server error), keeping local state.", err);
+            }
             return of(null);
           })
         );
@@ -200,7 +181,7 @@ export class AuthService {
         this.idToken = loginResponse.APIKey.id_token || null;
 
         try {
-          storage.setItem(TOKEN_STORAGE_KEY, loginResponse.APIKey.access_token);
+          storage.setItem(TOKEN_STORAGE_KEY, this.accessToken);
           if (this.idToken) {
             storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken);
           }
@@ -224,10 +205,16 @@ export class AuthService {
   }
 
   private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
+    // Fallback to sessionStorage if that's where the token is
+    if (!localStorage.getItem(TOKEN_STORAGE_KEY) && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
+        storage = sessionStorage;
+    }
+
     const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
 
     return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
       tap(permissionNodeArray => {
+        // Re-read from storage/cache to ensure consistency
         const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY) || 'Unknown';
         const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY) || '';
         const storedRoles = JSON.parse(this.getStoredItem(ROLES_STORAGE_KEY) || '[]');
@@ -255,29 +242,11 @@ export class AuthService {
         }
 
         // Update signals
-        this._isLoggedIn.set(true);
         this._currentUser.set(user);
         this._navItems.set(navTree);
+        this._isLoggedIn.set(true);
       })
     );
-  }
-
-  private clearOtherStorage(remember: boolean): void {
-    const otherStorage = remember ? sessionStorage : localStorage;
-    try {
-      if (typeof otherStorage !== 'undefined') {
-        otherStorage.removeItem(TOKEN_STORAGE_KEY);
-        otherStorage.removeItem(ID_TOKEN_STORAGE_KEY);
-        otherStorage.removeItem(ROLES_STORAGE_KEY);
-        otherStorage.removeItem(USERNAME_STORAGE_KEY);
-        otherStorage.removeItem(PERMISSIONS_STORAGE_KEY);
-        otherStorage.removeItem(FULLNAME_STORAGE_KEY);
-        otherStorage.removeItem(NAV_ITEMS_STORAGE_KEY);
-        otherStorage.removeItem(USER_ID_STORAGE_KEY);
-      }
-    } catch (e) {
-      console.error('Failed to clear other web storage', e);
-    }
   }
 
   logout(): void {
@@ -290,79 +259,76 @@ export class AuthService {
     this.idToken = null;
 
     try {
-      [localStorage, sessionStorage].forEach(storage => {
-        if (typeof storage !== 'undefined') {
-          storage.removeItem(TOKEN_STORAGE_KEY);
-          storage.removeItem(ID_TOKEN_STORAGE_KEY);
-          storage.removeItem(ROLES_STORAGE_KEY);
-          storage.removeItem(USERNAME_STORAGE_KEY);
-          storage.removeItem(PERMISSIONS_STORAGE_KEY);
-          storage.removeItem(FULLNAME_STORAGE_KEY);
-          storage.removeItem(NAV_ITEMS_STORAGE_KEY);
-          storage.removeItem(USER_ID_STORAGE_KEY);
-        }
-      });
+        const keys = [
+            TOKEN_STORAGE_KEY, ID_TOKEN_STORAGE_KEY, ROLES_STORAGE_KEY,
+            USERNAME_STORAGE_KEY, PERMISSIONS_STORAGE_KEY, FULLNAME_STORAGE_KEY,
+            NAV_ITEMS_STORAGE_KEY, USER_ID_STORAGE_KEY
+        ];
+        
+        [localStorage, sessionStorage].forEach(s => {
+            if (typeof s !== 'undefined') keys.forEach(k => s.removeItem(k));
+        });
     } catch (e) {
-      console.error('Failed to remove auth data from web storage', e);
+      console.error('Failed to remove auth data', e);
     }
 
-    // Update signals
     this._isLoggedIn.set(false);
     this._currentUser.set(null);
     this._navItems.set([]);
 
     if (navigate) {
-      this.router.navigate(['/login']).then(() => {
-        CustomRouteReuseStrategy.clearAllHandles();
-      });
-    } else {
-      CustomRouteReuseStrategy.clearAllHandles();
+      this.router.navigate(['/login']);
     }
   }
 
-  getAccessToken(): string | null {
-    if (this.accessToken) return this.accessToken;
-    const token = this.getStoredItem(TOKEN_STORAGE_KEY);
-    this.accessToken = token;
-    return token;
+  // --- Storage Helpers ---
+  private getStoredItem(key: string): string | null {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(key)) return localStorage.getItem(key);
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return sessionStorage.getItem(key);
+    return null;
   }
 
-  getIdToken(): string | null {
-    if (this.idToken) return this.idToken;
-    const token = this.getStoredItem(ID_TOKEN_STORAGE_KEY);
-    this.idToken = token;
-    return token;
+  private getStoredToken(): string | null { return this.getStoredItem(TOKEN_STORAGE_KEY); }
+  private getStoredIdToken(): string | null { return this.getStoredItem(ID_TOKEN_STORAGE_KEY); }
+
+  private clearOtherStorage(remember: boolean): void {
+    const other = remember ? sessionStorage : localStorage;
+    try {
+       // Simply clear() is safer if you don't store non-auth data
+       if (typeof other !== 'undefined') other.clear(); 
+    } catch (e) { }
   }
+
+  // --- Accessors & Logic ---
+  getAccessToken(): string | null { return this.accessToken || this.getStoredToken(); }
+  getIdToken(): string | null { return this.idToken || this.getStoredIdToken(); }
+
+  public getUserId(): string | null { return this._currentUser()?.id || this.getStoredItem(USER_ID_STORAGE_KEY); }
+  public getUsername(): string | null { return this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY); }
 
   hasRole(role: string): boolean {
-    const currentUser = this._currentUser();
-    return currentUser ? currentUser.roles.includes(role) : false;
+    const u = this._currentUser();
+    return u ? u.roles.includes(role) : false;
   }
 
   getUserRoles(): string[] {
-    const currentUser = this._currentUser();
-    return currentUser ? [...currentUser.roles] : [];
+    return this._currentUser()?.roles || [];
   }
 
   hasPermission(permission: string): boolean {
-    const currentUser = this._currentUser();
-    return currentUser ? currentUser.permissions.includes(permission) : false;
+    const u = this._currentUser();
+    return u ? u.permissions.includes(permission) : false;
   }
 
   getUserPermissions(): string[] {
-    const currentUser = this._currentUser();
-    return currentUser ? [...currentUser.permissions] : [];
+    return this._currentUser()?.permissions || [];
   }
 
   hasActionPermission(modulePrefix: string, action: string): boolean {
-    const currentUser = this._currentUser();
-    if (!currentUser) return false;
-    
-    const permissionString = currentUser.permissions.find(p => p.startsWith(modulePrefix));
-    if (!permissionString) return false;
-
-    const actions = permissionString.split('_');
-    return actions.includes(action);
+    const u = this._currentUser();
+    if (!u) return false;
+    const p = u.permissions.find(perm => perm.startsWith(modulePrefix));
+    return p ? p.split('_').includes(action) : false;
   }
 
   private buildNavTree(nodes: ApiPermissionNode[], parentId: string = "0"): NavItem[] {
@@ -373,59 +339,27 @@ export class AuthService {
 
     for (const node of children) {
       const childrenOfNode = this.buildNavTree(nodes, node.ID);
-      const navItem: NavItem = {
+      tree.push({
         label: node.LABEL,
         icon: node.ICON || 'fas fa-dot-circle',
         link: node.LINK || null,
         permissions: node.PERMISSIONS || [],
         isOpen: false,
         children: childrenOfNode.length > 0 ? childrenOfNode : undefined
-      };
-
-      tree.push(navItem);
+      });
     }
     return tree;
   }
 
   private handleError(error: any, isLoginError: boolean = false): Observable<never> {
-    if (error && error.code) {
-      return throwError(() => error);
-    }
-
-    let errorMessage: string;
-
+    if (isLoginError) this.clearLocalAuthData(false);
+    
+    let msg = error.message || 'Lỗi hệ thống.';
     if (error instanceof HttpErrorResponse) {
-      if (error.error && typeof error.error === 'object' && error.error.ErrorMessage) {
-        errorMessage = error.error.ErrorMessage;
-      } else {
-        errorMessage = error.message || 'An unknown error occurred!';
-      }
-
-      if (errorMessage === 'An unknown error occurred!' || !errorMessage) {
-        if (error.status === 0 || error.status === -1) errorMessage = 'Network error or could not connect to the server.';
-        else if (error.status === 401) errorMessage = 'Authentication failed or session expired. Please log in again.';
-        else if (error.status === 403) errorMessage = 'You do not have permission to perform this action.';
-        else if (error.status === 400) errorMessage = 'Invalid request. Please check your input.';
-        else if (error.status >= 500) errorMessage = 'Server error. Please try again later.';
-      }
-    } else {
-      errorMessage = error.message;
+       if (error.status === 401) msg = 'Phiên đăng nhập hết hạn.';
+       else if (error.status === 403) msg = 'Không có quyền truy cập.';
+       else if (error.error?.ErrorMessage) msg = error.error.ErrorMessage;
     }
-
-    if (isLoginError) {
-      this.clearLocalAuthData(false);
-    }
-
-    return throwError(() => new Error(errorMessage));
-  }
-
-  public getUserId(): string | null {
-    const user = this._currentUser();
-    return user ? user.id : null;
-  }
-
-  public getUsername(): string | null {
-    const user = this._currentUser();
-    return user ? user.username : null;
+    return throwError(() => new Error(msg));
   }
 }

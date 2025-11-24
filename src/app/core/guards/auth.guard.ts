@@ -6,12 +6,14 @@ export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Access the signal value directly by calling it as a function
+  // Access the signal value directly
   if (authService.isLoggedIn()) {
     return true;
   } else {
-    console.warn('AuthGuard: Access denied - User not logged in. Redirecting to /login.');
-    router.navigate(['/login']);
+    // Best Practice: Pass the returnUrl so we can redirect back after login
+    router.navigate(['/login'], { 
+      queryParams: { returnUrl: state.url } 
+    });
     return false;
   }
 };
