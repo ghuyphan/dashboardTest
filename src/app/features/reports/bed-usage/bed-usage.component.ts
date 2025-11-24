@@ -27,7 +27,6 @@ const GLOBAL_FONT_FAMILY =
 const AUTO_REFRESH_INTERVAL = 60_000;
 const CHART_BAR_WIDTH = '60%';
 
-// --- Interfaces ---
 interface ApiResponseData {
   TenPhongBan: string;
   Tong: number;
@@ -79,41 +78,34 @@ export class BedUsageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
-  // --- Signals ---
   public isLoading = signal<boolean>(true);
   public currentDateTime = signal<string>('');
-  
-  // Stores raw API data. When this updates, widgets and charts re-compute automatically.
   private rawData = signal<ApiResponseData[]>([]);
+  private visibleSeriesMap = signal<Record<string, boolean> | null>(null);
 
-  // Derived State: Widgets
-  // Re-calculates whenever rawData OR theme palette changes
   public widgetData = computed<WidgetData[]>(() => {
     const data = this.rawData();
     const palette = this.themeService.currentPalette();
     const totals = this.calculateTotals(data);
-    
     return this.buildWidgetList(totals, palette);
   });
 
-  // Derived State: Charts
-  // Re-calculates whenever rawData OR theme palette changes
   public chartOptions = computed<EChartsCoreOption | null>(() => {
     const data = this.rawData();
     const palette = this.themeService.currentPalette();
-    
+    const visibleMap = this.visibleSeriesMap();
+
     if (data.length === 0) return null;
 
     const chartData = this.transformApiData(data);
     chartData.sort((a, b) => a.viName.localeCompare(b.viName));
     
-    return this.buildChartOptions(chartData, palette);
+    return this.buildChartOptions(chartData, palette, visibleMap);
   });
 
   private isRefreshing = false;
 
   ngOnInit(): void {
-    // Start polling loop
     timer(0, AUTO_REFRESH_INTERVAL)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -124,7 +116,6 @@ export class BedUsageComponent implements OnInit {
   public loadData(): void {
     if (this.isRefreshing) return;
 
-    // Only show full loading state on first load
     if (this.rawData().length === 0) {
       this.isLoading.set(true);
     } else {
@@ -143,6 +134,10 @@ export class BedUsageComponent implements OnInit {
         },
         error: (error) => this.handleDataError(error),
       });
+  }
+
+  public onLegendChange(params: { name: string; selected: Record<string, boolean> }): void {
+    this.visibleSeriesMap.set(params.selected);
   }
 
   private handleRequestComplete(): void {
@@ -166,10 +161,8 @@ export class BedUsageComponent implements OnInit {
 
   private handleDataError(error: HttpErrorResponse): void {
     console.error('Failed to load bed usage data:', error);
-    this.rawData.set([]); // Clear data on error, which triggers computed empty states
+    this.rawData.set([]);
   }
-
-  // --- Calculation Helpers ---
 
   private calculateTotals(apiData: ApiResponseData[]) {
     return apiData.reduce(
@@ -310,12 +303,16 @@ export class BedUsageComponent implements OnInit {
     });
   }
 
-  private buildChartOptions(data: DepartmentChartData[], palette: ThemePalette): EChartsCoreOption {
+  private buildChartOptions(
+    data: DepartmentChartData[], 
+    palette: ThemePalette,
+    visibleMap: Record<string, boolean> | null
+  ): EChartsCoreOption {
+    
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
 
-    // Define series config locally to use current palette
     const bedStatusSeries: BedStatusSeries[] = [
       { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: palette.chart3 },
       { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: palette.chart1 },
@@ -324,6 +321,16 @@ export class BedUsageComponent implements OnInit {
       { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: palette.chart7 },
       { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: palette.chart9 },
     ];
+
+    const dynamicTotals = data.map(dept => {
+      let sum = 0;
+      bedStatusSeries.forEach(s => {
+        if (visibleMap === null || visibleMap[s.name] !== false) {
+          sum += (dept[s.dataKey] as number);
+        }
+      });
+      return sum;
+    });
 
     return {
       backgroundColor: 'transparent',
@@ -409,20 +416,28 @@ export class BedUsageComponent implements OnInit {
           type: 'bar',
           barGap: '-100%',
           barWidth: CHART_BAR_WIDTH,
-          data: data.map((item) => item.totalBeds),
+          data: dynamicTotals,
           itemStyle: { color: 'transparent' },
           label: {
             show: true,
             position: 'top',
-            color: palette.textPrimary,
+            color: '#ffffff',
+            // [UPDATED] Use a neutral gray for the badge background
+            backgroundColor: palette.gray600,
+            padding: [3, 6],
+            borderRadius: 4,
             fontWeight: 'bold',
-            fontSize: 10,
+            fontSize: 11,
             formatter: '{c}',
+            distance: 5,
+            shadowBlur: 2,
+            shadowColor: 'rgba(0,0,0,0.2)',
+            shadowOffsetY: 1
           },
           tooltip: { show: false },
           z: 10,
           silent: true,
-        } as any, // Cast as any if strict ECharts type check fails on custom series props
+        } as any,
       ],
     };
   }
@@ -436,12 +451,18 @@ export class BedUsageComponent implements OnInit {
       let result = `<div style="font-weight:bold;margin-bottom:5px;">${item.viName}</div>`;
       if (item.enName)
         result += `<div style="color:${palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
+      
+      let visibleTotal = 0;
 
       params.forEach((p: any) => {
-        if (p.seriesName === 'Tổng (Total)' || p.value === 0) return;
-        result += `<div>${p.marker} ${p.seriesName}: <b>${p.value}</b></div>`;
+        if (p.seriesName === 'Tổng (Total)') return; 
+        if (p.value !== 0) {
+            result += `<div>${p.marker} ${p.seriesName}: <b>${p.value}</b></div>`;
+        }
+        visibleTotal += (typeof p.value === 'number' ? p.value : 0);
       });
-      result += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid ${palette.gray200};">Total: <b>${item.totalBeds}</b></div>`;
+      
+      result += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid ${palette.gray200};">Total: <b>${visibleTotal}</b></div>`;
       return result;
     };
   }

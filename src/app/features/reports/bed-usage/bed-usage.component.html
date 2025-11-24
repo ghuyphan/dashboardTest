@@ -32,7 +32,8 @@
       iconClass="icon-info"
       [isLoading]="isLoading()"
       [chartOptions]="chartOptions()"
-      [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
+      [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+      (chartLegendSelectChanged)="onLegendChange($event)">
 
       <div
         header-actions

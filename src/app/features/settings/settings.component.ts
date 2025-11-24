@@ -6,7 +6,8 @@ import {
   FormGroup, 
   Validators, 
   AbstractControl, 
-  ValidationErrors 
+  ValidationErrors,
+  FormControl 
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -17,6 +18,13 @@ import { ToastService } from '../../core/services/toast.service';
 import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { User } from '../../core/models/user.model';
+
+// [1] Define the Strict Form Interface
+interface ChangePasswordForm {
+  OldPassword: FormControl<string | null>;
+  NewPassword: FormControl<string | null>;
+  ConfirmPassword: FormControl<string | null>;
+}
 
 @Component({
   selector: 'app-settings',
@@ -31,18 +39,17 @@ export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private modalService = inject(ModalService);
-  private router = inject(Router);
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);
-  public form: FormGroup;
+  
+  // [2] Apply the type to FormGroup
+  public form: FormGroup<ChangePasswordForm>;
 
-  // Password Visibility Signals
   public showOld = signal(false);
   public showNew = signal(false);
   public showConfirm = signal(false);
 
-  // Password Requirements State
   public passwordCriteria = signal({
     minLength: false,
     maxLength: false,
@@ -53,17 +60,18 @@ export class SettingsComponent implements OnInit {
   });
 
   constructor() {
-    this.form = this.fb.group({
-      OldPassword: ['', Validators.required],
-      NewPassword: ['', [Validators.required]],
-      ConfirmPassword: ['', Validators.required]
+    // [3] FormBuilder infers types automatically or you can be explicit
+    this.form = this.fb.group<ChangePasswordForm>({
+      OldPassword: new FormControl('', Validators.required),
+      NewPassword: new FormControl('', [Validators.required]),
+      ConfirmPassword: new FormControl('', Validators.required)
     }, { validators: this.passwordMatchValidator });
 
-    this.form.get('NewPassword')?.valueChanges
+    // [4] Use ?.valueChanges safely
+    this.form.controls.NewPassword.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(val => this.updatePasswordCriteria(val));
+      .subscribe(val => this.updatePasswordCriteria(val || ''));
 
-    // [FIX] Use effect to sync with AuthService signal
     effect(() => {
       this.currentUser.set(this.authService.currentUser());
     });
@@ -91,6 +99,7 @@ export class SettingsComponent implements OnInit {
   }
 
   private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    // Safe access to controls in a validator (still abstract)
     const newPass = control.get('NewPassword')?.value;
     const confirmPass = control.get('ConfirmPassword')?.value;
     return newPass === confirmPass ? null : { mismatch: true };
@@ -141,7 +150,17 @@ export class SettingsComponent implements OnInit {
   private performChangePassword(): void {
     this.isLoading.set(true);
     
-    this.authService.changePassword(this.form.value)
+    // form.getRawValue() is safer for typed forms
+    const rawValue = this.form.getRawValue();
+    
+    // Ensure no nulls are passed (though Validators.required handles this, types might imply null)
+    const payload = {
+        OldPassword: rawValue.OldPassword || '',
+        NewPassword: rawValue.NewPassword || '',
+        ConfirmPassword: rawValue.ConfirmPassword || ''
+    };
+    
+    this.authService.changePassword(payload)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (res) => {
@@ -157,22 +176,12 @@ export class SettingsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Change Password Error:', err);
-          
           let msg = 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.';
-
-          if (err.error) {
-            if (typeof err.error === 'string') {
-               msg = err.error;
-            } else if (err.error.TenKetQua) {
-               msg = err.error.TenKetQua;
-            } else if (err.error.ErrorMessage) {
-               msg = err.error.ErrorMessage;
-            } else if (err.error.message) {
-               msg = err.error.message;
-            }
-          } else if (err.message) {
-             msg = err.message;
-          }
+          
+          // Simplified error extraction
+          if (err.error?.TenKetQua) msg = err.error.TenKetQua;
+          else if (err.error?.ErrorMessage) msg = err.error.ErrorMessage;
+          else if (typeof err.error === 'string') msg = err.error;
 
           this.toastService.showError(msg);
         }

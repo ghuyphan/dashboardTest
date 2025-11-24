@@ -37,7 +37,6 @@ echarts.use([
   CanvasRenderer
 ]);
 
-// [UPDATED] Expanded types for more realistic loading states
 export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
 
 @Component({
@@ -73,6 +72,7 @@ export class ChartCardComponent implements AfterViewInit {
 
   // --- OUTPUTS ---
   public chartClick = output<any>();
+  public chartLegendSelectChanged = output<any>(); // [UPDATED] New output for legend toggles
 
   // --- VIEW CHILD ---
   private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
@@ -136,6 +136,11 @@ export class ChartCardComponent implements AfterViewInit {
 
       this.chartInstance.on('click', (params) => {
         this.ngZone.run(() => this.chartClick.emit(params));
+      });
+
+      // [UPDATED] Listen for legend changes
+      this.chartInstance.on('legendselectchanged', (params) => {
+        this.ngZone.run(() => this.chartLegendSelectChanged.emit(params));
       });
     });
   }

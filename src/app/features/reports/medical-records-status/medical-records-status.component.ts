@@ -9,12 +9,12 @@ import {
 import { CommonModule, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
-import { saveAs } from 'file-saver'; // Import saveAs for file download
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { MedicalRecordSummary, MedicalRecordDetail } from '../../../shared/models/medical-record-stat.model';
+import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service'; // [1] Import Service
+import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
@@ -37,6 +37,7 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 export class MedicalRecordsStatusComponent implements OnInit {
   private reportService = inject(ReportService);
   private toastService = inject(ToastService);
+  private excelService = inject(ExcelExportService); // [2] Inject Service
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
   public readonly themeService = inject(ThemeService);
@@ -217,59 +218,34 @@ export class MedicalRecordsStatusComponent implements OnInit {
             return;
           }
           
-          // IMPLEMENTED: Actual CSV Export Logic
-          this.exportToCsv(details, `BaoCao_ChuaTaoBA_${this.fromDate}_${this.toDate}`);
+          // [3] Define Excel Columns Configuration
+          const columns: ExportColumn[] = [
+            { key: 'MAYTE', header: 'Mã Y Tế' },
+            { key: 'TEN_BENH_NHAN', header: 'Tên Bệnh Nhân' },
+            { key: 'NGAY_KHAM', header: 'Ngày Khám', type: 'date' },
+            { key: 'DICH_VU', header: 'Dịch Vụ' },
+            { key: 'CHUYEN_KHOA', header: 'Chuyên Khoa' },
+            { key: 'MA_BS', header: 'Mã BS' },
+            { key: 'TEN_BS', header: 'Tên Bác Sĩ' },
+            { key: 'TEN_PHONG_KHAM', header: 'Phòng Khám' },
+            { key: 'THOI_GIAN_KHAM', header: 'Thời Gian', type: 'date' },
+            { key: 'TRANG_THAI_BA', header: 'Trạng Thái' },
+            { key: 'TIEPNHAN_ID', header: 'Mã Tiếp Nhận' }
+          ];
+
+          // [4] Use the service to export
+          this.excelService.exportToExcel(
+            details, 
+            `BaoCao_ChuaTaoBA_${this.fromDate}_${this.toDate}`,
+            columns
+          );
+          
+          this.toastService.showSuccess(`Đã xuất ${details.length} dòng ra file Excel.`);
         },
         error: (err) => {
           console.error(err);
           this.toastService.showError('Lỗi khi tải dữ liệu chi tiết để xuất Excel.');
         }
       });
-  }
-
-  /**
-   * Converts JSON data to CSV and triggers browser download.
-   * Includes BOM for Excel UTF-8 compatibility.
-   */
-  private exportToCsv(data: MedicalRecordDetail[], fileName: string): void {
-    const headerMap: Record<keyof MedicalRecordDetail, string> = {
-      MAYTE: 'Mã Y Tế',
-      TEN_BENH_NHAN: 'Tên Bệnh Nhân',
-      NGAY_KHAM: 'Ngày Khám',
-      DICH_VU: 'Dịch Vụ',
-      CHUYEN_KHOA: 'Chuyên Khoa',
-      MA_BS: 'Mã BS',
-      TEN_BS: 'Tên Bác Sĩ',
-      TEN_PHONG_KHAM: 'Phòng Khám',
-      THOI_GIAN_KHAM: 'Thời Gian',
-      TRANG_THAI_BA: 'Trạng Thái',
-      TIEPNHAN_ID: 'Mã Tiếp Nhận'
-    };
-
-    const headers = Object.keys(headerMap) as (keyof MedicalRecordDetail)[];
-    const headerRow = headers.map(key => headerMap[key]).join(',');
-
-    const rows = data.map(row => {
-      return headers.map(fieldName => {
-        let val = row[fieldName] ?? '';
-        
-        // Format dates if necessary
-        if (fieldName === 'NGAY_KHAM' || fieldName === 'THOI_GIAN_KHAM') {
-             val = this.datePipe.transform(val, 'dd/MM/yyyy HH:mm') || val;
-        }
-
-        // Escape quotes for CSV
-        const strVal = String(val).replace(/"/g, '""'); 
-        return `"${strVal}"`;
-      }).join(',');
-    });
-
-    const csvContent = [headerRow, ...rows].join('\n');
-    
-    // Add BOM for Excel UTF-8 support
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    saveAs(blob, `${fileName}.csv`);
-    this.toastService.showSuccess(`Đã xuất ${data.length} dòng ra file Excel (CSV).`);
   }
 }

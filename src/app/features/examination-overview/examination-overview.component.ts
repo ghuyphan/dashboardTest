@@ -253,6 +253,10 @@ export class ExaminationOverviewComponent implements OnInit {
       return dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : '';
     });
 
+    // FIX: Show symbols (dots) if we only have a single data point (e.g., 1 day)
+    // otherwise the line chart will appear empty.
+    const showPoints = sorted.length < 2;
+
     const c = {
       total: this.palette.deepSapphire,
       ck: this.palette.primary,
@@ -305,7 +309,7 @@ export class ExaminationOverviewComponent implements OnInit {
           name: 'Tổng Tiếp Nhận',
           type: 'line',
           smooth: true,
-          showSymbol: false,
+          showSymbol: showPoints, // FIX APPLIED HERE
           data: sorted.map((d) => d.TONG_LUOT_TIEP_NHAN),
           itemStyle: { color: c.total },
         },
@@ -313,7 +317,7 @@ export class ExaminationOverviewComponent implements OnInit {
           name: 'Khám Bệnh (CK)',
           type: 'line',
           smooth: true,
-          showSymbol: false,
+          showSymbol: showPoints, // FIX APPLIED HERE
           data: sorted.map((d) => d.LUOT_KHAM_CK),
           itemStyle: { color: c.ck },
         },
@@ -321,7 +325,7 @@ export class ExaminationOverviewComponent implements OnInit {
           name: 'Cấp Cứu',
           type: 'line',
           smooth: true,
-          showSymbol: false,
+          showSymbol: showPoints, // FIX APPLIED HERE
           data: sorted.map((d) => d.LUOT_CC),
           itemStyle: { color: c.cc },
         },
@@ -329,7 +333,7 @@ export class ExaminationOverviewComponent implements OnInit {
           name: 'Nội Trú',
           type: 'line',
           smooth: true,
-          showSymbol: false,
+          showSymbol: showPoints, // FIX APPLIED HERE
           data: sorted.map((d) => d.LUOT_NT),
           itemStyle: { color: c.nt },
         },
@@ -337,7 +341,7 @@ export class ExaminationOverviewComponent implements OnInit {
           name: 'ĐT Ngoại Trú',
           type: 'line',
           smooth: true,
-          showSymbol: false,
+          showSymbol: showPoints, // FIX APPLIED HERE
           data: sorted.map((d) => d.LUOT_DNT),
           itemStyle: { color: c.dnt },
         },

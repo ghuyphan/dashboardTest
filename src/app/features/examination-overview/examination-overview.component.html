@@ -12,7 +12,7 @@
         <app-widget-card
           [title]="'Loading...'"
           [isLoading]="true"
-        ></app-widget-card>
+        />
         } } @else { @for (widget of widgetData; track trackByWidget($index,
         widget)) {
         <app-widget-card
@@ -21,8 +21,7 @@
           [value]="widget.value"
           [caption]="widget.caption"
           [accentColor]="widget.accentColor"
-        >
-        </app-widget-card>
+        />
         } }
       </div>
     </div>
