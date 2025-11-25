@@ -143,7 +143,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'BaoCao.KhamCLST6', // Update this permission key
-          title: 'Thống kê CLS Tầng 6',
+          title: 'Tầng 6 Khám và CLS',
           showSearchBar: false,
         },
       },

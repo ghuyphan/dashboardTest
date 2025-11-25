@@ -115,7 +115,7 @@ export class PdfService {
           setTimeout(() => {
             document.body.removeChild(iframe);
             URL.revokeObjectURL(blobUrl);
-          }, 60000);
+          }, 600000);
         }
       }, 500);
     };

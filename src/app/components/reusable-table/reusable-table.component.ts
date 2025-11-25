@@ -13,7 +13,6 @@ import {
   output,
   viewChild,
   effect,
-  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -71,13 +70,20 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   override firstPageLabel = 'Trang đầu';
   override lastPageLabel = 'Trang cuối';
 
-  override getRangeLabel = (page: number, pageSize: number, length: number): string => {
+  override getRangeLabel = (
+    page: number,
+    pageSize: number,
+    length: number
+  ): string => {
     if (length === 0 || pageSize === 0) {
       return `0 / ${length}`;
     }
     const maxLength = Math.max(length, 0);
     const startIndex = page * pageSize;
-    const endIndex = startIndex < maxLength ? Math.min(startIndex + pageSize, maxLength) : startIndex + pageSize;
+    const endIndex =
+      startIndex < maxLength
+        ? Math.min(startIndex + pageSize, maxLength)
+        : startIndex + pageSize;
     return `${startIndex + 1} - ${endIndex} / ${maxLength}`;
   };
 }
@@ -103,12 +109,12 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
-    '[style.--table-header-bg]': 'headerColor()'
-  }
+    '[style.--table-header-bg]': 'headerColor()',
+  },
 })
 export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
-  
   private cdr = inject(ChangeDetectorRef);
+  private scrollTimer: any = null;
 
   // --- Inputs (Signals) ---
   public data = input<T[]>([]);
@@ -144,26 +150,29 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public readonly dataSource = new MatTableDataSource<T>();
   public displayedColumns: string[] = [];
   public selectedRow: T | null = null;
-  
+
   public readonly selection = new SelectionModel<T>(true, []);
   public sortState: SortState = { active: '', direction: '' };
 
   constructor() {
-    // Effect: React to Data Changes
     effect(() => {
       const currentData = this.data();
       this.handleDataChange(currentData);
     });
 
-    // Effect: React to Column/Selection Mode Changes
     effect(() => {
-      // Dependency tracking: accessing signals registers this effect
       const cols = this.columns();
       const multiSelect = this.enableMultiSelect();
+
+      // CRITICAL FIX: Clear selection when selection mode changes or columns change
+      // This prevents ghost selections when switching from multi to single mode
+      this.selection.clear();
+      this.selectedRow = null;
+      this.rowClick.emit(undefined);
+
       this.updateDisplayedColumns(cols, multiSelect);
     });
 
-    // Effect: React to Client-Side Features availability
     effect(() => {
       const sortInstance = this.sort();
       const paginatorInstance = this.paginator();
@@ -184,6 +193,10 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     this.initializeSortState();
   }
 
+  ngOnDestroy(): void {
+    if (this.scrollTimer) clearTimeout(this.scrollTimer);
+  }
+
   private initializeSelectionListener(): void {
     this.selection.changed.subscribe(() => {
       this.selectionChanged.emit(this.selection.selected);
@@ -200,13 +213,15 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     }
   }
 
-  private updateDisplayedColumns(cols: GridColumn[], enableMultiSelect: boolean): void {
+  private updateDisplayedColumns(
+    cols: GridColumn[],
+    enableMultiSelect: boolean
+  ): void {
     const baseColumns = cols.map((col) => col.key);
     this.displayedColumns = enableMultiSelect
       ? ['select', ...baseColumns]
       : baseColumns;
-      
-    // Trigger change detection since displayedColumns isn't a signal itself yet
+
     this.cdr.markForCheck();
   }
 
@@ -268,10 +283,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   }
 
   public clearSearch(): void {
-    // Search term is an input signal, we can't set it directly.
-    // We emit the event to parent to clear it.
     this.searchCleared.emit();
-    
     const paginatorInstance = this.paginator();
     if (paginatorInstance) {
       paginatorInstance.firstPage();
@@ -313,7 +325,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   }
 
   private scrollRowIntoView(index: number): void {
-    setTimeout(() => {
+    if (this.scrollTimer) clearTimeout(this.scrollTimer);
+
+    this.scrollTimer = setTimeout(() => {
       const rowElements = document.querySelectorAll('.clickable-row');
       const rowElement = rowElements[index];
       if (rowElement) {
@@ -323,7 +337,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   }
 
   public getEmptyStateMessage(): string {
-    return this.searchTerm() ? `${this.noResultsText()} "${this.searchTerm()}"` : this.emptyStateText();
+    return this.searchTerm()
+      ? `${this.noResultsText()} "${this.searchTerm()}"`
+      : this.emptyStateText();
   }
 
   public trackByFn = (index: number, item: any): any => {
@@ -335,9 +351,12 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     const lower = status.toLowerCase();
     if (lower.includes('đang sử dụng')) return 'status-in-use';
     if (lower.includes('sẵn sàng')) return 'status-ready';
-    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa')) return 'status-maintenance';
-    if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
-    if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
+    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa'))
+      return 'status-maintenance';
+    if (lower.includes('bảo trì') || lower.includes('sửa chữa'))
+      return 'status-repair';
+    if (lower.includes('hỏng') || lower.includes('thanh lý'))
+      return 'status-broken';
     return 'status-default';
   }
 
@@ -353,7 +372,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public toggleRowSelection(row: T, event: MouseEvent | null): void {
     if (event) event.stopPropagation();
     this.selectedRow = null;
-    this.rowClick.emit(undefined); 
+    this.rowClick.emit(undefined);
     this.selection.toggle(row);
   }
 

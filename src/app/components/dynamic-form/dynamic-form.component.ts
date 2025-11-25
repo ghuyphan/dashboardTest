@@ -4,7 +4,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   input,
-  output, // Import output function
+  output, 
   effect,
   ViewEncapsulation
 } from '@angular/core';
@@ -76,13 +76,14 @@ export type DynamicFormValue = Record<string, any>;
   encapsulation: ViewEncapsulation.None 
 })
 export class DynamicFormComponent implements OnInit {
-  // --- MODERN SIGNALS ---
   public formConfig = input<FormConfig | undefined>();
   public isLoading = input<boolean>(false);
 
-  // Modern Outputs
   public formSubmitted = output<DynamicFormValue>();
   public formCancelled = output<void>();
+  
+  // New Output for signaling reconstruction
+  public formReady = output<FormGroup>();
 
   public dynamicForm: FormGroup<Record<string, FormControl<any>>>;
 
@@ -105,6 +106,9 @@ export class DynamicFormComponent implements OnInit {
   private buildForm(config: FormConfig): void {
     const formControls = this.createFormControls(config);
     this.dynamicForm = new FormGroup(formControls);
+    
+    // Notify parent that the form group instance has changed
+    this.formReady.emit(this.dynamicForm);
   }
 
   private createFormControls(config: FormConfig): Record<string, FormControl<any>> {
@@ -236,7 +240,6 @@ export class DynamicFormComponent implements OnInit {
     inputElement.value = this.formatCurrency(rawValue);
   }
 
-  // Public API methods (kept for compatibility with parent via viewChild)
   public resetForm(): void {
     this.dynamicForm.reset();
   }

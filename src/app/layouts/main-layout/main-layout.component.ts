@@ -14,10 +14,11 @@ import {
   RouterModule,
   RouterOutlet,
   NavigationEnd,
+  NavigationStart,
   ActivatedRoute,
 } from '@angular/router';
 import { filter, map, mergeMap, startWith } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // Best Practice: Auto-cleanup
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/services/auth.service';
 import { NavItem } from '../../core/models/nav-item.model';
@@ -40,7 +41,7 @@ import { FooterActionService } from '../../core/services/footer-action.service';
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush // Best Practice: Optimize rendering cycles
+  changeDetection: ChangeDetectionStrategy.OnPush 
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
@@ -50,7 +51,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private location = inject(Location);
   private footerService = inject(FooterActionService);
 
-  // --- State Signals (Best Practice: Reactive State) ---
+  // --- State Signals ---
   public sidebarOpen = signal(false);
   public contentLoaded = signal(false);
   
@@ -58,8 +59,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   public searchVisible = signal(false);
   public backButtonVisible = signal(false);
 
-  // --- Derived State (Best Practice: Computed Signals) ---
-  // Automatically updates when authService.currentUser signal emits
+  // --- Derived State ---
   public currentUser = this.authService.currentUser; 
 
   public rolesDisplay = computed(() => {
@@ -72,14 +72,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return this.getInitials(name);
   });
 
-  // Writable signal for local nav items (copied to allow mutation by sidebar accordion)
   public navItems = signal<NavItem[]>([]);
 
   constructor() {
-    // Best Practice: Use effects to sync state instead of manual subscribe()
     effect(() => {
       const items = this.authService.navItems();
-      // Deep copy remains necessary if the sidebar component mutates 'isOpen' state internally
       this.navItems.set(this.deepCopyNavItems(items));
     });
 
@@ -90,10 +87,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.checkWindowSize();
     window.addEventListener('resize', this.checkWindowSize.bind(this));
 
-    // Simulate content loading (or replace with actual logic)
-    setTimeout(() => {
-      this.contentLoaded.set(true);
-    }, 50);
+    // Removed timeout, set immediately
+    this.contentLoaded.set(true);
   }
 
   ngOnDestroy(): void {
@@ -101,6 +96,17 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private initializeRouterEvents(): void {
+    // 1. Clear Actions on Navigation Start
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationStart),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => {
+        this.footerService.clearActions();
+      });
+
+    // 2. Update Title/Metadata on Navigation End
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -112,13 +118,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         }),
         filter(route => route.outlet === 'primary'),
         mergeMap(route => route.data),
-        // Best Practice: RxJS Interop for auto-unsubscription
         takeUntilDestroyed() 
       )
       .subscribe((data: any) => {
-        this.footerService.clearActions();
-        
-        // Best Practice: Update signals instead of primitive properties
         this.screenTitle.set(data['title'] || 'Dashboard');
         this.searchVisible.set(data['showSearchBar'] === true);
         this.backButtonVisible.set(data['showBackButton'] === true);
@@ -137,23 +139,21 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private checkWindowSize(): void {
-    // Auto-collapse on small screens
     this.sidebarOpen.set(false);
   }
 
   private getInitials(username: string): string {
-    if (username && username.length >= 3) {
-      return username.substring(1, 3).toUpperCase();
-    } else if (username && username.length > 0) {
+    if (!username) return '??';
+    if (username.length >= 2) {
       return username.substring(0, 2).toUpperCase();
     }
-    return '??';
+    return username.toUpperCase();
   }
 
   // --- Event Handlers ---
 
   toggleSidebar(): void {
-    this.sidebarOpen.update(v => !v); // Best Practice: signal.update()
+    this.sidebarOpen.update(v => !v);
   }
 
   logout(): void {

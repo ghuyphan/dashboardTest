@@ -17,7 +17,6 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 
-// ECharts Types
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart, PieChart, ScatterChart } from 'echarts/charts';
@@ -55,7 +54,6 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly themeService = inject(ThemeService);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
-  // --- INPUTS ---
   public title = input<string>('');
   public subtitle = input<string>('');
   public icon = input<string>('');
@@ -70,14 +68,11 @@ export class ChartCardComponent implements AfterViewInit {
 
   public theme = input<string | object | null>(null);
 
-  // --- OUTPUTS ---
   public chartClick = output<any>();
   public chartLegendSelectChanged = output<any>();
 
-  // --- VIEW CHILD ---
   private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
 
-  // --- COMPUTED ---
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
   public showChart = computed(() => !!this.chartOptions());
 
@@ -87,50 +82,47 @@ export class ChartCardComponent implements AfterViewInit {
 
   private chartInstance?: EChartsType;
   
-  // Optimization variables
   private resizeObserver?: ResizeObserver;
   private windowResizeListener?: () => void;
   private resizeTimer?: ReturnType<typeof setTimeout>;
   private readonly RESIZE_DEBOUNCE_MS = 200;
   
-  // [OPTIMIZATION] Cache last known dimensions to prevent redundant resize calls
   private lastWidth = 0;
   private lastHeight = 0;
+  
+  // FIX: Flag to track destruction status
+  private isDestroyed = false;
 
   constructor() {
-    // Effect: Update chart data when options change
+    this.destroyRef.onDestroy(() => {
+      this.isDestroyed = true;
+      this.cleanup();
+    });
+
     effect(() => {
       const options = this.chartOptions();
       if (this.chartInstance && options) {
         this.updateChart(options);
       } else if (options && this.isBrowser) {
-        // Attempt to init if not already done (and we are in browser)
-        // We use setTimeout to ensure the view is ready
         setTimeout(() => this.initChart(options), 0);
       }
     });
 
-    // Effect: Handle Theme changes
     effect(() => {
-      this.effectiveTheme(); // Dependency
+      this.effectiveTheme(); 
       const options = untracked(() => this.chartOptions());
       
       if (this.chartInstance && options) {
         this.disposeChart();
-        // Small delay to ensure DOM styles (colors) update before re-init
         setTimeout(() => this.initChart(options), 0);
       }
     });
-
-    this.destroyRef.onDestroy(() => this.cleanup());
   }
 
   ngAfterViewInit(): void {
     if (this.isBrowser) {
-      // Setup resize listener immediately so we catch the first layout paint
       this.setupResizeStrategy();
 
-      // Attempt init if data exists
       if (this.chartOptions()) {
         this.initChart(this.chartOptions());
       }
@@ -138,32 +130,27 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private initChart(options: EChartsCoreOption | null): void {
-    if (!this.isBrowser || !this.chartContainerRef() || !options) return;
-    if (this.chartInstance) return; // Already initialized
+    // FIX: Check isDestroyed flag
+    if (this.isDestroyed || !this.isBrowser || !this.chartContainerRef() || !options) return;
+    if (this.chartInstance) return; 
 
     const el = this.chartContainerRef().nativeElement;
 
-    // [OPTIMIZATION] Strict dimension check
-    // If dimensions are 0, we CANNOT init ECharts yet. 
-    // We rely on the ResizeObserver (setup in ngAfterViewInit) to call performResize() later.
     if (el.clientWidth === 0 || el.clientHeight === 0) {
       return;
     }
 
     this.ngZone.runOutsideAngular(() => {
-      // Initialize
       this.chartInstance = echarts.init(el, this.effectiveTheme(), {
         renderer: 'canvas',
         useDirtyRect: false 
       });
 
-      // Cache initial dimensions
       this.lastWidth = el.clientWidth;
       this.lastHeight = el.clientHeight;
 
       this.chartInstance.setOption(options);
 
-      // Bind events
       this.chartInstance.on('click', (params) => {
         this.ngZone.run(() => this.chartClick.emit(params));
       });
@@ -180,7 +167,7 @@ export class ChartCardComponent implements AfterViewInit {
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance?.setOption(options, {
         notMerge: false,
-        lazyUpdate: true // Let ECharts throttle updates internally
+        lazyUpdate: true 
       });
     });
   }
@@ -188,14 +175,12 @@ export class ChartCardComponent implements AfterViewInit {
   private setupResizeStrategy(): void {
     const el = this.chartContainerRef().nativeElement;
 
-    // 1. Modern Approach: ResizeObserver
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => {
         this.triggerResize();
       });
       this.resizeObserver.observe(el);
     } 
-    // 2. Fallback Approach: Window Resize
     else {
       this.ngZone.runOutsideAngular(() => {
         this.windowResizeListener = () => this.triggerResize();
@@ -215,10 +200,8 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private performResize(): void {
-    if (!this.isBrowser) return;
+    if (!this.isBrowser || this.isDestroyed) return;
 
-    // [FIX] If chart was defer-loaded or had 0 size initially, 
-    // this is where we finally initialize it now that we have dimensions.
     if (!this.chartInstance) {
       if (this.chartOptions()) {
         this.initChart(this.chartOptions());
@@ -232,13 +215,10 @@ export class ChartCardComponent implements AfterViewInit {
     const currentWidth = el.clientWidth;
     const currentHeight = el.clientHeight;
 
-    // [OPTIMIZATION] Filter out phantom resize events
-    // Only resize if dimensions actually changed
     if (currentWidth === this.lastWidth && currentHeight === this.lastHeight) {
       return;
     }
 
-    // Only resize if container is visible
     if (currentWidth > 0 && currentHeight > 0) {
       this.lastWidth = currentWidth;
       this.lastHeight = currentHeight;

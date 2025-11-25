@@ -22,13 +22,11 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   
   public flyoutToggled = output<boolean>();
 
-  /** Event listener cleanup functions */
   private listeners: {
     globalClick?: () => void;
     menuClick?: () => void;
   } = {};
 
-  /** Original DOM position to restore when closing */
   private originalPosition: {
     parent: Node | null;
     nextSibling: Node | null;
@@ -37,10 +35,8 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     nextSibling: null,
   };
 
-  /** Tracks the currently open flyout to ensure only one is active */
   private static activeFlyout: FlyoutDirective | null = null;
 
-  /** Spacing constants */
   private readonly VIEWPORT_PADDING = 10;
   private readonly HORIZONTAL_OFFSET = 8;
   private readonly DEFAULT_SIDEBAR_WIDTH = 60;
@@ -70,7 +66,6 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
-    // Toggle: close if already open, open if closed
     if (this.isOpen()) {
       this.closeFlyout();
     } else {
@@ -209,8 +204,13 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     );
     const left = this.calculateHorizontalPosition();
 
+    // CRITICAL FIX: Calculate available space to prevent overflow
+    const availableHeight = viewportHeight - top - this.VIEWPORT_PADDING;
+    
     this.renderer.setStyle(menuEl, 'top', `${top}px`);
     this.renderer.setStyle(menuEl, 'left', `${left}px`);
+    this.renderer.setStyle(menuEl, 'max-height', `${availableHeight}px`);
+    this.renderer.setStyle(menuEl, 'overflow-y', 'auto');
   }
 
   private calculateVerticalPosition(
@@ -228,9 +228,12 @@ export class FlyoutDirective implements OnInit, OnDestroy {
       if (topAlignedBottom >= this.VIEWPORT_PADDING) {
         top = topAlignedBottom;
       } else {
-        top = viewportHeight - menuRect.height - this.VIEWPORT_PADDING;
-        if (top < this.VIEWPORT_PADDING) {
-          top = this.VIEWPORT_PADDING;
+        // If we are constrained, default to aligning with top but force scroll
+        top = Math.max(this.VIEWPORT_PADDING, hostRect.top);
+        // If that puts the top too low to see content, ensure we start at least somewhat high
+        if (top + menuRect.height > viewportHeight) {
+            // Prioritize showing the menu within view, max-height logic will handle the scroll
+            top = Math.max(this.VIEWPORT_PADDING, Math.min(top, viewportHeight - 100));
         }
       }
     }
@@ -252,7 +255,8 @@ export class FlyoutDirective implements OnInit, OnDestroy {
   private removePositioningStyles(): void {
     const menuEl = this.flyoutMenu();
     if (menuEl) {
-      const stylesToRemove = ['position', 'top', 'left', 'visibility'];
+      // Clean up the new styles added
+      const stylesToRemove = ['position', 'top', 'left', 'visibility', 'max-height', 'overflow-y'];
       stylesToRemove.forEach((style) => {
         this.renderer.removeStyle(menuEl, style);
       });
