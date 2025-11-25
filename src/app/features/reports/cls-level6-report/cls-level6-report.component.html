@@ -7,18 +7,64 @@
       buttonLabel="Lọc dữ liệu"
     ></app-date-filter>
 
+    <div class="widget-section">
+      <div class="widget-grid">
+        @if (isLoading && widgetData.length === 0) {
+          @for (i of [1, 2, 3, 4]; track i) {
+            <app-widget-card [title]="'Loading'" [isLoading]="true" />
+          }
+        } @else {
+          @for (widget of widgetData; track widget.id) {
+            <app-widget-card
+              [icon]="widget.icon"
+              [title]="widget.title"
+              [value]="widget.value"
+              [caption]="widget.caption"
+              [accentColor]="widget.accentColor"
+            />
+          }
+        }
+      </div>
+    </div>
+
     <div class="dashboard-grid">
       
       <app-chart-card
-        class="grid-item span-full"
-        title="Thống Kê Theo Phòng Ban"
-        icon="fas fa-chart-bar"
+        class="grid-item span-2"
+        title="Xu Hướng Cận Lâm Sàng (CLS)"
+        icon="fas fa-chart-line"
+        iconClass="icon-info"
+        [isLoading]="isLoading"
+        [chartOptions]="clsTrendOptions"
+        skeletonType="line"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        emptyText="Chưa có dữ liệu CLS."
+      >
+      </app-chart-card>
+
+      <app-chart-card
+        class="grid-item span-2"
+        title="Xu Hướng Nhập Viện"
+        icon="fas fa-procedures"
+        iconClass="icon-danger" 
+        [isLoading]="isLoading"
+        [chartOptions]="admissionTrendOptions"
+        skeletonType="line"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        emptyText="Chưa có dữ liệu nhập viện."
+      >
+      </app-chart-card>
+
+      <app-chart-card
+        class="grid-item span-2"
+        title="Phân Bố Theo Phòng Ban"
+        icon="fas fa-building"
         iconClass="icon-info"
         [isLoading]="isLoading"
         [chartOptions]="roomChartOptions"
-        skeletonType="bar"
+        skeletonType="horizontal-bar"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        emptyText="Không có dữ liệu."
+        emptyText="Không có dữ liệu phòng ban."
       >
       </app-chart-card>
 
@@ -26,20 +72,20 @@
         class="grid-item span-2"
         title="Tỷ Lệ Nhóm Dịch Vụ"
         icon="fas fa-pie-chart"
-        iconClass="icon-info"
+        iconClass="icon-warning"
         [isLoading]="isLoading"
         [chartOptions]="groupChartOptions"
-        skeletonType="pie"
+        skeletonType="doughnut"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        emptyText="Không có dữ liệu."
+        emptyText="Không có dữ liệu nhóm dịch vụ."
       >
       </app-chart-card>
 
       <app-table-card
         class="grid-item span-full"
-        title="Dữ Liệu Chi Tiết - CLS Tầng 6"
+        title="Chi Tiết Dữ Liệu"
         icon="fas fa-table"
-        iconClass="text-teal"
+        iconClass="icon-success"
         [isLoading]="isLoading"
         [data]="rawData"
         [columns]="tableColumns"

@@ -1,10 +1,8 @@
 import {
   Component,
-  Output,
-  EventEmitter,
   inject,
-  ViewEncapsulation,
   input,
+  output, // Updated: Modern Output API
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -30,8 +28,7 @@ import { ThemeService } from '../../core/services/theme.service';
     MatIconModule,
   ],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss',
-  encapsulation: ViewEncapsulation.Emulated,
+  styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
   public currentUser = input<User | null>(null);
@@ -40,14 +37,15 @@ export class HeaderComponent {
   public currentScreenName = input<string>('Dashboard');
   public showSearchBar = input<boolean>(false);
   public showBackButton = input<boolean>(false);
+  
   private router = inject(Router);
-
-  @Output() sidebarToggled = new EventEmitter<void>();
-  @Output() logoutClicked = new EventEmitter<void>();
-  @Output() backClicked = new EventEmitter<void>();
-
   public searchService = inject(SearchService);
   public themeService = inject(ThemeService);
+
+  // Updated: Use modern output() function
+  public sidebarToggled = output<void>();
+  public logoutClicked = output<void>();
+  public backClicked = output<void>();
 
   get searchTerm(): string {
     return this.searchService.searchTerm();
@@ -65,7 +63,6 @@ export class HeaderComponent {
     this.logoutClicked.emit();
   }
 
-  // FIXED: Added 'event' parameter here to match the HTML template
   onThemeToggle(event: Event): void {
     event.stopPropagation();
     event.preventDefault();
@@ -75,7 +72,10 @@ export class HeaderComponent {
   onSettingsClick(): void {
     this.router.navigate(['/app/settings']);
   }
-  onSupportClick(): void {}
+
+  onSupportClick(): void {
+    // Implementation for support action
+  }
 
   onSearchChange(event: Event): void {
     const target = event.target as HTMLInputElement;

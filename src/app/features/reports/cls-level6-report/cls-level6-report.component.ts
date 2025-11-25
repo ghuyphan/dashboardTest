@@ -6,7 +6,7 @@ import {
   ChangeDetectorRef,
   effect,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import type { EChartsCoreOption } from 'echarts/core';
 
@@ -22,8 +22,18 @@ import { ChartCardComponent } from '../../../components/chart-card/chart-card.co
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
 import { TableCardComponent } from '../../../components/table-card/table-card.component';
 import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
+
+interface WidgetData {
+  id: string;
+  icon: string;
+  title: string;
+  value: string;
+  caption: string;
+  accentColor: string;
+}
 
 @Component({
   selector: 'app-cls-level6-report',
@@ -32,9 +42,10 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
     CommonModule,
     ChartCardComponent,
     TableCardComponent,
-    DateFilterComponent
+    DateFilterComponent,
+    WidgetCardComponent
   ],
-  providers: [DatePipe],
+  providers: [DatePipe, DecimalPipe],
   templateUrl: './cls-level6-report.component.html',
   styleUrl: './cls-level6-report.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +56,7 @@ export class ClsLevel6ReportComponent implements OnInit {
   private excelService = inject(ExcelExportService);
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
+  private numberPipe = inject(DecimalPipe);
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
@@ -54,7 +66,13 @@ export class ClsLevel6ReportComponent implements OnInit {
   public fromDate: string = '';
   public toDate: string = '';
 
-  // Charts
+  // Widgets
+  public widgetData: WidgetData[] = [];
+
+  // Charts (Separated)
+  public clsTrendOptions: EChartsCoreOption | null = null;
+  public admissionTrendOptions: EChartsCoreOption | null = null;
+  
   public roomChartOptions: EChartsCoreOption | null = null;
   public groupChartOptions: EChartsCoreOption | null = null;
 
@@ -63,8 +81,8 @@ export class ClsLevel6ReportComponent implements OnInit {
     { key: 'NGAY_TH_DISPLAY', label: 'Ngày thực hiện', sortable: true, width: '120px' },
     { key: 'PHONG_BAN_TH', label: 'Phòng ban', sortable: true, width: '200px' },
     { key: 'NHOM_DICH_VU', label: 'Nhóm dịch vụ', sortable: true, width: '200px' },
-    { key: 'SO_LUONG', label: 'Số lượng', sortable: true, width: '100px' },
-    { key: 'SO_LUONG_NV', label: 'SL Nhân viên', sortable: true, width: '120px' },
+    { key: 'SO_LUONG', label: 'SL Cận Lâm Sàng', sortable: true, width: '120px' },
+    { key: 'SO_LUONG_NV', label: 'SL Nhập Viện', sortable: true, width: '120px' },
   ];
 
   private palette!: ThemePalette;
@@ -73,7 +91,7 @@ export class ClsLevel6ReportComponent implements OnInit {
     effect(() => {
       this.palette = this.themeService.currentPalette();
       if (!this.isLoading && this.rawData.length > 0) {
-        this.buildCharts(this.rawData);
+        this.processData(this.rawData);
       }
       this.cd.markForCheck();
     });
@@ -86,7 +104,6 @@ export class ClsLevel6ReportComponent implements OnInit {
 
   private setDefaultDateRange(): void {
     const now = new Date();
-    // Default to current week
     const day = now.getDay();
     const diff = now.getDate() - day + (day == 0 ? -6 : 1);
     const start = new Date(now.setDate(diff));
@@ -106,8 +123,12 @@ export class ClsLevel6ReportComponent implements OnInit {
     if (!this.fromDate || !this.toDate) return;
 
     this.isLoading = true;
+    this.widgetData = []; // Clear widgets while loading
+    this.clsTrendOptions = null;
+    this.admissionTrendOptions = null;
     this.roomChartOptions = null;
     this.groupChartOptions = null;
+    this.cd.markForCheck();
     
     this.reportService.getClsLevel6Report(this.fromDate, this.toDate)
       .pipe(
@@ -118,13 +139,12 @@ export class ClsLevel6ReportComponent implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          // Format data for display
           this.rawData = data.map(item => ({
             ...item,
-            NGAY_TH_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TH) // Create a display field for the table
+            NGAY_TH_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TH)
           }));
           
-          this.buildCharts(this.rawData);
+          this.processData(this.rawData);
         },
         error: (err) => {
           console.error(err);
@@ -134,79 +154,246 @@ export class ClsLevel6ReportComponent implements OnInit {
       });
   }
 
-  private buildCharts(data: ClsLevel6Stat[]): void {
-    if (!data || data.length === 0) return;
+  private processData(data: ClsLevel6Stat[]): void {
+    if (!data || data.length === 0) {
+        this.widgetData = [];
+        return;
+    }
 
-    // 1. Aggregate by Room (Phòng Ban)
     const roomMap = new Map<string, number>();
-    data.forEach(i => {
-      const key = i.PHONG_BAN_TH || 'Khác';
-      roomMap.set(key, (roomMap.get(key) || 0) + i.SO_LUONG);
-    });
-
-    const roomData = Array.from(roomMap, ([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value); // Top values first
-
-    // 2. Aggregate by Group (Nhóm Dịch Vụ)
     const groupMap = new Map<string, number>();
+    const dateMap = new Map<string, { total: number, admission: number }>();
+
+    let totalQuantity = 0;
+    let totalAdmission = 0;
+
     data.forEach(i => {
-      const key = i.NHOM_DICH_VU || 'Chưa phân nhóm';
-      groupMap.set(key, (groupMap.get(key) || 0) + i.SO_LUONG);
+      const qty = i.SO_LUONG || 0;
+      const admissionQty = i.SO_LUONG_NV || 0;
+
+      totalQuantity += qty;
+      totalAdmission += admissionQty;
+
+      // Room Stats
+      const roomName = i.PHONG_BAN_TH || 'Khác';
+      roomMap.set(roomName, (roomMap.get(roomName) || 0) + qty);
+
+      // Group Stats
+      const groupName = i.NHOM_DICH_VU || 'Chưa phân nhóm';
+      groupMap.set(groupName, (groupMap.get(groupName) || 0) + qty);
+
+      // Date Stats
+      const dateKey = i.NGAY_TH ? i.NGAY_TH.split('T')[0] : 'N/A';
+      const dayStats = dateMap.get(dateKey) || { total: 0, admission: 0 };
+      dayStats.total += qty;
+      dayStats.admission += admissionQty;
+      dateMap.set(dateKey, dayStats);
     });
 
-    const groupData = Array.from(groupMap, ([name, value]) => ({ name, value }));
+    // --- Widgets ---
+    const admissionRate = totalQuantity > 0 ? (totalAdmission / totalQuantity) * 100 : 0;
+    const sortedRooms = Array.from(roomMap.entries()).sort((a, b) => b[1] - a[1]);
 
-    // 3. Build Chart Options
+    this.widgetData = [
+      {
+        id: 'total',
+        icon: 'fas fa-microscope', // Changed icon to microscope for CLS context
+        title: 'Tổng Cận Lâm Sàng',
+        value: this.formatNumber(totalQuantity),
+        caption: 'Tổng lượt chỉ định',
+        accentColor: this.palette.primary
+      },
+      {
+        id: 'admission',
+        icon: 'fas fa-procedures',
+        title: 'Tổng Nhập Viện',
+        value: this.formatNumber(totalAdmission),
+        caption: 'Số ca nhập viện',
+        accentColor: this.palette.pastelCoral // Using Pastel Coral
+      },
+      {
+        id: 'rate',
+        icon: 'fas fa-chart-pie',
+        title: 'Tỷ Lệ Nhập Viện',
+        value: `${this.formatNumber(admissionRate)}%`,
+        caption: 'Trên tổng chỉ định CLS',
+        accentColor: this.palette.warning
+      },
+      {
+        id: 'top-room',
+        icon: 'fas fa-door-open',
+        title: 'Phòng Đông Nhất',
+        value: sortedRooms[0] ? this.formatNumber(sortedRooms[0][1]) : '0',
+        caption: sortedRooms[0] ? sortedRooms[0][0] : 'N/A',
+        accentColor: this.palette.deepSapphire
+      }
+    ];
+
+    this.buildCharts(roomMap, groupMap, dateMap);
+  }
+
+  private buildCharts(
+    roomMap: Map<string, number>, 
+    groupMap: Map<string, number>, 
+    dateMap: Map<string, { total: number, admission: number }>
+  ): void {
+    
     const commonOptions = {
       backgroundColor: 'transparent',
       textStyle: { fontFamily: GLOBAL_FONT_FAMILY, color: this.palette.textSecondary },
       tooltip: {
-        trigger: 'item',
+        trigger: 'axis',
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary }
-      }
+      },
+      grid: { left: '3%', right: '4%', bottom: '5%', top: '12%', containLabel: true },
     };
 
-    // Chart 1: Bar chart by Room
-    this.roomChartOptions = {
+    const sortedDates = Array.from(dateMap.keys()).sort();
+    const dateLabels = sortedDates.map(d => {
+       const dateObj = new Date(d);
+       return this.datePipe.transform(dateObj, 'dd/MM') || d;
+    });
+
+    const totalSeriesData = sortedDates.map(d => dateMap.get(d)?.total);
+    const admissionSeriesData = sortedDates.map(d => dateMap.get(d)?.admission);
+
+    // --- 1. CLS Trend Chart (Blue) ---
+    this.clsTrendOptions = {
       ...commonOptions,
-      tooltip: { ...commonOptions.tooltip, trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      legend: { show: false },
       xAxis: {
         type: 'category',
-        data: roomData.map(d => d.name),
-        axisLabel: { 
-            width: 100, 
-            overflow: 'truncate', 
-            interval: 0, 
-            rotate: 30,
-            color: this.palette.textPrimary
-        },
-        axisLine: { lineStyle: { color: this.palette.gray200 } }
+        boundaryGap: false,
+        data: dateLabels,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: this.palette.textPrimary }
       },
       yAxis: {
         type: 'value',
         splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
       },
       series: [{
-        name: 'Số Lượng',
-        type: 'bar',
-        barWidth: '40%',
-        data: roomData.map(d => d.value),
-        itemStyle: { color: this.palette.primary, borderRadius: [4, 4, 0, 0] }
+        name: 'Chỉ Định CLS',
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        data: totalSeriesData,
+        itemStyle: { color: this.palette.primary },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: this.palette.primary },
+              { offset: 1, color: this.palette.bgCard }
+            ]
+          },
+          opacity: 0.2
+        }
       }]
     };
 
-    // Chart 2: Pie chart by Group
-    this.groupChartOptions = {
+    // --- 2. Admission Trend Chart (Pastel Coral) ---
+    this.admissionTrendOptions = {
       ...commonOptions,
-      legend: { top: '5%', left: 'center', textStyle: { color: this.palette.textSecondary } },
+      legend: { show: false },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dateLabels,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: this.palette.textPrimary }
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
+      },
+      series: [{
+        name: 'Nhập Viện',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        data: admissionSeriesData,
+        itemStyle: { color: this.palette.pastelCoral }, // Using Pastel Coral
+        lineStyle: { width: 3 },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: this.palette.pastelCoral }, // Start color
+              { offset: 1, color: this.palette.bgCard }       // End color (fade)
+            ]
+          },
+          opacity: 0.2
+        }
+      }]
+    };
+
+    // --- 3. Room Chart ---
+    const roomData = Array.from(roomMap.entries()).sort((a, b) => a[1] - b[1]);
+
+    this.roomChartOptions = {
+      ...commonOptions,
+      grid: { left: '3%', right: '8%', bottom: '3%', top: '5%', containLabel: true },
+      xAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
+      },
+      yAxis: {
+        type: 'category',
+        data: roomData.map(d => d[0]),
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { width: 140, overflow: 'truncate', color: this.palette.textPrimary }
+      },
+      series: [{
+        name: 'Số Lượng',
+        type: 'bar',
+        barWidth: '60%',
+        data: roomData.map(d => d[1]),
+        itemStyle: { 
+            color: this.palette.secondary, 
+            borderRadius: [0, 4, 4, 0] 
+        },
+        label: {
+            show: true,
+            position: 'right',
+            color: this.palette.textSecondary,
+            formatter: '{c}'
+        }
+      }]
+    };
+
+    // --- 4. Group Chart ---
+    const groupData = Array.from(groupMap, ([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+    this.groupChartOptions = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: this.palette.bgCard,
+        borderColor: this.palette.gray200,
+        textStyle: { color: this.palette.textPrimary },
+        formatter: '{b}: <b>{c}</b> ({d}%)'
+      },
+      legend: { 
+        type: 'scroll',
+        orient: 'vertical',
+        right: 0,
+        top: 'center',
+        textStyle: { color: this.palette.textSecondary } 
+      },
       series: [{
         name: 'Nhóm Dịch Vụ',
         type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '60%'],
+        radius: ['45%', '75%'],
+        center: ['40%', '50%'],
+        avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 5,
           borderColor: this.palette.bgCard,
@@ -218,18 +405,21 @@ export class ClsLevel6ReportComponent implements OnInit {
     };
   }
 
+  private formatNumber(num: number): string {
+    return this.numberPipe.transform(num, '1.0-0') || '0';
+  }
+
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;
 
     this.isExporting = true;
-    // Simulate a small delay for UX or fetching full data if needed
     setTimeout(() => {
         const columns: ExportColumn[] = [
             { key: 'NGAY_TH', header: 'Ngày Thực Hiện', type: 'date' },
             { key: 'PHONG_BAN_TH', header: 'Phòng Ban' },
             { key: 'NHOM_DICH_VU', header: 'Nhóm Dịch Vụ' },
-            { key: 'SO_LUONG', header: 'Số Lượng' },
-            { key: 'SO_LUONG_NV', header: 'Số Lượng NV' },
+            { key: 'SO_LUONG', header: 'SL Cận Lâm Sàng' },
+            { key: 'SO_LUONG_NV', header: 'SL Nhập Viện' },
         ];
 
         this.excelService.exportToExcel(
@@ -241,6 +431,6 @@ export class ClsLevel6ReportComponent implements OnInit {
         this.isExporting = false;
         this.toastService.showSuccess('Xuất Excel thành công.');
         this.cd.markForCheck();
-    }, 300);
+    }, 500);
   }
 }

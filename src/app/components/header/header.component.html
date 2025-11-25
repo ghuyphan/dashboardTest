@@ -2,6 +2,7 @@
   <div class="header-left-controls">
     
     <button
+      type="button"
       class="header-icon-btn mobile-sidebar-toggle"
       (click)="onMobileToggleClick()"
       aria-label="Toggle sidebar"
@@ -17,6 +18,7 @@
     
     @if (showBackButton()) {
       <button
+        type="button"
         class="header-icon-btn header-back-btn"
         (click)="onBackClick()"
         aria-label="Go back"
@@ -58,7 +60,7 @@
     @if (currentUser()) {
       <div class="user-menu">
         
-        <button class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
+        <button type="button" class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
           <div class="header-avatar-initials">{{ userInitials() }}</div>
           <i class="fas fa-chevron-down chevron-icon"></i>
         </button>
@@ -76,24 +78,24 @@
           </div>
   
           <div class="menu-items-wrapper">
-            <button mat-menu-item (click)="onThemeToggle($event)" class="custom-menu-item">
+            <button type="button" mat-menu-item (click)="onThemeToggle($event)" class="custom-menu-item">
               <div class="menu-icon-bg">
                 <i class="fas" [class]="themeService.isDarkTheme() ? 'fa-sun' : 'fa-moon'"></i>
               </div>
               <span>{{ themeService.isDarkTheme() ? 'Chế độ sáng' : 'Chế độ tối' }}</span>
             </button>
 
-            <button mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
+            <button type="button" mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
               <div class="menu-icon-bg"><i class="fas fa-gear"></i></div>
               <span>Cài đặt</span>
             </button>
   
-            <button mat-menu-item (click)="onSupportClick()" class="custom-menu-item">
+            <button type="button" mat-menu-item (click)="onSupportClick()" class="custom-menu-item">
               <div class="menu-icon-bg"><i class="fas fa-question-circle"></i></div>
               <span>Hỗ trợ</span>
             </button>
   
-            <button mat-menu-item (click)="onLogoutClick()" class="custom-menu-item logout-item">
+            <button type="button" mat-menu-item (click)="onLogoutClick()" class="custom-menu-item logout-item">
               <div class="menu-icon-bg"><i class="fas fa-sign-out-alt"></i></div>
               <span>Đăng xuất</span>
             </button>

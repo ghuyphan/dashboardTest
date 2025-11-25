@@ -31,6 +31,24 @@
   }
 }
 
+/* --- Widget Section --- */
+.widget-section {
+  flex-shrink: 0;
+}
+
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  max-width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+}
+
+/* --- Dashboard Grid --- */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr)); 
@@ -45,6 +63,7 @@
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
 
   .grid-item {
@@ -64,3 +83,9 @@
 .span-full {
   grid-column: 1 / -1;
 }
+
+/* Helper Classes */
+.text-teal { color: var(--teal-blue); }
+.text-coral { color: var(--pastel-coral); }
+.icon-info { color: var(--color-info); }
+.icon-warning { color: var(--color-warning); }

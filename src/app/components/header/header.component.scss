@@ -10,10 +10,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem; /* Kept exact */
+  padding: 0.5rem 1rem;
 
   /* COLOR UPDATE: Adapts to Dark Mode Slate */
   background-color: var(--surface-card);
+  border-bottom: 1px solid transparent; /* Prep for scroll border if needed */
+
+  /* Dark mode separator to distinguish header from page content */
+  [data-theme='dark'] & {
+    border-bottom-color: var(--border-color);
+  }
 
   height: var(--header-height);
   gap: 1rem;
@@ -32,10 +38,7 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-
-  /* COLOR UPDATE: White in Dark Mode */
   color: var(--text-primary);
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -48,18 +51,21 @@
   background: none;
   border: none;
   font-size: 1.25rem;
-
-  /* COLOR UPDATE */
   color: var(--text-secondary);
-
   cursor: pointer;
-  padding: 0.5rem; /* Kept exact */
+  padding: 0.5rem;
   border-radius: 50%;
   transition: all 0.2s;
 
   &:hover {
-    background: var(--gray-100);
+    background-color: var(--gray-100);
     color: var(--teal-blue);
+    
+    /* POLISH: Visible hover in dark mode */
+    [data-theme='dark'] & {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--teal-blue);
+    }
   }
 }
 
@@ -80,35 +86,37 @@
   display: flex;
   align-items: center;
   position: relative;
-
-  /* 
-     COLOR UPDATE: Distinct Background 
-     Light: #F8FAFC | Dark: #020617 (Deep Cutout)
-  */
   background: var(--input-bg);
-
   border-radius: 99px;
-  border: 1px solid var(--border-color); /* Added border for definition */
+  border: 1px solid var(--border-color);
   flex: 2;
   max-width: 400px;
-  padding: 0 0.75rem; /* Kept exact */
+  padding: 0 0.75rem;
   transition: all 0.2s;
+
+  /* POLISH: Ensure search input is distinct in dark mode */
+  [data-theme='dark'] & {
+    background: rgba(0, 0, 0, 0.2); 
+    border-color: var(--gray-200);
+  }
 
   &:focus-within {
     background: var(--surface-card);
     border-color: var(--teal-blue);
     box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
+    
+    [data-theme='dark'] & {
+       background: var(--gray-100);
+    }
   }
 
   input {
     width: 100%;
     border: none;
     background: none;
-    padding: 0.5rem; /* Kept exact */
+    padding: 0.5rem;
     outline: none;
     font-size: 0.875rem;
-
-    /* COLOR UPDATE: Text visibility */
     color: var(--text-primary);
     caret-color: var(--teal-blue);
 
@@ -125,7 +133,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--gray-400); /* Icon color */
+    color: var(--gray-400);
 
     &:hover {
       color: var(--text-primary);
@@ -145,29 +153,30 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-
-  /* COLOR UPDATE: Transparent by default, slightly distinct */
   background: transparent;
   border: 1px solid transparent;
-
-  padding: 4px; /* Kept exact */
-  padding-right: 12px; /* Kept exact */
+  padding: 4px;
+  padding-right: 12px;
   border-radius: 99px;
   cursor: pointer;
   transition: all 0.2s;
 
-  /* Hover State */
   &:hover,
   &[aria-expanded="true"] {
     background: var(--gray-100);
     border-color: var(--border-color);
+
+    /* POLISH: Fix hover visibility in dark mode */
+    [data-theme='dark'] & {
+      background: rgba(255, 255, 255, 0.05);
+    }
   }
 
   .header-avatar-initials {
     width: 32px;
     height: 32px;
     background: var(--aqua-island);
-    color: #ffffff;
+    color: #ffffff; /* Always white text for contrast on aqua */
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -175,16 +184,17 @@
     font-weight: 600;
     font-size: 0.85rem;
     flex-shrink: 0;
+    
+    [data-theme='dark'] & {
+        color: #0f172a; /* Dark text on bright aqua in dark mode */
+    }
   }
 
   .chevron-icon {
     font-size: 0.8rem;
     width: 0.8rem;
     height: 0.8rem;
-
-    /* COLOR UPDATE */
     color: var(--text-secondary);
-
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -198,15 +208,12 @@
    CUSTOM MAT-MENU PANEL STYLING
    ================================================================= */
 ::ng-deep .header-user-menu-panel.mat-mdc-menu-panel {
-  /* COLOR UPDATE: Card Surface */
   background-color: var(--surface-card) !important;
   border: 1px solid var(--border-color) !important;
-
   border-radius: 12px !important;
-  padding: 8px !important; /* Kept exact */
+  padding: 8px !important;
   min-width: 280px !important;
   box-shadow: var(--box-shadow-lg) !important;
-
   transform-origin: top right !important;
   animation: menuScaleFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -217,15 +224,20 @@
   .menu-section-wrapper {
     background-color: var(--surface-card);
     border-radius: 8px;
-    margin-bottom: 8px; /* Kept exact */
+    margin-bottom: 8px;
     overflow: hidden;
+    
+    /* POLISH: Subtle separation in dark mode */
+    [data-theme='dark'] & {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
   }
 
   .dropdown-profile-header {
     display: flex;
     align-items: center;
-    padding: 12px; /* Kept exact */
-    gap: 12px; /* Kept exact */
+    padding: 12px;
+    gap: 12px;
     border-bottom: 1px solid var(--border-color);
 
     .dropdown-avatar-initials {
@@ -234,7 +246,6 @@
       min-width: 40px;
       flex-shrink: 0;
       border-radius: 50%;
-
       background: var(--aqua-island);
       color: white;
       display: flex;
@@ -242,6 +253,10 @@
       justify-content: center;
       font-weight: 600;
       font-size: 1.1rem;
+      
+      [data-theme='dark'] & {
+         color: #0f172a;
+      }
     }
 
     .dropdown-profile-text {
@@ -251,17 +266,13 @@
       .username {
         font-weight: 600;
         font-size: 0.95rem;
-
-        /* COLOR UPDATE */
         color: var(--text-primary);
-
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;
       }
       .user-role {
         font-size: 0.8rem;
-        /* COLOR UPDATE */
         color: var(--text-secondary);
       }
     }
@@ -270,23 +281,20 @@
   .menu-items-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 2px; /* Kept exact */
+    gap: 2px;
   }
 
   .custom-menu-item {
     border-radius: 6px;
-    margin: 0; /* Kept exact */
-    min-height: 44px; /* Kept exact */
+    margin: 0;
+    min-height: 44px;
 
     .mat-mdc-menu-item-text {
       display: flex;
       align-items: center;
-      gap: 12px; /* Kept exact */
+      gap: 12px;
       width: 100%;
-
-      /* COLOR UPDATE */
       color: var(--text-primary);
-
       font-weight: 500;
       font-size: 0.9rem;
 
@@ -300,12 +308,16 @@
       height: 32px;
       min-width: 32px;
       border-radius: 50%;
-
-      /* COLOR UPDATE */
-      background: var(--gray-100);
+      
+      /* FIXED: Default background */
+      background: var(--gray-100); 
+      
+      /* FIXED: Dark mode background (Lighter than card to stand out) */
+      [data-theme='dark'] & {
+         background: var(--gray-200); 
+      }
 
       color: var(--gray-600);
-
       display: flex;
       align-items: center;
       justify-content: center;
@@ -319,19 +331,24 @@
 
     &:hover {
       background-color: var(--gray-100);
+      
+      [data-theme='dark'] & {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
       .menu-icon-bg {
         background: var(--surface-background);
         color: var(--gray-900);
 
-        /* Dark mode adjustment */
         [data-theme="dark"] & {
+          background: var(--gray-300); /* Even lighter on hover */
           color: var(--white);
         }
       }
     }
 
     &.logout-item {
-      margin-top: 4px; /* Kept exact */
+      margin-top: 4px;
       border-top: 1px solid var(--border-color);
 
       .mat-mdc-menu-item-text {
