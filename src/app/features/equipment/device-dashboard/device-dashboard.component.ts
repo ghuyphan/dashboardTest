@@ -1,4 +1,3 @@
-// src/app/features/equipment/device-dashboard/device-dashboard.component.ts
 import {
   Component,
   OnInit,
@@ -21,10 +20,8 @@ import { Device } from '../../../shared/models/device.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import {
-  ReusableTableComponent,
-  GridColumn,
-} from '../../../components/reusable-table/reusable-table.component';
+import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
+import { TableCardComponent } from '../../../components/table-card/table-card.component'; // Updated Import
 import { DateUtils } from '../../../shared/utils/date.utils';
 import {
   ThemeService,
@@ -34,7 +31,6 @@ import {
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-// ... (Interfaces remain the same)
 interface WidgetData {
   id: string;
   icon: string;
@@ -46,10 +42,6 @@ interface WidgetData {
 interface DeviceStatsData {
   TenTrangThai: string;
   SoLuong: number;
-}
-interface AggregatedData {
-  name: string;
-  value: number;
 }
 interface ActionableDevice {
   Id: number;
@@ -71,8 +63,8 @@ interface ChartFilter {
   imports: [
     CommonModule,
     WidgetCardComponent,
-    ReusableTableComponent,
     ChartCardComponent,
+    TableCardComponent, // Added TableCardComponent
   ],
   templateUrl: './device-dashboard.component.html',
   styleUrl: './device-dashboard.component.scss',
@@ -126,14 +118,10 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor() {
-    // UNIFIED: React to currentPalette changes directly from the service
     effect(() => {
       this.palette = this.themeService.currentPalette();
-
-      // Update color maps and widget colors immediately
       this.initializePaletteMaps();
 
-      // Re-render charts/widgets if data is already loaded
       if (!this.isLoading && this.allDevices.length > 0) {
         this.refilterAndRenderAll();
       }
@@ -142,10 +130,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Initialize palette synchronously first to avoid undefined errors before effect runs
     this.palette = this.themeService.currentPalette();
     this.initializePaletteMaps();
-    this.initializeWidgetsStructure(); // Set up widget structure with initial colors
+    this.initializeWidgetsStructure();
 
     this.isLoading = true;
     this.cd.markForCheck();
@@ -159,7 +146,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   private initializePaletteMaps(): void {
-    // Map Statuses to Theme Colors using the active palette
     this.statusColorMap.set('Sẵn sàng', this.palette.success);
     this.statusColorMap.set('Đang sử dụng', this.palette.peacockLight);
     this.statusColorMap.set('Cần bảo trì', this.palette.warning);
@@ -170,17 +156,13 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     this.statusColorMap.set('Cho mượn', this.palette.chart9);
     this.statusColorMap.set('Khác', this.palette.gray400);
 
-    // Update accent colors for existing widgets (if re-rendering after theme switch)
     if (this.widgetData.length > 0) {
       const w = this.widgetData;
-      w.find((x) => x.id === 'totalDevices')!.accentColor =
-        this.palette.primary;
-      w.find((x) => x.id === 'attentionValue')!.accentColor =
-        this.palette.warning;
+      w.find((x) => x.id === 'totalDevices')!.accentColor = this.palette.primary;
+      w.find((x) => x.id === 'attentionValue')!.accentColor = this.palette.warning;
       w.find((x) => x.id === 'inUse')!.accentColor = this.palette.info;
       w.find((x) => x.id === 'ready')!.accentColor = this.palette.success;
-      w.find((x) => x.id === 'needsAttention')!.accentColor =
-        this.palette.warning;
+      w.find((x) => x.id === 'needsAttention')!.accentColor = this.palette.warning;
       w.find((x) => x.id === 'expiring')!.accentColor = this.palette.danger;
     }
   }

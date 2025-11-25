@@ -25,7 +25,7 @@ import {
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 const AUTO_REFRESH_INTERVAL = 60_000;
-const CHART_BAR_WIDTH = '60%';
+const CHART_BAR_WIDTH = '50%';
 
 interface ApiResponseData {
   TenPhongBan: string;
@@ -81,6 +81,8 @@ export class BedUsageComponent implements OnInit {
   public isLoading = signal<boolean>(true);
   public currentDateTime = signal<string>('');
   private rawData = signal<ApiResponseData[]>([]);
+  
+  // Tracks which legends are toggled off to recalculate the Total correctly
   private visibleSeriesMap = signal<Record<string, boolean> | null>(null);
 
   public widgetData = computed<WidgetData[]>(() => {
@@ -93,7 +95,7 @@ export class BedUsageComponent implements OnInit {
   public chartOptions = computed<EChartsCoreOption | null>(() => {
     const data = this.rawData();
     const palette = this.themeService.currentPalette();
-    const visibleMap = this.visibleSeriesMap();
+    const visibleMap = this.visibleSeriesMap(); 
 
     if (data.length === 0) return null;
 
@@ -164,16 +166,17 @@ export class BedUsageComponent implements OnInit {
     this.rawData.set([]);
   }
 
+  // [FIX] Sanitize inputs with Math.max(0, value) to prevent negative numbers from breaking the UI
   private calculateTotals(apiData: ApiResponseData[]) {
     return apiData.reduce(
       (acc, item) => ({
-        giuongTrong: acc.giuongTrong + item.GiuongTrong,
-        dangDieuTri: acc.dangDieuTri + item.DangSuDung,
-        choXuatVien: acc.choXuatVien + item.ChoXuatVien,
-        daBook: acc.daBook + item.DaBook,
-        chuaSanSang: acc.chuaSanSang + item.ChuaSanSang,
-        choMuonGiuong: acc.choMuonGiuong + item.ChoMuonGiuong,
-        totalBeds: acc.totalBeds + item.Tong,
+        giuongTrong: acc.giuongTrong + Math.max(0, item.GiuongTrong),
+        dangDieuTri: acc.dangDieuTri + Math.max(0, item.DangSuDung),
+        choXuatVien: acc.choXuatVien + Math.max(0, item.ChoXuatVien),
+        daBook: acc.daBook + Math.max(0, item.DaBook),
+        chuaSanSang: acc.chuaSanSang + Math.max(0, item.ChuaSanSang),
+        choMuonGiuong: acc.choMuonGiuong + Math.max(0, item.ChoMuonGiuong),
+        totalBeds: acc.totalBeds + Math.max(0, item.Tong),
       }),
       {
         giuongTrong: 0,
@@ -201,79 +204,21 @@ export class BedUsageComponent implements OnInit {
     const format = (val: number) => new Intl.NumberFormat('vi-VN').format(val);
 
     return [
-      {
-        id: 'occupancyRate',
-        title: 'Công Suất',
-        value: occupancyRate,
-        caption: 'Occupancy Rate',
-        icon: 'fas fa-chart-pie',
-        accentColor: palette.chart1,
-      },
-      {
-        id: 'totalBeds',
-        title: 'Tổng Số',
-        value: format(totals.totalBeds),
-        caption: 'Total Beds',
-        icon: 'fas fa-hospital',
-        accentColor: palette.chart2,
-      },
-      {
-        id: 'giuongTrong',
-        title: 'Giường Trống',
-        value: format(totals.giuongTrong),
-        caption: 'Vacant Beds',
-        icon: 'fas fa-check-circle',
-        accentColor: palette.chart3,
-      },
-      {
-        id: 'dangDieuTri',
-        title: 'Đang Điều Trị',
-        value: format(totals.dangDieuTri),
-        caption: 'In Treatment',
-        icon: 'fas fa-user-injured',
-        accentColor: palette.chart1,
-      },
-      {
-        id: 'choXuatVien',
-        title: 'Chờ Xuất Viện',
-        value: format(totals.choXuatVien),
-        caption: 'Awaiting Discharge',
-        icon: 'fas fa-door-open',
-        accentColor: palette.chart8,
-      },
-      {
-        id: 'daBook',
-        title: 'Đã Book',
-        value: format(totals.daBook),
-        caption: 'Booked Beds',
-        icon: 'fas fa-bookmark',
-        accentColor: palette.chart6,
-      },
-      {
-        id: 'chuaSanSang',
-        title: 'Chưa Sẵn Sàng',
-        value: format(totals.chuaSanSang),
-        caption: 'Not Ready',
-        icon: 'fas fa-tools',
-        accentColor: palette.chart7,
-      },
-      {
-        id: 'choMuonGiuong',
-        title: 'Cho Mượn Giường',
-        value: format(totals.choMuonGiuong),
-        caption: 'On Loan',
-        icon: 'fas fa-hand-holding-medical',
-        accentColor: palette.chart9,
-      },
+      { id: 'occupancyRate', title: 'Công Suất', value: occupancyRate, caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: palette.chart1 },
+      { id: 'totalBeds', title: 'Tổng Số', value: format(totals.totalBeds), caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: palette.chart2 },
+      { id: 'giuongTrong', title: 'Giường Trống', value: format(totals.giuongTrong), caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: palette.chart3 },
+      { id: 'dangDieuTri', title: 'Đang Điều Trị', value: format(totals.dangDieuTri), caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: palette.chart1 },
+      { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: format(totals.choXuatVien), caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: palette.chart8 },
+      { id: 'daBook', title: 'Đã Book', value: format(totals.daBook), caption: 'Booked Beds', icon: 'fas fa-bookmark', accentColor: palette.chart6 },
+      { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: format(totals.chuaSanSang), caption: 'Not Ready', icon: 'fas fa-tools', accentColor: palette.chart7 },
+      { id: 'choMuonGiuong', title: 'Cho Mượn Giường', value: format(totals.choMuonGiuong), caption: 'On Loan', icon: 'fas fa-hand-holding-medical', accentColor: palette.chart9 },
     ];
   }
 
+  // [FIX] Sanitize individual chart items so bars don't go below zero
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
     return apiData.map((item) => {
-      let cleanName = item.TenPhongBan.replace(
-        /\s*-?\s*\(Σ:\s*\d+\)\s*$/,
-        ''
-      ).trim();
+      let cleanName = item.TenPhongBan.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
       let viName = cleanName;
       let enName = '';
 
@@ -292,13 +237,13 @@ export class BedUsageComponent implements OnInit {
       return {
         viName,
         enName,
-        totalBeds: item.Tong,
-        giuongTrong: item.GiuongTrong,
-        dangDieuTri: item.DangSuDung,
-        choXuatVien: item.ChoXuatVien,
-        daBook: item.DaBook,
-        chuaSanSang: item.ChuaSanSang,
-        choMuonGiuong: item.ChoMuonGiuong,
+        totalBeds: Math.max(0, item.Tong),
+        giuongTrong: Math.max(0, item.GiuongTrong),
+        dangDieuTri: Math.max(0, item.DangSuDung),
+        choXuatVien: Math.max(0, item.ChoXuatVien),
+        daBook: Math.max(0, item.DaBook),
+        chuaSanSang: Math.max(0, item.ChuaSanSang),
+        choMuonGiuong: Math.max(0, item.ChoMuonGiuong),
       };
     });
   }
@@ -322,6 +267,7 @@ export class BedUsageComponent implements OnInit {
       { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: palette.chart9 },
     ];
 
+    // Calculate Sum based on visible series
     const dynamicTotals = data.map(dept => {
       let sum = 0;
       bedStatusSeries.forEach(s => {
@@ -352,15 +298,17 @@ export class BedUsageComponent implements OnInit {
       },
       legend: {
         data: bedStatusSeries.map((s) => s.name),
-        top: '2%',
+        top: 0,
         left: 'center',
         type: 'scroll',
-        textStyle: { fontSize: 10, color: palette.textSecondary },
+        textStyle: { fontSize: 11, color: palette.textSecondary },
+        padding: [0, 0, 10, 0]
       },
       grid: {
-        left: '5%',
-        right: '5%',
-        bottom: '15%',
+        left: '2%',
+        right: '3%',
+        bottom: '5%',
+        top: '12%', 
         containLabel: true,
       },
       xAxis: {
@@ -370,25 +318,28 @@ export class BedUsageComponent implements OnInit {
           interval: 0,
           rotate: 45,
           fontSize: 10,
-          fontWeight: 'bold',
+          fontWeight: 500,
+          width: 100,
           overflow: 'truncate',
           color: palette.textPrimary,
         },
         axisLine: {
-          lineStyle: { color: palette.secondary },
+          lineStyle: { color: palette.gray300 },
         },
+        axisTick: { alignWithLabel: true }
       },
       yAxis: {
         type: 'value',
-        name: 'Tổng Số Giường (Total)',
-        nameLocation: 'middle',
-        nameGap: 40,
+        name: 'Số Lượng',
+        nameLocation: 'end',
+        min: 0, // Explicitly prevent negative Y-axis
         splitLine: {
           lineStyle: {
             color: palette.gray200,
-            type: 'dotted',
+            type: 'dashed',
           },
         },
+        axisLabel: { color: palette.textSecondary }
       },
       series: [
         ...bedStatusSeries.map((config) => ({
@@ -398,7 +349,7 @@ export class BedUsageComponent implements OnInit {
           barWidth: CHART_BAR_WIDTH,
           itemStyle: {
             color: config.color,
-            borderRadius: [4, 4, 0, 0],
+            borderRadius: [0, 0, 0, 0],
             borderColor: palette.bgCard,
             borderWidth: 1,
           },
@@ -411,28 +362,24 @@ export class BedUsageComponent implements OnInit {
             formatter: (p: any) => (p.value > 0 ? p.value : ''),
           },
         })),
+
+        // [FIX] Clean "Total" Label: No background, simple text
         {
           name: 'Tổng (Total)',
           type: 'bar',
-          barGap: '-100%',
+          barGap: '-100%', 
           barWidth: CHART_BAR_WIDTH,
           data: dynamicTotals,
-          itemStyle: { color: 'transparent' },
+          itemStyle: { color: 'transparent' }, // Invisible bar
           label: {
             show: true,
             position: 'top',
-            color: '#ffffff',
-            // [UPDATED] Use a neutral gray for the badge background
-            backgroundColor: palette.gray600,
-            padding: [3, 6],
-            borderRadius: 4,
+            color: palette.textPrimary, // Use Theme Text Color
             fontWeight: 'bold',
             fontSize: 11,
             formatter: '{c}',
             distance: 5,
-            shadowBlur: 2,
-            shadowColor: 'rgba(0,0,0,0.2)',
-            shadowOffsetY: 1
+            // Removed backgroundColor, padding, borderRadius
           },
           tooltip: { show: false },
           z: 10,
@@ -448,21 +395,30 @@ export class BedUsageComponent implements OnInit {
       const idx = params[0].dataIndex;
       const item = data[idx];
 
-      let result = `<div style="font-weight:bold;margin-bottom:5px;">${item.viName}</div>`;
+      let result = `<div style="font-weight:bold;margin-bottom:4px;">${item.viName}</div>`;
       if (item.enName)
         result += `<div style="color:${palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
       
       let visibleTotal = 0;
 
       params.forEach((p: any) => {
-        if (p.seriesName === 'Tổng (Total)') return; 
+        if (p.seriesName === 'Tổng (Total)') return;
         if (p.value !== 0) {
-            result += `<div>${p.marker} ${p.seriesName}: <b>${p.value}</b></div>`;
+            result += `
+              <div style="display:flex; justify-content:space-between; gap:15px; font-size:12px;">
+                <span>${p.marker} ${p.seriesName}</span>
+                <span style="font-weight:bold;">${p.value}</span>
+              </div>`;
         }
         visibleTotal += (typeof p.value === 'number' ? p.value : 0);
       });
       
-      result += `<div style="margin-top:5px;padding-top:5px;border-top:1px solid ${palette.gray200};">Total: <b>${visibleTotal}</b></div>`;
+      result += `
+        <div style="margin-top:6px; padding-top:6px; border-top:1px solid ${palette.gray200}; display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
+          <span>Tổng cộng</span>
+          <span>${visibleTotal}</span>
+        </div>`;
+      
       return result;
     };
   }

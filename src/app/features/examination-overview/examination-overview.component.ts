@@ -20,10 +20,8 @@ import { DateUtils } from '../../shared/utils/date.utils';
 import { WidgetCardComponent } from '../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../components/date-filter/date-filter.component';
-import {
-  ReusableTableComponent,
-  GridColumn,
-} from '../../components/reusable-table/reusable-table.component';
+import { TableCardComponent } from '../../components/table-card/table-card.component'; // [Updated]
+import { GridColumn } from '../../components/reusable-table/reusable-table.component';
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -44,7 +42,7 @@ interface WidgetData {
     CommonModule,
     WidgetCardComponent,
     ChartCardComponent,
-    ReusableTableComponent,
+    TableCardComponent, // [Updated] Added TableCardComponent
     DateFilterComponent
   ],
   providers: [DatePipe],
@@ -62,6 +60,8 @@ export class ExaminationOverviewComponent implements OnInit {
 
   public isLoading = false;
   public isInitialLoad = true;
+  public isExporting = false; // [New] Track export state
+  
   public rawData: ExaminationStat[] = [];
   
   public fromDate: string = '';
@@ -72,7 +72,6 @@ export class ExaminationOverviewComponent implements OnInit {
   public trendChartOptions: EChartsCoreOption | null = null;
   public typeChartOptions: EChartsCoreOption | null = null;
   public patientStatusChartOptions: EChartsCoreOption | null = null; 
-  public admissionChartOptions: EChartsCoreOption | null = null;
 
   public tableColumns: GridColumn[] = [
     { key: 'NGAY_TIEP_NHAN', label: 'Ngày', sortable: true, width: '120px' },
@@ -254,7 +253,6 @@ export class ExaminationOverviewComponent implements OnInit {
 
     const showPoints = sorted.length < 2;
 
-    // Colors - PRESERVED FROM ORIGINAL CODE
     const c = {
       total: this.palette.deepSapphire,
       ck: this.palette.primary,
@@ -262,9 +260,9 @@ export class ExaminationOverviewComponent implements OnInit {
       nt: this.palette.warning,
       dnt: this.palette.tealMidtone,
       bhyt: this.palette.secondary,
-      vp: this.palette.warning, // Original was warning
-      newp: this.palette.chart3, // Cyan/Aqua
-      oldp: this.palette.chart2, // Blue
+      vp: this.palette.warning, 
+      newp: this.palette.chart3,
+      oldp: this.palette.chart2,
     };
 
     const commonOps = {
@@ -288,7 +286,6 @@ export class ExaminationOverviewComponent implements OnInit {
       },
     };
 
-    // 1. Trend Chart (5 lines - Maintained)
     this.trendChartOptions = {
       ...commonOps,
       legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
@@ -350,7 +347,6 @@ export class ExaminationOverviewComponent implements OnInit {
       ],
     };
 
-    // --- AGGREGATION FOR PIE CHARTS ---
     const totals = sorted.reduce(
       (a, b) => ({
         bhyt: a.bhyt + (b.BHYT || 0),
@@ -361,7 +357,6 @@ export class ExaminationOverviewComponent implements OnInit {
       { bhyt: 0, vp: 0, newp: 0, oldp: 0 }
     );
 
-    // 2. Type Chart (Pie) - BHYT vs Vien Phi
     this.typeChartOptions = this.createPieChartOption(
       [
         { value: totals.bhyt, name: 'BHYT', itemStyle: { color: c.bhyt } },
@@ -370,7 +365,6 @@ export class ExaminationOverviewComponent implements OnInit {
       commonOps
     );
 
-    // 3. Patient Status Chart (Converted to Pie) - New vs Old
     this.patientStatusChartOptions = this.createPieChartOption(
       [
         { value: totals.newp, name: 'Bệnh Mới', itemStyle: { color: c.newp } },
@@ -378,9 +372,6 @@ export class ExaminationOverviewComponent implements OnInit {
       ],
       commonOps
     );
-
-    // 4. Clean up: Admission Bar Chart removed (Redundant with Trend Chart)
-    this.admissionChartOptions = null;
   }
 
   private createPieChartOption(data: any[], commonOps: any): EChartsCoreOption {
@@ -423,31 +414,44 @@ export class ExaminationOverviewComponent implements OnInit {
     return item.id;
   }
   
+  // [Custom Export Logic]
+  // This page does NOT use the automatic table export because it needs to 
+  // export the RAW data (or potentially fetch a more detailed report), 
+  // while the table might show aggregated data.
   public onExport(): void {
+    if (this.isExporting) return;
     if (!this.rawData || this.rawData.length === 0) {
       this.toastService.showWarning('Không có dữ liệu để xuất.');
       return;
     }
 
-    const columns: ExportColumn[] = [
-      { key: 'NGAY_TIEP_NHAN', header: 'Ngày Tiếp Nhận' },
-      { key: 'TONG_LUOT_TIEP_NHAN', header: 'Tổng Lượt' },
-      { key: 'BENH_MOI', header: 'Bệnh Mới' },
-      { key: 'BENH_CU', header: 'Bệnh Cũ' },
-      { key: 'BHYT', header: 'BHYT' },
-      { key: 'VIEN_PHI', header: 'Viện Phí' },
-      { key: 'LUOT_KHAM_CK', header: 'Khám Bệnh (CK)' },
-      { key: 'LUOT_CC', header: 'Cấp Cứu' },
-      { key: 'LUOT_NT', header: 'Nội Trú' },
-      { key: 'LUOT_DNT', header: 'ĐT Ngoại Trú' },
-    ];
+    this.isExporting = true;
 
-    this.excelService.exportToExcel(
-      this.rawData, 
-      `TongQuanKhamBenh_${this.fromDate}_${this.toDate}`, 
-      columns
-    );
+    // Simulate async delay or API call if needed (using setTimeout for UI feedback demo)
+    // In real app, you might call: this.reportService.getDetails(...)
+    setTimeout(() => {
+      const columns: ExportColumn[] = [
+        { key: 'NGAY_TIEP_NHAN', header: 'Ngày Tiếp Nhận' },
+        { key: 'TONG_LUOT_TIEP_NHAN', header: 'Tổng Lượt' },
+        { key: 'BENH_MOI', header: 'Bệnh Mới' },
+        { key: 'BENH_CU', header: 'Bệnh Cũ' },
+        { key: 'BHYT', header: 'BHYT' },
+        { key: 'VIEN_PHI', header: 'Viện Phí' },
+        { key: 'LUOT_KHAM_CK', header: 'Khám Bệnh (CK)' },
+        { key: 'LUOT_CC', header: 'Cấp Cứu' },
+        { key: 'LUOT_NT', header: 'Nội Trú' },
+        { key: 'LUOT_DNT', header: 'ĐT Ngoại Trú' },
+      ];
 
-    this.toastService.showSuccess('Xuất dữ liệu thành công.');
+      this.excelService.exportToExcel(
+        this.rawData, 
+        `TongQuanKhamBenh_${this.fromDate}_${this.toDate}`, 
+        columns
+      );
+
+      this.toastService.showSuccess('Xuất dữ liệu thành công.');
+      this.isExporting = false;
+      this.cd.markForCheck();
+    }, 500);
   }
 }

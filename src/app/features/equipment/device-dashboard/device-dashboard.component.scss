@@ -10,7 +10,6 @@
   flex-direction: column;
   height: 100%;
   overflow: auto;
-  // background-color: var(--gray-50);
   @include hidden-scrollbar;
 }
 
@@ -34,14 +33,10 @@
   }
 }
 
-/* --- Widget Skeleton Wrapper --- */
+/* --- Widget Section --- */
 .widget-section {
   padding-bottom: var(--spacing-md);
   flex-shrink: 0;
-}
-
-.widget-skeleton {
-  height: 80px;
 }
 
 .widget-grid {
@@ -65,7 +60,7 @@
   gap: var(--spacing-lg);
 }
 
-/* --- THANH BỘ LỌC (RESTYLED) --- */
+/* --- FILTER BAR --- */
 .filter-bar-container {
   max-height: 0;
   overflow: hidden;
@@ -119,7 +114,7 @@
   }
 }
 
-/* --- ***** START: LAYOUT LƯỚI ***** --- */
+/* --- MAIN GRID LAYOUT --- */
 .dashboard-main-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -135,7 +130,7 @@
   }
 }
 
-/* --- Helper classes to control spanning --- */
+/* --- Grid Spanning Helpers --- */
 .span-1 {
   grid-column: span 1;
 }
@@ -160,9 +155,13 @@
   }
 }
 
-/* Keep chart cards tall to show data properly */
-app-chart-card {
+/* --- Component Sizing --- */
+/* Ensure both chart and table cards maintain consistent height in the grid */
+app-chart-card,
+app-table-card {
   min-height: 400px;
+  display: flex; /* Ensure the host element fills the grid cell properly */
+  flex-direction: column;
   
   @media (max-width: 768px) {
     min-height: 350px;
@@ -170,90 +169,5 @@ app-chart-card {
 
   @media (max-width: 480px) {
     min-height: 300px;
-  }
-}
-
-/* FIX: Removed min-height: 400px so list cards shrink when empty */
-.action-list-card {
-  background-color: var(--white);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  /* min-height: 400px;  <-- REMOVED THIS */
-  min-height: auto; /* Added this to be explicit */
-  overflow: hidden;
-}
-
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-800);
-  margin: 0 0 var(--spacing-sm) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--gray-200);
-  display: flex;
-  align-items: center;
-  justify-content: space-between; 
-  gap: var(--spacing-sm);
-  flex-shrink: 0;
-
-  > span:first-child {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-  }
-
-  .card-subtitle {
-    font-size: 0.875rem;
-    font-weight: 400;
-    color: var(--gray-700);
-  }
-
-  i {
-    font-size: 1rem;
-    &.icon-warning {
-      color: var(--color-warning);
-    }
-    &.icon-danger {
-      color: var(--color-danger);
-    }
-    &.icon-info {
-      color: var(--color-info);
-    }
-  }
-}
-
-.action-list-body {
-  overflow-y: auto;
-  flex-grow: 1;
-  min-height: 0;
-  @include hidden-scrollbar;
-
-  /* Ensure empty state has a reasonable height */
-  .list-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-lg) 0;
-    text-align: center;
-    color: var(--gray-500);
-    gap: var(--spacing-sm);
-    height: 100%;
-    min-height: 150px; /* Keeps a nice minimum size without being huge */
-    box-sizing: border-box;
-
-    i {
-      font-size: 2rem;
-      &.icon-success {
-        color: var(--color-success);
-      }
-    }
-    span {
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
   }
 }

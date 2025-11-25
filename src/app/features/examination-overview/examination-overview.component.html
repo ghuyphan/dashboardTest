@@ -67,39 +67,26 @@
       >
       </app-chart-card>
 
-      <div class="content-card grid-item span-4">
-        <div class="card-header">
-          <div class="card-title-wrapper">
-            <h3 class="card-title">
-              <i class="fas fa-table text-teal" aria-hidden="true"></i>
-              Dữ Liệu Chi Tiết
-            </h3>
-          </div>
-          <div class="header-controls">
-            <button class="btn-icon" (click)="onExport()" title="Xuất Excel">
-              <i class="fas fa-file-excel text-success"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="card-body table-body">
-          @if (isInitialLoad) {
-            <div class="skeleton-rect" style="height: 400px; width: 100%"></div>
-          } @else {
-            <app-reusable-table
-              [data]="rawData"
-              [columns]="tableColumns"
-              [isLoading]="isLoading"
-              [showPaginator]="true"
-              [pageSize]="10"
-              [pageSizeOptions]="[5, 10, 25, 50]"
-              [clientSideSort]="true"
-              emptyStateText="Không có dữ liệu cho khoảng thời gian này."
-            >
-            </app-reusable-table>
-          }
-        </div>
-      </div>
+      <app-table-card
+        class="grid-item span-4"
+        title="Dữ Liệu Chi Tiết"
+        icon="fas fa-table"
+        iconClass="text-teal"
+        
+        [isLoading]="isLoading"
+        [data]="rawData"
+        [columns]="tableColumns"
+        [showPaginator]="true"
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        [clientSideSort]="true"
+        emptyStateText="Không có dữ liệu cho khoảng thời gian này."
+        
+        [enableExport]="true"
+        [isExporting]="isExporting"
+        (exportClicked)="onExport()"
+      >
+      </app-table-card>
 
     </div>
   </div>

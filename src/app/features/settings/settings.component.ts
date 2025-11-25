@@ -89,7 +89,7 @@ export class SettingsComponent implements OnInit {
     }
 
     this.passwordCriteria.set({
-      minLength: value.length >= 10,
+      minLength: value.length >= 8,
       maxLength: value.length <= 20,
       hasUpper: /[A-Z]/.test(value),
       hasLower: /[a-z]/.test(value),

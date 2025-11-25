@@ -40,19 +40,6 @@
   }
 }
 
-/* --- Filter Section --- */
-.filter-section {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  background-color: var(--surface-card);
-  box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-lg);
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-
 /* --- Widget Section --- */
 .widget-section {
   padding-bottom: 0;
@@ -131,82 +118,6 @@
   grid-column: 1 / -1;
 }
 
-/* --- Content Card (Table) --- */
-.content-card {
-  background-color: var(--surface-card);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  height: 100%; 
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-sm);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-  }
-
-  .card-title-wrapper {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-  }
-
-  .card-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    
-    i { font-size: 1rem; }
-  }
-
-  .card-body {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-  }
-
-  .table-body {
-    overflow: hidden;
-    
-    ::ng-deep app-reusable-table {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      
-      .reusable-table-wrapper {
-         box-shadow: none;
-         border-radius: 0;
-         border: none;
-         background: transparent;
-      }
-    }
-  }
-}
-
 /* Helpers */
 .text-teal { color: var(--teal-blue); }
 .text-success { color: var(--color-success); }
-
-.btn-icon {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 1.1rem;
-  transition: color 0.2s;
-  padding: 4px;
-  &:hover { color: var(--color-success); }
-}

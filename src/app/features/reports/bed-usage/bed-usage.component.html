@@ -1,17 +1,13 @@
 <div class="page-container">
   <div class="page-content">
 
-    @if (isLoading() && widgetData().length === 0) {
-      <div class="widget-section">
-        <div class="widget-grid">
+    <div class="widget-section">
+      <div class="widget-grid">
+        @if (isLoading() && widgetData().length === 0) {
           @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
             <app-widget-card [isLoading]="true" title="Loading"></app-widget-card>
           }
-        </div>
-      </div>
-    } @else {
-      <div class="widget-section">
-        <div class="widget-grid">
+        } @else {
           @for (widget of widgetData(); track trackByWidgetId($index, widget)) {
             <app-widget-card
               [icon]="widget.icon"
@@ -22,42 +18,40 @@
               [isLoading]="isLoading()">
             </app-widget-card>
           }
-        </div>
-      </div>
-    }
-
-    <app-chart-card
-      title="Tình Hình Sử Dụng Giường Bệnh"
-      icon="fas fa-bed-pulse"
-      iconClass="icon-info"
-      [isLoading]="isLoading()"
-      [chartOptions]="chartOptions()"
-      [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-      (chartLegendSelectChanged)="onLegendChange($event)">
-
-      <div
-        header-actions
-        class="refresh-control"
-        (click)="loadData()"
-        [class.loading]="isLoading()"
-        [attr.aria-label]="isLoading() ? 'Loading data' : 'Refresh data'"
-        role="button"
-        tabindex="0"
-        (keydown.enter)="loadData()"
-        (keydown.space)="loadData()">
-
-        <div class="refresh-icon">
-          <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
-        </div>
-        
-        @if (currentDateTime()) {
-          <span class="refresh-text">
-            Cập nhập: {{ currentDateTime() }}
-          </span>
         }
       </div>
+    </div>
 
-    </app-chart-card>
+    <div class="dashboard-grid">
+      <app-chart-card
+        class="grid-item span-full" 
+        title="Tình Hình Sử Dụng Giường Bệnh"
+        icon="fas fa-bed-pulse"
+        iconClass="icon-info"
+        [isLoading]="isLoading()"
+        [chartOptions]="chartOptions()"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
+
+        <div
+          header-actions
+          class="refresh-control"
+          (click)="loadData()"
+          [class.loading]="isLoading()"
+          title="Cập nhật dữ liệu mới nhất">
+          
+          <div class="refresh-icon">
+            <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
+          </div>
+          
+          @if (currentDateTime()) {
+            <span class="refresh-text">
+              {{ currentDateTime() }}
+            </span>
+          }
+        </div>
+
+      </app-chart-card>
+    </div>
 
   </div>
 </div>
