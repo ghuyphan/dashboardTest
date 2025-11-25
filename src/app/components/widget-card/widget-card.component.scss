@@ -3,6 +3,8 @@
   container-type: inline-size;
   container-name: widget;
   height: 100%;
+  /* CRITICAL FIX: Allows the component to shrink below its content size in CSS Grid */
+  min-width: 0;
 }
 
 .widget-card {
@@ -12,6 +14,8 @@
   transition: all 0.2s ease-in-out;
   height: 100%;
   overflow: hidden;
+  /* CRITICAL FIX: Prevents content blowout */
+  min-width: 0;
 
   /* --- GRID STACKING TRICK --- */
   /* Forces both layers to occupy the same space */
@@ -22,6 +26,14 @@
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-lg);
+  }
+
+  /* Disable hover lift on touch devices to prevent sticky states */
+  @media (hover: none) and (pointer: coarse) {
+    &:hover {
+      transform: none;
+      box-shadow: var(--box-shadow-md);
+    }
   }
 }
 
@@ -38,6 +50,8 @@
   flex-direction: column;
   text-align: center;
   justify-content: center;
+  /* Ensure content doesn't overflow horizontally */
+  min-width: 0;
 }
 
 /* --- SKELETON LAYER --- */
@@ -99,6 +113,11 @@
     color: var(--gray-900);
     line-height: 1.2;
     margin-bottom: 4px;
+    
+    /* Text Truncation */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .widget-title {
@@ -106,6 +125,11 @@
     color: var(--gray-600);
     line-height: 1.3;
     margin-bottom: 2px;
+    
+    /* Text Truncation */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .widget-caption {
@@ -113,6 +137,11 @@
     color: var(--gray-500);
     line-height: 1.2;
     margin: 0;
+    
+    /* Text Truncation */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -132,6 +161,7 @@
 }
 
 /* --- CONTAINER QUERY: Wide Layout --- */
+/* Triggers when the widget itself is wider than 220px (e.g. desktop grid or single column mobile) */
 @container widget (min-width: 220px) {
   .widget-layer {
     flex-direction: row;

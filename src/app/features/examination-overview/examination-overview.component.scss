@@ -65,7 +65,8 @@
 /* --- Dashboard Grid (4 Columns Base) --- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* FIX: Use minmax(0, 1fr) to allow charts to shrink */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: min-content;
   gap: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
@@ -73,12 +74,14 @@
   min-height: 0;
 
   @media (max-width: 1400px) {
-    grid-template-columns: repeat(2, 1fr);
+    /* FIX: Use minmax(0, 1fr) here too */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   /* Tablets Portrait / Mobile: Switch to 1 column stack */
   @media (max-width: 992px) {
-    grid-template-columns: 1fr;
+    /* FIX: Use minmax(0, 1fr) for single column to prevent blowout */
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
   }
 

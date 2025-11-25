@@ -44,7 +44,7 @@
                     [routerLink]="item.link"
                     routerLinkActive="active"
                     [appTooltip]="!isOpen() ? item.label : ''"
-                    (click)="onNavLinkClick()" 
+                    (click)="onNavLinkClick($event, item.link)"
                   >
                     <i [class]="item.icon"></i>
                     <span>{{ item.label }}</span>
@@ -78,7 +78,7 @@
                             [routerLink]="child.link"
                             routerLinkActive="active"
                             [appTooltip]="child.label"
-                            (click)="onNavLinkClick()"
+                            (click)="onNavLinkClick($event, child.link)"
                           >
                             <i [class]="child.icon"></i>
                             <span>{{ child.label }}</span>

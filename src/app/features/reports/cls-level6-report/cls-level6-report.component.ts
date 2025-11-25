@@ -23,7 +23,6 @@ import { DateFilterComponent, DateRange } from '../../../components/date-filter/
 import { TableCardComponent } from '../../../components/table-card/table-card.component';
 import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
-import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
@@ -45,7 +44,6 @@ interface WidgetData {
     TableCardComponent,
     DateFilterComponent,
     WidgetCardComponent,
-    HasPermissionDirective
   ],
   providers: [DatePipe, DecimalPipe],
   templateUrl: './cls-level6-report.component.html',

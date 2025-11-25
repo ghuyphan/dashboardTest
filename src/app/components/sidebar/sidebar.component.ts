@@ -7,10 +7,10 @@ import {
   inject,
   input,
   effect,
-  ChangeDetectionStrategy, // <--- Import this
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -31,7 +31,7 @@ import { FlyoutDirective } from '../../shared/directives/flyout.directive';
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush, // <--- CRITICAL PERFORMANCE FIX
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
   // Signal Inputs
@@ -47,6 +47,7 @@ export class SidebarComponent {
   public isMobileView: boolean = false;
 
   private breakpointObserver = inject(BreakpointObserver);
+  private router = inject(Router);
 
   constructor() {
     this.breakpointObserver
@@ -121,9 +122,26 @@ export class SidebarComponent {
     item.isOpen = this.openAccordionItems.has(item);
   }
 
-  public onNavLinkClick(): void {
+  /**
+   * Handles navigation clicks.
+   * In mobile view, it prevents immediate navigation, closes the sidebar,
+   * waits for the animation to finish, and THEN navigates.
+   */
+  public onNavLinkClick(event: Event, link: string | null | undefined): void {
     if (this.isMobileView && this.isOpen()) {
+      // 1. Stop the RouterLink from activating immediately
+      event.preventDefault();
+      event.stopPropagation();
+
+      // 2. Close the sidebar (starts the CSS transition)
       this.toggleSidebar.emit();
+
+      // 3. Wait for the transition (300ms matches CSS) before navigating
+      if (link) {
+        setTimeout(() => {
+          this.router.navigateByUrl(link);
+        }, 300); 
+      }
     }
   }
 }

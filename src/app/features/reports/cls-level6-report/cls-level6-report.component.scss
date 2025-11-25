@@ -51,6 +51,7 @@
 /* --- Dashboard Grid --- */
 .dashboard-grid {
   display: grid;
+  /* This was already correct (minmax(0, 1fr)), but ensures consistency */
   grid-template-columns: repeat(4, minmax(0, 1fr)); 
   gap: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
@@ -62,7 +63,8 @@
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    /* FIX: Changed from 1fr to minmax(0, 1fr) to prevent overflow on mobile */
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
   }
 
