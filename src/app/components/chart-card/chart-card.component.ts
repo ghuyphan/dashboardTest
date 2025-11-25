@@ -87,29 +87,38 @@ export class ChartCardComponent implements AfterViewInit {
 
   private chartInstance?: EChartsType;
   
-  // Resize handling variables
+  // Optimization variables
   private resizeObserver?: ResizeObserver;
   private windowResizeListener?: () => void;
   private resizeTimer?: ReturnType<typeof setTimeout>;
   private readonly RESIZE_DEBOUNCE_MS = 200;
+  
+  // [OPTIMIZATION] Cache last known dimensions to prevent redundant resize calls
+  private lastWidth = 0;
+  private lastHeight = 0;
 
   constructor() {
-    // Effect: Update chart data
+    // Effect: Update chart data when options change
     effect(() => {
       const options = this.chartOptions();
       if (this.chartInstance && options) {
         this.updateChart(options);
+      } else if (options && this.isBrowser) {
+        // Attempt to init if not already done (and we are in browser)
+        // We use setTimeout to ensure the view is ready
+        setTimeout(() => this.initChart(options), 0);
       }
     });
 
-    // Effect: Handle Theme changes or Init
+    // Effect: Handle Theme changes
     effect(() => {
-      this.effectiveTheme();
+      this.effectiveTheme(); // Dependency
       const options = untracked(() => this.chartOptions());
       
-      if (this.chartInstance) {
+      if (this.chartInstance && options) {
         this.disposeChart();
-        this.initChart(options);
+        // Small delay to ensure DOM styles (colors) update before re-init
+        setTimeout(() => this.initChart(options), 0);
       }
     });
 
@@ -118,37 +127,43 @@ export class ChartCardComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.isBrowser) {
+      // Setup resize listener immediately so we catch the first layout paint
+      this.setupResizeStrategy();
+
+      // Attempt init if data exists
       if (this.chartOptions()) {
         this.initChart(this.chartOptions());
       }
-      this.setupResizeStrategy();
     }
   }
 
   private initChart(options: EChartsCoreOption | null): void {
     if (!this.isBrowser || !this.chartContainerRef() || !options) return;
+    if (this.chartInstance) return; // Already initialized
 
     const el = this.chartContainerRef().nativeElement;
 
-    // Ensure container has dimensions before init to avoid "Can't get DOM width or height"
+    // [OPTIMIZATION] Strict dimension check
+    // If dimensions are 0, we CANNOT init ECharts yet. 
+    // We rely on the ResizeObserver (setup in ngAfterViewInit) to call performResize() later.
     if (el.clientWidth === 0 || el.clientHeight === 0) {
-      // Retry once after a short delay if dimensions are 0 (likely inside a hidden tab or animation)
-      setTimeout(() => {
-        if (this.chartContainerRef()?.nativeElement && !this.chartInstance) {
-           this.initChart(options);
-        }
-      }, 100);
       return;
     }
 
     this.ngZone.runOutsideAngular(() => {
+      // Initialize
       this.chartInstance = echarts.init(el, this.effectiveTheme(), {
         renderer: 'canvas',
-        useDirtyRect: true 
+        useDirtyRect: false 
       });
+
+      // Cache initial dimensions
+      this.lastWidth = el.clientWidth;
+      this.lastHeight = el.clientHeight;
 
       this.chartInstance.setOption(options);
 
+      // Bind events
       this.chartInstance.on('click', (params) => {
         this.ngZone.run(() => this.chartClick.emit(params));
       });
@@ -165,18 +180,11 @@ export class ChartCardComponent implements AfterViewInit {
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance?.setOption(options, {
         notMerge: false,
-        lazyUpdate: true
+        lazyUpdate: true // Let ECharts throttle updates internally
       });
-      // Force resize on data update to ensure fit
-      this.performResize(); 
     });
   }
 
-  /**
-   * Robust resize strategy:
-   * 1. Tries ResizeObserver (Modern browsers)
-   * 2. Falls back to window 'resize' event (Older browsers)
-   */
   private setupResizeStrategy(): void {
     const el = this.chartContainerRef().nativeElement;
 
@@ -199,33 +207,49 @@ export class ChartCardComponent implements AfterViewInit {
   private triggerResize(): void {
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
     
-    this.resizeTimer = setTimeout(() => {
-      this.performResize();
-    }, this.RESIZE_DEBOUNCE_MS);
+    this.ngZone.runOutsideAngular(() => {
+      this.resizeTimer = setTimeout(() => {
+        this.performResize();
+      }, this.RESIZE_DEBOUNCE_MS);
+    });
   }
 
   private performResize(): void {
     if (!this.isBrowser) return;
 
-    // Handle initialization if chart options exist but instance doesn't (e.g., tab switch)
-    if (!this.chartInstance && this.chartOptions()) {
-      this.initChart(this.chartOptions());
+    // [FIX] If chart was defer-loaded or had 0 size initially, 
+    // this is where we finally initialize it now that we have dimensions.
+    if (!this.chartInstance) {
+      if (this.chartOptions()) {
+        this.initChart(this.chartOptions());
+      }
       return;
     }
 
-    if (this.chartInstance) {
-      const el = this.chartContainerRef()?.nativeElement;
-      
-      // CRITICAL: Only resize if container is visible and has dimensions
-      if (el && el.clientWidth > 0 && el.clientHeight > 0) {
-        this.ngZone.runOutsideAngular(() => {
-          this.chartInstance?.resize({
-            width: 'auto',
-            height: 'auto',
-            animation: { duration: 300 } 
-          });
+    const el = this.chartContainerRef()?.nativeElement;
+    if (!el) return;
+
+    const currentWidth = el.clientWidth;
+    const currentHeight = el.clientHeight;
+
+    // [OPTIMIZATION] Filter out phantom resize events
+    // Only resize if dimensions actually changed
+    if (currentWidth === this.lastWidth && currentHeight === this.lastHeight) {
+      return;
+    }
+
+    // Only resize if container is visible
+    if (currentWidth > 0 && currentHeight > 0) {
+      this.lastWidth = currentWidth;
+      this.lastHeight = currentHeight;
+
+      this.ngZone.runOutsideAngular(() => {
+        this.chartInstance?.resize({
+          width: 'auto',
+          height: 'auto',
+          animation: { duration: 300 } 
         });
-      }
+      });
     }
   }
 
@@ -233,6 +257,8 @@ export class ChartCardComponent implements AfterViewInit {
     if (this.chartInstance) {
       this.chartInstance.dispose();
       this.chartInstance = undefined;
+      this.lastWidth = 0;
+      this.lastHeight = 0;
     }
   }
 

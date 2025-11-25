@@ -23,6 +23,7 @@ import { DateFilterComponent, DateRange } from '../../../components/date-filter/
 import { TableCardComponent } from '../../../components/table-card/table-card.component';
 import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
@@ -43,7 +44,8 @@ interface WidgetData {
     ChartCardComponent,
     TableCardComponent,
     DateFilterComponent,
-    WidgetCardComponent
+    WidgetCardComponent,
+    HasPermissionDirective
   ],
   providers: [DatePipe, DecimalPipe],
   templateUrl: './cls-level6-report.component.html',
@@ -90,15 +92,20 @@ export class ClsLevel6ReportComponent implements OnInit {
   constructor() {
     effect(() => {
       this.palette = this.themeService.currentPalette();
+      // If we have data, rebuild charts to apply new theme colors
       if (!this.isLoading && this.rawData.length > 0) {
         this.processData(this.rawData);
       }
+      // Ensure widgets have correct colors on theme switch
+      this.updateWidgetColors();
       this.cd.markForCheck();
     });
   }
 
   ngOnInit(): void {
     this.setDefaultDateRange();
+    // Initialize widgets with 0 so they render immediately (enabling animation later)
+    this.initializeWidgets(); 
     this.loadData();
   }
 
@@ -113,6 +120,58 @@ export class ClsLevel6ReportComponent implements OnInit {
     this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
   }
 
+  private initializeWidgets(): void {
+    // Initialize with default "0" values to ensure components are created
+    // This allows the animation to trigger when values change from "0" -> "Actual"
+    this.widgetData = [
+      {
+        id: 'total',
+        icon: 'fas fa-microscope',
+        title: 'Tổng Cận Lâm Sàng',
+        value: '0',
+        caption: 'Tổng lượt chỉ định',
+        accentColor: this.palette?.primary || '#00839b'
+      },
+      {
+        id: 'admission',
+        icon: 'fas fa-procedures',
+        title: 'Tổng Nhập Viện',
+        value: '0',
+        caption: 'Số ca nhập viện',
+        accentColor: this.palette?.pastelCoral || '#ffb3ba'
+      },
+      {
+        id: 'rate',
+        icon: 'fas fa-chart-pie',
+        title: 'Tỷ Lệ Nhập Viện',
+        value: '0%',
+        caption: 'Trên tổng chỉ định CLS',
+        accentColor: this.palette?.warning || '#f59e0b'
+      },
+      {
+        id: 'top-room',
+        icon: 'fas fa-door-open',
+        title: 'Phòng Đông Nhất',
+        value: '0',
+        caption: 'Đang tải...',
+        accentColor: this.palette?.deepSapphire || '#082567'
+      }
+    ];
+  }
+
+  private updateWidgetColors(): void {
+    if (this.widgetData.length > 0 && this.palette) {
+      const setC = (id: string, color: string) => {
+        const item = this.widgetData.find(x => x.id === id);
+        if (item) item.accentColor = color;
+      };
+      setC('total', this.palette.primary);
+      setC('admission', this.palette.pastelCoral);
+      setC('rate', this.palette.warning);
+      setC('top-room', this.palette.deepSapphire);
+    }
+  }
+
   public onDateFilter(range: DateRange): void {
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
@@ -123,7 +182,10 @@ export class ClsLevel6ReportComponent implements OnInit {
     if (!this.fromDate || !this.toDate) return;
 
     this.isLoading = true;
-    this.widgetData = []; // Clear widgets while loading
+    // DO NOT clear widgetData here (this.widgetData = []). 
+    // Keeping the old data allows the skeleton overlay to work properly 
+    // and prevents the component from being destroyed, ensuring animation works.
+    
     this.clsTrendOptions = null;
     this.admissionTrendOptions = null;
     this.roomChartOptions = null;
@@ -150,13 +212,16 @@ export class ClsLevel6ReportComponent implements OnInit {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu báo cáo.');
           this.rawData = [];
+          // Re-init to 0 if error occurs to show empty state properly
+          this.initializeWidgets(); 
         }
       });
   }
 
   private processData(data: ClsLevel6Stat[]): void {
+    // Even if empty, we want to keep the widget structure but with 0s
     if (!data || data.length === 0) {
-        this.widgetData = [];
+        this.initializeWidgets();
         return;
     }
 
@@ -194,10 +259,12 @@ export class ClsLevel6ReportComponent implements OnInit {
     const admissionRate = totalQuantity > 0 ? (totalAdmission / totalQuantity) * 100 : 0;
     const sortedRooms = Array.from(roomMap.entries()).sort((a, b) => b[1] - a[1]);
 
+    // Create new array to trigger change detection
+    // Important: Keep IDs the same so Angular's trackBy preserves the DOM elements
     this.widgetData = [
       {
         id: 'total',
-        icon: 'fas fa-microscope', // Changed icon to microscope for CLS context
+        icon: 'fas fa-microscope',
         title: 'Tổng Cận Lâm Sàng',
         value: this.formatNumber(totalQuantity),
         caption: 'Tổng lượt chỉ định',
@@ -209,7 +276,7 @@ export class ClsLevel6ReportComponent implements OnInit {
         title: 'Tổng Nhập Viện',
         value: this.formatNumber(totalAdmission),
         caption: 'Số ca nhập viện',
-        accentColor: this.palette.pastelCoral // Using Pastel Coral
+        accentColor: this.palette.pastelCoral 
       },
       {
         id: 'rate',
@@ -279,7 +346,9 @@ export class ClsLevel6ReportComponent implements OnInit {
         name: 'Chỉ Định CLS',
         type: 'line',
         smooth: true,
-        symbol: 'none',
+        // [UPDATED] Set symbol to circle to show dots for days
+        symbol: 'circle',
+        symbolSize: 6,
         data: totalSeriesData,
         itemStyle: { color: this.palette.primary },
         areaStyle: {
@@ -318,14 +387,14 @@ export class ClsLevel6ReportComponent implements OnInit {
         symbol: 'circle',
         symbolSize: 6,
         data: admissionSeriesData,
-        itemStyle: { color: this.palette.pastelCoral }, // Using Pastel Coral
+        itemStyle: { color: this.palette.pastelCoral }, 
         lineStyle: { width: 3 },
         areaStyle: {
           color: {
             type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: this.palette.pastelCoral }, // Start color
-              { offset: 1, color: this.palette.bgCard }       // End color (fade)
+              { offset: 0, color: this.palette.pastelCoral }, 
+              { offset: 1, color: this.palette.bgCard }       
             ]
           },
           opacity: 0.2

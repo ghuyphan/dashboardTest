@@ -50,7 +50,6 @@
 }
 
 /* --- OPTIMIZATION START --- */
-/* Changed from margin/width animation to padding animation for better performance */
 .main-panel {
   flex-grow: 1;
   display: flex;
@@ -64,9 +63,14 @@
   
   background-color: var(--white);
   
-  /* Animate padding-left */
-  transition: padding-left var(--transition-duration) var(--transition-smooth);
-  will-change: padding-left;
+  /* [PERFORMANCE FIX] 
+     Disable transition on padding-left. 
+     This ensures the content "snaps" to the new width instantly instead of animating.
+     This prevents the browser from recalculating sticky header positions 
+     on every frame, eliminating the lag. 
+  */
+  /* transition: padding-left var(--transition-duration) var(--transition-smooth); */
+  /* will-change: padding-left; */
 }
 
 .main-panel.collapsed {

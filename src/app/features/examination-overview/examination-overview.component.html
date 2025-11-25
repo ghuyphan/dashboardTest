@@ -9,20 +9,15 @@
 
     <div class="widget-section">
       <div class="widget-grid">
-        @if (isInitialLoad) { 
-          @for (i of [1, 2, 3, 4, 5]; track i) {
-            <app-widget-card [title]="'Loading...'" [isLoading]="true"></app-widget-card>
-          } 
-        } @else { 
-          @for (widget of widgetData; track trackByWidget($index, widget)) {
-            <app-widget-card
-              [icon]="widget.icon"
-              [title]="widget.title"
-              [value]="widget.value"
-              [caption]="widget.caption"
-              [accentColor]="widget.accentColor"
-            ></app-widget-card>
-          } 
+        @for (widget of widgetData; track trackByWidget($index, widget)) {
+          <app-widget-card
+            [icon]="widget.icon"
+            [title]="widget.title"
+            [value]="widget.value"
+            [caption]="widget.caption"
+            [accentColor]="widget.accentColor"
+            [isLoading]="isLoading"
+          ></app-widget-card>
         }
       </div>
     </div>

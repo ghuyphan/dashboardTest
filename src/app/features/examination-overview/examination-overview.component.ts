@@ -20,7 +20,7 @@ import { DateUtils } from '../../shared/utils/date.utils';
 import { WidgetCardComponent } from '../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../components/table-card/table-card.component'; // [Updated]
+import { TableCardComponent } from '../../components/table-card/table-card.component';
 import { GridColumn } from '../../components/reusable-table/reusable-table.component';
 
 const GLOBAL_FONT_FAMILY =
@@ -42,7 +42,7 @@ interface WidgetData {
     CommonModule,
     WidgetCardComponent,
     ChartCardComponent,
-    TableCardComponent, // [Updated] Added TableCardComponent
+    TableCardComponent,
     DateFilterComponent
   ],
   providers: [DatePipe],
@@ -59,8 +59,7 @@ export class ExaminationOverviewComponent implements OnInit {
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
-  public isInitialLoad = true;
-  public isExporting = false; // [New] Track export state
+  public isExporting = false;
   
   public rawData: ExaminationStat[] = [];
   
@@ -94,6 +93,7 @@ export class ExaminationOverviewComponent implements OnInit {
       this.updateWidgetColors();
 
       if (!this.isLoading && this.rawData.length > 0) {
+        // Recalculate to ensure charts get new theme colors
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
       }
@@ -104,7 +104,10 @@ export class ExaminationOverviewComponent implements OnInit {
 
   ngOnInit(): void {
     this.palette = this.themeService.currentPalette();
+    
+    // 1. Initialize widgets immediately with "0" so they render
     this.initializeWidgetsStructure();
+    
     this.setDefaultDateRange();
     this.loadData();
   }
@@ -134,7 +137,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Tổng Tiếp Nhận',
         value: '0',
         caption: 'Total',
-        accentColor: this.palette.deepSapphire,
+        accentColor: this.palette?.deepSapphire || '#082567',
       },
       {
         id: 'ck',
@@ -142,7 +145,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Khám Bệnh (CK)',
         value: '0',
         caption: 'Clinic',
-        accentColor: this.palette.primary,
+        accentColor: this.palette?.primary || '#00839b',
       },
       {
         id: 'emergency',
@@ -150,7 +153,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Cấp Cứu',
         value: '0',
         caption: 'Emergency',
-        accentColor: this.palette.pastelCoral,
+        accentColor: this.palette?.pastelCoral || '#ffb3ba',
       },
       {
         id: 'inpatient',
@@ -158,7 +161,7 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'Nội Trú',
         value: '0',
         caption: 'Inpatient',
-        accentColor: this.palette.warning,
+        accentColor: this.palette?.warning || '#f59e0b',
       },
       {
         id: 'daycare',
@@ -166,13 +169,13 @@ export class ExaminationOverviewComponent implements OnInit {
         title: 'ĐT Ngoại Trú',
         value: '0',
         caption: 'Daycares',
-        accentColor: this.palette.tealMidtone,
+        accentColor: this.palette?.tealMidtone || '#52c3d7',
       },
     ];
   }
 
   private updateWidgetColors(): void {
-    if (this.widgetData.length > 0) {
+    if (this.widgetData.length > 0 && this.palette) {
       const w = this.widgetData;
       const setC = (id: string, color: string) => {
          const item = w.find(x => x.id === id);
@@ -189,13 +192,21 @@ export class ExaminationOverviewComponent implements OnInit {
 
   public loadData(): void {
     if (!this.fromDate || !this.toDate) return;
+    
     this.isLoading = true;
+    
+    // Clear charts to show loading state (if skeleton enabled)
+    this.trendChartOptions = null;
+    this.typeChartOptions = null;
+    this.patientStatusChartOptions = null;
+    
+    this.cd.markForCheck();
+    
     this.reportService
       .getExaminationOverview(this.fromDate, this.toDate)
       .pipe(
         finalize(() => {
           this.isLoading = false;
-          this.isInitialLoad = false;
           this.cd.markForCheck();
         })
       )
@@ -208,8 +219,11 @@ export class ExaminationOverviewComponent implements OnInit {
           this.calculateWidgets(data);
           this.buildCharts(data);
         },
-        error: () =>
-          this.toastService.showError('Không thể tải dữ liệu báo cáo.'),
+        error: () => {
+          this.toastService.showError('Không thể tải dữ liệu báo cáo.');
+          // Re-init to 0 if error
+          this.initializeWidgetsStructure();
+        },
       });
   }
 
@@ -227,16 +241,19 @@ export class ExaminationOverviewComponent implements OnInit {
 
     const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
-    const updateWidget = (id: string, value: string) => {
-      const widget = this.widgetData.find((w) => w.id === id);
-      if (widget) widget.value = value;
-    };
-
-    updateWidget('total', fmt(t.total));
-    updateWidget('ck', fmt(t.ck));
-    updateWidget('emergency', fmt(t.cc));
-    updateWidget('inpatient', fmt(t.nt));
-    updateWidget('daycare', fmt(t.dnt));
+    // Update values in place so Object reference changes but Array reference stays same (if strictly needed)
+    // Or create new array to trigger change detection properly
+    this.widgetData = this.widgetData.map(w => {
+      let val = '0';
+      switch(w.id) {
+        case 'total': val = fmt(t.total); break;
+        case 'ck': val = fmt(t.ck); break;
+        case 'emergency': val = fmt(t.cc); break;
+        case 'inpatient': val = fmt(t.nt); break;
+        case 'daycare': val = fmt(t.dnt); break;
+      }
+      return { ...w, value: val };
+    });
   }
 
   private buildCharts(data: ExaminationStat[]): void {
@@ -414,10 +431,6 @@ export class ExaminationOverviewComponent implements OnInit {
     return item.id;
   }
   
-  // [Custom Export Logic]
-  // This page does NOT use the automatic table export because it needs to 
-  // export the RAW data (or potentially fetch a more detailed report), 
-  // while the table might show aggregated data.
   public onExport(): void {
     if (this.isExporting) return;
     if (!this.rawData || this.rawData.length === 0) {
@@ -427,8 +440,6 @@ export class ExaminationOverviewComponent implements OnInit {
 
     this.isExporting = true;
 
-    // Simulate async delay or API call if needed (using setTimeout for UI feedback demo)
-    // In real app, you might call: this.reportService.getDetails(...)
     setTimeout(() => {
       const columns: ExportColumn[] = [
         { key: 'NGAY_TIEP_NHAN', header: 'Ngày Tiếp Nhận' },

@@ -1,7 +1,6 @@
 import {
   Component,
   ElementRef,
-  ViewChild,
   AfterViewInit,
   ChangeDetectionStrategy,
   input,
@@ -36,6 +35,9 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   public value = input<string>('0');
   public caption = input<string>('Caption');
   public isLoading = input<boolean>(false);
+  
+  // [OPTIMIZATION] Allow disabling animation manually
+  public enableAnimation = input<boolean>(true);
 
   /**
    * Accepts a hex code (e.g. '#00839b') OR a semantic key (e.g. 'primary', 'success', 'chart1')
@@ -166,7 +168,12 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   private animate(start: number, end: number): void {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     
-    if (start === end) {
+    // [OPTIMIZATION] Check user preference for reduced motion
+    const prefersReducedMotion = typeof window !== 'undefined' && 
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // If start equals end, or animations disabled/unwanted, render immediately
+    if (start === end || !this.enableAnimation() || prefersReducedMotion) {
       this.currentValue = end;
       this.renderNumericValue(end);
       return;
@@ -176,6 +183,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
       const startTime = performance.now();
       const animationStep = (currentTime: number) => {
         const elapsed = currentTime - startTime;
+        // Removed the invalid line here
         const progress = Math.min(elapsed / this.ANIMATION_DURATION_MS, 1);
         const easedProgress = 1 - Math.pow(1 - progress, 4); 
         
