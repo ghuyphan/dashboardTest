@@ -49,11 +49,25 @@
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.875rem;
   
+  /* Required for the pseudo-element fix to position correctly */
+  position: relative; 
+
   /* UPDATED: Use standard spring transition for consistency */
   transition: transform 0.2s var(--transition-spring),
     box-shadow 0.2s var(--transition-smooth);
     
   text-align: center;
+
+  /* STABILITY FIX: Prevent flicker when lifting */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;        /* Cover the button */
+    bottom: -8px;    /* Extend hit area downwards to catch the cursor */
+    z-index: 1;      /* Sit above backgrounds */
+    background: transparent;
+    border-radius: inherit;
+  }
 
   @media (max-width: 767px) {
     /* --- MOBILE ICON BUTTON STYLES --- */

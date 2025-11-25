@@ -322,10 +322,6 @@ select:-webkit-autofill {
   border-radius: var(--border-radius-md);
 }
 
-/* ==================================================
-   6. BUTTONS SYSTEM
-   Standardized interactions and styles for all buttons.
-   ================================================== */
 .btn {
   /* Layout */
   display: inline-flex;
@@ -353,19 +349,12 @@ select:-webkit-autofill {
               background-color 0.2s ease, 
               color 0.2s ease, 
               border-color 0.2s ease;
-
-  /* STABILITY FIX: DEAD SPOT PREVENTION
-     Creates an invisible extension at the bottom of the button.
-     When the button lifts up (-2px), this extension ensures the mouse
-     is still "touching" the element, preventing the flicker loop. */
   &::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: -6px; /* Extends hit area downwards to catch cursor during lift */
-    z-index: -1;  /* Keeps it behind visual content */
+    inset: 0;        /* Cover the entire button area */
+    bottom: -8px;    /* Extend hit area significantly downwards */
+    z-index: 1;      /* Ensure it sits ON TOP of card backgrounds */
     background: transparent;
     border-radius: inherit;
   }

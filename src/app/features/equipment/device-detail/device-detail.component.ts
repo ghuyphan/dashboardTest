@@ -172,7 +172,7 @@ async onPrintReport(device: Device): Promise<void> {
       this.toastService.showInfo('Đang chuẩn bị bản in...');
 
       await this.pdfService.generatePdf(
-        'assets/templates/device_test.pdf', 
+        'assets/templates/device_template.pdf', 
         reportData, 
         `Bien_Ban_${device.Ma}.pdf`,
         'print'

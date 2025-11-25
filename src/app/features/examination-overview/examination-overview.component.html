@@ -27,6 +27,7 @@
     </div>
 
     <div class="dashboard-grid">
+      <!-- Row 1: Main Trend -->
       <app-chart-card
         class="grid-item span-full"
         title="Biểu Đồ Tiếp Nhận Theo Ngày"
@@ -39,6 +40,7 @@
       >
       </app-chart-card>
 
+      <!-- Row 2: Split row (Type Pie + Admission Bar) -->
       <app-chart-card
         class="grid-item span-half"
         title="Đối Tượng (BHYT / Viện Phí)"
@@ -63,6 +65,20 @@
       >
       </app-chart-card>
 
+      <!-- Row 3: New vs Old Patient (Line Chart) - Full Width -->
+      <app-chart-card
+        class="grid-item span-full"
+        title="Xu hướng Bệnh Mới / Bệnh Cũ"
+        icon="fas fa-user-friends"
+        iconClass="icon-info"
+        [isLoading]="isLoading"
+        [chartOptions]="patientStatusChartOptions"
+        skeletonType="line"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+      >
+      </app-chart-card>
+
+      <!-- Row 4: Data Table -->
       <div class="content-card grid-item span-full">
         <div class="card-header">
           <div class="card-title-wrapper">

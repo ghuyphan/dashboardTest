@@ -65,8 +65,22 @@
   color: var(--text-secondary);
   cursor: pointer;
   
+  /* Layout for pseudo-element positioning */
+  position: relative;
+
   /* UPDATED: Standard transition */
   transition: all 0.2s var(--transition-spring);
+
+  /* STABILITY FIX: Prevent flicker when lifting */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;        /* Cover the element */
+    bottom: -6px;    /* Extend hit area downwards */
+    background: transparent;
+    border-radius: inherit;
+    cursor: pointer;
+  }
 
   &:hover {
     background-color: var(--gray-100);
