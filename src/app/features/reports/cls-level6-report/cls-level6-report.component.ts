@@ -69,9 +69,9 @@ export class ClsLevel6ReportComponent implements OnInit {
   // Widgets
   public widgetData: WidgetData[] = [];
 
-  // Charts (Separated)
+  // Charts
+  public examTrendOptions: EChartsCoreOption | null = null;
   public clsTrendOptions: EChartsCoreOption | null = null;
-  public admissionTrendOptions: EChartsCoreOption | null = null;
   
   public roomChartOptions: EChartsCoreOption | null = null;
   public groupChartOptions: EChartsCoreOption | null = null;
@@ -81,8 +81,8 @@ export class ClsLevel6ReportComponent implements OnInit {
     { key: 'NGAY_TH_DISPLAY', label: 'Ngày thực hiện', sortable: true, width: '120px' },
     { key: 'PHONG_BAN_TH', label: 'Phòng ban', sortable: true, width: '200px' },
     { key: 'NHOM_DICH_VU', label: 'Nhóm dịch vụ', sortable: true, width: '200px' },
-    { key: 'SO_LUONG', label: 'SL Cận Lâm Sàng', sortable: true, width: '120px' },
-    { key: 'SO_LUONG_NV', label: 'SL Nhập Viện', sortable: true, width: '120px' },
+    { key: 'SO_LUONG', label: 'Số lượng', sortable: true, width: '100px' },
+    { key: 'TYPE_LABEL', label: 'Loại', sortable: true, width: '120px' },
   ];
 
   private palette!: ThemePalette;
@@ -90,11 +90,9 @@ export class ClsLevel6ReportComponent implements OnInit {
   constructor() {
     effect(() => {
       this.palette = this.themeService.currentPalette();
-      // If we have data, rebuild charts to apply new theme colors
       if (!this.isLoading && this.rawData.length > 0) {
         this.processData(this.rawData);
       }
-      // Ensure widgets have correct colors on theme switch
       this.updateWidgetColors();
       this.cd.markForCheck();
     });
@@ -102,7 +100,6 @@ export class ClsLevel6ReportComponent implements OnInit {
 
   ngOnInit(): void {
     this.setDefaultDateRange();
-    // Initialize widgets with 0 so they render immediately (enabling animation later)
     this.initializeWidgets(); 
     this.loadData();
   }
@@ -119,16 +116,22 @@ export class ClsLevel6ReportComponent implements OnInit {
   }
 
   private initializeWidgets(): void {
-    // Initialize with default "0" values to ensure components are created
-    // This allows the animation to trigger when values change from "0" -> "Actual"
     this.widgetData = [
       {
-        id: 'total',
+        id: 'total-exam',
+        icon: 'fas fa-stethoscope',
+        title: 'Tổng Lượt Khám',
+        value: '0',
+        caption: 'Thực hiện khám',
+        accentColor: this.palette?.primary || '#00839b'
+      },
+      {
+        id: 'total-cls',
         icon: 'fas fa-microscope',
         title: 'Tổng Cận Lâm Sàng',
         value: '0',
-        caption: 'Tổng lượt chỉ định',
-        accentColor: this.palette?.primary || '#00839b'
+        caption: 'Thực hiện CLS',
+        accentColor: this.palette?.chart6 || '#f89c5b' // Changed to Orange
       },
       {
         id: 'admission',
@@ -137,14 +140,6 @@ export class ClsLevel6ReportComponent implements OnInit {
         value: '0',
         caption: 'Số ca nhập viện',
         accentColor: this.palette?.pastelCoral || '#ffb3ba'
-      },
-      {
-        id: 'rate',
-        icon: 'fas fa-chart-pie',
-        title: 'Tỷ Lệ Nhập Viện',
-        value: '0%',
-        caption: 'Trên tổng chỉ định CLS',
-        accentColor: this.palette?.warning || '#f59e0b'
       },
       {
         id: 'top-room',
@@ -163,9 +158,9 @@ export class ClsLevel6ReportComponent implements OnInit {
         const item = this.widgetData.find(x => x.id === id);
         if (item) item.accentColor = color;
       };
-      setC('total', this.palette.primary);
+      setC('total-exam', this.palette.primary);
+      setC('total-cls', this.palette.chart6); // Update to chart6 (Orange)
       setC('admission', this.palette.pastelCoral);
-      setC('rate', this.palette.warning);
       setC('top-room', this.palette.deepSapphire);
     }
   }
@@ -180,12 +175,8 @@ export class ClsLevel6ReportComponent implements OnInit {
     if (!this.fromDate || !this.toDate) return;
 
     this.isLoading = true;
-    // DO NOT clear widgetData here (this.widgetData = []). 
-    // Keeping the old data allows the skeleton overlay to work properly 
-    // and prevents the component from being destroyed, ensuring animation works.
-    
+    this.examTrendOptions = null;
     this.clsTrendOptions = null;
-    this.admissionTrendOptions = null;
     this.roomChartOptions = null;
     this.groupChartOptions = null;
     this.cd.markForCheck();
@@ -201,7 +192,8 @@ export class ClsLevel6ReportComponent implements OnInit {
         next: (data) => {
           this.rawData = data.map(item => ({
             ...item,
-            NGAY_TH_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TH)
+            NGAY_TH_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TH),
+            TYPE_LABEL: item.KHAM_CLS === 1 ? 'Khám' : (item.KHAM_CLS === 2 ? 'CLS' : 'Khác')
           }));
           
           this.processData(this.rawData);
@@ -210,14 +202,12 @@ export class ClsLevel6ReportComponent implements OnInit {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu báo cáo.');
           this.rawData = [];
-          // Re-init to 0 if error occurs to show empty state properly
           this.initializeWidgets(); 
         }
       });
   }
 
   private processData(data: ClsLevel6Stat[]): void {
-    // Even if empty, we want to keep the widget structure but with 0s
     if (!data || data.length === 0) {
         this.initializeWidgets();
         return;
@@ -225,16 +215,22 @@ export class ClsLevel6ReportComponent implements OnInit {
 
     const roomMap = new Map<string, number>();
     const groupMap = new Map<string, number>();
-    const dateMap = new Map<string, { total: number, admission: number }>();
+    const dateMap = new Map<string, { exam: number, cls: number }>();
 
-    let totalQuantity = 0;
+    let totalExam = 0;
+    let totalCls = 0;
     let totalAdmission = 0;
 
     data.forEach(i => {
       const qty = i.SO_LUONG || 0;
       const admissionQty = i.SO_LUONG_NV || 0;
 
-      totalQuantity += qty;
+      if (i.KHAM_CLS === 1) {
+        totalExam += qty;
+      } else if (i.KHAM_CLS === 2) {
+        totalCls += qty;
+      }
+
       totalAdmission += admissionQty;
 
       // Room Stats
@@ -247,26 +243,35 @@ export class ClsLevel6ReportComponent implements OnInit {
 
       // Date Stats
       const dateKey = i.NGAY_TH ? i.NGAY_TH.split('T')[0] : 'N/A';
-      const dayStats = dateMap.get(dateKey) || { total: 0, admission: 0 };
-      dayStats.total += qty;
-      dayStats.admission += admissionQty;
+      const dayStats = dateMap.get(dateKey) || { exam: 0, cls: 0 };
+      
+      if (i.KHAM_CLS === 1) {
+        dayStats.exam += qty;
+      } else if (i.KHAM_CLS === 2) {
+        dayStats.cls += qty;
+      }
+      
       dateMap.set(dateKey, dayStats);
     });
 
-    // --- Widgets ---
-    const admissionRate = totalQuantity > 0 ? (totalAdmission / totalQuantity) * 100 : 0;
     const sortedRooms = Array.from(roomMap.entries()).sort((a, b) => b[1] - a[1]);
 
-    // Create new array to trigger change detection
-    // Important: Keep IDs the same so Angular's trackBy preserves the DOM elements
     this.widgetData = [
       {
-        id: 'total',
+        id: 'total-exam',
+        icon: 'fas fa-stethoscope',
+        title: 'Tổng Lượt Khám',
+        value: this.formatNumber(totalExam),
+        caption: 'Thực hiện khám',
+        accentColor: this.palette.primary
+      },
+      {
+        id: 'total-cls',
         icon: 'fas fa-microscope',
         title: 'Tổng Cận Lâm Sàng',
-        value: this.formatNumber(totalQuantity),
-        caption: 'Tổng lượt chỉ định',
-        accentColor: this.palette.primary
+        value: this.formatNumber(totalCls),
+        caption: 'Thực hiện CLS',
+        accentColor: this.palette.chart6
       },
       {
         id: 'admission',
@@ -277,19 +282,11 @@ export class ClsLevel6ReportComponent implements OnInit {
         accentColor: this.palette.pastelCoral 
       },
       {
-        id: 'rate',
-        icon: 'fas fa-chart-pie',
-        title: 'Tỷ Lệ Nhập Viện',
-        value: `${this.formatNumber(admissionRate)}%`,
-        caption: 'Trên tổng chỉ định CLS',
-        accentColor: this.palette.warning
-      },
-      {
         id: 'top-room',
         icon: 'fas fa-door-open',
-        title: 'Phòng Đông Nhất',
+        title: sortedRooms[0] ? sortedRooms[0][0] : 'N/A',
         value: sortedRooms[0] ? this.formatNumber(sortedRooms[0][1]) : '0',
-        caption: sortedRooms[0] ? sortedRooms[0][0] : 'N/A',
+        caption: 'Phòng Đông Nhất',
         accentColor: this.palette.deepSapphire
       }
     ];
@@ -300,7 +297,7 @@ export class ClsLevel6ReportComponent implements OnInit {
   private buildCharts(
     roomMap: Map<string, number>, 
     groupMap: Map<string, number>, 
-    dateMap: Map<string, { total: number, admission: number }>
+    dateMap: Map<string, { exam: number, cls: number }>
   ): void {
     
     const commonOptions = {
@@ -321,10 +318,48 @@ export class ClsLevel6ReportComponent implements OnInit {
        return this.datePipe.transform(dateObj, 'dd/MM') || d;
     });
 
-    const totalSeriesData = sortedDates.map(d => dateMap.get(d)?.total);
-    const admissionSeriesData = sortedDates.map(d => dateMap.get(d)?.admission);
+    const examSeriesData = sortedDates.map(d => dateMap.get(d)?.exam || 0);
+    const clsSeriesData = sortedDates.map(d => dateMap.get(d)?.cls || 0);
 
-    // --- 1. CLS Trend Chart (Blue) ---
+    // --- 1. Exam Trend Chart (Blue) ---
+    this.examTrendOptions = {
+      ...commonOptions,
+      legend: { show: false },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dateLabels,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: this.palette.textPrimary }
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
+      },
+      series: [{
+        name: 'Thực hiện Khám',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        data: examSeriesData,
+        itemStyle: { color: this.palette.primary },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: this.palette.primary },
+              { offset: 1, color: this.palette.bgCard }
+            ]
+          },
+          opacity: 0.2
+        }
+      }]
+    };
+
+    // --- 2. CLS Trend Chart (Orange / chart6) ---
+    // Changed color to differentiate from Exam
     this.clsTrendOptions = {
       ...commonOptions,
       legend: { show: false },
@@ -341,57 +376,19 @@ export class ClsLevel6ReportComponent implements OnInit {
         splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
       },
       series: [{
-        name: 'Chỉ Định CLS',
-        type: 'line',
-        smooth: true,
-        // [UPDATED] Set symbol to circle to show dots for days
-        symbol: 'circle',
-        symbolSize: 6,
-        data: totalSeriesData,
-        itemStyle: { color: this.palette.primary },
-        areaStyle: {
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: this.palette.primary },
-              { offset: 1, color: this.palette.bgCard }
-            ]
-          },
-          opacity: 0.2
-        }
-      }]
-    };
-
-    // --- 2. Admission Trend Chart (Pastel Coral) ---
-    this.admissionTrendOptions = {
-      ...commonOptions,
-      legend: { show: false },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: dateLabels,
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { color: this.palette.textPrimary }
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
-      },
-      series: [{
-        name: 'Nhập Viện',
+        name: 'Thực hiện CLS',
         type: 'line',
         smooth: true,
         symbol: 'circle',
         symbolSize: 6,
-        data: admissionSeriesData,
-        itemStyle: { color: this.palette.pastelCoral }, 
+        data: clsSeriesData,
+        itemStyle: { color: this.palette.chart6 }, 
         lineStyle: { width: 3 },
         areaStyle: {
           color: {
             type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: this.palette.pastelCoral }, 
+              { offset: 0, color: this.palette.chart6 }, 
               { offset: 1, color: this.palette.bgCard }       
             ]
           },
@@ -439,8 +436,19 @@ export class ClsLevel6ReportComponent implements OnInit {
     const groupData = Array.from(groupMap, ([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
+    const donutColors = [
+       this.palette.chart1,
+       this.palette.chart6,
+       this.palette.chart8,
+       this.palette.chart9,
+       this.palette.chart2,
+       this.palette.pastelCoral,
+       this.palette.deepSapphire
+    ];
+
     this.groupChartOptions = {
       backgroundColor: 'transparent',
+      color: donutColors,
       tooltip: {
         trigger: 'item',
         backgroundColor: this.palette.bgCard,
@@ -486,6 +494,7 @@ export class ClsLevel6ReportComponent implements OnInit {
             { key: 'PHONG_BAN_TH', header: 'Phòng Ban' },
             { key: 'NHOM_DICH_VU', header: 'Nhóm Dịch Vụ' },
             { key: 'SO_LUONG', header: 'SL Cận Lâm Sàng' },
+            { key: 'TYPE_LABEL', header: 'Loại' },
             { key: 'SO_LUONG_NV', header: 'SL Nhập Viện' },
         ];
 

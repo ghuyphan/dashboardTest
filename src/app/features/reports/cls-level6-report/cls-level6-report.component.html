@@ -24,22 +24,22 @@
     <div class="dashboard-grid">
       <app-chart-card
         class="grid-item span-2"
-        title="Xu hướng nhập viện"
-        icon="fas fa-procedures"
-        iconClass="icon-danger"
+        title="Xu hướng Khám bệnh"
+        icon="fas fa-stethoscope"
+        iconClass="icon-info"
         [isLoading]="isLoading"
-        [chartOptions]="admissionTrendOptions"
+        [chartOptions]="examTrendOptions"
         skeletonType="line"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        emptyText="Chưa có dữ liệu nhập viện."
+        emptyText="Chưa có dữ liệu khám."
       >
       </app-chart-card>
 
       <app-chart-card
         class="grid-item span-2"
         title="Xu hướng thực hiện CLS"
-        icon="fas fa-chart-line"
-        iconClass="icon-info"
+        icon="fas fa-microscope"
+        iconClass="icon-warning"
         [isLoading]="isLoading"
         [chartOptions]="clsTrendOptions"
         skeletonType="line"
