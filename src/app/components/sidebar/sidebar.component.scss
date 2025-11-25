@@ -2,11 +2,15 @@
   --header-height: 50px;
   --sidebar-width: 240px;
   --sidebar-width-collapsed: 60px;
+  
+  /* New: Consistent Padding Variable */
+  --sidebar-padding: 12px; 
+  
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-duration: 0.3s;
   --transition-fast: 0.2s;
-  --scrollbar-width: 8px;
+  --scrollbar-width: 6px;
 }
 
 /* ========== SIDEBAR STYLES ========== */
@@ -26,13 +30,9 @@
   z-index: 1000;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
   
-  /* display: flex; */ /* Flex is fine, but ensure overflow works */
   display: flex;
   flex-direction: column;
   
-  /* === PERFORMANCE OPTIMIZATION === */
-  /* Tells browser to treat this element as an independent layout boundary */
-  /* 'size' cannot be used here because width animates */
   contain: layout style; 
   will-change: transform, width;
 
@@ -53,7 +53,10 @@
   margin-bottom: var(--spacing-sm);
   box-sizing: border-box;
   position: relative;
-  padding: 0 0.85rem;
+  
+  /* Polished: Use consistent padding variable */
+  padding: 0 var(--sidebar-padding);
+  
   flex-shrink: 0;
   transition: padding var(--transition-duration) var(--transition-smooth),
     justify-content var(--transition-duration) var(--transition-smooth);
@@ -141,67 +144,58 @@
 .sidebar-nav-content {
   flex-grow: 1;
   min-height: 0;
-  position: relative; 
+  width: 100%;
+  position: relative;
   
-  /* Performance: Content Visibility skips rendering offscreen items */
-  content-visibility: auto;
-  contain-intrinsic-size: 100px 500px; /* Estimate dimensions */
-
-  @media (min-width: 992.01px) {
-    scrollbar-gutter: stable both-edges;
+  /* Polished: Overlay scrollbar logic */
+  overflow-y: overlay; /* WebKit specific */
+  overflow-x: hidden;
+  
+  /* Fallback */
+  @supports not (overflow-y: overlay) {
     overflow-y: auto;
-    overflow-x: hidden;
-    
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-    
-    &::-webkit-scrollbar {
-      width: var(--scrollbar-width);
-      position: absolute;
-    }
-    
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background-color: transparent;
-      border-radius: 4px;
-      border: 2px solid transparent;
-      background-clip: padding-box;
-      min-height: 40px;
-    }
   }
-}
 
-/* DESKTOP SCROLLBAR BEHAVIOR */
-@media (min-width: 992.01px) {
-  .sidebar:not(.collapsed):hover .sidebar-nav-content::-webkit-scrollbar-thumb {
-    background-color: var(--gray-400);
+  /* Styling the scrollbar to be invisible/overlay-like */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s;
+
+  &:hover {
+    scrollbar-color: var(--gray-300) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    background: transparent;
+    position: absolute;
   }
   
-  .sidebar:not(.collapsed):hover .sidebar-nav-content {
-    scrollbar-color: var(--gray-400) transparent;
+  &::-webkit-scrollbar-track {
+    background: transparent;
   }
   
-  .sidebar.collapsed .sidebar-nav-content {
-    margin-right: calc(-1 * var(--scrollbar-width));
-    padding-right: var(--scrollbar-width);
-    
-    &::-webkit-scrollbar-thumb {
-      background-color: transparent !important;
-    }
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    min-height: 40px;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
   }
   
-  .sidebar.collapsed .sidebar-nav {
-    padding-right: var(--scrollbar-width) !important;
-  }
+  content-visibility: auto;
+  contain-intrinsic-size: 100px 500px;
 }
 
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   overflow: visible;
-  padding: 0 0.625rem;
+  /* Polished: Use consistent padding variable */
+  padding: 0 var(--sidebar-padding);
 }
 
 .sidebar-nav ul {
@@ -242,7 +236,7 @@
   color: var(--gray-700);
   text-decoration: none;
   display: flex;
-  padding: 0.75rem 0.625rem;
+  padding: 0.75rem var(--spacing-sm); /* Adjusted slightly to fit container padding */
   border-radius: var(--border-radius-md);
   transition: background-color var(--transition-fast) ease,
     color var(--transition-fast) ease,
@@ -562,8 +556,9 @@
     transition: transform 0.3s var(--transition-smooth);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 0 0.625rem var(--spacing-md) 0.625rem;
-    /* Mobile doesn't need strict layout containment as it overlays */
+    
+    /* Polished: Remove hard padding so scrollbar doesn't push content */
+    padding: 0;
     contain: none; 
   }
 
@@ -582,7 +577,9 @@
   }
   
   .sidebar-header { padding: 0 var(--spacing-xs); }
-  .sidebar-nav { padding: 0; }
+  
+  /* Restoring original mobile padding logic but cleaner */
+  .sidebar-nav { padding: 0 var(--sidebar-padding); }
 
   /* Accordion behavior for mobile collapsed state (technically mobile menu) */
   .sidebar.collapsed .sidebar-nav ul li .submenu {

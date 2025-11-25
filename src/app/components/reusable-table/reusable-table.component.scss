@@ -170,35 +170,46 @@ app-reusable-table {
       background-color: var(--surface-card);
     }
 
-&.clickable-row {
+    &.clickable-row {
       cursor: pointer;
-      
-      position: relative; 
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;       
-        bottom: -4px;     
-        z-index: -1;      
-        pointer-events: auto; 
-        background: transparent;
-      }
 
       &:hover {
         background-color: var(--gray-100) !important;
         [data-theme="dark"] & {
           background-color: var(--gray-200) !important;
         }
-        transform: translateY(-1px);
+        // transform: translateY(-1px);
         box-shadow: var(--box-shadow-sm);
-        z-index: 1; 
+        position: relative;
+        z-index: 1;
       }
 
       &:active {
-        /* Optional: Press down effect */
-        transform: scale(0.995) translateY(0); 
+        transform: scale(0.995);
         background-color: var(--gray-200) !important;
+      }
+
+      &.selected {
+        background-color: rgba(0, 131, 155, 0.08) !important;
+        box-shadow: inset 3px 0 0 var(--teal-blue) !important;
+        .mat-mdc-cell {
+          color: var(--teal-blue) !important;
+          font-weight: var(--font-weight-medium) !important;
+        }
+      }
+
+      &.multi-selected {
+        background-color: var(--pastel-sky) !important;
+        [data-theme="dark"] & {
+          background-color: rgba(99, 179, 237, 0.2) !important;
+        }
+        .mat-mdc-cell {
+          color: var(--deep-sapphire) !important;
+          [data-theme="dark"] & {
+            color: var(--peacock-blue) !important;
+          }
+          font-weight: var(--font-weight-medium) !important;
+        }
       }
     }
   }

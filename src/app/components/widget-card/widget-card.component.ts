@@ -36,13 +36,18 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   public caption = input<string>('Caption');
   public isLoading = input<boolean>(false);
   
+  // [OPTIMIZATION] Allow disabling animation manually
   public enableAnimation = input<boolean>(true);
 
+  /**
+   * Accepts a hex code (e.g. '#00839b') OR a semantic key (e.g. 'primary', 'success', 'chart1')
+   */
   public accentColor = input<string>('primary');
 
+  // Resolve the color: Try to find it in the palette, otherwise use raw string
   public resolvedAccentColor = computed(() => {
     const rawInput = this.accentColor();
-    const palette = this.themeService.currentPalette(); 
+    const palette = this.themeService.currentPalette(); // Reactive!
     
     if (rawInput in palette) {
       return palette[rawInput as keyof ThemePalette];
@@ -50,14 +55,16 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     return rawInput;
   });
 
+  // Use the resolved color for styles
   public iconWrapperStyle = computed(() => ({
-    'background-color': this.resolvedAccentColor() + '33'
+    'background-color': this.resolvedAccentColor() + '33' // Add 20% opacity (hex alpha)
   }));
   
   public iconStyle = computed(() => ({
     'color': this.resolvedAccentColor()
   }));
 
+  // View Child with new signal API
   public valueDisplay = viewChild.required<ElementRef<HTMLDivElement>>('valueDisplay');
 
   private currentValue: number = 0;
@@ -71,6 +78,9 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const val = this.value();
+
+      // OPTIMIZATION: Process value immediately regardless of loading state.
+      // This ensures text is ready underneath the skeleton overlay.
       if (this.hasViewInitialized) {
         this.processValue(val, true);
       }
@@ -79,6 +89,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.hasViewInitialized = true;
+    // Initial process without animation to set initial state
     this.processValue(this.value(), false);
   }
 
@@ -94,7 +105,6 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
   private processPercentageValue(value: string, shouldAnimate: boolean): void {
     this.valueFormat = 'percent';
-    // Basic cleanup for percentages, assuming standard dot decimal for now or localized
     const cleanValue = value.replace(/[%]/g, '').trim().replace(/,/g, '.');
     const parsedValue = parseFloat(cleanValue);
 
@@ -150,35 +160,19 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   }
 
   private parseNumericValue(value: string): number {
-    if (!value) return 0;
-
-    // 1. Remove any character that is NOT a digit, dot, comma, or minus sign
-    let cleaned = value.replace(/[^0-9,.-]/g, '');
-
-    // 2. Heuristic to determine if it's 1.000,00 (Euro/Vietnamese) or 1,000.00 (Standard)
-    const lastComma = cleaned.lastIndexOf(',');
-    const lastDot = cleaned.lastIndexOf('.');
-
-    if (lastComma > lastDot) {
-      // Assume format: 1.234,56 -> Convert to 1234.56
-      // Remove all dots (thousands), replace comma with dot
-      cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.');
-    } else {
-      // Assume format: 1,234.56 -> Convert to 1234.56
-      // Remove all commas (thousands)
-      cleaned = cleaned.replace(/,/g, '');
-    }
-
-    const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? NaN : parsed;
+    const cleaned = (value?.replace(/[^0-9,.-]/g, '') || '0').replace(/[.,]/g, '').trim();
+    if (/[^0-9-]/.test(cleaned)) return NaN;
+    return parseFloat(cleaned);
   }
 
   private animate(start: number, end: number): void {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     
+    // [OPTIMIZATION] Check user preference for reduced motion
     const prefersReducedMotion = typeof window !== 'undefined' && 
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // If start equals end, or animations disabled/unwanted, render immediately
     if (start === end || !this.enableAnimation() || prefersReducedMotion) {
       this.currentValue = end;
       this.renderNumericValue(end);
@@ -189,6 +183,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
       const startTime = performance.now();
       const animationStep = (currentTime: number) => {
         const elapsed = currentTime - startTime;
+        // Removed the invalid line here
         const progress = Math.min(elapsed / this.ANIMATION_DURATION_MS, 1);
         const easedProgress = 1 - Math.pow(1 - progress, 4); 
         
