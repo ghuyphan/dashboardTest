@@ -134,6 +134,19 @@ export const routes: Routes = [
           showSearchBar: false,
         },
       },
+      {
+        path: 'reports/cls-level6',
+        loadComponent: () =>
+          import(
+            './features/reports/cls-level6-report/cls-level6-report.component'
+          ).then((m) => m.ClsLevel6ReportComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.KhamCLST6', // Update this permission key
+          title: 'Thống kê CLS Tầng 6',
+          showSearchBar: false,
+        },
+      },
 
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],

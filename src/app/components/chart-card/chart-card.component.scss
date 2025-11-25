@@ -4,6 +4,8 @@
   flex: 1;
   min-height: 0;
   height: 100%;
+  /* CRITICAL FIX: Allows the component to shrink below its content size */
+  min-width: 0; 
 }
 
 .chart-card {
@@ -16,6 +18,8 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  /* CRITICAL FIX: Allows the card container to shrink */
+  min-width: 0; 
 }
 
 /* --- HEADER LAYOUT --- */
@@ -78,6 +82,8 @@
   flex-direction: column;
   min-height: 200px;
   overflow: hidden;
+  /* Ensure body also respects width constraints */
+  min-width: 0;
 }
 
 .chart-container {
@@ -87,6 +93,8 @@
   min-height: 0;
   opacity: 1;
   transition: opacity 0.3s ease-in-out;
+  /* Ensure canvas container doesn't force width */
+  min-width: 0; 
 
   &.invisible {
     opacity: 0;
@@ -157,7 +165,7 @@
 
 .sk-pie {
   width: 50%;         
-  max-width: 180px;   /* Cap max size so it doesn't look huge on wide screens */
+  max-width: 180px;   
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   position: relative;
@@ -165,13 +173,13 @@
   &::after {
     content: '';
     position: absolute;
-    inset: 30%; /* Standard Pie Cutout (small) */
+    inset: 30%; 
     background-color: var(--white);
     border-radius: 50%;
   }
 
   &.sk-doughnut::after {
-    inset: 65%; /* Thinner ring for Doughnut */
+    inset: 65%; 
   }
 }
 
@@ -202,10 +210,9 @@
   position: relative;
   padding-bottom: 2px;
   
-  /* Standard Vertical Bar Layout */
   &.bar-mode {
     align-items: flex-end;
-    justify-content: space-around; /* [CRITICAL] Distribute bars evenly with gaps */
+    justify-content: space-around; 
     padding-left: 10px;
     padding-right: 10px;
   }
@@ -228,7 +235,7 @@
 /* --- VERTICAL BAR SKELETON --- */
 .sk-bar {
   flex: 1;
-  max-width: 40px; /* [CRITICAL] Cap bar width so they don't look blocky */
+  max-width: 40px; 
   min-width: 8px;
   margin: 0 4px;
   height: var(--h);

@@ -13,11 +13,13 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service'; // [1] Import Service
+import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
+// [1] Import the permission directive
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
@@ -27,7 +29,8 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
   imports: [
     CommonModule,
     ChartCardComponent,
-    DateFilterComponent
+    DateFilterComponent,
+    HasPermissionDirective // [2] Add to imports array
   ],
   providers: [DatePipe],
   templateUrl: './medical-records-status.component.html',
@@ -37,7 +40,7 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 export class MedicalRecordsStatusComponent implements OnInit {
   private reportService = inject(ReportService);
   private toastService = inject(ToastService);
-  private excelService = inject(ExcelExportService); // [2] Inject Service
+  private excelService = inject(ExcelExportService);
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
   public readonly themeService = inject(ThemeService);

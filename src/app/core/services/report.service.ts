@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { ExaminationStat } from '../../shared/models/examination-stat.model';
+import { ClsLevel6Stat } from '../../shared/models/cls-stat.model';
 import {
   MedicalRecordSummary,
   MedicalRecordDetail,
@@ -18,7 +19,7 @@ export class ReportService {
 
   private summaryUrl = environment.outpatientSumUrl;
   private detailUrl = environment.outpatientDetailUrl;
-
+  private clsLevel6Url = environment.clsLevel6Url;
 
   constructor() {}
 
@@ -55,5 +56,16 @@ export class ReportService {
 
     // Note: Update 'this.detailUrl' with environment variable when you create it
     return this.http.get<MedicalRecordDetail[]>(this.detailUrl, { params });
+  }
+
+  getClsLevel6Report(
+    fromDate: string,
+    toDate: string
+  ): Observable<ClsLevel6Stat[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+
+    return this.http.get<ClsLevel6Stat[]>(this.clsLevel6Url, { params });
   }
 }

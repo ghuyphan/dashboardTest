@@ -21,20 +21,21 @@
         emptyText="Không có dữ liệu trong khoảng thời gian này."
       >
         <div header-actions>
-          <button 
-            class="btn-icon-text" 
-            (click)="onExport()" 
-            title="Tải dữ liệu chi tiết và xuất Excel"
-            [disabled]="isLoading || isExporting || !summaryData.length">
-            
-            @if (isExporting) {
-              <i class="fas fa-spinner fa-spin text-success"></i>
-              <span>Đang xử lý...</span>
-            } @else {
-              <i class="fas fa-file-excel text-success"></i>
-              <!-- <span>Xuất Excel Chi Tiết</span> -->
-            }
-          </button>
+          <ng-container *appHasPermission="'KHTH.ChuaTaoHSBANgoaiTru.REXPORT'">
+            <button 
+              class="btn-icon-text" 
+              (click)="onExport()" 
+              title="Tải dữ liệu chi tiết và xuất Excel"
+              [disabled]="isLoading || isExporting || !summaryData.length">
+              
+              @if (isExporting) {
+                <i class="fas fa-spinner fa-spin text-success"></i>
+                <span>Đang xử lý...</span>
+              } @else {
+                <i class="fas fa-file-excel text-success"></i>
+                }
+            </button>
+          </ng-container>
         </div>
 
       </app-chart-card>

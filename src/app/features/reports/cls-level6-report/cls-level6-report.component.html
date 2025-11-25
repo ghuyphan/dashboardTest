@@ -1,0 +1,60 @@
+<div class="page-container">
+  <div class="page-content">
+    
+    <app-date-filter
+      (filterSubmit)="onDateFilter($event)"
+      [isLoading]="isLoading"
+      buttonLabel="Lọc dữ liệu"
+    ></app-date-filter>
+
+    <div class="dashboard-grid">
+      
+      <app-chart-card
+        class="grid-item span-full"
+        title="Thống Kê Theo Phòng Ban"
+        icon="fas fa-chart-bar"
+        iconClass="icon-info"
+        [isLoading]="isLoading"
+        [chartOptions]="roomChartOptions"
+        skeletonType="bar"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        emptyText="Không có dữ liệu."
+      >
+      </app-chart-card>
+
+      <app-chart-card
+        class="grid-item span-2"
+        title="Tỷ Lệ Nhóm Dịch Vụ"
+        icon="fas fa-pie-chart"
+        iconClass="icon-info"
+        [isLoading]="isLoading"
+        [chartOptions]="groupChartOptions"
+        skeletonType="pie"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        emptyText="Không có dữ liệu."
+      >
+      </app-chart-card>
+
+      <app-table-card
+        class="grid-item span-full"
+        title="Dữ Liệu Chi Tiết - CLS Tầng 6"
+        icon="fas fa-table"
+        iconClass="text-teal"
+        [isLoading]="isLoading"
+        [data]="rawData"
+        [columns]="tableColumns"
+        [showPaginator]="true"
+        [pageSize]="10"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [clientSideSort]="true"
+        emptyStateText="Không tìm thấy dữ liệu phù hợp."
+        
+        [enableExport]="true"
+        [isExporting]="isExporting"
+        (exportClicked)="onExport()"
+      >
+      </app-table-card>
+
+    </div>
+  </div>
+</div>

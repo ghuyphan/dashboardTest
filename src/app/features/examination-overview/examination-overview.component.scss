@@ -31,93 +31,100 @@
   gap: var(--spacing-lg);
   @include hidden-scrollbar;
 
-  @media (max-width: 768px) {
-    padding: var(--spacing-md);
-  }
-
-  @media (max-width: 480px) {
+  /* Optimize spacing for smaller screens */
+  @media (max-width: 992px) {
     padding: var(--spacing-sm);
+    gap: var(--spacing-md);
   }
 }
 
 /* --- Widget Section --- */
 .widget-section {
-  padding-bottom: 0;
   flex-shrink: 0;
 }
 
 .widget-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-sm);
+  /* Desktop: Auto-fit with a comfortable minimum width */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spacing-md);
   max-width: 100%;
 
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-sm);
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 576px) {
+    /* Mobile: Force 2 columns for symmetry, looks better for stat cards */
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xs);
   }
 }
 
-/* --- Dashboard Grid (4 Columns) --- */
+/* --- Dashboard Grid (4 Columns Base) --- */
 .dashboard-grid {
   display: grid;
-  /* Desktop: 4 columns allows flexible 25% / 50% / 100% spans */
-  grid-template-columns: repeat(4, minmax(0, 1fr)); 
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: min-content;
   gap: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
   flex: 1;
   min-height: 0;
 
-  /* Tablet/Laptop: 2 columns to prevent cramping */
   @media (max-width: 1400px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Mobile: 1 column */
-  @media (max-width: 768px) {
+  /* Tablets Portrait / Mobile: Switch to 1 column stack */
+  @media (max-width: 992px) {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
   }
 
   .grid-item {
-    min-height: 400px;
     display: flex;
     flex-direction: column;
     
+    /* Dynamic Heights for responsiveness */
+    min-height: 450px;
+
+    @media (max-width: 1400px) {
+      min-height: 400px;
+    }
+
     @media (max-width: 768px) {
-      min-height: 350px;
+      min-height: 350px; /* Compact height for tablets */
+    }
+
+    @media (max-width: 480px) {
+      min-height: 300px; /* Even more compact for phones */
     }
   }
 }
 
 /* --- Spanning Classes --- */
-/* Span 1/4 (25%) on Desktop */
-.span-1 { 
-  grid-column: span 1; 
-}
-
-/* Span 2/4 (50%) on Desktop */
-.span-2 {
-  grid-column: span 2;
-  /* On Tablet (2 cols), spanning 2 becomes Full Width.
-     If we want 50% on tablet, we change it to span 1. */
-  @media (max-width: 1400px) { 
-    grid-column: span 1; 
+.span-4 { 
+  grid-column: span 4; 
+  
+  @media (max-width: 1400px) {
+    grid-column: span 2; 
   }
-  /* On Mobile, full width */
-  @media (max-width: 768px) { 
+  @media (max-width: 992px) { 
     grid-column: 1 / -1; 
   }
 }
 
-/* Full Width */
-.span-4, .span-full {
-  grid-column: 1 / -1;
+.span-2 {
+  grid-column: span 2;
+  
+  @media (max-width: 1400px) { 
+    grid-column: span 1; 
+  }
+  @media (max-width: 992px) { 
+    grid-column: 1 / -1; 
+  }
 }
 
-/* Helpers */
 .text-teal { color: var(--teal-blue); }
 .text-success { color: var(--color-success); }
