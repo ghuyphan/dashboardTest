@@ -365,10 +365,10 @@ select:-webkit-autofill {
     outline-offset: 2px;
   }
 
-  /* Hover State: Lift Up */
+  /* Hover State: Lift Up (UPDATED) */
   &:not(:disabled):hover {
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-md);
+    transform: translateY(-3px); /* Increased lift from -2px */
+    box-shadow: var(--box-shadow-lg); /* Increased shadow size from box-shadow-md */
   }
 
   /* Active State: Press Down */
@@ -429,7 +429,7 @@ select:-webkit-autofill {
 
   &:hover:not(:disabled) {
     background-color: rgba(0, 131, 155, 0.1);
-    box-shadow: var(--box-shadow-sm);
+    /* Inherits box-shadow: var(--box-shadow-lg) from .btn:hover */
     [data-theme='dark'] & {
       background-color: rgba(45, 212, 191, 0.1);
     }

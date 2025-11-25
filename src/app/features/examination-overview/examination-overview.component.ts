@@ -412,14 +412,17 @@ export class ExaminationOverviewComponent implements OnInit {
               borderColor: this.palette.bgCard,
               borderWidth: 2,
             },
-            label: { show: false, position: 'center' },
+            label: { 
+              show: true, 
+              position: 'outer',
+              formatter: '{b}: {c} ({d}%)',
+              color: this.palette.textPrimary
+            },
             emphasis: {
               label: {
                 show: true,
-                fontSize: 18,
                 fontWeight: 'bold',
-                color: this.palette.textPrimary,
-              },
+              }
             },
             data: data,
           },

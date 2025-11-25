@@ -63,7 +63,7 @@
     
     /* POLISH: Visible hover in dark mode */
     [data-theme='dark'] & {
-      background-color: rgba(255, 255, 255, 0.1);
+       background-color: var(--surface-card);
       color: var(--teal-blue);
     }
   }

@@ -221,6 +221,7 @@
   gap: 8px;
   margin-top: 8px;
   animation: fadeIn 0.3s ease;
+  pointer-events: auto;
 
   .action-btn {
     background: var(--surface-card);

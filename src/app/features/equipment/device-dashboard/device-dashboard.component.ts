@@ -502,10 +502,12 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           radius: ['50%', '75%'],
           center: ['65%', '50%'],
           data: chartData,
+          // [UPDATE] Added explicit formatter to match other charts
           label: {
             show: true,
             position: 'outer',
             color: this.palette.textPrimary,
+            formatter: '{b}: {c} ({d}%)'
           },
         },
       ],

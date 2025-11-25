@@ -432,7 +432,7 @@ export class ClsLevel6ReportComponent implements OnInit {
       }]
     };
 
-    // --- 4. Group Chart ---
+    // --- 4. Group Chart (Doughnut) ---
     const groupData = Array.from(groupMap, ([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
@@ -458,23 +458,35 @@ export class ClsLevel6ReportComponent implements OnInit {
       },
       legend: { 
         type: 'scroll',
-        orient: 'vertical',
-        right: 0,
-        top: 'center',
+        orient: 'horizontal', // <--- MODIFIED to horizontal
+        bottom: 0,            // <--- MODIFIED to bottom
+        left: 'center',       // <--- MODIFIED to center
         textStyle: { color: this.palette.textSecondary } 
       },
       series: [{
         name: 'Nhóm Dịch Vụ',
         type: 'pie',
         radius: ['45%', '75%'],
-        center: ['40%', '50%'],
+        center: ['50%', '45%'], // <--- MODIFIED to re-center the chart vertically above the legend
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 5,
           borderColor: this.palette.bgCard,
           borderWidth: 2
         },
-        label: { show: false },
+        // Show label with values
+        label: { 
+            show: true, 
+            position: 'outer',
+            color: this.palette.textPrimary, 
+            formatter: '{b}: {c} ({d}%)' 
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontWeight: 'bold',
+          }
+        },
         data: groupData
       }]
     };
