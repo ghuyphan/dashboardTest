@@ -10,8 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router'; 
+import { Router, NavigationEnd } from '@angular/router';
 import { PageEvent } from '@angular/material/paginator';
 import { Subject, of, Observable } from 'rxjs';
 import {
@@ -19,7 +18,6 @@ import {
   switchMap,
   tap,
   catchError,
-  startWith,
   debounceTime,
   map,
   filter,
@@ -34,8 +32,8 @@ import { ToastService } from '../../../core/services/toast.service';
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
-import { environment } from '../../../../environments/environment.development';
-import { DateUtils } from '../../../shared/utils/date.utils';
+// Import Service
+import { DeviceService, DeviceQueryParams } from '../../../core/services/device.service';
 
 // Constants
 const DEFAULT_PAGE_SIZE = 25;
@@ -43,12 +41,6 @@ const DEFAULT_SORT_COLUMN = 'Id';
 const DEFAULT_SORT_DIRECTION: SortDirection = 'asc';
 const SEARCH_DEBOUNCE_TIME = 500;
 const DEVICE_LIST_ROUTE = '/app/equipment/catalog';
-
-// Interfaces
-export interface PagedResult<T> {
-  Items: T[];
-  TotalCount: number;
-}
 
 interface RowActionEvent {
   action: string;
@@ -66,7 +58,7 @@ interface RowActionEvent {
 export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   // Dependency Injection
   private readonly footerService = inject(FooterActionService);
-  private readonly http = inject(HttpClient);
+  private readonly deviceService = inject(DeviceService); // Injected Service
   private readonly searchService = inject(SearchService);
   private readonly modalService = inject(ModalService);
   private readonly toastService = inject(ToastService);
@@ -98,7 +90,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     // [PERFORMANCE FIX]
     // Delay data loading slightly to allow the View Transition animation to complete smoothly.
-    // Without this, the heavy table rendering blocks the main thread during the slide animation.
     setTimeout(() => {
       this.triggerReload();
     }, 300);
@@ -146,7 +137,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     // 2. Data Reload Subscription
     this.reloadTrigger$
       .pipe(
-        // [PERFORMANCE FIX] Removed startWith(null) to prevent immediate loading during init
         tap(() => this.handleLoadStart()),
         switchMap(() => this.loadDevices()),
         takeUntilDestroyed(this.destroyRef)
@@ -160,8 +150,10 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((event: NavigationEnd) => {
-        if (event.urlAfterRedirects === DEVICE_LIST_ROUTE || 
-            event.urlAfterRedirects.split('?')[0] === DEVICE_LIST_ROUTE) {
+        if (
+          event.urlAfterRedirects === DEVICE_LIST_ROUTE ||
+          event.urlAfterRedirects.split('?')[0] === DEVICE_LIST_ROUTE
+        ) {
           this.updateFooterActions();
           this.cdr.markForCheck();
         }
@@ -176,50 +168,23 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadDevices(): Observable<void> {
-    const params = this.buildHttpParams();
-    const url = this.buildApiUrl();
+    const queryParams: DeviceQueryParams = {
+      pageNumber: this.currentPageIndex + 1,
+      pageSize: this.currentPageSize,
+      sortColumn: this.currentSortColumn,
+      sortDirection: this.currentSortDirection,
+      textSearch: this.currentSearchTerm,
+    };
 
-    return this.http.get<PagedResult<Device>>(url, { params }).pipe(
-      map((response) => this.processDeviceResponse(response)),
-      tap(() => this.handleLoadSuccess()),
+    return this.deviceService.getDevicesPaged(queryParams).pipe(
+      tap((response) => {
+        this.pagedDeviceData = response.Items;
+        this.totalDeviceCount = response.TotalCount;
+        this.handleLoadSuccess();
+      }),
+      map(() => undefined), // Return void to match Observable<void>
       catchError((error) => this.handleLoadError(error))
     );
-  }
-
-  private buildHttpParams(): HttpParams {
-    const pageNumber = this.currentPageIndex + 1;
-    let params = new HttpParams()
-      .set('PageNumber', pageNumber.toString())
-      .set('PageSize', this.currentPageSize.toString())
-      .set('sortColumn', this.currentSortColumn)
-      .set('sortDirection', this.currentSortDirection);
-
-    if (this.currentSearchTerm) {
-      params = params.set('TextSearch', this.currentSearchTerm);
-    }
-    return params;
-  }
-
-  private buildApiUrl(): string {
-    const baseUrl = environment.equipmentCatUrl;
-    return this.currentSearchTerm ? `${baseUrl}/page/search` : `${baseUrl}/page`;
-  }
-
-  private processDeviceResponse(response: PagedResult<Device>): void {
-    const formattedData = response.Items.map((device) =>
-      this.formatDeviceDates(device)
-    );
-    this.pagedDeviceData = formattedData;
-    this.totalDeviceCount = response.TotalCount;
-  }
-
-  private formatDeviceDates(device: Device): Device {
-    return {
-      ...device,
-      NgayTao: DateUtils.formatToDisplay(device.NgayTao),
-      NgayMua: DateUtils.formatToDisplay(device.NgayMua),
-      NgayHetHanBH: DateUtils.formatToDisplay(device.NgayHetHanBH),
-    };
   }
 
   private handleLoadSuccess(): void {
@@ -227,7 +192,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cdr.markForCheck();
   }
 
-  private handleLoadError(error: HttpErrorResponse): Observable<void> {
+  private handleLoadError(error: any): Observable<void> {
     console.error('Failed to load devices:', error);
     this.isLoading = false;
     this.pagedDeviceData = [];
@@ -251,8 +216,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public onDeviceSelected(device: Device | undefined): void {
-    // The table component handles toggling, so if we receive undefined, it means deselect.
-    // If we receive a device, it means that device is selected.
     this.selectedDevice = device || null;
     this.updateFooterActions();
     this.cdr.markForCheck();
@@ -325,27 +288,36 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private performDeviceDeletion(device: Device): void {
+    if (!device.Id) return;
+    
     this.isLoading = true;
     this.cdr.markForCheck();
-    const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
 
-    this.http.delete<any>(deleteUrl)
-      .pipe(finalize(() => {
-        this.isLoading = false;
-        this.selectedDevice = null;
-        this.updateFooterActions();
-        this.cdr.markForCheck();
-      }))
+    this.deviceService
+      .deleteDevice(device.Id)
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.selectedDevice = null;
+          this.updateFooterActions();
+          this.cdr.markForCheck();
+        })
+      )
       .subscribe({
         next: (response) => {
-          this.toastService.showSuccess(response?.TenKetQua || 'Xóa thiết bị thành công!');
+          this.toastService.showSuccess(
+            response?.TenKetQua || 'Xóa thiết bị thành công!'
+          );
           if (this.pagedDeviceData.length === 1 && this.currentPageIndex > 0) {
             this.currentPageIndex--;
           }
           this.triggerReload();
         },
         error: (error) => {
-          const msg = error.error?.TenKetQua || error.error?.ErrorMessage || 'Xóa thất bại.';
+          const msg =
+            error.error?.TenKetQua ||
+            error.error?.ErrorMessage ||
+            'Xóa thất bại.';
           this.toastService.showError(msg, 0);
           console.error('Failed to delete device:', error);
         },

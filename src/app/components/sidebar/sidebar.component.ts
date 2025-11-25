@@ -8,7 +8,6 @@ import {
   input,
   effect,
   ChangeDetectionStrategy,
-  OnDestroy, // [1] Import OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -34,7 +33,7 @@ import { FlyoutDirective } from '../../shared/directives/flyout.directive';
   styleUrl: './sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidebarComponent implements OnDestroy {
+export class SidebarComponent {
   // Signal Inputs
   public navItems = input<NavItem[]>([]);
   public isOpen = input<boolean>(false);
@@ -46,9 +45,6 @@ export class SidebarComponent implements OnDestroy {
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
   public isMobileView: boolean = false;
-  
-  // [2] Store timer reference
-  private navTimer: any = null;
 
   private breakpointObserver = inject(BreakpointObserver);
   private router = inject(Router);
@@ -73,13 +69,6 @@ export class SidebarComponent implements OnDestroy {
         this.hideAllSubmenus();
       }
     });
-  }
-
-  // [3] Cleanup on destroy
-  ngOnDestroy(): void {
-    if (this.navTimer) {
-      clearTimeout(this.navTimer);
-    }
   }
 
   hideAllSubmenus(): void {
@@ -135,32 +124,24 @@ export class SidebarComponent implements OnDestroy {
 
   /**
    * Handles navigation clicks.
-   * In mobile view, it hijacks the click event to delay navigation.
+   * In mobile view, it prevents immediate navigation, closes the sidebar,
+   * waits for the animation to finish, and THEN navigates.
    */
   public onNavLinkClick(event: Event, link: string | null | undefined): void {
-    // Always clear pending timers to prevent race conditions (e.g. double clicking)
-    if (this.navTimer) {
-      clearTimeout(this.navTimer);
-      this.navTimer = null;
-    }
-
     if (this.isMobileView && this.isOpen()) {
-      // [4] CRITICAL: Stop RouterLink from firing immediately
-      // 'stopImmediatePropagation' prevents other listeners (like RouterLink) on the same element from running.
-      event.stopImmediatePropagation(); 
+      // 1. Stop the RouterLink from activating immediately
       event.preventDefault();
+      event.stopPropagation();
 
-      // Close the sidebar (starts the CSS transition)
+      // 2. Close the sidebar (starts the CSS transition)
       this.toggleSidebar.emit();
 
-      // Wait for transition
+      // 3. Wait for the transition (300ms matches CSS) before navigating
       if (link) {
-        this.navTimer = setTimeout(() => {
+        setTimeout(() => {
           this.router.navigateByUrl(link);
-          this.navTimer = null;
         }, 300); 
       }
     }
-    // If NOT mobile, we let the event bubble or RouterLink handle it naturally
   }
 }

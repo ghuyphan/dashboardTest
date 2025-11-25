@@ -8,25 +8,25 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 
 import type { EChartsCoreOption } from 'echarts/core';
-import { environment } from '../../../../environments/environment.development';
 
 import { Device } from '../../../shared/models/device.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component'; // Updated Import
+import { TableCardComponent } from '../../../components/table-card/table-card.component';
 import { DateUtils } from '../../../shared/utils/date.utils';
 import {
   ThemeService,
   ThemePalette,
 } from '../../../core/services/theme.service';
+// Import the new Service
+import { DeviceService } from '../../../core/services/device.service';
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -64,14 +64,16 @@ interface ChartFilter {
     CommonModule,
     WidgetCardComponent,
     ChartCardComponent,
-    TableCardComponent, // Added TableCardComponent
+    TableCardComponent,
   ],
   templateUrl: './device-dashboard.component.html',
   styleUrl: './device-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeviceDashboardComponent implements OnInit, OnDestroy {
-  private http = inject(HttpClient);
+  // Dependency Injection
+  // private http = inject(HttpClient); // Removed
+  private deviceService = inject(DeviceService); // Injected Service
   private cd = inject(ChangeDetectorRef);
   private toastService = inject(ToastService);
   private router = inject(Router);
@@ -221,8 +223,9 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   public loadData(): void {
-    this.http
-      .get<Device[]>(environment.equipmentCatUrl)
+    // Use DeviceService
+    this.deviceService
+      .getAllDevices()
       .pipe(
         finalize(() => {
           this.isLoading = false;

@@ -1,12 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation, Inject } from '@angular/core';
-import { CommonModule, CurrencyPipe, DOCUMENT } from '@angular/common'; // Removed DatePipe as it wasn't used in imports
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { CommonModule, CurrencyPipe, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, finalize, map, switchMap, of } from 'rxjs';
+import { Subscription, finalize, switchMap, of } from 'rxjs';
 import { QRCodeComponent } from 'angularx-qrcode';
 
 import { Device } from '../../../shared/models/device.model';
-import { environment } from '../../../../environments/environment.development';
 import { FooterActionService } from '../../../core/services/footer-action.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -16,8 +14,9 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
 import { CustomRouteReuseStrategy } from '../../../core/strategies/custom-route-reuse-strategy';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-// NEW IMPORT
+// Services
 import { PdfService } from '../../../core/services/pdf.service';
+import { DeviceService } from '../../../core/services/device.service';
 
 @Component({
   selector: 'app-device-detail',
@@ -44,11 +43,12 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient,
+    // private http: HttpClient, // Removed
+    private deviceService: DeviceService, // Injected Service
     private footerService: FooterActionService,
     private modalService: ModalService,
     private toastService: ToastService,
-    private pdfService: PdfService, // CHANGED: Injected PdfService
+    private pdfService: PdfService,
     @Inject(DOCUMENT) private document: Document
   ) { }
 
@@ -71,17 +71,11 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
 
   loadDevice(id: string): void {
     this.isLoading = true;
-    const url = `${environment.equipmentCatUrl}/${id}`;
-
+    
     this.deviceSub?.unsubscribe();
 
-    this.deviceSub = this.http.get<Device[]>(url).pipe(
-      map(dataArray => {
-        if (dataArray && dataArray.length > 0) {
-          return dataArray[0];
-        }
-        throw new Error('Không tìm thấy chi tiết cho thiết bị này.');
-      }),
+    // Use DeviceService to fetch data
+    this.deviceSub = this.deviceService.getDeviceById(id).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe({
       next: (device) => {
@@ -153,8 +147,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
     return 'fas fa-hdd';
   }
 
-  // CHANGED: New Method for PDF Printing
-async onPrintReport(device: Device): Promise<void> {
+  async onPrintReport(device: Device): Promise<void> {
     if (!device) return;
     const reportData = {
       device_name: device.Ten || '',
@@ -218,8 +211,8 @@ async onPrintReport(device: Device): Promise<void> {
       },
       {
         label: 'In Biên Bản',
-        icon: 'fas fa-file-pdf', // Changed icon to PDF
-        action: () => this.onPrintReport(device), // Changed to new method
+        icon: 'fas fa-file-pdf', 
+        action: () => this.onPrintReport(device), 
         permission: 'QLThietBi.DMThietBi.RPRINT',
         className: 'btn-primary',
       },
@@ -256,8 +249,8 @@ async onPrintReport(device: Device): Promise<void> {
       switchMap(confirmed => {
         if (confirmed) {
           this.isLoading = true;
-          const deleteUrl = `${environment.equipmentCatUrl}/${device.Id}`;
-          return this.http.delete(deleteUrl);
+          // Use DeviceService to delete
+          return this.deviceService.deleteDevice(device.Id!);
         }
         return of(null);
       })
@@ -269,9 +262,11 @@ async onPrintReport(device: Device): Promise<void> {
           this.goBack();
         }
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.isLoading = false;
-        this.toastService.showError(err.error?.TenKetQua || 'Xóa thất bại.', 0);
+        // Handle error type safely
+        const msg = err.error?.TenKetQua || err.message || 'Xóa thất bại.';
+        this.toastService.showError(msg, 0);
       },
       complete: () => {
         this.isLoading = false;

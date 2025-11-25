@@ -30,10 +30,6 @@
   z-index: 100;
   display: flex;
   justify-content: flex-start;
-
-  /* Optional: Add a subtle top border for separation */
-  border-top: 1px solid var(--border-color);
-
   @media (max-width: 767px) {
     padding: var(--spacing-xs) var(--spacing-md);
   }
