@@ -1,5 +1,6 @@
 <div class="page-container">
   <div class="page-content">
+    
     <app-date-filter
       (filterSubmit)="onDateFilter($event)"
       [isLoading]="isLoading"
@@ -8,28 +9,28 @@
 
     <div class="widget-section">
       <div class="widget-grid">
-        @if (isInitialLoad) { @for (i of [1, 2, 3, 4, 5]; track i) {
-        <app-widget-card
-          [title]="'Loading...'"
-          [isLoading]="true"
-        />
-        } } @else { @for (widget of widgetData; track trackByWidget($index,
-        widget)) {
-        <app-widget-card
-          [icon]="widget.icon"
-          [title]="widget.title"
-          [value]="widget.value"
-          [caption]="widget.caption"
-          [accentColor]="widget.accentColor"
-        />
-        } }
+        @if (isInitialLoad) { 
+          @for (i of [1, 2, 3, 4, 5]; track i) {
+            <app-widget-card [title]="'Loading...'" [isLoading]="true"></app-widget-card>
+          } 
+        } @else { 
+          @for (widget of widgetData; track trackByWidget($index, widget)) {
+            <app-widget-card
+              [icon]="widget.icon"
+              [title]="widget.title"
+              [value]="widget.value"
+              [caption]="widget.caption"
+              [accentColor]="widget.accentColor"
+            ></app-widget-card>
+          } 
+        }
       </div>
     </div>
 
     <div class="dashboard-grid">
-      <!-- Row 1: Main Trend -->
+      
       <app-chart-card
-        class="grid-item span-full"
+        class="grid-item span-4"
         title="Biểu Đồ Tiếp Nhận Theo Ngày"
         icon="fas fa-chart-line"
         iconClass="icon-info"
@@ -40,11 +41,24 @@
       >
       </app-chart-card>
 
-      <!-- Row 2: Split row (Type Pie + Admission Bar) -->
       <app-chart-card
-        class="grid-item span-half"
-        title="Đối Tượng (BHYT / Viện Phí)"
-        icon="fas fa-chart-pie"
+        class="grid-item span-2"
+        title="Tỷ Lệ Bệnh Nhân"
+        subtitle="(Mới / Cũ)"
+        icon="fas fa-user-friends"
+        iconClass="icon-info"
+        [isLoading]="isLoading"
+        [chartOptions]="patientStatusChartOptions"
+        skeletonType="pie"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+      >
+      </app-chart-card>
+
+      <app-chart-card
+        class="grid-item span-2"
+        title="Đối Tượng"
+        subtitle="(BHYT / Viện Phí)"
+        icon="fas fa-wallet"
         iconClass="icon-info"
         [isLoading]="isLoading"
         [chartOptions]="typeChartOptions"
@@ -53,33 +67,7 @@
       >
       </app-chart-card>
 
-      <app-chart-card
-        class="grid-item span-half"
-        title="Hình Thức Tiếp Nhận"
-        icon="fas fa-chart-bar"
-        iconClass="icon-info"
-        [isLoading]="isLoading"
-        [chartOptions]="admissionChartOptions"
-        skeletonType="bar"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-      >
-      </app-chart-card>
-
-      <!-- Row 3: New vs Old Patient (Line Chart) - Full Width -->
-      <app-chart-card
-        class="grid-item span-full"
-        title="Xu hướng Bệnh Mới / Bệnh Cũ"
-        icon="fas fa-user-friends"
-        iconClass="icon-info"
-        [isLoading]="isLoading"
-        [chartOptions]="patientStatusChartOptions"
-        skeletonType="line"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-      >
-      </app-chart-card>
-
-      <!-- Row 4: Data Table -->
-      <div class="content-card grid-item span-full">
+      <div class="content-card grid-item span-4">
         <div class="card-header">
           <div class="card-title-wrapper">
             <h3 class="card-title">
@@ -96,22 +84,23 @@
 
         <div class="card-body table-body">
           @if (isInitialLoad) {
-          <div class="skeleton-rect" style="height: 400px; width: 100%"></div>
+            <div class="skeleton-rect" style="height: 400px; width: 100%"></div>
           } @else {
-          <app-reusable-table
-            [data]="rawData"
-            [columns]="tableColumns"
-            [isLoading]="isLoading"
-            [showPaginator]="true"
-            [pageSize]="10"
-            [pageSizeOptions]="[5, 10, 25, 50]"
-            [clientSideSort]="true"
-            emptyStateText="Không có dữ liệu cho khoảng thời gian này."
-          >
-          </app-reusable-table>
+            <app-reusable-table
+              [data]="rawData"
+              [columns]="tableColumns"
+              [isLoading]="isLoading"
+              [showPaginator]="true"
+              [pageSize]="10"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              [clientSideSort]="true"
+              emptyStateText="Không có dữ liệu cho khoảng thời gian này."
+            >
+            </app-reusable-table>
           }
         </div>
       </div>
+
     </div>
   </div>
 </div>

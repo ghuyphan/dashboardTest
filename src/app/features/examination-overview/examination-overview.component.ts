@@ -254,7 +254,7 @@ export class ExaminationOverviewComponent implements OnInit {
 
     const showPoints = sorted.length < 2;
 
-    // Colors
+    // Colors - PRESERVED FROM ORIGINAL CODE
     const c = {
       total: this.palette.deepSapphire,
       ck: this.palette.primary,
@@ -262,7 +262,7 @@ export class ExaminationOverviewComponent implements OnInit {
       nt: this.palette.warning,
       dnt: this.palette.tealMidtone,
       bhyt: this.palette.secondary,
-      vp: this.palette.warning,
+      vp: this.palette.warning, // Original was warning
       newp: this.palette.chart3, // Cyan/Aqua
       oldp: this.palette.chart2, // Blue
     };
@@ -288,7 +288,7 @@ export class ExaminationOverviewComponent implements OnInit {
       },
     };
 
-    // 1. Trend Chart (Only Categories)
+    // 1. Trend Chart (5 lines - Maintained)
     this.trendChartOptions = {
       ...commonOps,
       legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
@@ -313,6 +313,7 @@ export class ExaminationOverviewComponent implements OnInit {
           showSymbol: showPoints,
           data: sorted.map((d) => d.TONG_LUOT_TIEP_NHAN),
           itemStyle: { color: c.total },
+          z: 10
         },
         {
           name: 'Khám Bệnh (CK)',
@@ -349,106 +350,37 @@ export class ExaminationOverviewComponent implements OnInit {
       ],
     };
 
-    // 2. Type Chart (Pie)
-    const pieTotals = sorted.reduce(
+    // --- AGGREGATION FOR PIE CHARTS ---
+    const totals = sorted.reduce(
       (a, b) => ({
         bhyt: a.bhyt + (b.BHYT || 0),
         vp: a.vp + (b.VIEN_PHI || 0),
+        newp: a.newp + (b.BENH_MOI || 0),
+        oldp: a.oldp + (b.BENH_CU || 0),
       }),
-      { bhyt: 0, vp: 0 }
+      { bhyt: 0, vp: 0, newp: 0, oldp: 0 }
     );
-    
+
+    // 2. Type Chart (Pie) - BHYT vs Vien Phi
     this.typeChartOptions = this.createPieChartOption(
       [
-        { value: pieTotals.bhyt, name: 'BHYT', itemStyle: { color: c.bhyt } },
-        { value: pieTotals.vp, name: 'Viện Phí', itemStyle: { color: c.vp } },
+        { value: totals.bhyt, name: 'BHYT', itemStyle: { color: c.bhyt } },
+        { value: totals.vp, name: 'Viện Phí', itemStyle: { color: c.vp } },
       ],
       commonOps
     );
 
-    // 3. Patient Status Chart (New Line Chart for Old/New)
-    this.patientStatusChartOptions = {
-        ...commonOps,
-        legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
-        xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            data: dates,
-            axisLine: { show: false },
-            axisLabel: { color: this.palette.textPrimary },
-        },
-        yAxis: {
-            type: 'value',
-            splitLine: {
-                lineStyle: { type: 'dashed', color: this.palette.gray200 },
-            },
-        },
-        series: [
-            {
-                name: 'Bệnh Mới',
-                type: 'line',
-                smooth: true,
-                showSymbol: showPoints,
-                data: sorted.map((d) => d.BENH_MOI),
-                itemStyle: { color: c.newp },
-                areaStyle: {
-                    color: {
-                      type: 'linear',
-                      x: 0, y: 0, x2: 0, y2: 1,
-                      colorStops: [
-                        { offset: 0, color: c.newp },
-                        { offset: 1, color: 'rgba(255,255,255,0)' }
-                      ]
-                    },
-                    opacity: 0.2
-                }
-            },
-            {
-                name: 'Bệnh Cũ',
-                type: 'line',
-                smooth: true,
-                showSymbol: showPoints,
-                data: sorted.map((d) => d.BENH_CU),
-                itemStyle: { color: c.oldp },
-            },
-        ],
-    };
-
-    // 4. Admission Chart
-    const barTotals = {
-      ck: sorted.reduce((s, i) => s + (i.LUOT_KHAM_CK || 0), 0),
-      cc: sorted.reduce((s, i) => s + (i.LUOT_CC || 0), 0),
-      nt: sorted.reduce((s, i) => s + (i.LUOT_NT || 0), 0),
-      dnt: sorted.reduce((s, i) => s + (i.LUOT_DNT || 0), 0),
-    };
-
-    this.admissionChartOptions = {
-      ...commonOps,
-      xAxis: {
-        type: 'category',
-        data: ['Khám CK', 'Cấp Cứu', 'Nội Trú', 'ĐT Ngoại Trú'],
-        axisLabel: { color: this.palette.textPrimary },
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
-        },
-      },
-      series: [
-        {
-          type: 'bar',
-          barWidth: '40%',
-          itemStyle: { borderRadius: [4, 4, 0, 0] },
-          data: [
-            { value: barTotals.ck, itemStyle: { color: c.ck } },
-            { value: barTotals.cc, itemStyle: { color: c.cc } },
-            { value: barTotals.nt, itemStyle: { color: c.nt } },
-            { value: barTotals.dnt, itemStyle: { color: c.dnt } },
-          ],
-        },
+    // 3. Patient Status Chart (Converted to Pie) - New vs Old
+    this.patientStatusChartOptions = this.createPieChartOption(
+      [
+        { value: totals.newp, name: 'Bệnh Mới', itemStyle: { color: c.newp } },
+        { value: totals.oldp, name: 'Bệnh Cũ', itemStyle: { color: c.oldp } },
       ],
-    };
+      commonOps
+    );
+
+    // 4. Clean up: Admission Bar Chart removed (Redundant with Trend Chart)
+    this.admissionChartOptions = null;
   }
 
   private createPieChartOption(data: any[], commonOps: any): EChartsCoreOption {

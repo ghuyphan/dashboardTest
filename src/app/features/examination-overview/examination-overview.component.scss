@@ -1,3 +1,10 @@
+@mixin hidden-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :host {
   display: flex;
   flex-direction: column;
@@ -13,200 +20,127 @@
 }
 
 .page-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-sm); 
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  padding: var(--spacing-xs);
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
   gap: var(--spacing-lg);
-  
-  scrollbar-width: none; 
-  &::-webkit-scrollbar { display: none; }
+  @include hidden-scrollbar;
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-md);
+  }
 
   @media (max-width: 480px) {
     padding: var(--spacing-sm);
   }
 }
 
-/* --- 1. Filter Section (Responsive & Themed) --- */
+/* --- Filter Section --- */
 .filter-section {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  
   background-color: var(--surface-card);
   box-shadow: var(--box-shadow-md);
-  
   padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   flex-wrap: wrap;
   gap: var(--spacing-md);
-
-  .filter-controls {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--spacing-md);
-    flex-wrap: wrap;
-    flex: 1;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 140px;
-
-    label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      letter-spacing: 0.5px;
-    }
-  }
-
-  .quick-actions {
-    display: flex;
-    gap: 6px;
-    padding-bottom: 3px;
-    flex-wrap: wrap; 
-    
-    .btn-pill {
-      padding: 6px 16px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      border-radius: 99px;
-      background-color: var(--surface-background);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-
-      &:hover {
-        background-color: var(--gray-100);
-        color: var(--teal-blue);
-        border-color: var(--teal-blue);
-      }
-
-      &.active {
-        background-color: var(--teal-blue);
-        color: #ffffff;
-        border-color: var(--teal-blue);
-        box-shadow: var(--box-shadow-sm);
-      }
-    }
-  }
-
-  .form-control-sm {
-    padding: 8px 12px;
-    background-color: var(--input-bg);
-    border: 1px solid var(--gray-300);
-    color: var(--text-primary);
-    border-radius: var(--border-radius-sm);
-    font-size: 0.9rem;
-    width: 100%;
-    
-    &:focus {
-      outline: none;
-      border-color: var(--teal-blue);
-      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
-    }
-  }
-  
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 38px;
-    padding: 0 20px;
-    border-radius: var(--border-radius-md);
-    font-weight: 500;
-    white-space: nowrap;
-    
-    @media (max-width: 576px) {
-      width: 100%;
-      margin-top: var(--spacing-sm);
-    }
-  }
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
-    
-    .filter-controls {
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--spacing-sm);
-    }
-    
-    .quick-actions {
-      overflow-x: auto;
-      padding-bottom: 5px;
-      width: 100%;
-      -ms-overflow-style: none;  
-      scrollbar-width: none; 
-      &::-webkit-scrollbar { display: none; }
-    }
-  }
 }
 
-/* --- 2. Widget Grid --- */
+/* --- Widget Section --- */
+.widget-section {
+  padding-bottom: 0;
+  flex-shrink: 0;
+}
+
 .widget-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-sm);
+  max-width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
 
   @media (max-width: 480px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* --- 3. Dashboard Grid Layout --- */
+/* --- Dashboard Grid (4 Columns) --- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  /* Desktop: 4 columns allows flexible 25% / 50% / 100% spans */
+  grid-template-columns: repeat(4, minmax(0, 1fr)); 
   gap: var(--spacing-lg);
-  padding-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  flex: 1;
+  min-height: 0;
+
+  /* Tablet/Laptop: 2 columns to prevent cramping */
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Mobile: 1 column */
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
 
   .grid-item {
     min-height: 400px;
-  }
-
-  /* Spans entire width (2 columns) on larger screens */
-  .span-full {
-    grid-column: 1 / -1;
-  }
-
-  /* Spans 1 column on larger screens */
-  .span-half {
-    grid-column: span 1;
-  }
-
-  /* Mobile: Force everything into 1 column */
-  @media (max-width: 992px) {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
     
-    .span-half,
-    .span-full {
-      grid-column: 1 / -1; 
+    @media (max-width: 768px) {
+      min-height: 350px;
     }
   }
 }
 
-/* --- 4. Content Card (Table) --- */
+/* --- Spanning Classes --- */
+/* Span 1/4 (25%) on Desktop */
+.span-1 { 
+  grid-column: span 1; 
+}
+
+/* Span 2/4 (50%) on Desktop */
+.span-2 {
+  grid-column: span 2;
+  /* On Tablet (2 cols), spanning 2 becomes Full Width.
+     If we want 50% on tablet, we change it to span 1. */
+  @media (max-width: 1400px) { 
+    grid-column: span 1; 
+  }
+  /* On Mobile, full width */
+  @media (max-width: 768px) { 
+    grid-column: 1 / -1; 
+  }
+}
+
+/* Full Width */
+.span-4, .span-full {
+  grid-column: 1 / -1;
+}
+
+/* --- Content Card (Table) --- */
 .content-card {
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
   background-color: var(--surface-card);
-  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%; 
 
   .card-header {
     display: flex;
@@ -216,6 +150,12 @@
     padding-bottom: var(--spacing-sm);
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
+  }
+
+  .card-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
 
   .card-title {
@@ -258,13 +198,7 @@
 
 /* Helpers */
 .text-teal { color: var(--teal-blue); }
-.text-blue { color: var(--peacock-blue); }
-.text-orange { color: var(--color-warning); }
 .text-success { color: var(--color-success); }
-
-:host-context([data-theme='dark']) {
-  .text-teal { color: var(--dark-teal); }
-}
 
 .btn-icon {
   background: none;
@@ -274,6 +208,5 @@
   font-size: 1.1rem;
   transition: color 0.2s;
   padding: 4px;
-  
   &:hover { color: var(--color-success); }
 }
