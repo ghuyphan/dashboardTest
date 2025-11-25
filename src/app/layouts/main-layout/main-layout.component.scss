@@ -49,34 +49,20 @@
   }
 }
 
-/* --- OPTIMIZATION START --- */
 .main-panel {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  
-  /* Use padding for spacing instead of physically moving the element with margin */
   width: 100%; 
   margin-left: 0;
   padding-left: var(--sidebar-width);
-  
   background-color: var(--white);
-  
-  /* [PERFORMANCE FIX] 
-     Disable transition on padding-left. 
-     This ensures the content "snaps" to the new width instantly instead of animating.
-     This prevents the browser from recalculating sticky header positions 
-     on every frame, eliminating the lag. 
-  */
-  /* transition: padding-left var(--transition-duration) var(--transition-smooth); */
-  /* will-change: padding-left; */
 }
 
 .main-panel.collapsed {
   padding-left: var(--sidebar-width-collapsed);
 }
-/* --- OPTIMIZATION END --- */
 
 @media (max-width: 992px) {
   .main-panel {
@@ -153,20 +139,5 @@ app-header {
   &.hidden {
     transform: translateY(-100%);
     margin-bottom: calc(var(--header-height) * -1);
-  }
-}
-
-:host ::ng-deep app-action-footer {
-  display: block;
-  flex-shrink: 0;
-  background-color: var(--white);
-  z-index: 980;
-  transform: translateY(0);
-  transition: transform var(--transition-duration) var(--transition-smooth),
-    margin-top var(--transition-duration) var(--transition-smooth);
-
-  &.hidden {
-    transform: translateY(100%);
-    margin-top: calc(var(--footer-height) * -1);
   }
 }

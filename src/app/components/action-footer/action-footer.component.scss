@@ -1,17 +1,38 @@
-/* These styles were moved from the global styles.scss 
-  to encapsulate them within the component.
-*/
+:host {
+  /* Layout & Positioning */
+  display: block;
+  flex-shrink: 0;
+  
+  /* Use semantic variable for better Dark Mode support */
+  background-color: var(--surface-card); 
+  
+  /* Layering */
+  z-index: 980;
+  
+  /* Animation for Hide/Show states */
+  transform: translateY(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Hidden State (Applied via class binding) */
+  &.hidden {
+    transform: translateY(100%);
+    /* Negative margin to reclaim space when hidden (approx --footer-height) */
+    margin-top: -55px; 
+  }
+}
 
 .action-footer-container {
   position: sticky;
   bottom: 0;
   width: 100%;
-  // background-color: var(--white);
   padding: var(--spacing-sm) var(--spacing-md);
-  // box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.04);
   z-index: 100;
   display: flex;
   justify-content: flex-start;
+
+  /* Optional: Add a subtle top border for separation */
+  border-top: 1px solid var(--border-color);
 
   @media (max-width: 767px) {
     padding: var(--spacing-xs) var(--spacing-md);
@@ -24,7 +45,7 @@
   gap: var(--spacing-sm);
 
   @media (max-width: 767px) {
-    /* Keep buttons in a row, but they will be small now */
+    /* Keep buttons in a row on mobile */
     flex-wrap: nowrap;
     width: 100%;
     justify-content: flex-start;
@@ -38,9 +59,7 @@
   }
 }
 
-/* Use :host to apply styles to the component's buttons,
-  replacing the global app-action-footer .btn rules.
-*/
+/* Scoped Button Styles */
 :host .btn {
   /* Desktop styles */
   display: inline-flex;
@@ -49,28 +68,30 @@
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.875rem;
   
-  /* Required for the pseudo-element fix to position correctly */
+  /* Required for the pseudo-element fix */
   position: relative; 
 
-  /* UPDATED: Use standard spring transition for consistency */
+  /* Standard spring transition */
   transition: transform 0.2s var(--transition-spring),
     box-shadow 0.2s var(--transition-smooth);
     
   text-align: center;
+  cursor: pointer;
+  border-radius: var(--border-radius-md);
 
-  /* STABILITY FIX: Prevent flicker when lifting */
+  /* Stability Fix: Prevent flicker when lifting */
   &::after {
     content: '';
     position: absolute;
-    inset: 0;        /* Cover the button */
-    bottom: -8px;    /* Extend hit area downwards to catch the cursor */
-    z-index: 1;      /* Sit above backgrounds */
+    inset: 0;
+    bottom: -8px;
+    z-index: 1;
     background: transparent;
     border-radius: inherit;
   }
 
   @media (max-width: 767px) {
-    /* --- MOBILE ICON BUTTON STYLES --- */
+    /* --- Mobile Icon Button Styles --- */
     flex: 0 0 auto;
     width: 2.25rem;
     height: 2.25rem;
@@ -80,7 +101,7 @@
     line-height: 1; 
   }
 
-  /* UPDATED: Apply standard interaction physics */
+  /* Interaction Physics */
   &:not(:disabled):hover {
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-md);
@@ -99,7 +120,6 @@
 }
 
 :host .btn i {
-  /* Remove any default browser/icon font margins */
   margin: 0;
 }
 
