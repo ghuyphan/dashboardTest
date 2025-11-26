@@ -3,10 +3,10 @@
   width: 100%;
 }
 
-/* Ensure input labels are visible in dark mode */
+/* Ensure input labels use semantic colors */
 .auth-input-group label {
-  /* variable --gray-700 maps to Primary Text in both Light and Dark modes */
-  color: var(--gray-700); 
+  color: var(--text-primary); 
+  font-weight: 500;
 }
 
 .toggle-password {
@@ -18,8 +18,8 @@
   padding: 0 clamp(12px, 3vw, 1rem);
   cursor: pointer;
   
-  /* Default Icon Color (Muted) */
-  color: var(--gray-400);
+  /* Semantic Icon Color */
+  color: var(--text-disabled);
   
   font-size: clamp(15px, 4vw, 17px);
   line-height: 1;
@@ -33,7 +33,6 @@
 
   &:hover,
   &:focus {
-    /* Brand color on interaction */
     color: var(--teal-blue);
   }
 }
@@ -53,14 +52,13 @@
   align-items: center;
   gap: clamp(6px, 2vw, 0.5rem);
   
-  /* Use Semantic Variable */
-  color: var(--gray-700);
+  color: var(--text-primary); /* Semantic Variable */
   cursor: pointer;
 
   label {
     cursor: pointer;
     margin-bottom: 0;
-    font-weight: var(--font-weight-normal);
+    font-weight: 400;
     font-size: inherit;
     white-space: nowrap;
   }
@@ -73,8 +71,22 @@
     margin-right: clamp(2px, 1vw, 0.25rem);
     vertical-align: middle;
     flex-shrink: 0;
+    border: 1px solid var(--border-color); 
+    cursor: pointer;
+  }
+}
+
+.forgot-password {
+  a {
+    color: var(--teal-blue);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
     
-    border: 1px solid var(--gray-300); 
+    &:hover {
+      text-decoration: underline;
+      color: var(--peacock-blue);
+    }
   }
 }
 
@@ -83,8 +95,8 @@
   align-items: center;
   margin: clamp(20px, 5vw, 2rem) 0;
   
-  /* Muted text for the "OR" label */
-  color: var(--gray-500);
+  /* Semantic Muted Text */
+  color: var(--text-secondary);
   
   font-size: clamp(0.875rem, 3.5vw, 15px);
   gap: clamp(8px, 2vw, 12px);
@@ -100,10 +112,7 @@
 .support {
   text-align: center;
   font-size: clamp(0.875rem, 3.5vw, 15px);
-  
-  /* Use Semantic Variable for Secondary Text */
   color: var(--text-secondary);
-  
   line-height: 1.6;
 
   a+a {
@@ -127,12 +136,12 @@
   }
 }
 
-/* --- UPDATED AUTH BUTTON --- */
+/* --- AUTH BUTTON --- */
 .auth-btn {
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
   background: var(--teal-blue);
-  color: #FFFFFF;
+  color: #FFFFFF; /* Always white text on primary button */
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
   font-size: clamp(0.9375rem, 4vw, 16px);
@@ -140,28 +149,17 @@
   cursor: pointer;
   min-height: 44px;
   
-  /* Standard Transition */
   transition: all 0.2s var(--transition-spring);
 
   &:hover:not(:disabled) {
-    background: #145248; 
-    /* Standard Lift */
+    background: var(--peacock-blue);
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-md);
   }
   
   &:active:not(:disabled) {
-    /* Press Down */
     transform: translateY(0);
     box-shadow: var(--box-shadow-sm);
-  }
-
-  [data-theme='dark'] & {
-    color: #020617; 
-    &:hover:not(:disabled) {
-       background: var(--peacock-blue);
-       box-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
-    }
   }
 
   &:disabled { 

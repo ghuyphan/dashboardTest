@@ -43,22 +43,33 @@ $light-tokens: (
   "surface-background": map.get($base-palette, "slate-50"),
   "surface-card": map.get($base-palette, "white"),
   "surface-overlay": rgba(255, 255, 255, 0.95),
-  "surface-toast": rgba(255, 255, 255, 0.96),
+  "surface-toast": map.get($base-palette, "white"),
   "input-bg": map.get($base-palette, "slate-50"),
+
   // Text
   "text-primary": map.get($base-palette, "slate-900"),
   "text-secondary": map.get($base-palette, "slate-600"),
   "text-disabled": map.get($base-palette, "slate-400"),
+
   // Borders
   "border-color": map.get($base-palette, "slate-200"),
+
   // Brand Mappings
   "primary": map.get($base-palette, "teal-blue"),
   "secondary": map.get($base-palette, "peacock-blue"),
+
+  // Custom Brand Colors
+  "deep-sapphire": map.get($base-palette, "deep-sapphire"),
+  "teal-midtone": map.get($base-palette, "teal-midtone"),
+  "pastel-coral": map.get($base-palette, "pastel-coral"),
+  "peacock-light": #66a9c5,
+
   // Status
   "color-danger": map.get($base-palette, "danger"),
   "color-success": map.get($base-palette, "success"),
   "color-warning": map.get($base-palette, "warning"),
   "color-info": map.get($base-palette, "teal-blue"),
+
   // Charts
   "chart-1": map.get($base-palette, "teal-blue"),
   "chart-2": map.get($base-palette, "peacock-blue"),
@@ -69,39 +80,47 @@ $light-tokens: (
   "chart-9": map.get($base-palette, "beige-midtone")
 );
 
-// --- Semantic Tokens (Dark Theme) ---
+// --- Semantic Tokens (Dark Theme - Polished) ---
 $dark-tokens: (
-  // Backgrounds
-  "surface-background": map.get($base-palette, "slate-950"),
-  "surface-card": map.get($base-palette, "slate-800"),
-  "surface-overlay": rgba(15, 23, 42, 0.85),
-  "surface-toast": map.get($base-palette, "slate-700"),
-  "input-bg": #020617,
+  // Backgrounds (Rich dark blue/slate scale)
+  "surface-background": #020617, // Slate 950 (Deepest)
+  "surface-card": #0f172a,       // Slate 900 (Card layer)
+  "surface-overlay": rgba(2, 6, 23, 0.85),
+  "surface-toast": #1e293b,      // Slate 800 (Elevated)
+  "input-bg": #1e293b,           // Visible inputs
 
-  // Text
-  "text-primary": map.get($base-palette, "slate-100"),
-  "text-secondary": map.get($base-palette, "slate-400"),
-  "text-disabled": map.get($base-palette, "slate-600"),
-  // Borders
-  "border-color": map.get($base-palette, "slate-700"),
-  // Brand Mappings (Adjusted for Dark Mode contrast)
-  "primary": #2dd4bf,
-  "secondary": #38bdf8,
+  // Text (High Contrast)
+  "text-primary": #f8fafc,       // Slate 50
+  "text-secondary": #94a3b8,     // Slate 400 (Readable gray)
+  "text-disabled": #475569,      // Slate 600
 
-  // Status
-  "color-danger": #f87171,
-  "color-success": #4ade80,
-  "color-warning": #fbbf24,
-  "color-info": #38bdf8,
+  // Borders (Subtle)
+  "border-color": rgba(255, 255, 255, 0.12),
 
-  // Charts
-  "chart-1": #2dd4bf,
-  "chart-2": #60a5fa,
-  "chart-3": #14b8a6,
-  "chart-6": #fb923c,
-  "chart-7": #94a3b8,
-  "chart-8": #818cf8,
-  "chart-9": #f472b6
+  // Brand Mappings (Bright/Neon for Dark Mode visibility)
+  "primary": #2dd4bf,   // Teal 400
+  "secondary": #38bdf8, // Sky 400
+
+  // Custom Brand Colors (Inverted/Brightened)
+  "deep-sapphire": #818cf8, // Indigo 400
+  "teal-midtone": #22d3ee,  // Cyan 400
+  "pastel-coral": #fda4af,  // Rose 300
+  "peacock-light": #7dd3fc, // Sky 300
+
+  // Status (Softer Pastels for Dark Mode)
+  "color-danger": #f87171,  // Red 400
+  "color-success": #4ade80, // Green 400
+  "color-warning": #fbbf24, // Amber 400
+  "color-info": #38bdf8,    // Sky 400
+
+  // Charts (Vibrant)
+  "chart-1": #2dd4bf, // Teal
+  "chart-2": #60a5fa, // Blue
+  "chart-3": #34d399, // Emerald
+  "chart-6": #fb923c, // Orange
+  "chart-7": #94a3b8, // Gray
+  "chart-8": #818cf8, // Indigo
+  "chart-9": #f472b6  // Pink
 );
 
 // Mixin to generate CSS variables from maps
@@ -123,15 +142,15 @@ $dark-tokens: (
   /* --- SHARED SETTINGS --- */
   --font-family-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-size-base: 1rem;
+  --font-size-base: 0.9375rem;
   --line-height-base: 1.5;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
 
-  --header-height: 50px;
-  --sidebar-width: 240px;
-  --sidebar-width-collapsed: 60px;
+  --header-height: 60px;
+  --sidebar-width: 250px;
+  --sidebar-width-collapsed: 64px;
 
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -141,7 +160,7 @@ $dark-tokens: (
   --spacing-xl: 2rem;
   --spacing-xxl: 3rem;
 
-  --border-radius-sm: 0.25rem;
+  --border-radius-sm: 0.375rem;
   --border-radius-md: 0.5rem;
   --border-radius-lg: 0.75rem;
   --border-radius-full: 9999px;
@@ -158,20 +177,15 @@ $dark-tokens: (
     0 2px 4px -2px rgb(0 0 0 / 0.1);
   --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
     0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-elevation: 0 20px 25px -5px rgb(0 0 0 / 0.1),
-    0 8px 10px -6px rgb(0 0 0 / 0.1);
 
   // Component Specific Defaults
   --table-header-bg: var(--teal-blue);
   --table-header-text: #ffffff;
 
-  // Chart Extras
+  // Misc Aliases (Legacy)
   --teal-blue-light: #66b9c9;
   --teal-blue-dark: #005e70;
-  --peacock-blue-light: #66a9c5;
-  --peacock-blue-dark: #004d6a;
   --aqua-island-light: #cdeceb;
-  --deep-sapphire-light: #5a6da3;
 
   /* 2. Apply Light Tokens by default */
   @include create-theme-vars($light-tokens);
@@ -198,56 +212,49 @@ $dark-tokens: (
 [data-theme="dark"] {
   @include create-theme-vars($dark-tokens);
 
-  --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5),
-    0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
-  --shadow-elevation: 0 20px 25px -5px rgba(0, 0, 0, 0.6),
-    0 8px 10px -6px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 20px 0px rgba(45, 212, 191, 0.15);
+  // Dark Mode Shadows: lighter, more subtle, relying on borders for depth
+  --box-shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --box-shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --box-shadow-lg: 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  
+  // Re-map Grays for Semantic correctness in Dark Mode (Inverted Scale)
+  --gray-50: #020617;  // Slate 950
+  --gray-100: #0f172a; // Slate 900
+  --gray-200: #1e293b; // Slate 800
+  --gray-300: #334155; // Slate 700
+  --gray-400: #475569; // Slate 600
+  --gray-500: #64748b; // Slate 500
+  --gray-600: #94a3b8; // Slate 400 (Text Secondary)
+  --gray-700: #cbd5e1; // Slate 300
+  --gray-800: #f1f5f9; // Slate 100
+  --gray-900: #ffffff; // White
 
-  // Re-map Grays for Semantic correctness in Dark Mode
-  --gray-50: var(--slate-950);
-  --gray-100: var(--slate-900);
-  --gray-200: var(--slate-800);
-  --gray-300: var(--slate-700);
-  --gray-400: var(--slate-500);
-  --gray-500: var(--slate-400);
-  --gray-600: var(--slate-300);
-  --gray-700: var(--slate-200);
-  --gray-800: var(--slate-100);
-  --gray-900: #ffffff;
-  --white: var(--slate-800); // Component bg mapping
+  // Special mapping for components
+  --white: var(--surface-card);
+  
+  // Table Header in Dark Mode (Darker background)
+  --table-header-bg: #1e293b;
+  --table-header-text: #e2e8f0;
+  
+  // Background utilities with transparency
+  --aqua-island-light: rgba(45, 212, 191, 0.15); // Transparent Teal
+  --teal-blue-light: rgba(45, 212, 191, 0.2);
 }
 
 /* ==================================================
    3. ANGULAR MATERIAL THEMES
    ================================================== */
-$mat-light-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    density: (
-      scale: 0,
-    ),
-  )
-);
+$mat-light-theme: mat.define-theme((
+  color: (theme-type: light, primary: mat.$azure-palette, tertiary: mat.$blue-palette),
+  density: (scale: 0)
+));
 
-$mat-dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    density: (
-      scale: 0,
-    ),
-  )
-);
+$mat-dark-theme: mat.define-theme((
+  color: (theme-type: dark, primary: mat.$azure-palette, tertiary: mat.$blue-palette),
+  density: (scale: 0)
+));
 
 html {
   height: 100%;
@@ -261,15 +268,15 @@ html {
 [data-theme="dark"] {
   @include mat.all-component-colors($mat-dark-theme);
 
-  // Material Overrides for Dark Mode consistency
+  // Fix Material Overlays/Panels in Dark Mode
   .mat-mdc-menu-panel,
   .mat-mdc-dialog-surface,
   .mat-mdc-select-panel,
   .mat-mdc-autocomplete-panel {
     background-color: var(--surface-card) !important;
     color: var(--text-primary) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--shadow-elevation) !important;
+    border: 1px solid var(--border-color); // Add border for definition against dark bg
+    box-shadow: var(--box-shadow-lg) !important;
   }
 
   .mat-mdc-option {
@@ -278,14 +285,17 @@ html {
       background-color: rgba(255, 255, 255, 0.05) !important;
     }
     &.mdc-list-item--selected {
-      background-color: rgba(45, 212, 191, 0.15) !important;
-      color: var(--teal-blue) !important;
+      background-color: rgba(45, 212, 191, 0.15) !important; // Teal tint
+      color: var(--primary) !important;
     }
   }
-
-  .mat-mdc-form-field,
-  .mat-mdc-input-element {
-    caret-color: var(--teal-blue) !important;
+  
+  /* Fix Material Form Fields colors in Dark Mode */
+  .mdc-text-field--outlined {
+    --mdc-outlined-text-field-outline-color: var(--border-color);
+    --mdc-outlined-text-field-focus-outline-color: var(--primary);
+    --mdc-outlined-text-field-label-text-color: var(--text-secondary);
+    --mdc-outlined-text-field-input-text-color: var(--text-primary);
   }
 }
 
@@ -304,7 +314,7 @@ body {
   line-height: var(--line-height-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 app-root {
@@ -322,56 +332,37 @@ router-outlet + * {
   height: 100%;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-@import "@angular/cdk/overlay-prebuilt.css";
-
 /* ==================================================
    5. UTILITY CLASSES & COMPONENTS
    ================================================== */
 
 /* --- Global Resets --- */
-*,
-*::before,
-*::after {
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: var(--font-weight-bold);
-  line-height: 1.2;
+  line-height: 1.25;
   color: var(--text-primary);
 }
-h1 {
-  font-size: 2.25rem;
-}
-h2 {
-  font-size: 1.875rem;
-}
-h3 {
-  font-size: 1.5rem;
-}
-h4 {
-  font-size: 1.25rem;
-}
-p {
-  margin-bottom: var(--spacing-md);
-}
+h1 { font-size: 2.25rem; }
+h2 { font-size: 1.875rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+
+p { margin-bottom: var(--spacing-md); }
 
 a {
-  color: var(--teal-blue);
+  color: var(--primary);
   text-decoration: none;
   transition: color 0.2s;
   &:hover {
     text-decoration: underline;
-    color: var(--peacock-blue);
+    color: var(--secondary);
   }
 }
 
@@ -389,16 +380,17 @@ a {
   border: 2px solid transparent;
   background-clip: content-box;
   min-height: 40px;
-  &:hover {
-    background-color: var(--gray-400);
-  }
+}
+[data-theme="dark"] *::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.2);
+  &:hover { background-color: rgba(255,255,255,0.3); }
 }
 
 /* --- Autofill Override --- */
 input:-webkit-autofill,
 textarea:-webkit-autofill,
 select:-webkit-autofill {
-  -webkit-text-fill-color: var(--gray-700);
+  -webkit-text-fill-color: var(--text-primary) !important;
   -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
@@ -464,19 +456,18 @@ select:-webkit-autofill {
   background-color: var(--primary);
   color: #ffffff;
   border-color: var(--primary);
+
+  [data-theme="dark"] & {
+    color: #020617; // Black text on bright teal
+    &:hover:not(:disabled) {
+      background-color: var(--secondary);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5); // Glow effect
+    }
+  }
+
   &:hover:not(:disabled) {
     background-color: var(--secondary);
     color: #ffffff;
-  }
-
-  [data-theme="dark"] & {
-    color: #020617;
-    font-weight: 600;
-    &:hover:not(:disabled) {
-      background-color: var(--secondary);
-      color: #000000;
-      box-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
-    }
   }
 }
 
@@ -484,6 +475,18 @@ select:-webkit-autofill {
   background-color: var(--gray-200);
   color: var(--gray-800);
   border-color: var(--gray-200);
+
+  [data-theme="dark"] & {
+    background-color: rgba(255, 255, 255, 0.1); // Transparent white
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
   &:hover:not(:disabled) {
     background-color: var(--gray-300);
     color: var(--gray-900);
@@ -505,43 +508,21 @@ select:-webkit-autofill {
 
 /* --- Animations --- */
 @keyframes slideDownFade {
-  from {
-    opacity: 0;
-    transform: translateY(-0.75rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-0.75rem); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 @keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 @keyframes skeleton-pulse {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 /* Focus & Shimmer */
@@ -604,7 +585,7 @@ select:-webkit-autofill {
   width: 40px;
   height: 40px;
   border: 3px solid var(--gray-200);
-  border-top-color: var(--teal-blue);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: app-spin 0.8s linear infinite;
   flex-shrink: 0;
@@ -621,16 +602,14 @@ select:-webkit-autofill {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-md);
-  color: var(--gray-600);
+  color: var(--text-secondary);
   font-size: 0.95rem;
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-xl);
   height: 100%;
   width: 100%;
   min-height: 200px;
-  p {
-    margin: 0;
-  }
+  p { margin: 0; }
 }
 
 .app-loading-overlay {
@@ -660,7 +639,7 @@ body > ul.submenu.open {
   box-shadow: var(--box-shadow-lg);
 
   [data-theme="dark"] & {
-    border: none;
+    border: 1px solid var(--border-color);
     box-shadow: var(--shadow-elevation);
   }
 
@@ -686,7 +665,7 @@ body > ul.submenu.open {
       margin: 0 0 var(--spacing-xs) 0;
       font-size: 0.875rem;
       border-radius: 0.375rem;
-      color: var(--text-secondary); /* Updated to match sidebar default */
+      color: var(--text-secondary);
       font-weight: var(--font-weight-normal);
       transition: background-color 0.2s ease, color 0.2s ease;
       overflow: hidden;
@@ -708,16 +687,14 @@ body > ul.submenu.open {
       }
 
       &:hover {
-        background-color: var(--gray-200); /* Updated to match sidebar */
+        background-color: var(--gray-200);
         color: var(--text-primary);
-        i {
-          transform: scale(1.15);
-        }
+        i { transform: scale(1.15); }
       }
 
       &.active {
-        color: var(--teal-blue); /* Updated to match sidebar */
-        background-color: var(--gray-200); /* Updated to match sidebar */
+        color: var(--primary);
+        background-color: var(--gray-200);
         font-weight: 600;
 
         &::before {
@@ -727,27 +704,18 @@ body > ul.submenu.open {
           top: var(--spacing-xs);
           bottom: var(--spacing-xs);
           width: var(--spacing-xs);
-          background-color: var(--aqua-island);
+          background-color: var(--chart-3); // aqua-island
           border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
           display: block;
         }
       }
     }
-    &:last-child a {
-      margin-bottom: var(--spacing-xs);
-    }
   }
 }
 
 @keyframes flyout-menu-fade-in {
-  from {
-    opacity: 0;
-    transform: translateX(-8px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
+  from { opacity: 0; transform: translateX(-8px) scale(0.95); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
 }
 
 .app-modal-backdrop {
@@ -781,28 +749,21 @@ body > ul.submenu.open {
   color: #ffffff;
   background-color: var(--gray-500); // Default
 }
-.status-in-use {
-  background-color: var(--secondary);
-}
-.status-ready {
-  background-color: var(--color-success);
-}
-.status-maintenance {
-  background-color: var(--gray-500);
-}
+.status-in-use { background-color: var(--secondary); }
+.status-ready { background-color: var(--color-success); }
+.status-maintenance { background-color: var(--gray-500); }
 .status-repair {
   background-color: var(--color-warning);
   color: #000;
 }
-.status-broken {
-  background-color: var(--color-danger);
-}
-.status-default {
-  background-color: var(--gray-500);
-}
+.status-broken { background-color: var(--color-danger); }
+.status-default { background-color: var(--gray-500); }
 
 .skeleton {
   background-color: var(--gray-200);
+  [data-theme="dark"] & {
+    background-color: rgba(255,255,255,0.08);
+  }
   border-radius: var(--border-radius-md);
   animation: skeleton-pulse 1.5s infinite ease-in-out;
 }
@@ -830,7 +791,7 @@ body > ul.submenu.open {
     font-size: clamp(0.875rem, 3.5vw, 15px);
     font-weight: 600;
     margin-bottom: clamp(6px, 2vw, 0.5rem);
-    color: var(--gray-700);
+    color: var(--text-secondary);
   }
   .input-wrapper {
     position: relative;
@@ -841,9 +802,9 @@ body > ul.submenu.open {
   input {
     width: 100%;
     padding: clamp(12px, 3vw, 1rem) clamp(40px, 10vw, 3rem);
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--border-color);
     background: var(--input-bg);
-    color: var(--gray-700);
+    color: var(--text-primary);
     border-radius: clamp(10px, 3vw, 14px);
     font-size: clamp(0.875rem, 3.5vw, 1rem);
     transition: all 0.3s ease;
@@ -852,11 +813,11 @@ body > ul.submenu.open {
     min-height: 44px;
 
     &:focus {
-      border-color: var(--teal-blue);
+      border-color: var(--primary);
       background: var(--surface-card);
-      box-shadow: 0 0 0 3px rgba(3, 132, 143, 0.2);
+      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2);
       ~ .input-icon {
-        color: var(--teal-blue);
+        color: var(--primary);
       }
       [data-theme="dark"] & {
         box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
@@ -873,7 +834,7 @@ body > ul.submenu.open {
   .input-icon {
     position: absolute;
     left: clamp(12px, 3vw, 1rem);
-    color: var(--gray-300);
+    color: var(--text-disabled);
     font-size: clamp(16px, 4vw, 18px);
     transition: color 0.25s ease;
     pointer-events: none;
@@ -889,7 +850,7 @@ body > ul.submenu.open {
 .auth-btn {
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
-  background: var(--teal-blue);
+  background: var(--primary);
   color: #ffffff;
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
@@ -900,13 +861,13 @@ body > ul.submenu.open {
   min-height: 44px;
 
   &:hover:not(:disabled) {
-    background: #145248;
+    background: var(--secondary);
     transform: translateY(-1px);
   }
   [data-theme="dark"] & {
     color: #020617;
     &:hover:not(:disabled) {
-      background: var(--peacock-blue);
+      background: var(--secondary);
       box-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
     }
   }
@@ -918,12 +879,12 @@ body > ul.submenu.open {
 }
 
 .auth-link {
-  color: var(--teal-blue);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s;
   &:hover {
-    color: var(--peacock-blue);
+    color: var(--secondary);
     text-decoration: underline;
   }
 }
@@ -941,25 +902,6 @@ body > ul.submenu.open {
 }
 ::view-transition-new(auth-card) {
   animation: none;
-}
-
-/* --- Material Panel Overrides --- */
-.mat-mdc-menu-panel,
-.mat-mdc-dialog-surface,
-.mat-mdc-select-panel,
-.mat-mdc-autocomplete-panel {
-  background-color: var(--surface-card) !important;
-  color: var(--text-primary) !important;
-}
-
-.mat-mdc-option {
-  color: var(--text-primary) !important;
-  &:hover:not(.mdc-list-item--disabled) {
-    background-color: var(--gray-100) !important;
-  }
-  &.mdc-list-item--selected {
-    background-color: rgba(0, 131, 155, 0.1) !important;
-  }
 }
 
 /* --- Mobile & Print --- */
@@ -1005,4 +947,37 @@ body > ul.submenu.open {
     height: auto !important;
     overflow: visible !important;
   }
+}
+
+/* ==================================================
+   THEME CURTAIN OVERLAY
+   ================================================== */
+.theme-transition-curtain {
+  position: fixed;
+  inset: 0; /* top:0; left:0; right:0; bottom:0; */
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: curtainFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  background-color: var(--surface-background);
+  &.going-dark {
+    background-color: var(--slate-900); /* Slate 950 (Dark BG) */
+    color: #fff;
+  }
+  &.going-light {
+    background-color: var(--slate-50); /* Slate 50 (Light BG) */
+    color: #0f172a;
+  }
+
+  .curtain-loader {
+    font-size: 2rem;
+    opacity: 0.5;
+  }
+}
+
+@keyframes curtainFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

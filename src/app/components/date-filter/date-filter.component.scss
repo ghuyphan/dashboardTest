@@ -1,35 +1,51 @@
 :host {
+  // Sets the custom element as a block container for layout
   display: block;
 }
 
+// --- Filter Card Container ---
+// Acts as the main wrapper for the filter components.
 .filter-card {
+  // Surface styles
   background-color: var(--surface-card);
   box-shadow: var(--box-shadow-md);
   padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
+  border: 1px solid transparent; // Base border for dark mode support
 
-  /* Responsive: Adjust padding on smaller screens */
+  // Flex layout for primary contents
+  display: flex;
+  align-items: flex-end; // Aligns items to the bottom (e.g., inputs and buttons)
+  justify-content: space-between; // Separates the input group and action buttons
+  flex-wrap: wrap; // Allows items to wrap on smaller screens
+  gap: var(--spacing-md); // Consistent spacing between main sections
+
+  /* Dark Mode Support: Applied to the card when the 'data-theme' is set */
+  [data-theme='dark'] & {
+    border-color: var(--border-color);
+  }
+
+  // Responsive: Adjust padding on smaller screens (Mobile first - 480px break)
   @media (max-width: 480px) {
     padding: var(--spacing-sm);
   }
 }
 
+// --- Input Fields and Selectors Container ---
+// Houses all individual filter groups.
 .filter-inputs {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-md); // Space between individual filter groups
 }
 
+// --- Individual Filter Group (Label + Input) ---
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 6px; // Space between label and input
 
   label {
+    // Typography for the label
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -38,87 +54,95 @@
   }
 }
 
+// --- Small Form Control (Input/Select/Textarea) ---
 .form-control-sm {
+  // Sizing and background
   padding: 8px 12px;
   background-color: var(--input-bg);
-  border: 1px solid var(--gray-300);
-  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   font-size: 0.9rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  color: var(--text-primary);
   
-  /* Ensure full width in flex containers */
-  width: 100%;
-  box-sizing: border-box;
+  // Layout and transition
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%; // Ensures full width within flex containers
+  box-sizing: border-box; // Ensures padding/border is included in the width
 
+  // Focus state for accessibility and visual feedback
   &:focus {
     outline: none;
     border-color: var(--teal-blue);
-    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
+    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1); // Teal focus ring
   }
 }
 
+// --- Container for Pill Buttons ---
 .quick-actions {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: wrap; // Allows pills to wrap if container width is limited
 }
 
+// --- Pill Button Styles (for quick-actions) ---
 .btn-pill {
+  // Base styles
   padding: 6px 12px;
   font-size: 0.8rem;
   font-weight: 500;
-  border-radius: 99px;
+  border-radius: 99px; // Pill shape
+  white-space: nowrap; // Prevents button text from wrapping
+  
+  // Appearance
   background-color: var(--surface-background);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  white-space: nowrap;
   
-  /* Layout for pseudo-element positioning */
-  position: relative;
+  // Transition and layout
+  position: relative; // For positioning the hit-area pseudo-element
+  transition: all 0.2s var(--transition-spring); // Spring transition for interactive elements
 
-  /* UPDATED: Standard transition */
-  transition: all 0.2s var(--transition-spring);
-
-  /* STABILITY FIX: Prevent flicker when lifting */
+  // STABILITY FIX: Enlarges the clickable area (hit area) below the pill
   &::after {
     content: '';
     position: absolute;
-    inset: 0;        /* Cover the element */
-    bottom: -6px;    /* Extend hit area downwards */
+    inset: 0; 
+    bottom: -6px; // Extends the hit area downwards
     background: transparent;
     border-radius: inherit;
-    cursor: pointer;
+    cursor: pointer; // Ensures the cursor remains a pointer in the extended area
   }
 
+  // Hover state (Lift effect)
   &:hover {
     background-color: var(--gray-100);
     color: var(--teal-blue);
     border-color: var(--teal-blue);
     
-    /* ADDED: Standard Lift */
-    transform: translateY(-2px);
+    transform: translateY(-2px); // Standard Lift
     box-shadow: var(--box-shadow-sm);
   }
   
+  // Active/Click state (Press down effect)
   &:active {
-    /* ADDED: Press down */
     transform: translateY(0);
   }
 
+  // Active/Selected state
   &.active {
     background-color: var(--teal-blue);
     color: #ffffff;
     border-color: var(--teal-blue);
     
-    /* Active pill stays flat */
-    transform: translateY(0);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    transform: translateY(0); // Active pill stays flat
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); // Inner shadow for "pressed" look
   }
 }
 
+// --- Primary Button Styles ---
 .btn-primary {
+  // Layout and sizing
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -126,75 +150,88 @@
   height: 38px;
   padding: 0 20px;
   border-radius: var(--border-radius-md);
+  white-space: nowrap;
+  
+  // Appearance
   font-weight: 500;
   background-color: var(--teal-blue);
   color: #fff;
   border: none;
   cursor: pointer;
-  white-space: nowrap;
   
-  /* UPDATED: Standard transition */
+  // Transition
   transition: all 0.2s var(--transition-spring);
 
+  // Hover state (Lift effect)
   &:hover:not(:disabled) {
     background-color: var(--peacock-blue);
-    /* ADDED: Standard Lift */
-    transform: translateY(-2px);
+    transform: translateY(-2px); // Standard Lift
     box-shadow: var(--box-shadow-md);
   }
   
+  // Active/Click state (Press down effect)
   &:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: var(--box-shadow-sm);
   }
 
+  // Disabled state
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
-    transform: none;
+    transform: none; // Removes hover/active effects when disabled
   }
 }
 
-/* --- RESPONSIVE MEDIA QUERIES --- */
+// ===================================
+// --- RESPONSIVE MEDIA QUERIES ---
+// ===================================
 
+// Tablet/Medium screens (768px and below)
 @media (max-width: 768px) {
   .filter-card {
+    // Stacks elements vertically for better use of space
     flex-direction: column;
-    align-items: stretch;
+    align-items: stretch; // Stretches children to full width
     gap: var(--spacing-md);
   }
 
   .filter-inputs {
-    width: 100%;
+    width: 100%; // Takes full width of the card
   }
 
   .filter-group {
-    flex: 1;
-    min-width: 0; /* Allow shrinking */
+    flex: 1; // Allows groups to distribute space evenly
+    min-width: 0; // Ensures groups can shrink if needed
   }
 
   .quick-actions {
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px; /* Space for scrollbar if needed */
-    scrollbar-width: none; /* Firefox */
-    &::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+    overflow-x: auto; // Enables horizontal scrolling for quick actions
+    padding-bottom: 4px; // Space for scrollbar if present
     
-    /* Better touch targets */
+    // Hide scrollbar for cleaner mobile look
+    scrollbar-width: none; // Firefox
+    &::-webkit-scrollbar { display: none; } // Chrome/Safari
+    
+    // Better touch targets for pills
     .btn-pill {
       padding: 8px 16px;
     }
   }
 
+  // Ensures primary button section takes full width
   .action-buttons {
     width: 100%;
-    .btn {
-      width: 100%;
+    .btn-primary {
+      width: 100%; // Primary button spans full width
     }
   }
 }
 
+// Mobile/Small screens (480px and below)
 @media (max-width: 480px) {
+  // Stacks filter inputs vertically
   .filter-inputs {
     flex-direction: column;
     gap: var(--spacing-sm);

@@ -22,7 +22,8 @@
       i {
         font-size: 3rem; 
         line-height: 1;
-        color: var(--gray-400); 
+        /* Semantic variable for disabled/muted icon color */
+        color: var(--text-disabled); 
       }
     }
 
@@ -88,13 +89,13 @@
 
 .confirm-title {
   font-weight: 700;
-  color: var(--gray-900);
+  color: var(--text-primary); /* Semantic variable */
   line-height: 1.2;
 }
 
 .confirm-message {
   font-size: 0.9375rem; 
-  color: var(--gray-700);
+  color: var(--text-secondary); /* Semantic variable */
   margin: 0;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -113,20 +114,22 @@
 */
 
 .btn {
-  /* Layout & Size overrides if needed specific to modal */
   min-width: 80px; 
 }
 
 .btn-danger {
   background-color: var(--color-danger);
-  color: var(--white);
+  color: var(--white); 
   border-color: var(--color-danger);
   
   &:hover:not(:disabled) {
-    background-color: #c9302c; /* Darker red */
+    /* Darken for hover effect */
+    background-color: #c9302c; 
     border-color: #b02a37;
-    /* Removed manual transform/box-shadow to use global system */
+
+    [data-theme='dark'] & {
+       background-color: #f87171; 
+       opacity: 0.9;
+    }
   }
 }
-
-/* .btn-primary and .btn-secondary and .btn-ghost inherit global styles automatically */

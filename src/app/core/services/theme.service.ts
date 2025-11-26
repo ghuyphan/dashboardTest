@@ -22,8 +22,8 @@ export interface ThemePalette {
   textDisabled: string;
 
   // Semantic
-  primary: string;   // --teal-blue
-  secondary: string; // --peacock-blue
+  primary: string;   
+  secondary: string; 
   success: string;
   warning: string;
   danger: string;
@@ -55,10 +55,10 @@ export class ThemeService {
   private platformId = inject(PLATFORM_ID);
 
   public isDarkTheme = signal<boolean>(this.getInitialTheme());
-  
-  // [UNIFIED SOURCE] Components should read this signal
-  // We initialize it with the current CSS variables
   public currentPalette = signal<ThemePalette>(this.getColors());
+
+  // [NEW] Controls the visibility of the fullscreen curtain overlay
+  public isTransitioning = signal<boolean>(false);
 
   constructor() {
     this.renderer = this.rendererFactory.createRenderer(null, null);
@@ -66,7 +66,6 @@ export class ThemeService {
     effect(() => {
       const isDark = this.isDarkTheme();
       
-      // 1. Apply the theme class/attribute immediately
       if (isDark) {
         this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'dark');
         localStorage.setItem('theme', 'dark');
@@ -75,17 +74,28 @@ export class ThemeService {
         localStorage.setItem('theme', 'light');
       }
 
-      // 2. [FIX] Wait for styles to propagate to DOM. 
-      // A 50ms delay ensures the browser has time to recalculate CSS variables 
-      // before we read them via getComputedStyle().
+      // Force recalculation of CSS variables after theme switch
+      // A small delay ensures the DOM has repainted with new CSS classes
       setTimeout(() => {
         this.currentPalette.set(this.getColors());
       }, 50);
     });
   }
 
+  /**
+   * Toggles the theme with a "curtain" effect to hide layout thrashing.
+   */
   public toggleTheme(): void {
-    this.isDarkTheme.update((current) => !current);
+    this.isTransitioning.set(true);
+    setTimeout(() => {
+      this.isDarkTheme.update((current) => !current);
+
+      setTimeout(() => {
+        // 5. Lift the curtain
+        this.isTransitioning.set(false);
+      }, 100);
+
+    }, 300); 
   }
 
   private getInitialTheme(): boolean {
@@ -100,21 +110,15 @@ export class ThemeService {
     return false;
   }
 
-  /**
-   * Helper to retrieve a CSS variable value.
-   */
   public getCssVar(name: string, fallback: string = ''): string {
     if (!isPlatformBrowser(this.platformId)) return fallback;
     return getComputedStyle(this.document.documentElement).getPropertyValue(name).trim() || fallback;
   }
 
-  /**
-   * Returns the full application color palette based on current CSS variables.
-   */
   public getColors(): ThemePalette {
-    // Helper for brevity
     const c = (name: string, fb: string = '') => this.getCssVar(name, fb);
 
+    // Mappings should match styles.scss logic
     return {
       white: c('--white', '#ffffff'),
       gray100: c('--gray-100', '#f1f5f9'),
@@ -126,6 +130,7 @@ export class ThemeService {
       gray700: c('--gray-700', '#334155'),
       gray800: c('--gray-800', '#1e293b'),
       gray900: c('--gray-900', '#0f172a'),
+      
       bgPage: c('--surface-background', '#f8fafc'),
       bgCard: c('--surface-card', '#ffffff'),
 
@@ -133,25 +138,28 @@ export class ThemeService {
       textSecondary: c('--text-secondary', '#64748b'),
       textDisabled: c('--text-disabled', '#94a3b8'),
 
-      primary: c('--teal-blue', '#00839b'),
-      secondary: c('--peacock-blue', '#006e96'),
+      // Main semantic colors
+      primary: c('--primary', '#00839b'),
+      secondary: c('--secondary', '#006e96'),
       success: c('--color-success', '#16a34a'),
       warning: c('--color-warning', '#f59e0b'),
       danger: c('--color-danger', '#dc3545'),
       info: c('--color-info', '#0ea5e9'),
 
+      // Specific Brand colors
       deepSapphire: c('--deep-sapphire', '#082567'),
       tealMidtone: c('--teal-midtone', '#52c3d7'),
       pastelCoral: c('--pastel-coral', '#ffb3ba'),
-      peacockLight: c('--peacock-blue-light', '#66a9c5'),
+      peacockLight: c('--peacock-light', '#66a9c5'),
 
-      chart1: c('--chart-color-1', '#00839b'),
-      chart2: c('--chart-color-2', '#006e96'),
-      chart3: c('--chart-color-3', '#9bdad9'),
-      chart6: c('--chart-color-6', '#f89c5b'),
-      chart7: c('--chart-color-7', '#4a4a4a'),
-      chart8: c('--chart-color-8', '#52c3d7'),
-      chart9: c('--chart-color-9', '#f9b88a'),
+      // Chart Colors
+      chart1: c('--chart-1', '#00839b'),
+      chart2: c('--chart-2', '#006e96'),
+      chart3: c('--chart-3', '#9bdad9'),
+      chart6: c('--chart-6', '#f89c5b'),
+      chart7: c('--chart-7', '#4a4a4a'),
+      chart8: c('--chart-8', '#52c3d7'),
+      chart9: c('--chart-9', '#f9b88a'),
     };
   }
 }

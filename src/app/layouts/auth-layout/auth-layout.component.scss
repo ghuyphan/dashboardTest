@@ -4,7 +4,7 @@
   height: 100vh;
   position: relative;
   overflow: hidden;
-  // background-color: var(--surface-background);
+  background-color: var(--surface-background); /* Semantic Variable */
 }
 
 /* ==========================================================================
@@ -34,17 +34,13 @@
 .bg-overlay {
   position: absolute;
   inset: 0;
-
-  /* 
-     FIX: No hardcoded colors. 
-     We use the theme's background color and simple opacity.
-     Light Mode: Tints image with #F8FAFC (Off-white)
-     Dark Mode: Tints image with #0d1117 (GitHub Dark)
+  /* Dynamically tint the background image using the theme's surface color.
+     This ensures it looks correct in both Light (whitish tint) and Dark (dark tint) modes.
   */
-   background-color: color-mix(in srgb, var(--surface-background), transparent 60%);
+  background-color: color-mix(in srgb, var(--surface-background), transparent 60%);
   opacity: 0.85;
-
   transform: translateZ(0);
+  backdrop-filter: blur(4px); /* Slight blur for better text readability */
 }
 
 /* ==========================================================================
@@ -68,23 +64,14 @@
   width: 100%;
   max-width: 420px;
 
-  /* 
-     FIX: Strictly use Global Variables.
-     - background: Automatically switches (White <-> GitHub Card #161b22)
-     - border: Automatically switches (Light Gray <-> GitHub Border #30363d)
-  */
+  /* Semantic Theme Variables */
   background-color: var(--surface-card);
   border: 1px solid var(--border-color);
   box-shadow: var(--box-shadow-lg);
-
-  /* 
-     Optional: If you still want the card to be slightly transparent 
-     while keeping the variable color, use color-mix (Modern CSS).
-     If you prefer solid GitHub style, remove the line below.
-  */
-  background-color: color-mix(in srgb, var(--surface-card), transparent 10%);
-
   border-radius: var(--border-radius-lg);
+
+  /* Optional: Slight transparency for glassmorphism effect */
+  background-color: color-mix(in srgb, var(--surface-card), transparent 5%);
   backdrop-filter: blur(12px);
 
   padding: clamp(24px, 5vw, 40px);
@@ -112,30 +99,24 @@
     font-size: clamp(1.5rem, 5vw, 2rem);
     margin-bottom: 8px;
     line-height: 1.2;
-
-    /* Use Semantic Text Color (Headings) */
-    color: var(--teal-blue);
-
+    color: var(--teal-blue); /* Brand Color */
     margin-top: 0;
   }
 
   p {
     font-size: clamp(0.875rem, 3.5vw, 15px);
-    /* Use Semantic Text Color (Secondary) */
-    color: var(--text-secondary);
+    color: var(--text-secondary); /* Semantic Variable */
     margin: 0;
   }
 }
 
 /* Mobile Optimizations */
 @media (max-width: 992px) {
-  :host {
-    background-color: transparent;
-  }
   .auth-container {
     padding: 0;
     align-items: flex-start;
   }
+
   .auth-card-wrapper {
     max-width: none;
     min-height: 100vh;
@@ -143,9 +124,8 @@
     border: none;
     box-shadow: none;
     justify-content: center;
-
-    /* Ensure mobile background uses the main surface color */
-    background-color: var(--surface-background);
+    /* Ensure mobile background is solid and matches theme */
+    background-color: var(--surface-background); 
   }
 }
 
@@ -160,18 +140,10 @@
   z-index: 100;
 }
 
-::view-transition-old(auth-card) {
-  display: none;
-}
-::view-transition-new(auth-card) {
-  animation: none;
-}
+::view-transition-old(auth-card) { display: none; }
+::view-transition-new(auth-card) { animation: none; }
 
 @keyframes imageFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

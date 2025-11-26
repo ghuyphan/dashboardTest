@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { ExaminationStat } from '../../shared/models/examination-stat.model';
 import { ClsLevel6Stat } from '../../shared/models/cls-stat.model';
+import { SpecialtyClsStat } from '../../shared/models/specialty-cls-stat.model';
 import {
   MedicalRecordSummary,
   MedicalRecordDetail,
@@ -14,12 +15,11 @@ import {
 })
 export class ReportService {
   private http = inject(HttpClient);
-
   private apiUrl = environment.examinationOvUrl;
-
   private summaryUrl = environment.outpatientSumUrl;
   private detailUrl = environment.outpatientDetailUrl;
   private clsLevel6Url = environment.clsLevel6Url;
+  private specialtyClsUrl = environment.specialtyClsUrl;
 
   constructor() {}
 
@@ -68,4 +68,16 @@ export class ReportService {
 
     return this.http.get<ClsLevel6Stat[]>(this.clsLevel6Url, { params });
   }
+
+  getSpecialtyClsReport(
+    fromDate: string,
+    toDate: string
+  ): Observable<SpecialtyClsStat[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+
+    return this.http.get<SpecialtyClsStat[]>(this.specialtyClsUrl, { params });
+  }
 }
+

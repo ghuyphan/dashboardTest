@@ -15,10 +15,6 @@
   @media (max-width: 768px) {
     padding: var(--spacing-xs);
   }
-
-  @media (max-width: 480px) {
-    padding: var(--spacing-xs);
-  }
 }
 
 .detail-card-wrapper {
@@ -28,10 +24,19 @@
 .detail-card {
   max-width: 100%;
   margin: 0;
-  background: var(--white);
+  
+  /* Semantic Background */
+  background: var(--surface-card);
+  
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  border: none;
+  
+  /* Semantic Border (Subtle in Dark Mode) */
+  border: 1px solid transparent;
+  [data-theme='dark'] & {
+    border-color: var(--border-color);
+  }
+
   overflow: hidden;
   height: auto;
   display: flex;
@@ -43,15 +48,23 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color); /* Semantic */
 
   .header-icon {
     flex-shrink: 0;
     width: 50px;
     height: 50px;
     border-radius: 50%;
+    
+    /* Brand colors work well in both modes, or adjust for dark mode */
     background-color: var(--teal-blue-light);
-    color: var(--teal-blue-dark);
+    color: #003d4d; /* Dark Teal text */
+    
+    [data-theme='dark'] & {
+      background-color: rgba(45, 212, 191, 0.2);
+      color: var(--teal-blue);
+    }
+
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,7 +79,7 @@
   .device-name {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--text-primary); /* Semantic */
     margin: 0;
     line-height: 1.2;
     overflow: hidden;
@@ -76,7 +89,7 @@
 
   .device-code {
     font-size: 1rem;
-    color: var(--gray-600);
+    color: var(--text-secondary); /* Semantic */
     font-family: monospace;
   }
 
@@ -84,6 +97,13 @@
     padding: 6px 14px;
     font-size: 0.875rem;
     font-weight: 600;
+    border-radius: 99px;
+    color: #fff;
+    
+    /* Default gray */
+    background-color: var(--gray-500);
+    
+    /* Map status colors based on component logic classes (status-in-use etc.) */
   }
 }
 
@@ -129,7 +149,7 @@
   .info-label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--gray-500);
+    color: var(--text-secondary); /* Semantic */
     margin-bottom: var(--spacing-xs);
     text-transform: uppercase;
   }
@@ -137,7 +157,7 @@
   .info-value {
     font-size: 1rem;
     font-weight: 500;
-    color: var(--gray-800);
+    color: var(--text-primary); /* Semantic */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -155,23 +175,29 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
-  background-color: var(--gray-100);
+  
+  /* Semantic Background for Side Panel */
+  background-color: var(--gray-50);
+  [data-theme='dark'] & {
+    background-color: var(--gray-100); /* Slightly distinct from card bg */
+  }
+
   padding: var(--spacing-lg);
-  border-left: 1px solid var(--gray-200);
+  border-left: 1px solid var(--border-color);
 
   @media (max-width: 992px) {
     border-left: none;
-    border-top: 1px solid var(--gray-200);
+    border-top: 1px solid var(--border-color);
   }
 }
 
 .meta-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--gray-700);
+  color: var(--text-primary); /* Semantic */
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .qr-code-section {
@@ -179,9 +205,9 @@
 
   .qr-code-box {
     padding: var(--spacing-sm);
-    background-color: var(--white);
+    background-color: white; /* QR codes need white bg always */
     border-radius: var(--border-radius-md);
-    border: 1px solid var(--gray-200);
+    border: 1px solid var(--border-color);
     display: inline-block;
   }
 
@@ -190,7 +216,7 @@
     margin-top: var(--spacing-sm);
     font-family: monospace;
     font-size: 0.875rem;
-    color: var(--gray-600);
+    color: var(--text-secondary);
   }
 }
 
@@ -222,35 +248,21 @@
   font-size: 0.9em;
   font-weight: 500;
   margin-left: var(--spacing-sm);
-  color: var(--gray-700);
+  color: var(--text-secondary);
 }
 
 @keyframes pulse-warning {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 /* --- PRINT STYLING --- */
-
-/* Initially hide the print section */
 #qr-print-section {
   display: none;
   background-color: white;
 }
 
-/* CRITICAL: Only apply these print styles when the body has 
-   the 'print-mode-qr' class. This prevents conflicts with the Word viewer.
-*/
 :host-context(body.print-mode-qr) {
   @media print {
     @page {

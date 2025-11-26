@@ -14,13 +14,13 @@ app-reusable-table {
 
 /* DARK MODE CONTEXT */
 [data-theme="dark"] app-reusable-table {
-  --header-bg-local: var(--gray-200);
-  --header-text-local: var(--gray-900);
+  --header-bg-local: var(--gray-100); /* Darker header in dark mode */
+  --header-text-local: var(--text-primary);
 }
 
 /* GLOBAL HIGHLIGHT (Used by pipe) */
 .highlight {
-  background-color: var(--pastel-lemon);
+  background-color: var(--pastel-coral); /* Adjusted for visibility */
   color: var(--gray-900);
   font-weight: 700;
   padding: 0 2px;
@@ -35,7 +35,7 @@ app-reusable-table {
   flex-direction: column;
   min-height: 0;
   position: relative;
-  background-color: var(--surface-card);
+  background-color: var(--surface-card); /* Semantic Variable */
   border-radius: var(--border-radius-md);
   box-shadow: none;
   overflow: hidden;
@@ -48,15 +48,14 @@ app-reusable-table {
     overflow: auto;
     min-height: 0;
     position: relative;
-    background-color: var(--surface-card);
+    background-color: var(--surface-card); /* Semantic Variable */
     
     /* contain: strict is fastest, but 'layout style' is safer if contents might scroll */
     contain: layout style; 
     will-change: scroll-position;
   }
 
-  /* 2. Fixed Layout: Browser calculates column widths ONCE based on headers, 
-        ignoring body content. Massive speedup for resizes. */
+  /* 2. Fixed Layout: Browser calculates column widths ONCE based on headers */
   table.mat-table {
     table-layout: fixed !important; 
     width: 100%;
@@ -71,7 +70,7 @@ app-reusable-table {
     min-width: 48px !important;
     max-width: 48px !important;
     padding: 0 0 0 4px !important;
-    box-sizing: border-box; /* Ensure padding doesn't break fixed layout */
+    box-sizing: border-box; 
   }
 
   .mat-mdc-header-cell.mat-column-select,
@@ -89,11 +88,13 @@ app-reusable-table {
     letter-spacing: 0.03em !important;
     padding: var(--spacing-xs) var(--spacing-sm) !important;
     border-bottom: none !important;
+    
+    /* Semantic Border Color */
     border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
 
-    /* Dark Mode Border adjustment via body attr or ancestor */
+    /* Dark Mode Border adjustment */
     [data-theme="dark"] & {
-      border-right: 1px solid rgba(0, 0, 0, 0.2) !important;
+      border-right: 1px solid var(--border-color) !important;
     }
 
     /* Fixed Layout Requirements: Hide overflow */
@@ -133,7 +134,7 @@ app-reusable-table {
   /* Body Cell Styling */
   .mat-mdc-cell {
     padding: 0 var(--spacing-sm) !important;
-    color: var(--text-primary) !important;
+    color: var(--text-primary) !important; /* Semantic Variable */
     border-bottom: none !important;
     font-size: 0.8125rem !important;
     height: 36px !important;
@@ -146,7 +147,7 @@ app-reusable-table {
     &.mat-column-actions {
       padding: 0 4px !important;
       width: 40px;
-      overflow: visible; /* Allow menu trigger to be visible if needed */
+      overflow: visible; 
     }
 
     &:first-of-type:not(.mat-column-select) {
@@ -162,8 +163,9 @@ app-reusable-table {
     height: 36px !important;
     transition: background-color 0.2s var(--transition-smooth);
 
+    /* Alternating Rows using semantic grays */
     &:nth-child(even) {
-      background-color: var(--gray-50);
+      background-color: var(--gray-50); 
     }
 
     &:nth-child(odd) {
@@ -175,10 +177,12 @@ app-reusable-table {
 
       &:hover {
         background-color: var(--gray-100) !important;
+        
+        /* Slightly darker hover in dark mode */
         [data-theme="dark"] & {
           background-color: var(--gray-200) !important;
         }
-        // transform: translateY(-1px);
+        
         box-shadow: var(--box-shadow-sm);
         position: relative;
         z-index: 1;
@@ -199,14 +203,14 @@ app-reusable-table {
       }
 
       &.multi-selected {
-        background-color: var(--pastel-sky) !important;
+        background-color: var(--aqua-island-light) !important;
         [data-theme="dark"] & {
-          background-color: rgba(99, 179, 237, 0.2) !important;
+          background-color: rgba(45, 212, 191, 0.15) !important;
         }
         .mat-mdc-cell {
           color: var(--deep-sapphire) !important;
           [data-theme="dark"] & {
-            color: var(--peacock-blue) !important;
+            color: var(--teal-blue) !important;
           }
           font-weight: var(--font-weight-medium) !important;
         }
@@ -227,11 +231,11 @@ app-reusable-table {
   /* Paginator Styling */
   .mat-mdc-paginator {
     flex-shrink: 0;
-    background-color: var(--surface-card) !important;
-    border-top: 1px solid var(--border-color);
+    background-color: var(--surface-card) !important; /* Semantic Variable */
+    border-top: 1px solid var(--border-color);        /* Semantic Variable */
     height: 40px !important;
     min-height: 40px !important;
-    color: var(--text-secondary) !important;
+    color: var(--text-secondary) !important;          /* Semantic Variable */
 
     .mat-mdc-paginator-container {
       padding: 0 var(--spacing-xs) !important;
@@ -260,7 +264,7 @@ app-reusable-table {
         padding: 0 4px !important;
         height: 28px !important;
         border-radius: var(--border-radius-sm) !important;
-        background-color: var(--gray-100) !important;
+        background-color: var(--gray-100) !important; /* Adaptive Gray */
       }
       .mat-mdc-form-field-infix {
         padding-top: 2px !important;
@@ -276,7 +280,7 @@ app-reusable-table {
       width: 28px !important;
       height: 28px !important;
       padding: 2px !important;
-      color: var(--gray-500) !important;
+      color: var(--text-secondary) !important;
       .mat-icon {
         font-size: 18px !important;
         width: 18px !important;
@@ -308,7 +312,7 @@ app-reusable-table {
   .mat-mdc-header-cell:focus-visible,
   .mat-mdc-cell:focus-visible,
   .mat-mdc-icon-button:focus-visible {
-    outline: 2px solid var(--aqua-island) !important;
+    outline: 2px solid var(--teal-blue) !important;
     outline-offset: 1px !important;
     z-index: 20 !important;
   }
@@ -318,7 +322,7 @@ app-reusable-table {
 .loading-shade {
   position: absolute;
   top: 0; left: 0; bottom: 0; right: 0;
-  background: var(--surface-overlay);
+  background: var(--surface-overlay); /* Semantic Variable */
   z-index: 50;
   display: flex;
   align-items: center;
@@ -355,7 +359,7 @@ app-reusable-table {
   height: 28px;
   border: none;
   background-color: transparent;
-  color: var(--gray-500);
+  color: var(--text-secondary); /* Semantic Variable */
   border-radius: 50%;
   cursor: pointer;
   outline: none;
@@ -374,14 +378,16 @@ app-reusable-table {
   }
 }
 
+/* --- EMPTY STATE --- */
 .no-data-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Semantic Variable */
   padding: var(--spacing-xl) var(--spacing-md);
   text-align: center;
+  background-color: var(--surface-card);
 
   .no-data-icon-container {
     margin-bottom: var(--spacing-md);
@@ -393,7 +399,7 @@ app-reusable-table {
     font-size: 42px !important;
     height: 42px !important;
     width: 42px !important;
-    color: var(--gray-300) !important;
+    color: var(--text-disabled) !important; /* Semantic Variable */
   }
 
   .no-data-text {

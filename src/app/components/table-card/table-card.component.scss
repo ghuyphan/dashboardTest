@@ -6,7 +6,7 @@
 }
 
 .table-card {
-  background-color: var(--white);
+  background-color: var(--surface-card); /* Semantic Variable */
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);
@@ -15,13 +15,19 @@
   height: 100%;
   overflow: hidden;
   position: relative;
+  
+  /* Subtle border for dark mode definition */
+  border: 1px solid transparent;
+  [data-theme='dark'] & {
+    border-color: var(--border-color);
+  }
 }
 
 .card-header {
   flex-shrink: 0;
   margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color); /* Semantic Variable */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -30,7 +36,7 @@
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-800);
+  color: var(--text-primary); /* Semantic Variable */
   margin: 0;
   display: flex;
   align-items: center;
@@ -55,7 +61,7 @@
 
 .btn-icon-action {
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color); /* Semantic Variable */
   border-radius: var(--border-radius-sm);
   width: 32px;
   height: 32px;
@@ -64,12 +70,16 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Semantic Variable */
 
   &:hover:not(:disabled) {
     background-color: var(--gray-100);
     color: var(--text-primary);
-    border-color: var(--gray-300);
+    
+    [data-theme='dark'] & {
+      background-color: var(--gray-200);
+      border-color: var(--gray-300);
+    }
   }
 
   &:disabled {
@@ -112,14 +122,14 @@
   
   .skeleton-header {
     height: 40px;
-    background-color: var(--gray-100);
+    background-color: var(--gray-100); /* Adaptive Gray */
     border-radius: 4px;
     animation: pulse 1.5s infinite ease-in-out;
   }
   
   .skeleton-row {
     height: 30px;
-    background-color: var(--gray-50);
+    background-color: var(--gray-50); /* Adaptive Gray */
     border-radius: 4px;
     animation: pulse 1.5s infinite ease-in-out;
     animation-delay: 0.1s;

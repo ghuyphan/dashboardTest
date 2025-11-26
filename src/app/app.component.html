@@ -1,2 +1,14 @@
-<router-outlet></router-outlet> 
+<router-outlet></router-outlet>
 <app-toast></app-toast>
+
+@if (themeService.isTransitioning()) {
+  <div 
+    class="theme-transition-curtain" 
+    [class.going-dark]="!themeService.isDarkTheme()" 
+    [class.going-light]="themeService.isDarkTheme()">
+    
+    <div class="curtain-loader">
+       <i class="fas fa-circle-notch fa-spin"></i>
+    </div>
+  </div>
+}

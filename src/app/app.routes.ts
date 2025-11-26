@@ -147,6 +147,19 @@ export const routes: Routes = [
           showSearchBar: false,
         },
       },
+      {
+        path: 'reports/specialty-cls',
+        loadComponent: () =>
+          import(
+            './features/reports/specialty-cls-report/specialty-cls-report.component'
+          ).then((m) => m.SpecialtyClsReportComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.KhamCLSTheoCK', 
+          title: 'Khám CLS theo chuyên khoa',
+          showSearchBar: false,
+        },
+      },
 
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],

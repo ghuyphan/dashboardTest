@@ -9,7 +9,7 @@
 }
 
 .chart-card {
-  background-color: var(--white);
+  background-color: var(--surface-card); /* Semantic variable */
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);
@@ -32,7 +32,7 @@
   flex-shrink: 0;
   margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color); /* Semantic variable */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,14 +54,12 @@
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--gray-800);
+  color: var(--text-primary); /* Semantic variable */
   margin: 0;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   white-space: nowrap;
-
-  /* REMOVED: text-transform: capitalize; to allow "Thống kê" (Sentence case) */
 
   /* Text Truncation */
   overflow: hidden;
@@ -85,7 +83,7 @@
 .card-subtitle {
   font-size: 0.875rem;
   font-weight: 400;
-  color: var(--gray-700);
+  color: var(--text-secondary); /* Semantic variable */
   margin-left: auto;
   padding-left: var(--spacing-sm);
   white-space: nowrap;
@@ -135,7 +133,7 @@
   position: absolute;
   inset: 0;
   z-index: 10;
-  background-color: var(--white);
+  background-color: var(--surface-card); /* Semantic variable */
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -206,7 +204,7 @@
     content: '';
     position: absolute;
     inset: 30%; 
-    background-color: var(--white);
+    background-color: var(--surface-card); /* Semantic variable */
     border-radius: 50%;
   }
 
@@ -237,8 +235,8 @@
   flex: 1;
   display: flex;
   height: 100%;
-  border-left: 2px solid var(--gray-200);
-  border-bottom: 2px solid var(--gray-200);
+  border-left: 2px solid var(--border-color); /* Semantic variable */
+  border-bottom: 2px solid var(--border-color); /* Semantic variable */
   position: relative;
   padding-bottom: 2px;
   
@@ -252,15 +250,15 @@
   &.line-mode {
     display: block;
     border: none;
-    border-left: 2px solid var(--gray-200);
-    border-bottom: 2px solid var(--gray-200);
+    border-left: 2px solid var(--border-color); /* Semantic variable */
+    border-bottom: 2px solid var(--border-color); /* Semantic variable */
   }
   
   &.scatter-mode {
     position: relative;
     border: none;
-    border-left: 2px solid var(--gray-200);
-    border-bottom: 2px solid var(--gray-200);
+    border-left: 2px solid var(--border-color); /* Semantic variable */
+    border-bottom: 2px solid var(--border-color); /* Semantic variable */
   }
 }
 
@@ -352,16 +350,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--gray-500);
+  color: var(--text-secondary); /* Semantic variable */
   padding: var(--spacing-lg) 0;
   text-align: center;
   gap: var(--spacing-sm);
-  background-color: var(--white);
+  background-color: var(--surface-card); /* Semantic variable */
 
   .no-data-icon-wrapper {
     i {
       font-size: 2rem;
-      color: var(--gray-300);
+      color: var(--text-disabled); /* Semantic variable */
     }
   }
 
