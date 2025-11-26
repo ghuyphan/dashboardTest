@@ -7,26 +7,19 @@
   flex-direction: column;
   box-sizing: border-box;
   margin: auto;
-  
-  /* FIX: Use the semantic variable for background */
-  background: var(--surface-overlay);
-  
+
+  background: var(--surface-card);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-lg);
-  
-  /* FIX: Use variable border color */
   border: 1px solid var(--border-color);
-  
-  /* FIX: Use variable text color */
-  color: var(--gray-900);
-  
+  color: var(--text-primary);
   position: relative;
   overflow: hidden;
   width: 90vw;
   min-width: 320px;
   max-width: 600px;
   max-height: 85vh;
-  animation: modalFadeIn 0.25s var(--transition-smooth) forwards;
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: opacity, transform; 
 
   &.modal-size-sm { max-width: 400px; }
@@ -46,10 +39,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-md) var(--spacing-lg);
-  
-  /* FIX: Use variable border and background */
-  border-bottom: 1px solid var(--gray-200);
-  background: var(--surface-overlay); /* Ensure header matches body */
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-card); 
   
   flex-shrink: 0;
 }
@@ -59,7 +50,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--gray-900);
+  color: var(--text-primary);
 }
 
 .modal-close-btn {
@@ -73,15 +64,15 @@
   background: transparent;
   border: none;
   border-radius: 50%;
-  color: var(--gray-500); /* Updated to variable */
+  color: var(--text-secondary);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: var(--gray-200); /* Hover state adaptation */
-    color: var(--gray-900);
+    background-color: var(--gray-100);
+    color: var(--text-primary);
   }
 }
 
@@ -92,7 +83,6 @@
   overscroll-behavior: contain;
   scrollbar-gutter: stable; 
   
-  /* Scrollbar styling */
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) transparent;
 
@@ -109,7 +99,7 @@
   }
 }
 
-@keyframes modalFadeIn {
-  0% { opacity: 0; transform: scale(0.96); }
-  100% { opacity: 1; transform: scale(1); }
+@keyframes modalScaleIn {
+  0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }

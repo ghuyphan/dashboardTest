@@ -14,10 +14,8 @@
   width: var(--sidebar-width);
   height: 100vh;
   
-  /* UPDATED: Use semantic background */
   background-color: var(--surface-background);
   
-  /* UPDATED: Use semantic text color */
   color: var(--text-secondary);
   
   padding: 0 0 var(--spacing-md) 0;
@@ -25,8 +23,7 @@
   transition: transform var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
   z-index: 1000;
-  
-  /* Use global border color variable */
+
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
   
   display: flex;
@@ -39,11 +36,8 @@
     white-space: nowrap;
   }
 
-  /* REMOVED: Explicit :host-context([data-theme='dark']) block. 
-     The --surface-background variable now automatically switches values. */
 }
 
-/* --- Sidebar Header --- */
 .sidebar-header {
   display: flex;
   align-items: center;
@@ -76,7 +70,6 @@
   min-width: 2.25rem;
   border-radius: 50%;
   
-  /* UPDATED: Use card background for contrast against sidebar */
   background-color: var(--surface-card);
   
   padding: var(--spacing-xs);
@@ -101,7 +94,6 @@
 .sidebar-header h2 {
   font-size: 1.125rem;
   font-weight: 600;
-  /* UPDATED: Semantic text color */
   color: var(--text-primary);
   margin: 0;
   white-space: nowrap;
@@ -115,7 +107,6 @@
   background: none;
   border: none;
   font-size: 1.125rem;
-  /* UPDATED: Semantic text color */
   color: var(--text-secondary);
   cursor: pointer;
   padding: var(--spacing-sm);
@@ -233,7 +224,6 @@
 .sidebar-nav ul li a,
 .sidebar-nav ul li button {
   align-items: center;
-  /* UPDATED: Semantic text color */
   color: var(--text-secondary);
   text-decoration: none;
   display: flex;
@@ -283,7 +273,6 @@
 .sidebar-nav ul li a:hover,
 .sidebar-nav ul li button:hover {
   background-color: var(--gray-200);
-  /* UPDATED: Text color on hover */
   color: var(--text-primary);
 }
 
