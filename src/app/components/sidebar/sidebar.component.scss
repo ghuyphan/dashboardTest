@@ -45,8 +45,6 @@
   margin-bottom: var(--spacing-sm);
   box-sizing: border-box;
   position: relative;
-  
-  /* Polished: Use consistent padding variable */
   padding: 0 var(--sidebar-padding);
   
   flex-shrink: 0;
@@ -124,32 +122,30 @@
   margin-left: auto;
 }
 
-.sidebar-toggle-btn:hover {
-  background-color: var(--gray-200);
-  color: var(--teal-blue);
-  transform: scale(1.1);
+/* FIX: Apply hover styles only on devices that support hover */
+@media (hover: hover) {
+  .sidebar-toggle-btn:hover {
+    background-color: var(--gray-200);
+    color: var(--teal-blue);
+    transform: scale(1.1);
+  }
 }
 
 .sidebar-toggle-btn:active {
   transform: scale(0.95);
 }
 
-/* --- Sidebar Navigation Content (Scrollable Area) --- */
+/* --- Sidebar Navigation Content --- */
 .sidebar-nav-content {
   flex-grow: 1;
   min-height: 0;
   width: 100%;
   position: relative;
-  
-  /* Modern overlay scrollbar */
   overflow-y: scroll;
   overflow-x: hidden;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
 
-  /* Styling the scrollbar to be minimal and overlay-like */
-  scrollbar-width: none; /* Firefox - hide scrollbar but keep functionality */
-  -ms-overflow-style: none; /* IE and Edge */
-
-  /* WebKit browsers - hide but keep functionality */
   &::-webkit-scrollbar {
     width: var(--scrollbar-width);
     background: transparent;
@@ -173,7 +169,6 @@
   contain-intrinsic-size: 100px 500px;
 }
 
-/* Custom overlay scrollbar indicator */
 .sidebar-nav-content::after {
   content: '';
   position: absolute;
@@ -192,7 +187,6 @@
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   overflow: visible;
-  /* Polished: Use consistent padding variable */
   padding: 0 var(--sidebar-padding);
 }
 
@@ -211,7 +205,7 @@
   z-index: 10;
 }
 
-/* --- Loading Skeleton for Defer Block --- */
+/* --- Loading Skeleton --- */
 .nav-skeleton {
   height: 50px;
   margin: 10px 0;
@@ -231,10 +225,7 @@
 .sidebar-nav ul li a,
 .sidebar-nav ul li button {
   align-items: center;
-  
-  /* UPDATED: Semantic Text Secondary */
   color: var(--text-secondary);
-  
   text-decoration: none;
   display: flex;
   padding: 0.75rem var(--spacing-sm);
@@ -256,7 +247,6 @@
   justify-content: flex-start;
 }
 
-/* Icons */
 .sidebar-nav ul li a i:not(.toggle-icon),
 .sidebar-nav ul li button i:not(.toggle-icon) {
   margin-right: 0.75rem;
@@ -279,18 +269,60 @@
   transform-origin: left center;
 }
 
-/* Hover States */
-.sidebar-nav ul li a:hover,
-.sidebar-nav ul li button:hover {
-  background-color: var(--gray-200);
-  
-  /* UPDATED: Semantic Text Primary */
-  color: var(--text-primary);
-}
+/* FIX: Hover States - Wrapped in media query */
+@media (hover: hover) {
+  .sidebar-nav ul li a:hover,
+  .sidebar-nav ul li button:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
 
-.sidebar-nav ul li a:hover i:not(.toggle-icon),
-.sidebar-nav ul li button:hover i:not(.toggle-icon) {
-  transform: scale(1.15);
+  .sidebar-nav ul li a:hover i:not(.toggle-icon),
+  .sidebar-nav ul li button:hover i:not(.toggle-icon) {
+    transform: scale(1.15);
+  }
+  
+  /* Active link hover state */
+  .sidebar-nav ul li a.active:hover,
+  .sidebar-nav ul li button.active:hover {
+    background-color: var(--gray-200);
+  }
+
+  .sidebar-nav ul li a.active:hover i:not(.toggle-icon),
+  .sidebar-nav ul li button.active:hover i:not(.toggle-icon) {
+    transform: scale(1.15);
+  }
+  
+  /* Submenu button hover */
+  .sidebar-nav ul li.has-submenu button[aria-expanded='true']:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
+  
+  /* Submenu item hover */
+  .submenu li a:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
+
+  .submenu li a:hover i { transform: scale(1.15); }
+  
+  /* Collapsed mode hover */
+  .sidebar.collapsed .sidebar-nav > ul > li > a:hover,
+  .sidebar.collapsed .sidebar-nav > ul > li > button:hover {
+    transform: scale(1.05);
+    background-color: var(--gray-200);
+  }
+  
+  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
+    opacity: 0.3;
+  }
+
+  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
+    opacity: 1;
+    pointer-events: auto;
+    background-color: var(--gray-100);
+  }
 }
 
 .sidebar-nav ul li a:active,
@@ -302,10 +334,7 @@
 .sidebar-nav ul li a.active,
 .sidebar-nav ul li button.active {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   font-weight: 600;
   box-shadow: none;
 }
@@ -322,48 +351,22 @@
   border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
 }
 
-.sidebar-nav ul li a.active:hover,
-.sidebar-nav ul li button.active:hover {
-  background-color: var(--gray-200);
-}
-
-.sidebar-nav ul li a.active:hover i:not(.toggle-icon),
-.sidebar-nav ul li button.active:hover i:not(.toggle-icon) {
-  transform: scale(1.15);
-}
-
 /* --- Submenu Styling --- */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] {
   background-color: transparent;
-  
-  /* UPDATED: Text Secondary */
   color: var(--text-secondary);
-  
   font-weight: var(--font-weight-normal);
-}
-
-.sidebar-nav ul li.has-submenu button[aria-expanded='true']:hover {
-  background-color: var(--gray-200);
-  
-  /* UPDATED: Text Primary */
-  color: var(--text-primary);
 }
 
 .sidebar-nav ul li.has-submenu button.active {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   font-weight: 600;
 }
 
 .sidebar-nav ul li.active-parent > button {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   font-weight: 600;
 }
 
@@ -400,10 +403,7 @@
     margin var(--transition-duration) var(--transition-smooth);
   opacity: 0;
   position: relative;
-  
-  /* UPDATED: Border Color */
   border-left: 2px solid var(--border-color);
-  
   margin-left: 0.5rem !important;
 }
 
@@ -418,10 +418,7 @@
 .submenu li a {
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   font-size: 0.875rem;
-  
-  /* UPDATED: Text Secondary */
   color: var(--text-secondary);
-  
   margin: 0 0 0.25rem 0;
   border-radius: 0.375rem;
   position: relative;
@@ -440,19 +437,8 @@
 
 .submenu li a::before { display: none; }
 
-.submenu li a:hover {
-  background-color: var(--gray-200);
-  
-  /* UPDATED: Text Primary */
-  color: var(--text-primary);
-}
-
-.submenu li a:hover i { transform: scale(1.15); }
-
 .submenu li a.active {
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   background-color: var(--gray-200);
   font-weight: 600;
 }
@@ -506,16 +492,6 @@
   justify-content: center;
 }
 
-.sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
-  opacity: 0.3;
-}
-
-.sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
-  opacity: 1;
-  pointer-events: auto;
-  background-color: var(--gray-100);
-}
-
 .sidebar.collapsed .sidebar-header .sidebar-logo { margin-right: 0; }
 
 .sidebar.collapsed .sidebar-nav > ul > li > a,
@@ -528,12 +504,6 @@
   align-items: center;
   border-radius: var(--border-radius-md);
   justify-content: center;
-}
-
-.sidebar.collapsed .sidebar-nav > ul > li > a:hover,
-.sidebar.collapsed .sidebar-nav > ul > li > button:hover {
-  transform: scale(1.05);
-  background-color: var(--gray-200);
 }
 
 .sidebar.collapsed .sidebar-nav > ul > li > a i:not(.toggle-icon),
@@ -583,8 +553,6 @@
     transition: transform 0.3s var(--transition-smooth);
     overflow-x: hidden;
     overflow-y: auto;
-    
-    /* Polished: Remove hard padding so scrollbar doesn't push content */
     padding: 0;
     contain: none; 
   }
@@ -605,10 +573,9 @@
   
   .sidebar-header { padding: 0 var(--spacing-xs); }
   
-  /* Restoring original mobile padding logic but cleaner */
   .sidebar-nav { padding: 0 var(--sidebar-padding); }
 
-  /* Accordion behavior for mobile collapsed state (technically mobile menu) */
+  /* Accordion behavior for mobile collapsed state */
   .sidebar.collapsed .sidebar-nav ul li .submenu {
     position: relative;
     left: auto;
@@ -621,10 +588,7 @@
     z-index: 1;
     max-height: 0 !important;
     overflow: hidden !important;
-    
-    /* UPDATED: Border Color */
     border-left: 2px solid var(--border-color) !important;
-    
     opacity: 0;
     visibility: visible;
     transition: max-height var(--transition-duration) var(--transition-smooth),
@@ -665,14 +629,9 @@
     padding-left: 0;
   }
 
-  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
-    opacity: 1;
-  }
-
-  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
-    background-color: transparent;
-  }
-
+  /* Reset Hover overrides for mobile specifically inside this block if needed,
+     though the @media (hover: hover) block above handles it globally. */
+  
   .sidebar.collapsed .sidebar-nav ul li a,
   .sidebar.collapsed .sidebar-nav ul li button {
     justify-content: flex-start;

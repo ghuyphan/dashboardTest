@@ -1,23 +1,20 @@
 :host {
-  /* Layout & Positioning */
   display: block;
   flex-shrink: 0;
-  
-  /* Use semantic variable for better Dark Mode support */
   background-color: var(--surface-card); 
-  
-  /* Layering */
+  border-top: 1px solid transparent;
+  [data-theme='dark'] & {
+    border-top-color: var(--border-color);
+  }
   z-index: 980;
   
-  /* Animation for Hide/Show states */
   transform: translateY(0);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Hidden State (Applied via class binding) */
+              margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.2s ease,
+              border-color 0.2s ease;
   &.hidden {
     transform: translateY(100%);
-    /* Negative margin to reclaim space when hidden (approx --footer-height) */
     margin-top: -55px; 
   }
 }
@@ -30,6 +27,7 @@
   z-index: 100;
   display: flex;
   justify-content: flex-start;
+  
   @media (max-width: 767px) {
     padding: var(--spacing-xs) var(--spacing-md);
   }
@@ -41,7 +39,6 @@
   gap: var(--spacing-sm);
 
   @media (max-width: 767px) {
-    /* Keep buttons in a row on mobile */
     flex-wrap: nowrap;
     width: 100%;
     justify-content: flex-start;
@@ -57,25 +54,20 @@
 
 /* Scoped Button Styles */
 :host .btn {
-  /* Desktop styles */
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.875rem;
-  
-  /* Required for the pseudo-element fix */
   position: relative; 
-
-  /* Standard spring transition */
   transition: transform 0.2s var(--transition-spring),
-    box-shadow 0.2s var(--transition-smooth);
+    box-shadow 0.2s var(--transition-smooth),
+    background-color 0.2s ease,
+    color 0.2s ease;
     
   text-align: center;
   cursor: pointer;
   border-radius: var(--border-radius-md);
-
-  /* Stability Fix: Prevent flicker when lifting */
   &::after {
     content: '';
     position: absolute;
@@ -87,7 +79,6 @@
   }
 
   @media (max-width: 767px) {
-    /* --- Mobile Icon Button Styles --- */
     flex: 0 0 auto;
     width: 2.25rem;
     height: 2.25rem;
@@ -119,6 +110,8 @@
   margin: 0;
 }
 
+/* Override Danger Button specific to Footer if needed, 
+   otherwise relies on global .btn-danger but scoped here for specificity */
 :host .btn-danger {
   color: var(--white);
   background-color: var(--color-danger);

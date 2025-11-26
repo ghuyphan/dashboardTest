@@ -123,25 +123,15 @@ export class SidebarComponent {
   }
 
   /**
-   * Handles navigation clicks.
-   * In mobile view, it prevents immediate navigation, closes the sidebar,
-   * waits for the animation to finish, and THEN navigates.
+   * Handles navigation clicks in mobile view.
+   * Simplified to just emit the toggle event. 
+   * The actual navigation is handled by the [routerLink] directive,
+   * and the closing logic is handled by MainLayout responding to router events.
+   * This manual emit handles cases where navigation might not trigger (e.g. same route).
    */
-  public onNavLinkClick(event: Event, link: string | null | undefined): void {
+  public onNavLinkClick(): void {
     if (this.isMobileView && this.isOpen()) {
-      // 1. Stop the RouterLink from activating immediately
-      event.preventDefault();
-      event.stopPropagation();
-
-      // 2. Close the sidebar (starts the CSS transition)
       this.toggleSidebar.emit();
-
-      // 3. Wait for the transition (300ms matches CSS) before navigating
-      if (link) {
-        setTimeout(() => {
-          this.router.navigateByUrl(link);
-        }, 300); 
-      }
     }
   }
 }

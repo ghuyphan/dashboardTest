@@ -21,10 +21,8 @@
           xmlns="http://www.w3.org/2000/svg"
           style="display: block"
         >
-          <!-- Main background rectangle uses currentColor (inherits from button text color) -->
           <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />
           
-          <!-- Inner details use var(--surface-card) or white to punch through dynamically -->
           <rect x="10" y="25" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
           <rect x="10" y="40" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
           <rect x="10" y="55" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
@@ -47,7 +45,7 @@
                     [routerLink]="item.link"
                     routerLinkActive="active"
                     [appTooltip]="!isOpen() ? item.label : ''"
-                    (click)="onNavLinkClick($event, item.link)"
+                    (click)="onNavLinkClick()"
                   >
                     <i [class]="item.icon"></i>
                     <span>{{ item.label }}</span>
@@ -81,7 +79,7 @@
                             [routerLink]="child.link"
                             routerLinkActive="active"
                             [appTooltip]="child.label"
-                            (click)="onNavLinkClick($event, child.link)"
+                            (click)="onNavLinkClick()"
                           >
                             <i [class]="child.icon"></i>
                             <span>{{ child.label }}</span>

@@ -52,7 +52,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private footerService = inject(FooterActionService);
 
   // --- State Signals ---
-  // [UPDATED] Set to false so it starts in "Mini" mode on Desktop
+  // Default to false (Collapsed/Mini on Desktop, Hidden on Mobile)
   public sidebarOpen = signal(false); 
   public contentLoaded = signal(false);
   
@@ -79,6 +79,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private resizeListener = this.checkWindowSize.bind(this);
 
   constructor() {
+    // Sync Navigation Items
     effect(() => {
       const items = this.authService.navItems();
       this.navItems.set(this.deepCopyNavItems(items));
@@ -88,7 +89,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Check initial size but don't force reset if we just loaded
+    // Initial check for mobile size
     if (window.innerWidth <= 992) {
       this.sidebarOpen.set(false);
     }
@@ -102,6 +103,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private initializeRouterEvents(): void {
+    // Close sidebar on mobile when navigation starts
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationStart),
@@ -110,12 +112,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.footerService.clearActions();
         
-        // Optional: Auto-close on mobile when navigating
-        if (window.innerWidth <= 992) {
+        if (window.innerWidth <= 992 && this.sidebarOpen()) {
           this.sidebarOpen.set(false);
         }
       });
 
+    // Update Header Info on Navigation End
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -147,16 +149,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }));
   }
 
-  // [UPDATED] Only force close if we transition into Mobile view
   private checkWindowSize(): void {
-    if (window.innerWidth <= 992) {
-      // Only collapse if it's currently open to avoid unnecessary signal updates
-      if (this.sidebarOpen()) {
-        this.sidebarOpen.set(false);
-      }
+    // Automatically close sidebar if resized to mobile width
+    if (window.innerWidth <= 992 && this.sidebarOpen()) {
+      this.sidebarOpen.set(false);
     }
-    // We do NOT force sidebarOpen to false on Desktop resize, 
-    // allowing the user to keep it expanded if they toggled it.
   }
 
   private getInitials(username: string): string {
