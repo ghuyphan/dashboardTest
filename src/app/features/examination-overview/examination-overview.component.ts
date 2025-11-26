@@ -89,6 +89,7 @@ export class ExaminationOverviewComponent implements OnInit {
   ];
 
   private palette!: ThemePalette;
+  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -201,7 +202,6 @@ export class ExaminationOverviewComponent implements OnInit {
       { total: 0, ck: 0, cc: 0, nt: 0, dnt: 0 }
     );
 
-    // [UPDATED] Removed manual formatting here. 
     // Sending raw strings allows WidgetCardComponent to animate and format automatically.
     this.widgetData = this.widgetData.map(w => {
       let val = 0;
@@ -353,42 +353,43 @@ export class ExaminationOverviewComponent implements OnInit {
 
   private createPieChartOption(data: any[], commonOps: any): EChartsCoreOption {
     return {
-        ...commonOps,
-        // [UPDATED] Removed 'formatter' string. 
-        // This lets ChartCard inject the automatic valueFormatter (1.000) into the tooltip.
-        tooltip: {
-          trigger: 'item',
-          backgroundColor: this.palette.bgCard,
-          borderColor: this.palette.gray200,
-          textStyle: { color: this.palette.textPrimary },
-        },
-        legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
-        series: [
-          {
-            type: 'pie',
-            radius: ['45%', '70%'],
-            center: ['50%', '45%'],
-            itemStyle: {
-              borderRadius: 5,
-              borderColor: this.palette.bgCard,
-              borderWidth: 2,
-            },
-            label: { 
-              show: true, 
-              position: 'outer',
-              // {c} here will now be auto-formatted by ChartCard middleware too!
-              formatter: '{b}: {c} ({d}%)', 
-              color: this.palette.textPrimary
-            },
-            emphasis: {
-              label: {
-                show: true,
-                fontWeight: 'bold',
-              }
-            },
-            data: data,
+      ...commonOps,
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: this.palette.bgCard,
+        borderColor: this.palette.gray200,
+        textStyle: { color: this.palette.textPrimary },
+        // ChartCard auto-injects valueFormatter for tooltips if not provided
+      },
+      legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
+      series: [
+        {
+          type: 'pie',
+          radius: ['45%', '70%'],
+          center: ['50%', '45%'],
+          itemStyle: {
+            borderRadius: 5,
+            borderColor: this.palette.bgCard,
+            borderWidth: 2,
           },
-        ],
+          label: { 
+            show: true, 
+            position: 'outer',
+            // Use function formatter to ensure number formatting
+            formatter: (params: any) => {
+              return `${params.name}: ${this.vnNumberFormatter.format(params.value)} (${params.percent}%)`;
+            },
+            color: this.palette.textPrimary
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontWeight: 'bold',
+            }
+          },
+          data: data,
+        },
+      ],
     };
   }
 

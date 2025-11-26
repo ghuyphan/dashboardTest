@@ -8,7 +8,14 @@
     [class.going-light]="!themeService.isDarkTransition()">
     
     <div class="curtain-loader">
-       <i class="fas fa-circle-notch fa-spin"></i>
+       <div class="app-loading-spinner"></div>
+       <p>
+         @if (themeService.isDarkTransition()) {
+           Đang chuyển sang chế độ tối...
+         } @else {
+           Đang chuyển sang chế độ sáng...
+         }
+       </p>
     </div>
   </div>
 }

@@ -58,7 +58,7 @@ export class ClsLevel6ReportComponent implements OnInit {
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
   private numberPipe = inject(DecimalPipe);
-  private destroyRef = inject(DestroyRef); // [1]
+  private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
@@ -85,6 +85,7 @@ export class ClsLevel6ReportComponent implements OnInit {
   ];
 
   private palette!: ThemePalette;
+  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -186,7 +187,7 @@ export class ClsLevel6ReportComponent implements OnInit {
           this.isLoading = false;
           this.cd.markForCheck();
         }),
-        takeUntilDestroyed(this.destroyRef) // [2]
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (data) => {
@@ -420,7 +421,7 @@ export class ClsLevel6ReportComponent implements OnInit {
             show: true,
             position: 'right',
             color: this.palette.textSecondary,
-            formatter: '{c}'
+            // REMOVED formatter so ChartCard handles it
         }
       }]
     };
@@ -446,7 +447,7 @@ export class ClsLevel6ReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        formatter: '{b}: <b>{c}</b> ({d}%)'
+        // Auto-inject format:
       },
       legend: { 
         type: 'scroll',
@@ -470,7 +471,9 @@ export class ClsLevel6ReportComponent implements OnInit {
             show: true, 
             position: 'outer',
             color: this.palette.textPrimary, 
-            formatter: '{b}: {c} ({d}%)' 
+            formatter: (params: any) => {
+              return `${params.name}: ${this.vnNumberFormatter.format(params.value)} (${params.percent}%)`;
+            }
         },
         emphasis: {
           label: {

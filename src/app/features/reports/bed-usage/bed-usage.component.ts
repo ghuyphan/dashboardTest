@@ -81,9 +81,8 @@ export class BedUsageComponent implements OnInit {
   public isLoading = signal<boolean>(true);
   public currentDateTime = signal<string>('');
   private rawData = signal<ApiResponseData[]>([]);
-  
-  // Tracks which legends are toggled off to recalculate the Total correctly
   private visibleSeriesMap = signal<Record<string, boolean> | null>(null);
+  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   public widgetData = computed<WidgetData[]>(() => {
     const data = this.rawData();
@@ -166,7 +165,6 @@ export class BedUsageComponent implements OnInit {
     this.rawData.set([]);
   }
 
-  // [FIX] Sanitize inputs with Math.max(0, value) to prevent negative numbers from breaking the UI
   private calculateTotals(apiData: ApiResponseData[]) {
     return apiData.reduce(
       (acc, item) => ({
@@ -200,8 +198,10 @@ export class BedUsageComponent implements OnInit {
     
     const rate = totals.totalBeds > 0 ? (occupied / totals.totalBeds) * 100 : 0;
     const occupancyRate = `${rate.toFixed(1).replace('.', ',')}%`;
-
-    const format = (val: number) => new Intl.NumberFormat('vi-VN').format(val);
+    
+    // WidgetCardComponent auto-formats values, so sending raw strings/numbers is fine usually,
+    // but for consistency with specific formatting requirements (if any), we use the formatter.
+    const format = (val: number) => this.vnNumberFormatter.format(val);
 
     return [
       { id: 'occupancyRate', title: 'Công Suất', value: occupancyRate, caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: palette.chart1 },
@@ -215,7 +215,6 @@ export class BedUsageComponent implements OnInit {
     ];
   }
 
-  // [FIX] Sanitize individual chart items so bars don't go below zero
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
     return apiData.map((item) => {
       let cleanName = item.TenPhongBan.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
@@ -267,7 +266,6 @@ export class BedUsageComponent implements OnInit {
       { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: palette.chart9 },
     ];
 
-    // Calculate Sum based on visible series
     const dynamicTotals = data.map(dept => {
       let sum = 0;
       bedStatusSeries.forEach(s => {
@@ -332,7 +330,7 @@ export class BedUsageComponent implements OnInit {
         type: 'value',
         name: 'Số Lượng',
         nameLocation: 'end',
-        min: 0, // Explicitly prevent negative Y-axis
+        min: 0,
         splitLine: {
           lineStyle: {
             color: palette.gray200,
@@ -340,6 +338,7 @@ export class BedUsageComponent implements OnInit {
           },
         },
         axisLabel: { color: palette.textSecondary }
+        // Note: We removed axisLabel.formatter to let ChartCard middleware inject it
       },
       series: [
         ...bedStatusSeries.map((config) => ({
@@ -359,27 +358,26 @@ export class BedUsageComponent implements OnInit {
             position: 'inside',
             color: '#fff',
             fontSize: 9,
-            formatter: (p: any) => (p.value > 0 ? p.value : ''),
+            // Manually format because of the > 0 check logic
+            formatter: (p: any) => (p.value > 0 ? this.vnNumberFormatter.format(p.value) : ''),
           },
         })),
 
-        // [FIX] Clean "Total" Label: No background, simple text
         {
           name: 'Tổng (Total)',
           type: 'bar',
           barGap: '-100%', 
           barWidth: CHART_BAR_WIDTH,
           data: dynamicTotals,
-          itemStyle: { color: 'transparent' }, // Invisible bar
+          itemStyle: { color: 'transparent' },
           label: {
             show: true,
             position: 'top',
-            color: palette.textPrimary, // Use Theme Text Color
+            color: palette.textPrimary,
             fontWeight: 'bold',
             fontSize: 11,
-            formatter: '{c}',
+            // Removed manual formatter '{c}' so ChartCard will format it to '1.000'
             distance: 5,
-            // Removed backgroundColor, padding, borderRadius
           },
           tooltip: { show: false },
           z: 10,
@@ -407,7 +405,7 @@ export class BedUsageComponent implements OnInit {
             result += `
               <div style="display:flex; justify-content:space-between; gap:15px; font-size:12px;">
                 <span>${p.marker} ${p.seriesName}</span>
-                <span style="font-weight:bold;">${p.value}</span>
+                <span style="font-weight:bold;">${this.vnNumberFormatter.format(p.value)}</span>
               </div>`;
         }
         visibleTotal += (typeof p.value === 'number' ? p.value : 0);
@@ -416,7 +414,7 @@ export class BedUsageComponent implements OnInit {
       result += `
         <div style="margin-top:6px; padding-top:6px; border-top:1px solid ${palette.gray200}; display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
           <span>Tổng cộng</span>
-          <span>${visibleTotal}</span>
+          <span>${this.vnNumberFormatter.format(visibleTotal)}</span>
         </div>`;
       
       return result;

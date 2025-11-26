@@ -74,7 +74,7 @@ export class DeviceDashboardComponent implements OnInit {
   private cd = inject(ChangeDetectorRef);
   private toastService = inject(ToastService);
   private router = inject(Router);
-  private destroyRef = inject(DestroyRef); // [1] Inject DestroyRef
+  private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
@@ -115,9 +115,9 @@ export class DeviceDashboardComponent implements OnInit {
 
   private palette!: ThemePalette;
   private statusColorMap = new Map<string, string>();
+  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
-    // Ensure timer is cleared if component is destroyed
     this.destroyRef.onDestroy(() => {
       clearTimeout(this.filterTransitionTimer);
     });
@@ -226,7 +226,7 @@ export class DeviceDashboardComponent implements OnInit {
           this.isLoading = false;
           this.cd.markForCheck();
         }),
-        takeUntilDestroyed(this.destroyRef) // [2] Modern cancellation
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (data) => {
@@ -484,6 +484,7 @@ export class DeviceDashboardComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         textStyle: { color: this.palette.textPrimary },
         borderColor: this.palette.gray200,
+        // ChartCard auto-injects valueFormatter for tooltips
       },
       legend: {
         orient: 'vertical',
@@ -501,7 +502,10 @@ export class DeviceDashboardComponent implements OnInit {
             show: true,
             position: 'outer',
             color: this.palette.textPrimary,
-            formatter: '{b}: {c} ({d}%)'
+            // Explicitly format number since ChartCard's default overwrites string templates only if missing
+            formatter: (param: any) => {
+              return `${param.name}: ${this.vnNumberFormatter.format(param.value)} (${param.percent}%)`;
+            }
           },
         },
       ],
@@ -535,12 +539,14 @@ export class DeviceDashboardComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        // Auto-formatted
       },
       xAxis: {
         type: 'value',
         splitLine: {
           lineStyle: { color: this.palette.gray200, type: 'dotted' },
         },
+        // Auto-formatted
       },
       yAxis: {
         type: 'category',
@@ -555,6 +561,7 @@ export class DeviceDashboardComponent implements OnInit {
             show: true,
             position: 'right',
             color: this.palette.textSecondary,
+            // Removed 'formatter', letting ChartCard inject "1.000"
           },
         },
       ],
@@ -573,6 +580,7 @@ export class DeviceDashboardComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        // Auto-formatted
       },
       grid: { left: '3%', right: '4%', containLabel: true },
       xAxis: { type: 'category', data: x, boundaryGap: false },
@@ -581,6 +589,7 @@ export class DeviceDashboardComponent implements OnInit {
         splitLine: {
           lineStyle: { color: this.palette.gray200, type: 'dotted' },
         },
+        // Auto-formatted
       },
       series: [
         {
@@ -607,7 +616,7 @@ export class DeviceDashboardComponent implements OnInit {
   }
 
   formatNumber(val: number) {
-    return new Intl.NumberFormat('vi-VN').format(val);
+    return this.vnNumberFormatter.format(val);
   }
 
   onChartClick(type: FilterType, params: any) {

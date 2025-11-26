@@ -78,6 +78,7 @@ export class SpecialtyClsReportComponent implements OnInit {
   ];
 
   private palette!: ThemePalette;
+  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -220,7 +221,6 @@ export class SpecialtyClsReportComponent implements OnInit {
   ): void {
     
     // [UPDATED] Theme Service Palette
-    // Using strictly defined colors from your theme service
     const themePalette = [
       this.palette.primary,       // Teal Blue
       this.palette.chart6,        // Orange
@@ -306,7 +306,10 @@ export class SpecialtyClsReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        formatter: '{b}: <b>{c}</b> ({d}%)'
+        // Use explicit formatting
+        formatter: (params: any) => {
+          return `${params.name}: <b>${this.vnNumberFormatter.format(params.value)}</b> (${params.percent}%)`;
+        }
       },
       legend: {
         type: 'scroll',
@@ -330,7 +333,8 @@ export class SpecialtyClsReportComponent implements OnInit {
           label: {
             show: true,
             position: 'outside',
-            formatter: '{b}\n{d}%',
+            // Use formatting
+            formatter: (params: any) => `${params.name}\n${params.percent}%`,
             color: this.palette.textPrimary,
           },
           labelLine: {
@@ -392,7 +396,7 @@ export class SpecialtyClsReportComponent implements OnInit {
             show: true,
             position: 'right',
             color: this.palette.textSecondary,
-            formatter: '{c}'
+            // Removed formatter so ChartCard handles it
           }
         }
       ]
