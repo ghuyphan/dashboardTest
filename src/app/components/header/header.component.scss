@@ -11,12 +11,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
-
-  /* COLOR UPDATE: Adapts to Dark Mode Slate */
   background-color: var(--surface-card);
-  border-bottom: 1px solid transparent; /* Prep for scroll border if needed */
-
-  /* Dark mode separator to distinguish header from page content */
+  border-bottom: 1px solid transparent; 
   [data-theme='dark'] & {
     border-bottom-color: var(--border-color);
   }
@@ -60,11 +56,8 @@
   &:hover {
     background-color: var(--gray-100);
     color: var(--teal-blue);
-    
-    /* POLISH: Visible hover in dark mode */
     [data-theme='dark'] & {
-       background-color: var(--surface-card);
-      color: var(--teal-blue);
+       background-color: var(--gray-200); 
     }
   }
 }
@@ -94,10 +87,9 @@
   padding: 0 0.75rem;
   transition: all 0.2s;
 
-  /* POLISH: Ensure search input is distinct in dark mode */
   [data-theme='dark'] & {
     background: rgba(0, 0, 0, 0.2); 
-    border-color: var(--gray-200);
+    border-color: var(--border-color);
   }
 
   &:focus-within {
@@ -133,7 +125,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--gray-400);
+    color: var(--text-disabled);
 
     &:hover {
       color: var(--text-primary);
@@ -166,7 +158,6 @@
     background: var(--gray-100);
     border-color: var(--border-color);
 
-    /* POLISH: Fix hover visibility in dark mode */
     [data-theme='dark'] & {
       background: rgba(255, 255, 255, 0.05);
     }
@@ -176,7 +167,7 @@
     width: 32px;
     height: 32px;
     background: var(--aqua-island);
-    color: #ffffff; /* Always white text for contrast on aqua */
+    color: #ffffff; 
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -186,7 +177,7 @@
     flex-shrink: 0;
     
     [data-theme='dark'] & {
-        color: #0f172a; /* Dark text on bright aqua in dark mode */
+        color: #0f172a; 
     }
   }
 
@@ -208,6 +199,7 @@
    CUSTOM MAT-MENU PANEL STYLING
    ================================================================= */
 ::ng-deep .header-user-menu-panel.mat-mdc-menu-panel {
+  /* UPDATED: Use semantic card background */
   background-color: var(--surface-card) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 12px !important;
@@ -227,7 +219,6 @@
     margin-bottom: 8px;
     overflow: hidden;
     
-    /* POLISH: Subtle separation in dark mode */
     [data-theme='dark'] & {
       background-color: rgba(255, 255, 255, 0.03);
     }
@@ -309,15 +300,14 @@
       min-width: 32px;
       border-radius: 50%;
       
-      /* FIXED: Default background */
+      /* UPDATED: Semantic background for icons */
       background: var(--gray-100); 
       
-      /* FIXED: Dark mode background (Lighter than card to stand out) */
       [data-theme='dark'] & {
          background: var(--gray-200); 
       }
 
-      color: var(--gray-600);
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -338,10 +328,10 @@
 
       .menu-icon-bg {
         background: var(--surface-background);
-        color: var(--gray-900);
+        color: var(--text-primary);
 
         [data-theme="dark"] & {
-          background: var(--gray-300); /* Even lighter on hover */
+          background: var(--gray-300); 
           color: var(--white);
         }
       }
