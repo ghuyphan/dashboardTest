@@ -52,7 +52,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private footerService = inject(FooterActionService);
 
   // --- State Signals ---
-  public sidebarOpen = signal(false);
+  // [UPDATED] Set to false so it starts in "Mini" mode on Desktop
+  public sidebarOpen = signal(false); 
   public contentLoaded = signal(false);
   
   public screenTitle = signal('Đang tải...');
@@ -74,6 +75,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   public navItems = signal<NavItem[]>([]);
 
+  // Store resize listener to remove it later
+  private resizeListener = this.checkWindowSize.bind(this);
+
   constructor() {
     effect(() => {
       const items = this.authService.navItems();
@@ -84,19 +88,20 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.checkWindowSize();
-    window.addEventListener('resize', this.checkWindowSize.bind(this));
-
-    // Removed timeout, set immediately
+    // Check initial size but don't force reset if we just loaded
+    if (window.innerWidth <= 992) {
+      this.sidebarOpen.set(false);
+    }
+    
+    window.addEventListener('resize', this.resizeListener);
     this.contentLoaded.set(true);
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('resize', this.checkWindowSize.bind(this));
+    window.removeEventListener('resize', this.resizeListener);
   }
 
   private initializeRouterEvents(): void {
-    // 1. Clear Actions on Navigation Start
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationStart),
@@ -104,9 +109,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => {
         this.footerService.clearActions();
+        
+        // Optional: Auto-close on mobile when navigating
+        if (window.innerWidth <= 992) {
+          this.sidebarOpen.set(false);
+        }
       });
 
-    // 2. Update Title/Metadata on Navigation End
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -138,8 +147,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }));
   }
 
+  // [UPDATED] Only force close if we transition into Mobile view
   private checkWindowSize(): void {
-    this.sidebarOpen.set(false);
+    if (window.innerWidth <= 992) {
+      // Only collapse if it's currently open to avoid unnecessary signal updates
+      if (this.sidebarOpen()) {
+        this.sidebarOpen.set(false);
+      }
+    }
+    // We do NOT force sidebarOpen to false on Desktop resize, 
+    // allowing the user to keep it expanded if they toggled it.
   }
 
   private getInitials(username: string): string {

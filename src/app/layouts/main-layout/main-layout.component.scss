@@ -141,6 +141,3 @@ app-header {
     margin-bottom: calc(var(--header-height) * -1);
   }
 }
-
-/* REMOVED ::ng-deep block for footer. 
-   Styles are now handled inside the component or via global css. */
