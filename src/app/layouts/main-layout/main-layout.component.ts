@@ -170,6 +170,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.sidebarOpen.update(v => !v);
   }
 
+  // [FIX] Added explicit close handler
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
+
   logout(): void {
     this.authService.logout();
   }

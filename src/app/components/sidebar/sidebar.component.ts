@@ -39,6 +39,7 @@ export class SidebarComponent {
   public isOpen = input<boolean>(false);
 
   @Output() toggleSidebar = new EventEmitter<void>();
+  @Output() closeSidebar = new EventEmitter<void>(); // [FIX] New output for explicit closing
 
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
@@ -124,14 +125,13 @@ export class SidebarComponent {
 
   /**
    * Handles navigation clicks in mobile view.
-   * Simplified to just emit the toggle event. 
-   * The actual navigation is handled by the [routerLink] directive,
-   * and the closing logic is handled by MainLayout responding to router events.
-   * This manual emit handles cases where navigation might not trigger (e.g. same route).
+   * [FIX] Use closeSidebar event instead of toggle. 
+   * This prevents race conditions where the Router closes it 
+   * and this toggles it back open.
    */
   public onNavLinkClick(): void {
     if (this.isMobileView && this.isOpen()) {
-      this.toggleSidebar.emit();
+      this.closeSidebar.emit();
     }
   }
 }

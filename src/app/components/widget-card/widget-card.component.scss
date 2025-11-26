@@ -3,22 +3,27 @@
   container-type: inline-size;
   container-name: widget;
   height: 100%;
-  /* CRITICAL FIX: Allows the component to shrink below its content size in CSS Grid */
   min-width: 0;
 }
 
 .widget-card {
-  background-color: var(--white);
+  background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  transition: all 0.2s ease-in-out;
+  
+  transition: transform 0.2s ease-in-out, 
+              box-shadow 0.2s ease-in-out, 
+              border-color 0.2s ease;
+              
   height: 100%;
   overflow: hidden;
-  /* CRITICAL FIX: Prevents content blowout */
   min-width: 0;
 
-  /* --- GRID STACKING TRICK --- */
-  /* Forces both layers to occupy the same space */
+  border: 1px solid transparent;
+  [data-theme='dark'] & {
+    border-color: var(--border-color);
+  }
+
   display: grid;
   grid-template-columns: 100%;
   grid-template-rows: 100%; 
@@ -28,7 +33,6 @@
     box-shadow: var(--box-shadow-lg);
   }
 
-  /* Disable hover lift on touch devices to prevent sticky states */
   @media (hover: none) and (pointer: coarse) {
     &:hover {
       transform: none;
@@ -50,26 +54,23 @@
   flex-direction: column;
   text-align: center;
   justify-content: center;
-  /* Ensure content doesn't overflow horizontally */
   min-width: 0;
 }
 
 /* --- SKELETON LAYER --- */
 .skeleton-layer {
   z-index: 2; /* Sits on top */
-  background-color: var(--white); /* Opaque to hide content below */
+  background-color: var(--surface-card); 
   
-  /* TRANSITION LOGIC */
   opacity: 1;
   visibility: visible;
   transition: opacity 0.4s ease-in-out, visibility 0s 0s;
   will-change: opacity;
-  pointer-events: none; /* Always allow clicks to pass through if strictly visual */
+  pointer-events: none;
   
   &.hide {
     opacity: 0;
     visibility: hidden;
-    /* Delay visibility hidden until opacity fade completes */
     transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
   }
 }
@@ -110,7 +111,7 @@
   .widget-value {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--gray-900);
+    color: var(--gray-900); 
     line-height: 1.2;
     margin-bottom: 4px;
     
@@ -161,7 +162,6 @@
 }
 
 /* --- CONTAINER QUERY: Wide Layout --- */
-/* Triggers when the widget itself is wider than 220px (e.g. desktop grid or single column mobile) */
 @container widget (min-width: 220px) {
   .widget-layer {
     flex-direction: row;
