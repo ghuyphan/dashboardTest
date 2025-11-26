@@ -29,7 +29,7 @@ export interface ExportConfig {
     ReusableTableComponent,
     MatMenuModule,
     MatIconModule,
-    HasPermissionDirective // <--- REINSTATED
+    HasPermissionDirective
   ],
   templateUrl: './table-card.component.html',
   styleUrls: ['./table-card.component.scss'],
@@ -38,7 +38,7 @@ export interface ExportConfig {
 })
 export class TableCardComponent<T> {
   private excelService = inject(ExcelExportService);
-  private route = inject(ActivatedRoute); // <--- NEW: Inject ActivatedRoute
+  private route = inject(ActivatedRoute);
 
   // --- Card Inputs ---
   public title = input.required<string>();
@@ -60,19 +60,35 @@ export class TableCardComponent<T> {
   public isExporting = input<boolean>(false); 
   public exportConfig = input<ExportConfig | null>(null);
 
-  // --- NEW COMPUTED PROPERTY: Derives permission from route data ---
+  /**
+   * [Optional] Manually specify the permission key for the export button.
+   * If provided, this overrides the auto-detected route permission.
+   */
+  public exportPermission = input<string | undefined>(undefined);
+
+  /**
+   * Computes the final permission string required to see the Export button.
+   * Priority:
+   * 1. `exportPermission` input (Manual override).
+   * 2. Auto-derived from the current Route's `data.permission` + `.REXPORT`.
+   * 3. `undefined` (If no permission found, button is visible to all).
+   */
   public fullExportPermission = computed(() => {
-    // Traverse the snapshot to find the deepest route, which holds the current page's data.
+    // 1. Check for manual override input
+    const manualOverride = this.exportPermission();
+    if (manualOverride) {
+      return manualOverride;
+    }
+
+    // 2. Traverse to find the deepest active route (where the data usually lives)
     let currentRoute = this.route.snapshot;
     while (currentRoute.firstChild) {
       currentRoute = currentRoute.firstChild;
     }
 
+    // 3. Derive from Route Data
     const basePermission = currentRoute.data['permission'] as string | undefined;
-    console.log(basePermission)
-
-    // Check if the permission property exists and append .REXPORT
-    if (basePermission && typeof basePermission === 'string') {
+    if (basePermission) {
       return `${basePermission}.REXPORT`;
     }
     

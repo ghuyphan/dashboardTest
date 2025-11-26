@@ -15,6 +15,7 @@
       @if (enableExport()) {
         <button 
           class="btn-icon-action" 
+          *appHasPermission="fullExportPermission()"
           (click)="onExport()" 
           [disabled]="isLoading() || isExporting()"
           title="Xuất Excel">

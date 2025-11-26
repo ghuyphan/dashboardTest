@@ -16,8 +16,8 @@ import {
   NavigationEnd,
   NavigationStart,
   ActivatedRoute,
-} from '@angular/router';
-import { filter, map, mergeMap, startWith } from 'rxjs/operators';
+} from '@angular/router'
+import { filter, map, mergeMap, startWith, tap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -52,7 +52,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private footerService = inject(FooterActionService);
 
   // --- State Signals ---
-  // Default to false (Collapsed/Mini on Desktop, Hidden on Mobile)
   public sidebarOpen = signal(false); 
   public contentLoaded = signal(false);
   
@@ -79,7 +78,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private resizeListener = this.checkWindowSize.bind(this);
 
   constructor() {
-    // Sync Navigation Items
     effect(() => {
       const items = this.authService.navItems();
       this.navItems.set(this.deepCopyNavItems(items));
@@ -103,7 +101,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private initializeRouterEvents(): void {
-    // Close sidebar on mobile when navigation starts
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationStart),
@@ -111,16 +108,18 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => {
         this.footerService.clearActions();
-        
-        if (window.innerWidth <= 992 && this.sidebarOpen()) {
-          this.sidebarOpen.set(false);
-        }
       });
 
-    // Update Header Info on Navigation End
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
+        tap(() => {
+            if (window.innerWidth <= 992 && this.sidebarOpen()) {
+                requestAnimationFrame(() => {
+                  this.sidebarOpen.set(false);
+                });
+            }
+        }),
         startWith(null),
         map(() => this.activatedRoute),
         map(route => {
@@ -150,7 +149,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   private checkWindowSize(): void {
-    // Automatically close sidebar if resized to mobile width
     if (window.innerWidth <= 992 && this.sidebarOpen()) {
       this.sidebarOpen.set(false);
     }
