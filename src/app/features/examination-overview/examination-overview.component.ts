@@ -5,10 +5,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   effect,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import type { EChartsCoreOption } from 'echarts/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ExaminationStat } from '../../shared/models/examination-stat.model';
 import { ReportService } from '../../core/services/report.service';
@@ -56,6 +58,7 @@ export class ExaminationOverviewComponent implements OnInit {
   private excelService = inject(ExcelExportService);
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
+  private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
@@ -93,7 +96,6 @@ export class ExaminationOverviewComponent implements OnInit {
       this.updateWidgetColors();
 
       if (!this.isLoading && this.rawData.length > 0) {
-        // Recalculate to ensure charts get new theme colors
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
       }
@@ -104,10 +106,7 @@ export class ExaminationOverviewComponent implements OnInit {
 
   ngOnInit(): void {
     this.palette = this.themeService.currentPalette();
-    
-    // 1. Initialize widgets immediately with "0" so they render
     this.initializeWidgetsStructure();
-    
     this.setDefaultDateRange();
     this.loadData();
   }
@@ -131,46 +130,11 @@ export class ExaminationOverviewComponent implements OnInit {
 
   private initializeWidgetsStructure(): void {
     this.widgetData = [
-      {
-        id: 'total',
-        icon: 'fas fa-users',
-        title: 'Tổng Tiếp Nhận',
-        value: '0',
-        caption: 'Total',
-        accentColor: this.palette?.deepSapphire || '#082567',
-      },
-      {
-        id: 'ck',
-        icon: 'fas fa-stethoscope',
-        title: 'Khám Bệnh (CK)',
-        value: '0',
-        caption: 'Clinic',
-        accentColor: this.palette?.primary || '#00839b',
-      },
-      {
-        id: 'emergency',
-        icon: 'fas fa-ambulance',
-        title: 'Cấp Cứu',
-        value: '0',
-        caption: 'Emergency',
-        accentColor: this.palette?.pastelCoral || '#ffb3ba',
-      },
-      {
-        id: 'inpatient',
-        icon: 'fas fa-procedures',
-        title: 'Nội Trú',
-        value: '0',
-        caption: 'Inpatient',
-        accentColor: this.palette?.warning || '#f59e0b',
-      },
-      {
-        id: 'daycare',
-        icon: 'fas fa-clinic-medical',
-        title: 'ĐT Ngoại Trú',
-        value: '0',
-        caption: 'Daycares',
-        accentColor: this.palette?.tealMidtone || '#52c3d7',
-      },
+      { id: 'total', icon: 'fas fa-users', title: 'Tổng Tiếp Nhận', value: '0', caption: 'Total', accentColor: this.palette?.deepSapphire || '#082567' },
+      { id: 'ck', icon: 'fas fa-stethoscope', title: 'Khám Bệnh (CK)', value: '0', caption: 'Clinic', accentColor: this.palette?.primary || '#00839b' },
+      { id: 'emergency', icon: 'fas fa-ambulance', title: 'Cấp Cứu', value: '0', caption: 'Emergency', accentColor: this.palette?.pastelCoral || '#ffb3ba' },
+      { id: 'inpatient', icon: 'fas fa-procedures', title: 'Nội Trú', value: '0', caption: 'Inpatient', accentColor: this.palette?.warning || '#f59e0b' },
+      { id: 'daycare', icon: 'fas fa-clinic-medical', title: 'ĐT Ngoại Trú', value: '0', caption: 'Daycares', accentColor: this.palette?.tealMidtone || '#52c3d7' },
     ];
   }
 
@@ -194,8 +158,6 @@ export class ExaminationOverviewComponent implements OnInit {
     if (!this.fromDate || !this.toDate) return;
     
     this.isLoading = true;
-    
-    // Clear charts to show loading state (if skeleton enabled)
     this.trendChartOptions = null;
     this.typeChartOptions = null;
     this.patientStatusChartOptions = null;
@@ -208,7 +170,8 @@ export class ExaminationOverviewComponent implements OnInit {
         finalize(() => {
           this.isLoading = false;
           this.cd.markForCheck();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (data) => {
@@ -221,7 +184,6 @@ export class ExaminationOverviewComponent implements OnInit {
         },
         error: () => {
           this.toastService.showError('Không thể tải dữ liệu báo cáo.');
-          // Re-init to 0 if error
           this.initializeWidgetsStructure();
         },
       });
@@ -239,20 +201,18 @@ export class ExaminationOverviewComponent implements OnInit {
       { total: 0, ck: 0, cc: 0, nt: 0, dnt: 0 }
     );
 
-    const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
-
-    // Update values in place so Object reference changes but Array reference stays same (if strictly needed)
-    // Or create new array to trigger change detection properly
+    // [UPDATED] Removed manual formatting here. 
+    // Sending raw strings allows WidgetCardComponent to animate and format automatically.
     this.widgetData = this.widgetData.map(w => {
-      let val = '0';
+      let val = 0;
       switch(w.id) {
-        case 'total': val = fmt(t.total); break;
-        case 'ck': val = fmt(t.ck); break;
-        case 'emergency': val = fmt(t.cc); break;
-        case 'inpatient': val = fmt(t.nt); break;
-        case 'daycare': val = fmt(t.dnt); break;
+        case 'total': val = t.total; break;
+        case 'ck': val = t.ck; break;
+        case 'emergency': val = t.cc; break;
+        case 'inpatient': val = t.nt; break;
+        case 'daycare': val = t.dnt; break;
       }
-      return { ...w, value: val };
+      return { ...w, value: val.toString() };
     });
   }
 
@@ -394,9 +354,10 @@ export class ExaminationOverviewComponent implements OnInit {
   private createPieChartOption(data: any[], commonOps: any): EChartsCoreOption {
     return {
         ...commonOps,
+        // [UPDATED] Removed 'formatter' string. 
+        // This lets ChartCard inject the automatic valueFormatter (1.000) into the tooltip.
         tooltip: {
           trigger: 'item',
-          formatter: '{b}: {c} ({d}%)',
           backgroundColor: this.palette.bgCard,
           borderColor: this.palette.gray200,
           textStyle: { color: this.palette.textPrimary },
@@ -415,7 +376,8 @@ export class ExaminationOverviewComponent implements OnInit {
             label: { 
               show: true, 
               position: 'outer',
-              formatter: '{b}: {c} ({d}%)',
+              // {c} here will now be auto-formatted by ChartCard middleware too!
+              formatter: '{b}: {c} ({d}%)', 
               color: this.palette.textPrimary
             },
             emphasis: {

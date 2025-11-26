@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation, Inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Inject, inject, DestroyRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, finalize, switchMap, of } from 'rxjs';
+import { finalize, switchMap, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // [1] Import
 import { QRCodeComponent } from 'angularx-qrcode';
 
 import { Device } from '../../../shared/models/device.model';
@@ -30,12 +31,12 @@ import { DeviceService } from '../../../core/services/device.service';
   styleUrl: './device-detail.component.scss',
   encapsulation: ViewEncapsulation.None
 })
-export class DeviceDetailComponent implements OnInit, OnDestroy {
+export class DeviceDetailComponent implements OnInit {
+  private destroyRef = inject(DestroyRef); // [2] Inject DestroyRef
+  
   public device: Device | null = null;
   public isLoading = true;
   public qrCodeValue: string = '';
-  private routeSub: Subscription | null = null;
-  private deviceSub: Subscription | null = null;
 
   public isWarrantyExpiring: boolean = false;
   public warrantyExpiresInDays: number = 0;
@@ -43,8 +44,7 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    // private http: HttpClient, // Removed
-    private deviceService: DeviceService, // Injected Service
+    private deviceService: DeviceService,
     private footerService: FooterActionService,
     private modalService: ModalService,
     private toastService: ToastService,
@@ -53,44 +53,43 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.routeSub = this.route.params.subscribe(params => {
-      const deviceId = params['id'];
-      if (deviceId) {
-        this.loadDevice(deviceId);
-      } else {
-        this.toastService.showError('Không tìm thấy ID thiết bị.');
-        this.goBack();
-      }
-    });
+    this.route.params
+      .pipe(takeUntilDestroyed(this.destroyRef)) // [3] Protect route params subscription
+      .subscribe(params => {
+        const deviceId = params['id'];
+        if (deviceId) {
+          this.loadDevice(deviceId);
+        } else {
+          this.toastService.showError('Không tìm thấy ID thiết bị.');
+          this.goBack();
+        }
+      });
   }
 
-  ngOnDestroy(): void {
-    this.routeSub?.unsubscribe();
-    this.deviceSub?.unsubscribe();
-  }
+  // ngOnDestroy removed - handled automatically by DestroyRef
 
   loadDevice(id: string): void {
     this.isLoading = true;
     
-    this.deviceSub?.unsubscribe();
+    this.deviceService.getDeviceById(id)
+      .pipe(
+        finalize(() => this.isLoading = false),
+        takeUntilDestroyed(this.destroyRef) // [4] Protect API call
+      )
+      .subscribe({
+        next: (device) => {
+          this.device = device;
+          this.qrCodeValue = window.location.href;
 
-    // Use DeviceService to fetch data
-    this.deviceSub = this.deviceService.getDeviceById(id).pipe(
-      finalize(() => this.isLoading = false)
-    ).subscribe({
-      next: (device) => {
-        this.device = device;
-        this.qrCodeValue = window.location.href;
-
-        this.setupFooterActions(this.device);
-        this.checkWarrantyStatus(this.device);
-      },
-      error: (err: Error) => {
-        console.error('Failed to load device details:', err);
-        this.toastService.showError(err.message || 'Không thể tải chi tiết thiết bị.');
-        this.goBack();
-      }
-    });
+          this.setupFooterActions(this.device);
+          this.checkWarrantyStatus(this.device);
+        },
+        error: (err: Error) => {
+          console.error('Failed to load device details:', err);
+          this.toastService.showError(err.message || 'Không thể tải chi tiết thiết bị.');
+          this.goBack();
+        }
+      });
   }
 
   private checkWarrantyStatus(device: Device): void {
@@ -249,11 +248,11 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       switchMap(confirmed => {
         if (confirmed) {
           this.isLoading = true;
-          // Use DeviceService to delete
           return this.deviceService.deleteDevice(device.Id!);
         }
         return of(null);
-      })
+      }),
+      takeUntilDestroyed(this.destroyRef) // [5] Protect deletion
     ).subscribe({
       next: (response) => {
         if (response) {
@@ -264,12 +263,12 @@ export class DeviceDetailComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.isLoading = false;
-        // Handle error type safely
         const msg = err.error?.TenKetQua || err.message || 'Xóa thất bại.';
         this.toastService.showError(msg, 0);
       },
       complete: () => {
-        this.isLoading = false;
+        // If we didn't navigate away (e.g., error or cancelled), stop loading
+        if (this.isLoading) this.isLoading = false;
       }
     });
   }

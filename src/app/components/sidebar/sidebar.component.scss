@@ -45,10 +45,7 @@
   margin-bottom: var(--spacing-sm);
   box-sizing: border-box;
   position: relative;
-  
-  /* Polished: Use consistent padding variable */
   padding: 0 var(--sidebar-padding);
-  
   flex-shrink: 0;
   transition: padding var(--transition-duration) var(--transition-smooth),
     justify-content var(--transition-duration) var(--transition-smooth);
@@ -96,6 +93,8 @@
   font-weight: 600;
   color: var(--text-primary);
   
+  /* [FIX] Increased line-height prevents cutting off descenders (g, y, p) */
+  line-height: 1.5; 
   margin: 0;
   white-space: nowrap;
   flex: 1;
@@ -134,22 +133,17 @@
   transform: scale(0.95);
 }
 
-/* --- Sidebar Navigation Content (Scrollable Area) --- */
+/* --- Sidebar Navigation Content --- */
 .sidebar-nav-content {
   flex-grow: 1;
   min-height: 0;
   width: 100%;
   position: relative;
-  
-  /* Modern overlay scrollbar */
   overflow-y: scroll;
   overflow-x: hidden;
+  scrollbar-width: none; 
+  -ms-overflow-style: none; 
 
-  /* Styling the scrollbar to be minimal and overlay-like */
-  scrollbar-width: none; /* Firefox - hide scrollbar but keep functionality */
-  -ms-overflow-style: none; /* IE and Edge */
-
-  /* WebKit browsers - hide but keep functionality */
   &::-webkit-scrollbar {
     width: var(--scrollbar-width);
     background: transparent;
@@ -173,7 +167,6 @@
   contain-intrinsic-size: 100px 500px;
 }
 
-/* Custom overlay scrollbar indicator */
 .sidebar-nav-content::after {
   content: '';
   position: absolute;
@@ -192,7 +185,6 @@
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   overflow: visible;
-  /* Polished: Use consistent padding variable */
   padding: 0 var(--sidebar-padding);
 }
 
@@ -211,7 +203,7 @@
   z-index: 10;
 }
 
-/* --- Loading Skeleton for Defer Block --- */
+/* --- Loading Skeleton --- */
 .nav-skeleton {
   height: 50px;
   margin: 10px 0;
@@ -231,10 +223,7 @@
 .sidebar-nav ul li a,
 .sidebar-nav ul li button {
   align-items: center;
-  
-  /* UPDATED: Semantic Text Secondary */
   color: var(--text-secondary);
-  
   text-decoration: none;
   display: flex;
   padding: 0.75rem var(--spacing-sm);
@@ -242,7 +231,6 @@
   transition: background-color var(--transition-fast) ease,
     color var(--transition-fast) ease,
     transform var(--transition-fast) ease;
-
   white-space: nowrap;
   position: relative;
   width: 100%;
@@ -269,11 +257,19 @@
   transition: transform var(--transition-fast) var(--transition-spring);
 }
 
+/* [FIX] Updated Span Styles for Text Safety */
 .sidebar-nav ul li a span,
 .sidebar-nav ul li button span {
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+  
+  /* [FIX] Explicitly allow shrinking for ellipsis to work in Flexbox */
+  min-width: 0;
+  
+  /* [FIX] Increase line-height so descenders aren't clipped by overflow:hidden */
+  line-height: 1.5;
+  
   transition: opacity var(--transition-fast) var(--transition-smooth),
     transform var(--transition-fast) var(--transition-smooth);
   transform-origin: left center;
@@ -283,8 +279,6 @@
 .sidebar-nav ul li a:hover,
 .sidebar-nav ul li button:hover {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Semantic Text Primary */
   color: var(--text-primary);
 }
 
@@ -302,10 +296,7 @@
 .sidebar-nav ul li a.active,
 .sidebar-nav ul li button.active {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   font-weight: 600;
   box-shadow: none;
 }
@@ -335,35 +326,24 @@
 /* --- Submenu Styling --- */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] {
   background-color: transparent;
-  
-  /* UPDATED: Text Secondary */
   color: var(--text-secondary);
-  
   font-weight: var(--font-weight-normal);
 }
 
 .sidebar-nav ul li.has-submenu button[aria-expanded='true']:hover {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Text Primary */
   color: var(--text-primary);
 }
 
 .sidebar-nav ul li.has-submenu button.active {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   font-weight: 600;
 }
 
 .sidebar-nav ul li.active-parent > button {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   font-weight: 600;
 }
 
@@ -400,10 +380,7 @@
     margin var(--transition-duration) var(--transition-smooth);
   opacity: 0;
   position: relative;
-  
-  /* UPDATED: Border Color */
   border-left: 2px solid var(--border-color);
-  
   margin-left: 0.5rem !important;
 }
 
@@ -418,10 +395,7 @@
 .submenu li a {
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   font-size: 0.875rem;
-  
-  /* UPDATED: Text Secondary */
   color: var(--text-secondary);
-  
   margin: 0 0 0.25rem 0;
   border-radius: 0.375rem;
   position: relative;
@@ -442,17 +416,13 @@
 
 .submenu li a:hover {
   background-color: var(--gray-200);
-  
-  /* UPDATED: Text Primary */
   color: var(--text-primary);
 }
 
 .submenu li a:hover i { transform: scale(1.15); }
 
 .submenu li a.active {
-  /* UPDATED: Brand Color */
   color: var(--teal-blue);
-  
   background-color: var(--gray-200);
   font-weight: 600;
 }
@@ -583,8 +553,6 @@
     transition: transform 0.3s var(--transition-smooth);
     overflow-x: hidden;
     overflow-y: auto;
-    
-    /* Polished: Remove hard padding so scrollbar doesn't push content */
     padding: 0;
     contain: none; 
   }
@@ -605,10 +573,8 @@
   
   .sidebar-header { padding: 0 var(--spacing-xs); }
   
-  /* Restoring original mobile padding logic but cleaner */
   .sidebar-nav { padding: 0 var(--sidebar-padding); }
 
-  /* Accordion behavior for mobile collapsed state (technically mobile menu) */
   .sidebar.collapsed .sidebar-nav ul li .submenu {
     position: relative;
     left: auto;
@@ -621,10 +587,7 @@
     z-index: 1;
     max-height: 0 !important;
     overflow: hidden !important;
-    
-    /* UPDATED: Border Color */
     border-left: 2px solid var(--border-color) !important;
-    
     opacity: 0;
     visibility: visible;
     transition: max-height var(--transition-duration) var(--transition-smooth),
@@ -710,5 +673,16 @@
 @media (max-width: 480px) {
   .sidebar {
     width: var(--sidebar-width);
+  }
+}
+
+/* =========================================
+   NO TRANSITION UTILITY
+   Forces animations off during initialization
+   ========================================= */
+.sidebar.no-transition {
+  transition: none !important;
+  * {
+    transition: none !important;
   }
 }

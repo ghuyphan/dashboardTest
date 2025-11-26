@@ -5,10 +5,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   effect,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import type { EChartsCoreOption } from 'echarts/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -17,7 +19,6 @@ import { ClsLevel6Stat } from '../../../shared/models/cls-stat.model';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-// UI Components
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
 import { TableCardComponent } from '../../../components/table-card/table-card.component';
@@ -57,6 +58,7 @@ export class ClsLevel6ReportComponent implements OnInit {
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
   private numberPipe = inject(DecimalPipe);
+  private destroyRef = inject(DestroyRef); // [1]
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
@@ -66,17 +68,14 @@ export class ClsLevel6ReportComponent implements OnInit {
   public fromDate: string = '';
   public toDate: string = '';
 
-  // Widgets
   public widgetData: WidgetData[] = [];
 
-  // Charts
   public examTrendOptions: EChartsCoreOption | null = null;
   public clsTrendOptions: EChartsCoreOption | null = null;
   
   public roomChartOptions: EChartsCoreOption | null = null;
   public groupChartOptions: EChartsCoreOption | null = null;
 
-  // Table Config
   public tableColumns: GridColumn[] = [
     { key: 'NGAY_TH_DISPLAY', label: 'Ngày thực hiện', sortable: true, width: '120px' },
     { key: 'PHONG_BAN_TH', label: 'Phòng ban', sortable: true, width: '200px' },
@@ -131,7 +130,7 @@ export class ClsLevel6ReportComponent implements OnInit {
         title: 'Tổng Cận Lâm Sàng',
         value: '0',
         caption: 'Thực hiện CLS',
-        accentColor: this.palette?.chart6 || '#f89c5b' // Changed to Orange
+        accentColor: this.palette?.chart6 || '#f89c5b' 
       },
       {
         id: 'admission',
@@ -159,7 +158,7 @@ export class ClsLevel6ReportComponent implements OnInit {
         if (item) item.accentColor = color;
       };
       setC('total-exam', this.palette.primary);
-      setC('total-cls', this.palette.chart6); // Update to chart6 (Orange)
+      setC('total-cls', this.palette.chart6); 
       setC('admission', this.palette.pastelCoral);
       setC('top-room', this.palette.deepSapphire);
     }
@@ -186,7 +185,8 @@ export class ClsLevel6ReportComponent implements OnInit {
         finalize(() => {
           this.isLoading = false;
           this.cd.markForCheck();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef) // [2]
       )
       .subscribe({
         next: (data) => {
@@ -233,15 +233,12 @@ export class ClsLevel6ReportComponent implements OnInit {
 
       totalAdmission += admissionQty;
 
-      // Room Stats
       const roomName = i.PHONG_BAN_TH || 'Khác';
       roomMap.set(roomName, (roomMap.get(roomName) || 0) + qty);
 
-      // Group Stats
       const groupName = i.NHOM_DICH_VU || 'Chưa phân nhóm';
       groupMap.set(groupName, (groupMap.get(groupName) || 0) + qty);
 
-      // Date Stats
       const dateKey = i.NGAY_TH ? i.NGAY_TH.split('T')[0] : 'N/A';
       const dayStats = dateMap.get(dateKey) || { exam: 0, cls: 0 };
       
@@ -321,7 +318,6 @@ export class ClsLevel6ReportComponent implements OnInit {
     const examSeriesData = sortedDates.map(d => dateMap.get(d)?.exam || 0);
     const clsSeriesData = sortedDates.map(d => dateMap.get(d)?.cls || 0);
 
-    // --- 1. Exam Trend Chart (Blue) ---
     this.examTrendOptions = {
       ...commonOptions,
       legend: { show: false },
@@ -358,8 +354,6 @@ export class ClsLevel6ReportComponent implements OnInit {
       }]
     };
 
-    // --- 2. CLS Trend Chart (Orange / chart6) ---
-    // Changed color to differentiate from Exam
     this.clsTrendOptions = {
       ...commonOptions,
       legend: { show: false },
@@ -397,7 +391,6 @@ export class ClsLevel6ReportComponent implements OnInit {
       }]
     };
 
-    // --- 3. Room Chart ---
     const roomData = Array.from(roomMap.entries()).sort((a, b) => a[1] - b[1]);
 
     this.roomChartOptions = {
@@ -432,7 +425,6 @@ export class ClsLevel6ReportComponent implements OnInit {
       }]
     };
 
-    // --- 4. Group Chart (Doughnut) ---
     const groupData = Array.from(groupMap, ([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
@@ -458,23 +450,22 @@ export class ClsLevel6ReportComponent implements OnInit {
       },
       legend: { 
         type: 'scroll',
-        orient: 'horizontal', // <--- MODIFIED to horizontal
-        bottom: 0,            // <--- MODIFIED to bottom
-        left: 'center',       // <--- MODIFIED to center
+        orient: 'horizontal', 
+        bottom: 0,            
+        left: 'center',       
         textStyle: { color: this.palette.textSecondary } 
       },
       series: [{
         name: 'Nhóm Dịch Vụ',
         type: 'pie',
         radius: ['45%', '75%'],
-        center: ['50%', '45%'], // <--- MODIFIED to re-center the chart vertically above the legend
+        center: ['50%', '45%'], 
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 5,
           borderColor: this.palette.bgCard,
           borderWidth: 2
         },
-        // Show label with values
         label: { 
             show: true, 
             position: 'outer',

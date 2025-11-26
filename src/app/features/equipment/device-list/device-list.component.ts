@@ -32,10 +32,8 @@ import { ToastService } from '../../../core/services/toast.service';
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
-// Import Service
 import { DeviceService, DeviceQueryParams } from '../../../core/services/device.service';
 
-// Constants
 const DEFAULT_PAGE_SIZE = 25;
 const DEFAULT_SORT_COLUMN = 'Id';
 const DEFAULT_SORT_DIRECTION: SortDirection = 'asc';
@@ -56,9 +54,8 @@ interface RowActionEvent {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
-  // Dependency Injection
   private readonly footerService = inject(FooterActionService);
-  private readonly deviceService = inject(DeviceService); // Injected Service
+  private readonly deviceService = inject(DeviceService);
   private readonly searchService = inject(SearchService);
   private readonly modalService = inject(ModalService);
   private readonly toastService = inject(ToastService);
@@ -66,7 +63,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
-  // Public Properties
   public readonly deviceColumns: GridColumn[] = this.initializeColumns();
   public isLoading = true;
   public pagedDeviceData: Device[] = [];
@@ -78,7 +74,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   public currentSearchTerm = '';
   public selectedDevice: Device | null = null;
 
-  // Private Properties
   private readonly reloadTrigger$ = new Subject<void>();
   private readonly searchTerm$ = toObservable(this.searchService.searchTerm);
 
@@ -88,8 +83,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // [PERFORMANCE FIX]
-    // Delay data loading slightly to allow the View Transition animation to complete smoothly.
     setTimeout(() => {
       this.triggerReload();
     }, 300);
@@ -121,7 +114,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initializeSubscriptions(): void {
-    // 1. Search Subscription
     this.searchTerm$
       .pipe(
         debounceTime(SEARCH_DEBOUNCE_TIME),
@@ -134,7 +126,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       });
 
-    // 2. Data Reload Subscription
     this.reloadTrigger$
       .pipe(
         tap(() => this.handleLoadStart()),
@@ -143,7 +134,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       )
       .subscribe();
 
-    // 3. Router Subscription
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -182,7 +172,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         this.totalDeviceCount = response.TotalCount;
         this.handleLoadSuccess();
       }),
-      map(() => undefined), // Return void to match Observable<void>
+      map(() => undefined),
       catchError((error) => this.handleLoadError(error))
     );
   }
@@ -200,8 +190,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cdr.markForCheck();
     return of(undefined);
   }
-
-  // --- Table Event Handlers ---
 
   public onSortChanged(sortEvent: SortChangedEvent): void {
     this.currentSortColumn = sortEvent.column;
@@ -235,8 +223,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   public onSearchCleared(): void {
     this.searchService.setSearchTerm('');
   }
-
-  // --- CRUD Operations ---
 
   public onViewDetail(device: Device): void {
     if (!device?.Id) return;
@@ -301,7 +287,8 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
           this.selectedDevice = null;
           this.updateFooterActions();
           this.cdr.markForCheck();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef) // [1] Add deletion protection
       )
       .subscribe({
         next: (response) => {
@@ -323,8 +310,6 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         },
       });
   }
-
-  // --- Helpers ---
 
   private updateFooterActions(): void {
     const isRowSelected = this.selectedDevice !== null;

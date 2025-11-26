@@ -1,9 +1,11 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, NgClass } from '@angular/common';
+import { RouterLink, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { RouterLink, Router } from '@angular/router';
 import { ModalService } from '../../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 
@@ -18,11 +20,11 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush // <--- 1. Enable OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
-  // Inject ChangeDetectorRef
-  private cd = inject(ChangeDetectorRef); 
+  private cd = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   public isLoading = false;
   public credentials = {
@@ -44,49 +46,47 @@ export class LoginComponent {
   onSubmit() {
     if (this.isLoading) return;
     this.isLoading = true;
-    // No need to markForCheck here because the event (submit) triggers detection automatically
 
-    this.authService.login(this.credentials).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        this.toastService.showSuccess('Đăng nhập thành công!');
-        this.router.navigate(['/app']);
-        this.cd.markForCheck(); // <--- 2. Update view after async
-      },
-      error: (err: any) => {
-        this.isLoading = false;
+    this.authService.login(this.credentials)
+      .pipe(takeUntilDestroyed(this.destroyRef)) 
+      .subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          this.toastService.showSuccess('Đăng nhập thành công!');
+          this.router.navigate(['/app']);
+          this.cd.markForCheck();
+        },
+        error: (err: any) => {
+          this.isLoading = false;
 
-        // Kiểm tra mã lỗi 104 (Tài khoản bị khóa)
-        if (err.code == 104) {
-          this.modalService.open(ConfirmationModalComponent, {
-            title: 'Tài khoản bị khóa',
-            size: 'sm',
-            disableBackdropClose: true,
-            context: {
-              layout: 'center',
-              title: '',
-              icon: 'fas fa-user-shield',
-              iconColor: 'var(--color-danger)',
-              message: `${err.message}\n\nVui lòng liên hệ bộ phận IT qua hotline:\n☎ 1108 / 1109 để mở khóa.`,
-              confirmText: 'Đã hiểu',
-              cancelText: ''
-            }
-          });
-        } else {
-          // Xử lý các lỗi khác
-          const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
-          this.toastService.showError(errorMessage);
+          if (err.code == 104) {
+            this.modalService.open(ConfirmationModalComponent, {
+              title: 'Tài khoản bị khóa',
+              size: 'sm',
+              disableBackdropClose: true,
+              context: {
+                layout: 'center',
+                title: '',
+                icon: 'fas fa-user-shield',
+                iconColor: 'var(--color-danger)',
+                message: `${err.message}\n\nVui lòng liên hệ bộ phận IT qua hotline:\n☎ 1108 / 1109 để mở khóa.`,
+                confirmText: 'Đã hiểu',
+                cancelText: ''
+              }
+            });
+          } else {
+            const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
+            this.toastService.showError(errorMessage);
+          }
+
+          console.error('Login failed', err);
+          this.cd.markForCheck();
         }
-
-        console.error('Login failed', err);
-        this.cd.markForCheck(); // <--- 3. Update view after async error
-      }
-    });
+      });
   }
 
   togglePasswordVisibility(): void {
     this.passwordVisible = !this.passwordVisible;
     this.passwordFieldType = this.passwordVisible ? 'text' : 'password';
-    // No markForCheck needed here as it's a direct DOM event
   }
 }

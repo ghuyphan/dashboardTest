@@ -5,10 +5,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   effect,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -18,7 +20,6 @@ import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
-// [1] Import the permission directive
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
@@ -30,7 +31,7 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
     CommonModule,
     ChartCardComponent,
     DateFilterComponent,
-    HasPermissionDirective // [2] Add to imports array
+    HasPermissionDirective
   ],
   providers: [DatePipe],
   templateUrl: './medical-records-status.component.html',
@@ -43,21 +44,16 @@ export class MedicalRecordsStatusComponent implements OnInit {
   private excelService = inject(ExcelExportService);
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
+  private destroyRef = inject(DestroyRef); // [1]
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
   public isExporting = false; 
   
-  // Data State
   public summaryData: MedicalRecordSummary[] = [];
-  
-  // Filters
   public fromDate: string = '';
   public toDate: string = '';
-
-  // Chart Config
   public doctorChartOptions: EChartsCoreOption | null = null;
-
   private palette!: ThemePalette;
 
   constructor() {
@@ -71,20 +67,15 @@ export class MedicalRecordsStatusComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // 1. Initialize Default Dates (This Week) to match Filter UI
     this.setDefaultDateRange();
-    
-    // 2. Load initial data
     this.loadData();
   }
 
   private setDefaultDateRange(): void {
     const now = new Date();
     const day = now.getDay(); 
-    // Calculate Monday
     const diff = now.getDate() - day + (day == 0 ? -6 : 1); 
     const start = new Date(now.setDate(diff));
-    // Calculate Sunday
     const end = new Date(now.setDate(start.getDate() + 6)); 
 
     this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
@@ -109,7 +100,8 @@ export class MedicalRecordsStatusComponent implements OnInit {
         finalize(() => {
           this.isLoading = false;
           this.cd.markForCheck();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef) // [2]
       )
       .subscribe({
         next: (data) => {
@@ -131,7 +123,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
       return;
     }
 
-    // Sort by count descending and take Top 15
     const sorted = [...data].sort((a, b) => b.SO_LUONG - a.SO_LUONG);
     const topList = sorted.slice(0, 15);
 
@@ -154,7 +145,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
       grid: {
         left: '3%',
         right: '4%',
-        // bottom: '15%',
         top: '10%',
         containLabel: true,
       },
@@ -212,7 +202,8 @@ export class MedicalRecordsStatusComponent implements OnInit {
         finalize(() => {
           this.isExporting = false;
           this.cd.markForCheck();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef) // [3]
       )
       .subscribe({
         next: (details) => {
@@ -221,7 +212,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
             return;
           }
           
-          // [3] Define Excel Columns Configuration
           const columns: ExportColumn[] = [
             { key: 'MAYTE', header: 'Mã Y Tế' },
             { key: 'TEN_BENH_NHAN', header: 'Tên Bệnh Nhân' },
@@ -236,7 +226,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
             { key: 'TIEPNHAN_ID', header: 'Mã Tiếp Nhận' }
           ];
 
-          // [4] Use the service to export
           this.excelService.exportToExcel(
             details, 
             `BaoCao_ChuaTaoBA_${this.fromDate}_${this.toDate}`,

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   ReactiveFormsModule, 
@@ -9,7 +9,6 @@ import {
   ValidationErrors,
   FormControl 
 } from '@angular/forms';
-import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -19,7 +18,6 @@ import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { User } from '../../core/models/user.model';
 
-// [1] Define the Strict Form Interface
 interface ChangePasswordForm {
   OldPassword: FormControl<string | null>;
   NewPassword: FormControl<string | null>;
@@ -39,11 +37,11 @@ export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private modalService = inject(ModalService);
+  private destroyRef = inject(DestroyRef); // [1] Inject DestroyRef
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);
   
-  // [2] Apply the type to FormGroup
   public form: FormGroup<ChangePasswordForm>;
 
   public showOld = signal(false);
@@ -60,14 +58,12 @@ export class SettingsComponent implements OnInit {
   });
 
   constructor() {
-    // [3] FormBuilder infers types automatically or you can be explicit
     this.form = this.fb.group<ChangePasswordForm>({
       OldPassword: new FormControl('', Validators.required),
       NewPassword: new FormControl('', [Validators.required]),
       ConfirmPassword: new FormControl('', Validators.required)
     }, { validators: this.passwordMatchValidator });
 
-    // [4] Use ?.valueChanges safely
     this.form.controls.NewPassword.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(val => this.updatePasswordCriteria(val || ''));
@@ -99,7 +95,6 @@ export class SettingsComponent implements OnInit {
   }
 
   private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-    // Safe access to controls in a validator (still abstract)
     const newPass = control.get('NewPassword')?.value;
     const confirmPass = control.get('ConfirmPassword')?.value;
     return newPass === confirmPass ? null : { mismatch: true };
@@ -150,10 +145,8 @@ export class SettingsComponent implements OnInit {
   private performChangePassword(): void {
     this.isLoading.set(true);
     
-    // form.getRawValue() is safer for typed forms
     const rawValue = this.form.getRawValue();
     
-    // Ensure no nulls are passed (though Validators.required handles this, types might imply null)
     const payload = {
         OldPassword: rawValue.OldPassword || '',
         NewPassword: rawValue.NewPassword || '',
@@ -161,7 +154,10 @@ export class SettingsComponent implements OnInit {
     };
     
     this.authService.changePassword(payload)
-      .pipe(finalize(() => this.isLoading.set(false)))
+      .pipe(
+        finalize(() => this.isLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef) // [2] Auto-cancel
+      )
       .subscribe({
         next: (res) => {
            if (res && res.MaKetQua && Number(res.MaKetQua) !== 200) {
@@ -178,7 +174,6 @@ export class SettingsComponent implements OnInit {
           console.error('Change Password Error:', err);
           let msg = 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.';
           
-          // Simplified error extraction
           if (err.error?.TenKetQua) msg = err.error.TenKetQua;
           else if (err.error?.ErrorMessage) msg = err.error.ErrorMessage;
           else if (typeof err.error === 'string') msg = err.error;

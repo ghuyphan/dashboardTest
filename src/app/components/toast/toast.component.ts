@@ -36,6 +36,7 @@ export class ToastComponent implements OnDestroy {
   // Private cache for diffing
   private _previousToasts: ToastMessage[] = [];
   private timerState = new Map<number, ToastTimerState>();
+  private dismissTimers: any[] = []; // Track dismiss animation timers
 
   private readonly DEFAULT_DURATION = 5000;
   private readonly SWIPE_DISMISS_THRESHOLD_PERCENT = 0.4;
@@ -88,6 +89,10 @@ export class ToastComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearAllTimers();
+    
+    // Clear all pending dismiss timers
+    this.dismissTimers.forEach(timerId => clearTimeout(timerId));
+    this.dismissTimers = [];
   }
 
   // --- Timer Logic ---
@@ -150,9 +155,15 @@ export class ToastComponent implements OnDestroy {
     
     if (card) {
       card.classList.add('dismissing');
-      setTimeout(() => {
+      
+      // Track the dismiss timer
+      const timerId = setTimeout(() => {
         this.toastService.removeToast(id);
+        // Remove timer from tracking array once executed
+        this.dismissTimers = this.dismissTimers.filter(t => t !== timerId);
       }, 300); 
+      
+      this.dismissTimers.push(timerId);
     } else {
       this.toastService.removeToast(id);
     }

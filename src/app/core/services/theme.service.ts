@@ -57,8 +57,12 @@ export class ThemeService {
   public isDarkTheme = signal<boolean>(this.getInitialTheme());
   public currentPalette = signal<ThemePalette>(this.getColors());
 
-  // [NEW] Controls the visibility of the fullscreen curtain overlay
+  // [FIX] Controls visibility of curtain
   public isTransitioning = signal<boolean>(false);
+  
+  // [FIX] Locks the color of the curtain to the TARGET theme
+  // (Prevents the curtain from flipping colors mid-animation)
+  public isDarkTransition = signal<boolean>(false);
 
   constructor() {
     this.renderer = this.rendererFactory.createRenderer(null, null);
@@ -74,28 +78,35 @@ export class ThemeService {
         localStorage.setItem('theme', 'light');
       }
 
-      // Force recalculation of CSS variables after theme switch
-      // A small delay ensures the DOM has repainted with new CSS classes
+      // Force recalculation of CSS variables
       setTimeout(() => {
         this.currentPalette.set(this.getColors());
       }, 50);
     });
   }
 
-  /**
-   * Toggles the theme with a "curtain" effect to hide layout thrashing.
-   */
   public toggleTheme(): void {
+    const nextStateIsDark = !this.isDarkTheme();
+    
+    // 1. Lock the curtain color to where we are GOING
+    this.isDarkTransition.set(nextStateIsDark);
+
+    // 2. Show the curtain
     this.isTransitioning.set(true);
+
+    // 3. Wait for curtain to fade in (matches CSS animation: 0.3s)
     setTimeout(() => {
-      this.isDarkTheme.update((current) => !current);
+      
+      // 4. Switch the actual theme behind the curtain
+      this.isDarkTheme.set(nextStateIsDark);
 
+      // 5. Short delay to let charts/tables repaint while hidden
       setTimeout(() => {
-        // 5. Lift the curtain
+        // 6. Remove curtain
         this.isTransitioning.set(false);
-      }, 100);
+      }, 150);
 
-    }, 300); 
+    }, 300);
   }
 
   private getInitialTheme(): boolean {
@@ -118,7 +129,6 @@ export class ThemeService {
   public getColors(): ThemePalette {
     const c = (name: string, fb: string = '') => this.getCssVar(name, fb);
 
-    // Mappings should match styles.scss logic
     return {
       white: c('--white', '#ffffff'),
       gray100: c('--gray-100', '#f1f5f9'),
@@ -138,7 +148,6 @@ export class ThemeService {
       textSecondary: c('--text-secondary', '#64748b'),
       textDisabled: c('--text-disabled', '#94a3b8'),
 
-      // Main semantic colors
       primary: c('--primary', '#00839b'),
       secondary: c('--secondary', '#006e96'),
       success: c('--color-success', '#16a34a'),
@@ -146,13 +155,11 @@ export class ThemeService {
       danger: c('--color-danger', '#dc3545'),
       info: c('--color-info', '#0ea5e9'),
 
-      // Specific Brand colors
       deepSapphire: c('--deep-sapphire', '#082567'),
       tealMidtone: c('--teal-midtone', '#52c3d7'),
       pastelCoral: c('--pastel-coral', '#ffb3ba'),
       peacockLight: c('--peacock-light', '#66a9c5'),
 
-      // Chart Colors
       chart1: c('--chart-1', '#00839b'),
       chart2: c('--chart-2', '#006e96'),
       chart3: c('--chart-3', '#9bdad9'),

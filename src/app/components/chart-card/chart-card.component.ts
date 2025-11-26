@@ -89,9 +89,10 @@ export class ChartCardComponent implements AfterViewInit {
   
   private lastWidth = 0;
   private lastHeight = 0;
-  
-  // FIX: Flag to track destruction status
   private isDestroyed = false;
+
+  // [NEW] Reusable formatter for Vietnamese numbers (1.000)
+  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -108,6 +109,7 @@ export class ChartCardComponent implements AfterViewInit {
       }
     });
 
+    // Re-init chart if theme changes
     effect(() => {
       this.effectiveTheme(); 
       const options = untracked(() => this.chartOptions());
@@ -130,7 +132,6 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private initChart(options: EChartsCoreOption | null): void {
-    // FIX: Check isDestroyed flag
     if (this.isDestroyed || !this.isBrowser || !this.chartContainerRef() || !options) return;
     if (this.chartInstance) return; 
 
@@ -149,6 +150,8 @@ export class ChartCardComponent implements AfterViewInit {
       this.lastWidth = el.clientWidth;
       this.lastHeight = el.clientHeight;
 
+      // [NEW] Apply formatting middleware
+      this.applyAutoFormatting(options);
       this.chartInstance.setOption(options);
 
       this.chartInstance.on('click', (params) => {
@@ -165,11 +168,59 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.chartInstance) return;
     
     this.ngZone.runOutsideAngular(() => {
+      // [NEW] Apply formatting middleware
+      this.applyAutoFormatting(options);
+      
       this.chartInstance?.setOption(options, {
         notMerge: false,
         lazyUpdate: true 
       });
     });
+  }
+
+  /**
+   * [NEW] Middleware to inject Vietnamese number formatting into
+   * Axis Labels, Tooltips, and Series Labels if they are not manually defined.
+   */
+  private applyAutoFormatting(option: any): void {
+    if (!option) return;
+
+    const formatFn = (val: number) => this.vnNumberFormatter.format(val);
+
+    // 1. Y-Axis: Format numbers like 1.000
+    if (option.yAxis) {
+      const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis];
+      yAxes.forEach((axis: any) => {
+        if (axis.type === 'value') {
+          axis.axisLabel = axis.axisLabel || {};
+          if (!axis.axisLabel.formatter) {
+            axis.axisLabel.formatter = formatFn;
+          }
+        }
+      });
+    }
+
+    // 2. Series: Format Tooltips and Labels
+    if (option.series) {
+      const seriesList = Array.isArray(option.series) ? option.series : [option.series];
+      seriesList.forEach((series: any) => {
+         // Tooltip Value Formatter (ECharts 5.3+)
+         // This puts "1.000" in the tooltip list automatically
+         series.tooltip = series.tooltip || {};
+         if (!series.tooltip.valueFormatter) {
+            series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
+         }
+
+         // Label Formatter (Text on bars/lines)
+         if (series.label?.show && !series.label.formatter) {
+             series.label.formatter = (params: any) => {
+                 // Handle simple values and array values [x, y]
+                 const val = Array.isArray(params.value) ? params.value[1] : params.value;
+                 return typeof val === 'number' ? formatFn(val) : val;
+             };
+         }
+      });
+    }
   }
 
   private setupResizeStrategy(): void {

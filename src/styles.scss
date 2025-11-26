@@ -963,11 +963,11 @@ body > ul.submenu.open {
   animation: curtainFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   background-color: var(--surface-background);
   &.going-dark {
-    background-color: var(--slate-900); /* Slate 950 (Dark BG) */
+    background-color: var(--slate-900);
     color: #fff;
   }
   &.going-light {
-    background-color: var(--slate-50); /* Slate 50 (Light BG) */
+    background-color: var(--slate-50); 
     color: #0f172a;
   }
 

@@ -7,6 +7,8 @@ import {
   inject,
   input,
   effect,
+  signal,
+  AfterViewInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -33,15 +35,18 @@ import { FlyoutDirective } from '../../shared/directives/flyout.directive';
   styleUrl: './sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidebarComponent {
+export class SidebarComponent implements AfterViewInit {
   // Signal Inputs
   public navItems = input<NavItem[]>([]);
   public isOpen = input<boolean>(false);
 
   @Output() toggleSidebar = new EventEmitter<void>();
-  @Output() closeSidebar = new EventEmitter<void>(); // [FIX] New output for explicit closing
+  @Output() closeSidebar = new EventEmitter<void>();
 
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
+
+  // [FIX] Signal to gate animations until view is stable
+  public transitionsEnabled = signal(false);
 
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
@@ -70,6 +75,13 @@ export class SidebarComponent {
         this.hideAllSubmenus();
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    // [FIX] Enable transitions shortly after render to prevent initial "closing" animation glitch
+    setTimeout(() => {
+      this.transitionsEnabled.set(true);
+    }, 300);
   }
 
   hideAllSubmenus(): void {
@@ -123,12 +135,6 @@ export class SidebarComponent {
     item.isOpen = this.openAccordionItems.has(item);
   }
 
-  /**
-   * Handles navigation clicks in mobile view.
-   * [FIX] Use closeSidebar event instead of toggle. 
-   * This prevents race conditions where the Router closes it 
-   * and this toggles it back open.
-   */
   public onNavLinkClick(): void {
     if (this.isMobileView && this.isOpen()) {
       this.closeSidebar.emit();

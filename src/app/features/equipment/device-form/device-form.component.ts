@@ -1,10 +1,10 @@
-import { Component, OnInit, ViewChild, inject, ChangeDetectorRef, ChangeDetectionStrategy, input, effect } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, ChangeDetectorRef, ChangeDetectionStrategy, input, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, forkJoin, map } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-// Models & Services
 import { Device } from '../../../shared/models/device.model';
 import { ModalRef } from '../../../core/models/modal-ref.model';
 import { ModalService } from '../../../core/services/modal.service';
@@ -14,7 +14,6 @@ import { DropdownDataService, DropdownOption } from '../../../core/services/drop
 import { environment } from '../../../../environments/environment.development';
 import { DateUtils } from '../../../shared/utils/date.utils'; 
 
-// Components
 import { DynamicFormComponent } from '../../../components/dynamic-form/dynamic-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 
@@ -27,7 +26,6 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
   changeDetection: ChangeDetectionStrategy.OnPush 
 })
 export class DeviceFormComponent implements OnInit {
-  // --- MODERN SIGNALS ---
   public device = input<Device | null>(null);
   public title = input<string>('Biểu Mẫu Thiết Bị');
 
@@ -41,6 +39,7 @@ export class DeviceFormComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef); // [1] Inject
 
   public formConfig: any | null = null;
   public isFormLoading = true;
@@ -64,7 +63,8 @@ export class DeviceFormComponent implements OnInit {
         finalize(() => {
           this.isFormLoading = false;
           this.cdr.markForCheck();
-        })
+        }),
+        takeUntilDestroyed(this.destroyRef) // [2] Cancel init if modal closed early
       )
       .subscribe({
         next: ({ deviceTypes, deviceStatuses, deviceData }) => {
@@ -79,7 +79,6 @@ export class DeviceFormComponent implements OnInit {
   }
 
   private getDeviceDataStream(): Observable<Device | null> {
-    // Access signal value
     const currentDevice = this.device();
     if (currentDevice?.Id) {
       const url = `${environment.equipmentCatUrl}/${currentDevice.Id}`;
@@ -94,9 +93,6 @@ export class DeviceFormComponent implements OnInit {
     this.modalRef.canClose = () => this.canDeactivate();
   }
 
-  // -------------------------------------------------------------------------
-  // Form Configuration
-  // -------------------------------------------------------------------------
   private buildFormConfig(
     deviceTypes: DropdownOption[],
     deviceStatuses: DropdownOption[],
@@ -263,9 +259,6 @@ export class DeviceFormComponent implements OnInit {
     };
   }
 
-  // -------------------------------------------------------------------------
-  // Action Handlers & Helpers
-  // -------------------------------------------------------------------------
   public onSave(formData: any): void {
     const dateError = this.validateFormDates(formData);
     if (dateError) {
@@ -291,7 +284,8 @@ export class DeviceFormComponent implements OnInit {
       finalize(() => {
         this.isSaving = false;
         this.cdr.markForCheck();
-      })
+      }),
+      takeUntilDestroyed(this.destroyRef) // [3] Cancel save if destroyed
     ).subscribe({
       next: (response: any) => {
         const msg = response.TenKetQua || 'Lưu thành công!';

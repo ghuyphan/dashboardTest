@@ -1,6 +1,10 @@
 <aside
   class="sidebar"
-  [ngClass]="{ 'collapsed': !isOpen(), 'open': isOpen() }"
+  [ngClass]="{ 
+    'collapsed': !isOpen(), 
+    'open': isOpen(),
+    'no-transition': !transitionsEnabled()
+  }"
 >
   <div class="sidebar-header">
     <div class="sidebar-logo-wrapper">

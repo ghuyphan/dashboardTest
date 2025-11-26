@@ -337,14 +337,13 @@ export class SpecialtyClsReportComponent implements OnInit {
             show: true,
             length: 10,
             length2: 10,
-            lineStyle: { color: this.palette.gray400 }
+            smooth: 0.2
           },
           data: pieData
         }
       ]
     };
 
-    // === 3. Top 10 Specialties Chart (Side-by-Side) ===
     const top10Data = sortedSpecialties.slice(0, 10).reverse();
     
     this.topSpecialtyChartOptions = {

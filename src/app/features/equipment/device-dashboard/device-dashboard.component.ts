@@ -1,16 +1,16 @@
 import {
   Component,
   OnInit,
-  OnDestroy,
   inject,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   effect,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { finalize, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import type { EChartsCoreOption } from 'echarts/core';
 
@@ -25,7 +25,6 @@ import {
   ThemeService,
   ThemePalette,
 } from '../../../core/services/theme.service';
-// Import the new Service
 import { DeviceService } from '../../../core/services/device.service';
 
 const GLOBAL_FONT_FAMILY =
@@ -70,13 +69,12 @@ interface ChartFilter {
   styleUrl: './device-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DeviceDashboardComponent implements OnInit, OnDestroy {
-  // Dependency Injection
-  // private http = inject(HttpClient); // Removed
-  private deviceService = inject(DeviceService); // Injected Service
+export class DeviceDashboardComponent implements OnInit {
+  private deviceService = inject(DeviceService);
   private cd = inject(ChangeDetectorRef);
   private toastService = inject(ToastService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef); // [1] Inject DestroyRef
   public readonly themeService = inject(ThemeService);
 
   public isLoading = false;
@@ -117,9 +115,13 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
 
   private palette!: ThemePalette;
   private statusColorMap = new Map<string, string>();
-  private destroy$ = new Subject<void>();
 
   constructor() {
+    // Ensure timer is cleared if component is destroyed
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.filterTransitionTimer);
+    });
+
     effect(() => {
       this.palette = this.themeService.currentPalette();
       this.initializePaletteMaps();
@@ -139,12 +141,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.cd.markForCheck();
     this.loadData();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-    clearTimeout(this.filterTransitionTimer);
   }
 
   private initializePaletteMaps(): void {
@@ -223,7 +219,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
   }
 
   public loadData(): void {
-    // Use DeviceService
     this.deviceService
       .getAllDevices()
       .pipe(
@@ -231,7 +226,7 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           this.cd.markForCheck();
         }),
-        takeUntil(this.destroy$)
+        takeUntilDestroyed(this.destroyRef) // [2] Modern cancellation
       )
       .subscribe({
         next: (data) => {
@@ -502,7 +497,6 @@ export class DeviceDashboardComponent implements OnInit, OnDestroy {
           radius: ['50%', '75%'],
           center: ['65%', '50%'],
           data: chartData,
-          // [UPDATE] Added explicit formatter to match other charts
           label: {
             show: true,
             position: 'outer',
