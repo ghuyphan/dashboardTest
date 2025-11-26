@@ -4,14 +4,17 @@ import {
   input,
   output,
   ChangeDetectionStrategy,
-  ViewEncapsulation
+  ViewEncapsulation,
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { ActivatedRoute } from '@angular/router';
 
 import { ReusableTableComponent, GridColumn, RowActionEvent } from '../reusable-table/reusable-table.component';
 import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
 export interface ExportConfig {
   fileName: string;
@@ -25,8 +28,8 @@ export interface ExportConfig {
     CommonModule,
     ReusableTableComponent,
     MatMenuModule,
-    MatIconModule
-    // HasPermissionDirective removed to fix TS-998113
+    MatIconModule,
+    HasPermissionDirective // <--- REINSTATED
   ],
   templateUrl: './table-card.component.html',
   styleUrls: ['./table-card.component.scss'],
@@ -35,6 +38,7 @@ export interface ExportConfig {
 })
 export class TableCardComponent<T> {
   private excelService = inject(ExcelExportService);
+  private route = inject(ActivatedRoute); // <--- NEW: Inject ActivatedRoute
 
   // --- Card Inputs ---
   public title = input.required<string>();
@@ -54,11 +58,26 @@ export class TableCardComponent<T> {
   // --- Export Inputs ---
   public enableExport = input<boolean>(false);
   public isExporting = input<boolean>(false); 
-  /**
-   * If provided, the component will automatically export the CURRENT table data.
-   * If null/undefined, the parent component must handle the export via the (exportClicked) event.
-   */
   public exportConfig = input<ExportConfig | null>(null);
+
+  // --- NEW COMPUTED PROPERTY: Derives permission from route data ---
+  public fullExportPermission = computed(() => {
+    // Traverse the snapshot to find the deepest route, which holds the current page's data.
+    let currentRoute = this.route.snapshot;
+    while (currentRoute.firstChild) {
+      currentRoute = currentRoute.firstChild;
+    }
+
+    const basePermission = currentRoute.data['permission'] as string | undefined;
+    console.log(basePermission)
+
+    // Check if the permission property exists and append .REXPORT
+    if (basePermission && typeof basePermission === 'string') {
+      return `${basePermission}.REXPORT`;
+    }
+    
+    return undefined;
+  });
 
   // --- Outputs ---
   public exportClicked = output<void>();
