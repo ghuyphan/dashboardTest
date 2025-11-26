@@ -20,9 +20,17 @@
   flex-wrap: wrap; // Allows items to wrap on smaller screens
   gap: var(--spacing-md); // Consistent spacing between main sections
 
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+
   /* Dark Mode Support: Applied to the card when the 'data-theme' is set */
   [data-theme='dark'] & {
     border-color: var(--border-color);
+  }
+
+  // Visual feedback for loading state on the container
+  &.is-loading {
+    opacity: 0.85;
+    pointer-events: none;
   }
 
   // Responsive: Adjust padding on smaller screens (Mobile first - 480px break)
@@ -68,75 +76,110 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%; // Ensures full width within flex containers
   box-sizing: border-box; // Ensures padding/border is included in the width
+  min-height: 38px; // Align height with buttons
 
   // Focus state for accessibility and visual feedback
   &:focus {
     outline: none;
     border-color: var(--teal-blue);
-    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1); // Teal focus ring
+    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15); // Teal focus ring
+  }
+
+  &:disabled {
+    background-color: var(--gray-100);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    opacity: 0.7;
   }
 }
 
 // --- Container for Pill Buttons ---
 .quick-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap; // Allows pills to wrap if container width is limited
+  align-items: center;
+  min-height: 38px;
 }
 
 // --- Pill Button Styles (for quick-actions) ---
 .btn-pill {
   // Base styles
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
   font-weight: 500;
   border-radius: 99px; // Pill shape
   white-space: nowrap; // Prevents button text from wrapping
   
-  // Appearance
-  background-color: var(--surface-background);
+  // Default State (Not Chosen)
+  background-color: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
   
   // Transition and layout
-  position: relative; // For positioning the hit-area pseudo-element
-  transition: all 0.2s var(--transition-spring); // Spring transition for interactive elements
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   // STABILITY FIX: Enlarges the clickable area (hit area) below the pill
   &::after {
     content: '';
     position: absolute;
-    inset: 0; 
-    bottom: -6px; // Extends the hit area downwards
-    background: transparent;
+    inset: -4px;
     border-radius: inherit;
-    cursor: pointer; // Ensures the cursor remains a pointer in the extended area
+    background: transparent;
+    z-index: -1;
   }
 
-  // Hover state (Lift effect)
-  &:hover {
+  // --- Hover State (Only if not disabled and not active) ---
+  &:hover:not(.active):not(:disabled) {
     background-color: var(--gray-100);
-    color: var(--teal-blue);
-    border-color: var(--teal-blue);
-    
-    transform: translateY(-2px); // Standard Lift
+    border-color: var(--gray-300);
+    color: var(--text-primary);
+    transform: translateY(-1px);
     box-shadow: var(--box-shadow-sm);
   }
   
-  // Active/Click state (Press down effect)
-  &:active {
-    transform: translateY(0);
-  }
-
-  // Active/Selected state
+  // --- Active/Chosen State ---
   &.active {
     background-color: var(--teal-blue);
-    color: #ffffff;
     border-color: var(--teal-blue);
-    
+    color: #ffffff;
+    font-weight: 600;
     transform: translateY(0); // Active pill stays flat
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); // Inner shadow for "pressed" look
+    box-shadow: 0 2px 4px rgba(0, 131, 155, 0.25);
+
+    // Ensure hover on active doesn't revert style
+    &:hover:not(:disabled) {
+      filter: brightness(1.1); // Slight glow on hover
+      transform: translateY(-1px);
+    }
+  }
+
+  // --- Disabled State (during loading) ---
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none !important;
+    
+    // If it was active before disabling, keep it looking active but dimmed
+    &.active {
+      opacity: 0.7;
+      box-shadow: none;
+    }
+  }
+
+  // --- Dark Mode Specifics ---
+  [data-theme='dark'] & {
+    &:hover:not(.active):not(:disabled) {
+      background-color: var(--gray-200);
+      border-color: var(--gray-400);
+      color: var(--white);
+    }
+    
+    &.active {
+      box-shadow: 0 2px 4px rgba(45, 212, 191, 0.25);
+    }
   }
 }
 
@@ -148,12 +191,12 @@
   justify-content: center;
   gap: 8px;
   height: 38px;
-  padding: 0 20px;
+  padding: 0 24px;
   border-radius: var(--border-radius-md);
   white-space: nowrap;
   
   // Appearance
-  font-weight: 500;
+  font-weight: 600;
   background-color: var(--teal-blue);
   color: #fff;
   border: none;
@@ -161,6 +204,9 @@
   
   // Transition
   transition: all 0.2s var(--transition-spring);
+  
+  // Min-width for stability
+  min-width: 140px;
 
   // Hover state (Lift effect)
   &:hover:not(:disabled) {
@@ -177,9 +223,15 @@
 
   // Disabled state
   &:disabled {
-    opacity: 0.7;
+    background-color: var(--teal-blue); // Keep color
+    opacity: 0.75;
     cursor: not-allowed;
     transform: none; // Removes hover/active effects when disabled
+    box-shadow: none;
+  }
+
+  i {
+    font-size: 1rem;
   }
 }
 
@@ -209,6 +261,7 @@
     width: 100%;
     overflow-x: auto; // Enables horizontal scrolling for quick actions
     padding-bottom: 4px; // Space for scrollbar if present
+    margin-bottom: -4px;
     
     // Hide scrollbar for cleaner mobile look
     scrollbar-width: none; // Firefox
@@ -216,7 +269,7 @@
     
     // Better touch targets for pills
     .btn-pill {
-      padding: 8px 16px;
+      flex-shrink: 0; // Prevent squishing
     }
   }
 

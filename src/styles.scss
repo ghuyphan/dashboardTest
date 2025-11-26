@@ -83,46 +83,49 @@ $light-tokens: (
 
 // --- Semantic Tokens (Dark Theme - Polished) ---
 $dark-tokens: (
-  // Backgrounds (Rich dark blue/slate scale)
-  "surface-background": #020617, // Slate 950 (Deepest)
-  "surface-card": #0f172a,       // Slate 900 (Card layer)
-  "surface-overlay": rgba(2, 6, 23, 0.85),
-  "surface-toast": #1e293b,      // Slate 800 (Elevated)
-  "input-bg": #1e293b,           // Visible inputs
+  // Backgrounds (Zinc/Neutral Scale - Kept as requested)
+  "surface-background": #09090b, 
+  "surface-card": #18181b,       
+  "surface-overlay": rgba(9, 9, 11, 0.9),
+  "surface-toast": #27272a,      
+  "input-bg": #27272a,           
 
-  // Text (High Contrast)
-  "text-primary": #f8fafc,       // Slate 50
-  "text-secondary": #94a3b8,     // Slate 400 (Readable gray)
-  "text-disabled": #475569,      // Slate 600
+  // Text (Kept as requested)
+  "text-primary": #fafafa,       
+  "text-secondary": #a1a1aa,     
+  "text-disabled": #52525b,      
 
-  // Borders (Subtle)
-  "border-color": rgba(255, 255, 255, 0.12),
+  // Borders
+  "border-color": #27272a,
 
-  // Brand Mappings (Bright/Neon for Dark Mode visibility)
-  "primary": #2dd4bf,   // Teal 400
-  "secondary": #38bdf8, // Sky 400
+  // Brand Mappings (Softened)
+  "primary": #2dd4bf,   // Teal 400 (Standard, readable)
+  "secondary": #7dd3fc, // Sky 300 (Softer than before)
 
-  // Custom Brand Colors (Inverted/Brightened)
-  "deep-sapphire": #818cf8, // Indigo 400
-  "teal-midtone": #22d3ee,  // Cyan 400
-  "pastel-coral": #fda4af,  // Rose 300
-  "peacock-light": #7dd3fc, // Sky 300
+  // Custom Brand Colors (Muted for Dark Mode)
+  "deep-sapphire": #818cf8,
+  "teal-midtone": #67e8f9,  // Cyan 300 (Softer)
+  "pastel-coral": #fda4af,  // Rose 300 (Pastel)
+  "peacock-light": #bae6fd, // Sky 200
 
-  // Status (Softer Pastels for Dark Mode)
-  "color-danger": #f87171,  // Red 400
-  "color-success": #4ade80, // Green 400
-  "color-warning": #fbbf24, // Amber 400
-  "color-info": #38bdf8,    // Sky 400
+  // Status (Desaturated - No longer "Traffic Light" bright)
+  "color-danger": #fca5a5,  // Red 300 (Soft Salmon)
+  "color-success": #86efac, // Green 300 (Soft Mint)
+  "color-warning": #fcd34d, // Amber 300 (Soft Gold)
+  "color-info": #7dd3fc,    // Sky 300
 
-  // Charts (Vibrant)
-  "chart-1": #2dd4bf, // Teal
-  "chart-2": #60a5fa, // Blue
-  "chart-3": #34d399, // Emerald
-  "chart-6": #fb923c, // Orange
-  "chart-7": #94a3b8, // Gray
-  "chart-8": #818cf8, // Indigo
-  "chart-9": #f472b6  // Pink
+  // Charts (Professional Pastels - The "Anti-Neon" Palette)
+  // These colors have less "glow" and sit flatter on the dark card background.
+  
+  "chart-1": #5eead4, // Soft Teal (Teal 300)
+  "chart-2": #93c5fd, // Soft Blue (Blue 300)
+  "chart-3": #6ee7b7, // Muted Emerald (Emerald 300)
+  "chart-6": #fdba74, // Apricot/Orange (Orange 300)
+  "chart-7": #a1a1aa, // Neutral Gray (Zinc 400)
+  "chart-8": #a5b4fc, // Periwinkle (Indigo 300)
+  "chart-9": #f9a8d4  // Dusty Pink (Pink 300)
 );
+
 
 // Mixin to generate CSS variables from maps
 @mixin create-theme-vars($tokens) {
@@ -473,10 +476,10 @@ select:-webkit-autofill {
   border-color: var(--primary);
 
   [data-theme="dark"] & {
-    color: #020617; // Black text on bright teal
+    color: #020617; 
     &:hover:not(:disabled) {
       background-color: var(--secondary);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5); // Glow effect
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
     }
   }
 
@@ -492,7 +495,7 @@ select:-webkit-autofill {
   border-color: var(--gray-200);
 
   [data-theme="dark"] & {
-    background-color: rgba(255, 255, 255, 0.1); // Transparent white
+    background-color: rgba(255, 255, 255, 0.1); 
     color: var(--text-primary);
     border-color: rgba(255, 255, 255, 0.1);
 
@@ -969,41 +972,37 @@ body > ul.submenu.open {
    ================================================== */
 .theme-transition-curtain {
   position: fixed;
-  inset: 0; /* top:0; left:0; right:0; bottom:0; */
+  inset: 0;
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   animation: curtainFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  background-color: var(--surface-background);
-
-  /* Set primary text color on the curtain root for inheritance */
-  color: var(--text-primary); 
   
+  background-color: var(--surface-background);
+  color: var(--text-primary); 
+
   &.going-dark {
-    background-color: var(--slate-900);
-    color: var(--slate-50); /* Destination Dark Theme Text */
+    background-color: #09090b; 
+    color: #fafafa;            
     
     .curtain-loader {
         .app-loading-spinner {
-            /* FIX: Force spinner to use Dark Theme's color variables 
-               This overrides the global theme flip to ensure stability. */
-            border-color: var(--gray-300) !important; 
-            border-top-color: var(--primary) !important; 
+            border-color: #27272a !important; 
+            border-top-color: #2dd4bf !important;
         }
     }
   }
   
   &.going-light {
-    background-color: var(--slate-50); 
-    color: var(--slate-900); /* Destination Light Theme Text */
+    background-color: #f8fafc;
+    color: #0f172a;            
     
     .curtain-loader {
         .app-loading-spinner {
-            /* FIX: Force spinner to use Light Theme's color variables */
-            border-color: var(--gray-200) !important; 
-            border-top-color: var(--primary) !important; 
+            border-color: #e2e8f0 !important;
+            border-top-color: #00839b !important;
         }
     }
   }
@@ -1015,16 +1014,14 @@ body > ul.submenu.open {
     gap: var(--spacing-md);
     opacity: 0.8;
     
-    /* Global .app-loading-spinner styles (for size/animation consistency) */
     .app-loading-spinner {
       width: 50px;
       height: 50px;
       border-width: 4px;
       animation: app-spin 0.8s linear infinite;
-      
-      /* Default colors, overridden by the .going-dark/.going-light above */
-      border-color: var(--gray-200); 
-      border-top-color: var(--primary); 
+      // Base styles are overridden by .going-dark / .going-light above
+      border-style: solid;
+      border-radius: 50%;
     }
 
     p {

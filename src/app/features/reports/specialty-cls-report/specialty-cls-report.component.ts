@@ -206,7 +206,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       { id: 'top-specialty', icon: 'fas fa-star', title: topSpecialtyName, value: this.formatNumber(topSpecialtyValue), caption: 'Hoạt động cao nhất', accentColor: this.palette.deepSapphire }
     ];
 
-    const sortedSpecialtyNames = sortedSpecialties.map(s => s[0]);
+    const sortedSpecialtyNames = sortedSpecialties.map(s => s[0]); // Sort charts by highest volume
     const sortedGroups = Array.from(uniqueGroups).sort();
 
     this.buildCharts(data, sortedSpecialtyNames, sortedGroups, groupTotals, sortedSpecialties);
@@ -220,7 +220,6 @@ export class SpecialtyClsReportComponent implements OnInit {
     sortedSpecialties: [string, number][]
   ): void {
     
-    // [UPDATED] Theme Service Palette
     const themePalette = [
       this.palette.primary,       // Teal Blue
       this.palette.chart6,        // Orange
@@ -239,18 +238,22 @@ export class SpecialtyClsReportComponent implements OnInit {
       textStyle: { fontFamily: GLOBAL_FONT_FAMILY, color: this.palette.textSecondary },
     };
 
-    // === 1. Main Stacked Bar Chart (Full Width) ===
+    // === 1. Main Stacked Bar Chart (with DataZoom) ===
     const series = groups.map(group => ({
       name: group,
       type: 'bar',
       stack: 'total',
-      barWidth: 32,
+      barWidth: '60%', // Relative width better for zoom
       emphasis: { focus: 'series' },
       data: specialties.map(spec => {
         const record = data.find(d => d.TEN_CHUYEN_KHOA === spec && d.NHOM_CLS === group);
         return record ? record.SO_LUONG : 0;
       })
     }));
+
+    // Calculate initial zoom window (show approx 15 items max)
+    const dataLength = specialties.length;
+    const endPercent = dataLength > 15 ? (15 / dataLength) * 100 : 100;
 
     this.specialtyChartOptions = {
       ...commonOptions,
@@ -262,9 +265,9 @@ export class SpecialtyClsReportComponent implements OnInit {
         axisPointer: { type: 'shadow' }
       },
       grid: { 
-        left: '1%', 
-        right: '1%', 
-        bottom: '5%', 
+        left: '2%', 
+        right: '2%', 
+        bottom: '15%', // Increased bottom padding for slider and labels
         top: '12%', 
         containLabel: true 
       },
@@ -273,14 +276,39 @@ export class SpecialtyClsReportComponent implements OnInit {
         top: 0,
         textStyle: { color: this.palette.textSecondary }
       },
+      dataZoom: [
+        {
+          type: 'slider',
+          show: true,
+          xAxisIndex: [0],
+          start: 0,
+          end: endPercent,
+          bottom: 10,
+          height: 20,
+          borderColor: 'transparent',
+          backgroundColor: this.palette.gray100,
+          fillerColor: 'rgba(0, 131, 155, 0.2)', // Using a transparent teal
+          handleStyle: {
+              color: this.palette.primary
+          }
+        },
+        {
+          type: 'inside',
+          xAxisIndex: [0],
+          start: 0,
+          end: endPercent,
+          zoomOnMouseWheel: false, // Prevent accidental zoom when scrolling page
+          moveOnMouseWheel: true,
+        }
+      ],
       xAxis: {
         type: 'category',
         data: specialties,
         axisLabel: { 
-          interval: 0, 
-          rotate: 30, 
-          fontSize: 11,
-          width: 160, 
+          interval: 0, // Force show all labels
+          rotate: 45,  // Angle for long text
+          fontSize: 10,
+          width: 140, 
           overflow: 'truncate',
           color: this.palette.textPrimary 
         },
@@ -306,7 +334,6 @@ export class SpecialtyClsReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        // Use explicit formatting
         formatter: (params: any) => {
           return `${params.name}: <b>${this.vnNumberFormatter.format(params.value)}</b> (${params.percent}%)`;
         }
@@ -322,8 +349,8 @@ export class SpecialtyClsReportComponent implements OnInit {
         {
           name: 'Nhóm Dịch Vụ',
           type: 'pie',
-          radius: ['40%', '65%'],
-          center: ['50%', '40%'],
+          radius: ['35%', '60%'],
+          center: ['50%', '50%'],
           avoidLabelOverlap: true,
           itemStyle: {
             borderRadius: 4,
@@ -333,7 +360,6 @@ export class SpecialtyClsReportComponent implements OnInit {
           label: {
             show: true,
             position: 'outside',
-            // Use formatting
             formatter: (params: any) => `${params.name}\n${params.percent}%`,
             color: this.palette.textPrimary,
           },
@@ -396,7 +422,6 @@ export class SpecialtyClsReportComponent implements OnInit {
             show: true,
             position: 'right',
             color: this.palette.textSecondary,
-            // Removed formatter so ChartCard handles it
           }
         }
       ]
