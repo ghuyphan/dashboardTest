@@ -22,7 +22,7 @@ import {
 } from '../../../core/services/excel-export.service';
 import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
-import { LlmService } from '../../../core/services/llm.service'; // [1] Import
+import { LlmService } from '../../../core/services/llm.service';
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -68,9 +68,8 @@ export class SpecialtyClsReportComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private numberPipe = inject(DecimalPipe);
   public readonly themeService = inject(ThemeService);
-  private readonly llmService = inject(LlmService); // [2] Inject
+  private readonly llmService = inject(LlmService);
 
-  // ... (Existing properties)
   public isLoading = false;
   public isExporting = false;
   public rawData: SpecialtyClsStat[] = [];
@@ -80,15 +79,22 @@ export class SpecialtyClsReportComponent implements OnInit {
   public specialtyChartOptions: EChartsCoreOption | null = null;
   public groupPieChartOptions: EChartsCoreOption | null = null;
   public topSpecialtyChartOptions: EChartsCoreOption | null = null;
+  
   public tableColumns: GridColumn[] = [
+    {
+      key: 'NGAY_KHAM_DISPLAY',
+      label: 'Ngày Khám',
+      sortable: true,
+      width: '120px',
+    },
     {
       key: 'TEN_CHUYEN_KHOA',
       label: 'Chuyên Khoa',
       sortable: true,
-      width: '40%',
+      width: '35%',
     },
-    { key: 'NHOM_CLS', label: 'Nhóm Dịch Vụ', sortable: true, width: '40%' },
-    { key: 'SO_LUONG', label: 'Số Lượng', sortable: true, width: '20%' },
+    { key: 'NHOM_CLS', label: 'Nhóm Dịch Vụ', sortable: true, width: '35%' },
+    { key: 'SO_LUONG', label: 'Số Lượng', sortable: true, width: '15%' },
   ];
   private palette!: ThemePalette;
   private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
@@ -110,7 +116,6 @@ export class SpecialtyClsReportComponent implements OnInit {
     this.loadData();
   }
 
-  // ... (setDefaultDateRange, initializeWidgets, updateWidgetColors, onDateFilter, loadData remain the same)
   private setDefaultDateRange(): void {
     const now = new Date();
     const day = now.getDay();
@@ -120,6 +125,7 @@ export class SpecialtyClsReportComponent implements OnInit {
     this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
     this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
   }
+  
   private initializeWidgets(): void {
     this.widgetData = [
       {
@@ -148,6 +154,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     ];
   }
+  
   private updateWidgetColors(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const setC = (id: string, color: string) => {
@@ -159,6 +166,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       setC('top-specialty', this.palette.deepSapphire);
     }
   }
+
   public onDateFilter(range: DateRange): void {
     const start = DateUtils.parse(range.fromDate);
     const end = DateUtils.parse(range.toDate);
@@ -195,7 +203,10 @@ export class SpecialtyClsReportComponent implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          this.rawData = data || [];
+          this.rawData = (data || []).map(item => ({
+             ...item,
+             NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAY_KHAM)
+          }));
           this.processData(this.rawData);
         },
         error: (err) => {
@@ -218,12 +229,15 @@ export class SpecialtyClsReportComponent implements OnInit {
     const specialtyTotals = new Map<string, number>();
     const groupTotals = new Map<string, number>();
     const uniqueGroups = new Set<string>();
+    const groupOrderMap = new Map<string, number>();
 
     data.forEach((item) => {
       const qty = item.SO_LUONG || 0;
       const group = item.NHOM_CLS || 'Khác';
       const specialty = item.TEN_CHUYEN_KHOA || 'Chưa xác định';
       const lowerGroup = group.toLowerCase();
+      const sortOrder = item.NHOM ?? 999; 
+
       if (lowerGroup.includes('khám') || lowerGroup.includes('kham'))
         totalKham += qty;
       else totalCls += qty;
@@ -233,7 +247,12 @@ export class SpecialtyClsReportComponent implements OnInit {
         (specialtyTotals.get(specialty) || 0) + qty
       );
       groupTotals.set(group, (groupTotals.get(group) || 0) + qty);
+      
       uniqueGroups.add(group);
+      
+      if (!groupOrderMap.has(group)) {
+        groupOrderMap.set(group, sortOrder);
+      }
     });
 
     const sortedSpecialties = Array.from(specialtyTotals.entries()).sort(
@@ -273,7 +292,6 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     ];
 
-    // [3] Update AI Context
     this.updateAiContext(
       totalKham,
       totalCls,
@@ -282,14 +300,21 @@ export class SpecialtyClsReportComponent implements OnInit {
     );
 
     const sortedSpecialtyNames = sortedSpecialties.map((s) => s[0]);
-    const sortedGroups = Array.from(uniqueGroups).sort();
+    
+    // Sort groups based on NHOM
+    const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
+       const orderA = groupOrderMap.get(a) ?? 999;
+       const orderB = groupOrderMap.get(b) ?? 999;
+       return orderA - orderB;
+    });
 
     this.buildCharts(
       data,
       sortedSpecialtyNames,
       sortedGroups,
       groupTotals,
-      sortedSpecialties
+      sortedSpecialties,
+      groupOrderMap
     );
   }
 
@@ -310,25 +335,29 @@ export class SpecialtyClsReportComponent implements OnInit {
     `);
   }
 
-  // ... (buildCharts, formatNumber, onExport methods remain the same)
   private buildCharts(
     data: SpecialtyClsStat[],
     specialties: string[],
     groups: string[],
     groupTotals: Map<string, number>,
-    sortedSpecialties: [string, number][]
+    sortedSpecialties: [string, number][],
+    groupOrderMap: Map<string, number>
   ): void {
+    // [UPDATED] 8-Color Palette mapped to groups 1-8
+    // 1: Teal (Khám bệnh), 2: Orange (Xét nghiệm), 3: Dark Blue (NS Tiêu Hóa)
+    // 4: Green (NS TMH), 5: Pink (X-Quang), 6: Blue (MSCT)
+    // 7: Purple/Violet (Siêu Âm - REPLACED RED), 8: Dark Grey (TDCN)
     const themePalette = [
-      this.palette.primary,
-      this.palette.chart6,
-      this.palette.deepSapphire,
-      this.palette.pastelCoral,
-      this.palette.chart3,
-      this.palette.chart8,
-      this.palette.warning,
-      this.palette.chart2,
-      this.palette.success,
+      this.palette.primary,       // 1. Khám bệnh
+      this.palette.chart6,        // 2. Xét nghiệm
+      this.palette.deepSapphire,  // 3. NS Tiêu Hóa
+      this.palette.success,       // 4. NS TMH
+      this.palette.pastelCoral,   // 5. X-Quang
+      this.palette.secondary,     // 6. MSCT
+      '#8b5cf6',                  // 7. Siêu Âm (Violet - No Red)
+      this.palette.chart7,        // 8. TDCN
     ];
+
     const commonOptions = {
       backgroundColor: 'transparent',
       color: themePalette,
@@ -337,6 +366,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         color: this.palette.textSecondary,
       },
     };
+
     const series = groups.map((group) => ({
       name: group,
       type: 'bar',
@@ -422,7 +452,13 @@ export class SpecialtyClsReportComponent implements OnInit {
 
     const pieData = Array.from(groupTotals.entries())
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+      .sort((a, b) => {
+          const orderA = groupOrderMap.get(a.name) ?? 999;
+          const orderB = groupOrderMap.get(b.name) ?? 999;
+          if (orderA !== orderB) return orderA - orderB;
+          return b.value - a.value;
+      });
+
     this.groupPieChartOptions = {
       ...commonOptions,
       tooltip: {
@@ -521,14 +557,17 @@ export class SpecialtyClsReportComponent implements OnInit {
       ],
     };
   }
+  
   private formatNumber(num: number): string {
     return this.numberPipe.transform(num, '1.0-0') || '0';
   }
+  
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;
     this.isExporting = true;
     setTimeout(() => {
       const columns: ExportColumn[] = [
+        { key: 'NGAY_KHAM_DISPLAY', header: 'Ngày Khám' },
         { key: 'TEN_CHUYEN_KHOA', header: 'Chuyên Khoa' },
         { key: 'NHOM_CLS', header: 'Nhóm Dịch Vụ' },
         { key: 'SO_LUONG', header: 'Số Lượng' },

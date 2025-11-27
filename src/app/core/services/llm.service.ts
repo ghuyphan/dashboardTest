@@ -17,9 +17,6 @@ export class LlmService {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-
-  // NOTE: Ensure this URL ends with /api/chat for best Ollama compatibility
-  // Example: http://10.20.26.45:11434/api/chat
   private readonly apiUrl = environment.llmUrl;
   private readonly MAX_HISTORY = 10;
 
@@ -126,11 +123,11 @@ export class LlmService {
           {
             role: 'assistant',
             content:
-              'Xin chào Quý khách! Tôi là trợ lý AI của Hoàn Mỹ Portal. Tôi có thể hỗ trợ gì cho Quý khách dựa trên thông tin hiện tại?',
+              'Xin chào! Tôi là Homi. Tôi có thể hỗ trợ gì cho bạn dựa trên thông tin hiện tại?',
           },
         ]);
       }
-    }, 800);
+    }, 200);
   }
 
   async sendMessage(content: string): Promise<void> {

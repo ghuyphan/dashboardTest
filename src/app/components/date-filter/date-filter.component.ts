@@ -4,10 +4,12 @@ import {
   signal,
   output,
   input,
-  ViewEncapsulation
+  ViewEncapsulation,
+  computed
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastService } from '../../core/services/toast.service';
 
 export interface DateRange {
   fromDate: string;
@@ -26,11 +28,14 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
   encapsulation: ViewEncapsulation.Emulated
 })
 export class DateFilterComponent {
+  private datePipe = inject(DatePipe);
+  private toastService = inject(ToastService);
+
   // INPUTS
   public isLoading = input<boolean>(false);
   public buttonLabel = input<string>('Xem Báo Cáo');
   public minDate = input<string>(''); 
-  public maxDate = input<string>('');
+  public maxDate = input<string>(''); // Optional strict max limit from parent
 
   // OUTPUTS
   public filterSubmit = output<DateRange>();
@@ -48,15 +53,62 @@ export class DateFilterComponent {
     { key: 'thisYear', label: 'Năm nay' },
   ];
 
-  private datePipe = inject(DatePipe);
+  // --- COMPUTED CONSTRAINTS ---
+  private todayStr = new Date().toISOString().split('T')[0];
+
+  // Effective Max: Use parent's maxDate if provided, otherwise default to Today
+  public effectiveMax = computed(() => this.maxDate() || this.todayStr);
+
+  // From Date Max: Cannot exceed To Date (if selected) AND cannot exceed Today
+  public fromMax = computed(() => {
+    const to = this.toDate();
+    const max = this.effectiveMax();
+    if (to && to < max) return to;
+    return max;
+  });
+
+  // To Date Min: Cannot be less than From Date
+  public toMin = computed(() => {
+    const from = this.fromDate();
+    const min = this.minDate();
+    if (from && (!min || from > min)) return from;
+    return min || '';
+  });
+
+  // To Date Max: Cannot exceed Today
+  public toMax = computed(() => this.effectiveMax());
 
   constructor() {
     this.setRange('thisWeek', false);
   }
 
   onDateChange(type: 'from' | 'to', value: string) {
-    if (type === 'from') this.fromDate.set(value);
-    if (type === 'to') this.toDate.set(value);
+    // 1. Validate Future Dates
+    if (value > this.effectiveMax()) {
+      this.toastService.showWarning('Không thể chọn ngày trong tương lai.');
+      // Reset to Today if user types a future date
+      value = this.effectiveMax();
+      
+      // Force UI update if needed (usually value re-assignment handles it)
+      if (type === 'from') this.fromDate.set(value);
+      else this.toDate.set(value);
+    }
+
+    if (type === 'from') {
+      this.fromDate.set(value);
+      // Ensure From <= To
+      if (this.toDate() && value > this.toDate()) {
+        this.toDate.set(value);
+      }
+    } 
+    else if (type === 'to') {
+      this.toDate.set(value);
+      // Ensure To >= From
+      if (this.fromDate() && value < this.fromDate()) {
+        this.fromDate.set(value);
+      }
+    }
+    
     this.activeRange.set('custom');
   }
 
@@ -92,7 +144,7 @@ export class DateFilterComponent {
         break;
     }
 
-    // [FIX] Apply constraints to calculated dates
+    // Apply constraints to calculated range (e.g. clip future dates to Today)
     const finalStart = this.applyConstraints(this.formatDate(start));
     const finalEnd = this.applyConstraints(this.formatDate(end));
 
@@ -115,14 +167,11 @@ export class DateFilterComponent {
     return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
   }
 
-  /**
-   * Clamps a date string between minDate and maxDate
-   */
   private applyConstraints(dateStr: string): string {
     if (!dateStr) return dateStr;
     
     const min = this.minDate();
-    const max = this.maxDate();
+    const max = this.effectiveMax(); // Uses Today if maxDate is not provided
 
     if (min && dateStr < min) return min;
     if (max && dateStr > max) return max;

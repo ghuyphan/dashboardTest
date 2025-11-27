@@ -20,7 +20,6 @@ import { LlmService } from '../../core/services/llm.service';
   imports: [CommonModule, FormsModule],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss'],
-  // [OPTIMIZATION 1] Use OnPush to prevent checking this component on every global tick
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AiChatComponent implements AfterViewInit, OnDestroy {

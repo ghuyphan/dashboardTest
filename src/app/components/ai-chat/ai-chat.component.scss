@@ -1,22 +1,21 @@
+/* src/app/components/ai-chat/ai-chat.component.scss */
+
 /* --- Semantic Colors --- */
 $color-primary: var(--teal-blue);
 $color-primary-dark: var(--deep-sapphire);
-$color-accent: #06b6d4; 
+$color-accent: #06b6d4;
 $color-bg-user: var(--teal-blue);
 $color-text-user: #ffffff;
-$color-bg-ai: var(--gray-100);
-$color-text-ai: var(--text-primary);
 
 /* Gradients */
-$gradient-header: linear-gradient(135deg, var(--surface-card), var(--gray-50));
 $gradient-avatar: linear-gradient(135deg, $color-primary, $color-accent);
-$gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
+$gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), var(--gray-100));
 
 :host {
-  /* Variables for sizing */
+  --header-offset: 48px; 
+  
   --chat-width: 400px;
   --chat-height: 650px;
-  --header-offset: 65px;
   
   display: block;
   position: relative;
@@ -29,7 +28,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
 .ai-window {
   position: fixed;
   top: var(--header-offset);
-  right: 20px;
+  right: 20px; /* Keeps it aligned with the right edge padding */
   
   width: var(--chat-width);
   height: var(--chat-height);
@@ -38,43 +37,48 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   max-width: calc(100vw - 40px);
   max-height: calc(100vh - var(--header-offset) - 20px);
 
+  /* Use global semantic variables */
   background-color: var(--surface-card);
-  border-radius: 16px;
+  border-radius: 12px; /* Reduced slightly to match mat-menu sharpness */
   border: 1px solid var(--border-color);
   
-  /* Deep Elevation Shadow */
-  box-shadow: 
-    0 0 0 1px rgba(0, 0, 0, 0.03),
-    0 20px 25px -5px rgba(0, 0, 0, 0.1), 
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* Deep Elevation Shadow - Matches mat-menu elevation */
+  box-shadow: var(--box-shadow-lg);
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
   
-  /* Animation State */
+  /* Animation State - Adjusted to slide from top (like a dropdown) */
   transform-origin: top right;
-  transform: scale(0.95) translateY(-15px);
+  transform: scale(0.95) translateY(-10px);
   opacity: 0;
   visibility: hidden;
+  
+  /* Close Transition - Matches header menu (Material Emphasized Decelerate) */
+  /* duration 0.2s matches the header menu speed */
   transition: 
-    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.2s ease,
-    visibility 0s 0.3s;
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s 0.2s; /* Delay visibility hidden until opacity finishes */
 
   &.open {
     transform: scale(1) translateY(0);
     opacity: 1;
     visibility: visible;
+    
+    /* Open Transition - Matches header menu entrance */
     transition: 
-      transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-      opacity 0.2s ease,
+      transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
       visibility 0s 0s;
   }
 
-  /* Dark Mode Adjustments */
+  /* Dark Mode Specific Adjustments */
   [data-theme='dark'] & {
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 20px 40px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -83,18 +87,19 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
    ========================================================================== */
 .ai-header {
   flex-shrink: 0;
-  padding: 12px 16px;
+  padding: 12px 16px; /* slightly tighter to match standard headers */
   background: var(--surface-card);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   
-  /* Glassmorphism */
-  backdrop-filter: blur(8px);
-  background-color: rgba(255, 255, 255, 0.8);
+  /* Glassmorphism support */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
   [data-theme='dark'] & {
-    background-color: rgba(30, 41, 59, 0.8);
+    background-color: rgba(24, 24, 27, 0.9); 
   }
 
   .header-left {
@@ -115,7 +120,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 10px rgba(0, 131, 155, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 131, 155, 0.2);
     }
 
     .pulse-dot {
@@ -138,6 +143,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   .header-info {
     display: flex;
     flex-direction: column;
+    gap: 2px;
 
     .title {
       font-size: 0.95rem;
@@ -150,6 +156,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     .status {
       font-size: 0.75rem;
       color: var(--text-secondary);
+      font-weight: 500;
     }
   }
 
@@ -167,7 +174,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     transition: all 0.2s ease;
 
     &:hover {
-      background-color: var(--gray-200);
+      background-color: var(--gray-100);
       color: var(--text-primary);
     }
   }
@@ -179,11 +186,11 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
 .ai-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
-  background-color: var(--surface-background);
+  padding: 20px 16px;
+  background-color: var(--surface-background); 
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 
   /* Scrollbar styling */
   scrollbar-width: thin;
@@ -198,6 +205,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     align-items: center;
     justify-content: center;
     text-align: center;
+    background-color: var(--surface-card);
   }
 }
 
@@ -221,7 +229,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   }
 
   p {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
     margin: 0;
     line-height: 1.5;
@@ -231,13 +239,14 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
 /* Messages */
 .message-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-end;
   max-width: 100%;
   animation: messageFadeIn 0.3s ease forwards;
   opacity: 0;
   transform: translateY(8px);
 
+  /* User Message */
   &.user {
     flex-direction: row-reverse;
     
@@ -246,9 +255,11 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       color: $color-text-user;
       border-radius: 18px 18px 4px 18px;
       box-shadow: 0 2px 4px rgba(0, 131, 155, 0.15);
+      border: none;
     }
   }
 
+  /* Assistant Message */
   &.assistant {
     flex-direction: row;
     
@@ -263,6 +274,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       align-items: center;
       justify-content: center;
       color: var(--teal-blue);
+      box-shadow: var(--box-shadow-sm);
     }
 
     .bubble {
@@ -270,10 +282,11 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       color: var(--text-primary);
       border: 1px solid var(--border-color);
       border-radius: 18px 18px 18px 4px;
+      box-shadow: var(--box-shadow-sm);
     }
   }
 
-  /* --- New System Message Style --- */
+  /* System Message */
   &.system {
     justify-content: center;
     width: 100%;
@@ -294,13 +307,11 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
 
   .bubble {
     padding: 10px 14px;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: 0.925rem;
+    line-height: 1.55;
     max-width: 80%;
     word-break: break-word;
     position: relative;
-    
-    /* [UPDATED] Preserves whitespace/newlines from AI stream */
     white-space: pre-wrap; 
   }
 
@@ -308,15 +319,15 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   .thinking-bubble {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: 10px;
+    padding: 10px 16px;
     border: none !important;
     background: $gradient-thinking;
     background-size: 200% 100%;
     animation: gradientMove 2s linear infinite;
-
+    
     [data-theme='dark'] & {
-      background: linear-gradient(270deg, #0f3f42, #134e4a, #0f3f42);
+       background: linear-gradient(270deg, var(--gray-100), var(--gray-200), var(--gray-100));
     }
 
     .gradient-text {
@@ -325,6 +336,12 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       background: linear-gradient(to right, var(--teal-blue), var(--peacock-blue));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      
+      [data-theme='dark'] & {
+        background: linear-gradient(to right, var(--teal-midtone), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
     }
   }
 }
@@ -339,7 +356,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 
   .input-container {
     display: flex;
@@ -347,12 +364,16 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     background: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 24px;
-    padding: 4px;
+    padding: 4px 4px 4px 16px;
     transition: all 0.2s ease;
 
     &:focus-within {
       border-color: var(--teal-blue);
       box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
+      
+      [data-theme='dark'] & {
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+      }
     }
   }
 
@@ -361,17 +382,17 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     background: transparent;
     border: none;
     outline: none;
-    padding: 8px 12px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-primary);
     min-width: 0;
+    line-height: 1.5;
 
     &::placeholder { color: var(--text-disabled); }
   }
 
   .send-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: none;
     background: var(--teal-blue);
@@ -394,7 +415,6 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       background: var(--peacock-blue);
     }
 
-    /* [UPDATED] Styles for when AI is generating (Stop Button) */
     &.generating {
       background: transparent;
       border: 2px solid var(--text-primary);
@@ -407,7 +427,6 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
         transition: background-color 0.2s;
       }
       
-      /* Hover state becomes red to indicate "Stop" */
       &:hover {
         border-color: var(--color-danger);
         background-color: rgba(220, 53, 69, 0.1);
@@ -433,7 +452,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
 }
 
 /* ==========================================================================
-   ANIMATIONS & RESPONSIVENESS
+   ANIMATIONS
    ========================================================================== */
 @keyframes messageFadeIn {
   to { opacity: 1; transform: translateY(0); }
@@ -452,17 +471,16 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     right: 0;
     bottom: 0;
     width: 100vw;
-    height: 100dvh; /* Use dynamic viewport height */
+    height: 100dvh;
     max-width: none;
     max-height: none;
     border-radius: 0;
     border: none;
-    z-index: 2000; /* Above overlay/modals */
+    z-index: 2000;
   }
 
   .ai-header {
     padding: 16px;
-    /* Add safe area padding for notched phones */
     padding-top: env(safe-area-inset-top, 16px);
   }
 
@@ -471,7 +489,7 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   }
 }
 
-/* Loader Animation */
+/* Loader Ring */
 .ai-pulse-ring {
   display: inline-block;
   position: relative;
@@ -488,6 +506,11 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     border-radius: 50%;
     animation: ai-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
     border-color: var(--teal-blue) transparent transparent transparent;
+    
+    [data-theme='dark'] & {
+       border-color: var(--teal-midtone) transparent transparent transparent;
+    }
+
     &:nth-child(1) { animation-delay: -0.45s; }
     &:nth-child(2) { animation-delay: -0.3s; }
     &:nth-child(3) { animation-delay: -0.15s; }
@@ -503,11 +526,16 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
   display: flex;
   gap: 4px;
   span {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     background: var(--teal-blue);
     border-radius: 50%;
     animation: bounce 1.4s infinite ease-in-out both;
+    
+    [data-theme='dark'] & {
+      background: var(--teal-midtone);
+    }
+
     &:nth-child(1) { animation-delay: -0.32s; }
     &:nth-child(2) { animation-delay: -0.16s; }
   }

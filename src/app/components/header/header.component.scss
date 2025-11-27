@@ -3,7 +3,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  --header-height: 50px;
+  --header-height: 60px; /* Standardized height */
 }
 
 .dashboard-header {
@@ -66,9 +66,11 @@
   font-size: 1.25rem;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 8px;
   border-radius: 50%;
   transition: all 0.2s;
+  width: 40px; /* Explicit size for alignment */
+  height: 40px;
 
   &:hover {
     background-color: var(--gray-100);
@@ -82,13 +84,10 @@
 .mobile-sidebar-toggle {
   display: none;
   color: var(--text-primary);
+  padding: 0; /* Reset padding as it uses width/height */
 
   @media (max-width: 992px) {
     display: flex;
-    i,
-    svg {
-      font-size: 1.25rem;
-    }
   }
 }
 
@@ -103,6 +102,7 @@
   
   flex: 2;
   max-width: 400px;
+  height: 40px; /* Match button height */
   
   padding: 0 0.75rem;
   transition: all 0.2s;
@@ -126,12 +126,13 @@
     width: 100%;
     border: none;
     background: none;
-    padding: 0.5rem;
+    padding: 0 0.5rem;
     outline: none;
     font-size: 0.875rem;
     color: var(--text-primary);
     caret-color: var(--teal-blue);
     line-height: 1.5;
+    height: 100%;
 
     &::placeholder {
       color: var(--text-disabled);
@@ -147,6 +148,11 @@
     border: none;
     cursor: pointer;
     color: var(--text-disabled);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
 
     &:hover {
       color: var(--text-primary);
@@ -162,16 +168,40 @@
   justify-content: flex-end;
   flex-shrink: 0;
   flex-grow: 0;
+  gap: 12px; /* Consistent spacing between elements */
+  height: 100%;
+}
+
+/* AI Button Specifics for Alignment */
+.ai-trigger-btn {
+  width: 36px; /* Exactly match Avatar Wrapper */
+  height: 36px;
+  padding: 0;
+  
+  /* Add ring for active state */
+  &.active {
+    color: var(--teal-blue);
+    background-color: var(--gray-100);
+    [data-theme='dark'] & {
+        background-color: rgba(255,255,255,0.1);
+    }
+  }
 }
 
 /* --- AVATAR BUTTON & BADGE --- */
+.user-menu {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 .user-menu-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  padding: 2px; 
+  padding: 0; 
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -228,7 +258,6 @@
   i {
     font-size: 9px;
     color: var(--text-secondary);
-    /* MODIFIED: Added transform to transition for animation */
     transition: color 0.2s, transform 0.2s ease; 
   }
   .user-menu-toggle[aria-expanded="true"] & i {
@@ -389,6 +418,8 @@
    --------------------------------------------------------------- */
 ::ng-deep [data-theme='dark'] .header-user-menu-panel.mat-mdc-menu-panel {
   
+  background-color: #18181b !important; /* Ensure background is set for panel */
+
   .menu-section-wrapper {
     background-color: rgba(255, 255, 255, 0.03);
   }
@@ -401,12 +432,11 @@
 
   .custom-menu-item {
     .menu-icon-bg {
-      /* Make icon bg lighter than the card bg (#0f172a) to be visible */
-      background-color: var(--gray-200); /* #1e293b */
+      background-color: var(--gray-200); 
     }
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.08);
       
       .menu-icon-bg {
         background-color: var(--gray-300);

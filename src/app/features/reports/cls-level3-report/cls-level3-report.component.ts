@@ -561,7 +561,7 @@ export class ClsLevel3ReportComponent implements OnInit {
           type: 'pie',
           radius: ['45%', '75%'],
           center: ['50%', '45%'],
-          avoidLabelOverlap: false,
+          avoidLabelOverlap: true,
           itemStyle: {
             borderRadius: 5,
             borderColor: this.palette.bgCard,

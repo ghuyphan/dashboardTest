@@ -240,17 +240,12 @@ export class FlyoutDirective implements OnInit, OnDestroy {
     return top;
   }
 
-  private calculateHorizontalPosition(): number {
-    const rootStyle = getComputedStyle(this.document.documentElement);
-    const collapsedWidthValue = rootStyle.getPropertyValue(
-      '--sidebar-width-collapsed'
-    );
-    const collapsedWidth = collapsedWidthValue
-      ? parseFloat(collapsedWidthValue)
-      : this.DEFAULT_SIDEBAR_WIDTH;
-
-    return collapsedWidth + this.HORIZONTAL_OFFSET;
-  }
+// In FlyoutDirective.calculateHorizontalPosition()
+private calculateHorizontalPosition(): number {
+  // Use the button's actual position + padding
+  const hostRect = this.el.nativeElement.getBoundingClientRect();
+  return hostRect.right + this.HORIZONTAL_OFFSET; 
+}
 
   private removePositioningStyles(): void {
     const menuEl = this.flyoutMenu();
