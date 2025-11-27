@@ -1,8 +1,10 @@
-import { Injectable, signal, inject, computed } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment.development';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -18,7 +20,7 @@ export class LlmService {
   private router = inject(Router);
 
   // [CONFIGURATION] Points to Ollama's standard API endpoint
-  private readonly apiUrl = 'http://localhost:11434/v1/chat/completions';
+  private readonly apiUrl =environment.llmUrl;
   
   // --- Signals ---
   public isModelLoading = signal<boolean>(false);
@@ -27,24 +29,47 @@ export class LlmService {
   public loadProgress = signal<string>('');
   public messages = signal<ChatMessage[]>([]);
 
-  constructor() {}
+  // [NEW] Signal to hold dynamic page context
+  public pageContext = signal<string>('');
+
+  constructor() {
+    // [NEW] Automatically clear context when navigating to a new page
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.pageContext.set(''); 
+    });
+  }
 
   /**
-   * Builds a dynamic system prompt containing app context.
+   * [UPDATED] Builds a dynamic system prompt containing app context + Page Data.
    */
   private getSystemPrompt(): string {
     const user = this.authService.currentUser();
     const userName = user?.fullName || 'Người dùng';
     const userRole = user?.roles?.join(', ') || 'Nhân viên';
     const currentUrl = this.router.url;
+    
+    // Get the current context
+    const activeContext = this.pageContext();
 
     return `
       QUAN TRỌNG: Bạn là trợ lý AI thông minh của 'Cổng thông tin Hoàn Mỹ'.
       - Luôn luôn trả lời bằng Tiếng Việt.
       - Người dùng hiện tại: ${userName} (Chức vụ: ${userRole}).
       - Người dùng đang đứng ở trang: ${currentUrl}.
-      - Hãy trả lời ngắn gọn, chuyên nghiệp và hữu ích.
+      
+      DỮ LIỆU TRÊN MÀN HÌNH HIỆN TẠI:
+      ${activeContext ? activeContext : 'Không có dữ liệu cụ thể.'}
+      
+      Hãy sử dụng dữ liệu trên để trả lời câu hỏi nếu người dùng yêu cầu.
+      Trả lời ngắn gọn, chuyên nghiệp và hữu ích.
     `.trim();
+  }
+
+  // [NEW] Public method for components to call to inject data
+  setPageContext(description: string): void {
+    this.pageContext.set(description);
   }
 
   async loadModel(): Promise<void> {
@@ -54,7 +79,7 @@ export class LlmService {
     this.loadProgress.set('Đang kết nối máy chủ AI...');
 
     try {
-      // Simulate check
+      // Simulate check (In real app, you might ping the Ollama endpoint)
       await new Promise(resolve => setTimeout(resolve, 800));
 
       this.modelLoaded.set(true);

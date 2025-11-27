@@ -5,7 +5,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   effect,
-  DestroyRef
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs';
@@ -14,12 +14,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '../../../core/services/excel-export.service';
 import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
+import { LlmService } from '../../../core/services/llm.service'; // [1] Import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
+import {
+  DateFilterComponent,
+  DateRange,
+} from '../../../components/date-filter/date-filter.component';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
@@ -31,7 +41,7 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
     CommonModule,
     ChartCardComponent,
     DateFilterComponent,
-    HasPermissionDirective
+    HasPermissionDirective,
   ],
   providers: [DatePipe],
   templateUrl: './medical-records-status.component.html',
@@ -44,12 +54,13 @@ export class MedicalRecordsStatusComponent implements OnInit {
   private excelService = inject(ExcelExportService);
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
-  private destroyRef = inject(DestroyRef); // [1]
+  private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
+  private readonly llmService = inject(LlmService); // [2] Inject
 
   public isLoading = false;
-  public isExporting = false; 
-  
+  public isExporting = false;
+
   public summaryData: MedicalRecordSummary[] = [];
   public fromDate: string = '';
   public toDate: string = '';
@@ -61,6 +72,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
       this.palette = this.themeService.currentPalette();
       if (!this.isLoading && this.summaryData.length > 0) {
         this.buildCharts(this.summaryData);
+        this.updateAiContext(this.summaryData); // [3]
       }
       this.cd.markForCheck();
     });
@@ -71,13 +83,31 @@ export class MedicalRecordsStatusComponent implements OnInit {
     this.loadData();
   }
 
+  private updateAiContext(data: MedicalRecordSummary[]): void {
+    const topMissing = data
+      .sort((a, b) => b.SO_LUONG - a.SO_LUONG)
+      .slice(0, 5)
+      .map((i) => `- BS ${i.TEN_BS}: ${i.SO_LUONG} HSBA`)
+      .join('\n');
+
+    const total = data.reduce((sum, i) => sum + i.SO_LUONG, 0);
+
+    this.llmService.setPageContext(`
+      BÁO CÁO CHƯA TẠO HỒ SƠ BỆNH ÁN (NGOẠI TRÚ)
+      Từ ngày: ${this.fromDate} đến ${this.toDate}
+      Tổng số lượng chưa tạo: ${total}
+
+      Top 5 Bác sĩ chưa tạo nhiều nhất:
+      ${topMissing}
+    `);
+  }
+
   private setDefaultDateRange(): void {
     const now = new Date();
-    const day = now.getDay(); 
-    const diff = now.getDate() - day + (day == 0 ? -6 : 1); 
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day == 0 ? -6 : 1);
     const start = new Date(now.setDate(diff));
-    const end = new Date(now.setDate(start.getDate() + 6)); 
-
+    const end = new Date(now.setDate(start.getDate() + 6));
     this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
     this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
   }
@@ -90,30 +120,31 @@ export class MedicalRecordsStatusComponent implements OnInit {
 
   public loadData(): void {
     if (!this.fromDate || !this.toDate) return;
-
     this.isLoading = true;
     this.doctorChartOptions = null;
     this.cd.markForCheck();
 
-    this.reportService.getMedicalRecordStatusSummary(this.fromDate, this.toDate)
+    this.reportService
+      .getMedicalRecordStatusSummary(this.fromDate, this.toDate)
       .pipe(
         finalize(() => {
           this.isLoading = false;
           this.cd.markForCheck();
         }),
-        takeUntilDestroyed(this.destroyRef) // [2]
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (data) => {
           this.summaryData = data || [];
           this.buildCharts(this.summaryData);
+          this.updateAiContext(this.summaryData); // Ensure context is set on load
         },
         error: (err) => {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu biểu đồ.');
           this.summaryData = [];
           this.doctorChartOptions = null;
-        }
+        },
       });
   }
 
@@ -122,12 +153,10 @@ export class MedicalRecordsStatusComponent implements OnInit {
       this.doctorChartOptions = null;
       return;
     }
-
     const sorted = [...data].sort((a, b) => b.SO_LUONG - a.SO_LUONG);
     const topList = sorted.slice(0, 15);
-
-    const names = topList.map(i => i.TEN_BS || 'N/A');
-    const values = topList.map(i => i.SO_LUONG);
+    const names = topList.map((i) => i.TEN_BS || 'N/A');
+    const values = topList.map((i) => i.SO_LUONG);
 
     this.doctorChartOptions = {
       backgroundColor: 'transparent',
@@ -140,14 +169,9 @@ export class MedicalRecordsStatusComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        axisPointer: { type: 'shadow' }
+        axisPointer: { type: 'shadow' },
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        top: '10%',
-        containLabel: true,
-      },
+      grid: { left: '3%', right: '4%', top: '10%', containLabel: true },
       xAxis: {
         type: 'category',
         data: names,
@@ -156,20 +180,16 @@ export class MedicalRecordsStatusComponent implements OnInit {
           overflow: 'truncate',
           color: this.palette.textPrimary,
           rotate: 45,
-          interval: 0
+          interval: 0,
         },
-        axisLine: {
-          lineStyle: { color: this.palette.gray200 }
-        }
+        axisLine: { lineStyle: { color: this.palette.gray200 } },
       },
       yAxis: {
         type: 'value',
         splitLine: {
           lineStyle: { type: 'dashed', color: this.palette.gray200 },
         },
-        axisLabel: {
-          color: this.palette.textSecondary
-        }
+        axisLabel: { color: this.palette.textSecondary },
       },
       series: [
         {
@@ -179,31 +199,30 @@ export class MedicalRecordsStatusComponent implements OnInit {
           barWidth: '50%',
           itemStyle: {
             color: this.palette.primary,
-            borderRadius: [4, 4, 0, 0]
+            borderRadius: [4, 4, 0, 0],
           },
           label: {
             show: true,
             position: 'top',
-            color: this.palette.textPrimary
-          }
-        }
-      ]
+            color: this.palette.textPrimary,
+          },
+        },
+      ],
     };
   }
 
   public onExport(): void {
     if (this.isExporting) return;
-
     this.isExporting = true;
     this.cd.markForCheck();
-
-    this.reportService.getMedicalRecordStatusDetail(this.fromDate, this.toDate)
+    this.reportService
+      .getMedicalRecordStatusDetail(this.fromDate, this.toDate)
       .pipe(
         finalize(() => {
           this.isExporting = false;
           this.cd.markForCheck();
         }),
-        takeUntilDestroyed(this.destroyRef) // [3]
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (details) => {
@@ -211,7 +230,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
             this.toastService.showWarning('Không có dữ liệu chi tiết để xuất.');
             return;
           }
-          
           const columns: ExportColumn[] = [
             { key: 'MAYTE', header: 'Mã Y Tế' },
             { key: 'TEN_BENH_NHAN', header: 'Tên Bệnh Nhân' },
@@ -223,21 +241,23 @@ export class MedicalRecordsStatusComponent implements OnInit {
             { key: 'TEN_PHONG_KHAM', header: 'Phòng Khám' },
             { key: 'THOI_GIAN_KHAM', header: 'Thời Gian', type: 'date' },
             { key: 'TRANG_THAI_BA', header: 'Trạng Thái' },
-            { key: 'TIEPNHAN_ID', header: 'Mã Tiếp Nhận' }
+            { key: 'TIEPNHAN_ID', header: 'Mã Tiếp Nhận' },
           ];
-
           this.excelService.exportToExcel(
-            details, 
+            details,
             `BaoCao_ChuaTaoBA_${this.fromDate}_${this.toDate}`,
             columns
           );
-          
-          this.toastService.showSuccess(`Đã xuất ${details.length} dòng ra file Excel.`);
+          this.toastService.showSuccess(
+            `Đã xuất ${details.length} dòng ra file Excel.`
+          );
         },
         error: (err) => {
           console.error(err);
-          this.toastService.showError('Lỗi khi tải dữ liệu chi tiết để xuất Excel.');
-        }
+          this.toastService.showError(
+            'Lỗi khi tải dữ liệu chi tiết để xuất Excel.'
+          );
+        },
       });
   }
 }

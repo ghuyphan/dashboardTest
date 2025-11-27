@@ -2,13 +2,14 @@ import { Component, OnInit, ViewEncapsulation, Inject, inject, DestroyRef } from
 import { CommonModule, CurrencyPipe, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, of } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // [1] Import
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { QRCodeComponent } from 'angularx-qrcode';
 
 import { Device } from '../../../shared/models/device.model';
 import { FooterActionService } from '../../../core/services/footer-action.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { LlmService } from '../../../core/services/llm.service'; // [1] Import
 import { FooterAction } from '../../../core/models/footer-action.model';
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
@@ -32,7 +33,8 @@ import { DeviceService } from '../../../core/services/device.service';
   encapsulation: ViewEncapsulation.None
 })
 export class DeviceDetailComponent implements OnInit {
-  private destroyRef = inject(DestroyRef); // [2] Inject DestroyRef
+  private destroyRef = inject(DestroyRef);
+  private llmService = inject(LlmService); // [2] Inject
   
   public device: Device | null = null;
   public isLoading = true;
@@ -54,7 +56,7 @@ export class DeviceDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params
-      .pipe(takeUntilDestroyed(this.destroyRef)) // [3] Protect route params subscription
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(params => {
         const deviceId = params['id'];
         if (deviceId) {
@@ -66,15 +68,13 @@ export class DeviceDetailComponent implements OnInit {
       });
   }
 
-  // ngOnDestroy removed - handled automatically by DestroyRef
-
   loadDevice(id: string): void {
     this.isLoading = true;
     
     this.deviceService.getDeviceById(id)
       .pipe(
         finalize(() => this.isLoading = false),
-        takeUntilDestroyed(this.destroyRef) // [4] Protect API call
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (device) => {
@@ -83,6 +83,9 @@ export class DeviceDetailComponent implements OnInit {
 
           this.setupFooterActions(this.device);
           this.checkWarrantyStatus(this.device);
+          
+          // [3] Update AI Context with single device details
+          this.updateAiContext(device);
         },
         error: (err: Error) => {
           console.error('Failed to load device details:', err);
@@ -90,6 +93,29 @@ export class DeviceDetailComponent implements OnInit {
           this.goBack();
         }
       });
+  }
+
+  private updateAiContext(d: Device): void {
+    const warrantyInfo = this.isWarrantyExpiring 
+      ? `CẢNH BÁO: Sắp hết hạn bảo hành (còn ${this.warrantyExpiresInDays} ngày).` 
+      : `Ngày hết hạn BH: ${d.NgayHetHanBH || 'N/A'}`;
+
+    const context = `
+      Đang xem chi tiết thiết bị:
+      - Tên: ${d.Ten}
+      - Mã: ${d.Ma}
+      - Model: ${d.Model || 'N/A'}
+      - Serial: ${d.SerialNumber || 'N/A'}
+      - Loại: ${d.TenLoaiThietBi || 'N/A'}
+      - Trạng thái: ${d.TrangThai_Ten || 'N/A'}
+      - Vị trí: ${d.ViTri || 'N/A'}
+      - Giá mua: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(d.GiaMua || 0)}
+      - Ngày mua: ${d.NgayMua || 'N/A'}
+      - ${warrantyInfo}
+      - Mô tả: ${d.MoTa || 'Không có'}
+    `;
+
+    this.llmService.setPageContext(context);
   }
 
   private checkWarrantyStatus(device: Device): void {
@@ -252,7 +278,7 @@ export class DeviceDetailComponent implements OnInit {
         }
         return of(null);
       }),
-      takeUntilDestroyed(this.destroyRef) // [5] Protect deletion
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (response) => {
         if (response) {
@@ -267,7 +293,6 @@ export class DeviceDetailComponent implements OnInit {
         this.toastService.showError(msg, 0);
       },
       complete: () => {
-        // If we didn't navigate away (e.g., error or cancelled), stop loading
         if (this.isLoading) this.isLoading = false;
       }
     });

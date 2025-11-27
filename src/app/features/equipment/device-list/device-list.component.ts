@@ -29,6 +29,7 @@ import { FooterAction } from '../../../core/models/footer-action.model';
 import { SearchService } from '../../../core/services/search.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { LlmService } from '../../../core/services/llm.service'; // [NEW] Import LlmService
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
@@ -59,6 +60,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly searchService = inject(SearchService);
   private readonly modalService = inject(ModalService);
   private readonly toastService = inject(ToastService);
+  private readonly llmService = inject(LlmService); // [NEW] Inject LlmService
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -180,6 +182,30 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   private handleLoadSuccess(): void {
     this.isLoading = false;
     this.cdr.markForCheck();
+    // [NEW] Feed the AI context
+    this.updateAiContext();
+  }
+
+  private updateAiContext(): void {
+    if (!this.pagedDeviceData || this.pagedDeviceData.length === 0) {
+      this.llmService.setPageContext('Danh sách thiết bị đang trống.');
+      return;
+    }
+
+    // Create a summary string to send to the LLM
+    const summary = this.pagedDeviceData.map(d => 
+      `- ${d.Ten} (${d.Ma}): ${d.TrangThai_Ten}, tại ${d.ViTri}`
+    ).join('\n');
+
+    const contextString = `
+      Đang hiển thị danh sách thiết bị (Trang ${this.currentPageIndex + 1}).
+      Tổng số thiết bị trong hệ thống: ${this.totalDeviceCount}.
+      
+      Danh sách chi tiết trên màn hình hiện tại:
+      ${summary}
+    `;
+
+    this.llmService.setPageContext(contextString);
   }
 
   private handleLoadError(error: any): Observable<void> {
@@ -288,7 +314,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
           this.updateFooterActions();
           this.cdr.markForCheck();
         }),
-        takeUntilDestroyed(this.destroyRef) // [1] Add deletion protection
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (response) => {
