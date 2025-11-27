@@ -1,30 +1,49 @@
-<button class="ai-fab" (click)="toggleChat()" [class.active]="isOpen()" title="Trợ lý AI">
-  <i class="fas fa-robot"></i>
-</button>
-
-<div class="ai-window" [class.open]="isOpen()">
+<div class="ai-window" [class.open]="llmService.isOpen()">
   
   <div class="ai-header">
-    <div class="header-title">
-      <i class="fas fa-sparkles"></i>
-      <span>Trợ lý IT AI</span>
+    <div class="header-left">
+      <div class="ai-avatar-wrapper">
+        <div class="avatar-ring">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="pulse-dot" [class.online]="llmService.modelLoaded()"></div>
+      </div>
+      <div class="header-info">
+        <h3 class="title">Trợ lý AI</h3>
+        <span class="status">{{ llmService.modelLoaded() ? 'Sẵn sàng hỗ trợ' : 'Đang kết nối...' }}</span>
+      </div>
     </div>
-    <button class="close-btn" (click)="toggleChat()">
+    
+    <button class="close-btn" (click)="closeChat()" title="Đóng">
       <i class="fas fa-times"></i>
     </button>
   </div>
 
-  <div class="ai-body" *ngIf="!llmService.modelLoaded() && llmService.isModelLoading()">
-    <div class="loading-container">
-      <div class="app-loading-spinner"></div>
+  <div class="ai-body loading-view" *ngIf="!llmService.modelLoaded() && llmService.isModelLoading()">
+    <div class="loader-content">
+      <div class="ai-pulse-ring"><div></div><div></div><div></div><div></div></div>
       <p class="loading-text">{{ llmService.loadProgress() }}</p>
     </div>
   </div>
 
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
     
+    <div class="chat-intro">
+      <span class="intro-badge">Context Aware</span>
+      <p>Xin chào! Tôi có thể nhìn thấy dữ liệu trên màn hình hiện tại. Bạn cần tra cứu gì không?</p>
+    </div>
+
     @for (msg of llmService.messages(); track $index) {
-      <div class="message" [ngClass]="msg.role">
+      <div class="message-row" [ngClass]="msg.role">
+        @if(msg.role === 'assistant') {
+          <div class="msg-avatar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+            </svg>
+          </div>
+        }
         <div class="bubble">
           {{ msg.content }}
         </div>
@@ -32,33 +51,49 @@
     }
 
     @if (llmService.isGenerating()) {
-      <div class="message assistant">
+      <div class="message-row assistant">
+        <div class="msg-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+          </svg>
+        </div>
         <div class="bubble thinking-bubble">
-          <div class="dot-pulse">
-             <span></span><span></span><span></span>
-          </div>
-          <span>Đang suy nghĩ...</span>
+          <span class="gradient-text">Đang suy nghĩ</span>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
     }
   </div>
 
   <div class="ai-footer" *ngIf="llmService.modelLoaded()">
-    <input 
-      type="text" 
-      [(ngModel)]="userInput" 
-      (keyup.enter)="onSend()"
-      [disabled]="llmService.isGenerating()"
-      placeholder="Hỏi tôi bất cứ điều gì..." 
-      class="chat-input"
-      autofocus
-    >
-    <button class="send-btn" (click)="onSend()" [disabled]="!userInput.trim() || llmService.isGenerating()">
-      @if (llmService.isGenerating()) {
-         <i class="fas fa-spinner fa-spin"></i>
-      } @else {
-         <i class="fas fa-paper-plane"></i>
-      }
-    </button>
+    
+    <div class="input-container">
+      <input 
+        type="text" 
+        [(ngModel)]="userInput" 
+        (keyup.enter)="onSend()"
+        [disabled]="llmService.isGenerating()"
+        placeholder="Nhập câu hỏi..." 
+        class="chat-input"
+        autocomplete="off"
+      >
+      <button 
+        class="send-btn" 
+        (click)="onSend()" 
+        [disabled]="!userInput.trim() || llmService.isGenerating()"
+        [class.generating]="llmService.isGenerating()">
+        
+        @if (llmService.isGenerating()) {
+          <div class="stop-icon"></div>
+        } @else {
+          <i class="fas fa-arrow-up"></i>
+        }
+      </button>
+    </div>
+
+    <div class="disclaimer">
+      <i class="fas fa-shield-alt"></i>
+      <span>AI có thể mắc lỗi. Vui lòng kiểm chứng thông tin quan trọng.</span>
+    </div>
   </div>
 </div>

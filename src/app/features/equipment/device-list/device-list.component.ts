@@ -60,7 +60,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly searchService = inject(SearchService);
   private readonly modalService = inject(ModalService);
   private readonly toastService = inject(ToastService);
-  private readonly llmService = inject(LlmService); // [NEW] Inject LlmService
+  private readonly llmService = inject(LlmService); 
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -182,30 +182,34 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   private handleLoadSuccess(): void {
     this.isLoading = false;
     this.cdr.markForCheck();
-    // [NEW] Feed the AI context
     this.updateAiContext();
   }
 
   private updateAiContext(): void {
     if (!this.pagedDeviceData || this.pagedDeviceData.length === 0) {
-      this.llmService.setPageContext('Danh sách thiết bị đang trống.');
+      this.llmService.setPageContext('Danh sách thiết bị hiện đang trống.');
       return;
     }
 
-    // Create a summary string to send to the LLM
-    const summary = this.pagedDeviceData.map(d => 
-      `- ${d.Ten} (${d.Ma}): ${d.TrangThai_Ten}, tại ${d.ViTri}`
-    ).join('\n');
+    // Optimization: Only send necessary data for the visible rows to save tokens
+    // Limit to top 10 items to ensure we don't overload the prompt
+    const visibleItems = this.pagedDeviceData.slice(0, 10).map(d => ({
+      Ten: d.Ten,
+      Ma: d.Ma,
+      TrangThai: d.TrangThai_Ten,
+      ViTri: d.ViTri,
+      Model: d.Model
+    }));
 
-    const contextString = `
-      Đang hiển thị danh sách thiết bị (Trang ${this.currentPageIndex + 1}).
-      Tổng số thiết bị trong hệ thống: ${this.totalDeviceCount}.
-      
-      Danh sách chi tiết trên màn hình hiện tại:
-      ${summary}
-    `;
+    const contextObj = {
+      Screen: 'Danh Mục Thiết Bị (Device Catalog)',
+      TotalRecords: this.totalDeviceCount,
+      CurrentPage: this.currentPageIndex + 1,
+      VisibleItemsSample: visibleItems,
+      Note: 'Chỉ hiển thị 10 thiết bị đầu tiên của trang này cho AI.'
+    };
 
-    this.llmService.setPageContext(contextString);
+    this.llmService.setPageContext(contextObj);
   }
 
   private handleLoadError(error: any): Observable<void> {

@@ -1,14 +1,15 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment.development';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
+  isNavigationEvent?: boolean;
 }
 
 @Injectable({
@@ -18,58 +19,114 @@ export class LlmService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  // [CONFIGURATION] Points to Ollama's standard API endpoint
-  private readonly apiUrl =environment.llmUrl;
-  
+  private readonly apiUrl = environment.llmUrl; // Đảm bảo URL là: http://localhost:11434/api/chat
+  private readonly MAX_HISTORY = 10; 
+
   // --- Signals ---
+  public isOpen = signal<boolean>(false); 
   public isModelLoading = signal<boolean>(false);
   public isGenerating = signal<boolean>(false);
-  public modelLoaded = signal<boolean>(false); 
+  public modelLoaded = signal<boolean>(false);
   public loadProgress = signal<string>('');
+  
   public messages = signal<ChatMessage[]>([]);
-
-  // [NEW] Signal to hold dynamic page context
   public pageContext = signal<string>('');
 
   constructor() {
-    // [NEW] Automatically clear context when navigating to a new page
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.pageContext.set(''); 
-    });
+    this.trackNavigation();
   }
 
   /**
-   * [UPDATED] Builds a dynamic system prompt containing app context + Page Data.
+   * Toggle the chat window visibility.
    */
-  private getSystemPrompt(): string {
-    const user = this.authService.currentUser();
-    const userName = user?.fullName || 'Người dùng';
-    const userRole = user?.roles?.join(', ') || 'Nhân viên';
-    const currentUrl = this.router.url;
+  public toggleChat(): void {
+    this.isOpen.update(v => !v);
     
-    // Get the current context
-    const activeContext = this.pageContext();
-
-    return `
-      QUAN TRỌNG: Bạn là trợ lý AI thông minh của 'Cổng thông tin Hoàn Mỹ'.
-      - Luôn luôn trả lời bằng Tiếng Việt.
-      - Người dùng hiện tại: ${userName} (Chức vụ: ${userRole}).
-      - Người dùng đang đứng ở trang: ${currentUrl}.
-      
-      DỮ LIỆU TRÊN MÀN HÌNH HIỆN TẠI:
-      ${activeContext ? activeContext : 'Không có dữ liệu cụ thể.'}
-      
-      Hãy sử dụng dữ liệu trên để trả lời câu hỏi nếu người dùng yêu cầu.
-      Trả lời ngắn gọn, chuyên nghiệp và hữu ích.
-    `.trim();
+    if (this.isOpen() && !this.modelLoaded() && !this.isModelLoading()) {
+      this.loadModel();
+    }
   }
 
-  // [NEW] Public method for components to call to inject data
-  setPageContext(description: string): void {
-    this.pageContext.set(description);
+  /**
+   * Automatically tracks route changes to update context and inject system events.
+   */
+  private trackNavigation(): void {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => {
+        let child = this.route.root;
+        while (child.firstChild) child = child.firstChild;
+        return child.snapshot.data['title'] || this.router.url;
+      })
+    ).subscribe((screenName) => {
+      this.pageContext.set('');
+
+      if (this.messages().length > 0) {
+        const navMessage: ChatMessage = {
+          role: 'system',
+          content: `Người dùng đã chuyển sang màn hình: "${screenName}".`,
+          isNavigationEvent: true
+        };
+        this.messages.update(msgs => [...msgs, navMessage]);
+      }
+    });
+  }
+
+  setPageContext(data: string | object): void {
+    if (typeof data === 'string') {
+      this.pageContext.set(data);
+    } else {
+      try {
+        const formatted = JSON.stringify(data, null, 2);
+        this.pageContext.set(formatted);
+      } catch (e) {
+        this.pageContext.set('Lỗi: Không thể đọc dữ liệu màn hình.');
+      }
+    }
+  }
+
+  private getSystemPrompt(): string {
+    const user = this.authService.currentUser();
+    const userInfo = user 
+      ? `User: ${user.fullName} (Role: ${user.roles.join(', ')})`
+      : 'User: Khách';
+    
+    const contextData = this.pageContext();
+
+    // [NEW] Calculate current time in Vietnamese format
+    const now = new Date();
+    const timeString = now.toLocaleString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    return `
+<instruction>
+  Bạn là trợ lý AI của "Hoàn Mỹ Portal".
+  QUY TẮC BẮT BUỘC:
+  1. CHỈ TRẢ LỜI BẰNG TIẾNG VIỆT.
+  2. Trả lời ngắn gọn, chuyên nghiệp.
+  3. Sử dụng dữ liệu trong <current_screen_context> để trả lời. Nếu không có thông tin, hãy nói rõ.
+</instruction>
+
+<current_time>
+  ${timeString}
+</current_time>
+
+<user_info>
+  ${userInfo}
+</user_info>
+
+<current_screen_context>
+  ${contextData ? contextData : '(Người dùng đang ở trang chủ hoặc chưa có dữ liệu cụ thể)'}
+</current_screen_context>
+    `.trim();
   }
 
   async loadModel(): Promise<void> {
@@ -79,28 +136,21 @@ export class LlmService {
     this.loadProgress.set('Đang kết nối máy chủ AI...');
 
     try {
-      // Simulate check (In real app, you might ping the Ollama endpoint)
+      // Giả lập delay kết nối (hoặc có thể gọi API check status thực tế)
       await new Promise(resolve => setTimeout(resolve, 800));
-
+      
       this.modelLoaded.set(true);
       this.loadProgress.set('Đã kết nối!');
       
-      // Add initial greeting if empty
       if (this.messages().length === 0) {
-        const user = this.authService.currentUser();
-        const greeting = user 
-          ? `Xin chào ${user.fullName}! Tôi có thể giúp gì cho bạn hôm nay?` 
-          : 'Xin chào! Tôi là trợ lý AI trực tuyến. Tôi có thể giúp gì cho bạn?';
-
         this.messages.update(msgs => [
           ...msgs, 
-          { role: 'assistant', content: greeting }
+          { role: 'assistant', content: 'Xin chào! Tôi có thể giúp gì với dữ liệu trên màn hình này?' }
         ]);
       }
-
     } catch (error) {
-      console.error('Connection Error', error);
-      this.loadProgress.set('Lỗi: Không thể kết nối máy chủ.');
+      console.error('LLM Connection Error', error);
+      this.loadProgress.set('Lỗi kết nối.');
     } finally {
       this.isModelLoading.set(false);
     }
@@ -109,24 +159,22 @@ export class LlmService {
   async sendMessage(content: string): Promise<void> {
     if (!content.trim()) return;
 
-    // 1. Add User Message
     const userMsg: ChatMessage = { role: 'user', content };
     this.messages.update(msgs => [...msgs, userMsg]);
-    
-    // 2. Set Loading State (UI will show "Đang suy nghĩ...")
     this.isGenerating.set(true);
 
     try {
-      // 3. Prepare Payload with System Context
-      const contextMessages: ChatMessage[] = [
-        { role: 'system', content: this.getSystemPrompt() },
-        ...this.messages().filter(m => m.role !== 'system')
-      ];
+      const recentMessages = this.messages()
+        .filter(m => !m.isNavigationEvent)
+        .slice(-this.MAX_HISTORY);
 
       const payload = {
-        model: "llama3", // Ensure this matches your Ollama model
-        messages: contextMessages,
-        temperature: 0.7,
+        model: "llama3.1:8b-instruct-q4_K_M", // [UPDATED] Sử dụng alias bạn đã tạo
+        messages: [
+          { role: 'system', content: this.getSystemPrompt() },
+          ...recentMessages
+        ],
+        temperature: 0.3,
         stream: false
       };
 
@@ -134,20 +182,23 @@ export class LlmService {
         this.http.post(this.apiUrl, payload)
       );
 
-      const reply = response?.choices?.[0]?.message?.content 
-                 || 'Xin lỗi, tôi không nhận được phản hồi.';
+      // [UPDATED] Xử lý response cho cả 2 trường hợp (Ollama native API và OpenAI compatible)
+      // Ollama native trả về: response.message.content
+      // OpenAI format trả về: response.choices[0].message.content
+      const reply = response?.message?.content || 
+                    response?.choices?.[0]?.message?.content || 
+                    'Xin lỗi, tôi không có câu trả lời.';
 
-      // 4. Add Assistant Message
       this.messages.update(msgs => [
         ...msgs, 
         { role: 'assistant', content: reply }
       ]);
 
-    } catch (error: any) {
-      console.error('API Error:', error);
+    } catch (error) {
+      console.error('AI Error:', error);
       this.messages.update(msgs => [
         ...msgs, 
-        { role: 'system', content: 'Lỗi: Không thể kết nối đến máy chủ AI. Vui lòng kiểm tra lại Ollama.' }
+        { role: 'system', content: '⚠️ Lỗi kết nối đến máy chủ AI.' }
       ]);
     } finally {
       this.isGenerating.set(false);
