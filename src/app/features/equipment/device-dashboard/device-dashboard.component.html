@@ -1,6 +1,10 @@
 <div class="page-container">
   <div class="page-content">
-    <div class="widget-section">
+    
+    <div class="widget-section"
+         [appAiContext]="widgetData"
+         appAiContextKey="DashboardKPIs"
+         description="Các chỉ số tổng quan (KPI) về thiết bị: Tổng, Cần sửa, Đang dùng, Sẵn sàng, Sắp hết hạn BH.">
       <div class="widget-grid">
         @if (isLoading && widgetData.length === 0) { 
           @for (i of [1, 2, 3, 4, 5, 6]; track i) {
@@ -93,6 +97,10 @@
           emptyStateText="Không có thiết bị nào cần bảo trì."
           (rowClick)="navigateToDetail($event)"
           [enableExport]="false"
+          
+          [appAiContext]="attentionDevices"
+          appAiContextKey="TableCanChuY"
+          description="Danh sách các thiết bị đang hỏng, bảo trì hoặc sửa chữa"
         >
         </app-table-card>
 
@@ -121,6 +129,10 @@
           emptyStateText="Không có thiết bị nào sắp hết hạn."
           (rowClick)="navigateToDetail($event)"
           [enableExport]="false"
+
+          [appAiContext]="expiringDevices"
+          appAiContextKey="TableSapHetHan"
+          description="Danh sách các thiết bị sắp hết hạn bảo hành trong 30 ngày tới"
         >
         </app-table-card>
       </div>

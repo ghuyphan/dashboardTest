@@ -1,19 +1,16 @@
 /* src/app/components/ai-chat/ai-chat.component.scss */
 
-/* --- Semantic Colors --- */
 $color-primary: var(--teal-blue);
 $color-primary-dark: var(--deep-sapphire);
 $color-accent: #06b6d4;
 $color-bg-user: var(--teal-blue);
 $color-text-user: #ffffff;
 
-/* Gradients */
 $gradient-avatar: linear-gradient(135deg, $color-primary, $color-accent);
 $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), var(--gray-100));
 
 :host {
   --header-offset: 48px; 
-  
   --chat-width: 400px;
   --chat-height: 650px;
   
@@ -22,59 +19,53 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   z-index: 1100;
 }
 
-/* ==========================================================================
-   MAIN WINDOW CONTAINER
-   ========================================================================== */
+/* --- MAIN WINDOW (Optimized) --- */
 .ai-window {
   position: fixed;
   top: var(--header-offset);
-  right: 20px; /* Keeps it aligned with the right edge padding */
+  right: 20px; 
   
   width: var(--chat-width);
   height: var(--chat-height);
-  
-  /* Intelligent Constraints */
   max-width: calc(100vw - 40px);
   max-height: calc(100vh - var(--header-offset) - 20px);
 
-  /* Use global semantic variables */
   background-color: var(--surface-card);
-  border-radius: 12px; /* Reduced slightly to match mat-menu sharpness */
+  border-radius: 12px; 
   border: 1px solid var(--border-color);
   
-  /* Deep Elevation Shadow - Matches mat-menu elevation */
   box-shadow: var(--box-shadow-lg);
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
   
-  /* Animation State - Adjusted to slide from top (like a dropdown) */
+  /* Animation State */
   transform-origin: top right;
   transform: scale(0.95) translateY(-10px);
   opacity: 0;
   visibility: hidden;
   
-  /* Close Transition - Matches header menu (Material Emphasized Decelerate) */
-  /* duration 0.2s matches the header menu speed */
+  /* PERFORMANCE OPTIMIZATION */
+  will-change: transform, opacity; 
+  contain: paint layout;
+
   transition: 
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s 0.2s; /* Delay visibility hidden until opacity finishes */
+    visibility 0s 0.2s; 
 
   &.open {
     transform: scale(1) translateY(0);
     opacity: 1;
     visibility: visible;
     
-    /* Open Transition - Matches header menu entrance */
     transition: 
       transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
       opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
       visibility 0s 0s;
   }
 
-  /* Dark Mode Specific Adjustments */
   [data-theme='dark'] & {
     box-shadow: 
       0 0 0 1px rgba(255, 255, 255, 0.05),
@@ -82,24 +73,21 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   HEADER SECTION
-   ========================================================================== */
+/* --- HEADER --- */
 .ai-header {
   flex-shrink: 0;
-  padding: 12px 16px; /* slightly tighter to match standard headers */
+  padding: 12px 16px; 
   background: var(--surface-card);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   
-  /* Glassmorphism support */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
+  /* Removed backdrop-filter for performance during stream if necessary, 
+     but usually header is static so it's fine */
+  
   [data-theme='dark'] & {
-    background-color: rgba(24, 24, 27, 0.9); 
+    background-color: rgba(24, 24, 27, 0.95); 
   }
 
   .header-left {
@@ -120,7 +108,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(0, 131, 155, 0.2);
     }
 
     .pulse-dot {
@@ -135,7 +122,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       
       &.online {
         background-color: var(--color-success);
-        box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
       }
     }
   }
@@ -171,7 +157,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
 
     &:hover {
       background-color: var(--gray-100);
@@ -180,9 +166,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   BODY / CHAT AREA
-   ========================================================================== */
+/* --- BODY / CHAT AREA (Optimized) --- */
 .ai-body {
   flex: 1;
   overflow-y: auto;
@@ -192,7 +176,11 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   flex-direction: column;
   gap: 16px;
 
-  /* Scrollbar styling */
+  /* PERFORMANCE FIX: Stop scroll jumping */
+  overflow-anchor: none;
+  scroll-behavior: smooth; 
+  will-change: scroll-position;
+
   scrollbar-width: thin;
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-track { background: transparent; }
@@ -209,7 +197,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* Intro Badge */
 .chat-intro {
   text-align: center;
   margin: 8px 0 24px 0;
@@ -242,11 +229,15 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   gap: 10px;
   align-items: flex-end;
   max-width: 100%;
+  
+  /* PERFORMANCE: Only animate opacity/transform */
   animation: messageFadeIn 0.3s ease forwards;
   opacity: 0;
   transform: translateY(8px);
+  
+  /* Isolate layout recalculations */
+  contain: layout style; 
 
-  /* User Message */
   &.user {
     flex-direction: row-reverse;
     
@@ -254,12 +245,12 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       background-color: $color-bg-user;
       color: $color-text-user;
       border-radius: 18px 18px 4px 18px;
-      box-shadow: 0 2px 4px rgba(0, 131, 155, 0.15);
+      /* Reduced shadow complexity */
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       border: none;
     }
   }
 
-  /* Assistant Message */
   &.assistant {
     flex-direction: row;
     
@@ -274,7 +265,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       align-items: center;
       justify-content: center;
       color: var(--teal-blue);
-      box-shadow: var(--box-shadow-sm);
     }
 
     .bubble {
@@ -282,11 +272,11 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       color: var(--text-primary);
       border: 1px solid var(--border-color);
       border-radius: 18px 18px 18px 4px;
-      box-shadow: var(--box-shadow-sm);
+      /* Reduced shadow complexity */
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
   }
 
-  /* System Message */
   &.system {
     justify-content: center;
     width: 100%;
@@ -302,6 +292,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       border-radius: 12px;
       padding: 4px 12px;
       max-width: 90%;
+      box-shadow: none;
     }
   }
 
@@ -315,7 +306,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     white-space: pre-wrap; 
   }
 
-  /* Thinking State */
   .thinking-bubble {
     display: flex;
     align-items: center;
@@ -346,17 +336,77 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   FOOTER SECTION
-   ========================================================================== */
+/* --- FOOTER SECTION (With Toolbar) --- */
 .ai-footer {
   flex-shrink: 0;
-  padding: 12px 16px;
+  padding: 8px 16px 12px 16px; 
   background: var(--surface-card);
   border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+
+  /* New Toolbar */
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+
+    .context-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      user-select: none;
+
+      input {
+        cursor: pointer;
+        accent-color: var(--teal-blue);
+        width: 14px; 
+        height: 14px;
+      }
+
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        
+        i {
+          font-size: 0.85rem;
+          color: var(--text-disabled);
+          transition: color 0.2s;
+          
+          &.active {
+            color: var(--teal-blue);
+          }
+        }
+      }
+      
+      &:hover .toggle-label {
+        color: var(--text-primary);
+      }
+    }
+
+    .clear-chat-btn {
+      background: none;
+      border: none;
+      color: var(--text-disabled);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        color: var(--color-danger);
+        background-color: rgba(220, 53, 69, 0.1);
+      }
+    }
+  }
 
   .input-container {
     display: flex;
@@ -451,9 +501,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   ANIMATIONS
-   ========================================================================== */
 @keyframes messageFadeIn {
   to { opacity: 1; transform: translateY(0); }
 }
@@ -463,7 +510,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   100% { background-position: -100% 0; }
 }
 
-/* Mobile Responsive Override */
 @media (max-width: 480px) {
   .ai-window {
     top: 0;
@@ -521,7 +567,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   100% { transform: rotate(360deg); }
 }
 
-/* Typing Dots */
 .typing-dots {
   display: flex;
   gap: 4px;

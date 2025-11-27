@@ -14,7 +14,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { User } from '../../core/models/user.model';
 import { SearchService } from '../../core/services/search.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { LlmService } from '../../core/services/llm.service'; // [1] Import LlmService
+import { LlmService } from '../../core/services/llm.service';
+import { VersionService } from '../../core/services/version.service'; // [NEW] Import
 
 @Component({
   selector: 'app-header',
@@ -41,7 +42,8 @@ export class HeaderComponent {
   private router = inject(Router);
   public searchService = inject(SearchService);
   public themeService = inject(ThemeService);
-  public llmService = inject(LlmService); // [2] Inject LlmService
+  public llmService = inject(LlmService);
+  public versionService = inject(VersionService); // [NEW] Inject VersionService
 
   public sidebarToggled = output<void>();
   public logoutClicked = output<void>();
@@ -69,13 +71,10 @@ export class HeaderComponent {
     this.themeService.toggleTheme();
   }
 
-  // [3] New method to toggle AI Chat
-  // We pass the event to stop propagation so it doesn't immediately trigger the "close" click-outside listener
   onAiToggle(event: Event): void {
     event.stopPropagation(); 
     this.llmService.toggleChat();
     
-    // Optional: Automatically connect if opening and not yet loaded
     if (this.llmService.isOpen() && !this.llmService.modelLoaded()) {
       this.llmService.loadModel();
     }
@@ -86,7 +85,6 @@ export class HeaderComponent {
   }
 
   onSupportClick(): void {
-    // Implementation for support action
   }
 
   onSearchChange(event: Event): void {

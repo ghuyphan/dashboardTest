@@ -101,22 +101,23 @@
   gap: 8px;
   align-items: center;
   flex: 1; 
-  min-width: 0; /* Allows shrinking within flex container */
+  min-width: 0; 
   
-  /* Mobile: Force nice horizontal scroll */
+  /* [FIX: PC SHRINK SCROLL] Enable horizontal scroll to prevent overflow on shrinking desktop screens */
+  overflow-x: auto;
+  white-space: nowrap; /* Keep pills in a single row */
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+  
+  padding-bottom: 4px; /* Space for horizontal scrolling/shadows */
+
+  /* Mobile/Tablet Layout (Max 992px) */
   @media (max-width: 992px) {
-    flex: 1 1 100%; /* Force to new line */
-    order: 2;       /* Place between inputs and button */
+    flex: 1 1 100%; /* Force to new line when stacking begins */
+    order: 2;
     
-    overflow-x: auto;
-    white-space: nowrap;
-    padding-bottom: 4px; /* Space for scrollbar/shadows */
-    
-    /* Hide scrollbar */
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
-    
-    /* Add some breathing room */
     margin-top: 4px;
     margin-bottom: 4px;
   }
@@ -128,7 +129,7 @@
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   
-  height: 34px; /* Distinct from inputs */
+  height: 34px; 
   padding: 0 16px;
   border-radius: 99px;
   
@@ -136,7 +137,7 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0; /* Important: prevents pills from squashing */
+  flex-shrink: 0; 
   
   transition: all 0.2s ease;
   user-select: none;
@@ -166,7 +167,7 @@
   
   @media (max-width: 992px) {
     width: 100%;
-    order: 3; /* Force to bottom */
+    order: 3; 
     margin-left: 0;
   }
 }
@@ -177,7 +178,7 @@
   justify-content: center;
   gap: 8px;
   
-  height: 42px; /* Match input height */
+  height: 42px; 
   padding: 0 24px;
   
   background: var(--primary);

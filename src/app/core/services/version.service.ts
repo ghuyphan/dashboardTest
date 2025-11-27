@@ -8,6 +8,8 @@ export class VersionService {
   
   public appVersion = signal<string>(APP_VERSION);
 
+  public isDevMode = signal<boolean>(false);
+
   constructor() { }
 
   getVersion(): string {

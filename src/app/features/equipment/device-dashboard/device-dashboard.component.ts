@@ -26,7 +26,8 @@ import {
   ThemePalette,
 } from '../../../core/services/theme.service';
 import { DeviceService } from '../../../core/services/device.service';
-import { LlmService } from '../../../core/services/llm.service'; // [1] Import
+// [NEW] Import Directive
+import { ContextAwareDirective } from '../../../shared/directives/context-aware.directive';
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -39,7 +40,6 @@ interface WidgetData {
   caption: string;
   accentColor: string;
 }
-// ... (Other interfaces remain the same)
 interface DeviceStatsData {
   TenTrangThai: string;
   SoLuong: number;
@@ -66,6 +66,7 @@ interface ChartFilter {
     WidgetCardComponent,
     ChartCardComponent,
     TableCardComponent,
+    ContextAwareDirective // [NEW] Add to imports
   ],
   templateUrl: './device-dashboard.component.html',
   styleUrl: './device-dashboard.component.scss',
@@ -78,12 +79,11 @@ export class DeviceDashboardComponent implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  private readonly llmService = inject(LlmService); // [2] Inject
+  // [REMOVED] LlmService injection
 
   public isLoading = false;
   private allDevices: Device[] = [];
 
-  // ... (Existing properties: currentFilter, visibleFilter, widgetData, chartOptions, tables, etc.)
   public currentFilter: ChartFilter | null = null;
   public visibleFilter: ChartFilter | null = null;
   private filterTransitionTimer: any;
@@ -137,7 +137,6 @@ export class DeviceDashboardComponent implements OnInit {
     });
   }
 
-  // ... (ngOnInit, initializePaletteMaps, initializeWidgetsStructure remain the same)
   ngOnInit(): void {
     this.palette = this.themeService.currentPalette();
     this.initializePaletteMaps();
@@ -248,49 +247,7 @@ export class DeviceDashboardComponent implements OnInit {
       });
   }
 
-  // [3] Update AI Context with rich dashboard data
-  private updateAiContext(stats: any): void {
-    const widgetSummary = Object.values(this.widgetData)
-      .map((w) => `- ${w.title}: ${w.value}`)
-      .join('\n');
-
-    const attentionList =
-      this.attentionDevices.length > 0
-        ? this.attentionDevices
-            .slice(0, 5)
-            .map((d) => `  + ${d.Ten} (${d.TrangThai_Ten}) tại ${d.ViTri}`)
-            .join('\n')
-        : '  (Không có)';
-
-    const expiringList =
-      this.expiringDevices.length > 0
-        ? this.expiringDevices
-            .slice(0, 5)
-            .map((d) => `  + ${d.Ten} (Hết hạn: ${d.NgayHetHanBH})`)
-            .join('\n')
-        : '  (Không có)';
-
-    this.llmService.setPageContext(`
-      DASHBOARD THIẾT BỊ Y TẾ:
-      ${widgetSummary}
-      
-      TOP THIẾT BỊ CẦN CHÚ Ý (Hỏng/Bảo trì):
-      ${attentionList}
-      ${
-        this.attentionDevices.length > 5
-          ? `  ... và ${this.attentionDevices.length - 5} thiết bị khác.`
-          : ''
-      }
-
-      THIẾT BỊ SẮP HẾT HẠN BẢO HÀNH (30 ngày):
-      ${expiringList}
-      ${
-        this.expiringDevices.length > 5
-          ? `  ... và ${this.expiringDevices.length - 5} thiết bị khác.`
-          : ''
-      }
-    `);
-  }
+  // [REMOVED] updateAiContext() method
 
   private refilterAndRenderAll(): void {
     let filteredDevices = this.allDevices;
@@ -322,8 +279,8 @@ export class DeviceDashboardComponent implements OnInit {
     this.attentionDevices = stats.attentionDevices;
     this.expiringDevices = stats.expiringDevices;
 
-    // [Call AI Context Update]
-    this.updateAiContext(stats);
+    // [REMOVED] this.updateAiContext(stats);
+
     const statusData =
       this.currentFilter?.type === 'status'
         ? this.aggregateStatus(this.allDevices)
@@ -380,7 +337,6 @@ export class DeviceDashboardComponent implements OnInit {
     this.cd.markForCheck();
   }
 
-  // ... (Aggregation methods, updateWidgets, buildChartOption methods remain the same)
   private aggregateStatus(devices: Device[]) {
     const map = new Map<string, number>();
     devices.forEach((d) => {
@@ -504,7 +460,7 @@ export class DeviceDashboardComponent implements OnInit {
     update('needsAttention', this.formatNumber(data.needsAttention));
     update('expiring', this.formatNumber(data.expiring));
   }
-  // ... (Chart options building methods remain same)
+  
   private buildDonutOption(
     data: DeviceStatsData[],
     highlight?: string
