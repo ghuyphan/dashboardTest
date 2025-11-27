@@ -1,31 +1,27 @@
 :host {
   display: block;
-  container-type: inline-size;
-  container-name: filter-bar;
 }
 
 .filter-card {
   background-color: var(--surface-card);
   box-shadow: var(--box-shadow-md);
-  padding: 16px 20px; /* Better vertical padding */
+  padding: 16px;
   border-radius: var(--border-radius-lg);
   border: 1px solid transparent;
   
   display: flex;
-  align-items: flex-end;
-  gap: 20px;
   flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end; /* Aligns inputs and buttons to bottom baseline */
 
-  transition: all 0.2s ease-in-out;
-
+  /* Dark Mode Border */
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
 
   &.is-loading {
-    opacity: 0.7;
+    opacity: 0.6;
     pointer-events: none;
-    filter: grayscale(0.5);
   }
 }
 
@@ -33,9 +29,14 @@
 .filter-inputs {
   display: flex;
   gap: 16px;
-  
-  /* Ensure inputs don't shrink too small */
   flex: 0 0 auto; 
+  
+  /* On very small screens, stack inputs */
+  @media (max-width: 576px) {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
 }
 
 .filter-group {
@@ -45,39 +46,41 @@
   position: relative;
 
   label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-secondary);
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     margin-left: 2px;
+    white-space: nowrap;
   }
 }
 
 .form-control-sm {
+  height: 42px; /* Standardized height */
   padding: 0 12px;
-  height: 40px; /* Slightly taller touch target */
+  width: 100%;
+  min-width: 140px;
+  
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
+  
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-primary);
   font-family: var(--font-family-sans);
   
-  transition: all 0.2s ease;
-  min-width: 140px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
 
   &:hover:not(:disabled) {
     border-color: var(--gray-400);
-    background-color: var(--surface-card);
   }
 
   &:focus {
-    outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
-    background-color: var(--surface-card);
   }
 
   &:disabled {
@@ -86,17 +89,9 @@
     background-color: var(--gray-100);
   }
 
-  /* Custom Calendar Icon Color Adjustment */
-  &::-webkit-calendar-picker-indicator {
-    cursor: pointer;
-    opacity: 0.6;
-    transition: 0.2s;
-    
-    &:hover { opacity: 1; }
-    
-    [data-theme='dark'] & {
-      filter: invert(1);
-    }
+  /* Fix Calendar Icon in Dark Mode */
+  [data-theme='dark'] & {
+    color-scheme: dark;
   }
 }
 
@@ -105,10 +100,26 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
-  flex: 1; /* Take up remaining space */
-  min-width: 200px;
-  padding-bottom: 2px; /* Space for focus rings */
+  flex: 1; 
+  min-width: 0; /* Allows shrinking within flex container */
+  
+  /* Mobile: Force nice horizontal scroll */
+  @media (max-width: 992px) {
+    flex: 1 1 100%; /* Force to new line */
+    order: 2;       /* Place between inputs and button */
+    
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px; /* Space for scrollbar/shadows */
+    
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+    
+    /* Add some breathing room */
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
 }
 
 .btn-pill {
@@ -117,14 +128,17 @@
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   
-  padding: 6px 14px;
-  border-radius: 20px;
+  height: 34px; /* Distinct from inputs */
+  padding: 0 16px;
+  border-radius: 99px;
+  
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0; /* Important: prevents pills from squashing */
   
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: all 0.2s ease;
   user-select: none;
 
   &:hover:not(:disabled) {
@@ -132,10 +146,6 @@
     color: var(--text-primary);
     border-color: var(--gray-300);
     transform: translateY(-1px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
   }
 
   &.active {
@@ -146,22 +156,19 @@
 
     &:hover {
       background-color: var(--secondary);
-      border-color: var(--secondary);
-    }
-  }
-
-  /* Dark mode adjustments */
-  [data-theme='dark'] & {
-    &:hover:not(.active):not(:disabled) {
-      background-color: rgba(255, 255, 255, 0.05);
-      color: #fff;
     }
   }
 }
 
-/* --- Submit Button --- */
+/* --- Action Buttons --- */
 .action-buttons {
-  margin-left: auto; /* Push to right */
+  margin-left: auto;
+  
+  @media (max-width: 992px) {
+    width: 100%;
+    order: 3; /* Force to bottom */
+    margin-left: 0;
+  }
 }
 
 .btn-primary {
@@ -170,7 +177,7 @@
   justify-content: center;
   gap: 8px;
   
-  height: 40px;
+  height: 42px; /* Match input height */
   padding: 0 24px;
   
   background: var(--primary);
@@ -180,14 +187,15 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
   
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-sm);
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
     background-color: var(--secondary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--box-shadow-md);
   }
 
   &:active:not(:disabled) {
@@ -200,74 +208,8 @@
     cursor: wait;
   }
 
-  i { font-size: 1rem; }
-}
-
-/* ===================================
-   RESPONSIVE LAYOUT
-   =================================== */
-
-/* Tablet Portrait & Mobile Landscape */
-@media (max-width: 992px) {
-  .filter-card {
-    padding: 16px;
-    gap: 16px;
-    align-items: stretch; /* Stretch items to fill width */
-  }
-  
-  .filter-inputs {
-    flex: 1 1 100%; /* Force full width */
-    
-    .filter-group {
-      flex: 1;
-    }
-  }
-  
-  .quick-actions {
-    order: 3; /* Move pills to bottom on medium screens if desired */
+  /* Mobile: Full width button */
+  @media (max-width: 992px) {
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    
-    /* Hide Scrollbar */
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
-  }
-
-  .action-buttons {
-    flex: 0 0 auto;
-    margin-left: 0;
-  }
-}
-
-/* Mobile Phones */
-@media (max-width: 576px) {
-  .filter-card {
-    flex-direction: column;
-  }
-  
-  .filter-inputs {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .form-control-sm {
-    width: 100%;
-  }
-
-  .action-buttons {
-    width: 100%;
-    
-    .btn-primary {
-      width: 100%;
-    }
-  }
-  
-  /* Make pills easier to tap */
-  .btn-pill {
-    padding: 8px 16px;
-    flex: 1 0 auto; /* Grow to fill space */
-    text-align: center;
-    justify-content: center;
   }
 }

@@ -24,6 +24,7 @@
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
     "@e965/xlsx": "^0.20.3",
+    "@mlc-ai/web-llm": "^0.2.80",
     "angularx-qrcode": "^19.0.0",
     "d3": "^7.9.0",
     "echarts": "^6.0.0",

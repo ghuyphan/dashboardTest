@@ -27,6 +27,7 @@ import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 import { HeaderComponent } from '../../components/header/header.component';
 import { SearchService } from '../../core/services/search.service';
 import { FooterActionService } from '../../core/services/footer-action.service';
+import { AiChatComponent } from '../../components/ai-chat/ai-chat.component';
 
 @Component({
   selector: 'app-main-layout',
@@ -38,6 +39,7 @@ import { FooterActionService } from '../../core/services/footer-action.service';
     ActionFooterComponent,
     SidebarComponent,
     HeaderComponent,
+    AiChatComponent
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',

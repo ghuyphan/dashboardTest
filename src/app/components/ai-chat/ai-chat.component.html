@@ -1,0 +1,60 @@
+<button class="ai-fab" (click)="toggleChat()" [class.active]="isOpen()">
+  <i class="fas fa-robot"></i>
+</button>
+
+<div class="ai-window" [class.open]="isOpen()">
+  
+  <div class="ai-header">
+    <div class="header-title">
+      <i class="fas fa-microchip"></i>
+      <span>Trợ lý AI (Local)</span>
+    </div>
+    <button class="close-btn" (click)="toggleChat()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <div class="ai-body" *ngIf="!llmService.modelLoaded() && llmService.isModelLoading()">
+    <div class="loading-container">
+      <div class="app-loading-spinner"></div>
+      <p class="loading-text">{{ llmService.loadProgress() }}</p>
+      <small class="text-muted">
+        Lần đầu tải mô hình có thể mất vài phút (1.5GB).<br>
+        Dữ liệu sẽ được lưu vào cache trình duyệt cho lần sau.
+      </small>
+    </div>
+  </div>
+
+  <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
+    
+    @for (msg of llmService.messages(); track $index) {
+      <div class="message" [ngClass]="msg.role">
+        <div class="bubble">
+          {{ msg.content }}
+        </div>
+      </div>
+    }
+
+    @if (llmService.isGenerating()) {
+      <div class="message assistant">
+        <div class="bubble typing">
+          <span>.</span><span>.</span><span>.</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="ai-footer" *ngIf="llmService.modelLoaded()">
+    <input 
+      type="text" 
+      [(ngModel)]="userInput" 
+      (keyup.enter)="onSend()"
+      [disabled]="llmService.isGenerating()"
+      placeholder="Hỏi gì đó..." 
+      class="chat-input"
+    >
+    <button class="send-btn" (click)="onSend()" [disabled]="!userInput.trim() || llmService.isGenerating()">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+</div>

@@ -30,7 +30,12 @@
                 "glob": "**/*",
                 "input": "public"
               },
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "node_modules/@mlc-ai/web-llm",
+                "output": "web-llm"
+              }
             ],
             "styles": [
               "src/styles.scss"
