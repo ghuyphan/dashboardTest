@@ -15,6 +15,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
+import { DateUtils } from '../../../shared/utils/date.utils';
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
@@ -23,6 +24,7 @@ import { GridColumn } from '../../../components/reusable-table/reusable-table.co
 import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
+const MAX_RANGE_DAYS = 92; // Approx 1 Quarter (3 months)
 
 interface WidgetData {
   id: string;
@@ -99,9 +101,17 @@ export class SpecialtyClsReportComponent implements OnInit {
   }
 
   private setDefaultDateRange(): void {
+    // [UPDATED] Default to "This Week" (Monday to Sunday)
     const now = new Date();
-    this.fromDate = this.datePipe.transform(now, 'yyyy-MM-dd') || '';
-    this.toDate = this.datePipe.transform(now, 'yyyy-MM-dd') || '';
+    const day = now.getDay();
+    // Calculate diff to get to Monday (Day 1). If Sunday (0), substract 6.
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    
+    const start = new Date(now.setDate(diff));
+    const end = new Date(now.setDate(start.getDate() + 6));
+
+    this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
+    this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
   }
 
   private initializeWidgets(): void {
@@ -126,6 +136,23 @@ export class SpecialtyClsReportComponent implements OnInit {
   }
 
   public onDateFilter(range: DateRange): void {
+    // [UPDATED] Validate Range Limit (Max 1 Quarter / ~92 Days)
+    const start = DateUtils.parse(range.fromDate);
+    const end = DateUtils.parse(range.toDate);
+
+    if (start && end) {
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > MAX_RANGE_DAYS) {
+        this.toastService.showWarning('Vui lòng chọn khoảng thời gian tối đa 1 quý (3 tháng) để đảm bảo hiệu năng.');
+        
+        // Optionally reset the inputs to previous valid state or just stop
+        // For now, we just stop the loading process.
+        return;
+      }
+    }
+
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
     this.loadData();

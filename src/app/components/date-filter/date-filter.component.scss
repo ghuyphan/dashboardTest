@@ -1,292 +1,273 @@
 :host {
-  // Sets the custom element as a block container for layout
   display: block;
+  container-type: inline-size;
+  container-name: filter-bar;
 }
 
-// --- Filter Card Container ---
-// Acts as the main wrapper for the filter components.
 .filter-card {
-  // Surface styles
   background-color: var(--surface-card);
   box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
+  padding: 16px 20px; /* Better vertical padding */
   border-radius: var(--border-radius-lg);
-  border: 1px solid transparent; // Base border for dark mode support
-
-  // Flex layout for primary contents
+  border: 1px solid transparent;
+  
   display: flex;
-  align-items: flex-end; // Aligns items to the bottom (e.g., inputs and buttons)
-  justify-content: space-between; // Separates the input group and action buttons
-  flex-wrap: wrap; // Allows items to wrap on smaller screens
-  gap: var(--spacing-md); // Consistent spacing between main sections
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
 
-  transition: border-color 0.2s ease, opacity 0.2s ease;
+  transition: all 0.2s ease-in-out;
 
-  /* Dark Mode Support: Applied to the card when the 'data-theme' is set */
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
 
-  // Visual feedback for loading state on the container
   &.is-loading {
-    opacity: 0.85;
+    opacity: 0.7;
     pointer-events: none;
-  }
-
-  // Responsive: Adjust padding on smaller screens (Mobile first - 480px break)
-  @media (max-width: 480px) {
-    padding: var(--spacing-sm);
+    filter: grayscale(0.5);
   }
 }
 
-// --- Input Fields and Selectors Container ---
-// Houses all individual filter groups.
+/* --- Inputs Section --- */
 .filter-inputs {
   display: flex;
-  gap: var(--spacing-md); // Space between individual filter groups
+  gap: 16px;
+  
+  /* Ensure inputs don't shrink too small */
+  flex: 0 0 auto; 
 }
 
-// --- Individual Filter Group (Label + Input) ---
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 6px; // Space between label and input
+  gap: 6px;
+  position: relative;
 
   label {
-    // Typography for the label
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
     color: var(--text-secondary);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
+    margin-left: 2px;
   }
 }
 
-// --- Small Form Control (Input/Select/Textarea) ---
 .form-control-sm {
-  // Sizing and background
-  padding: 8px 12px;
+  padding: 0 12px;
+  height: 40px; /* Slightly taller touch target */
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
+  border-radius: 8px;
   font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-primary);
+  font-family: var(--font-family-sans);
   
-  // Layout and transition
-  transition: border-color 0.2s, box-shadow 0.2s;
-  width: 100%; // Ensures full width within flex containers
-  box-sizing: border-box; // Ensures padding/border is included in the width
-  min-height: 38px; // Align height with buttons
+  transition: all 0.2s ease;
+  min-width: 140px;
 
-  // Focus state for accessibility and visual feedback
+  &:hover:not(:disabled) {
+    border-color: var(--gray-400);
+    background-color: var(--surface-card);
+  }
+
   &:focus {
     outline: none;
-    border-color: var(--teal-blue);
-    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15); // Teal focus ring
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
+    background-color: var(--surface-card);
   }
 
   &:disabled {
-    background-color: var(--gray-100);
-    color: var(--text-disabled);
+    opacity: 0.6;
     cursor: not-allowed;
-    opacity: 0.7;
+    background-color: var(--gray-100);
+  }
+
+  /* Custom Calendar Icon Color Adjustment */
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: 0.2s;
+    
+    &:hover { opacity: 1; }
+    
+    [data-theme='dark'] & {
+      filter: invert(1);
+    }
   }
 }
 
-// --- Container for Pill Buttons ---
+/* --- Quick Actions (Pills) --- */
 .quick-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap; // Allows pills to wrap if container width is limited
   align-items: center;
-  min-height: 38px;
+  flex-wrap: wrap;
+  flex: 1; /* Take up remaining space */
+  min-width: 200px;
+  padding-bottom: 2px; /* Space for focus rings */
 }
 
-// --- Pill Button Styles (for quick-actions) ---
 .btn-pill {
-  // Base styles
-  padding: 6px 14px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  border-radius: 99px; // Pill shape
-  white-space: nowrap; // Prevents button text from wrapping
-  
-  // Default State (Not Chosen)
+  appearance: none;
   background-color: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
+  
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
   
-  // Transition and layout
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
 
-  // STABILITY FIX: Enlarges the clickable area (hit area) below the pill
-  &::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: inherit;
-    background: transparent;
-    z-index: -1;
-  }
-
-  // --- Hover State (Only if not disabled and not active) ---
-  &:hover:not(.active):not(:disabled) {
+  &:hover:not(:disabled) {
     background-color: var(--gray-100);
-    border-color: var(--gray-300);
     color: var(--text-primary);
+    border-color: var(--gray-300);
     transform: translateY(-1px);
-    box-shadow: var(--box-shadow-sm);
   }
-  
-  // --- Active/Chosen State ---
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
   &.active {
-    background-color: var(--teal-blue);
-    border-color: var(--teal-blue);
+    background-color: var(--primary);
+    border-color: var(--primary);
     color: #ffffff;
-    font-weight: 600;
-    transform: translateY(0); // Active pill stays flat
-    box-shadow: 0 2px 4px rgba(0, 131, 155, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 131, 155, 0.25);
 
-    // Ensure hover on active doesn't revert style
-    &:hover:not(:disabled) {
-      filter: brightness(1.1); // Slight glow on hover
-      transform: translateY(-1px);
+    &:hover {
+      background-color: var(--secondary);
+      border-color: var(--secondary);
     }
   }
 
-  // --- Disabled State (during loading) ---
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    transform: none !important;
-    
-    // If it was active before disabling, keep it looking active but dimmed
-    &.active {
-      opacity: 0.7;
-      box-shadow: none;
-    }
-  }
-
-  // --- Dark Mode Specifics ---
+  /* Dark mode adjustments */
   [data-theme='dark'] & {
     &:hover:not(.active):not(:disabled) {
-      background-color: var(--gray-200);
-      border-color: var(--gray-400);
-      color: var(--white);
-    }
-    
-    &.active {
-      box-shadow: 0 2px 4px rgba(45, 212, 191, 0.25);
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #fff;
     }
   }
 }
 
-// --- Primary Button Styles ---
+/* --- Submit Button --- */
+.action-buttons {
+  margin-left: auto; /* Push to right */
+}
+
 .btn-primary {
-  // Layout and sizing
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 38px;
-  padding: 0 24px;
-  border-radius: var(--border-radius-md);
-  white-space: nowrap;
   
-  // Appearance
+  height: 40px;
+  padding: 0 24px;
+  
+  background: var(--primary);
+  color: white;
   font-weight: 600;
-  background-color: var(--teal-blue);
-  color: #fff;
+  font-size: 0.9rem;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
   
-  // Transition
-  transition: all 0.2s var(--transition-spring);
-  
-  // Min-width for stability
-  min-width: 140px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 
-  // Hover state (Lift effect)
   &:hover:not(:disabled) {
-    background-color: var(--peacock-blue);
-    transform: translateY(-2px); // Standard Lift
-    box-shadow: var(--box-shadow-md);
+    background-color: var(--secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
-  
-  // Active/Click state (Press down effect)
+
   &:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: var(--box-shadow-sm);
-  }
-
-  // Disabled state
-  &:disabled {
-    background-color: var(--teal-blue); // Keep color
-    opacity: 0.75;
-    cursor: not-allowed;
-    transform: none; // Removes hover/active effects when disabled
     box-shadow: none;
   }
 
-  i {
-    font-size: 1rem;
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  i { font-size: 1rem; }
+}
+
+/* ===================================
+   RESPONSIVE LAYOUT
+   =================================== */
+
+/* Tablet Portrait & Mobile Landscape */
+@media (max-width: 992px) {
+  .filter-card {
+    padding: 16px;
+    gap: 16px;
+    align-items: stretch; /* Stretch items to fill width */
+  }
+  
+  .filter-inputs {
+    flex: 1 1 100%; /* Force full width */
+    
+    .filter-group {
+      flex: 1;
+    }
+  }
+  
+  .quick-actions {
+    order: 3; /* Move pills to bottom on medium screens if desired */
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    
+    /* Hide Scrollbar */
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .action-buttons {
+    flex: 0 0 auto;
+    margin-left: 0;
   }
 }
 
-// ===================================
-// --- RESPONSIVE MEDIA QUERIES ---
-// ===================================
-
-// Tablet/Medium screens (768px and below)
-@media (max-width: 768px) {
+/* Mobile Phones */
+@media (max-width: 576px) {
   .filter-card {
-    // Stacks elements vertically for better use of space
     flex-direction: column;
-    align-items: stretch; // Stretches children to full width
-    gap: var(--spacing-md);
   }
-
+  
   .filter-inputs {
-    width: 100%; // Takes full width of the card
-  }
-
-  .filter-group {
-    flex: 1; // Allows groups to distribute space evenly
-    min-width: 0; // Ensures groups can shrink if needed
-  }
-
-  .quick-actions {
+    flex-direction: column;
     width: 100%;
-    overflow-x: auto; // Enables horizontal scrolling for quick actions
-    padding-bottom: 4px; // Space for scrollbar if present
-    margin-bottom: -4px;
-    
-    // Hide scrollbar for cleaner mobile look
-    scrollbar-width: none; // Firefox
-    &::-webkit-scrollbar { display: none; } // Chrome/Safari
-    
-    // Better touch targets for pills
-    .btn-pill {
-      flex-shrink: 0; // Prevent squishing
-    }
+  }
+  
+  .form-control-sm {
+    width: 100%;
   }
 
-  // Ensures primary button section takes full width
   .action-buttons {
     width: 100%;
+    
     .btn-primary {
-      width: 100%; // Primary button spans full width
+      width: 100%;
     }
   }
-}
-
-// Mobile/Small screens (480px and below)
-@media (max-width: 480px) {
-  // Stacks filter inputs vertically
-  .filter-inputs {
-    flex-direction: column;
-    gap: var(--spacing-sm);
+  
+  /* Make pills easier to tap */
+  .btn-pill {
+    padding: 8px 16px;
+    flex: 1 0 auto; /* Grow to fill space */
+    text-align: center;
+    justify-content: center;
   }
 }

@@ -26,14 +26,16 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
   encapsulation: ViewEncapsulation.Emulated
 })
 export class DateFilterComponent {
-  // INPUTS: Received from Parent
+  // INPUTS
   public isLoading = input<boolean>(false);
   public buttonLabel = input<string>('Xem Báo Cáo');
+  public minDate = input<string>(''); 
+  public maxDate = input<string>('');
 
-  // OUTPUTS: Sent to Parent
+  // OUTPUTS
   public filterSubmit = output<DateRange>();
 
-  // Internal Signals
+  // SIGNALS
   public fromDate = signal<string>('');
   public toDate = signal<string>('');
   public activeRange = signal<QuickRange>('thisWeek');
@@ -49,7 +51,6 @@ export class DateFilterComponent {
   private datePipe = inject(DatePipe);
 
   constructor() {
-    // Initialize default view state (UI only, parent handles initial data load usually)
     this.setRange('thisWeek', false);
   }
 
@@ -67,13 +68,12 @@ export class DateFilterComponent {
 
     switch (range) {
       case 'today':
-        // start/end are already now
+        // start/end are now
         break;
       case 'thisWeek':
         const day = now.getDay();
-        const diff = now.getDate() - day + (day == 0 ? -6 : 1); // Adjust when day is Sunday
+        const diff = now.getDate() - day + (day == 0 ? -6 : 1);
         start = new Date(now.setDate(diff));
-        // End of week (Sunday)
         const lastDay = start.getDate() + 6;
         end = new Date(now.setDate(lastDay));
         break;
@@ -92,8 +92,12 @@ export class DateFilterComponent {
         break;
     }
 
-    this.fromDate.set(this.formatDate(start));
-    this.toDate.set(this.formatDate(end));
+    // [FIX] Apply constraints to calculated dates
+    const finalStart = this.applyConstraints(this.formatDate(start));
+    const finalEnd = this.applyConstraints(this.formatDate(end));
+
+    this.fromDate.set(finalStart);
+    this.toDate.set(finalEnd);
 
     if (emit) {
       this.applyFilter();
@@ -109,5 +113,20 @@ export class DateFilterComponent {
 
   private formatDate(date: Date): string {
     return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
+  }
+
+  /**
+   * Clamps a date string between minDate and maxDate
+   */
+  private applyConstraints(dateStr: string): string {
+    if (!dateStr) return dateStr;
+    
+    const min = this.minDate();
+    const max = this.maxDate();
+
+    if (min && dateStr < min) return min;
+    if (max && dateStr > max) return max;
+    
+    return dateStr;
   }
 }

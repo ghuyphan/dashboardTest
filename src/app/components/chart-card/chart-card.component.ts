@@ -46,6 +46,10 @@ export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pi
   styleUrls: ['./chart-card.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // [FIX] Remove the native 'title' attribute from the host element to prevent the browser tooltip
+  host: {
+    '[attr.title]': 'null'
+  }
 })
 export class ChartCardComponent implements AfterViewInit {
   private readonly ngZone = inject(NgZone);

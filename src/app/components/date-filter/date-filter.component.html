@@ -9,6 +9,8 @@
         (ngModelChange)="onDateChange('from', $event)" 
         class="form-control-sm" 
         [disabled]="isLoading()"
+        [min]="minDate()"
+        [max]="maxDate()"
       />
     </div>
     <div class="filter-group">
@@ -20,6 +22,8 @@
         (ngModelChange)="onDateChange('to', $event)" 
         class="form-control-sm" 
         [disabled]="isLoading()"
+        [min]="minDate()"
+        [max]="maxDate()"
       />
     </div>
   </div>

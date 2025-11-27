@@ -34,7 +34,11 @@ export interface ExportConfig {
   templateUrl: './table-card.component.html',
   styleUrls: ['./table-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.Emulated
+  encapsulation: ViewEncapsulation.Emulated,
+  // [FIX] Remove the native 'title' attribute from the host element to prevent the browser tooltip
+  host: {
+    '[attr.title]': 'null'
+  }
 })
 export class TableCardComponent<T> {
   private excelService = inject(ExcelExportService);

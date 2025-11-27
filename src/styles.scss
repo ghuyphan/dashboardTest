@@ -83,47 +83,45 @@ $light-tokens: (
 
 // --- Semantic Tokens (Dark Theme - Polished) ---
 $dark-tokens: (
-  // Backgrounds (Zinc/Neutral Scale - Kept as requested)
-  "surface-background": #09090b, 
-  "surface-card": #18181b,       
-  "surface-overlay": rgba(9, 9, 11, 0.9),
-  "surface-toast": #27272a,      
-  "input-bg": #27272a,           
-
-  // Text (Kept as requested)
-  "text-primary": #fafafa,       
-  "text-secondary": #a1a1aa,     
-  "text-disabled": #52525b,      
-
-  // Borders
-  "border-color": #27272a,
-
-  // Brand Mappings (Softened)
-  "primary": #2dd4bf,   // Teal 400 (Standard, readable)
-  "secondary": #7dd3fc, // Sky 300 (Softer than before)
-
-  // Custom Brand Colors (Muted for Dark Mode)
-  "deep-sapphire": #818cf8,
-  "teal-midtone": #67e8f9,  // Cyan 300 (Softer)
-  "pastel-coral": #fda4af,  // Rose 300 (Pastel)
-  "peacock-light": #bae6fd, // Sky 200
-
-  // Status (Desaturated - No longer "Traffic Light" bright)
-  "color-danger": #fca5a5,  // Red 300 (Soft Salmon)
-  "color-success": #86efac, // Green 300 (Soft Mint)
-  "color-warning": #fcd34d, // Amber 300 (Soft Gold)
-  "color-info": #7dd3fc,    // Sky 300
-
-  // Charts (Professional Pastels - The "Anti-Neon" Palette)
-  // These colors have less "glow" and sit flatter on the dark card background.
+  // Backgrounds
+  "surface-background": #000000,   
+  "surface-card": #18181b,         
+  "surface-overlay": rgba(9, 9, 11, 0.95),
+  "surface-toast": #27272a,
   
-  "chart-1": #5eead4, // Soft Teal (Teal 300)
-  "chart-2": #93c5fd, // Soft Blue (Blue 300)
-  "chart-3": #6ee7b7, // Muted Emerald (Emerald 300)
-  "chart-6": #fdba74, // Apricot/Orange (Orange 300)
-  "chart-7": #a1a1aa, // Neutral Gray (Zinc 400)
-  "chart-8": #a5b4fc, // Periwinkle (Indigo 300)
-  "chart-9": #f9a8d4  // Dusty Pink (Pink 300)
+  "input-bg": #09090b,             
+
+  // Text
+  "text-primary": #ffffff,         
+  "text-secondary": #e4e4e7,      
+  "text-disabled": #71717a,        
+
+  "border-color": #3f3f46,        
+
+  // Brand Mappings (High Visibility)
+  "primary": #2dd4bf,   
+  "secondary": #38bdf8, 
+
+  // Custom Brand Colors
+  "deep-sapphire": #a5b4fc,
+  "teal-midtone": #67e8f9,
+  "pastel-coral": #fda4af,
+  "peacock-light": #bae6fd,
+
+  // Status Colors (Brightened for dark bg)
+  "color-danger": #f87171,  // Red 400
+  "color-success": #4ade80, // Green 400
+  "color-warning": #fbbf24, // Amber 400
+  "color-info": #38bdf8,    // Sky 400
+
+  // Charts (Keep your existing pastel palette, it is good)
+  "chart-1": #5eead4,
+  "chart-2": #93c5fd,
+  "chart-3": #6ee7b7,
+  "chart-6": #fdba74,
+  "chart-7": #a1a1aa,
+  "chart-8": #a5b4fc,
+  "chart-9": #f9a8d4
 );
 
 
