@@ -11,10 +11,14 @@ export const idTokenInterceptor: HttpInterceptorFn = (
   const authService = inject(AuthService);
   const loginUrl = environment.authUrl;
   
-  // Define which methods require these specific headers
+  // [FIX] Check if the URL is pointing to Ollama (port 11434)
+  // If it is, skip adding any headers and just pass the request through.
+  if (req.url.includes('11434')) { 
+    return next(req);
+  }
+
   const targetMethods = ['POST', 'PUT', 'DELETE'];
 
-  // 1. Skip if not a target method or if it's a login request
   if (!targetMethods.includes(req.method.toUpperCase()) || req.url.includes(loginUrl)) {
     return next(req);
   }
@@ -22,13 +26,10 @@ export const idTokenInterceptor: HttpInterceptorFn = (
   const idToken = authService.getIdToken();
   const userId = authService.getUserId();
 
-  // 2. If tokens are missing, force logout or proceed without headers (let BE handle auth error)
   if (!idToken || !userId) {
-    // authService.logout(); // Option: Force logout here
     return next(req);
   }
 
-  // 3. Clone the request and set the headers
   const clonedRequest = req.clone({
     setHeaders: {
       'id_token': idToken,

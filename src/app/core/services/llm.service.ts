@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
-import { CreateMLCEngine, MLCEngine, InitProgressCallback, InitProgressReport } from '@mlc-ai/web-llm';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -10,104 +11,110 @@ export interface ChatMessage {
   providedIn: 'root'
 })
 export class LlmService {
-  // We use Gemma-2b because it is lightweight (~1.5GB) and runs well in browsers.
-  // You can switch this to 'Llama-3-8B-Instruct-q4f32_1-MLC' for a smarter but heavier model.
-private selectedModel = 'gemma-2b-it-q4f32_1-MLC';
+  private http = inject(HttpClient);
   
-  private engine: MLCEngine | null = null;
-
+  // [CONFIGURATION] Points to Ollama's standard API endpoint
+  private readonly apiUrl = 'http://localhost:11434/v1/chat/completions';
+  
   // --- Signals for Reactive UI State ---
   public isModelLoading = signal<boolean>(false);
   public isGenerating = signal<boolean>(false);
-  public modelLoaded = signal<boolean>(false);
+  public modelLoaded = signal<boolean>(false); 
   public loadProgress = signal<string>('');
   public messages = signal<ChatMessage[]>([]);
 
   constructor() {}
 
   /**
-   * Initializes the WebLLM engine. This downloads the model weights (~1.5GB) 
-   * and caches them in the browser Cache Storage.
+   * Simulates connection to the external server.
+   * No heavy download required, just a quick ready check.
    */
-async loadModel(): Promise<void> {
-    if (this.engine) return; 
+  async loadModel(): Promise<void> {
+    if (this.modelLoaded()) return;
 
     this.isModelLoading.set(true);
-    this.loadProgress.set('Đang khởi tạo WebGPU...');
+    this.loadProgress.set('Đang kết nối máy chủ AI...');
 
     try {
-      const initProgressCallback: InitProgressCallback = (report: InitProgressReport) => {
-        this.loadProgress.set(report.text);
-      };
-
-      this.engine = await CreateMLCEngine(
-        this.selectedModel,
-        { initProgressCallback }
-      );
+      // Simulate network delay (or perform a real health check ping here)
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       this.modelLoaded.set(true);
-      this.loadProgress.set('Mô hình đã sẵn sàng!');
+      this.loadProgress.set('Đã kết nối!');
       
-      this.messages.update(msgs => [
-        ...msgs, 
-        { role: 'assistant', content: 'Xin chào! Tôi là trợ lý AI chạy trực tiếp trên trình duyệt của bạn. Tôi có thể giúp gì cho bạn?' }
-      ]);
-
-    } catch (error: any) {
-      console.error('WebLLM Load Error:', error);
-      
-      // Specific handling for QuotaExceededError
-      if (error.name === 'QuotaExceededError' || error.message?.includes('Quota exceeded')) {
-        this.loadProgress.set('Lỗi: Bộ nhớ trình duyệt đã đầy. Vui lòng xóa cache (Application > Clear site data) và thử lại.');
-      } else {
-        this.loadProgress.set('Lỗi: Không thể tải mô hình. Vui lòng kiểm tra WebGPU hoặc kết nối mạng.');
+      if (this.messages().length === 0) {
+        this.messages.update(msgs => [
+          ...msgs, 
+          { role: 'assistant', content: 'Xin chào! Tôi là trợ lý AI trực tuyến (Llama 3). Tôi có thể giúp gì cho bạn?' }
+        ]);
       }
+
+    } catch (error) {
+      console.error('Connection Error', error);
+      this.loadProgress.set('Lỗi: Không thể kết nối máy chủ.');
     } finally {
       this.isModelLoading.set(false);
     }
   }
 
   /**
-   * Sends a user message to the LLM and streams the response back.
+   * Sends a user message to the External API and updates the UI.
    */
   async sendMessage(content: string): Promise<void> {
-    if (!this.engine || !content.trim()) return;
+    if (!content.trim()) return;
 
-    // 1. Add User Message to Chat
+    // 1. Add User Message to UI
     const userMsg: ChatMessage = { role: 'user', content };
     this.messages.update(msgs => [...msgs, userMsg]);
     this.isGenerating.set(true);
 
+    // 2. Prepare Payload *BEFORE* adding the placeholder to UI
+    // This ensures we don't send the "..." message to the AI, which causes 400 Errors
+    const apiMessages = this.messages()
+      .filter(m => m.role !== 'system')
+      .map(m => ({ role: m.role, content: m.content }));
+
     try {
-      // 2. Create a placeholder for the Assistant's response
-      const assistantMsg: ChatMessage = { role: 'assistant', content: '' };
+      // 3. Create placeholder for Assistant response (Visual only)
+      const assistantMsg: ChatMessage = { role: 'assistant', content: '...' };
       this.messages.update(msgs => [...msgs, assistantMsg]);
 
-      // 3. Call the engine with streaming enabled
-      const chunks = await this.engine.chat.completions.create({
-        messages: this.messages().map(m => ({ role: m.role, content: m.content })), 
-        stream: true,
-        temperature: 0.7
+      // 4. Prepare Payload for Ollama
+      const payload = {
+        model: "llama3", // [IMPORTANT] Must match the model you ran (ollama run llama3)
+        messages: apiMessages,
+        temperature: 0.7,
+        stream: false // Disable streaming for simple HTTP Client handling
+      };
+
+      // 5. Send Request to Server
+      const response: any = await firstValueFrom(
+        this.http.post(this.apiUrl, payload)
+      );
+
+      // 6. Extract Response Content
+      const reply = response?.choices?.[0]?.message?.content 
+                 || 'Không nhận được phản hồi từ máy chủ.';
+
+      // 7. Update UI with actual response (Replace the "...")
+      this.messages.update(msgs => {
+        const newMsgs = [...msgs];
+        newMsgs[newMsgs.length - 1] = { role: 'assistant', content: reply };
+        return newMsgs;
       });
 
-      let fullResponse = '';
+    } catch (error: any) {
+      console.error('API Error:', error);
       
-      // 4. Process the stream chunk by chunk
-      for await (const chunk of chunks) {
-        const delta = chunk.choices[0]?.delta.content || '';
-        fullResponse += delta;
-
-        // Update the last message (Assistant's response) in real-time
-        this.messages.update(msgs => {
-          const newMsgs = [...msgs];
-          newMsgs[newMsgs.length - 1] = { ...assistantMsg, content: fullResponse };
-          return newMsgs;
-        });
-      }
-      
-    } catch (error) {
-      console.error('Generation error:', error);
-      this.messages.update(msgs => [...msgs, { role: 'system', content: 'Đã xảy ra lỗi khi tạo câu trả lời.' }]);
+      // Remove placeholder and show error
+      this.messages.update(msgs => {
+        const newMsgs = [...msgs];
+        newMsgs.pop(); // Remove "..."
+        return [
+          ...newMsgs, 
+          { role: 'system', content: 'Lỗi: Không thể kết nối đến máy chủ AI (400/500). Hãy kiểm tra Ollama đã chạy chưa.' }
+        ];
+      });
     } finally {
       this.isGenerating.set(false);
     }
@@ -115,8 +122,6 @@ async loadModel(): Promise<void> {
 
   resetChat(): void {
     this.messages.set([]);
-    if (this.engine) {
-        this.engine.resetChat();
-    }
+    this.loadModel();
   }
 }
