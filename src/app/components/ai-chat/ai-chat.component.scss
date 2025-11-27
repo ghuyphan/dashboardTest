@@ -299,6 +299,9 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
     max-width: 80%;
     word-break: break-word;
     position: relative;
+    
+    /* [UPDATED] Preserves whitespace/newlines from AI stream */
+    white-space: pre-wrap; 
   }
 
   /* Thinking State */
@@ -391,18 +394,26 @@ $gradient-thinking: linear-gradient(270deg, #e0f2f1, #ccfbf1, #e0f2f1);
       background: var(--peacock-blue);
     }
 
+    /* [UPDATED] Styles for when AI is generating (Stop Button) */
     &.generating {
       background: transparent;
       border: 2px solid var(--text-primary);
+      
       .stop-icon {
         width: 10px;
         height: 10px;
         background-color: var(--text-primary);
         border-radius: 2px;
+        transition: background-color 0.2s;
       }
+      
+      /* Hover state becomes red to indicate "Stop" */
       &:hover {
         border-color: var(--color-danger);
-        .stop-icon { background-color: var(--color-danger); }
+        background-color: rgba(220, 53, 69, 0.1);
+        .stop-icon { 
+          background-color: var(--color-danger); 
+        }
       }
     }
   }

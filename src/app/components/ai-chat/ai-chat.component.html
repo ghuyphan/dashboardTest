@@ -36,21 +36,25 @@
     </div>
 
     @for (msg of llmService.messages(); track $index) {
-      <div class="message-row" [ngClass]="msg.role">
-        @if(msg.role === 'assistant') {
-          <div class="msg-avatar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
-            </svg>
+      @if (msg.role !== 'assistant' || msg.content) {
+        <div class="message-row" [ngClass]="msg.role">
+          
+          @if(msg.role === 'assistant') {
+            <div class="msg-avatar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+              </svg>
+            </div>
+          }
+
+          <div class="bubble" [class.system-msg]="msg.role === 'system'">
+            {{ msg.content }}
           </div>
-        }
-        <div class="bubble">
-          {{ msg.content }}
         </div>
-      </div>
+      }
     }
 
-    @if (llmService.isGenerating()) {
+    @if (shouldShowThinking()) {
       <div class="message-row assistant">
         <div class="msg-avatar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -71,17 +75,19 @@
       <input 
         type="text" 
         [(ngModel)]="userInput" 
-        (keyup.enter)="onSend()"
+        (keyup.enter)="handleMainButton()"
         [disabled]="llmService.isGenerating()"
         placeholder="Nhập câu hỏi..." 
         class="chat-input"
         autocomplete="off"
       >
+      
       <button 
         class="send-btn" 
-        (click)="onSend()" 
-        [disabled]="!userInput.trim() || llmService.isGenerating()"
-        [class.generating]="llmService.isGenerating()">
+        (click)="handleMainButton()" 
+        [disabled]="!llmService.isGenerating() && !userInput.trim()"
+        [class.generating]="llmService.isGenerating()"
+        [title]="llmService.isGenerating() ? 'Dừng lại' : 'Gửi'">
         
         @if (llmService.isGenerating()) {
           <div class="stop-icon"></div>
