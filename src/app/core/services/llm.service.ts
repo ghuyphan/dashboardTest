@@ -1,5 +1,4 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { NavItem } from '../models/nav-item.model';
 import { environment } from '../../../environments/environment.development';
@@ -39,7 +38,6 @@ export class LlmService {
     this.isModelLoading.set(true);
     this.loadProgress.set('Đang kết nối trợ lý ảo...');
 
-    // Simulate connection delay for better UX
     setTimeout(() => {
       this.modelLoaded.set(true);
       this.isModelLoading.set(false);
@@ -50,8 +48,7 @@ export class LlmService {
           ...msgs,
           {
             role: 'assistant',
-            content:
-              'Xin chào! Tôi là Homi, trợ lý điều hướng của Hoàn Mỹ Portal. Bạn cần tìm chức năng nào hoặc muốn tôi hướng dẫn sử dụng phần nào của hệ thống?',
+            content: 'Xin chào! Tôi là Homi. Bạn cần tìm chức năng nào hoặc muốn tôi hướng dẫn sử dụng phần nào của hệ thống?',
           },
         ]);
       }
@@ -65,24 +62,24 @@ export class LlmService {
     const userMsg: ChatMessage = { role: 'user', content };
     this.messages.update((msgs) => [...msgs, userMsg]);
     
-    // 2. Prepare Assistant Message Placeholder
+    // 2. Add Assistant Placeholder (Empty initially)
     const aiMsg: ChatMessage = { role: 'assistant', content: '' };
     this.messages.update((msgs) => [...msgs, aiMsg]);
     this.isGenerating.set(true);
 
     try {
       const recentMessages = this.messages()
-        .filter((m) => m !== aiMsg)
+        .filter((m) => m !== aiMsg) // Don't send the empty placeholder
         .slice(-this.MAX_HISTORY);
 
-      // 3. Build Payload with "Instruct" System Prompt
+      // 3. Optimised Prompt for Gemma 3 Instruct
       const payload = {
-        model: 'gemma3:1b-it-qat', // Assuming this model supports instruct/chat format
+        model: 'gemma3:1b-it-qat', 
         messages: [
           { role: 'system', content: this.getSystemPrompt() },
           ...recentMessages,
         ],
-        temperature: 0.2, // Lower temperature for more precise navigation instructions
+        temperature: 0.2, // Low temp for precise navigation instructions
         stream: true, 
       };
 
@@ -122,7 +119,8 @@ export class LlmService {
               fullContent += token;
               this.messages.update((msgs) => {
                 const lastIdx = msgs.length - 1;
-                if (lastIdx >= 0) {
+                // Only update if the last message is actually the assistant's placeholder
+                if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
                   const newMsgs = [...msgs];
                   newMsgs[lastIdx] = { ...newMsgs[lastIdx], content: fullContent };
                   return newMsgs;
@@ -138,9 +136,10 @@ export class LlmService {
       console.error('AI Stream Error:', error);
       this.messages.update((msgs) => {
         const newMsgs = [...msgs];
+        // Replace placeholder with error if it failed mid-stream or at start
         newMsgs[newMsgs.length - 1] = {
           role: 'assistant',
-          content: '⚠️ Xin lỗi, tôi đang gặp sự cố kết nối. Vui lòng thử lại sau.',
+          content: newMsgs[newMsgs.length - 1].content + '\n\n⚠️ *Xin lỗi, tôi đang gặp sự cố kết nối.*',
         };
         return newMsgs;
       });
@@ -154,39 +153,46 @@ export class LlmService {
     this.loadModel();
   }
 
-  // --- SYSTEM PROMPT GENERATION ---
+  // --- PROMPT ENGINEERING ---
 
   private getSystemPrompt(): string {
     const user = this.authService.currentUser();
     const siteMap = this.generateSiteMap(this.authService.navItems());
 
     return `
-Bạn là "Homi" - Trợ lý ảo chuyên trách hướng dẫn sử dụng và điều hướng cho Hoàn Mỹ Portal.
+### ROLE
+Bạn là "Homi" - Trợ lý ảo chuyên nghiệp của Hoàn Mỹ Portal. Nhiệm vụ của bạn là hỗ trợ người dùng điều hướng hệ thống và giải thích chức năng.
 
-THÔNG TIN NGƯỜI DÙNG:
-- Tên: ${user?.fullName || 'Khách'}
+### USER INFO
+- Tên: ${user?.fullName || 'Người dùng'}
 - Vai trò: ${user?.roles.join(', ') || 'N/A'}
 
-CẤU TRÚC HỆ THỐNG (SITEMAP):
+### SYSTEM NAVIGATION (SITEMAP)
+Dưới đây là danh sách các chức năng và đường dẫn (URL) có sẵn trong hệ thống:
 ${siteMap}
 
-NHIỆM VỤ CỦA BẠN:
-1. Hướng dẫn người dùng tìm kiếm chức năng trong menu dựa trên SITEMAP ở trên.
-2. Giải thích ngắn gọn công dụng của các màn hình nếu được hỏi (dựa trên tên màn hình).
-3. Nếu người dùng hỏi về dữ liệu cụ thể (doanh thu, số lượng...), hãy lịch sự từ chối và hướng dẫn họ đến màn hình báo cáo tương ứng để xem. BẠN KHÔNG CÓ QUYỀN TRUY CẬP DỮ LIỆU MÀN HÌNH.
-4. Luôn trả lời bằng Tiếng Việt, ngắn gọn, súc tích và chuyên nghiệp.
-5. Nếu chức năng nằm trong menu con, hãy chỉ dẫn rõ ràng: "Vào [Menu Cha] -> [Menu Con]".
+### INSTRUCTIONS
+1. **Điều hướng:** Khi người dùng hỏi về một chức năng, hãy hướng dẫn họ cách truy cập. 
+   - QUAN TRỌNG: Nếu chức năng có đường dẫn (Link), hãy cung cấp liên kết trực tiếp bằng cú pháp Markdown: \`[Tên Chức Năng](/duong-dan)\`.
+   - Ví dụ: "Bạn có thể xem báo cáo tại [Tổng quan KCB](/app/reports/examination-overview)."
 
-VÍ DỤ TRẢ LỜI:
-User: "Tôi muốn xem báo cáo doanh thu."
-Homi: "Để xem báo cáo doanh thu, bạn vui lòng truy cập: Báo Cáo -> Tổng quan KCB hoặc các mục báo cáo tài chính liên quan trong menu bên trái."
+2. **Định dạng:** Sử dụng **Markdown** để làm câu trả lời dễ đọc (in đậm, danh sách bullet point).
+
+3. **Giới hạn:** - KHÔNG bịa ra dữ liệu thực tế (doanh thu, số lượng bệnh nhân) vì bạn không có quyền truy cập cơ sở dữ liệu trực tiếp. 
+   - Thay vào đó, hãy chỉ dẫn người dùng đến màn hình Báo Cáo tương ứng để họ tự xem.
+   - Trả lời ngắn gọn, súc tích bằng Tiếng Việt.
+
+### EXAMPLE INTERACTION
+User: "Tôi muốn xem doanh thu hôm nay."
+Homi: "Tôi không có quyền truy cập dữ liệu doanh thu trực tiếp. Tuy nhiên, bạn có thể xem chi tiết tại màn hình [Tổng quan KCB](/app/reports/examination-overview) hoặc [Báo cáo Tài Chính](/app/reports/finance)."
 `.trim();
   }
 
   private generateSiteMap(items: NavItem[], prefix = '- '): string {
     let map = '';
     for (const item of items) {
-      map += `${prefix}${item.label} (Link: ${item.link || 'Menu'})\n`;
+      const linkInfo = item.link ? `(Link: ${item.link})` : '(Menu cha)';
+      map += `${prefix}${item.label} ${linkInfo}\n`;
       if (item.children && item.children.length > 0) {
         map += this.generateSiteMap(item.children, `  ${prefix}`);
       }
