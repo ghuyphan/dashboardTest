@@ -9,6 +9,27 @@ export interface ChatMessage {
   content: string;
 }
 
+/**
+ * KNOWLEDGE BASE: Ánh xạ URL -> Mô tả nghiệp vụ chi tiết.
+ * Giúp AI hiểu "Thêm máy mới" = "Danh mục thiết bị".
+ */
+const ROUTE_DESCRIPTIONS: Record<string, string> = {
+  '/app/home': 'Trang chủ, màn hình chính, dashboard tổng hợp thông tin.',
+  '/app/settings': 'Cài đặt tài khoản, đổi mật khẩu, xem thông tin cá nhân.',
+  
+  // Module Thiết bị
+  '/app/equipment/catalog': 'Quản lý danh sách thiết bị y tế. Chức năng: Thêm mới máy móc, Sửa thông tin, Xóa thiết bị, Tìm kiếm theo mã/tên, In mã QR, In biên bản bàn giao.',
+  '/app/equipment/dashboard': 'Dashboard thiết bị, biểu đồ thống kê tình trạng máy (hỏng, bảo trì, hoạt động), xem nhanh các thiết bị cần chú ý hoặc sắp hết bảo hành.',
+  
+  // Module Báo cáo
+  '/app/reports/bed-usage': 'Báo cáo công suất giường bệnh. Xem số lượng giường trống, giường đang sử dụng, chờ xuất viện theo từng khoa phòng.',
+  '/app/reports/examination-overview': 'Tổng quan khám chữa bệnh (KCB). Thống kê số lượt tiếp nhận, bệnh nhân mới/cũ, BHYT/Viện phí theo ngày/tháng.',
+  '/app/reports/missing-medical-records': 'Báo cáo hồ sơ bệnh án (HSBA) thiếu. Dành cho KHTH kiểm tra bác sĩ nào chưa tạo bệnh án, quên làm hồ sơ ngoại trú.',
+  '/app/reports/cls-level3': 'Báo cáo hoạt động Cận lâm sàng (CLS) tại khu vực Tầng 3 (Xét nghiệm, X-Quang...).',
+  '/app/reports/cls-level6': 'Báo cáo hoạt động Cận lâm sàng (CLS) tại khu vực Tầng 6.',
+  '/app/reports/specialty-cls': 'Thống kê chỉ định Cận lâm sàng (CLS) theo từng Chuyên khoa. Xem tỷ lệ chỉ định của các khoa.'
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -27,6 +48,7 @@ export class LlmService {
   public modelLoaded = signal<boolean>(false);
   public loadProgress = signal<string>('');
   public messages = signal<ChatMessage[]>([]);
+  public isNavigating = signal<boolean>(false); // Trạng thái điều hướng
 
   constructor() {}
 
@@ -40,50 +62,53 @@ export class LlmService {
   async loadModel(): Promise<void> {
     if (this.modelLoaded()) return;
     this.isModelLoading.set(true);
-    this.loadProgress.set('Đang kết nối trợ lý ảo...');
+    this.loadProgress.set('Đang khởi động trợ lý ảo...');
 
+    // Giả lập kết nối
     setTimeout(() => {
       this.modelLoaded.set(true);
       this.isModelLoading.set(false);
       this.loadProgress.set('Sẵn sàng');
 
       if (this.messages().length === 0) {
+        const user = this.authService.currentUser();
+        // Lời chào trung tính hơn
+        const greeting = `Xin chào ${user?.fullName || 'bạn'}. Mình là Homi, trợ lý ảo của hệ thống. Bạn cần tìm chức năng hay báo cáo nào?`;
+          
         this.messages.update((msgs) => [
           ...msgs,
-          {
-            role: 'assistant',
-            content: 'Xin chào! Tôi là Homi. Bạn cần tìm chức năng nào của hệ thống?',
-          },
+          { role: 'assistant', content: greeting },
         ]);
       }
-    }, 500);
+    }, 600);
   }
 
   async sendMessage(content: string): Promise<void> {
     if (!content.trim()) return;
     
-    const userMsg: ChatMessage = { role: 'user', content };
-    this.messages.update((msgs) => [...msgs, userMsg]);
+    // 1. Add User Message
+    this.messages.update((msgs) => [...msgs, { role: 'user', content }]);
     
-    const aiMsg: ChatMessage = { role: 'assistant', content: '' };
-    this.messages.update((msgs) => [...msgs, aiMsg]);
+    // 2. Prepare AI Placeholder
+    this.messages.update((msgs) => [...msgs, { role: 'assistant', content: '' }]);
     this.isGenerating.set(true);
 
     try {
+      // 3. Prepare Context & Prompt
       const recentMessages = this.messages()
-        .filter((m) => m !== aiMsg)
+        .filter((m) => m.content && m.role !== 'assistant') // Filter out empty current placeholder
         .slice(-this.MAX_HISTORY);
 
       const systemPrompt = this.getSystemPrompt();
 
+      // 4. Call API
       const payload = {
         model: 'gemma3:4b-it-qat', 
         messages: [
           { role: 'system', content: systemPrompt },
           ...recentMessages,
         ],
-        // Temperature 0.2 keeps it very focused and reduces hallucinations.
-        temperature: 0.2, 
+        temperature: 0.1, // Giữ thấp để câu trả lời chính xác, ít "sáng tạo" lung tung
         top_p: 0.9,
         stream: true, 
       };
@@ -94,12 +119,14 @@ export class LlmService {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('API Request Failed');
-      if (!response.body) throw new Error('No response body');
+      if (!response.ok) throw new Error('Kết nối AI thất bại');
 
-      const reader = response.body.getReader();
+      // 5. Handle Stream
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
       const decoder = new TextDecoder();
-      let fullContent = '';
+      let fullText = '';
 
       while (true) {
         if (!this.isGenerating()) {
@@ -110,39 +137,56 @@ export class LlmService {
         if (done) break;
         
         const chunk = decoder.decode(value, { stream: true });
+        // Xử lý format data: của các dòng stream (tùy server)
         const lines = chunk.split('\n').filter((line) => line.trim() !== '');
 
         for (const line of lines) {
           try {
             const jsonStr = line.startsWith('data: ') ? line.slice(6) : line;
             if (jsonStr === '[DONE]') continue;
+            
             const json = JSON.parse(jsonStr);
-            const token = json.message?.content || json.choices?.[0]?.delta?.content || '';
+            // Hỗ trợ nhiều format response khác nhau (Ollama, vLLM, etc)
+            const token = json.message?.content || json.choices?.[0]?.delta?.content || json.response || '';
             
             if (token) {
-              fullContent += token;
+              fullText += token;
+              
+              // --- LOGIC ĐIỀU HƯỚNG TỰ ĐỘNG ---
+              // Regex bắt lệnh: [[NAVIGATE:/app/some/path]]
+              const navMatch = fullText.match(/\[\[NAVIGATE:(.*?)\]\]/);
+              
+              if (navMatch) {
+                const path = navMatch[1];
+                // Xóa lệnh khỏi văn bản hiển thị để user không thấy code lạ
+                fullText = fullText.replace(navMatch[0], '').trim();
+                
+                // Thực thi điều hướng (có animation)
+                this.triggerNavigation(path);
+              }
+              // --------------------------------
+
+              // Cập nhật UI
               this.messages.update((msgs) => {
-                const lastIdx = msgs.length - 1;
-                if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
-                  const newMsgs = [...msgs];
-                  newMsgs[lastIdx] = { ...newMsgs[lastIdx], content: fullContent };
-                  return newMsgs;
-                }
-                return msgs;
+                const newMsgs = [...msgs];
+                const lastIdx = newMsgs.length - 1;
+                newMsgs[lastIdx] = { role: 'assistant', content: fullText };
+                return newMsgs;
               });
             }
+            
             if (json.done) this.isGenerating.set(false);
-          } catch (e) { }
+          } catch (e) { 
+            // Bỏ qua lỗi parse JSON từng chunk nhỏ
+          }
         }
       }
     } catch (error) {
-      console.error('AI Stream Error:', error);
+      console.error('AI Error:', error);
       this.messages.update((msgs) => {
         const newMsgs = [...msgs];
-        newMsgs[newMsgs.length - 1] = {
-          role: 'assistant',
-          content: newMsgs[newMsgs.length - 1].content + '\n\n⚠️ *Xin lỗi, tôi đang gặp sự cố kết nối với máy chủ AI.*',
-        };
+        const lastMsg = newMsgs[newMsgs.length - 1];
+        lastMsg.content += '\n\n*(Hệ thống đang bận, vui lòng thử lại sau)*';
         return newMsgs;
       });
     } finally {
@@ -150,75 +194,103 @@ export class LlmService {
     }
   }
 
+  private triggerNavigation(path: string): void {
+    // Debounce: Nếu đang điều hướng rồi thì thôi
+    if (this.isNavigating() || this.router.url === path) return;
+
+    this.isNavigating.set(true);
+    
+    // Delay để user kịp đọc tin nhắn "Mình đang mở..."
+    setTimeout(() => {
+      this.router.navigateByUrl(path).then(() => {
+        // Tắt hiệu ứng sau khi chuyển trang xong
+        setTimeout(() => this.isNavigating.set(false), 800);
+      });
+    }, 1000);
+  }
+
   resetChat(): void {
     this.messages.set([]);
     this.loadModel(); 
   }
 
+  // ========================================================================
+  //  PROMPT ENGINEERING - TRÁI TIM CỦA HỆ THỐNG
+  // ========================================================================
+  
   private getSystemPrompt(): string {
-    const routeMap = this.extractRoutes(this.router.config);
-    const siteMapString = routeMap.map(r => `- [${r.title}](${r.path})`).join('\n');
-    const isDark = this.themeService.isDarkTheme();
+    // 1. Lấy danh sách màn hình user ĐƯỢC PHÉP thấy (đã lọc permission)
+    const allowedRoutes = this.extractAuthorizedRoutes(this.router.config);
+    
+    // 2. Tạo bản đồ chức năng (Context Map)
+    const sitemapText = allowedRoutes.map(r => {
+      const desc = ROUTE_DESCRIPTIONS[r.path] || 'Chức năng hệ thống.';
+      return `- Tên: "${r.title}"\n  URL: ${r.path}\n  Nghiệp vụ: ${desc}`;
+    }).join('\n\n');
+    
     const currentUser = this.authService.currentUser();
 
-    // Optimized Prompt for Gemma 3 using XML tags for clarity and structure
+    // 3. Prompt "Thông minh" với cấu trúc XML rõ ràng
     return `
 <role>
-Bạn là "Homi", trợ lý ảo chuyên nghiệp của cổng thông tin nội bộ Hoàn Mỹ Portal.
-Nhiệm vụ của bạn là hỗ trợ người dùng điều hướng và sử dụng phần mềm.
-Phong cách trả lời: Ngắn gọn, chính xác, lịch sự, sử dụng tiếng Việt.
+Bạn là Homi, trợ lý ảo thông minh của hệ thống nội bộ Hoàn Mỹ.
+Bạn đang trò chuyện với: ${currentUser?.fullName || 'Người dùng'} (Vai trò: ${currentUser?.roles?.join(', ') || 'N/A'}).
+Phong cách: Chuyên nghiệp, ngắn gọn, hữu ích, xưng hô trung tính (bạn/mình hoặc anh/chị).
 </role>
 
-<user_context>
-- Tên: ${currentUser?.fullName || 'Người dùng'}
-- Giao diện: ${isDark ? 'Tối (Dark Mode)' : 'Sáng (Light Mode)'}
-</user_context>
+<context>
+Dưới đây là danh sách các chức năng mà người dùng này CÓ QUYỀN truy cập.
+Bạn CHỈ ĐƯỢC phép điều hướng hoặc gợi ý các đường dẫn có trong danh sách này.
 
-<sitemap>
-${siteMapString}
-</sitemap>
-
-<capabilities>
-1. **Điều Hướng:** Cung cấp link dạng Markdown để người dùng bấm vào: \`[Tên Màn Hình](/duong-dan)\`.
-2. **Hỗ Trợ:** Chỉ cung cấp thông tin liên hệ IT khi gặp vấn đề kỹ thuật.
-</capabilities>
+${sitemapText}
+</context>
 
 <rules>
-1. **Quy tắc quan trọng nhất (Out of Scope):**
-   Nếu câu hỏi của người dùng KHÔNG liên quan đến:
-   - Các chức năng có trong <sitemap>.
-   - Cách sử dụng cổng thông tin Hoàn Mỹ.
-   - Cài đặt tài khoản hoặc giao diện.
-   
-   (Ví dụ: hỏi về thời tiết, tin tức, code, kiến thức y khoa, hoặc trò chuyện phiếm)
+1. **Ưu tiên điều hướng (Navigation First):**
+   - Nếu người dùng hỏi cách làm một việc gì đó (ví dụ: "Thêm máy mới", "Xem báo cáo giường"), hãy phân tích xem nó thuộc "Nghiệp vụ" nào trong <context>.
+   - Nếu tìm thấy màn hình phù hợp, hãy trả lời xác nhận và ĐÍNH KÈM lệnh điều hướng đặc biệt ở cuối câu: \`[[NAVIGATE:/duong-dan]]\`.
+   - Ví dụ User: "Tôi muốn thêm thiết bị".
+   - Homi: "Để thêm thiết bị mới, bạn vào danh mục thiết bị nhé. [[NAVIGATE:/app/equipment/catalog]]"
 
-   => Bạn **BẮT BUỘC** phải trả lời chính xác câu sau:
-   "Vấn đề này nằm ngoài phạm vi hỗ trợ của tôi. Vui lòng liên hệ bộ phận IT qua hotline 1108 hoặc 1109 để được hỗ trợ."
+2. **Xử lý khi không tìm thấy hoặc không có quyền:**
+   - Nếu chức năng người dùng hỏi KHÔNG có trong <context> (do họ không có quyền hoặc hệ thống không có), hãy trả lời thật lòng:
+   - "Chức năng này không nằm trong quyền truy cập của bạn hoặc chưa được hỗ trợ."
+   - Đừng bịa ra đường dẫn ảo.
 
-2. **Quy tắc Điều Hướng:**
-   - Khi người dùng hỏi về một chức năng (ví dụ: "đổi mật khẩu", "xem danh sách thiết bị"), hãy tìm trong <sitemap> và trả lời bằng link Markdown.
-   - Ví dụ: "Bạn có thể đổi mật khẩu tại [Cài đặt tài khoản](/app/settings)."
+3. **Hỗ trợ kỹ thuật:**
+   - Chỉ hướng dẫn liên hệ IT (hotline 1108) khi người dùng gặp lỗi đăng nhập, lỗi hệ thống, hoặc tài khoản bị khóa. Đừng dùng nó làm câu trả lời mặc định cho mọi thứ.
 
-3. **Quy tắc Giao Diện:**
-   - Nếu hỏi về đổi màu/giao diện, hướng dẫn: "Bấm vào Avatar (góc phải trên) -> Chọn Chế độ Sáng/Tối."
-
-4. **Không Bịa Đặt:**
-   - Tuyệt đối không tự bịa ra các đường dẫn (URL) không có trong <sitemap>.
+4. **Ngôn ngữ:** Tiếng Việt tự nhiên, không máy móc.
 </rules>
 `.trim();
   }
 
-  private extractRoutes(routes: Routes, parentPath: string = ''): { title: string; path: string }[] {
+  /**
+   * Hàm đệ quy lọc route dựa trên Permission của AuthService.
+   * Nếu user không có quyền, route đó sẽ BIẾN MẤT khỏi nhận thức của AI.
+   */
+  private extractAuthorizedRoutes(routes: Routes, parentPath: string = ''): { title: string; path: string }[] {
     let result: { title: string; path: string }[] = [];
 
     for (const route of routes) {
       if (route.redirectTo || route.path === '**') continue;
 
+      // Xây dựng full path
       let currentPath = parentPath;
       if (route.path) {
         currentPath = parentPath ? `${parentPath}/${route.path}` : `/${route.path}`;
       }
 
+      // 1. Kiểm tra Permission (Chốt chặn quan trọng nhất)
+      if (route.data && route.data['permission']) {
+        const requiredPerm = route.data['permission'];
+        if (!this.authService.hasPermission(requiredPerm)) {
+          // User không có quyền -> Bỏ qua route này -> AI sẽ không biết nó tồn tại
+          continue;
+        }
+      }
+
+      // 2. Chỉ lấy các route là màn hình (có Title)
       if (route.data && route.data['title']) {
         result.push({
           title: route.data['title'] as string,
@@ -226,8 +298,9 @@ ${siteMapString}
         });
       }
 
+      // 3. Đệ quy lấy route con
       if (route.children) {
-        result = result.concat(this.extractRoutes(route.children, currentPath));
+        result = result.concat(this.extractAuthorizedRoutes(route.children, currentPath));
       }
     }
     return result;

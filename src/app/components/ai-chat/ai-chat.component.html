@@ -1,4 +1,4 @@
-<div class="ai-window" [class.open]="llmService.isOpen()">
+<div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()">
   
   <div class="ai-header">
     <div class="header-left">
@@ -19,13 +19,6 @@
     <button class="close-btn" (click)="closeChat()" title="Đóng">
       <i class="fas fa-times"></i>
     </button>
-  </div>
-
-  <div class="ai-body loading-view" *ngIf="!llmService.modelLoaded() && llmService.isModelLoading()">
-    <div class="loader-content">
-      <div class="ai-pulse-ring"><div></div><div></div><div></div><div></div></div>
-      <p class="loading-text">{{ llmService.loadProgress() }}</p>
-    </div>
   </div>
 
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
@@ -66,9 +59,20 @@
       </div>
     }
   </div>
+  
+  @if (llmService.isNavigating()) {
+    <div class="nav-overlay">
+      <div class="warp-tunnel"></div>
+      <div class="nav-content">
+        <div class="nav-icon-wrapper">
+          <i class="fas fa-rocket nav-icon"></i>
+        </div>
+        <p>Đang chuyển hướng...</p>
+      </div>
+    </div>
+  }
 
   <div class="ai-footer" *ngIf="llmService.modelLoaded()">
-    
     <div class="toolbar" style="justify-content: flex-end;">
       <button class="clear-chat-btn" (click)="llmService.resetChat()" title="Xóa lịch sử chat" [disabled]="llmService.isGenerating()">
         <i class="fas fa-trash-alt"></i> Xóa lịch sử

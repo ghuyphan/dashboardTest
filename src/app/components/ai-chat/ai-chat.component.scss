@@ -10,7 +10,7 @@ $gradient-avatar: linear-gradient(135deg, $color-primary, $color-accent);
 $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), var(--gray-100));
 
 :host {
-  --header-offset: 50px; /* Adjusted to match standard header height */
+  --header-offset: 50px;
   --chat-width: 400px;
   --chat-height: 650px;
   --bubble-radius: 18px;
@@ -22,7 +22,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
 }
 
 /* ==========================================================================
-   MAIN WINDOW (Optimized)
+   MAIN WINDOW
    ========================================================================== */
 .ai-window {
   position: fixed;
@@ -34,24 +34,20 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   max-width: calc(100vw - 40px);
   max-height: calc(100vh - var(--header-offset) - 20px);
 
-  /* Appearance */
   background-color: var(--surface-card);
   border-radius: 16px; 
   border: 1px solid var(--border-color);
   box-shadow: var(--box-shadow-lg), 0 10px 40px -10px rgba(0, 0, 0, 0.15);
 
-  /* Layout */
   display: flex;
   flex-direction: column;
   overflow: hidden;
   
-  /* Animation State: Top Opening */
   transform-origin: top right;
   transform: scale(0.95) translateY(-10px);
   opacity: 0;
   visibility: hidden;
   
-  /* PERFORMANCE: Isolate layout calculations for the whole window */
   contain: paint layout;
   will-change: transform, opacity; 
 
@@ -64,11 +60,16 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     transform: scale(1) translateY(0);
     opacity: 1;
     visibility: visible;
-    
     transition: 
       transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
       opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
       visibility 0s 0s;
+  }
+
+  /* Navigation Mode State */
+  &.navigating-mode {
+    border-color: var(--teal-blue);
+    box-shadow: 0 0 0 2px rgba(0, 131, 155, 0.2), 0 10px 30px rgba(0,0,0,0.2);
   }
 
   [data-theme='dark'] & {
@@ -78,9 +79,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   HEADER
-   ========================================================================== */
+/* ... Header styles remain the same ... */
 .ai-header {
   flex-shrink: 0;
   padding: 16px; 
@@ -179,9 +178,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   BODY / CHAT AREA (Streaming Optimized)
-   ========================================================================== */
+/* ... Chat Body styles remain the same ... */
 .ai-body {
   flex: 1;
   overflow-y: auto;
@@ -190,12 +187,8 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   display: flex;
   flex-direction: column;
   gap: 16px;
-
-  /* Optimization: Hint browser to optimize for scrolling updates */
   will-change: scroll-position;
   scroll-behavior: smooth;
-  
-  /* Stable Anchoring: Prevents jumps when content loads above */
   overflow-anchor: auto; 
 
   scrollbar-width: thin;
@@ -214,7 +207,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* Guide Mode Badge */
 .chat-intro {
   text-align: center;
   margin: 8px 0 24px 0;
@@ -245,45 +237,31 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* --- Message Rows --- */
 .message-row {
   display: flex;
   gap: 12px;
-  align-items: flex-start; /* Top alignment corrects the "feet talking" issue */
+  align-items: flex-start;
   max-width: 100%;
-  
-  /* Entrance Animation */
   animation: messageSlideUp 0.3s cubic-bezier(0.2, 0, 0.2, 1) forwards;
   opacity: 0;
   transform: translateY(8px);
-  
-  /* PERFORMANCE: Isolate layout for individual messages during streaming */
   contain: layout style; 
 
-  /* --- User Message (Right) --- */
   &.user {
     flex-direction: row-reverse;
-    
     .bubble {
       background-color: $color-bg-user;
       color: $color-text-user;
-      
-      /* FIX: Sharp corner at Top-Right to match face position */
       border-radius: var(--bubble-radius) 4px var(--bubble-radius) var(--bubble-radius);
-      
       box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.2);
       border: none;
       margin-left: 40px;
-
-      /* User link contrast */
       ::ng-deep a { color: white; text-decoration: underline; }
     }
   }
 
-  /* --- Assistant Message (Left) --- */
   &.assistant {
     flex-direction: row;
-    
     .msg-avatar {
       width: 32px;
       height: 32px;
@@ -296,28 +274,23 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       justify-content: center;
       color: var(--teal-blue);
       box-shadow: var(--box-shadow-sm);
-      margin-top: 2px; /* Tiny visual offset */
+      margin-top: 2px;
     }
 
     .bubble {
       background-color: var(--surface-card);
       color: var(--text-primary);
       border: 1px solid var(--border-color);
-      
-      /* FIX: Sharp corner at Top-Left to match Avatar position */
       border-radius: 4px var(--bubble-radius) var(--bubble-radius) var(--bubble-radius);
-      
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       margin-right: 20px;
     }
   }
 
-  /* --- System Message --- */
   &.system {
     justify-content: center;
     width: 100%;
     margin: 8px 0;
-    
     .bubble {
       background-color: var(--gray-100);
       color: var(--text-secondary);
@@ -332,7 +305,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     }
   }
 
-  /* --- Bubble Content --- */
   .bubble {
     padding: var(--bubble-padding);
     font-size: 0.925rem;
@@ -342,35 +314,21 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     position: relative;
     transition: background-color 0.2s ease;
     
-    /* MARKDOWN STYLES (Deep Scope) */
     ::ng-deep {
       & > p:first-child { margin-top: 0; }
       & > p:last-child { margin-bottom: 0; }
       & > p { margin-bottom: 8px; }
-      
       strong { font-weight: 600; color: inherit; }
-      
-      ul, ol {
-        margin: 6px 0 10px 0;
-        padding-left: 20px;
-      }
-      
+      ul, ol { margin: 6px 0 10px 0; padding-left: 20px; }
       li { margin-bottom: 4px; }
-
-      /* Links */
       a {
         color: var(--teal-blue);
         text-decoration: none;
         font-weight: 500;
         border-bottom: 1px dotted currentColor;
         transition: all 0.2s;
-        &:hover { 
-          color: var(--secondary);
-          border-bottom-style: solid; 
-        }
+        &:hover { color: var(--secondary); border-bottom-style: solid; }
       }
-      
-      /* Code Blocks */
       code {
         background-color: var(--gray-100);
         color: var(--color-danger);
@@ -380,7 +338,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
         font-size: 0.85em;
         border: 1px solid var(--border-color);
       }
-
       [data-theme='dark'] & code {
         background-color: rgba(255, 255, 255, 0.1);
         color: #fca5a5;
@@ -388,7 +345,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     }
   }
 
-  /* Thinking State */
   .thinking-bubble {
     display: flex;
     align-items: center;
@@ -409,7 +365,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       background: linear-gradient(to right, var(--teal-blue), var(--peacock-blue));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      
       [data-theme='dark'] & {
         background: linear-gradient(to right, var(--teal-midtone), var(--primary));
         -webkit-background-clip: text;
@@ -419,8 +374,78 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
 }
 
 /* ==========================================================================
-   FOOTER / INPUT AREA
+   NEW: NAVIGATION OVERLAY ANIMATION
    ========================================================================== */
+.nav-overlay {
+  position: absolute;
+  inset: 60px 0 70px 0; /* Cover body, leave header/footer visible */
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease forwards;
+
+  [data-theme='dark'] & {
+    background-color: rgba(24, 24, 27, 0.85);
+  }
+
+  .warp-tunnel {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(var(--primary-rgb), 0.05) 50%, rgba(var(--primary-rgb), 0.1) 100%);
+    animation: warpZoom 1.5s infinite linear;
+  }
+
+  .nav-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .nav-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    background: var(--teal-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px auto;
+    box-shadow: 0 0 0 6px rgba(0, 131, 155, 0.2);
+    animation: iconPulse 1s infinite ease-in-out;
+
+    .nav-icon {
+      color: white;
+      font-size: 1.5rem;
+      transform: rotate(-45deg); /* Rocket pointing up-right */
+    }
+  }
+
+  p {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+}
+
+@keyframes warpZoom {
+  0% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 131, 155, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 131, 155, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 131, 155, 0); }
+}
+
+/* ... Footer styles remain the same ... */
 .ai-footer {
   flex-shrink: 0;
   padding: 12px 16px 16px 16px; 
@@ -432,7 +457,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   position: relative;
   z-index: 10;
 
-  /* Toolbar */
   .toolbar {
     display: flex;
     justify-content: flex-end;
@@ -462,7 +486,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     }
   }
 
-  /* Input Field */
   .input-container {
     display: flex;
     align-items: center;
@@ -477,7 +500,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       border-color: var(--teal-blue);
       background-color: var(--surface-card);
       box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
-      
       [data-theme='dark'] & {
         box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
         background-color: var(--gray-100);
@@ -495,11 +517,9 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     min-width: 0;
     line-height: 1.5;
     padding: 4px 0;
-
     &::placeholder { color: var(--text-disabled); }
   }
 
-  /* Send Button */
   .send-btn {
     width: 36px;
     height: 36px;
@@ -532,16 +552,12 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
-    &:not(:disabled):active {
-      transform: scale(0.95);
-    }
+    &:not(:disabled):active { transform: scale(0.95); }
 
-    /* Stop Generating Icon */
     &.generating {
       background: transparent;
       border: 2px solid var(--text-primary);
       box-shadow: none;
-      
       .stop-icon {
         width: 10px;
         height: 10px;
@@ -549,21 +565,16 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
         border-radius: 2px;
         transition: background-color 0.2s;
       }
-      
       &:hover {
         border-color: var(--color-danger);
         background-color: rgba(220, 53, 69, 0.1);
-        .stop-icon { 
-          background-color: var(--color-danger); 
-        }
+        .stop-icon { background-color: var(--color-danger); }
       }
     }
   }
 }
 
-/* ==========================================================================
-   ANIMATIONS & HELPERS
-   ========================================================================== */
+/* ... Animations and Mobile styles remain the same ... */
 @keyframes messageSlideUp {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -579,7 +590,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   100% { background-position: -100% 0; }
 }
 
-/* Loader Ring */
 .ai-pulse-ring {
   display: inline-block;
   position: relative;
@@ -596,11 +606,9 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     border-radius: 50%;
     animation: ai-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
     border-color: var(--teal-blue) transparent transparent transparent;
-    
     [data-theme='dark'] & {
        border-color: var(--teal-midtone) transparent transparent transparent;
     }
-
     &:nth-child(1) { animation-delay: -0.45s; }
     &:nth-child(2) { animation-delay: -0.3s; }
     &:nth-child(3) { animation-delay: -0.15s; }
@@ -632,11 +640,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     background: var(--teal-blue);
     border-radius: 50%;
     animation: bounce 1.4s infinite ease-in-out both;
-    
-    [data-theme='dark'] & {
-      background: var(--teal-midtone);
-    }
-
+    [data-theme='dark'] & { background: var(--teal-midtone); }
     &:nth-child(1) { animation-delay: -0.32s; }
     &:nth-child(2) { animation-delay: -0.16s; }
   }
@@ -646,9 +650,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   40% { transform: scale(1); }
 }
 
-/* ==========================================================================
-   MOBILE RESPONSIVE
-   ========================================================================== */
 @media (max-width: 480px) {
   .ai-window {
     top: 0 !important;
@@ -674,7 +675,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   
-  /* Adjust bubble margins for smaller screens */
   .message-row.user .bubble { margin-left: 20px; }
   .message-row.assistant .bubble { margin-right: 20px; }
 }
