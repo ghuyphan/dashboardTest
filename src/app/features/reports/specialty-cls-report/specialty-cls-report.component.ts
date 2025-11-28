@@ -22,7 +22,6 @@ import {
 } from '../../../core/services/excel-export.service';
 import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
-// [CLEANUP] Removed LlmService import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -68,7 +67,6 @@ export class SpecialtyClsReportComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private numberPipe = inject(DecimalPipe);
   public readonly themeService = inject(ThemeService);
-  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -116,7 +114,6 @@ export class SpecialtyClsReportComponent implements OnInit {
     this.loadData();
   }
 
-  // ... existing methods (setDefaultDateRange, initializeWidgets, updateWidgetColors, onDateFilter) ...
   private setDefaultDateRange(): void {
     const now = new Date();
     const day = now.getDay();
@@ -293,11 +290,8 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     ];
 
-    // [CLEANUP] Removed updateAiContext call
-
     const sortedSpecialtyNames = sortedSpecialties.map((s) => s[0]);
     
-    // Sort groups based on NHOM
     const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
        const orderA = groupOrderMap.get(a) ?? 999;
        const orderB = groupOrderMap.get(b) ?? 999;
@@ -314,8 +308,6 @@ export class SpecialtyClsReportComponent implements OnInit {
     );
   }
 
-  // [CLEANUP] Removed updateAiContext method
-
   private buildCharts(
     data: SpecialtyClsStat[],
     specialties: string[],
@@ -324,19 +316,15 @@ export class SpecialtyClsReportComponent implements OnInit {
     sortedSpecialties: [string, number][],
     groupOrderMap: Map<string, number>
   ): void {
-    // [UPDATED] 8-Color Palette mapped to groups 1-8
-    // 1: Teal (Khám bệnh), 2: Orange (Xét nghiệm), 3: Dark Blue (NS Tiêu Hóa)
-    // 4: Green (NS TMH), 5: Pink (X-Quang), 6: Blue (MSCT)
-    // 7: Purple/Violet (Siêu Âm - REPLACED RED), 8: Dark Grey (TDCN)
     const themePalette = [
-      this.palette.primary,       // 1. Khám bệnh
-      this.palette.chart6,        // 2. Xét nghiệm
-      this.palette.deepSapphire,  // 3. NS Tiêu Hóa
-      this.palette.success,       // 4. NS TMH
-      this.palette.pastelCoral,   // 5. X-Quang
-      this.palette.secondary,     // 6. MSCT
-      '#8b5cf6',                  // 7. Siêu Âm (Violet - No Red)
-      this.palette.chart7,        // 8. TDCN
+      this.palette.primary,       
+      this.palette.chart6,        
+      this.palette.deepSapphire,  
+      this.palette.success,       
+      this.palette.pastelCoral,   
+      this.palette.secondary,     
+      '#8b5cf6',                  
+      this.palette.chart7,        
     ];
 
     const commonOptions = {
@@ -372,6 +360,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         axisPointer: { type: 'shadow' },
+        confine: true, // Added to prevent cropping
       },
       grid: {
         left: '2%',
@@ -381,7 +370,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         containLabel: true,
       },
       legend: {
-        type: 'scroll',
+        type: 'scroll', // Added to prevent overlap
         top: 0,
         textStyle: { color: this.palette.textSecondary },
       },
@@ -447,13 +436,14 @@ export class SpecialtyClsReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Added to prevent cropping
         formatter: (params: any) =>
           `${params.name}: <b>${this.vnNumberFormatter.format(
             params.value
           )}</b> (${params.percent}%)`,
       },
       legend: {
-        type: 'scroll',
+        type: 'scroll', // Added to prevent overlap
         orient: 'horizontal',
         bottom: 0,
         left: 'center',
@@ -465,7 +455,7 @@ export class SpecialtyClsReportComponent implements OnInit {
           type: 'pie',
           radius: ['35%', '60%'],
           center: ['50%', '50%'],
-          avoidLabelOverlap: true,
+          avoidLabelOverlap: true, // Added to prevent overlap
           itemStyle: {
             borderRadius: 4,
             borderColor: this.palette.bgCard,
@@ -491,6 +481,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Added to prevent cropping
       },
       grid: {
         left: '3%',

@@ -437,8 +437,10 @@ export class DeviceDashboardComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         textStyle: { color: this.palette.textPrimary },
         borderColor: this.palette.gray200,
+        confine: true, // Avoid tooltip cut-off
       },
       legend: {
+        type: 'scroll', // Prevent overlap
         orient: 'vertical',
         left: '4%',
         top: 'center',
@@ -449,6 +451,7 @@ export class DeviceDashboardComponent implements OnInit {
           type: 'pie',
           radius: ['50%', '75%'],
           center: ['65%', '50%'],
+          avoidLabelOverlap: true, // Prevent label overlap
           data: data.map((item) => ({
             name: item.TenTrangThai,
             value: item.SoLuong,
@@ -486,6 +489,7 @@ export class DeviceDashboardComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Avoid tooltip cut-off
       },
       xAxis: {
         type: 'value',
@@ -531,6 +535,7 @@ export class DeviceDashboardComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Avoid tooltip cut-off
       },
       grid: { left: '3%', right: '4%', containLabel: true },
       xAxis: { type: 'category', data: x, boundaryGap: false },

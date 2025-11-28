@@ -198,9 +198,6 @@ export class BedUsageComponent implements OnInit {
     
     const rate = totals.totalBeds > 0 ? (occupied / totals.totalBeds) * 100 : 0;
     const occupancyRate = `${rate.toFixed(1).replace('.', ',')}%`;
-    
-    // WidgetCardComponent auto-formats values, so sending raw strings/numbers is fine usually,
-    // but for consistency with specific formatting requirements (if any), we use the formatter.
     const format = (val: number) => this.vnNumberFormatter.format(val);
 
     return [
@@ -288,6 +285,7 @@ export class BedUsageComponent implements OnInit {
         backgroundColor: palette.bgCard,
         borderColor: palette.gray200,
         textStyle: { color: palette.textPrimary },
+        confine: true, // Added to prevent cropping
         axisPointer: {
           type: 'shadow',
           shadowStyle: { color: 'rgba(0, 0, 0, 0.05)' },
@@ -298,7 +296,7 @@ export class BedUsageComponent implements OnInit {
         data: bedStatusSeries.map((s) => s.name),
         top: 0,
         left: 'center',
-        type: 'scroll',
+        type: 'scroll', // Added to prevent overlap
         textStyle: { fontSize: 11, color: palette.textSecondary },
         padding: [0, 0, 10, 0]
       },
@@ -338,7 +336,6 @@ export class BedUsageComponent implements OnInit {
           },
         },
         axisLabel: { color: palette.textSecondary }
-        // Note: We removed axisLabel.formatter to let ChartCard middleware inject it
       },
       series: [
         ...bedStatusSeries.map((config) => ({
@@ -358,7 +355,6 @@ export class BedUsageComponent implements OnInit {
             position: 'inside',
             color: '#fff',
             fontSize: 9,
-            // Manually format because of the > 0 check logic
             formatter: (p: any) => (p.value > 0 ? this.vnNumberFormatter.format(p.value) : ''),
           },
         })),
@@ -376,7 +372,6 @@ export class BedUsageComponent implements OnInit {
             color: palette.textPrimary,
             fontWeight: 'bold',
             fontSize: 11,
-            // Removed manual formatter '{c}' so ChartCard will format it to '1.000'
             distance: 5,
           },
           tooltip: { show: false },

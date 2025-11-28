@@ -24,7 +24,6 @@ import {
   ExportColumn,
 } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
-// [CLEANUP] Removed LlmService import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -70,7 +69,6 @@ export class ClsLevel6ReportComponent implements OnInit {
   private numberPipe = inject(DecimalPipe);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -294,12 +292,8 @@ export class ClsLevel6ReportComponent implements OnInit {
       },
     ];
 
-    // [CLEANUP] Removed updateAiContext call
-
     this.buildCharts(roomMap, groupMap, dateMap);
   }
-
-  // [CLEANUP] Removed updateAiContext method
 
   private buildCharts(
     roomMap: Map<string, number>,
@@ -317,6 +311,7 @@ export class ClsLevel6ReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Added to prevent cropping
       },
       grid: {
         left: '3%',
@@ -522,9 +517,10 @@ export class ClsLevel6ReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Added to prevent cropping
       },
       legend: {
-        type: 'scroll',
+        type: 'scroll', // Added to prevent overlap
         orient: 'horizontal',
         bottom: 0,
         left: 'center',
@@ -536,7 +532,7 @@ export class ClsLevel6ReportComponent implements OnInit {
           type: 'pie',
           radius: ['45%', '75%'],
           center: ['50%', '45%'],
-          avoidLabelOverlap: true,
+          avoidLabelOverlap: true, // Added to prevent overlap
           itemStyle: {
             borderRadius: 5,
             borderColor: this.palette.bgCard,

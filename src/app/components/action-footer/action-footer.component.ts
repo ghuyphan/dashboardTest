@@ -22,12 +22,10 @@ export class ActionFooterComponent implements OnInit, OnDestroy {
   public actions$: Observable<FooterAction[] | null>;
   
   private footerService = inject(FooterActionService);
-  public versionService = inject(VersionService); // Changed to public for template access
+  public versionService = inject(VersionService);
   private toastService = inject(ToastService); 
 
   public appVersion = this.versionService.appVersion; 
-  
-  // [UPDATED] Use the signal from VersionService instead of a local one
   public isDevMode = this.versionService.isDevMode;
   
   // Easter Egg State
@@ -72,16 +70,14 @@ export class ActionFooterComponent implements OnInit, OnDestroy {
   }
 
   private triggerEasterEgg(): void { 
-    // Toggle the global state
+    // Toggle the global state via signal
+    // The Service effect will handle LocalStorage and Body Class updates
     this.versionService.isDevMode.update(v => !v);
     
     if (this.isDevMode()) {
-      // [UPDATED MESSAGE]
       this.toastService.showSuccess('↑ ↑ ↓ ↓ ← → ← → B A. Chế độ Konami kích hoạt! AI Assistant đã được bật.');
-      document.body.classList.add('dev-mode-active');
     } else {
       this.toastService.showInfo('Chế độ Konami Tắt. AI Assistant đã ẩn.');
-      document.body.classList.remove('dev-mode-active');
     }
   }
 }

@@ -19,7 +19,7 @@
   height: 100%;
   width: 100%;
   position: relative;
-  overflow: hidden; /* Contain everything */
+  overflow: hidden;
 }
 
 /* --- BACKDROP --- */
@@ -31,8 +31,8 @@
   .sidebar-backdrop {
     display: block;
     position: fixed;
-    inset: 0; /* Covers entire screen */
-    background-color: rgba(0, 0, 0, 0.3); /* Slightly darker */
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.3); 
     z-index: 990;
     opacity: 0;
     visibility: hidden;
@@ -79,25 +79,17 @@
 
 /* --- CONTENT AREA --- */
 .dashboard-content {
-  /* [FIX] Use Flexbox to fill remaining space */
   flex: 1;
   min-height: 0; 
-  
-  /* [UPDATED] Remove scroll from layout, let individual pages handle it.
-     This fixes the height:100% issue on Chart screens. */
   overflow: hidden; 
   
-  padding: var(--spacing-sm) var(--spacing-mds);
+  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-mds) var(--spacing-sm);
   position: relative;
-  
-  /* [FIX] Make this a flex container to pass height down correctly to router-outlet children */
   display: flex;
   flex-direction: column;
 }
 
 .content-fade-wrapper {
-  /* [FIX] Changed from min-height to height: 100% and flex: 1 
-     This ensures child components with height: 100% actually fill the screen */
   flex: 1;
   height: 100%;
   display: flex;
@@ -126,11 +118,11 @@
 
 /* --- HEADER & FOOTER --- */
 app-header {
-  flex-shrink: 0; /* Prevent shrinking */
+  flex-shrink: 0;
   z-index: 980;
 }
 
 app-action-footer {
-  flex-shrink: 0; /* Prevent shrinking */
+  flex-shrink: 0; 
   z-index: 980;
 }

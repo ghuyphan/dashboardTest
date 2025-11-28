@@ -18,7 +18,6 @@ import { ToastService } from '../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../core/services/theme.service';
 import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
 import { DateUtils } from '../../shared/utils/date.utils';
-// [CLEANUP] Removed LlmService import
 
 import { WidgetCardComponent } from '../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../components/chart-card/chart-card.component';
@@ -61,7 +60,6 @@ export class ExaminationOverviewComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -101,8 +99,6 @@ export class ExaminationOverviewComponent implements OnInit {
       if (!this.isLoading && this.rawData.length > 0) {
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
-        
-        // [CLEANUP] Removed updateAiContext call
       }
 
       this.cd.markForCheck();
@@ -133,7 +129,9 @@ export class ExaminationOverviewComponent implements OnInit {
     this.loadData();
   }
 
-  // [CLEANUP] Removed updateAiContext method
+  private initializeWidgets(): void {
+    this.initializeWidgetsStructure();
+  }
 
   private initializeWidgetsStructure(): void {
     this.widgetData = [
@@ -208,7 +206,6 @@ export class ExaminationOverviewComponent implements OnInit {
       { total: 0, ck: 0, cc: 0, nt: 0, dnt: 0 }
     );
 
-    // Sending raw strings allows WidgetCardComponent to animate and format automatically.
     this.widgetData = this.widgetData.map(w => {
       let val = 0;
       switch(w.id) {
@@ -259,6 +256,7 @@ export class ExaminationOverviewComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
+        confine: true, // Prevent tooltip cropping
       },
       grid: {
         left: '2%',
@@ -271,7 +269,11 @@ export class ExaminationOverviewComponent implements OnInit {
 
     this.trendChartOptions = {
       ...commonOps,
-      legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
+      legend: { 
+        bottom: 0, 
+        textStyle: { color: this.palette.textSecondary },
+        type: 'scroll', // Scrollable Legend
+      },
       xAxis: {
         type: 'category',
         boundaryGap: false,
@@ -365,14 +367,19 @@ export class ExaminationOverviewComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        // ChartCard auto-injects valueFormatter for tooltips if not provided
+        confine: true, // Prevent tooltip cropping
       },
-      legend: { bottom: 0, textStyle: { color: this.palette.textSecondary } },
+      legend: { 
+        bottom: 0, 
+        textStyle: { color: this.palette.textSecondary },
+        type: 'scroll', // Scrollable Legend
+      },
       series: [
         {
           type: 'pie',
           radius: ['45%', '70%'],
           center: ['50%', '45%'],
+          avoidLabelOverlap: true, // Prevent overlap for pie labels
           itemStyle: {
             borderRadius: 5,
             borderColor: this.palette.bgCard,
@@ -381,7 +388,6 @@ export class ExaminationOverviewComponent implements OnInit {
           label: { 
             show: true, 
             position: 'outer',
-            // Use function formatter to ensure number formatting
             formatter: (params: any) => {
               return `${params.name}: ${this.vnNumberFormatter.format(params.value)} (${params.percent}%)`;
             },

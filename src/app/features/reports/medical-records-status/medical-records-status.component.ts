@@ -23,7 +23,6 @@ import {
   ExportColumn,
 } from '../../../core/services/excel-export.service';
 import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
-// [CLEANUP] Removed LlmService import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -56,7 +55,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -81,8 +79,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
     this.setDefaultDateRange();
     this.loadData();
   }
-
-  // [CLEANUP] Removed updateAiContext method
 
   private setDefaultDateRange(): void {
     const now = new Date();
@@ -119,7 +115,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
         next: (data) => {
           this.summaryData = data || [];
           this.buildCharts(this.summaryData);
-          // [CLEANUP] Removed updateAiContext call
         },
         error: (err) => {
           console.error(err);
@@ -152,6 +147,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         axisPointer: { type: 'shadow' },
+        confine: true, // Added to prevent cropping
       },
       grid: { left: '3%', right: '4%', top: '10%', containLabel: true },
       xAxis: {

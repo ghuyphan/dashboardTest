@@ -10,7 +10,7 @@ $gradient-avatar: linear-gradient(135deg, $color-primary, $color-accent);
 $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), var(--gray-100));
 
 :host {
-  --header-offset: 48px; /* Adjusted to match standard header height */
+  --header-offset: 50px; /* Adjusted to match standard header height */
   --chat-width: 400px;
   --chat-height: 650px;
   --bubble-radius: 18px;
