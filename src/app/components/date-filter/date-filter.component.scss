@@ -1,41 +1,41 @@
 :host {
   display: block;
+  --input-height: 42px;
+  --icon-size: 1.25rem;
 }
 
 .filter-card {
   background-color: var(--surface-card);
-  box-shadow: var(--box-shadow-md);
-  padding: 16px;
   border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-md);
   border: 1px solid transparent;
   
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-end; /* Aligns inputs and buttons to bottom baseline */
+  flex-direction: column;
+  gap: var(--spacing-md);
 
   /* Dark Mode Border */
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
 
-  &.is-loading {
-    opacity: 0.6;
-    pointer-events: none;
+  /* Desktop: Row Layout */
+  @media (min-width: 992px) {
+    flex-direction: row;
+    align-items: flex-end;
   }
 }
 
-/* --- Inputs Section --- */
+/* --- 1. Inputs Section --- */
 .filter-inputs {
-  display: flex;
-  gap: 16px;
-  flex: 0 0 auto; 
-  
-  /* On very small screens, stack inputs */
-  @media (max-width: 576px) {
-    width: 100%;
-    flex-direction: column;
-    gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Side by side on mobile */
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr; /* Stack on very small screens */
   }
 }
 
@@ -52,75 +52,120 @@
     color: var(--text-secondary);
     letter-spacing: 0.5px;
     margin-left: 2px;
-    white-space: nowrap;
   }
 }
 
-.form-control-sm {
-  height: 42px; /* Standardized height */
-  padding: 0 12px;
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-control-date {
+  height: var(--input-height);
   width: 100%;
   min-width: 140px;
+  padding: 0 12px;
   
+  /* Semantic Colors */
   background-color: var(--input-bg);
+  color: var(--text-primary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   
+  font-family: var(--font-family-sans);
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-primary);
-  font-family: var(--font-family-sans);
   
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
   outline: none;
+  
+  /* Browser Native Picker Styling */
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: 0.2s;
+    /* Invert icon in dark mode (managed globally in styles.scss, but forced here just in case) */
+    [data-theme='dark'] & {
+      filter: invert(1);
+    }
+  }
+  
+  /* Ensure native picker respects theme */
+  color-scheme: light;
+  [data-theme='dark'] & {
+    color-scheme: dark;
+  }
 
   &:hover:not(:disabled) {
     border-color: var(--gray-400);
   }
 
-  &:focus {
+  &:focus:not(:disabled) {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
+    [data-theme='dark'] & {
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    }
   }
 
+  /* --- IMPROVED DISABLED STATE --- */
   &:disabled {
-    opacity: 0.6;
     cursor: not-allowed;
-    background-color: var(--gray-100);
-  }
+    background-color: var(--gray-100); /* Explicit background */
+    color: var(--text-secondary);      /* High contrast text */
+    border-color: var(--gray-200);
+    opacity: 1; /* Prevent browser default fading */
 
-  /* Fix Calendar Icon in Dark Mode */
-  [data-theme='dark'] & {
-    color-scheme: dark;
+    [data-theme='dark'] & {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--gray-400);
+      border-color: var(--gray-700);
+    }
   }
 }
 
-/* --- Quick Actions (Pills) --- */
-.quick-actions {
+/* --- 2. Quick Actions (Pills) --- */
+.quick-actions-container {
+  flex: 1;
+  min-width: 0; /* Allow flex shrink */
+  position: relative;
+  display: flex;
+  align-items: center;
+  
+  /* Fade masks for scrolling hint */
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, transparent, var(--surface-card));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  /* Show fade on mobile/overflow */
+  @media (max-width: 992px) {
+    &::after { opacity: 1; }
+  }
+}
+
+.quick-actions-scroll {
   display: flex;
   gap: 8px;
-  align-items: center;
-  flex: 1; 
-  min-width: 0; 
-  
-  /* [FIX: PC SHRINK SCROLL] Enable horizontal scroll to prevent overflow on shrinking desktop screens */
   overflow-x: auto;
-  white-space: nowrap; /* Keep pills in a single row */
+  padding-bottom: 4px; /* Space for scrollbar/shadow */
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar { display: none; } /* Chrome */
   
-  /* Hide scrollbar */
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  /* Snap behavior for nice touch feel */
+  scroll-snap-type: x mandatory;
   
-  padding-bottom: 4px; /* Space for horizontal scrolling/shadows */
-
-  /* Mobile/Tablet Layout (Max 992px) */
-  @media (max-width: 992px) {
-    flex: 1 1 100%; /* Force to new line when stacking begins */
-    order: 2;
-    
-    margin-top: 4px;
-    margin-bottom: 4px;
-  }
+  /* Ensure proper height */
+  height: var(--input-height);
+  align-items: center;
 }
 
 .btn-pill {
@@ -129,88 +174,58 @@
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   
-  height: 34px; 
+  height: 32px;
   padding: 0 16px;
   border-radius: 99px;
   
   font-size: 0.8125rem;
   font-weight: 600;
-  cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0; 
-  
+  cursor: pointer;
   transition: all 0.2s ease;
-  user-select: none;
+  scroll-snap-align: start;
 
   &:hover:not(:disabled) {
     background-color: var(--gray-100);
     color: var(--text-primary);
-    border-color: var(--gray-300);
     transform: translateY(-1px);
+    
+    [data-theme='dark'] & {
+      background-color: var(--gray-700);
+    }
   }
 
   &.active {
     background-color: var(--primary);
     border-color: var(--primary);
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 131, 155, 0.25);
-
-    &:hover {
-      background-color: var(--secondary);
+    box-shadow: var(--box-shadow-sm);
+    
+    [data-theme='dark'] & {
+       color: #000; /* Black text on bright teal for contrast */
     }
-  }
-}
-
-/* --- Action Buttons --- */
-.action-buttons {
-  margin-left: auto;
-  
-  @media (max-width: 992px) {
-    width: 100%;
-    order: 3; 
-    margin-left: 0;
-  }
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  
-  height: 42px; 
-  padding: 0 24px;
-  
-  background: var(--primary);
-  color: white;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-  
-  box-shadow: var(--box-shadow-sm);
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background-color: var(--secondary);
-    transform: translateY(-1px);
-    box-shadow: var(--box-shadow-md);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: none;
   }
 
   &:disabled {
-    opacity: 0.7;
-    cursor: wait;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
+}
 
-  /* Mobile: Full width button */
-  @media (max-width: 992px) {
+/* --- 3. Submit Button --- */
+.action-buttons {
+  flex-shrink: 0;
+  
+  .btn-primary {
+    height: var(--input-height);
     width: 100%;
+    
+    /* On Desktop, auto width */
+    @media (min-width: 992px) {
+      width: auto;
+      min-width: 120px;
+    }
+    
+    i { margin-right: 6px; }
   }
 }

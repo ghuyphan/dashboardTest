@@ -5,6 +5,7 @@ import {
   withPreloading,
   PreloadAllModules,
   withViewTransitions,
+  withInMemoryScrolling,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
@@ -24,7 +25,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withPreloading(PreloadAllModules),
-      withViewTransitions()
+      withViewTransitions(),
+      // [FIX] Enable standard scroll restoration
+      withInMemoryScrolling({ scrollPositionRestoration: 'top' }) 
     ),
 
     provideHttpClient(

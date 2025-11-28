@@ -1,47 +1,55 @@
-<div class="filter-card">
+<div class="filter-card" [class.is-loading]="isLoading()">
+  
   <div class="filter-inputs">
     <div class="filter-group">
       <label for="fromDate">Từ ngày</label>
-      <input 
-        type="date" 
-        id="fromDate" 
-        [ngModel]="fromDate()" 
-        (ngModelChange)="onDateChange('from', $event)" 
-        class="form-control-sm" 
-        [disabled]="isLoading()"
-        [min]="minDate()"
-        [max]="fromMax()"
-      />
+      <div class="input-wrapper">
+        <input 
+          type="date" 
+          id="fromDate" 
+          [ngModel]="fromDate()" 
+          (ngModelChange)="onDateChange('from', $event)" 
+          class="form-control-date" 
+          [disabled]="isLoading()"
+          [max]="fromMax()"
+        />
+      </div>
     </div>
+    
     <div class="filter-group">
       <label for="toDate">Đến ngày</label>
-      <input 
-        type="date" 
-        id="toDate" 
-        [ngModel]="toDate()" 
-        (ngModelChange)="onDateChange('to', $event)" 
-        class="form-control-sm" 
-        [disabled]="isLoading()"
-        [min]="toMin()"
-        [max]="toMax()"
-      />
+      <div class="input-wrapper">
+        <input 
+          type="date" 
+          id="toDate" 
+          [ngModel]="toDate()" 
+          (ngModelChange)="onDateChange('to', $event)" 
+          class="form-control-date" 
+          [disabled]="isLoading()"
+          [min]="toMin()"
+          [max]="toMax()"
+        />
+      </div>
     </div>
   </div>
 
-  <div class="quick-actions">
-    @for (range of quickRanges; track range.key) {
-      <button 
-        class="btn-pill" 
-        [class.active]="activeRange() === range.key"
-        (click)="setRange(range.key, true)"
-        [disabled]="isLoading()"> 
-        {{ range.label }}
-      </button>
-    }
+  <div class="quick-actions-container">
+    <div class="quick-actions-scroll">
+      @for (range of quickRanges; track range.key) {
+        <button 
+          type="button"
+          class="btn-pill" 
+          [class.active]="activeRange() === range.key"
+          (click)="setRange(range.key, true)"
+          [disabled]="isLoading()"> 
+          {{ range.label }}
+        </button>
+      }
+    </div>
   </div>
 
   <div class="action-buttons">
-    <button class="btn btn-primary" (click)="applyFilter()" [disabled]="isLoading()">
+    <button type="button" class="btn btn-primary" (click)="applyFilter()" [disabled]="isLoading()">
       @if (isLoading()) {
         <i class="fas fa-spinner fa-spin"></i>
       } @else {
@@ -50,4 +58,5 @@
       <span>{{ buttonLabel() }}</span>
     </button>
   </div>
+  
 </div>

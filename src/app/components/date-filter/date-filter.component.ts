@@ -34,8 +34,11 @@ export class DateFilterComponent {
   // INPUTS
   public isLoading = input<boolean>(false);
   public buttonLabel = input<string>('Xem Báo Cáo');
+  
+  // Optional strict constraints from parent. 
+  // If maxDate is NOT provided, it defaults to Today (preventing future dates).
   public minDate = input<string>(''); 
-  public maxDate = input<string>(''); // Optional strict max limit from parent
+  public maxDate = input<string>(''); 
 
   // OUTPUTS
   public filterSubmit = output<DateRange>();
@@ -53,16 +56,19 @@ export class DateFilterComponent {
     { key: 'thisYear', label: 'Năm nay' },
   ];
 
-  // --- COMPUTED CONSTRAINTS ---
-  private todayStr = new Date().toISOString().split('T')[0];
+  // --- COMPUTED CONSTRAINTS (Strictly enforcing No Future Dates by default) ---
+  private readonly todayStr = new Date().toISOString().split('T')[0];
 
   // Effective Max: Use parent's maxDate if provided, otherwise default to Today
-  public effectiveMax = computed(() => this.maxDate() || this.todayStr);
+  public effectiveMax = computed(() => {
+    return this.maxDate() ? this.maxDate() : this.todayStr;
+  });
 
-  // From Date Max: Cannot exceed To Date (if selected) AND cannot exceed Today
+  // From Date Max: Cannot exceed To Date (if selected) AND cannot exceed effective max
   public fromMax = computed(() => {
     const to = this.toDate();
     const max = this.effectiveMax();
+    // If "To" date is selected and is earlier than "Max", restrict "From" to "To"
     if (to && to < max) return to;
     return max;
   });
@@ -71,39 +77,42 @@ export class DateFilterComponent {
   public toMin = computed(() => {
     const from = this.fromDate();
     const min = this.minDate();
+    // If "From" date is selected and is later than "Min", restrict "To" to "From"
     if (from && (!min || from > min)) return from;
     return min || '';
   });
 
-  // To Date Max: Cannot exceed Today
+  // To Date Max: Always the effective max (Today or custom)
   public toMax = computed(() => this.effectiveMax());
 
   constructor() {
+    // Initialize with "This Week"
     this.setRange('thisWeek', false);
   }
 
   onDateChange(type: 'from' | 'to', value: string) {
-    // 1. Validate Future Dates
+    // 1. Strict Future Validation (Server-side safety check for client input)
     if (value > this.effectiveMax()) {
-      this.toastService.showWarning('Không thể chọn ngày trong tương lai.');
-      // Reset to Today if user types a future date
+      this.toastService.showWarning('Ngày chọn không được vượt quá hôm nay (hoặc giới hạn cho phép).');
+      // Revert to valid max
       value = this.effectiveMax();
       
-      // Force UI update if needed (usually value re-assignment handles it)
+      // Force UI update via signal tick
       if (type === 'from') this.fromDate.set(value);
       else this.toDate.set(value);
     }
 
+    // 2. Logic Binding
     if (type === 'from') {
       this.fromDate.set(value);
-      // Ensure From <= To
+      // Auto-correct: If From > To, push To forward
       if (this.toDate() && value > this.toDate()) {
         this.toDate.set(value);
       }
     } 
     else if (type === 'to') {
       this.toDate.set(value);
-      // Ensure To >= From
+      // Auto-correct: If To < From, push From backward
       if (this.fromDate() && value < this.fromDate()) {
         this.fromDate.set(value);
       }
@@ -123,6 +132,7 @@ export class DateFilterComponent {
         // start/end are now
         break;
       case 'thisWeek':
+        // Calculate Monday of current week
         const day = now.getDay();
         const diff = now.getDate() - day + (day == 0 ? -6 : 1);
         start = new Date(now.setDate(diff));
@@ -144,7 +154,7 @@ export class DateFilterComponent {
         break;
     }
 
-    // Apply constraints to calculated range (e.g. clip future dates to Today)
+    // Apply constraints to calculated range (clip future dates to Today)
     const finalStart = this.applyConstraints(this.formatDate(start));
     const finalEnd = this.applyConstraints(this.formatDate(end));
 
@@ -171,7 +181,7 @@ export class DateFilterComponent {
     if (!dateStr) return dateStr;
     
     const min = this.minDate();
-    const max = this.effectiveMax(); // Uses Today if maxDate is not provided
+    const max = this.effectiveMax();
 
     if (min && dateStr < min) return min;
     if (max && dateStr > max) return max;

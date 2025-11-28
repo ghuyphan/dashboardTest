@@ -6,7 +6,9 @@ import {
   effect, 
   signal, 
   computed, 
-  ChangeDetectionStrategy 
+  ChangeDetectionStrategy,
+  ViewChild,      // [FIX] Added
+  ElementRef      // [FIX] Added
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
@@ -76,6 +78,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   public navItems = signal<NavItem[]>([]);
 
+  // [FIX] Access the scroll container
+  @ViewChild('mainContent') private mainContent!: ElementRef<HTMLElement>;
+
   // Store resize listener to remove it later
   private resizeListener = this.checkWindowSize.bind(this);
 
@@ -116,10 +121,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       .pipe(
         filter(event => event instanceof NavigationEnd),
         tap(() => {
+            // 1. Close sidebar on mobile
             if (window.innerWidth <= 992 && this.sidebarOpen()) {
                 requestAnimationFrame(() => {
                   this.sidebarOpen.set(false);
                 });
+            }
+            
+            // [FIX] 2. Reset scroll position for the internal container
+            if (this.mainContent?.nativeElement) {
+              this.mainContent.nativeElement.scrollTop = 0;
             }
         }),
         startWith(null),
@@ -170,7 +181,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.sidebarOpen.update(v => !v);
   }
 
-  // [FIX] Added explicit close handler
   closeSidebar(): void {
     this.sidebarOpen.set(false);
   }
