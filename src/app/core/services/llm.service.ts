@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
 import { Router, Routes, Route } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ThemeService } from './theme.service';
@@ -11,7 +11,7 @@ export interface ChatMessage {
 
 const SCREEN_DESCRIPTIONS: Record<string, string> = {
   'home': 'Màn hình chính, xem thống kê tổng quan nhanh.',
-  'settings': 'Thay đổi mật khẩu và xem thông tin tài khoản cá nhân.',
+  'settings': 'Cài đặt tài khoản, thay đổi mật khẩu và xem thông tin cá nhân.',
   'equipment/catalog': 'Quản lý danh sách máy móc, thêm/sửa/xóa thiết bị, in mã QR, biên bản bàn giao.',
   'equipment/dashboard': 'Dashboard thiết bị, biểu đồ thống kê tình trạng máy (hỏng, bảo trì, hoạt động).',
   'reports/bed-usage': 'Xem công suất giường bệnh, số lượng giường trống/đang dùng theo khoa.',
@@ -26,12 +26,13 @@ const SCREEN_DESCRIPTIONS: Record<string, string> = {
   providedIn: 'root',
 })
 export class LlmService {
-  private authService = inject(AuthService);
-  private themeService = inject(ThemeService);
-  private router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly themeService = inject(ThemeService);
+  private readonly router = inject(Router);
   
   private readonly apiUrl = environment.llmUrl;
   private readonly MAX_HISTORY = 10;
+  private readonly MODEL_NAME = 'gemma3:4b-it-qat';
 
   // --- Signals ---
   public isOpen = signal<boolean>(false);
@@ -42,7 +43,15 @@ export class LlmService {
   public messages = signal<ChatMessage[]>([]);
   public isNavigating = signal<boolean>(false);
 
-  constructor() {}
+  constructor() {
+    // Automatically reset chat state when user logs out
+    effect(() => {
+      if (!this.authService.isLoggedIn()) {
+        this.resetChat();
+        this.isOpen.set(false);
+      }
+    });
+  }
 
   public toggleChat(): void {
     this.isOpen.update((v) => !v);
@@ -51,6 +60,10 @@ export class LlmService {
     }
   }
 
+  /**
+   * Checks server availability before enabling chat.
+   * Uses a lightweight GET request to the base URL.
+   */
   async loadModel(): Promise<void> {
     if (this.modelLoaded()) return;
     
@@ -58,16 +71,9 @@ export class LlmService {
     this.loadProgress.set('Đang kết nối máy chủ...');
 
     try {
-      // [FAST CHECK] Instead of loading the model (heavy), just ping the server root (light)
-      // We infer the base URL from the API URL (e.g. http://host:11434/api/chat -> http://host:11434/)
-      let baseUrl = this.apiUrl;
-      try {
-        const urlObj = new URL(this.apiUrl);
-        baseUrl = `${urlObj.protocol}//${urlObj.host}/`;
-      } catch (e) { /* Keep original if parse fails */ }
-
+      const baseUrl = this.getBaseUrl();
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(baseUrl, {
         method: 'GET',
@@ -77,25 +83,19 @@ export class LlmService {
 
       clearTimeout(timeoutId);
 
+      // Accept 200 (OK) or 404 (Not Found) as proof of life from the server
       if (!response.ok && response.status !== 200 && response.status !== 404) {
-         // 404 is acceptable for a root ping as it proves the server is reachable
          throw new Error(`Server unreachable: ${response.status}`);
       }
 
-      // Artificial delay for the fancy animation to finish if it was too fast
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Small delay for better UX transition
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       this.modelLoaded.set(true);
       this.loadProgress.set('Sẵn sàng');
 
       if (this.messages().length === 0) {
-        const user = this.authService.currentUser();
-        const greeting = `Chào bạn ${user?.fullName || ''}. Tôi là Trợ lý IT Assistant, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?`;
-          
-        this.messages.update((msgs) => [
-          ...msgs,
-          { role: 'assistant', content: greeting },
-        ]);
+        this.addGreetingMessage();
       }
     } catch (error) {
       console.error('AI Server Connection Error:', error);
@@ -108,32 +108,32 @@ export class LlmService {
   async sendMessage(content: string): Promise<void> {
     if (!content.trim()) return;
     
-    // 1. Add User Message
-    this.messages.update((msgs) => [...msgs, { role: 'user', content }]);
-    
-    // 2. Prepare AI Placeholder
-    this.messages.update((msgs) => [...msgs, { role: 'assistant', content: '' }]);
+    // 1. Update UI with user message immediately
+    this.updateMessages({ role: 'user', content });
+    this.updateMessages({ role: 'assistant', content: '' }); // Placeholder
     this.isGenerating.set(true);
 
-    let hasNavigated = false;
+    let hasActionTriggered = false;
 
     try {
-      // 3. Prepare Context
-      const recentMessages = this.messages()
-        .filter((m) => !!m.content) // Filter out empty placeholders but keep assistant messages
+      // 2. Build context window
+      const contextMessages = this.messages()
+        .filter(m => !!m.content)
         .slice(-this.MAX_HISTORY);
 
       const systemPrompt = this.getDynamicSystemPrompt();
 
-      // 4. Call API
+      // 3. Prepare request payload
       const payload = {
-        model: 'gemma3:4b-it-qat', // Main model for logic
+        model: this.MODEL_NAME,
         messages: [
           { role: 'system', content: systemPrompt },
-          ...recentMessages,
+          ...contextMessages,
         ],
         temperature: 0.1,
         top_p: 0.9,
+        top_k: 40,
+        repeat_penalty: 1.1,
         stream: true, 
       };
 
@@ -143,25 +143,25 @@ export class LlmService {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Kết nối AI thất bại');
+      if (!response.ok) throw new Error('Failed to connect to AI service');
+      if (!response.body) throw new Error('No response body received');
 
-      // 5. Handle Stream
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
-
+      // 4. Process the stream
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullText = '';
+      let fullResponseText = '';
 
       while (true) {
         if (!this.isGenerating()) {
           reader.cancel();
           break;
         }
+        
         const { done, value } = await reader.read();
         if (done) break;
         
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter((line) => line.trim() !== '');
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
 
         for (const line of lines) {
           try {
@@ -172,37 +172,42 @@ export class LlmService {
             const token = json.message?.content || json.choices?.[0]?.delta?.content || json.response || '';
             
             if (token) {
-              fullText += token;
+              fullResponseText += token;
               
-              // --- NAVIGATION HANDLING ---
-              const navMatch = fullText.match(/\[\[NAVIGATE:(.*?)\]\]/);
-              if (navMatch) {
-                const path = navMatch[1];
-                fullText = fullText.replace(navMatch[0], '').trim();
+              // Check for commands (Navigation or Theme)
+              const commandMatch = fullResponseText.match(/\[\[(NAVIGATE|THEME):(.*?)]\]/);
+              
+              if (commandMatch) {
+                const [fullMatch, commandType, arg] = commandMatch;
                 
-                // Only trigger once per message
-                if (!hasNavigated) {
-                   this.triggerNavigation(path);
-                   hasNavigated = true;
+                // Hide command from UI
+                fullResponseText = fullResponseText.replace(fullMatch, '').trim();
+                
+                // Execute command (once per message)
+                if (!hasActionTriggered) {
+                   this.executeCommand(commandType, arg.trim());
+                   hasActionTriggered = true;
                 }
               }
-              // ---------------------------
 
-              this.messages.update((msgs: ChatMessage[]) => {
+              // Update the last assistant message in real-time
+              this.messages.update(msgs => {
                 const newMsgs = [...msgs];
                 const lastIdx = newMsgs.length - 1;
-                newMsgs[lastIdx] = { role: 'assistant', content: fullText };
+                newMsgs[lastIdx] = { role: 'assistant', content: fullResponseText };
                 return newMsgs;
               });
             }
             
             if (json.done) this.isGenerating.set(false);
-          } catch (e) { }
+          } catch (e) {
+            // Ignore JSON parse errors for partial chunks
+          }
         }
       }
     } catch (error) {
-      console.error('AI Error:', error);
-      this.messages.update((msgs) => {
+      console.error('AI Generation Error:', error);
+      this.messages.update(msgs => {
         const newMsgs = [...msgs];
         const lastMsg = newMsgs[newMsgs.length - 1];
         lastMsg.content += '\n\n*(Hệ thống đang bận, vui lòng thử lại sau)*';
@@ -210,7 +215,34 @@ export class LlmService {
       });
     } finally {
       this.isGenerating.set(false);
-      // Previous cleanup logic removed to keep chat history intact
+    }
+  }
+
+  /**
+   * Helper to add messages to the signal state
+   */
+  private updateMessages(msg: ChatMessage): void {
+    this.messages.update(current => [...current, msg]);
+  }
+
+  /**
+   * Resets the chat history. If user is logged in, adds the greeting again.
+   */
+  public resetChat(): void {
+    this.messages.set([]);
+    if (this.modelLoaded() && this.authService.isLoggedIn()) {
+        this.addGreetingMessage();
+    }
+  }
+
+  /**
+   * Executes parsed commands from the LLM
+   */
+  private executeCommand(type: string, arg: string): void {
+    if (type === 'NAVIGATE') {
+      this.triggerNavigation(arg);
+    } else if (type === 'THEME') {
+      this.triggerThemeAction(arg);
     }
   }
 
@@ -219,6 +251,7 @@ export class LlmService {
 
     this.isNavigating.set(true);
     
+    // Artificial delay to show the "Warp" animation
     setTimeout(() => {
       this.router.navigateByUrl(path).then(() => {
         setTimeout(() => this.isNavigating.set(false), 800);
@@ -226,68 +259,89 @@ export class LlmService {
     }, 1000);
   }
 
-  resetChat(): void {
-    this.messages.set([]);
-    // Don't need to reload model if already loaded, just clear msgs
-    if (!this.modelLoaded()) {
-        this.loadModel();
-    } else {
-        // Re-add greeting
-        const user = this.authService.currentUser();
-        this.messages.set([{ 
-            role: 'assistant', 
-            content: `Chào bạn ${user?.fullName || ''}. Tôi là Trợ lý IT Assistant, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?` 
-        }]);
+  private triggerThemeAction(action: string): void {
+    const isDark = this.themeService.isDarkTheme();
+    const mode = action.toLowerCase();
+
+    if (mode === 'dark' && !isDark) {
+      this.themeService.toggleTheme();
+    } else if (mode === 'light' && isDark) {
+      this.themeService.toggleTheme();
+    } else if (mode === 'toggle') {
+      this.themeService.toggleTheme();
     }
+  }
+
+  private addGreetingMessage(): void {
+    const user = this.authService.currentUser();
+    const name = user?.fullName || 'bạn';
+    const greeting = `Chào ${name}. Tôi là Trợ lý IT Assistant. Bạn cần hỗ trợ tìm kiếm chức năng nào?`;
+    this.updateMessages({ role: 'assistant', content: greeting });
   }
   
   private getDynamicSystemPrompt(): string {
     const currentUser = this.authService.currentUser();
     const accessibleRoutes = this.scanRoutes(this.router.config);
+    const today = this.getFormattedDate();
 
+    // Generate sitemap for context
     const sitemapText = accessibleRoutes.map(r => {
       const desc = this.getDescriptionForPath(r.purePath) || 'Chức năng hệ thống.';
-      return `- Tên màn hình: "${r.title}"\n  URL: ${r.fullUrl}\n  Mô tả: ${desc}`;
-    }).join('\n\n');
+      const permInfo = r.permission ? ` [Code: ${r.permission}]` : '';
+      return `- Tên: "${r.title}"${permInfo} | URL: ${r.fullUrl} | Mô tả: ${desc}`;
+    }).join('\n');
     
     return `
 <role>
-Bạn là Trợ lý IT Assistant, trợ lý ảo của hệ thống nội bộ Hoàn Mỹ.
-Bạn đang trò chuyện với: ${currentUser?.fullName || 'Người dùng'}.
-Xưng hô: Hãy dùng "tôi" (thay cho mình/em) và "bạn" (thay cho anh/chị).
-Phong cách: Ngắn gọn, đi thẳng vào vấn đề, hỗ trợ nhiệt tình.
+Bạn là Trợ lý IT Assistant của hệ thống nội bộ Hoàn Mỹ.
+Người dùng hiện tại: ${currentUser?.fullName || 'Nặc danh'}.
+Thời gian hiện tại: ${today}.
+Phong cách trả lời: Ngắn gọn, chuyên nghiệp, đi thẳng vào vấn đề.
 </role>
 
 <context>
-Dưới đây là danh sách các màn hình mà người dùng này ĐƯỢC PHÉP truy cập.
-Bạn CHỈ ĐƯỢC phép điều hướng tới các đường dẫn trong danh sách này.
-
+Danh sách các màn hình mà người dùng này ĐƯỢC PHÉP truy cập:
 ${sitemapText}
 </context>
 
 <rules>
 1. **Điều hướng (Navigation):**
-   - Nếu người dùng hỏi cách làm việc gì đó thuộc danh sách <context>, hãy hướng dẫn và đính kèm lệnh: \`[[NAVIGATE:/duong-dan]]\`.
-   - Ví dụ: "Tôi muốn xem báo cáo giường" -> "Bạn có thể xem tại màn hình công suất giường. [[NAVIGATE:/app/reports/bed-usage]]"
+   - Nếu người dùng hỏi về chức năng có trong <context>, hãy hướng dẫn và đính kèm lệnh điều hướng ở cuối câu trả lời: \`[[NAVIGATE:/url]]\`.
+   - Nếu người dùng nhắc đến **Mã Quyền** (ví dụ "KHTH.ChuaTaoHSBA"), hãy tìm mã đó trong <context> và điều hướng tương ứng.
+   - **Đổi mật khẩu:** Luôn hướng dẫn vào trang Cài đặt. \`[[NAVIGATE:/app/settings]]\`
+   - Ví dụ: "Xem công suất giường" -> "Đang mở màn hình công suất giường. [[NAVIGATE:/app/reports/bed-usage]]"
 
-2. **Bảo mật (Security):**
-   - Nếu người dùng hỏi về một chức năng KHÔNG có trong danh sách <context>, nghĩa là họ KHÔNG CÓ QUYỀN.
-   - Hãy trả lời: "Chức năng này không nằm trong quyền truy cập của bạn hoặc không tồn tại."
-   - Tuyệt đối không bịa ra đường dẫn.
+2. **Giao diện (Theme):**
+   - Hỗ trợ đổi giao diện bằng lệnh:
+     - Chế độ tối: \`[[THEME:dark]]\`
+     - Chế độ sáng: \`[[THEME:light]]\`
+     - Đảo ngược: \`[[THEME:toggle]]\`
+   - Ví dụ: "Bật chế độ tối" -> "Đã chuyển sang giao diện tối. [[THEME:dark]]"
 
-3. **Lỗi kỹ thuật:**
-   - Nếu gặp vấn đề tài khoản/lỗi hệ thống, hướng dẫn gọi IT: 1108 / 1109.
+3. **Bảo mật (Security):**
+   - Nếu người dùng hỏi về một chức năng KHÔNG có trong danh sách <context> (và không phải là yêu cầu đổi giao diện), hãy từ chối.
+   - Trả lời: "Chức năng này không nằm trong quyền truy cập của bạn hoặc không tồn tại."
+   - **TUYỆT ĐỐI KHÔNG** tự bịa ra đường dẫn URL không có trong context.
+
+4. **Hỗ trợ kỹ thuật:**
+   - Nếu gặp lỗi hệ thống, hướng dẫn liên hệ IT qua hotline: 1108 hoặc 1109.
 </rules>
 `.trim();
   }
 
-  private scanRoutes(routes: Routes, parentPath: string = ''): { title: string; fullUrl: string; purePath: string }[] {
-    let results: { title: string; fullUrl: string; purePath: string }[] = [];
+  /**
+   * Recursively scans the router configuration to build a list of accessible routes.
+   */
+  private scanRoutes(routes: Routes, parentPath: string = ''): { title: string; fullUrl: string; purePath: string, permission?: string }[] {
+    let results: { title: string; fullUrl: string; purePath: string, permission?: string }[] = [];
 
     for (const route of routes) {
       if (route.redirectTo || route.path === '**') continue;
 
-      const fullPath = parentPath ? `${parentPath}/${route.path}` : `/${route.path}`;
+      const pathPart = route.path || '';
+      const fullPath = parentPath ? `${parentPath}/${pathPart}` : `/${pathPart}`;
+      
+      // Clean path for description matching (remove /app/ prefix if exists)
       const purePath = fullPath.startsWith('/app/') ? fullPath.substring(5) : (fullPath.startsWith('/') ? fullPath.substring(1) : fullPath);
 
       if (!this.checkRoutePermission(route)) {
@@ -295,10 +349,13 @@ ${sitemapText}
       }
 
       if (route.data && route.data['title']) {
+        const permission = route.data['permission'] as string | undefined;
+        
         results.push({
           title: route.data['title'] as string,
           fullUrl: fullPath,
-          purePath: purePath
+          purePath: purePath,
+          permission: permission
         });
       }
 
@@ -310,18 +367,44 @@ ${sitemapText}
   }
 
   private checkRoutePermission(route: Route): boolean {
+    // Public routes are always allowed
     if (!route.data || !route.data['permission']) {
       return true;
     }
     const requiredPerm = route.data['permission'] as string;
     const user = this.authService.currentUser();
+    
     if (!user || !user.permissions) return false;
+    
+    // Check if user has any permission that starts with the required permission string
     return user.permissions.some(userPerm => userPerm.startsWith(requiredPerm));
   }
 
   private getDescriptionForPath(path: string): string | null {
     if (SCREEN_DESCRIPTIONS[path]) return SCREEN_DESCRIPTIONS[path];
+    // Fuzzy match for paths with IDs (e.g. equipment/catalog/123)
     const key = Object.keys(SCREEN_DESCRIPTIONS).find(k => path.includes(k));
     return key ? SCREEN_DESCRIPTIONS[key] : null;
+  }
+
+  private getFormattedDate(): string {
+    const now = new Date();
+    return new Intl.DateTimeFormat('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(now);
+  }
+
+  private getBaseUrl(): string {
+    try {
+      const urlObj = new URL(this.apiUrl);
+      return `${urlObj.protocol}//${urlObj.host}/`;
+    } catch (e) {
+      return this.apiUrl;
+    }
   }
 }
