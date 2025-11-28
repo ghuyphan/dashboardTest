@@ -1,3 +1,10 @@
+@mixin hidden-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :host {
   display: flex;
   flex-direction: column;
@@ -23,11 +30,12 @@
   overflow-y: auto;
   gap: var(--spacing-lg);
   
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  @include hidden-scrollbar;
 
+  /* Match padding with Date Filter component on mobile */
   @media (max-width: 768px) {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
+    gap: var(--spacing-md);
   }
 }
 
@@ -38,30 +46,45 @@
 
 .widget-grid {
   display: grid;
+  /* Desktop: Comfortable auto-fit */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacing-md);
   max-width: 100%;
 
+  /* Tablet: Allow slightly smaller widgets to fit more in a row */
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  /* Mobile: Force 2 columns (Fixes the "1 column" issue) */
   @media (max-width: 768px) {
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-sm);
+  }
+
+  /* Very small screens: Fallback to stack */
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
   }
 }
 
 /* --- Dashboard Grid --- */
 .dashboard-grid {
   display: grid;
+  /* Base: 4 columns */
   grid-template-columns: repeat(4, minmax(0, 1fr)); 
   gap: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
   flex: 1;
   min-height: 0;
 
+  /* Laptop: 2 columns */
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  @media (max-width: 768px) {
+  /* Tablet/Mobile: 1 column stack */
+  @media (max-width: 992px) {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
   }
@@ -70,11 +93,19 @@
     min-height: 450px;
     display: flex;
     flex-direction: column;
+
+    @media (max-width: 768px) {
+      min-height: 350px;
+    }
   }
 
   /* Tall Chart for Full Width view */
   .grid-item.tall-chart {
     min-height: 550px;
+    
+    @media (max-width: 768px) {
+      min-height: 400px;
+    }
   }
 }
 
@@ -82,13 +113,13 @@
 .span-2 {
   grid-column: span 2;
   @media (max-width: 1400px) { grid-column: span 1; }
-  @media (max-width: 768px) { grid-column: 1 / -1; }
+  @media (max-width: 992px) { grid-column: 1 / -1; }
 }
 
 .span-4 {
   grid-column: span 4;
   @media (max-width: 1400px) { grid-column: span 2; }
-  @media (max-width: 768px) { grid-column: 1 / -1; }
+  @media (max-width: 992px) { grid-column: 1 / -1; }
 }
 
 .span-full {

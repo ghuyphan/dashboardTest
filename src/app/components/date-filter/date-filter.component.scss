@@ -7,7 +7,10 @@
 .filter-card {
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
+  
+  /* [FIX] Use variable spacing and add mobile override */
+  padding: var(--spacing-md); 
+  
   box-shadow: var(--box-shadow-md);
   border: 1px solid transparent;
   
@@ -18,6 +21,12 @@
   /* Dark Mode Border */
   [data-theme='dark'] & {
     border-color: var(--border-color);
+  }
+
+  /* [FIX] Match ChartCard mobile padding (8px) */
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
   }
 
   /* Desktop: Row Layout */

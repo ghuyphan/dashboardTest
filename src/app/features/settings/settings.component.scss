@@ -155,7 +155,7 @@
       font-weight: 600;
       line-height: 1.2;
       background-color: var(--teal-blue-light); 
-      color: #003d4d; 
+      color:  var(--text-primary); 
       
       [data-theme='dark'] & {
         background-color: rgba(45, 212, 191, 0.2);

@@ -26,6 +26,7 @@ import {
   GridComponent,
   LegendComponent,
   DataZoomComponent,
+  TimelineComponent // [FIX] Added for responsive media queries
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { ThemeService } from '../../core/services/theme.service';
@@ -33,6 +34,7 @@ import { ThemeService } from '../../core/services/theme.service';
 echarts.use([
   BarChart, LineChart, PieChart, ScatterChart,
   TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
+  TimelineComponent, // [FIX] Register component
   CanvasRenderer
 ]);
 
@@ -46,7 +48,6 @@ export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pi
   styleUrls: ['./chart-card.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // [FIX] Remove the native 'title' attribute from the host element to prevent the browser tooltip
   host: {
     '[attr.title]': 'null'
   }
@@ -95,7 +96,6 @@ export class ChartCardComponent implements AfterViewInit {
   private lastHeight = 0;
   private isDestroyed = false;
 
-  // [NEW] Reusable formatter for Vietnamese numbers (1.000)
   private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
@@ -113,7 +113,6 @@ export class ChartCardComponent implements AfterViewInit {
       }
     });
 
-    // Re-init chart if theme changes
     effect(() => {
       this.effectiveTheme(); 
       const options = untracked(() => this.chartOptions());
@@ -154,9 +153,10 @@ export class ChartCardComponent implements AfterViewInit {
       this.lastWidth = el.clientWidth;
       this.lastHeight = el.clientHeight;
 
-      // [NEW] Apply formatting middleware
       this.applyAutoFormatting(options);
-      this.chartInstance.setOption(options);
+      const responsiveOptions = this.makeOptionsResponsive(options);
+
+      this.chartInstance.setOption(responsiveOptions);
 
       this.chartInstance.on('click', (params) => {
         this.ngZone.run(() => this.chartClick.emit(params));
@@ -172,10 +172,10 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.chartInstance) return;
     
     this.ngZone.runOutsideAngular(() => {
-      // [NEW] Apply formatting middleware
       this.applyAutoFormatting(options);
-      
-      this.chartInstance?.setOption(options, {
+      const responsiveOptions = this.makeOptionsResponsive(options);
+
+      this.chartInstance?.setOption(responsiveOptions, {
         notMerge: false,
         lazyUpdate: true 
       });
@@ -183,15 +183,76 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   /**
-   * [NEW] Middleware to inject Vietnamese number formatting into
-   * Axis Labels, Tooltips, and Series Labels if they are not manually defined.
+   * High-Performance Responsive Strategy
+   * Wraps the standard options in ECharts' native media query structure.
+   * The TimelineComponent is required for this 'baseOption' + 'media' syntax to work.
    */
+  private makeOptionsResponsive(options: any): any {
+    // 1. Avoid double-wrapping if user already provided media queries
+    if (options.baseOption || options.media) {
+      return options;
+    }
+
+    // 2. Check if this is a Pie/Doughnut chart
+    const series = Array.isArray(options.series) ? options.series : [options.series];
+    const hasPie = series.some((s: any) => s.type === 'pie');
+
+    if (!hasPie) {
+      return options;
+    }
+
+    // 3. Construct Media Query Wrapper
+    return {
+      baseOption: options, // The original desktop options
+      media: [
+        {
+          query: { maxWidth: 500 }, // Trigger when width < 500px
+          option: {
+            series: series.map((s: any) => {
+              if (s.type === 'pie' && s.radius) {
+                return {
+                  // Reduce radius by ~20% for mobile to prevent label clipping
+                  radius: this.scaleRadius(s.radius, 0.8),
+                  // Optionally reduce label font size
+                  label: { fontSize: 10 }
+                };
+              }
+              return {}; // Leave other series types alone
+            })
+          }
+        }
+      ]
+    };
+  }
+
+  /**
+   * Helper to scale radius values (strings like '50%' or numbers)
+   */
+  private scaleRadius(radius: any, factor: number): any {
+    if (Array.isArray(radius)) {
+      return radius.map(r => this.scaleSingleRadius(r, factor));
+    }
+    return this.scaleSingleRadius(radius, factor);
+  }
+
+  private scaleSingleRadius(val: string | number, factor: number): string | number {
+    if (typeof val === 'number') {
+      return Math.round(val * factor);
+    }
+    if (typeof val === 'string' && val.endsWith('%')) {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        return `${num * factor}%`;
+      }
+    }
+    return val;
+  }
+
   private applyAutoFormatting(option: any): void {
     if (!option) return;
 
     const formatFn = (val: number) => this.vnNumberFormatter.format(val);
 
-    // 1. Y-Axis: Format numbers like 1.000
     if (option.yAxis) {
       const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis];
       yAxes.forEach((axis: any) => {
@@ -204,21 +265,16 @@ export class ChartCardComponent implements AfterViewInit {
       });
     }
 
-    // 2. Series: Format Tooltips and Labels
     if (option.series) {
       const seriesList = Array.isArray(option.series) ? option.series : [option.series];
       seriesList.forEach((series: any) => {
-         // Tooltip Value Formatter (ECharts 5.3+)
-         // This puts "1.000" in the tooltip list automatically
          series.tooltip = series.tooltip || {};
          if (!series.tooltip.valueFormatter) {
             series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
          }
 
-         // Label Formatter (Text on bars/lines)
          if (series.label?.show && !series.label.formatter) {
              series.label.formatter = (params: any) => {
-                 // Handle simple values and array values [x, y]
                  const val = Array.isArray(params.value) ? params.value[1] : params.value;
                  return typeof val === 'number' ? formatFn(val) : val;
              };

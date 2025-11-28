@@ -1,448 +1,441 @@
-/* COMPONENT HOST */
+/* =========================================================
+   COMPONENT HOST & VARIABLES
+   ========================================================= */
 app-reusable-table {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
-  overflow: hidden;
   min-height: 0;
+  overflow: hidden;
 
-  /* Default (Light Mode) Header Variables */
+  /* --- CSS Variables Scope --- */
+  --row-height: 44px;
+  --header-height: 48px;
+  
+  /* Local Scoped Colors - Defaults (Light Mode) */
+  --border-color-local: var(--border-color);
+  --text-color-local: var(--text-primary);
   --header-bg-local: var(--table-header-bg);
   --header-text-local: var(--table-header-text);
+
+  /* Row Backgrounds */
+  --row-bg-odd: var(--surface-card);
+  --row-bg-even: var(--gray-50);
+  --row-bg-hover: var(--gray-100);
+  --row-bg-selected: rgba(0, 131, 155, 0.08); /* Primary tint */
+  
+  /* Sticky Column Divider */
+  --sticky-border-color: rgba(0, 0, 0, 0.08);
+
+  /* Dark Mode Overrides */
+  &[data-theme="dark"],
+  [data-theme="dark"] & {
+    /* Darker header background */
+    --header-bg-local: #1e293b; /* Slate 800 */
+    --header-text-local: #f8fafc;
+
+    /* Row Colors: Ensure 'even' isn't darker than the card background */
+    --row-bg-odd: var(--surface-card); 
+    --row-bg-even: rgba(255, 255, 255, 0.03); 
+    --row-bg-hover: rgba(255, 255, 255, 0.06);
+    --row-bg-selected: rgba(45, 212, 191, 0.15); /* Teal tint */
+    
+    --sticky-border-color: rgba(255, 255, 255, 0.12);
+  }
 }
 
-/* DARK MODE CONTEXT */
-[data-theme="dark"] app-reusable-table {
-  --header-bg-local: var(--gray-100); /* Darker header in dark mode */
-  --header-text-local: var(--text-primary);
-}
-
-/* GLOBAL HIGHLIGHT (Used by pipe) */
-.highlight {
-  background-color: var(--pastel-coral); /* Adjusted for visibility */
-  color: var(--gray-900);
-  font-weight: 700;
-  padding: 0 2px;
-  border-radius: 3px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-/* WRAPPER SCOPE */
+/* =========================================================
+   WRAPPER & SCROLL CONTAINER
+   ========================================================= */
 .reusable-table-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  position: relative;
-  background-color: var(--surface-card); /* Semantic Variable */
+  background-color: var(--surface-card);
   border-radius: var(--border-radius-md);
-  box-shadow: none;
+  position: relative;
   overflow: hidden;
 
-  /* === PERFORMANCE OPTIMIZATION START === */
-  
-  /* 1. Isolate Layout: Tells browser this container paints independently */
-  .table-container {
-    flex: 1;
-    overflow: auto;
-    min-height: 0;
-    position: relative;
-    background-color: var(--surface-card); /* Semantic Variable */
-    
-    /* contain: strict is fastest, but 'layout style' is safer if contents might scroll */
-    contain: layout style; 
-    will-change: scroll-position;
-  }
-
-  /* 2. Fixed Layout: Browser calculates column widths ONCE based on headers */
-  table.mat-table {
-    table-layout: fixed !important; 
-    width: 100%;
-  }
-  
-  /* === PERFORMANCE OPTIMIZATION END === */
-
-  /* --- MATERIAL TABLE OVERRIDES (Scoped) --- */
-  /* Checkbox Column Sizing */
-  .mat-column-select {
-    width: 48px !important;
-    min-width: 48px !important;
-    max-width: 48px !important;
-    padding: 0 0 0 4px !important;
-    box-sizing: border-box; 
-  }
-
-  .mat-mdc-header-cell.mat-column-select,
-  .mat-mdc-cell.mat-column-select {
-    padding-left: 16px !important;
-  }
-
-  /* Header Styling */
-  .mat-mdc-header-cell {
-    background-color: var(--header-bg-local) !important;
-    color: var(--header-text-local) !important;
-
-    font-weight: var(--font-weight-medium) !important;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.03em !important;
-    padding: var(--spacing-xs) var(--spacing-sm) !important;
-    border-bottom: none !important;
-    
-    /* Semantic Border Color */
-    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
-
-    /* Dark Mode Border adjustment */
-    [data-theme="dark"] & {
-      border-right: 1px solid var(--border-color) !important;
-    }
-
-    /* Fixed Layout Requirements: Hide overflow */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    
-    height: 32px !important;
-    min-height: 32px !important;
-    line-height: 32px !important;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-
-    &:last-child {
-      border-right: none !important;
-    }
-
-    .mat-sort-header-arrow {
-      color: currentColor !important;
-      opacity: 0.7;
-      font-size: 16px !important;
-      width: 16px !important;
-      height: 16px !important;
-    }
-
-    &:hover {
-      filter: brightness(1.1);
-    }
-  }
-
-  .mat-mdc-header-row {
-    height: 32px !important;
-    min-height: 32px !important;
-  }
-
-  /* Body Cell Styling */
-  .mat-mdc-cell {
-    padding: 0 var(--spacing-sm) !important;
-    color: var(--text-primary) !important; /* Semantic Variable */
-    border-bottom: none !important;
-    font-size: 0.8125rem !important;
-    height: 36px !important;
-    
-    /* Fixed Layout Requirements: Hide overflow */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    &.mat-column-actions {
-      padding: 0 4px !important;
-      width: 40px;
-      overflow: visible; 
-    }
-
-    &:first-of-type:not(.mat-column-select) {
-      padding-left: var(--spacing-md) !important;
-    }
-    &:last-of-type {
-      padding-right: var(--spacing-md) !important;
-    }
-  }
-
-  /* ROW STYLING */
-  .mat-mdc-row {
-    height: 36px !important;
-    transition: background-color 0.2s var(--transition-smooth);
-
-    /* Alternating Rows using semantic grays */
-    &:nth-child(even) {
-      background-color: var(--gray-50); 
-    }
-
-    &:nth-child(odd) {
-      background-color: var(--surface-card);
-    }
-
-    &.clickable-row {
-      cursor: pointer;
-
-      &:hover {
-        background-color: var(--gray-100) !important;
-        
-        /* Slightly darker hover in dark mode */
-        [data-theme="dark"] & {
-          background-color: var(--gray-200) !important;
-        }
-        
-        box-shadow: var(--box-shadow-sm);
-        position: relative;
-        z-index: 1;
-      }
-
-      &:active {
-        transform: scale(0.995);
-        background-color: var(--gray-200) !important;
-      }
-
-      &.selected {
-        background-color: rgba(0, 131, 155, 0.08) !important;
-        box-shadow: inset 3px 0 0 var(--teal-blue) !important;
-        .mat-mdc-cell {
-          color: var(--teal-blue) !important;
-          font-weight: var(--font-weight-medium) !important;
-        }
-      }
-
-      &.multi-selected {
-        background-color: var(--aqua-island-light) !important;
-        [data-theme="dark"] & {
-          background-color: rgba(45, 212, 191, 0.15) !important;
-        }
-        .mat-mdc-cell {
-          color: var(--deep-sapphire) !important;
-          [data-theme="dark"] & {
-            color: var(--teal-blue) !important;
-          }
-          font-weight: var(--font-weight-medium) !important;
-        }
-      }
-    }
-  }
-
-  .mat-no-data-row {
-    &:nth-child(even) {
-      background-color: var(--gray-50) !important;
-    }
-    .mat-mdc-cell {
-      border-bottom: none !important;
-      padding: var(--spacing-xl) !important;
-    }
-  }
-
-  /* Paginator Styling */
-  .mat-mdc-paginator {
-    flex-shrink: 0;
-    background-color: var(--surface-card) !important; /* Semantic Variable */
-    border-top: 1px solid var(--border-color);        /* Semantic Variable */
-    height: 40px !important;
-    min-height: 40px !important;
-    color: var(--text-secondary) !important;          /* Semantic Variable */
-
-    .mat-mdc-paginator-container {
-      padding: 0 var(--spacing-xs) !important;
-      min-height: 40px !important;
-      height: 40px !important;
-      display: flex !important;
-      align-items: center !important;
-    }
-
-    .mat-mdc-paginator-page-size,
-    .mat-mdc-paginator-range-label {
-      margin: 0 var(--spacing-xs) !important;
-    }
-
-    .mat-mdc-paginator-page-size-label,
-    .mat-mdc-paginator-range-label,
-    .mat-mdc-select-value-text {
-      color: var(--text-secondary) !important;
-      font-family: var(--font-family-sans) !important;
-      font-size: 0.75rem !important;
-      line-height: 1.2 !important;
-    }
-
-    .mat-mdc-form-field {
-      .mat-mdc-text-field-wrapper {
-        padding: 0 4px !important;
-        height: 28px !important;
-        border-radius: var(--border-radius-sm) !important;
-        background-color: var(--gray-100) !important; /* Adaptive Gray */
-      }
-      .mat-mdc-form-field-infix {
-        padding-top: 2px !important;
-        padding-bottom: 2px !important;
-        min-height: 28px !important;
-      }
-      .mat-mdc-form-field-subscript-wrapper {
-        display: none !important;
-      }
-    }
-
-    .mat-mdc-icon-button {
-      width: 28px !important;
-      height: 28px !important;
-      padding: 2px !important;
-      color: var(--text-secondary) !important;
-      .mat-icon {
-        font-size: 18px !important;
-        width: 18px !important;
-        height: 18px !important;
-      }
-      &[disabled] {
-        opacity: 0.4 !important;
-        color: var(--text-disabled) !important;
-      }
-      &:hover:not([disabled]) {
-        background-color: var(--gray-100) !important;
-        color: var(--text-primary) !important;
-      }
-    }
-
-    .mat-mdc-select-panel {
-      font-family: var(--font-family-sans) !important;
-      background-color: var(--surface-card) !important;
-    }
-
-    .mat-mdc-paginator-range-actions {
-      display: flex !important;
-      align-items: center !important;
-      gap: 4px !important;
-    }
-  }
-
-  /* Focus States */
-  .mat-mdc-header-cell:focus-visible,
-  .mat-mdc-cell:focus-visible,
-  .mat-mdc-icon-button:focus-visible {
-    outline: 2px solid var(--teal-blue) !important;
-    outline-offset: 1px !important;
-    z-index: 20 !important;
+  /* Border handling */
+  border: 1px solid transparent;
+  [data-theme="dark"] & {
+    border-color: var(--border-color);
   }
 }
 
-/* Normal Local Styles */
+.table-container {
+  flex: 1;
+  overflow: auto; /* Enables both X and Y scrolling */
+  position: relative;
+  background-color: var(--surface-card);
+
+  /* Performance Optimization: Isolate painting */
+  contain: layout style;
+  will-change: scroll-position;
+  scroll-behavior: smooth;
+
+  /* Custom Scrollbar Styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    
+    &:hover {
+      background-color: var(--gray-400);
+    }
+  }
+
+  [data-theme="dark"] & {
+    scrollbar-color: var(--gray-600) transparent;
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--gray-600);
+      &:hover { background-color: var(--gray-500); }
+    }
+  }
+}
+
+/* =========================================================
+   ANGULAR MATERIAL TABLE STYLING
+   ========================================================= */
+table.mat-table {
+  width: 100%;
+  border-collapse: separate; /* Required for sticky positioning to work correctly */
+  border-spacing: 0;
+  
+  /* Responsive Fix: Force minimum width so columns don't collapse on mobile.
+     This triggers the container's horizontal scrollbar. */
+  min-width: 1000px; 
+  table-layout: fixed;
+  
+  background-color: transparent; 
+}
+
+/* --- Header Row --- */
+.mat-mdc-header-row {
+  height: var(--header-height) !important;
+  min-height: var(--header-height) !important;
+  background-color: var(--header-bg-local) !important;
+  border-bottom: 1px solid var(--border-color-local);
+  
+  /* Sticky Header: Stays at top during vertical scroll */
+  position: sticky;
+  top: 0;
+  z-index: 100; 
+}
+
+.mat-mdc-header-cell {
+  color: var(--header-text-local) !important;
+  font-weight: 600 !important;
+  font-size: 0.8125rem !important; /* 13px */
+  padding: 0 var(--spacing-sm) !important;
+  vertical-align: middle;
+  
+  /* Layout */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  /* Separators */
+  border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+  &:last-of-type {
+    border-right: none !important;
+  }
+
+  /* Background needs to be explicit for sticky behavior */
+  background-color: inherit; 
+
+  /* Sort Arrow Color */
+  .mat-sort-header-arrow {
+    color: currentColor !important;
+    opacity: 0.7;
+  }
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+/* --- Data Rows --- */
+.mat-mdc-row {
+  height: var(--row-height) !important;
+  min-height: var(--row-height) !important;
+  transition: background-color 0.15s ease;
+  
+  /* Zebra Striping */
+  &:nth-child(odd) { background-color: var(--row-bg-odd) !important; }
+  &:nth-child(even) { background-color: var(--row-bg-even) !important; }
+
+  /* Hover State */
+  &.clickable-row:hover {
+    background-color: var(--row-bg-hover) !important;
+    cursor: pointer;
+    /* Ensure hover effect sits above zebra striping */
+    z-index: 1; 
+  }
+
+  /* Selected State */
+  &.selected, 
+  &.multi-selected {
+    background-color: var(--row-bg-selected) !important;
+    
+    .mat-mdc-cell {
+      color: var(--primary) !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+.mat-mdc-cell {
+  font-size: 0.875rem !important; /* 14px */
+  color: var(--text-color-local) !important;
+  padding: 0 var(--spacing-sm) !important;
+  border-bottom: 1px solid var(--border-color-local) !important;
+  
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* Add padding to first/last data cells (not select/actions) */
+  &:first-of-type:not(.mat-column-select) { padding-left: var(--spacing-md) !important; }
+  &:last-of-type:not(.mat-column-actions) { padding-right: var(--spacing-md) !important; }
+}
+
+/* --- Sticky Columns (Select & Actions) --- */
+
+/* 1. Checkbox Column (Sticky Left) */
+.mat-column-select {
+  width: 48px !important;
+  max-width: 48px !important;
+  padding: 0 !important;
+  text-align: center;
+  
+  position: sticky !important;
+  left: 0 !important;
+  /* Higher Z-index than normal cells, lower than header */
+  z-index: 101 !important; 
+  
+  /* CRITICAL: Inherit background from the row/header so content doesn't scroll "under" transparently */
+  background-color: inherit; 
+  
+  /* Divider Line */
+  border-right: 1px solid var(--sticky-border-color) !important;
+
+  /* Sticky Header overlap fix */
+  &.mat-mdc-header-cell {
+    /* Highest Z-index intersection (Sticky Header + Sticky Column) */
+    z-index: 102 !important; 
+    border-right-color: rgba(255, 255, 255, 0.15) !important;
+  }
+}
+
+/* 2. Actions Column (Sticky Right) */
+.mat-column-actions {
+  width: 48px !important;
+  max-width: 48px !important;
+  padding: 0 !important;
+  text-align: center;
+  
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 101 !important;
+  
+  background-color: inherit;
+  
+  /* Divider Line */
+  border-left: 1px solid var(--sticky-border-color) !important;
+  
+  /* Sticky Header overlap fix */
+  &.mat-mdc-header-cell {
+    z-index: 102 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+  }
+
+  /* Ensure menu is visible */
+  overflow: visible !important;
+}
+
+/* =========================================================
+   UI ELEMENTS & COMPONENTS
+   ========================================================= */
+
+/* Action Menu Button */
+.action-menu-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+    [data-theme="dark"] & {
+      background-color: rgba(255,255,255,0.1);
+    }
+  }
+  
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+/* Status Chips */
+.status-chip {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+  line-height: 1.5;
+  
+  &.status-in-use { background-color: rgba(0, 110, 150, 0.15); color: var(--secondary); }
+  &.status-ready { background-color: rgba(22, 163, 74, 0.15); color: var(--color-success); }
+  &.status-maintenance { background-color: var(--gray-200); color: var(--gray-700); }
+  &.status-broken { background-color: rgba(220, 53, 69, 0.15); color: var(--color-danger); }
+  
+  [data-theme="dark"] & {
+    /* Ensure text remains readable on dark bg */
+    &.status-maintenance { background-color: var(--gray-700); color: var(--gray-300); }
+  }
+}
+
+/* Paginator */
+.mat-mdc-paginator {
+  background-color: var(--surface-card) !important;
+  border-top: 1px solid var(--border-color-local);
+  color: var(--text-secondary) !important;
+  font-size: 0.8125rem !important;
+  
+  .mat-mdc-paginator-container {
+    padding: 0 8px !important;
+    min-height: 48px !important;
+    
+    @media (max-width: 480px) {
+      flex-wrap: wrap;
+      justify-content: center;
+      padding-bottom: 8px;
+    }
+  }
+
+  .mat-mdc-select-value { color: var(--text-primary) !important; }
+  .mat-mdc-select-arrow { color: var(--text-secondary) !important; }
+  
+  .mat-mdc-icon-button {
+    color: var(--text-secondary) !important;
+    &[disabled] { opacity: 0.4; }
+    &:hover:not([disabled]) {
+      background-color: var(--gray-100) !important;
+      [data-theme="dark"] & { background-color: var(--gray-700) !important; }
+    }
+  }
+}
+
+/* =========================================================
+   LOADING & EMPTY STATES
+   ========================================================= */
 .loading-shade {
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: var(--surface-overlay); /* Semantic Variable */
-  z-index: 50;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  [data-theme="dark"] & {
+    background: rgba(0, 0, 0, 0.6);
+  }
+  backdrop-filter: blur(2px);
+  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
+  
   opacity: 1;
-  visibility: visible;
-  transition: opacity 0.3s var(--transition-smooth), visibility 0s 0s;
-  will-change: opacity;
-
+  transition: opacity 0.2s ease;
+  
   &.hidden {
     opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s var(--transition-smooth), visibility 0s 0.3s;
     pointer-events: none;
   }
 }
 
-.header-content,
-.cell-content {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  max-width: 100%;
-  font-weight: inherit;
-}
-
-.action-menu-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background-color: transparent;
-  color: var(--text-secondary); /* Semantic Variable */
-  border-radius: 50%;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 0.2s ease, color 0.2s ease;
-
-  .mat-icon {
-    font-size: 18px;
-    line-height: 1;
-    width: 18px;
-    height: 18px;
-  }
-
-  &:hover {
-    background-color: var(--gray-100);
-    color: var(--text-primary);
-  }
-}
-
-/* --- EMPTY STATE --- */
 .no-data-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary); /* Semantic Variable */
-  padding: var(--spacing-xl) var(--spacing-md);
-  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
   background-color: var(--surface-card);
-
-  .no-data-icon-container {
-    margin-bottom: var(--spacing-md);
-    animation: pulse 2s infinite;
-    will-change: transform, opacity;
-  }
-
+  
   .no-data-icon {
-    font-size: 42px !important;
-    height: 42px !important;
-    width: 42px !important;
-    color: var(--text-disabled) !important; /* Semantic Variable */
-  }
-
-  .no-data-text {
-    font-size: 1.125rem !important;
-    margin: 0 !important;
-    font-weight: var(--font-weight-medium) !important;
-    color: var(--text-secondary) !important;
-    margin-bottom: var(--spacing-sm) !important;
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-disabled);
+    opacity: 0.5;
   }
 
   .reset-btn {
-    background: none !important;
-    border: none !important;
-    color: var(--teal-blue) !important;
-    cursor: pointer !important;
-    font-weight: var(--font-weight-medium) !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: var(--spacing-xs) !important;
-    padding: var(--spacing-xs) var(--spacing-sm) !important;
-    border-radius: var(--border-radius-sm) !important;
-    transition: all 0.2s var(--transition-smooth) !important;
-
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--border-color-local);
+    padding: 6px 16px;
+    border-radius: 20px;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    
     &:hover {
-      background-color: var(--gray-100) !important;
-      transform: scale(1.05) !important;
-    }
-
-    mat-icon {
-      font-size: 16px !important;
-      width: 16px !important;
-      height: 16px !important;
+      background-color: var(--gray-100);
+      [data-theme="dark"] & { background-color: var(--gray-700); }
     }
   }
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.6; }
+/* Mat No Data Row */
+.mat-no-data-row {
+  /* Ensure empty row background matches context */
+  &:nth-child(even) { background-color: var(--gray-50) !important; }
+  
+  [data-theme="dark"] & {
+     background-color: var(--surface-card) !important;
+  }
+  
+  .mat-mdc-cell {
+    border-bottom: none !important;
+    padding: 0 !important;
+  }
 }
 
-/* Media Queries */
+/* =========================================================
+   GLOBAL HELPERS
+   ========================================================= */
+.highlight {
+  background-color: #fde047; /* Yellow-300 */
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+/* --- Mobile Adjustments --- */
 @media (max-width: 768px) {
   .reusable-table-wrapper {
     .mat-mdc-header-cell,
@@ -450,29 +443,12 @@ app-reusable-table {
       padding: var(--spacing-xs) var(--spacing-xs) !important;
       font-size: 0.75rem !important;
     }
-
-    .mat-mdc-paginator {
-      height: auto !important;
-      .mat-mdc-paginator-container {
-        flex-wrap: wrap !important;
-        gap: 4px !important;
-        padding: 4px !important;
-      }
-      .mat-mdc-paginator-page-size,
-      .mat-mdc-paginator-range-label {
-        margin: 2px !important;
-      }
-    }
-
-    .mat-column-select {
+    
+    /* Adjust sticky columns for smaller touch targets */
+    .mat-column-select,
+    .mat-column-actions {
       width: 40px !important;
       min-width: 40px !important;
-      max-width: 40px !important;
-      padding: 0 0 0 4px !important;
-    }
-    .mat-mdc-header-cell.mat-column-select,
-    .mat-mdc-cell.mat-column-select {
-      padding-left: 12px !important;
     }
   }
 }
