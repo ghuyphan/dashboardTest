@@ -1,13 +1,22 @@
-import { Injectable, signal, inject, effect } from '@angular/core';
+import { Injectable, signal, inject, effect, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, Routes, Route } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ThemeService } from './theme.service';
 import { environment } from '../../../environments/environment.development';
+import { Subject, debounceTime } from 'rxjs';
 
 export interface ChatMessage {
+  id: string;  // Unique identifier for tracking
   role: 'user' | 'assistant' | 'system';
   content: string;
-  tokenEstimate?: number; // Track token usage
+  tokenEstimate?: number;
+  timestamp?: number;
+}
+
+interface StreamUpdate {
+  content: string;
+  tokenEstimate: number;
 }
 
 const SCREEN_DESCRIPTIONS: Record<string, string> = {
@@ -30,381 +39,76 @@ export class LlmService {
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
-  
+  private readonly destroyRef = inject(DestroyRef);
+
   private readonly apiUrl = environment.llmUrl;
   private readonly MODEL_NAME = 'gemma3:4b-it-qat';
   private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
   private readonly THEME_COOLDOWN = 1000;
 
-  // ===== OPTIMIZED CONTEXT SETTINGS FOR GEMMA 3 4B =====
-  private readonly MAX_CONTEXT_TOKENS = 6000;      // Safe limit for 8K context window
-  private readonly MAX_HISTORY_MESSAGES = 6;       // Reduced from 10
-  private readonly MAX_OUTPUT_TOKENS = 512;        // Limit response length
-  private readonly SYSTEM_PROMPT_BUDGET = 1500;    // Reserve tokens for system prompt
-  private readonly AVG_CHARS_PER_TOKEN = 3.5;      // Vietnamese ~3.5 chars/token
+  // ===== CONTEXT SETTINGS =====
+  private readonly MAX_CONTEXT_TOKENS = 6000;
+  private readonly MAX_HISTORY_MESSAGES = 6;
+  private readonly MAX_OUTPUT_TOKENS = 512;
+  private readonly AVG_CHARS_PER_TOKEN = 3.5;
+
+  // ===== PERFORMANCE SETTINGS =====
+  private readonly UI_UPDATE_DEBOUNCE_MS = 50; // Batch UI updates
+  private readonly MAX_RETRIES = 2;
+  private readonly RETRY_DELAY_MS = 1000;
 
   // --- Signals ---
-  public isOpen = signal<boolean>(false);
-  public isModelLoading = signal<boolean>(false);
-  public isGenerating = signal<boolean>(false);
-  public modelLoaded = signal<boolean>(false);
-  public loadProgress = signal<string>('');
-  public messages = signal<ChatMessage[]>([]);
-  public isNavigating = signal<boolean>(false);
-  public contextUsage = signal<number>(0); // Track context usage percentage
+  public readonly isOpen = signal<boolean>(false);
+  public readonly isModelLoading = signal<boolean>(false);
+  public readonly isGenerating = signal<boolean>(false);
+  public readonly modelLoaded = signal<boolean>(false);
+  public readonly loadProgress = signal<string>('');
+  public readonly messages = signal<ChatMessage[]>([]);
+  public readonly isNavigating = signal<boolean>(false);
+  public readonly contextUsage = signal<number>(0);
 
-  // --- Security State ---
-  private sessionTimeout?: number;
+  // --- Internal State ---
+  private sessionTimeout?: ReturnType<typeof setTimeout>;
   private lastThemeChange = 0;
-  private _cachedAllowedPaths: string[] = [];
+  private currentAbortController: AbortController | null = null;
+  private messageIdCounter = 0;  // Unique ID counter
+  
+  // --- Caching ---
+  private _cachedAllowedPaths: string[] | null = null;
   private _cachedSystemPrompt: string = '';
   private _systemPromptTokens: number = 0;
-  
-  private get allowedPaths(): string[] {
-    if (this._cachedAllowedPaths.length === 0) {
-      this._cachedAllowedPaths = this.scanRoutes(this.router.config).map(r => r.fullUrl);
-    }
-    return this._cachedAllowedPaths;
-  }
+  private _lastUserPermissionsHash: string = '';
+
+  // --- Debounced UI Updates ---
+  private readonly streamUpdate$ = new Subject<StreamUpdate>();
 
   constructor() {
+    // Setup auth state listener
     effect(() => {
       if (!this.authService.isLoggedIn()) {
-        this.resetChat();
-        this.isOpen.set(false);
-        this.clearSessionTimeout();
+        this.cleanup();
       }
     });
+
+    // Debounce stream updates to reduce change detection cycles
+    this.streamUpdate$
+      .pipe(
+        debounceTime(this.UI_UPDATE_DEBOUNCE_MS),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(update => this.applyStreamUpdate(update));
+
+    // Cleanup on destroy
+    this.destroyRef.onDestroy(() => this.cleanup());
   }
 
-  // ===== TOKEN ESTIMATION =====
-  
-  /**
-   * Estimate token count for Vietnamese text
-   * Vietnamese uses more tokens per character than English
-   */
-  private estimateTokens(text: string): number {
-    if (!text) return 0;
-    // Vietnamese: ~3.5 chars per token (vs English ~4)
-    // Add overhead for special tokens
-    return Math.ceil(text.length / this.AVG_CHARS_PER_TOKEN) + 4;
-  }
-
-  /**
-   * Calculate total tokens in message history
-   */
-  private calculateContextTokens(messages: ChatMessage[]): number {
-    return messages.reduce((sum, msg) => {
-      return sum + (msg.tokenEstimate || this.estimateTokens(msg.content));
-    }, 0);
-  }
-
-  // ===== CONTEXT MANAGEMENT =====
-
-  /**
-   * Compress context when approaching token limits
-   * Strategies: truncate old messages, summarize, or sliding window
-   */
-  private prepareContextWindow(newUserMessage: string): ChatMessage[] {
-    const newMsgTokens = this.estimateTokens(newUserMessage);
-    const availableForHistory = this.MAX_CONTEXT_TOKENS 
-      - this._systemPromptTokens 
-      - this.MAX_OUTPUT_TOKENS 
-      - newMsgTokens
-      - 100; // Safety buffer
-
-    const history = this.messages().filter(m => m.content.trim());
-    const result: ChatMessage[] = [];
-    let usedTokens = 0;
-
-    // Take messages from most recent, respecting token budget
-    for (let i = history.length - 1; i >= 0; i--) {
-      const msg = history[i];
-      const msgTokens = msg.tokenEstimate || this.estimateTokens(msg.content);
-      
-      if (usedTokens + msgTokens > availableForHistory) {
-        // If we can't fit more, check if we should summarize remaining
-        if (result.length < 2 && i > 0) {
-          // Add a summary placeholder for older context
-          const summaryMsg: ChatMessage = {
-            role: 'system',
-            content: '[Lịch sử trước đó đã được lược bỏ để tiết kiệm bộ nhớ]',
-            tokenEstimate: 20
-          };
-          result.unshift(summaryMsg);
-        }
-        break;
-      }
-      
-      usedTokens += msgTokens;
-      result.unshift({ ...msg, tokenEstimate: msgTokens });
-      
-      // Also respect message count limit
-      if (result.length >= this.MAX_HISTORY_MESSAGES) break;
-    }
-
-    // Update context usage indicator
-    const totalUsed = this._systemPromptTokens + usedTokens + newMsgTokens;
-    this.contextUsage.set(Math.round((totalUsed / this.MAX_CONTEXT_TOKENS) * 100));
-
-    return result;
-  }
-
-  /**
-   * Truncate a message to fit within token budget
-   */
-  private truncateMessage(content: string, maxTokens: number): string {
-    const currentTokens = this.estimateTokens(content);
-    if (currentTokens <= maxTokens) return content;
-    
-    const targetChars = Math.floor(maxTokens * this.AVG_CHARS_PER_TOKEN);
-    return content.substring(0, targetChars) + '... [đã cắt ngắn]';
-  }
-
-  // ===== OPTIMIZED SYSTEM PROMPT =====
-
-  /**
-   * Compact system prompt optimized for Gemma 3 4B
-   * - Shorter instructions
-   * - Clear structure without XML
-   * - Fewer examples (model should generalize)
-   */
-  private getDynamicSystemPrompt(): string {
-    // Return cached if user/routes haven't changed
-    const currentUser = this.authService.currentUser();
-    const routes = this.scanRoutes(this.router.config);
-    
-    // Compact sitemap - only essential info
-    const sitemap = routes.map(r => {
-      const desc = SCREEN_DESCRIPTIONS[r.purePath] || '';
-      return `${r.title}: ${r.fullUrl}${desc ? ' - ' + desc : ''}`;
-    }).join('\n');
-    
-    const prompt = `Bạn là IT Assistant hệ thống Hoàn Mỹ. Người dùng: ${currentUser?.fullName || 'Khách'}
-
-CHỨC NĂNG CÓ THỂ TRUY CẬP:
-${sitemap}
-
-CÁCH DÙNG:
-- Điều hướng: thêm [[NAVIGATE:/path]] cuối câu khi người dùng yêu cầu mở chức năng cụ thể
-- Đổi theme: [[THEME:dark]], [[THEME:light]], hoặc [[THEME:toggle]]
-- Nếu chức năng không có trong danh sách: từ chối lịch sự
-- Hỗ trợ IT: gọi 1108/1109
-
-CHỈ điều hướng khi được yêu cầu rõ ràng. Trả lời ngắn gọn, thân thiện.`;
-
-    this._cachedSystemPrompt = prompt;
-    this._systemPromptTokens = this.estimateTokens(prompt);
-    
-    return prompt;
-  }
-
-  // ===== MESSAGE HANDLING =====
-
-  async sendMessage(content: string): Promise<void> {
-    if (!content.trim()) return;
-    
-    this.resetSessionTimeout();
-    
-    // Sanitize input
-    const sanitized = content.replace(/\[\[(NAVIGATE|THEME):.*?]\]/g, '').trim();
-    if (!sanitized) return;
-    
-    // Estimate tokens for new message
-    const newMsgTokens = this.estimateTokens(sanitized);
-    
-    // Add user message with token estimate
-    this.messages.update(msgs => [...msgs, { 
-      role: 'user', 
-      content: sanitized,
-      tokenEstimate: newMsgTokens 
-    }]);
-    
-    // Add placeholder for assistant
-    this.messages.update(msgs => [...msgs, { 
-      role: 'assistant', 
-      content: '',
-      tokenEstimate: 0 
-    }]);
-    
-    this.isGenerating.set(true);
-    let hasActionTriggered = false;
-
-    try {
-      // Build optimized context window
-      const contextMessages = this.prepareContextWindow(sanitized);
-      const systemPrompt = this.getDynamicSystemPrompt();
-
-      // Optimized parameters for Gemma 3 4B
-      const payload = {
-        model: this.MODEL_NAME,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...contextMessages.map(m => ({ role: m.role, content: m.content })),
-          { role: 'user', content: sanitized }
-        ],
-        stream: true,
-        options: {
-          // Gemma 3 optimized settings
-          temperature: 0.6,          // Lower = more focused
-          top_p: 0.8,                // Nucleus sampling
-          top_k: 25,                 // More deterministic
-          repeat_penalty: 1.2,       // Reduce repetition
-          num_predict: this.MAX_OUTPUT_TOKENS,  // Limit output
-          num_ctx: this.MAX_CONTEXT_TOKENS,     // Context window
-          
-          // Additional Gemma optimizations
-          mirostat: 0,               // Disable for faster inference
-          num_thread: 4,             // Adjust based on hardware
-          
-          // Stop sequences to prevent runaway generation
-          stop: ['\n\nUser:', '\n\nHuman:', '[[END]]', '</s>']
-        }
-      };
-
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error('AI service error');
-      if (!response.body) throw new Error('No response body');
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullResponseText = '';
-      let tokenCount = 0;
-
-      while (true) {
-        if (!this.isGenerating()) {
-          reader.cancel();
-          break;
-        }
-        
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(line => line.trim());
-
-        for (const line of lines) {
-          try {
-            const jsonStr = line.startsWith('data: ') ? line.slice(6) : line;
-            if (jsonStr === '[DONE]') continue;
-            
-            const json = JSON.parse(jsonStr);
-            const token = json.message?.content || json.choices?.[0]?.delta?.content || json.response || '';
-            
-            if (token) {
-              fullResponseText += token;
-              tokenCount++;
-              
-              // Check for commands
-              const commandMatch = fullResponseText.match(/\[\[(NAVIGATE|THEME):(.*?)]\]/);
-              
-              if (commandMatch && !hasActionTriggered) {
-                const [fullMatch, commandType, arg] = commandMatch;
-                fullResponseText = fullResponseText.replace(fullMatch, '').trim();
-                this.executeCommand(commandType, arg.trim());
-                hasActionTriggered = true;
-              }
-
-              // Update UI
-              this.messages.update(msgs => {
-                const newMsgs = [...msgs];
-                const lastIdx = newMsgs.length - 1;
-                newMsgs[lastIdx] = { 
-                  role: 'assistant', 
-                  content: fullResponseText,
-                  tokenEstimate: tokenCount
-                };
-                return newMsgs;
-              });
-            }
-            
-            if (json.done) this.isGenerating.set(false);
-          } catch {
-            // Ignore parse errors
-          }
-        }
-      }
-
-      // Final token estimate update
-      this.messages.update(msgs => {
-        const newMsgs = [...msgs];
-        const lastIdx = newMsgs.length - 1;
-        newMsgs[lastIdx].tokenEstimate = this.estimateTokens(fullResponseText);
-        return newMsgs;
-      });
-
-    } catch (error) {
-      console.error('AI Error:', error);
-      this.messages.update(msgs => {
-        const newMsgs = [...msgs];
-        newMsgs[newMsgs.length - 1].content = 'Hệ thống đang bận, vui lòng thử lại.';
-        return newMsgs;
-      });
-    } finally {
-      this.isGenerating.set(false);
-    }
-  }
-
-  // ===== CONTEXT COMPRESSION (Advanced) =====
-
-  /**
-   * Summarize old messages when context is full
-   * This can be called manually or automatically
-   */
-  public async compressContext(): Promise<void> {
-    const messages = this.messages();
-    if (messages.length < 8) return; // Not enough to compress
-
-    // Take first half of messages to summarize
-    const toSummarize = messages.slice(0, Math.floor(messages.length / 2));
-    const toKeep = messages.slice(Math.floor(messages.length / 2));
-
-    const summaryPrompt = `Tóm tắt cuộc trò chuyện sau trong 2-3 câu ngắn:
-${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
-
-    try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: this.MODEL_NAME,
-          messages: [{ role: 'user', content: summaryPrompt }],
-          stream: false,
-          options: { num_predict: 100, temperature: 0.3 }
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const summary = data.message?.content || data.response;
-        
-        if (summary) {
-          const summaryMessage: ChatMessage = {
-            role: 'system',
-            content: `[Tóm tắt trước đó: ${summary}]`,
-            tokenEstimate: this.estimateTokens(summary)
-          };
-          
-          this.messages.set([summaryMessage, ...toKeep]);
-        }
-      }
-    } catch {
-      // Fallback: just truncate
-      this.messages.set(toKeep);
-    }
-  }
-
-  // ===== REST OF THE SERVICE (unchanged methods) =====
+  // ===== PUBLIC API =====
 
   public toggleChat(): void {
-    this.isOpen.update((v) => !v);
-    
-    if (this.isOpen()) {
+    const willOpen = !this.isOpen();
+    this.isOpen.set(willOpen);
+
+    if (willOpen) {
       this.resetSessionTimeout();
       if (!this.modelLoaded() && !this.isModelLoading()) {
         this.loadModel();
@@ -414,35 +118,108 @@ ${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
     }
   }
 
-  async loadModel(): Promise<void> {
-    if (this.modelLoaded()) return;
-    
+  public async sendMessage(content: string): Promise<void> {
+    const sanitized = this.sanitizeInput(content);
+    if (!sanitized) return;
+
+    this.resetSessionTimeout();
+    this.abortCurrentRequest(); // Cancel any in-flight request
+
+    const newMsgTokens = this.estimateTokens(sanitized);
+
+    // Add user message with unique ID
+    this.messages.update(msgs => [
+      ...msgs,
+      { 
+        id: this.generateMessageId(),
+        role: 'user', 
+        content: sanitized, 
+        tokenEstimate: newMsgTokens, 
+        timestamp: Date.now() 
+      }
+    ]);
+
+    // Add assistant placeholder with unique ID
+    this.messages.update(msgs => [
+      ...msgs,
+      { 
+        id: this.generateMessageId(),
+        role: 'assistant', 
+        content: '', 
+        tokenEstimate: 0, 
+        timestamp: Date.now() 
+      }
+    ]);
+
+    this.isGenerating.set(true);
+
+    try {
+      await this.executeWithRetry(() => this.streamResponse(sanitized));
+    } catch (error) {
+      this.handleError(error);
+    } finally {
+      this.isGenerating.set(false);
+      this.currentAbortController = null;
+      
+      // Ensure we don't have an empty assistant message
+      this.cleanupEmptyResponse();
+    }
+  }
+
+  /**
+   * Remove empty assistant response or add fallback message
+   */
+  private cleanupEmptyResponse(): void {
+    this.messages.update(msgs => {
+      const newMsgs = [...msgs];
+      const lastIdx = newMsgs.length - 1;
+      
+      if (lastIdx >= 0 && newMsgs[lastIdx].role === 'assistant') {
+        const content = newMsgs[lastIdx].content.trim();
+        
+        if (!content) {
+          // Replace empty response with fallback
+          newMsgs[lastIdx] = {
+            ...newMsgs[lastIdx],
+            content: 'Xin lỗi, tôi không hiểu yêu cầu của bạn. Bạn có thể nói rõ hơn được không?'
+          };
+        }
+      }
+      
+      return newMsgs;
+    });
+  }
+
+  public stopGeneration(): void {
+    this.abortCurrentRequest();
+    this.isGenerating.set(false);
+  }
+
+  public resetChat(): void {
+    this.abortCurrentRequest();
+    this.messages.set([]);
+    this.contextUsage.set(0);
+    this.messageIdCounter = 0;  // Reset ID counter
+
+    if (this.modelLoaded() && this.authService.isLoggedIn()) {
+      this.addGreetingMessage();
+    }
+  }
+
+  public async loadModel(): Promise<void> {
+    if (this.modelLoaded() || this.isModelLoading()) return;
+
     this.isModelLoading.set(true);
     this.loadProgress.set('Đang kết nối...');
 
     try {
-      const baseUrl = this.getBaseUrl();
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(baseUrl, {
-        method: 'GET',
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok && response.status !== 404) {
-        throw new Error(`Server unreachable`);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      await this.checkServerHealth();
       this.modelLoaded.set(true);
       this.loadProgress.set('Sẵn sàng');
 
-      // Pre-cache system prompt
+      // Pre-warm caches
       this.getDynamicSystemPrompt();
+      this.getAllowedPaths();
 
       if (this.messages().length === 0) {
         this.addGreetingMessage();
@@ -455,42 +232,352 @@ ${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
     }
   }
 
-  public resetChat(): void {
-    this.messages.set([]);
-    this.contextUsage.set(0);
-    if (this.modelLoaded() && this.authService.isLoggedIn()) {
-      this.addGreetingMessage();
+  // ===== STREAMING LOGIC =====
+
+  private async streamResponse(userMessage: string): Promise<void> {
+    this.currentAbortController = new AbortController();
+    const { signal } = this.currentAbortController;
+
+    const contextMessages = this.prepareContextWindow(userMessage);
+    const systemPrompt = this.getDynamicSystemPrompt();
+
+    const payload = {
+      model: this.MODEL_NAME,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...contextMessages.map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: userMessage }
+      ],
+      stream: true,
+      options: {
+        temperature: 1,
+        top_p: 0.8,
+        top_k: 25,
+        repeat_penalty: 1.2,
+        num_predict: this.MAX_OUTPUT_TOKENS,
+        num_ctx: this.MAX_CONTEXT_TOKENS,
+        mirostat: 0,
+        stop: ['\n\nUser:', '\n\nHuman:', '[[END]]', '</s>']
+      }
+    };
+
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error('No response body');
+    }
+
+    await this.processStream(response.body, signal);
+  }
+
+  private async processStream(body: ReadableStream<Uint8Array>, signal: AbortSignal): Promise<void> {
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let fullResponse = '';
+    let hasActionTriggered = false;
+    let commandConfirmation = '';
+    let buffer = ''; // Handle partial JSON chunks
+
+    try {
+      while (!signal.aborted) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Keep incomplete line in buffer
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === '[DONE]') continue;
+
+          try {
+            const jsonStr = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed;
+            const json = JSON.parse(jsonStr);
+            const token = json.message?.content || json.choices?.[0]?.delta?.content || json.response || '';
+
+            if (token) {
+              fullResponse += token;
+
+              // Check for commands (only execute once)
+              if (!hasActionTriggered) {
+                const commandMatch = fullResponse.match(/\[\[(NAVIGATE|THEME):(.*?)]]/);
+                if (commandMatch) {
+                  const [fullMatch, commandType, arg] = commandMatch;
+                  fullResponse = fullResponse.replace(fullMatch, '').trim();
+                  
+                  // Execute command and get confirmation
+                  const success = this.executeCommand(commandType, arg.trim());
+                  commandConfirmation = success 
+                    ? this.getCommandConfirmation(commandType, arg.trim())
+                    : (commandType === 'NAVIGATE' ? this.getNavigationErrorMessage(arg.trim()) : '');
+                  
+                  hasActionTriggered = true;
+                }
+              }
+
+              // Get display text (strip any commands and incomplete command patterns)
+              let displayText = this.getDisplayText(fullResponse);
+              
+              // If display is empty but we have a confirmation, use it
+              if (!displayText && commandConfirmation) {
+                displayText = commandConfirmation;
+              }
+
+              // Debounced UI update
+              this.streamUpdate$.next({
+                content: displayText,
+                tokenEstimate: this.estimateTokens(displayText)
+              });
+            }
+
+            if (json.done) break;
+          } catch {
+            // Ignore JSON parse errors for incomplete chunks
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+      
+      // Final update - strip any remaining commands
+      let finalText = this.getDisplayText(fullResponse);
+      
+      // Use confirmation if text is empty
+      if (!finalText && commandConfirmation) {
+        finalText = commandConfirmation;
+      }
+      
+      this.applyStreamUpdate({
+        content: finalText,
+        tokenEstimate: this.estimateTokens(finalText)
+      });
     }
   }
 
-  private executeCommand(type: string, arg: string): void {
-    if (type === 'NAVIGATE') {
-      this.triggerNavigation(arg);
-    } else if (type === 'THEME') {
-      this.triggerThemeAction(arg);
+  /**
+   * Strip commands and incomplete command patterns from display text
+   */
+  private getDisplayText(text: string): string {
+    // Remove complete commands: [[NAVIGATE:...]] or [[THEME:...]]
+    let result = text.replace(/\[\[(NAVIGATE|THEME):[^\]]*]]/g, '');
+    
+    // Remove incomplete command patterns at the end (being typed)
+    // Matches: [[ or [[N or [[NAVIGATE: or [[NAVIGATE:/path (without closing ]])
+    result = result.replace(/\[\[(?:NAVIGATE|THEME)?:?[^\]]*$/i, '');
+    
+    // Also handle case where just [[ is at the end
+    result = result.replace(/\[\[$/g, '');
+    
+    // Clean up extra whitespace
+    return result.trim();
+  }
+
+  /**
+   * Get confirmation message for executed command
+   */
+  private getCommandConfirmation(type: string, arg: string): string {
+    switch (type) {
+      case 'NAVIGATE':
+        return `Đang chuyển đến trang bạn yêu cầu...`;
+      case 'THEME':
+        const themeAction = arg.toLowerCase();
+        if (themeAction === 'dark') return 'Đã chuyển sang giao diện tối.';
+        if (themeAction === 'light') return 'Đã chuyển sang giao diện sáng.';
+        return 'Đã thay đổi giao diện.';
+      default:
+        return '';
     }
   }
 
-  private triggerNavigation(path: string): void {
-    if (this.isNavigating() || this.router.url === path) return;
+  /**
+   * Get error message when navigation fails
+   */
+  private getNavigationErrorMessage(path: string): string {
+    return `Xin lỗi, tôi không thể mở "${path}". Chức năng này không tồn tại hoặc bạn không có quyền truy cập.`;
+  }
 
-    if (!this.allowedPaths.includes(path)) {
+  private applyStreamUpdate(update: StreamUpdate): void {
+    this.messages.update(msgs => {
+      const newMsgs = [...msgs];
+      const lastIdx = newMsgs.length - 1;
+      if (lastIdx >= 0 && newMsgs[lastIdx].role === 'assistant') {
+        newMsgs[lastIdx] = {
+          ...newMsgs[lastIdx],
+          content: update.content,
+          tokenEstimate: update.tokenEstimate
+        };
+      }
+      return newMsgs;
+    });
+  }
+
+  // ===== RETRY LOGIC =====
+
+  private async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as Error;
+        
+        // Don't retry on abort or client errors
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          throw error;
+        }
+        
+        if (attempt < this.MAX_RETRIES) {
+          await this.delay(this.RETRY_DELAY_MS * (attempt + 1));
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
+  // ===== CONTEXT MANAGEMENT =====
+
+  private prepareContextWindow(newUserMessage: string): ChatMessage[] {
+    const newMsgTokens = this.estimateTokens(newUserMessage);
+    const availableForHistory = this.MAX_CONTEXT_TOKENS
+      - this._systemPromptTokens
+      - this.MAX_OUTPUT_TOKENS
+      - newMsgTokens
+      - 100;
+
+    const history = this.messages().filter(m => m.content.trim() && m.role !== 'system');
+    const result: ChatMessage[] = [];
+    let usedTokens = 0;
+
+    // Build from most recent
+    for (let i = history.length - 1; i >= 0 && result.length < this.MAX_HISTORY_MESSAGES; i--) {
+      const msg = history[i];
+      const msgTokens = msg.tokenEstimate || this.estimateTokens(msg.content);
+
+      if (usedTokens + msgTokens > availableForHistory) break;
+
+      usedTokens += msgTokens;
+      result.unshift({ ...msg, tokenEstimate: msgTokens });
+    }
+
+    // Update context usage
+    const totalUsed = this._systemPromptTokens + usedTokens + newMsgTokens;
+    this.contextUsage.set(Math.round((totalUsed / this.MAX_CONTEXT_TOKENS) * 100));
+
+    return result;
+  }
+
+  private estimateTokens(text: string): number {
+    if (!text) return 0;
+    return Math.ceil(text.length / this.AVG_CHARS_PER_TOKEN) + 4;
+  }
+
+  // ===== SYSTEM PROMPT =====
+
+// ===== SYSTEM PROMPT =====
+
+  private getDynamicSystemPrompt(): string {
+    const currentUser = this.authService.currentUser();
+    const permissionsHash = JSON.stringify(currentUser?.permissions || []);
+
+    if (permissionsHash !== this._lastUserPermissionsHash) {
+      this._cachedSystemPrompt = '';
+      this._cachedAllowedPaths = null;
+      this._lastUserPermissionsHash = permissionsHash;
+    }
+
+    if (this._cachedSystemPrompt) {
+      return this._cachedSystemPrompt;
+    }
+
+    const routes = this.scanRoutes(this.router.config);
+    const sitemap = routes
+      .map(r => {
+        const desc = SCREEN_DESCRIPTIONS[r.purePath] || '';
+        return `- ${r.title}: ${r.fullUrl} (${desc})`;
+      })
+      .join('\n');
+
+    // IMPROVED PROMPT
+    const prompt = `Bạn là Trợ lý ảo IT (IT Assistant) thân thiện của hệ thống Hoàn Mỹ.
+Người dùng hiện tại: ${currentUser?.fullName || 'Khách'}
+
+NHIỆM VỤ CỦA BẠN:
+1. Trò chuyện tự nhiên: Nếu người dùng chào hỏi, than vãn (buồn, chán, mệt), hãy trả lời ân cần, hài hước hoặc động viên họ ngắn gọn. Đừng lúc nào cũng hỏi về chức năng.
+2. Hỗ trợ hệ thống: Chỉ khi người dùng hỏi về công việc hoặc chức năng, hãy dùng danh sách dưới đây để hỗ trợ.
+
+DANH SÁCH CHỨC NĂNG (SITEMAP):
+${sitemap}
+
+CÁC LỆNH HỆ THỐNG (System Commands):
+- Nếu người dùng muốn mở một màn hình cụ thể, hãy trả về: [[NAVIGATE:/đường-dẫn]]
+- Nếu người dùng muốn đổi giao diện (tối/sáng), hãy trả về: [[THEME:dark/light/toggle]]
+- Hotline IT: 1108 hoặc 1109.
+
+QUY TẮC PHẢN HỒI:
+- Không được bịa ra chức năng không có trong Sitemap.
+- Với câu hỏi đời thường: Trả lời thân thiện (VD: "Mệt thì nghỉ chút đi bạn", "Uống cafe không?").
+- Với yêu cầu công việc: Thực hiện lệnh ngay lập tức.`;
+
+    this._cachedSystemPrompt = prompt;
+    this._systemPromptTokens = this.estimateTokens(prompt);
+
+    return prompt;
+  }
+
+  // ===== COMMAND EXECUTION =====
+
+  private executeCommand(type: string, arg: string): boolean {
+    switch (type) {
+      case 'NAVIGATE':
+        return this.triggerNavigation(arg);
+      case 'THEME':
+        return this.triggerThemeAction(arg);
+      default:
+        return false;
+    }
+  }
+
+  private triggerNavigation(path: string): boolean {
+    if (this.isNavigating() || this.router.url === path) {
+      return true; // Already there or navigating
+    }
+
+    const allowedPaths = this.getAllowedPaths();
+    if (!allowedPaths.includes(path)) {
       console.warn('Navigation blocked:', path);
-      return;
+      return false; // Not allowed
     }
 
     this.isNavigating.set(true);
-    
+
     setTimeout(() => {
-      this.router.navigateByUrl(path).then(() => {
+      this.router.navigateByUrl(path).finally(() => {
         setTimeout(() => this.isNavigating.set(false), 800);
       });
     }, 1000);
+
+    return true;
   }
 
-  private triggerThemeAction(action: string): void {
+  private triggerThemeAction(action: string): boolean {
     const now = Date.now();
-    if (now - this.lastThemeChange < this.THEME_COOLDOWN) return;
+    if (now - this.lastThemeChange < this.THEME_COOLDOWN) {
+      return true; // Cooldown, but not an error
+    }
     this.lastThemeChange = now;
 
     const isDark = this.themeService.isDarkTheme();
@@ -499,20 +586,24 @@ ${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
     if ((mode === 'dark' && !isDark) || (mode === 'light' && isDark) || mode === 'toggle') {
       this.themeService.toggleTheme();
     }
+
+    return true;
   }
 
-  private addGreetingMessage(): void {
-    const user = this.authService.currentUser();
-    const name = user?.fullName || 'bạn';
-    this.messages.update(msgs => [...msgs, {
-      role: 'assistant',
-      content: `Chào ${name}! Tôi là IT Assistant. Bạn cần hỗ trợ gì?`,
-      tokenEstimate: 25
-    }]);
+  // ===== ROUTES & PERMISSIONS =====
+
+  private getAllowedPaths(): string[] {
+    if (!this._cachedAllowedPaths) {
+      this._cachedAllowedPaths = this.scanRoutes(this.router.config).map(r => r.fullUrl);
+    }
+    return this._cachedAllowedPaths;
   }
 
-  private scanRoutes(routes: Routes, parentPath: string = ''): { title: string; fullUrl: string; purePath: string; permission?: string }[] {
-    let results: { title: string; fullUrl: string; purePath: string; permission?: string }[] = [];
+  private scanRoutes(
+    routes: Routes,
+    parentPath: string = ''
+  ): { title: string; fullUrl: string; purePath: string }[] {
+    const results: { title: string; fullUrl: string; purePath: string }[] = [];
 
     for (const route of routes) {
       if (route.redirectTo || route.path === '**') continue;
@@ -527,26 +618,49 @@ ${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
         results.push({
           title: route.data['title'] as string,
           fullUrl: fullPath,
-          purePath: purePath,
-          permission: route.data['permission'] as string | undefined
+          purePath
         });
       }
 
       if (route.children) {
-        results = results.concat(this.scanRoutes(route.children, fullPath));
+        results.push(...this.scanRoutes(route.children, fullPath));
       }
     }
+
     return results;
   }
 
   private checkRoutePermission(route: Route): boolean {
-    if (!route.data?.['permission']) return true;
-    
-    const requiredPerm = route.data['permission'] as string;
+    const requiredPerm = route.data?.['permission'] as string | undefined;
+    if (!requiredPerm) return true;
+
     const user = this.authService.currentUser();
-    
-    if (!user?.permissions) return false;
-    return user.permissions.some(p => p.startsWith(requiredPerm));
+    return user?.permissions?.some(p => p.startsWith(requiredPerm)) ?? false;
+  }
+
+  // ===== UTILITIES =====
+
+  private sanitizeInput(content: string): string {
+    return content.replace(/\[\[(NAVIGATE|THEME):.*?]]/g, '').trim();
+  }
+
+  private async checkServerHealth(): Promise<void> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const baseUrl = this.getBaseUrl();
+      const response = await fetch(baseUrl, {
+        method: 'GET',
+        signal: controller.signal
+      });
+
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Server unreachable');
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private getBaseUrl(): string {
@@ -558,9 +672,58 @@ ${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
     }
   }
 
+  private addGreetingMessage(): void {
+    const name = this.authService.currentUser()?.fullName || 'bạn';
+    this.messages.update(msgs => [
+      ...msgs,
+      {
+        id: this.generateMessageId(),
+        role: 'assistant',
+        content: `Chào ${name}! Tôi là IT Assistant. Bạn cần hỗ trợ gì?`,
+        tokenEstimate: 25,
+        timestamp: Date.now()
+      }
+    ]);
+  }
+
+  private handleError(error: unknown): void {
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    
+    if (!isAbort) {
+      console.error('AI Error:', error);
+      this.messages.update(msgs => {
+        const newMsgs = [...msgs];
+        const lastIdx = newMsgs.length - 1;
+        if (lastIdx >= 0) {
+          newMsgs[lastIdx] = {
+            ...newMsgs[lastIdx],
+            content: 'Hệ thống đang bận, vui lòng thử lại.'
+          };
+        }
+        return newMsgs;
+      });
+    }
+  }
+
+  // ===== CLEANUP =====
+
+  private abortCurrentRequest(): void {
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+      this.currentAbortController = null;
+    }
+  }
+
+  private cleanup(): void {
+    this.abortCurrentRequest();
+    this.clearSessionTimeout();
+    this.resetChat();
+    this.isOpen.set(false);
+  }
+
   private resetSessionTimeout(): void {
     this.clearSessionTimeout();
-    this.sessionTimeout = window.setTimeout(() => {
+    this.sessionTimeout = setTimeout(() => {
       this.resetChat();
       this.isOpen.set(false);
     }, this.SESSION_TIMEOUT);
@@ -571,5 +734,16 @@ ${toSummarize.map(m => `${m.role}: ${m.content}`).join('\n')}`;
       clearTimeout(this.sessionTimeout);
       this.sessionTimeout = undefined;
     }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Generate unique message ID
+   */
+  private generateMessageId(): string {
+    return `msg_${Date.now()}_${++this.messageIdCounter}`;
   }
 }

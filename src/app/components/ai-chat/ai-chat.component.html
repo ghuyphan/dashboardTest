@@ -1,5 +1,6 @@
 <div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()">
   
+  <!-- HEADER -->
   <div class="ai-header">
     <div class="header-left">
       <div class="ai-avatar-wrapper">
@@ -12,15 +13,32 @@
       </div>
       <div class="header-info">
         <h3 class="title">Trợ lý IT Assistant</h3>
-        <span class="status">{{ llmService.modelLoaded() ? 'Sẵn sàng hỗ trợ' : (llmService.isModelLoading() ? 'Đang kết nối...' : 'Ngoại tuyến') }}</span>
+        <span class="status">
+          {{ llmService.modelLoaded() ? 'Sẵn sàng hỗ trợ' : (llmService.isModelLoading() ? 'Đang kết nối...' : 'Ngoại tuyến') }}
+        </span>
       </div>
     </div>
-    
-    <button class="close-btn" (click)="closeChat()" title="Đóng">
-      <i class="fas fa-times"></i>
-    </button>
+
+    <div class="header-right">
+      <!-- Context Usage Indicator -->
+      @if (llmService.modelLoaded() && llmService.contextUsage() > 50) {
+        <div 
+          class="context-indicator" 
+          [class.medium]="getContextLevel() === 'medium'"
+          [class.high]="getContextLevel() === 'high'"
+          [title]="'Bộ nhớ hội thoại: ' + llmService.contextUsage() + '%'">
+          <i class="fas fa-brain"></i>
+          <span class="context-value">{{ llmService.contextUsage() }}%</span>
+        </div>
+      }
+
+      <button class="close-btn" (click)="closeChat()" title="Đóng">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
   </div>
 
+  <!-- LOADING VIEW -->
   <div class="ai-body loading-view" *ngIf="llmService.isModelLoading() && !llmService.modelLoaded()">
     <div class="scan-container">
       <div class="scan-grid"></div>
@@ -35,18 +53,14 @@
     </p>
   </div>
 
+  <!-- CHAT VIEW -->
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
     
-    <!-- <div class="chat-intro">
-      <span class="intro-badge">Guide Mode</span>
-      <p>Xin chào! Tôi có thể giúp bạn tìm kiếm chức năng hoặc hướng dẫn sử dụng phần mềm.</p>
-    </div> -->
-
-    @for (msg of llmService.messages(); track $index) {
+    @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
       @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
         <div class="message-row" [ngClass]="msg.role">
           
-          @if(msg.role === 'assistant') {
+          @if (msg.role === 'assistant') {
             <div class="msg-avatar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
@@ -59,6 +73,7 @@
       }
     }
 
+    <!-- Thinking Indicator -->
     @if (shouldShowThinking()) {
       <div class="message-row assistant">
         <div class="msg-avatar">
@@ -74,6 +89,7 @@
     }
   </div>
   
+  <!-- Navigation Overlay -->
   @if (llmService.isNavigating()) {
     <div class="nav-overlay">
       <div class="warp-tunnel"></div>
@@ -86,9 +102,22 @@
     </div>
   }
 
+  <!-- FOOTER -->
   <div class="ai-footer" *ngIf="llmService.modelLoaded()">
-    <div class="toolbar" style="justify-content: flex-end;">
-      <button class="clear-chat-btn" (click)="llmService.resetChat()" title="Xóa lịch sử chat" [disabled]="llmService.isGenerating()">
+    <div class="toolbar">
+      <!-- Context warning message -->
+      @if (llmService.contextUsage() >= 80) {
+        <span class="context-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          Bộ nhớ gần đầy
+        </span>
+      }
+      
+      <button 
+        class="clear-chat-btn" 
+        (click)="llmService.resetChat()" 
+        title="Xóa lịch sử chat" 
+        [disabled]="llmService.isGenerating()">
         <i class="fas fa-trash-alt"></i> Xóa lịch sử
       </button>
     </div>
