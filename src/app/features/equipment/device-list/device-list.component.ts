@@ -35,7 +35,6 @@ import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
 import { DeviceService, DeviceQueryParams } from '../../../core/services/device.service';
-import { ContextAwareDirective } from '../../../shared/directives/context-aware.directive';
 
 const DEFAULT_PAGE_SIZE = 25;
 const DEFAULT_SORT_COLUMN = 'Id';
@@ -51,7 +50,7 @@ interface RowActionEvent {
 @Component({
   selector: 'app-device-list',
   standalone: true,
-  imports: [CommonModule, ReusableTableComponent, ContextAwareDirective],
+  imports: [CommonModule, ReusableTableComponent],
   templateUrl: './device-list.component.html',
   styleUrl: './device-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

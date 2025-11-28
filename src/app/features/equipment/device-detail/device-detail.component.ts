@@ -9,7 +9,6 @@ import { Device } from '../../../shared/models/device.model';
 import { FooterActionService } from '../../../core/services/footer-action.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { LlmService } from '../../../core/services/llm.service'; // [1] Import
 import { FooterAction } from '../../../core/models/footer-action.model';
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
@@ -34,7 +33,6 @@ import { DeviceService } from '../../../core/services/device.service';
 })
 export class DeviceDetailComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
-  private llmService = inject(LlmService); // [2] Inject
   
   public device: Device | null = null;
   public isLoading = true;
@@ -83,9 +81,6 @@ export class DeviceDetailComponent implements OnInit {
 
           this.setupFooterActions(this.device);
           this.checkWarrantyStatus(this.device);
-          
-          // [3] Update AI Context with single device details
-          this.updateAiContext(device);
         },
         error: (err: Error) => {
           console.error('Failed to load device details:', err);
@@ -93,29 +88,6 @@ export class DeviceDetailComponent implements OnInit {
           this.goBack();
         }
       });
-  }
-
-  private updateAiContext(d: Device): void {
-    const warrantyInfo = this.isWarrantyExpiring 
-      ? `CẢNH BÁO: Sắp hết hạn bảo hành (còn ${this.warrantyExpiresInDays} ngày).` 
-      : `Ngày hết hạn BH: ${d.NgayHetHanBH || 'N/A'}`;
-
-    const context = `
-      Đang xem chi tiết thiết bị:
-      - Tên: ${d.Ten}
-      - Mã: ${d.Ma}
-      - Model: ${d.Model || 'N/A'}
-      - Serial: ${d.SerialNumber || 'N/A'}
-      - Loại: ${d.TenLoaiThietBi || 'N/A'}
-      - Trạng thái: ${d.TrangThai_Ten || 'N/A'}
-      - Vị trí: ${d.ViTri || 'N/A'}
-      - Giá mua: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(d.GiaMua || 0)}
-      - Ngày mua: ${d.NgayMua || 'N/A'}
-      - ${warrantyInfo}
-      - Mô tả: ${d.MoTa || 'Không có'}
-    `;
-
-    this.llmService.setPageContext(context);
   }
 
   private checkWarrantyStatus(device: Device): void {

@@ -18,7 +18,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../core/services/theme.service';
 import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
 import { DateUtils } from '../../shared/utils/date.utils';
-import { LlmService } from '../../core/services/llm.service'; // [1] Import
+// [CLEANUP] Removed LlmService import
 
 import { WidgetCardComponent } from '../../components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../components/chart-card/chart-card.component';
@@ -61,7 +61,7 @@ export class ExaminationOverviewComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  private readonly llmService = inject(LlmService); // [2] Inject
+  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -102,8 +102,7 @@ export class ExaminationOverviewComponent implements OnInit {
         this.calculateWidgets(this.rawData);
         this.buildCharts(this.rawData);
         
-        // [3] Update AI Context
-        this.updateAiContext();
+        // [CLEANUP] Removed updateAiContext call
       }
 
       this.cd.markForCheck();
@@ -134,21 +133,7 @@ export class ExaminationOverviewComponent implements OnInit {
     this.loadData();
   }
 
-  // [4] Helper to format context for AI
-  private updateAiContext(): void {
-    const summary = this.widgetData
-      .map(w => `- ${w.title}: ${w.value}`)
-      .join('\n');
-
-    const context = `
-      Báo cáo Tổng quan Khám chữa bệnh.
-      Giai đoạn: ${this.fromDate} đến ${this.toDate}
-      
-      Tóm tắt số liệu:
-      ${summary}
-    `;
-    this.llmService.setPageContext(context);
-  }
+  // [CLEANUP] Removed updateAiContext method
 
   private initializeWidgetsStructure(): void {
     this.widgetData = [

@@ -1,11 +1,4 @@
-<div
-  class="page-content"
-  [appAiContext]="deviceContextForAI()"
-  appAiContextKey="DanhSachThietBi"
-  appAiContextDescription="Danh sách thiết bị IT với thông tin phân trang, tìm kiếm và thống kê"
-  [appAiContextThrottle]="500"
-  [appAiContextEnabled]="!isLoading()"
->
+<div class="page-content">
   <div class="grid-container">
     <app-reusable-table
       [data]="pagedDeviceData()"

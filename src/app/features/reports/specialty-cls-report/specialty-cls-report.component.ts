@@ -22,7 +22,7 @@ import {
 } from '../../../core/services/excel-export.service';
 import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
-import { LlmService } from '../../../core/services/llm.service';
+// [CLEANUP] Removed LlmService import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -68,7 +68,7 @@ export class SpecialtyClsReportComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private numberPipe = inject(DecimalPipe);
   public readonly themeService = inject(ThemeService);
-  private readonly llmService = inject(LlmService);
+  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -116,6 +116,7 @@ export class SpecialtyClsReportComponent implements OnInit {
     this.loadData();
   }
 
+  // ... existing methods (setDefaultDateRange, initializeWidgets, updateWidgetColors, onDateFilter) ...
   private setDefaultDateRange(): void {
     const now = new Date();
     const day = now.getDay();
@@ -292,12 +293,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     ];
 
-    this.updateAiContext(
-      totalKham,
-      totalCls,
-      topSpecialtyName,
-      topSpecialtyValue
-    );
+    // [CLEANUP] Removed updateAiContext call
 
     const sortedSpecialtyNames = sortedSpecialties.map((s) => s[0]);
     
@@ -318,22 +314,7 @@ export class SpecialtyClsReportComponent implements OnInit {
     );
   }
 
-  private updateAiContext(
-    kham: number,
-    cls: number,
-    topSpec: string,
-    topVal: number
-  ): void {
-    this.llmService.setPageContext(`
-      BÁO CÁO KHÁM & CẬN LÂM SÀNG THEO CHUYÊN KHOA
-      Từ ngày: ${this.fromDate} đến ${this.toDate}
-
-      Thống kê:
-      - Tổng lượt khám: ${this.formatNumber(kham)}
-      - Tổng lượt CLS: ${this.formatNumber(cls)}
-      - Chuyên khoa đông nhất: ${topSpec} (${this.formatNumber(topVal)} lượt)
-    `);
-  }
+  // [CLEANUP] Removed updateAiContext method
 
   private buildCharts(
     data: SpecialtyClsStat[],

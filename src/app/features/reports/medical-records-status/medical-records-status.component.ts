@@ -23,7 +23,7 @@ import {
   ExportColumn,
 } from '../../../core/services/excel-export.service';
 import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
-import { LlmService } from '../../../core/services/llm.service'; // [1] Import
+// [CLEANUP] Removed LlmService import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -56,7 +56,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  private readonly llmService = inject(LlmService); // [2] Inject
+  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -72,7 +72,6 @@ export class MedicalRecordsStatusComponent implements OnInit {
       this.palette = this.themeService.currentPalette();
       if (!this.isLoading && this.summaryData.length > 0) {
         this.buildCharts(this.summaryData);
-        this.updateAiContext(this.summaryData); // [3]
       }
       this.cd.markForCheck();
     });
@@ -83,24 +82,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
     this.loadData();
   }
 
-  private updateAiContext(data: MedicalRecordSummary[]): void {
-    const topMissing = data
-      .sort((a, b) => b.SO_LUONG - a.SO_LUONG)
-      .slice(0, 5)
-      .map((i) => `- BS ${i.TEN_BS}: ${i.SO_LUONG} HSBA`)
-      .join('\n');
-
-    const total = data.reduce((sum, i) => sum + i.SO_LUONG, 0);
-
-    this.llmService.setPageContext(`
-      BÁO CÁO CHƯA TẠO HỒ SƠ BỆNH ÁN (NGOẠI TRÚ)
-      Từ ngày: ${this.fromDate} đến ${this.toDate}
-      Tổng số lượng chưa tạo: ${total}
-
-      Top 5 Bác sĩ chưa tạo nhiều nhất:
-      ${topMissing}
-    `);
-  }
+  // [CLEANUP] Removed updateAiContext method
 
   private setDefaultDateRange(): void {
     const now = new Date();
@@ -137,7 +119,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
         next: (data) => {
           this.summaryData = data || [];
           this.buildCharts(this.summaryData);
-          this.updateAiContext(this.summaryData); // Ensure context is set on load
+          // [CLEANUP] Removed updateAiContext call
         },
         error: (err) => {
           console.error(err);

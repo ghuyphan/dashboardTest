@@ -31,12 +31,12 @@
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
     
     <div class="chat-intro">
-      <span class="intro-badge">AI Assistant</span>
-      <p>Xin chào! Tôi có thể trả lời các câu hỏi dựa trên dữ liệu màn hình hoặc kiến thức chung.</p>
+      <span class="intro-badge">Guide Mode</span>
+      <p>Xin chào! Tôi có thể giúp bạn tìm kiếm chức năng hoặc hướng dẫn sử dụng phần mềm.</p>
     </div>
 
     @for (msg of llmService.messages(); track $index) {
-      @if (msg.role !== 'assistant' || msg.content) {
+      @if (msg.role !== 'system') {
         <div class="message-row" [ngClass]="msg.role">
           
           @if(msg.role === 'assistant') {
@@ -47,7 +47,7 @@
             </div>
           }
 
-          <div class="bubble" [class.system-msg]="msg.role === 'system'">
+          <div class="bubble">
             {{ msg.content }}
           </div>
         </div>
@@ -71,21 +71,9 @@
 
   <div class="ai-footer" *ngIf="llmService.modelLoaded()">
     
-    <div class="toolbar">
-      <label class="context-toggle" title="Bật để AI đọc được dữ liệu trên màn hình hiện tại">
-        <input 
-          type="checkbox" 
-          [checked]="llmService.useScreenContext()" 
-          (change)="llmService.toggleScreenContext()"
-          [disabled]="llmService.isGenerating()">
-        <span class="toggle-label">
-          <i class="fas fa-eye" [class.active]="llmService.useScreenContext()"></i> 
-          Đọc màn hình
-        </span>
-      </label>
-
+    <div class="toolbar" style="justify-content: flex-end;">
       <button class="clear-chat-btn" (click)="llmService.resetChat()" title="Xóa lịch sử chat" [disabled]="llmService.isGenerating()">
-        <i class="fas fa-trash-alt"></i>
+        <i class="fas fa-trash-alt"></i> Xóa lịch sử
       </button>
     </div>
 
@@ -95,7 +83,7 @@
         [(ngModel)]="userInput" 
         (keyup.enter)="handleMainButton()"
         [disabled]="llmService.isGenerating()"
-        placeholder="Nhập câu hỏi..." 
+        placeholder="Hỏi về cách sử dụng..." 
         class="chat-input"
         autocomplete="off"
       >
@@ -113,11 +101,6 @@
           <i class="fas fa-arrow-up"></i>
         }
       </button>
-    </div>
-
-    <div class="disclaimer">
-      <i class="fas fa-shield-alt"></i>
-      <span>AI có thể mắc lỗi. Vui lòng kiểm chứng thông tin quan trọng.</span>
     </div>
   </div>
 </div>

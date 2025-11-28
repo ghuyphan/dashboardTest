@@ -24,7 +24,7 @@ import {
   ExportColumn,
 } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
-import { LlmService } from '../../../core/services/llm.service'; // [1] Import
+// [CLEANUP] Removed LlmService import
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import {
@@ -70,7 +70,7 @@ export class ClsLevel3ReportComponent implements OnInit {
   private numberPipe = inject(DecimalPipe);
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
-  private readonly llmService = inject(LlmService); // [2] Inject
+  // [CLEANUP] Removed LlmService inject
 
   public isLoading = false;
   public isExporting = false;
@@ -294,38 +294,13 @@ export class ClsLevel3ReportComponent implements OnInit {
       },
     ];
 
-    // [3] Update AI Context
-    this.updateAiContext(
-      totalExam,
-      totalCls,
-      totalAdmission,
-      topRoomName,
-      topRoomValue
-    );
+    // [CLEANUP] Removed updateAiContext call
 
     this.buildCharts(roomMap, groupMap, dateMap);
   }
 
-  private updateAiContext(
-    exam: number,
-    cls: number,
-    admission: number,
-    topRoom: string,
-    topRoomVal: number
-  ): void {
-    this.llmService.setPageContext(`
-      BÁO CÁO KHÁM & CẬN LÂM SÀNG (Tầng 3)
-      Từ ngày: ${this.fromDate} đến ${this.toDate}
+  // [CLEANUP] Removed updateAiContext method
 
-      Số liệu tổng quan:
-      - Tổng khám: ${this.formatNumber(exam)}
-      - Tổng CLS: ${this.formatNumber(cls)}
-      - Tổng nhập viện: ${this.formatNumber(admission)}
-      - Phòng đông nhất: ${topRoom} (${this.formatNumber(topRoomVal)} lượt)
-    `);
-  }
-
-  // ... (buildCharts, formatNumber, onExport remain the same)
   private buildCharts(
     roomMap: Map<string, number>,
     groupMap: Map<string, number>,
