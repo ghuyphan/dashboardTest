@@ -250,7 +250,7 @@ export class LlmService {
       ],
       stream: true,
       options: {
-        temperature: 1,
+        temperature: 0.6,
         top_p: 0.8,
         top_k: 25,
         repeat_penalty: 1.2,
@@ -487,12 +487,11 @@ export class LlmService {
 
   // ===== SYSTEM PROMPT =====
 
-// ===== SYSTEM PROMPT =====
-
   private getDynamicSystemPrompt(): string {
     const currentUser = this.authService.currentUser();
     const permissionsHash = JSON.stringify(currentUser?.permissions || []);
 
+    // Invalidate cache if permissions changed
     if (permissionsHash !== this._lastUserPermissionsHash) {
       this._cachedSystemPrompt = '';
       this._cachedAllowedPaths = null;
@@ -507,30 +506,21 @@ export class LlmService {
     const sitemap = routes
       .map(r => {
         const desc = SCREEN_DESCRIPTIONS[r.purePath] || '';
-        return `- ${r.title}: ${r.fullUrl} (${desc})`;
+        return `${r.title}: ${r.fullUrl}${desc ? ' - ' + desc : ''}`;
       })
       .join('\n');
 
-    // IMPROVED PROMPT
-    const prompt = `Bạn là Trợ lý ảo IT (IT Assistant) thân thiện của hệ thống Hoàn Mỹ.
-Người dùng hiện tại: ${currentUser?.fullName || 'Khách'}
+    const prompt = `Bạn là IT Assistant hệ thống Hoàn Mỹ. Người dùng: ${currentUser?.fullName || 'Khách'}
 
-NHIỆM VỤ CỦA BẠN:
-1. Trò chuyện tự nhiên: Nếu người dùng chào hỏi, than vãn (buồn, chán, mệt), hãy trả lời ân cần, hài hước hoặc động viên họ ngắn gọn. Đừng lúc nào cũng hỏi về chức năng.
-2. Hỗ trợ hệ thống: Chỉ khi người dùng hỏi về công việc hoặc chức năng, hãy dùng danh sách dưới đây để hỗ trợ.
-
-DANH SÁCH CHỨC NĂNG (SITEMAP):
+CHỨC NĂNG:
 ${sitemap}
 
-CÁC LỆNH HỆ THỐNG (System Commands):
-- Nếu người dùng muốn mở một màn hình cụ thể, hãy trả về: [[NAVIGATE:/đường-dẫn]]
-- Nếu người dùng muốn đổi giao diện (tối/sáng), hãy trả về: [[THEME:dark/light/toggle]]
-- Hotline IT: 1108 hoặc 1109.
+LỆNH:
+- Điều hướng: [[NAVIGATE:/path]] khi được yêu cầu mở chức năng
+- Đổi theme: [[THEME:dark/light/toggle]]
+- Hỗ trợ IT: 1108/1109
 
-QUY TẮC PHẢN HỒI:
-- Không được bịa ra chức năng không có trong Sitemap.
-- Với câu hỏi đời thường: Trả lời thân thiện (VD: "Mệt thì nghỉ chút đi bạn", "Uống cafe không?").
-- Với yêu cầu công việc: Thực hiện lệnh ngay lập tức.`;
+Trả lời ngắn gọn. CHỈ điều hướng khi yêu cầu rõ ràng.`;
 
     this._cachedSystemPrompt = prompt;
     this._systemPromptTokens = this.estimateTokens(prompt);
