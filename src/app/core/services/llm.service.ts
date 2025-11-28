@@ -210,21 +210,7 @@ export class LlmService {
       });
     } finally {
       this.isGenerating.set(false);
-
-      // [FIX] Cleanup Context on Navigation
-      // If navigation occurred, remove the instruction and response from history 
-      // after a delay so the user sees the action but history stays clean.
-      if (hasNavigated) {
-        setTimeout(() => {
-          this.messages.update((msgs) => {
-            // Remove the last 2 messages (User Command + AI Response)
-            if (msgs.length >= 2) {
-              return msgs.slice(0, msgs.length - 2);
-            }
-            return msgs;
-          });
-        }, 2000); // Wait 2s (animation time) before cleaning up
-      }
+      // Previous cleanup logic removed to keep chat history intact
     }
   }
 

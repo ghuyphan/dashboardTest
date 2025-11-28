@@ -11,7 +11,7 @@
         <div class="pulse-dot" [class.online]="llmService.modelLoaded()"></div>
       </div>
       <div class="header-info">
-        <h3 class="title">Trợ lý Homi</h3>
+        <h3 class="title">Trợ lý IT Assistant</h3>
         <span class="status">{{ llmService.modelLoaded() ? 'Sẵn sàng hỗ trợ' : (llmService.isModelLoading() ? 'Đang kết nối...' : 'Ngoại tuyến') }}</span>
       </div>
     </div>
@@ -26,7 +26,7 @@
       <div class="scan-grid"></div>
       <div class="scan-radar"></div>
       <div class="scan-icon">
-        <i class="fas fa-network-wired"></i>
+        <i class="fas fa-server"></i>
       </div>
     </div>
     <p class="loading-text">
@@ -37,10 +37,10 @@
 
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
     
-    <div class="chat-intro">
+    <!-- <div class="chat-intro">
       <span class="intro-badge">Guide Mode</span>
       <p>Xin chào! Tôi có thể giúp bạn tìm kiếm chức năng hoặc hướng dẫn sử dụng phần mềm.</p>
-    </div>
+    </div> -->
 
     @for (msg of llmService.messages(); track $index) {
       @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {

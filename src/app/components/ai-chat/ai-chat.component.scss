@@ -10,7 +10,7 @@ $gradient-avatar: linear-gradient(135deg, $color-primary, $color-accent);
 $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), var(--gray-100));
 
 :host {
-  --header-offset: 50px;
+  --header-offset: 48px;
   --chat-width: 400px;
   --chat-height: 650px;
   --bubble-radius: 18px;
@@ -27,7 +27,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
 .ai-window {
   position: fixed;
   top: var(--header-offset);
-  right: 70px; 
+  right: 65px; 
   
   width: var(--chat-width);
   height: var(--chat-height);
