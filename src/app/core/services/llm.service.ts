@@ -55,33 +55,42 @@ export class LlmService {
     if (this.modelLoaded()) return;
     
     this.isModelLoading.set(true);
-    this.loadProgress.set('Đang kết nối máy chủ AI...');
+    this.loadProgress.set('Đang kết nối máy chủ...');
 
     try {
-      // Real Ping to wake up the model
-      // Using 'gemma:2b' (approx 2B params) for faster init as requested
-      const payload = {
-        model: 'gemma3:1b-it-qat', 
-        messages: [{ role: 'user', content: 'ping' }],
-        stream: false 
-      };
+      // [FAST CHECK] Instead of loading the model (heavy), just ping the server root (light)
+      // We infer the base URL from the API URL (e.g. http://host:11434/api/chat -> http://host:11434/)
+      let baseUrl = this.apiUrl;
+      try {
+        const urlObj = new URL(this.apiUrl);
+        baseUrl = `${urlObj.protocol}//${urlObj.host}/`;
+      } catch (e) { /* Keep original if parse fails */ }
 
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s Timeout
+
+      const response = await fetch(baseUrl, {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        signal: controller.signal
       });
 
-      if (!response.ok) {
-        throw new Error(`Init failed with status: ${response.status}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok && response.status !== 200 && response.status !== 404) {
+         // 404 is acceptable for a root ping as it proves the server is reachable
+         throw new Error(`Server unreachable: ${response.status}`);
       }
+
+      // Artificial delay for the fancy animation to finish if it was too fast
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       this.modelLoaded.set(true);
       this.loadProgress.set('Sẵn sàng');
 
       if (this.messages().length === 0) {
         const user = this.authService.currentUser();
-        const greeting = `Chào bạn ${user?.fullName || ''}. Tôi là Homi, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?`;
+        const greeting = `Chào bạn ${user?.fullName || ''}. Tôi là Trợ lý IT Assistant, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?`;
           
         this.messages.update((msgs) => [
           ...msgs,
@@ -89,9 +98,8 @@ export class LlmService {
         ]);
       }
     } catch (error) {
-      console.error('AI Model Init Error:', error);
-      this.loadProgress.set('Kết nối thất bại');
-      // Optional: Set modelLoaded to true anyway to allow retries in chat, or keep false to show error state
+      console.error('AI Server Connection Error:', error);
+      this.loadProgress.set('Không tìm thấy máy chủ AI');
     } finally {
       this.isModelLoading.set(false);
     }
@@ -242,7 +250,7 @@ export class LlmService {
         const user = this.authService.currentUser();
         this.messages.set([{ 
             role: 'assistant', 
-            content: `Chào bạn ${user?.fullName || ''}. Tôi là Homi, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?` 
+            content: `Chào bạn ${user?.fullName || ''}. Tôi là Trợ lý IT Assistant, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?` 
         }]);
     }
   }
@@ -258,7 +266,7 @@ export class LlmService {
     
     return `
 <role>
-Bạn là Homi, trợ lý ảo của hệ thống nội bộ Hoàn Mỹ.
+Bạn là Trợ lý IT Assistant, trợ lý ảo của hệ thống nội bộ Hoàn Mỹ.
 Bạn đang trò chuyện với: ${currentUser?.fullName || 'Người dùng'}.
 Xưng hô: Hãy dùng "tôi" (thay cho mình/em) và "bạn" (thay cho anh/chị).
 Phong cách: Ngắn gọn, đi thẳng vào vấn đề, hỗ trợ nhiệt tình.

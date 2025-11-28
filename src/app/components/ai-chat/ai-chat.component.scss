@@ -79,7 +79,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ... Header styles remain the same ... */
+/* --- HEADER --- */
 .ai-header {
   flex-shrink: 0;
   padding: 16px; 
@@ -178,7 +178,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ... Chat Body styles remain the same ... */
+/* --- CHAT BODY --- */
 .ai-body {
   flex: 1;
   overflow-y: auto;
@@ -204,9 +204,127 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     justify-content: center;
     text-align: center;
     background-color: var(--surface-card);
+    padding: 0;
   }
 }
 
+/* --- SCANNING ANIMATION (Connecting) --- */
+.scan-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.scan-grid {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed var(--border-color);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+  
+  /* Background grid pattern */
+  background-image: 
+    linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: center;
+  opacity: 0.3;
+  mask-image: radial-gradient(circle, black 40%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, black 40%, transparent 70%);
+}
+
+.scan-radar {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--teal-blue);
+  opacity: 0.5;
+  animation: radarSpin 2s linear infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 131, 155, 0.2) 60deg, transparent 60.1deg);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.scan-icon {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background: var(--surface-card);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  z-index: 5;
+  border: 1px solid var(--border-color);
+  animation: iconFloat 2s ease-in-out infinite;
+
+  i {
+    font-size: 28px;
+    color: var(--teal-blue);
+    /* Glitch effect on icon */
+    animation: iconGlitch 3s infinite;
+  }
+}
+
+@keyframes radarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes iconGlitch {
+  0%, 90%, 100% { opacity: 1; transform: scale(1); }
+  92% { opacity: 0.8; transform: scale(0.98); }
+  94% { opacity: 1; transform: scale(1.02); }
+  96% { opacity: 0.8; transform: scale(0.98); }
+}
+
+/* --- Loading Text --- */
+.loading-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.loading-dots {
+  span {
+    animation: dotBlink 1.4s infinite both;
+    font-size: 1.2em;
+  }
+  span:nth-child(1) { animation-delay: 0s; }
+  span:nth-child(2) { animation-delay: 0.2s; }
+  span:nth-child(3) { animation-delay: 0.4s; }
+}
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* --- CHAT MESSAGES --- */
 .chat-intro {
   text-align: center;
   margin: 8px 0 24px 0;
@@ -373,9 +491,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ==========================================================================
-   NEW: NAVIGATION OVERLAY ANIMATION
-   ========================================================================== */
+/* --- NAVIGATION OVERLAY --- */
 .nav-overlay {
   position: absolute;
   inset: 60px 0 70px 0; /* Cover body, leave header/footer visible */
@@ -421,7 +537,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     .nav-icon {
       color: white;
       font-size: 1.5rem;
-      transform: rotate(-45deg); /* Rocket pointing up-right */
+      transform: rotate(-45deg);
     }
   }
 
@@ -445,7 +561,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 131, 155, 0); }
 }
 
-/* ... Footer styles remain the same ... */
+/* --- FOOTER --- */
 .ai-footer {
   flex-shrink: 0;
   padding: 12px 16px 16px 16px; 
@@ -574,7 +690,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   }
 }
 
-/* ... Animations and Mobile styles remain the same ... */
 @keyframes messageSlideUp {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -588,66 +703,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
 @keyframes gradientMove {
   0% { background-position: 100% 0; }
   100% { background-position: -100% 0; }
-}
-
-.ai-pulse-ring {
-  display: inline-block;
-  position: relative;
-  width: 64px;
-  height: 64px;
-  div {
-    box-sizing: border-box;
-    display: block;
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    margin: 8px;
-    border: 3px solid var(--teal-blue);
-    border-radius: 50%;
-    animation: ai-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    border-color: var(--teal-blue) transparent transparent transparent;
-    [data-theme='dark'] & {
-       border-color: var(--teal-midtone) transparent transparent transparent;
-    }
-    &:nth-child(1) { animation-delay: -0.45s; }
-    &:nth-child(2) { animation-delay: -0.3s; }
-    &:nth-child(3) { animation-delay: -0.15s; }
-  }
-}
-@keyframes ai-ring {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  margin-top: 16px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  animation: pulseText 1.5s infinite;
-}
-@keyframes pulseText {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-.typing-dots {
-  display: flex;
-  gap: 4px;
-  span {
-    width: 6px;
-    height: 6px;
-    background: var(--teal-blue);
-    border-radius: 50%;
-    animation: bounce 1.4s infinite ease-in-out both;
-    [data-theme='dark'] & { background: var(--teal-midtone); }
-    &:nth-child(1) { animation-delay: -0.32s; }
-    &:nth-child(2) { animation-delay: -0.16s; }
-  }
-}
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
 }
 
 @media (max-width: 480px) {
