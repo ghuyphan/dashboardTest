@@ -1,5 +1,3 @@
-/* src/app/components/ai-chat/ai-chat.component.scss */
-
 $color-primary: var(--teal-blue);
 $color-primary-dark: var(--deep-sapphire);
 $color-accent: #06b6d4;
@@ -82,9 +80,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
-  /* Removed backdrop-filter for performance during stream if necessary, 
-     but usually header is static so it's fine */
   
   [data-theme='dark'] & {
     background-color: rgba(24, 24, 27, 0.95); 
@@ -176,7 +171,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
   flex-direction: column;
   gap: 16px;
 
-  /* PERFORMANCE FIX: Stop scroll jumping */
   overflow-anchor: none;
   scroll-behavior: smooth; 
   will-change: scroll-position;
@@ -227,15 +221,13 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
 .message-row {
   display: flex;
   gap: 10px;
-  align-items: flex-end;
+  align-items: flex-start; /* Align to top so avatars align with bubble start */
   max-width: 100%;
   
-  /* PERFORMANCE: Only animate opacity/transform */
   animation: messageFadeIn 0.3s ease forwards;
   opacity: 0;
   transform: translateY(8px);
   
-  /* Isolate layout recalculations */
   contain: layout style; 
 
   &.user {
@@ -245,7 +237,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       background-color: $color-bg-user;
       color: $color-text-user;
       border-radius: 18px 18px 4px 18px;
-      /* Reduced shadow complexity */
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       border: none;
     }
@@ -265,6 +256,7 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       align-items: center;
       justify-content: center;
       color: var(--teal-blue);
+      margin-top: 2px; /* Visual offset */
     }
 
     .bubble {
@@ -272,7 +264,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
       color: var(--text-primary);
       border: 1px solid var(--border-color);
       border-radius: 18px 18px 18px 4px;
-      /* Reduced shadow complexity */
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
   }
@@ -300,10 +291,53 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     padding: 10px 14px;
     font-size: 0.925rem;
     line-height: 1.55;
-    max-width: 80%;
+    max-width: 85%; /* Increased slightly */
     word-break: break-word;
     position: relative;
-    white-space: pre-wrap; 
+    
+    /* --- MARKDOWN CONTENT STYLES --- */
+    /* Because [innerHTML] strips encapsulation, we nest these rules */
+    
+    ::ng-deep & > p:first-child { margin-top: 0; }
+    ::ng-deep & > p:last-child { margin-bottom: 0; }
+    ::ng-deep & > p { margin-bottom: 8px; }
+    
+    ::ng-deep strong { font-weight: 600; color: inherit; }
+    
+    ::ng-deep ul, ::ng-deep ol {
+      margin: 4px 0 8px 0;
+      padding-left: 24px;
+    }
+    
+    ::ng-deep li {
+      margin-bottom: 4px;
+    }
+
+    ::ng-deep a {
+      color: var(--teal-blue);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+
+      &:hover {
+        border-bottom-color: var(--teal-blue);
+      }
+    }
+    
+    /* Code block style */
+    ::ng-deep code {
+      background-color: rgba(0,0,0,0.06);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    
+    /* Dark mode specific adjustments */
+    [data-theme='dark'] ::ng-deep code {
+      background-color: rgba(255,255,255,0.1);
+    }
   }
 
   .thinking-bubble {
@@ -352,44 +386,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
-
-    .context-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      user-select: none;
-
-      input {
-        cursor: pointer;
-        accent-color: var(--teal-blue);
-        width: 14px; 
-        height: 14px;
-      }
-
-      .toggle-label {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 500;
-        
-        i {
-          font-size: 0.85rem;
-          color: var(--text-disabled);
-          transition: color 0.2s;
-          
-          &.active {
-            color: var(--teal-blue);
-          }
-        }
-      }
-      
-      &:hover .toggle-label {
-        color: var(--text-primary);
-      }
-    }
 
     .clear-chat-btn {
       background: none;
@@ -485,19 +481,6 @@ $gradient-thinking: linear-gradient(270deg, var(--gray-100), var(--gray-200), va
         }
       }
     }
-  }
-
-  .disclaimer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: var(--text-disabled);
-    text-align: center;
-    user-select: none;
-
-    i { font-size: 0.8rem; opacity: 0.7; }
   }
 }
 

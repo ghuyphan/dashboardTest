@@ -47,9 +47,7 @@
             </div>
           }
 
-          <div class="bubble">
-            {{ msg.content }}
-          </div>
+          <div class="bubble" [innerHTML]="msg.content | markdown"></div>
         </div>
       }
     }
@@ -103,4 +101,4 @@
       </button>
     </div>
   </div>
-</div>>
+</div>
