@@ -36,7 +36,7 @@
     </div>
 
     @for (msg of llmService.messages(); track $index) {
-      @if (msg.role !== 'system') {
+      @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
         <div class="message-row" [ngClass]="msg.role">
           
           @if(msg.role === 'assistant') {

@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { AuthService } from './auth.service';
-import { NavItem } from '../models/nav-item.model';
+import { ThemeService } from './theme.service'; // [1] Import ThemeService
 import { environment } from '../../../environments/environment.development';
 
 export interface ChatMessage {
@@ -13,6 +14,9 @@ export interface ChatMessage {
 })
 export class LlmService {
   private authService = inject(AuthService);
+  private themeService = inject(ThemeService); // [2] Inject ThemeService
+  private router = inject(Router);
+  
   private readonly apiUrl = environment.llmUrl;
   private readonly MAX_HISTORY = 10;
 
@@ -58,28 +62,25 @@ export class LlmService {
   async sendMessage(content: string): Promise<void> {
     if (!content.trim()) return;
     
-    // 1. Add User Message
     const userMsg: ChatMessage = { role: 'user', content };
     this.messages.update((msgs) => [...msgs, userMsg]);
     
-    // 2. Add Assistant Placeholder (Empty initially)
     const aiMsg: ChatMessage = { role: 'assistant', content: '' };
     this.messages.update((msgs) => [...msgs, aiMsg]);
     this.isGenerating.set(true);
 
     try {
       const recentMessages = this.messages()
-        .filter((m) => m !== aiMsg) // Don't send the empty placeholder
+        .filter((m) => m !== aiMsg)
         .slice(-this.MAX_HISTORY);
 
-      // 3. Optimised Prompt for Gemma 3 Instruct
       const payload = {
-        model: 'gemma3:1b-it-qat', 
+        model: 'gemma3:4b-it-qat', 
         messages: [
           { role: 'system', content: this.getSystemPrompt() },
           ...recentMessages,
         ],
-        temperature: 0.2, // Low temp for precise navigation instructions
+        temperature: 0.1, 
         stream: true, 
       };
 
@@ -92,7 +93,6 @@ export class LlmService {
       if (!response.ok) throw new Error('API Request Failed');
       if (!response.body) throw new Error('No response body');
 
-      // 4. Stream Response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
@@ -119,7 +119,6 @@ export class LlmService {
               fullContent += token;
               this.messages.update((msgs) => {
                 const lastIdx = msgs.length - 1;
-                // Only update if the last message is actually the assistant's placeholder
                 if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
                   const newMsgs = [...msgs];
                   newMsgs[lastIdx] = { ...newMsgs[lastIdx], content: fullContent };
@@ -129,14 +128,13 @@ export class LlmService {
               });
             }
             if (json.done) this.isGenerating.set(false);
-          } catch (e) { /* Ignore parse errors in stream */ }
+          } catch (e) { }
         }
       }
     } catch (error) {
       console.error('AI Stream Error:', error);
       this.messages.update((msgs) => {
         const newMsgs = [...msgs];
-        // Replace placeholder with error if it failed mid-stream or at start
         newMsgs[newMsgs.length - 1] = {
           role: 'assistant',
           content: newMsgs[newMsgs.length - 1].content + '\n\n⚠️ *Xin lỗi, tôi đang gặp sự cố kết nối.*',
@@ -153,53 +151,83 @@ export class LlmService {
     this.loadModel();
   }
 
-  // --- PROMPT ENGINEERING ---
+  // --- REFINED SYSTEM PROMPT ---
 
   private getSystemPrompt(): string {
-    const user = this.authService.currentUser();
-    const siteMap = this.generateSiteMap(this.authService.navItems());
+    const routeMap = this.extractRoutes(this.router.config);
+    const siteMapString = routeMap.map(r => `- [${r.title}](${r.path})`).join('\n');
+
+    // [3] Determine Dynamic Theme Instruction
+    const isDark = this.themeService.isDarkTheme();
+    const themeInstruction = isDark 
+      ? 'Hiện tại đang là Chế độ Tối. Để chuyển sang Chế độ Sáng, bấm vào Avatar (góc phải trên) -> Chọn "Chế độ sáng".'
+      : 'Hiện tại đang là Chế độ Sáng. Để chuyển sang Chế độ Tối, bấm vào Avatar (góc phải trên) -> Chọn "Chế độ tối".';
 
     return `
 ### ROLE
-Bạn là "Homi" - Trợ lý ảo chuyên nghiệp của Hoàn Mỹ Portal. Nhiệm vụ của bạn là hỗ trợ người dùng điều hướng hệ thống và giải thích chức năng.
+Bạn là "Homi" - Trợ lý ảo chuyên nghiệp của Hoàn Mỹ Portal.
 
-### USER INFO
-- Tên: ${user?.fullName || 'Người dùng'}
-- Vai trò: ${user?.roles.join(', ') || 'N/A'}
+### GLOSSARY (Từ điển thuật ngữ)
+- **HSBA**: Hồ sơ bệnh án.
+- **CLS**: Cận lâm sàng (Xét nghiệm, X-Quang, Siêu âm...).
+- **OP / Ngoại trú**: Bệnh nhân khám và về trong ngày.
+- **IP / Nội trú**: Bệnh nhân nằm viện.
 
-### SYSTEM NAVIGATION (SITEMAP)
-Dưới đây là danh sách DUY NHẤT các chức năng và đường dẫn (URL) có sẵn trong hệ thống này:
-${siteMap}
+### SYSTEM KNOWLEDGE (Kiến thức hệ thống)
 
-### INSTRUCTIONS
-1. **Điều hướng:** Khi người dùng hỏi về một chức năng, hãy kiểm tra kỹ SITEMAP ở trên.
-   - Nếu chức năng CÓ trong Sitemap: Cung cấp link Markdown: \`[Tên Chức Năng](/duong-dan)\`.
-   - Nếu chức năng KHÔNG có trong Sitemap: Hãy trả lời thật thà là bạn không tìm thấy chức năng đó trong menu của họ.
-   - **TUYỆT ĐỐI KHÔNG** tự bịa ra đường dẫn không có trong Sitemap (ví dụ: không được bịa ra /finance, /billing nếu không có).
+1. **Điều Hướng (QUAN TRỌNG):**
+   - Trả lời bằng Link Markdown: \`[Tên Màn Hình](/duong-dan)\`.
+   - Dựa vào danh sách SITEMAP bên dưới để tìm link đúng.
 
-2. **Định dạng:** Sử dụng **Markdown** để làm câu trả lời dễ đọc (in đậm, danh sách bullet point).
+2. **Giao Diện & Tiện Ích:**
+   - **Đổi Giao Diện (Theme):** ${themeInstruction}
+   - **Đổi Mật Khẩu:** Bấm vào Avatar -> Chọn [Cài đặt tài khoản](/app/settings).
+   - **Thanh Footer:** Nút Lưu, In, Xuất Excel luôn nằm ở dưới cùng màn hình.
 
-3. **Giới hạn:** - KHÔNG bịa ra dữ liệu thực tế (doanh thu, số lượng).
-   - Trả lời ngắn gọn, súc tích bằng Tiếng Việt.
+3. **Hỗ Trợ Kỹ Thuật:**
+   - Hotline IT: **1108** hoặc **1109**.
 
-### EXAMPLE INTERACTION
-User: "Tôi muốn xem báo cáo giường bệnh."
-Homi: "Bạn có thể xem chi tiết tại màn hình [Công suất giường bệnh](/app/reports/bed-usage)."
+### SITEMAP (Danh sách chức năng)
+${siteMapString}
 
-User: "Tôi muốn xem bảng lương."
-Homi: "Xin lỗi, tôi không tìm thấy chức năng xem bảng lương trong menu hệ thống của bạn."
+### EXAMPLES
+User: "Mở báo cáo HSBA."
+Homi: "Dạ, bạn có thể xem tại đây: [Chưa tạo HSBA (OP)](/app/reports/missing-medical-records)."
+
+User: "Tôi muốn xem CLS."
+Homi: "Hệ thống có các báo cáo sau:
+- [Tầng 3 Khám và CLS](/app/reports/cls-level3)
+- [Tầng 6 Khám và CLS](/app/reports/cls-level6)
+- [Khám CLS theo chuyên khoa](/app/reports/specialty-cls)"
+
+User: "Giao diện sáng quá, đau mắt."
+Homi: "Bạn có thể chuyển sang chế độ tối bằng cách bấm vào Avatar -> Chọn **Chế độ tối**."
 `.trim();
   }
 
-  private generateSiteMap(items: NavItem[], prefix = '- '): string {
-    let map = '';
-    for (const item of items) {
-      const linkInfo = item.link ? `(Link: ${item.link})` : '(Menu cha)';
-      map += `${prefix}${item.label} ${linkInfo}\n`;
-      if (item.children && item.children.length > 0) {
-        map += this.generateSiteMap(item.children, `  ${prefix}`);
+  private extractRoutes(routes: Routes, parentPath: string = ''): { title: string; path: string }[] {
+    let result: { title: string; path: string }[] = [];
+
+    for (const route of routes) {
+      if (route.redirectTo || route.path === '**') continue;
+
+      let currentPath = parentPath;
+      if (route.path) {
+        currentPath = parentPath ? `${parentPath}/${route.path}` : `/${route.path}`;
+      }
+
+      if (route.data && route.data['title']) {
+        result.push({
+          title: route.data['title'] as string,
+          path: currentPath
+        });
+      }
+
+      if (route.children) {
+        result = result.concat(this.extractRoutes(route.children, currentPath));
       }
     }
-    return map;
+
+    return result;
   }
 }
