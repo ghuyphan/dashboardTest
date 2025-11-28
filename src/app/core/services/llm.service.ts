@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Router, Routes } from '@angular/router';
+import { Router, Routes, Route } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ThemeService } from './theme.service';
 import { environment } from '../../../environments/environment.development';
@@ -9,25 +9,17 @@ export interface ChatMessage {
   content: string;
 }
 
-/**
- * KNOWLEDGE BASE: Ánh xạ URL -> Mô tả nghiệp vụ chi tiết.
- * Giúp AI hiểu "Thêm máy mới" = "Danh mục thiết bị".
- */
-const ROUTE_DESCRIPTIONS: Record<string, string> = {
-  '/app/home': 'Trang chủ, màn hình chính, dashboard tổng hợp thông tin.',
-  '/app/settings': 'Cài đặt tài khoản, đổi mật khẩu, xem thông tin cá nhân.',
-  
-  // Module Thiết bị
-  '/app/equipment/catalog': 'Quản lý danh sách thiết bị y tế. Chức năng: Thêm mới máy móc, Sửa thông tin, Xóa thiết bị, Tìm kiếm theo mã/tên, In mã QR, In biên bản bàn giao.',
-  '/app/equipment/dashboard': 'Dashboard thiết bị, biểu đồ thống kê tình trạng máy (hỏng, bảo trì, hoạt động), xem nhanh các thiết bị cần chú ý hoặc sắp hết bảo hành.',
-  
-  // Module Báo cáo
-  '/app/reports/bed-usage': 'Báo cáo công suất giường bệnh. Xem số lượng giường trống, giường đang sử dụng, chờ xuất viện theo từng khoa phòng.',
-  '/app/reports/examination-overview': 'Tổng quan khám chữa bệnh (KCB). Thống kê số lượt tiếp nhận, bệnh nhân mới/cũ, BHYT/Viện phí theo ngày/tháng.',
-  '/app/reports/missing-medical-records': 'Báo cáo hồ sơ bệnh án (HSBA) thiếu. Dành cho KHTH kiểm tra bác sĩ nào chưa tạo bệnh án, quên làm hồ sơ ngoại trú.',
-  '/app/reports/cls-level3': 'Báo cáo hoạt động Cận lâm sàng (CLS) tại khu vực Tầng 3 (Xét nghiệm, X-Quang...).',
-  '/app/reports/cls-level6': 'Báo cáo hoạt động Cận lâm sàng (CLS) tại khu vực Tầng 6.',
-  '/app/reports/specialty-cls': 'Thống kê chỉ định Cận lâm sàng (CLS) theo từng Chuyên khoa. Xem tỷ lệ chỉ định của các khoa.'
+const SCREEN_DESCRIPTIONS: Record<string, string> = {
+  'home': 'Màn hình chính, xem thống kê tổng quan nhanh.',
+  'settings': 'Thay đổi mật khẩu và xem thông tin tài khoản cá nhân.',
+  'equipment/catalog': 'Quản lý danh sách máy móc, thêm/sửa/xóa thiết bị, in mã QR, biên bản bàn giao.',
+  'equipment/dashboard': 'Dashboard thiết bị, biểu đồ thống kê tình trạng máy (hỏng, bảo trì, hoạt động).',
+  'reports/bed-usage': 'Xem công suất giường bệnh, số lượng giường trống/đang dùng theo khoa.',
+  'reports/examination-overview': 'Tổng quan khám chữa bệnh, thống kê lượt tiếp nhận, BHYT/Viện phí.',
+  'reports/missing-medical-records': 'Báo cáo kiểm tra các bác sĩ chưa hoàn tất hồ sơ bệnh án (HSBA).',
+  'reports/cls-level3': 'Báo cáo hoạt động Cận lâm sàng (CLS) khu vực Tầng 3.',
+  'reports/cls-level6': 'Báo cáo hoạt động Cận lâm sàng (CLS) khu vực Tầng 6.',
+  'reports/specialty-cls': 'Thống kê chỉ định CLS theo từng Chuyên khoa.'
 };
 
 @Injectable({
@@ -48,7 +40,7 @@ export class LlmService {
   public modelLoaded = signal<boolean>(false);
   public loadProgress = signal<string>('');
   public messages = signal<ChatMessage[]>([]);
-  public isNavigating = signal<boolean>(false); // Trạng thái điều hướng
+  public isNavigating = signal<boolean>(false);
 
   constructor() {}
 
@@ -61,26 +53,48 @@ export class LlmService {
 
   async loadModel(): Promise<void> {
     if (this.modelLoaded()) return;
+    
     this.isModelLoading.set(true);
-    this.loadProgress.set('Đang khởi động trợ lý ảo...');
+    this.loadProgress.set('Đang kết nối máy chủ AI...');
 
-    // Giả lập kết nối
-    setTimeout(() => {
+    try {
+      // Real Ping to wake up the model
+      // Using 'gemma:2b' (approx 2B params) for faster init as requested
+      const payload = {
+        model: 'gemma3:1b-it-qat', 
+        messages: [{ role: 'user', content: 'ping' }],
+        stream: false 
+      };
+
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Init failed with status: ${response.status}`);
+      }
+
       this.modelLoaded.set(true);
-      this.isModelLoading.set(false);
       this.loadProgress.set('Sẵn sàng');
 
       if (this.messages().length === 0) {
         const user = this.authService.currentUser();
-        // Lời chào trung tính hơn
-        const greeting = `Xin chào ${user?.fullName || 'bạn'}. Mình là Homi, trợ lý ảo của hệ thống. Bạn cần tìm chức năng hay báo cáo nào?`;
+        const greeting = `Chào bạn ${user?.fullName || ''}. Tôi là Homi, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?`;
           
         this.messages.update((msgs) => [
           ...msgs,
           { role: 'assistant', content: greeting },
         ]);
       }
-    }, 600);
+    } catch (error) {
+      console.error('AI Model Init Error:', error);
+      this.loadProgress.set('Kết nối thất bại');
+      // Optional: Set modelLoaded to true anyway to allow retries in chat, or keep false to show error state
+    } finally {
+      this.isModelLoading.set(false);
+    }
   }
 
   async sendMessage(content: string): Promise<void> {
@@ -93,22 +107,24 @@ export class LlmService {
     this.messages.update((msgs) => [...msgs, { role: 'assistant', content: '' }]);
     this.isGenerating.set(true);
 
+    let hasNavigated = false;
+
     try {
-      // 3. Prepare Context & Prompt
+      // 3. Prepare Context
       const recentMessages = this.messages()
-        .filter((m) => m.content && m.role !== 'assistant') // Filter out empty current placeholder
+        .filter((m) => !!m.content) // Filter out empty placeholders but keep assistant messages
         .slice(-this.MAX_HISTORY);
 
-      const systemPrompt = this.getSystemPrompt();
+      const systemPrompt = this.getDynamicSystemPrompt();
 
       // 4. Call API
       const payload = {
-        model: 'gemma3:4b-it-qat', 
+        model: 'gemma3:4b-it-qat', // Main model for logic
         messages: [
           { role: 'system', content: systemPrompt },
           ...recentMessages,
         ],
-        temperature: 0.1, // Giữ thấp để câu trả lời chính xác, ít "sáng tạo" lung tung
+        temperature: 0.1,
         top_p: 0.9,
         stream: true, 
       };
@@ -137,7 +153,6 @@ export class LlmService {
         if (done) break;
         
         const chunk = decoder.decode(value, { stream: true });
-        // Xử lý format data: của các dòng stream (tùy server)
         const lines = chunk.split('\n').filter((line) => line.trim() !== '');
 
         for (const line of lines) {
@@ -146,28 +161,26 @@ export class LlmService {
             if (jsonStr === '[DONE]') continue;
             
             const json = JSON.parse(jsonStr);
-            // Hỗ trợ nhiều format response khác nhau (Ollama, vLLM, etc)
             const token = json.message?.content || json.choices?.[0]?.delta?.content || json.response || '';
             
             if (token) {
               fullText += token;
               
-              // --- LOGIC ĐIỀU HƯỚNG TỰ ĐỘNG ---
-              // Regex bắt lệnh: [[NAVIGATE:/app/some/path]]
+              // --- NAVIGATION HANDLING ---
               const navMatch = fullText.match(/\[\[NAVIGATE:(.*?)\]\]/);
-              
               if (navMatch) {
                 const path = navMatch[1];
-                // Xóa lệnh khỏi văn bản hiển thị để user không thấy code lạ
                 fullText = fullText.replace(navMatch[0], '').trim();
                 
-                // Thực thi điều hướng (có animation)
-                this.triggerNavigation(path);
+                // Only trigger once per message
+                if (!hasNavigated) {
+                   this.triggerNavigation(path);
+                   hasNavigated = true;
+                }
               }
-              // --------------------------------
+              // ---------------------------
 
-              // Cập nhật UI
-              this.messages.update((msgs) => {
+              this.messages.update((msgs: ChatMessage[]) => {
                 const newMsgs = [...msgs];
                 const lastIdx = newMsgs.length - 1;
                 newMsgs[lastIdx] = { role: 'assistant', content: fullText };
@@ -176,9 +189,7 @@ export class LlmService {
             }
             
             if (json.done) this.isGenerating.set(false);
-          } catch (e) { 
-            // Bỏ qua lỗi parse JSON từng chunk nhỏ
-          }
+          } catch (e) { }
         }
       }
     } catch (error) {
@@ -191,19 +202,31 @@ export class LlmService {
       });
     } finally {
       this.isGenerating.set(false);
+
+      // [FIX] Cleanup Context on Navigation
+      // If navigation occurred, remove the instruction and response from history 
+      // after a delay so the user sees the action but history stays clean.
+      if (hasNavigated) {
+        setTimeout(() => {
+          this.messages.update((msgs) => {
+            // Remove the last 2 messages (User Command + AI Response)
+            if (msgs.length >= 2) {
+              return msgs.slice(0, msgs.length - 2);
+            }
+            return msgs;
+          });
+        }, 2000); // Wait 2s (animation time) before cleaning up
+      }
     }
   }
 
   private triggerNavigation(path: string): void {
-    // Debounce: Nếu đang điều hướng rồi thì thôi
     if (this.isNavigating() || this.router.url === path) return;
 
     this.isNavigating.set(true);
     
-    // Delay để user kịp đọc tin nhắn "Mình đang mở..."
     setTimeout(() => {
       this.router.navigateByUrl(path).then(() => {
-        // Tắt hiệu ứng sau khi chuyển trang xong
         setTimeout(() => this.isNavigating.set(false), 800);
       });
     }, 1000);
@@ -211,98 +234,100 @@ export class LlmService {
 
   resetChat(): void {
     this.messages.set([]);
-    this.loadModel(); 
+    // Don't need to reload model if already loaded, just clear msgs
+    if (!this.modelLoaded()) {
+        this.loadModel();
+    } else {
+        // Re-add greeting
+        const user = this.authService.currentUser();
+        this.messages.set([{ 
+            role: 'assistant', 
+            content: `Chào bạn ${user?.fullName || ''}. Tôi là Homi, trợ lý ảo của hệ thống. Bạn cần tôi giúp tìm chức năng nào không?` 
+        }]);
+    }
   }
-
-  // ========================================================================
-  //  PROMPT ENGINEERING - TRÁI TIM CỦA HỆ THỐNG
-  // ========================================================================
   
-  private getSystemPrompt(): string {
-    // 1. Lấy danh sách màn hình user ĐƯỢC PHÉP thấy (đã lọc permission)
-    const allowedRoutes = this.extractAuthorizedRoutes(this.router.config);
-    
-    // 2. Tạo bản đồ chức năng (Context Map)
-    const sitemapText = allowedRoutes.map(r => {
-      const desc = ROUTE_DESCRIPTIONS[r.path] || 'Chức năng hệ thống.';
-      return `- Tên: "${r.title}"\n  URL: ${r.path}\n  Nghiệp vụ: ${desc}`;
+  private getDynamicSystemPrompt(): string {
+    const currentUser = this.authService.currentUser();
+    const accessibleRoutes = this.scanRoutes(this.router.config);
+
+    const sitemapText = accessibleRoutes.map(r => {
+      const desc = this.getDescriptionForPath(r.purePath) || 'Chức năng hệ thống.';
+      return `- Tên màn hình: "${r.title}"\n  URL: ${r.fullUrl}\n  Mô tả: ${desc}`;
     }).join('\n\n');
     
-    const currentUser = this.authService.currentUser();
-
-    // 3. Prompt "Thông minh" với cấu trúc XML rõ ràng
     return `
 <role>
-Bạn là Homi, trợ lý ảo thông minh của hệ thống nội bộ Hoàn Mỹ.
-Bạn đang trò chuyện với: ${currentUser?.fullName || 'Người dùng'} (Vai trò: ${currentUser?.roles?.join(', ') || 'N/A'}).
-Phong cách: Chuyên nghiệp, ngắn gọn, hữu ích, xưng hô trung tính (bạn/mình hoặc anh/chị).
+Bạn là Homi, trợ lý ảo của hệ thống nội bộ Hoàn Mỹ.
+Bạn đang trò chuyện với: ${currentUser?.fullName || 'Người dùng'}.
+Xưng hô: Hãy dùng "tôi" (thay cho mình/em) và "bạn" (thay cho anh/chị).
+Phong cách: Ngắn gọn, đi thẳng vào vấn đề, hỗ trợ nhiệt tình.
 </role>
 
 <context>
-Dưới đây là danh sách các chức năng mà người dùng này CÓ QUYỀN truy cập.
-Bạn CHỈ ĐƯỢC phép điều hướng hoặc gợi ý các đường dẫn có trong danh sách này.
+Dưới đây là danh sách các màn hình mà người dùng này ĐƯỢC PHÉP truy cập.
+Bạn CHỈ ĐƯỢC phép điều hướng tới các đường dẫn trong danh sách này.
 
 ${sitemapText}
 </context>
 
 <rules>
-1. **Ưu tiên điều hướng (Navigation First):**
-   - Nếu người dùng hỏi cách làm một việc gì đó (ví dụ: "Thêm máy mới", "Xem báo cáo giường"), hãy phân tích xem nó thuộc "Nghiệp vụ" nào trong <context>.
-   - Nếu tìm thấy màn hình phù hợp, hãy trả lời xác nhận và ĐÍNH KÈM lệnh điều hướng đặc biệt ở cuối câu: \`[[NAVIGATE:/duong-dan]]\`.
-   - Ví dụ User: "Tôi muốn thêm thiết bị".
-   - Homi: "Để thêm thiết bị mới, bạn vào danh mục thiết bị nhé. [[NAVIGATE:/app/equipment/catalog]]"
+1. **Điều hướng (Navigation):**
+   - Nếu người dùng hỏi cách làm việc gì đó thuộc danh sách <context>, hãy hướng dẫn và đính kèm lệnh: \`[[NAVIGATE:/duong-dan]]\`.
+   - Ví dụ: "Tôi muốn xem báo cáo giường" -> "Bạn có thể xem tại màn hình công suất giường. [[NAVIGATE:/app/reports/bed-usage]]"
 
-2. **Xử lý khi không tìm thấy hoặc không có quyền:**
-   - Nếu chức năng người dùng hỏi KHÔNG có trong <context> (do họ không có quyền hoặc hệ thống không có), hãy trả lời thật lòng:
-   - "Chức năng này không nằm trong quyền truy cập của bạn hoặc chưa được hỗ trợ."
-   - Đừng bịa ra đường dẫn ảo.
+2. **Bảo mật (Security):**
+   - Nếu người dùng hỏi về một chức năng KHÔNG có trong danh sách <context>, nghĩa là họ KHÔNG CÓ QUYỀN.
+   - Hãy trả lời: "Chức năng này không nằm trong quyền truy cập của bạn hoặc không tồn tại."
+   - Tuyệt đối không bịa ra đường dẫn.
 
-3. **Hỗ trợ kỹ thuật:**
-   - Chỉ hướng dẫn liên hệ IT (hotline 1108) khi người dùng gặp lỗi đăng nhập, lỗi hệ thống, hoặc tài khoản bị khóa. Đừng dùng nó làm câu trả lời mặc định cho mọi thứ.
-
-4. **Ngôn ngữ:** Tiếng Việt tự nhiên, không máy móc.
+3. **Lỗi kỹ thuật:**
+   - Nếu gặp vấn đề tài khoản/lỗi hệ thống, hướng dẫn gọi IT: 1108 / 1109.
 </rules>
 `.trim();
   }
 
-  /**
-   * Hàm đệ quy lọc route dựa trên Permission của AuthService.
-   * Nếu user không có quyền, route đó sẽ BIẾN MẤT khỏi nhận thức của AI.
-   */
-  private extractAuthorizedRoutes(routes: Routes, parentPath: string = ''): { title: string; path: string }[] {
-    let result: { title: string; path: string }[] = [];
+  private scanRoutes(routes: Routes, parentPath: string = ''): { title: string; fullUrl: string; purePath: string }[] {
+    let results: { title: string; fullUrl: string; purePath: string }[] = [];
 
     for (const route of routes) {
       if (route.redirectTo || route.path === '**') continue;
 
-      // Xây dựng full path
-      let currentPath = parentPath;
-      if (route.path) {
-        currentPath = parentPath ? `${parentPath}/${route.path}` : `/${route.path}`;
+      const fullPath = parentPath ? `${parentPath}/${route.path}` : `/${route.path}`;
+      const purePath = fullPath.startsWith('/app/') ? fullPath.substring(5) : (fullPath.startsWith('/') ? fullPath.substring(1) : fullPath);
+
+      if (!this.checkRoutePermission(route)) {
+        continue;
       }
 
-      // 1. Kiểm tra Permission (Chốt chặn quan trọng nhất)
-      if (route.data && route.data['permission']) {
-        const requiredPerm = route.data['permission'];
-        if (!this.authService.hasPermission(requiredPerm)) {
-          // User không có quyền -> Bỏ qua route này -> AI sẽ không biết nó tồn tại
-          continue;
-        }
-      }
-
-      // 2. Chỉ lấy các route là màn hình (có Title)
       if (route.data && route.data['title']) {
-        result.push({
+        results.push({
           title: route.data['title'] as string,
-          path: currentPath
+          fullUrl: fullPath,
+          purePath: purePath
         });
       }
 
-      // 3. Đệ quy lấy route con
       if (route.children) {
-        result = result.concat(this.extractAuthorizedRoutes(route.children, currentPath));
+        results = results.concat(this.scanRoutes(route.children, fullPath));
       }
     }
-    return result;
+    return results;
+  }
+
+  private checkRoutePermission(route: Route): boolean {
+    if (!route.data || !route.data['permission']) {
+      return true;
+    }
+    const requiredPerm = route.data['permission'] as string;
+    const user = this.authService.currentUser();
+    if (!user || !user.permissions) return false;
+    return user.permissions.some(userPerm => userPerm.startsWith(requiredPerm));
+  }
+
+  private getDescriptionForPath(path: string): string | null {
+    if (SCREEN_DESCRIPTIONS[path]) return SCREEN_DESCRIPTIONS[path];
+    const key = Object.keys(SCREEN_DESCRIPTIONS).find(k => path.includes(k));
+    return key ? SCREEN_DESCRIPTIONS[key] : null;
   }
 }

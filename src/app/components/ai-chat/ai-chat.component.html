@@ -4,7 +4,7 @@
     <div class="header-left">
       <div class="ai-avatar-wrapper">
         <div class="avatar-ring">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
             <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
           </svg>
         </div>
@@ -12,13 +12,18 @@
       </div>
       <div class="header-info">
         <h3 class="title">Trợ lý Homi</h3>
-        <span class="status">{{ llmService.modelLoaded() ? 'Sẵn sàng hỗ trợ' : 'Đang kết nối...' }}</span>
+        <span class="status">{{ llmService.modelLoaded() ? 'Sẵn sàng hỗ trợ' : (llmService.isModelLoading() ? 'Đang khởi động...' : 'Ngoại tuyến') }}</span>
       </div>
     </div>
     
     <button class="close-btn" (click)="closeChat()" title="Đóng">
       <i class="fas fa-times"></i>
     </button>
+  </div>
+
+  <div class="ai-body loading-view" *ngIf="llmService.isModelLoading() && !llmService.modelLoaded()">
+    <div class="ai-pulse-ring"><div></div><div></div><div></div></div>
+    <p class="loading-text">{{ llmService.loadProgress() }}</p>
   </div>
 
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
