@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { AuthService } from './auth.service';
-import { ThemeService } from './theme.service'; // [1] Import ThemeService
+import { ThemeService } from './theme.service';
 import { environment } from '../../../environments/environment.development';
 
 export interface ChatMessage {
@@ -14,7 +14,7 @@ export interface ChatMessage {
 })
 export class LlmService {
   private authService = inject(AuthService);
-  private themeService = inject(ThemeService); // [2] Inject ThemeService
+  private themeService = inject(ThemeService);
   private router = inject(Router);
   
   private readonly apiUrl = environment.llmUrl;
@@ -52,7 +52,7 @@ export class LlmService {
           ...msgs,
           {
             role: 'assistant',
-            content: 'Xin chào! Tôi là Homi. Bạn cần tìm chức năng nào hoặc muốn tôi hướng dẫn sử dụng phần nào của hệ thống?',
+            content: 'Xin chào! Tôi là Homi. Bạn cần tìm chức năng nào của hệ thống?',
           },
         ]);
       }
@@ -74,13 +74,18 @@ export class LlmService {
         .filter((m) => m !== aiMsg)
         .slice(-this.MAX_HISTORY);
 
-      const payload = {
+      const systemPrompt = this.getSystemPrompt();
+
+const payload = {
         model: 'gemma3:4b-it-qat', 
         messages: [
-          { role: 'system', content: this.getSystemPrompt() },
+          { role: 'system', content: systemPrompt },
           ...recentMessages,
         ],
-        temperature: 0.1, 
+        temperature: 1.0, 
+        top_p: 0.95,  
+        top_k: 64,        
+        repeat_penalty: 1.0, 
         stream: true, 
       };
 
@@ -137,7 +142,7 @@ export class LlmService {
         const newMsgs = [...msgs];
         newMsgs[newMsgs.length - 1] = {
           role: 'assistant',
-          content: newMsgs[newMsgs.length - 1].content + '\n\n⚠️ *Xin lỗi, tôi đang gặp sự cố kết nối.*',
+          content: newMsgs[newMsgs.length - 1].content + '\n\n⚠️ *Xin lỗi, tôi đang gặp sự cố kết nối với máy chủ AI.*',
         };
         return newMsgs;
       });
@@ -148,60 +153,46 @@ export class LlmService {
 
   resetChat(): void {
     this.messages.set([]);
-    this.loadModel();
+    this.loadModel(); 
   }
-
-  // --- REFINED SYSTEM PROMPT ---
 
   private getSystemPrompt(): string {
     const routeMap = this.extractRoutes(this.router.config);
     const siteMapString = routeMap.map(r => `- [${r.title}](${r.path})`).join('\n');
-
-    // [3] Determine Dynamic Theme Instruction
     const isDark = this.themeService.isDarkTheme();
-    const themeInstruction = isDark 
-      ? 'Hiện tại đang là Chế độ Tối. Để chuyển sang Chế độ Sáng, bấm vào Avatar (góc phải trên) -> Chọn "Chế độ sáng".'
-      : 'Hiện tại đang là Chế độ Sáng. Để chuyển sang Chế độ Tối, bấm vào Avatar (góc phải trên) -> Chọn "Chế độ tối".';
+    const currentUser = this.authService.currentUser();
 
+    // Updated Prompt using XML tags (Recommended for Gemma/Gemini)
     return `
-### ROLE
-Bạn là "Homi" - Trợ lý ảo chuyên nghiệp của Hoàn Mỹ Portal.
+<role>
+Bạn là "Homi", trợ lý ảo chuyên nghiệp của Hoàn Mỹ Portal.
+Bạn trả lời ngắn gọn, chính xác, sử dụng tiếng Việt thân thiện.
+</role>
 
-### GLOSSARY (Từ điển thuật ngữ)
-- **HSBA**: Hồ sơ bệnh án.
-- **CLS**: Cận lâm sàng (Xét nghiệm, X-Quang, Siêu âm...).
-- **OP / Ngoại trú**: Bệnh nhân khám và về trong ngày.
-- **IP / Nội trú**: Bệnh nhân nằm viện.
+<user_info>
+- Tên: ${currentUser?.fullName || 'Người dùng'}
+- Giao diện hiện tại: ${isDark ? 'Tối (Dark Mode)' : 'Sáng (Light Mode)'}
+</user_info>
 
-### SYSTEM KNOWLEDGE (Kiến thức hệ thống)
+<knowledge_base>
+1. **Điều Hướng:** Cung cấp link dạng Markdown: \`[Tên Màn Hình](/duong-dan)\`.
+2. **Giao diện:** Người dùng có thể đổi chế độ Sáng/Tối bằng cách bấm vào Avatar góc phải -> Chọn "Chế độ sáng/tối".
+3. **Đổi mật khẩu:** Bấm vào Avatar -> Chọn [Cài đặt tài khoản](/app/settings).
+4. **Hỗ Trợ Kỹ Thuật:** Hotline IT là 1108 hoặc 1109.
+</knowledge_base>
 
-1. **Điều Hướng (QUAN TRỌNG):**
-   - Trả lời bằng Link Markdown: \`[Tên Màn Hình](/duong-dan)\`.
-   - Dựa vào danh sách SITEMAP bên dưới để tìm link đúng.
-
-2. **Giao Diện & Tiện Ích:**
-   - **Đổi Giao Diện (Theme):** ${themeInstruction}
-   - **Đổi Mật Khẩu:** Bấm vào Avatar -> Chọn [Cài đặt tài khoản](/app/settings).
-   - **Thanh Footer:** Nút Lưu, In, Xuất Excel luôn nằm ở dưới cùng màn hình.
-
-3. **Hỗ Trợ Kỹ Thuật:**
-   - Hotline IT: **1108** hoặc **1109**.
-
-### SITEMAP (Danh sách chức năng)
+<sitemap>
 ${siteMapString}
+</sitemap>
 
-### EXAMPLES
-User: "Mở báo cáo HSBA."
-Homi: "Dạ, bạn có thể xem tại đây: [Chưa tạo HSBA (OP)](/app/reports/missing-medical-records)."
-
-User: "Tôi muốn xem CLS."
-Homi: "Hệ thống có các báo cáo sau:
-- [Tầng 3 Khám và CLS](/app/reports/cls-level3)
-- [Tầng 6 Khám và CLS](/app/reports/cls-level6)
-- [Khám CLS theo chuyên khoa](/app/reports/specialty-cls)"
-
-User: "Giao diện sáng quá, đau mắt."
-Homi: "Bạn có thể chuyển sang chế độ tối bằng cách bấm vào Avatar -> Chọn **Chế độ tối**."
+<instructions>
+- Với lời chào đơn giản (xin chào, hi), chỉ trả lời thân thiện và hỏi người dùng cần hỗ trợ gì.
+- Chỉ cung cấp danh sách chức năng trong <sitemap> KHI người dùng hỏi rõ ràng.
+- Nếu người dùng hỏi cách đi đến một chức năng CỤ THỂ, cung cấp link Markdown tương ứng: \`[Tên](/đường-dẫn)\`.
+- **QUAN TRỌNG:** Nếu câu hỏi của người dùng KHÔNG liên quan đến các chức năng trong <sitemap>, <knowledge_base> hoặc cách sử dụng phần mềm (ví dụ: hỏi về kiến thức y khoa chuyên sâu, thời tiết, tin tức, code, hoặc chuyện phếm), hãy trả lời chính xác câu này:
+  "Vấn đề này nằm ngoài phạm vi hỗ trợ của tôi. Vui lòng liên hệ bộ phận IT qua hotline 1108 hoặc 1109 để được hỗ trợ."
+- **TUYỆT ĐỐI KHÔNG** bịa đặt thông tin (hallucinate) hoặc trả lời những thứ không được quy định.
+</instructions>
 `.trim();
   }
 
@@ -227,7 +218,6 @@ Homi: "Bạn có thể chuyển sang chế độ tối bằng cách bấm vào A
         result = result.concat(this.extractRoutes(route.children, currentPath));
       }
     }
-
     return result;
   }
 }
