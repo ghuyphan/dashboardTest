@@ -54,9 +54,7 @@
     
     @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
       @if (msg.role !== 'system' && msg.role !== 'tool' && (msg.role !== 'assistant' || msg.content)) {
-        <div class="message-row" 
-             [ngClass]="msg.role" 
-             [class.is-thinking]="msg.isThinking">
+        <div class="message-row" [ngClass]="msg.role">
           
           @if (msg.role === 'assistant') {
             <div class="msg-avatar">

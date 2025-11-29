@@ -9,8 +9,7 @@ import {
   NgZone,
   AfterViewInit,
   OnDestroy,
-  TrackByFunction,
-  SecurityContext
+  TrackByFunction
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -67,14 +66,14 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   // ========================================================================
 
   /**
-   * IMPORTANT: Pre-processes content to handle Qwen/DeepSeek <think> tags.
+   * Pre-processes content to handle <think> tags from models like Qwen/DeepSeek.
    * Replaces them with a styled div structure before Markdown parsing.
    */
   processContent(content: string): string {
     if (!content) return '';
     
-    // Replace <think>...</think> with a styled container
-    // We use a specific class 'ai-thought-process' that you should style in SCSS
+    // Replace <think>...</think> with a styled container.
+    // The inner content of <think> is preserved and will be rendered inside.
     let processed = content
       .replace(/<think>/g, '<div class="ai-thought-process"><div class="thought-label">Thinking Process:</div>')
       .replace(/<\/think>/g, '</div>');
