@@ -1,4 +1,11 @@
-import { Injectable, signal, inject, effect, DestroyRef, NgZone } from '@angular/core';
+import {
+  Injectable,
+  signal,
+  inject,
+  effect,
+  DestroyRef,
+  NgZone,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, Routes, Route } from '@angular/router';
 import { AuthService } from './auth.service';
@@ -14,6 +21,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
+  thinking?: string;
   tokenEstimate?: number;
   timestamp?: number;
   toolCalls?: ToolCall[];
@@ -28,6 +36,7 @@ interface ToolCall {
 
 interface StreamUpdate {
   content: string;
+  thinking?: string;
   tokenEstimate: number;
   toolCalls?: ToolCall[];
   isThinking?: boolean;
@@ -41,21 +50,42 @@ interface RouteInfo {
   keywords?: string[];
 }
 
-// Screen descriptions with keywords for better matching
-const SCREEN_CONFIG: Record<
-  string,
-  { description: string; keywords: string[] }
-> = {
+interface ToolResult {
+  success: boolean;
+  data?: string;
+  error?: string;
+}
+
+interface MessageClassification {
+  type: 'greeting' | 'acknowledgment' | 'business_intent' | 'blocked_topic' | 'harmful' | 'unknown';
+  confidence: number;
+  blockedReason?: string;
+  suggestedResponse?: string;
+}
+
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+/**
+ * Screen descriptions with keywords for better matching
+ */
+const SCREEN_CONFIG: Record<string, { description: string; keywords: string[] }> = {
   home: {
     description: 'Trang chính, thống kê tổng quan',
     keywords: ['home', 'trang chủ', 'chính', 'dashboard', 'tổng quan'],
   },
   settings: {
     description: 'Cài đặt tài khoản, đổi mật khẩu',
-    keywords: ['settings', 'cài đặt', 'tài khoản', 'mật khẩu', 'config', 'password'],
+    keywords: [
+      'settings', 'cài đặt', 'tài khoản', 'account',
+      'mật khẩu', 'pass', 'password', 'đổi pass', 'đổi mật khẩu',
+      'change password', 'reset pass', 'quên pass',
+      'thông tin', 'cá nhân', 'profile', 'hồ sơ',
+    ],
   },
   'equipment/catalog': {
-    description: 'Danh sách máy móc, in QR, biên bản bàn giao',
+    description: 'Danh sách thiết bị, in QR, biên bản bàn giao',
     keywords: ['thiết bị', 'máy móc', 'catalog', 'danh sách', 'qr', 'bàn giao'],
   },
   'equipment/dashboard': {
@@ -68,7 +98,7 @@ const SCREEN_CONFIG: Record<
   },
   'reports/examination-overview': {
     description: 'Tổng quan khám chữa bệnh, BHYT/Viện phí',
-    keywords: ['khám', 'examination', 'bhyt', 'viện phí', 'tổng quan'],
+    keywords: ['khám', 'examination', 'bhyt', 'viện phí', 'tổng quan', 'doanh thu'],
   },
   'reports/missing-medical-records': {
     description: 'Báo cáo bác sĩ chưa hoàn tất HSBA',
@@ -76,17 +106,149 @@ const SCREEN_CONFIG: Record<
   },
   'reports/cls-level3': {
     description: 'Hoạt động CLS Tầng 3',
-    keywords: ['cls', 'tầng 3', 'level 3', 'cận lâm sàng'],
+    keywords: ['cls', 'tầng 3', 'lầu 3', 'level 3', 'level3', 'cận lâm sàng'],
   },
   'reports/cls-level6': {
     description: 'Hoạt động CLS Tầng 6',
-    keywords: ['cls', 'tầng 6', 'level 6', 'cận lâm sàng'],
+    keywords: ['cls', 'tầng 6', 'lầu 6', 'level 6', 'level6', 'cận lâm sàng'],
   },
   'reports/specialty-cls': {
     description: 'Thống kê CLS theo Chuyên khoa',
     keywords: ['cls', 'chuyên khoa', 'specialty', 'thống kê'],
   },
 };
+
+/**
+ * Blocked off-topic patterns - outside hospital IT scope
+ */
+const BLOCKED_TOPIC_PATTERNS: RegExp[] = [
+  // Programming/coding
+  /viết\s*(code|script|chương trình|hàm|function)/i,
+  /code\s*(python|java|javascript|c\+\+|sql|html)/i,
+  /(fix|sửa|debug)\s*(code|bug|lỗi code)/i,
+  /giải\s*(thuật toán|algorithm|bài tập|đề)/i,
+
+  // Creative writing
+  /viết\s*(thơ|bài hát|truyện|văn|luận|essay)/i,
+  /sáng tác|compose|write\s*(poem|song|story)/i,
+
+  // Translation
+  /(dịch|translate)\s*.{0,30}\s*(sang|to|qua)\s*(tiếng|ngôn ngữ)/i,
+
+  // Politics & religion
+  /(chính trị|bầu cử|đảng phái|political)/i,
+  /(tôn giáo|religion|phật|chúa|allah)/i,
+
+  // Cooking
+  /(nấu|làm|chế biến)\s*(ăn|món|bánh|cơm|phở)/i,
+  /công thức\s*(nấu|làm)/i,
+  /recipe|cooking/i,
+
+  // Dating
+  /(tình yêu|hẹn hò|dating|yêu đương)/i,
+  /(cua|tán|flirt)\s*(gái|trai|crush)/i,
+
+  // Finance & crypto
+  /(giá|price)\s*(vàng|gold|bitcoin|coin|stock|chứng khoán)/i,
+  /(đầu tư|invest|trading|crypto|forex|nft)/i,
+
+  // Entertainment
+  /(phim|movie|netflix|game|trò chơi)\s*(hay|nên xem|recommend)/i,
+  /(nhạc|music|spotify|youtube)\s*(hay|nghe)/i,
+
+  // General knowledge
+  /(thủ đô|capital)\s*(của|of)/i,
+  /(ai là|who is)\s*(tổng thống|president|thủ tướng)/i,
+  /lịch sử\s*(thế giới|world)/i,
+
+  // Math homework
+  /giải\s*(phương trình|equation|toán|math)/i,
+  /tính\s*(đạo hàm|tích phân|integral)/i,
+
+  // Emotional engagement - redirect to work
+  /^.{0,20}(chán|buồn|mệt|stress|bực|khó chịu|vui|happy|sad|tired|bored|boring).{0,15}$/i,
+];
+
+/**
+ * Harmful/dangerous patterns - immediate block
+ */
+const HARMFUL_PATTERNS: RegExp[] = [
+  // Self-harm & violence
+  /(thuốc|cách)\s*(độc|chết|tự tử|suicide)/i,
+  /cách\s*(giết|hại|đầu độc|murder)/i,
+  /(tự|self)\s*(harm|hại|cắt|rạch)/i,
+
+  // Hacking & exploits
+  /\b(hack|crack|exploit|bypass)\s*(password|mật khẩu|system|hệ thống)/i,
+  /(sql injection|xss|ddos|brute force)/i,
+  /(phishing|ransomware|malware|virus)/i,
+
+  // Unauthorized access
+  /truy cập\s*(trái phép|admin|root|database)/i,
+  /(password|mật khẩu)\s*(admin|root|database|server)/i,
+
+  // Weapons & drugs
+  /(làm|chế tạo)\s*(bom|thuốc nổ|explosive|weapon)/i,
+  /(ma túy|drug|cocaine|heroin|meth)/i,
+
+  // Data theft
+  /(lấy|đánh cắp|steal)\s*(thông tin|data|dữ liệu)\s*(bệnh nhân|patient)/i,
+  /leak\s*(data|database|thông tin)/i,
+];
+
+/**
+ * Prompt injection patterns
+ */
+const INJECTION_PATTERNS: RegExp[] = [
+  /ignore\s*(previous|above|all|prior)\s*(instructions?|prompts?|rules?)/i,
+  /bỏ qua\s*(hướng dẫn|quy tắc|lệnh)/i,
+  /disregard\s*(everything|all|the)/i,
+  /system\s*prompt/i,
+  /(show|print|display|reveal)\s*(your|the)\s*(prompt|instructions?)/i,
+  /\bDAN\b/i,
+  /\bjailbreak/i,
+  /(pretend|act|behave)\s*(like|as)\s*(you are|a)/i,
+  /giả vờ\s*(là|như|làm)/i,
+  /you are now|bây giờ bạn là/i,
+  /from now on|từ giờ/i,
+  /\[INST\]|\[\/INST\]/i,
+  /<<SYS>>|<<\/SYS>>/i,
+  /<\|im_start\|>|<\|im_end\|>/i,
+  /### (Human|Assistant|System):/i,
+  /developer\s*mode/i,
+  /enable\s*(debug|admin|god)\s*mode/i,
+];
+
+/**
+ * Business-related keywords for intent detection
+ */
+const BUSINESS_KEYWORDS: string[] = [
+  // Hospital terms
+  'bệnh viện', 'khoa', 'phòng', 'bệnh nhân', 'patient', 'bác sĩ', 'doctor',
+  'y tá', 'nurse', 'giường', 'bed', 'khám', 'examination', 'điều trị',
+  // Reports & data
+  'báo cáo', 'report', 'thống kê', 'statistic', 'dashboard', 'biểu đồ',
+  'doanh thu', 'revenue', 'công suất', 'capacity',
+  // Medical records
+  'hsba', 'hồ sơ', 'bệnh án', 'medical record', 'bhyt', 'viện phí',
+  // Equipment
+  'thiết bị', 'equipment', 'máy móc', 'device', 'catalog', 'qr',
+  // Navigation
+  'màn hình', 'trang', 'mở', 'xem', 'chuyển', 'vào', 'đi tới', 'navigate',
+  'open', 'show', 'go to',
+  // Settings
+  'cài đặt', 'settings', 'mật khẩu', 'password', 'đổi pass', 'tài khoản',
+  // Theme
+  'giao diện', 'theme', 'sáng', 'tối', 'dark', 'light', 'mode',
+  // CLS
+  'cls', 'cận lâm sàng', 'tầng 3', 'tầng 6', 'chuyên khoa',
+];
+
+/**
+ * Allowed tool names whitelist
+ */
+const ALLOWED_TOOLS = ['navigate_to_screen', 'navigate', 'change_theme', 'toggle_theme'] as const;
+type AllowedToolName = (typeof ALLOWED_TOOLS)[number];
 
 // ============================================================================
 // SERVICE
@@ -105,28 +267,26 @@ export class LlmService {
   private readonly apiUrl = environment.llmUrl;
 
   // ===== MODEL CONFIGURATION =====
-  // UPDATED: Using Qwen 3 4B as requested
-  private readonly MODEL_NAME = 'qwen3:4b'; 
+  private readonly MODEL_NAME = 'qwen3-vl:4b-instruct';
 
   // ===== SESSION SETTINGS =====
-  private readonly SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
-  private readonly THEME_COOLDOWN = 1000;
+  private readonly SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  private readonly THEME_COOLDOWN_MS = 1000;
 
   // ===== CONTEXT SETTINGS =====
   private readonly MAX_CONTEXT_TOKENS = 8192;
   private readonly MAX_HISTORY_MESSAGES = 6;
-  private readonly MAX_OUTPUT_TOKENS = 1024; // Increased for thinking output
-  private readonly SYSTEM_PROMPT_BUDGET = 600;
-  private readonly TOOL_BUDGET = 300;
+  private readonly MAX_OUTPUT_TOKENS = 2048;
+  private readonly TOOL_BUDGET_TOKENS = 300;
   private readonly BUFFER_TOKENS = 100;
   private readonly AVG_CHARS_PER_TOKEN = 3.0;
 
   // ===== SAMPLING PARAMETERS =====
   private readonly SAMPLING_CONFIG = {
-    temperature: 0.6, // Increased slightly to allow for "Thinking" creativity
+    temperature: 0.3, // Lower for more consistent, professional responses
     top_p: 0.85,
     top_k: 20,
-    repeat_penalty: 1.1,
+    repeat_penalty: 1.15,
     presence_penalty: 0.1,
   };
 
@@ -134,7 +294,19 @@ export class LlmService {
   private readonly UI_UPDATE_DEBOUNCE_MS = 30;
   private readonly MAX_RETRIES = 2;
   private readonly RETRY_DELAY_MS = 800;
-  private readonly CONNECT_TIMEOUT_MS = 15000;
+  private readonly CONNECT_TIMEOUT_MS = 30000;
+
+  // ===== INPUT/OUTPUT LIMITS =====
+  private readonly MAX_INPUT_LENGTH = 500;
+  private readonly MAX_OUTPUT_LENGTH = 2000;
+  private readonly MAX_TOOL_ARGS_LENGTH = 200;
+
+  // ===== RATE LIMITING =====
+  private readonly RATE_LIMIT_MAX_MESSAGES = 15;
+  private readonly RATE_LIMIT_WINDOW_MS = 60_000;
+  private readonly RATE_LIMIT_COOLDOWN_MS = 10_000;
+  private messageTimestamps: number[] = [];
+  private rateLimitCooldownUntil = 0;
 
   // ===== PUBLIC SIGNALS =====
   public readonly isOpen = signal<boolean>(false);
@@ -153,17 +325,15 @@ export class LlmService {
   private messageIdCounter = 0;
 
   // ===== CACHING =====
-  private _cachedAllowedRoutes: RouteInfo[] | null = null;
-  private _cachedToolDefinitions: unknown[] | null = null;
-  private _cachedSystemPrompt: string = '';
-  private _systemPromptTokens: number = 0;
-  private _lastUserPermissionsHash: string = '';
-  private _routeEnumCache: string[] | null = null;
+  private cachedAllowedRoutes: RouteInfo[] | null = null;
+  private cachedToolDefinitions: unknown[] | null = null;
+  private cachedSystemPrompt = '';
+  private systemPromptTokens = 0;
+  private lastUserPermissionsHash = '';
+  private routeEnumCache: string[] | null = null;
 
   // ===== DEBOUNCED UI UPDATES =====
   private readonly streamUpdate$ = new Subject<StreamUpdate>();
-  private pendingContent = '';
-  private pendingToolCalls: ToolCall[] = [];
 
   constructor() {
     effect(() => {
@@ -173,12 +343,8 @@ export class LlmService {
     });
 
     this.streamUpdate$
-      .pipe(
-        debounceTime(this.UI_UPDATE_DEBOUNCE_MS),
-        takeUntilDestroyed(this.destroyRef)
-      )
+      .pipe(debounceTime(this.UI_UPDATE_DEBOUNCE_MS), takeUntilDestroyed(this.destroyRef))
       .subscribe((update) => {
-        // Run update inside Angular Zone to ensure UI reflects changes
         this.ngZone.run(() => this.applyStreamUpdate(update));
       });
 
@@ -189,6 +355,9 @@ export class LlmService {
   // PUBLIC API
   // ============================================================================
 
+  /**
+   * Toggle the chat panel
+   */
   public toggleChat(): void {
     const willOpen = !this.isOpen();
     this.isOpen.set(willOpen);
@@ -203,37 +372,74 @@ export class LlmService {
     }
   }
 
+  /**
+   * Send a message to the assistant
+   */
   public async sendMessage(content: string): Promise<void> {
     const sanitized = this.sanitizeInput(content);
     if (!sanitized) return;
 
+    const rateLimitResult = this.checkRateLimit();
+    if (!rateLimitResult.allowed) {
+      this.addAssistantMessage(rateLimitResult.message!);
+      return;
+    }
+
+    const classification = this.classifyUserIntent(sanitized);
+
+    // Harmful content - immediate block
+    if (classification.type === 'harmful') {
+      console.warn('[LLM] Blocked harmful content');
+      this.messages.update((msgs) => [
+        ...msgs,
+        this.createMessage('user', sanitized),
+        this.createMessage('assistant', classification.suggestedResponse!),
+      ]);
+      return;
+    }
+
+    // Blocked topics - polite decline
+    if (classification.type === 'blocked_topic') {
+      this.messages.update((msgs) => [
+        ...msgs,
+        this.createMessage('user', sanitized),
+        this.createMessage('assistant', classification.suggestedResponse!),
+      ]);
+      return;
+    }
+
+    // Simple greetings/acknowledgments - respond directly
+    if (
+      (classification.type === 'greeting' || classification.type === 'acknowledgment') &&
+      classification.suggestedResponse
+    ) {
+      this.messages.update((msgs) => [
+        ...msgs,
+        this.createMessage('user', sanitized),
+        this.createMessage('assistant', classification.suggestedResponse!),
+      ]);
+      return;
+    }
+
+    // Continue with LLM processing
     this.resetSessionTimeout();
     this.abortCurrentRequest();
 
     const newMsgTokens = this.estimateTokens(sanitized);
 
-    this.messages.update((msgs) => [
-      ...msgs,
-      this.createMessage('user', sanitized, newMsgTokens),
-    ]);
+    this.messages.update((msgs) => [...msgs, this.createMessage('user', sanitized, newMsgTokens)]);
 
+    // Check for ambiguous navigation
     const disambiguationMsg = this.checkAmbiguousNavigation(sanitized);
     if (disambiguationMsg) {
-      this.messages.update((msgs) => [
-        ...msgs,
-        this.createMessage('assistant', disambiguationMsg),
-      ]);
+      this.messages.update((msgs) => [...msgs, this.createMessage('assistant', disambiguationMsg)]);
       return;
     }
 
-    this.messages.update((msgs) => [
-      ...msgs,
-      this.createMessage('assistant', '', 0),
-    ]);
+    // Add placeholder for response
+    this.messages.update((msgs) => [...msgs, this.createMessage('assistant', '', 0)]);
 
     this.isGenerating.set(true);
-    this.pendingContent = '';
-    this.pendingToolCalls = [];
 
     try {
       await this.executeWithRetry(() => this.streamResponse(sanitized));
@@ -246,24 +452,33 @@ export class LlmService {
     }
   }
 
+  /**
+   * Stop current generation
+   */
   public stopGeneration(): void {
     this.abortCurrentRequest();
     this.isGenerating.set(false);
   }
 
+  /**
+   * Reset chat to initial state
+   */
   public resetChat(): void {
     this.abortCurrentRequest();
     this.messages.set([]);
     this.contextUsage.set(0);
     this.messageIdCounter = 0;
-    this.pendingContent = '';
-    this.pendingToolCalls = [];
+    this.messageTimestamps = [];
+    this.rateLimitCooldownUntil = 0;
 
     if (this.modelLoaded() && this.authService.isLoggedIn()) {
       this.addGreetingMessage();
     }
   }
 
+  /**
+   * Load/initialize the AI model
+   */
   public async loadModel(): Promise<void> {
     if (this.modelLoaded() || this.isModelLoading()) return;
 
@@ -282,47 +497,351 @@ export class LlmService {
         this.addGreetingMessage();
       }
     } catch (error) {
-      console.error('AI Connection Error:', error);
-      this.loadProgress.set('Không tìm thấy máy chủ AI');
+      console.error('[LLM] Connection Error:', error);
+      this.loadProgress.set('Không thể kết nối máy chủ AI');
     } finally {
       this.isModelLoading.set(false);
     }
   }
 
   // ============================================================================
+  // INTENT CLASSIFICATION
+  // ============================================================================
+
+  /**
+   * Classify user intent for routing
+   */
+  private classifyUserIntent(message: string): MessageClassification {
+    const normalized = message.toLowerCase().trim();
+
+    // Priority 1: Prompt injection
+    if (this.matchesPatterns(normalized, INJECTION_PATTERNS)) {
+      return {
+        type: 'harmful',
+        confidence: 1.0,
+        blockedReason: 'prompt_injection',
+        suggestedResponse: 'Yêu cầu không hợp lệ.',
+      };
+    }
+
+    // Priority 2: Harmful content
+    if (this.matchesPatterns(normalized, HARMFUL_PATTERNS)) {
+      return {
+        type: 'harmful',
+        confidence: 1.0,
+        blockedReason: 'harmful_content',
+        suggestedResponse:
+          'Không thể xử lý yêu cầu này. Nếu cần hỗ trợ khẩn cấp, vui lòng liên hệ IT Helpdesk (1108/1109).',
+      };
+    }
+
+    // Priority 3: Blocked topics
+    if (this.matchesPatterns(normalized, BLOCKED_TOPIC_PATTERNS)) {
+      return {
+        type: 'blocked_topic',
+        confidence: 0.9,
+        blockedReason: 'off_topic',
+        suggestedResponse:
+          'Nội dung này nằm ngoài phạm vi hỗ trợ. Tôi có thể giúp điều hướng hệ thống hoặc đổi giao diện. Cần hỗ trợ kỹ thuật khác vui lòng liên hệ IT Helpdesk (1108/1109).',
+      };
+    }
+
+    // Priority 4: Simple greetings (short messages only)
+    if (normalized.length < 50) {
+      const greetingResponse = this.getGreetingResponse(normalized);
+      if (greetingResponse) {
+        return {
+          type: 'greeting',
+          confidence: 0.95,
+          suggestedResponse: greetingResponse,
+        };
+      }
+
+      const ackResponse = this.getAcknowledgmentResponse(normalized);
+      if (ackResponse) {
+        return {
+          type: 'acknowledgment',
+          confidence: 0.95,
+          suggestedResponse: ackResponse,
+        };
+      }
+    }
+
+    // Priority 5: Business intent
+    if (this.detectToolIntent(message) || this.hasBusinessKeywords(normalized)) {
+      return {
+        type: 'business_intent',
+        confidence: 0.85,
+      };
+    }
+
+    // Priority 6: Long messages without business keywords
+    if (normalized.length > 150 && !this.hasBusinessKeywords(normalized)) {
+      return {
+        type: 'blocked_topic',
+        confidence: 0.7,
+        blockedReason: 'too_broad',
+        suggestedResponse:
+          'Câu hỏi này nằm ngoài phạm vi hỗ trợ. Tôi có thể giúp điều hướng các màn hình trong hệ thống. Bạn cần mở trang nào?',
+      };
+    }
+
+    return { type: 'unknown', confidence: 0.5 };
+  }
+
+  /**
+   * Get response for greetings - professional tone
+   */
+  private getGreetingResponse(normalized: string): string | null {
+    // Greetings
+    if (/^(xin\s*)?(chào|hello|hi|hey|ê|ơi|alo)(\s+bạn)?[!.?]*$/i.test(normalized)) {
+      return 'Xin chào. Tôi có thể hỗ trợ gì?';
+    }
+
+    if (/^good\s*(morning|afternoon|evening)[!.?]*$/i.test(normalized)) {
+      return 'Xin chào. Tôi có thể hỗ trợ gì?';
+    }
+
+    if (/^(chào buổi)\s*(sáng|chiều|tối)[!.?]*$/i.test(normalized)) {
+      return 'Xin chào. Tôi có thể hỗ trợ gì?';
+    }
+
+    // Identity questions
+    if (/^(bạn là ai|ai vậy|bạn tên gì)[?]*$/i.test(normalized)) {
+      return 'Tôi là Trợ lý IT của Bệnh viện Hoàn Mỹ. Tôi hỗ trợ điều hướng hệ thống và đổi giao diện.';
+    }
+
+    // Capability questions
+    if (/^(bạn (làm|giúp) (được )?gì|bạn có thể làm gì|help)[?]*$/i.test(normalized)) {
+      return 'Tôi có thể hỗ trợ:\n• Điều hướng đến các màn hình (báo cáo, cài đặt, thiết bị...)\n• Đổi giao diện sáng/tối\n\nBạn cần gì?';
+    }
+
+    if (/^(hướng dẫn|chỉ|hướng)(\s+tôi|\s+mình)?[?]*$/i.test(normalized)) {
+      return 'Tôi có thể hỗ trợ:\n• Điều hướng đến các màn hình (báo cáo, cài đặt, thiết bị...)\n• Đổi giao diện sáng/tối\n\nBạn cần gì?';
+    }
+
+    return null;
+  }
+
+  /**
+   * Get response for acknowledgments - brief and professional
+   */
+  private getAcknowledgmentResponse(normalized: string): string | null {
+    // Thanks
+    if (/^(cảm ơn|cám ơn|thanks?|thank you|tks)[!.?]*$/i.test(normalized)) {
+      return 'Không có gì. Cần hỗ trợ thêm cứ hỏi.';
+    }
+
+    // OK/Acknowledgment
+    if (/^(ok|okay|oke|ô kê|được|vâng|dạ|ừ|rồi|hiểu rồi|đã hiểu|got it)[!.]*$/i.test(normalized)) {
+      return 'Cần hỗ trợ gì thêm cứ hỏi.';
+    }
+
+    // Simple no
+    if (/^(không|no|ko|k|nope|không cần|no need)[!.]*$/i.test(normalized)) {
+      return 'Được rồi.';
+    }
+
+    // Farewells
+    if (/^(tạm biệt|bye|goodbye|bai|gặp lại)[!.?]*$/i.test(normalized)) {
+      return 'Tạm biệt.';
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if text matches any patterns
+   */
+  private matchesPatterns(text: string, patterns: RegExp[]): boolean {
+    return patterns.some((pattern) => pattern.test(text));
+  }
+
+  /**
+   * Check if text contains business keywords
+   */
+  private hasBusinessKeywords(text: string): boolean {
+    const lowerText = text.toLowerCase();
+    return BUSINESS_KEYWORDS.some((kw) => lowerText.includes(kw));
+  }
+
+  // ============================================================================
+  // RATE LIMITING
+  // ============================================================================
+
+  /**
+   * Check rate limit
+   */
+  private checkRateLimit(): { allowed: boolean; message?: string } {
+    const now = Date.now();
+
+    if (now < this.rateLimitCooldownUntil) {
+      const remainingSeconds = Math.ceil((this.rateLimitCooldownUntil - now) / 1000);
+      return {
+        allowed: false,
+        message: `Vui lòng chờ ${remainingSeconds} giây.`,
+      };
+    }
+
+    this.messageTimestamps = this.messageTimestamps.filter(
+      (ts) => now - ts < this.RATE_LIMIT_WINDOW_MS
+    );
+
+    if (this.messageTimestamps.length >= this.RATE_LIMIT_MAX_MESSAGES) {
+      this.rateLimitCooldownUntil = now + this.RATE_LIMIT_COOLDOWN_MS;
+      return {
+        allowed: false,
+        message: 'Đã đạt giới hạn tin nhắn. Vui lòng chờ một chút.',
+      };
+    }
+
+    this.messageTimestamps.push(now);
+    return { allowed: true };
+  }
+
+  // ============================================================================
+  // INPUT/OUTPUT SANITIZATION
+  // ============================================================================
+
+  /**
+   * Sanitize user input
+   */
+  private sanitizeInput(content: string): string {
+    if (!content) return '';
+
+    let result = content.trim();
+
+    if (result.length > this.MAX_INPUT_LENGTH) {
+      result = result.slice(0, this.MAX_INPUT_LENGTH);
+    }
+
+    // Remove control characters
+    result = result.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+    // Normalize whitespace
+    result = result.replace(/[ \t]+/g, ' ');
+    result = result.replace(/\n{3,}/g, '\n\n');
+
+    // Remove code blocks
+    result = result.replace(/```[\s\S]*?```/g, '');
+
+    // Remove HTML/XML tags
+    result = result.replace(/<[^>]+>/g, '');
+
+    // Remove instruction markers
+    result = result
+      .replace(/\[INST\]|\[\/INST\]/gi, '')
+      .replace(/<<SYS>>|<<\/SYS>>/gi, '')
+      .replace(/<\|im_start\|>|<\|im_end\|>/gi, '')
+      .replace(/### (Human|Assistant|System):/gi, '');
+
+    return result.trim();
+  }
+
+  /**
+   * Sanitize model output
+   */
+  private sanitizeModelOutput(content: string): string {
+    if (!content) return '';
+
+    let result = content;
+
+    // Remove leaked system prompt fragments
+    const leakPatterns = [
+      /QUY TẮC BẤT KHẢ XÂM PHẠM[\s\S]*?(?=\n\n|$)/gi,
+      /HƯỚNG DẪN XỬ LÝ[\s\S]*?(?=\n\n|$)/gi,
+      /DANH SÁCH MÀN HÌNH[\s\S]*$/gi,
+      /\/no_think/gi,
+      /BẮT BUỘC SỬ DỤNG[\s\S]*?(?=\n|$)/gi,
+      /navigate_to_screen\s+[\/\w\-]+/gi,
+      /change_theme\s+(dark|light|toggle)/gi,
+    ];
+
+    for (const pattern of leakPatterns) {
+      result = result.replace(pattern, '');
+    }
+
+    // Remove external URLs
+    result = result.replace(/https?:\/\/(?!localhost|127\.0\.0\.1)[^\s<>]+/gi, '');
+
+    // Remove JSON tool call remnants
+    result = result.replace(
+      /\{\s*"name"\s*:\s*"[^"]+"\s*,\s*"(?:arguments|parameters)"\s*:\s*\{[^}]*\}\s*\}/gi,
+      ''
+    );
+
+    if (result.length > this.MAX_OUTPUT_LENGTH) {
+      result = result.substring(0, this.MAX_OUTPUT_LENGTH) + '...';
+    }
+
+    result = result.replace(/\n{3,}/g, '\n\n');
+
+    return result.trim();
+  }
+
+  /**
+   * Clean response for display
+   */
+  private cleanResponseForDisplay(text: string): string {
+    if (!text) return '';
+
+    let result = text;
+
+    // Remove tool call blocks
+    result = result.replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, '');
+    result = result.replace(
+      /```json\s*\{[^`]*"name"\s*:[^`]*(?:"arguments"|"parameters")\s*:[^`]*\}\s*```/gi,
+      ''
+    );
+    result = result.replace(/navigate_to_screen\s+[\/\w\-]+/gi, '');
+    result = result.replace(/change_theme\s+(dark|light|toggle)/gi, '');
+    result = result.replace(
+      /\{\s*"name"\s*:\s*"[^"]+"\s*,\s*"(?:arguments|parameters)"\s*:\s*\{[^}]*\}\s*\}/gi,
+      ''
+    );
+
+    // Remove thinking tags
+    result = result.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    result = result.replace(/<think>[\s\S]*?$/gi, '');
+    result = result.replace(/^[\s\S]*?<\/think>/gi, '');
+
+    result = this.sanitizeModelOutput(result);
+
+    return result.trim();
+  }
+
+  // ============================================================================
   // STREAMING LOGIC
   // ============================================================================
 
+  /**
+   * Stream response from LLM
+   */
   private async streamResponse(userMessage: string): Promise<void> {
     this.currentAbortController = new AbortController();
     const { signal } = this.currentAbortController;
 
     const contextMessages = this.prepareContextWindow(userMessage);
     const systemPrompt = this.getDynamicSystemPrompt();
-    
-    // HEURISTIC: Only attach tools if the user's intent looks like an action
+
     const shouldEnableTools = this.detectToolIntent(userMessage);
     const tools = shouldEnableTools ? this.getToolDefinitions() : undefined;
+    const outputTokens = this.getAdaptiveOutputTokens(userMessage, shouldEnableTools);
 
     const payload = {
       model: this.MODEL_NAME,
       messages: [
         { role: 'system', content: systemPrompt },
-        ...contextMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-          ...(m.role === 'tool' && m.toolName ? { tool_name: m.toolName } : {}),
-        })),
+        ...contextMessages.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: userMessage },
       ],
-      tools: tools,
+      tools,
       stream: true,
       options: {
         ...this.SAMPLING_CONFIG,
-        num_predict: this.MAX_OUTPUT_TOKENS,
+        num_predict: outputTokens,
         num_ctx: this.MAX_CONTEXT_TOKENS,
-        // CRITICAL: Enable thinking for Qwen3 to show reasoning
-        enable_thinking: true, 
+        enable_thinking: false,
       },
     };
 
@@ -331,8 +850,6 @@ export class LlmService {
     }, this.CONNECT_TIMEOUT_MS);
 
     try {
-      console.log(`[LLM] Sending request to ${this.apiUrl} using model ${this.MODEL_NAME}. Tools enabled: ${shouldEnableTools}`);
-
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,10 +871,8 @@ export class LlmService {
       await this.processStream(response.body, signal);
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        if (signal.aborted) {
-          console.log('[LLM] Request aborted by user or timeout');
-          throw err;
-        }
+        console.log('[LLM] Request aborted');
+        throw err;
       }
       throw err;
     } finally {
@@ -365,30 +880,80 @@ export class LlmService {
     }
   }
 
+  /**
+   * Detect if message requires tool usage
+   */
   private detectToolIntent(message: string): boolean {
     const normalized = message.toLowerCase();
-    
-    const actionKeywords = [
-      'mở', 'xem', 'chuyển', 'vào', 'đi tới', 'open', 'go', 'navigate', 'show',
-      'theme', 'giao diện', 'màu', 'sáng', 'tối', 'dark', 'light', 'mode',
-      'bật', 'tắt', 'đổi', 'change', 'turn', 'switch',
-      'ở đâu', 'chỗ nào', 'làm sao', 'như thế nào', 'cách', 'where', 'how' 
+
+    const navKeywords = [
+      'mở',
+      'xem',
+      'chuyển',
+      'vào',
+      'đi tới',
+      'đi đến',
+      'navigate',
+      'open',
+      'go',
+      'show',
+      'hiển thị',
+      'đưa tôi đến',
     ];
 
-    if (actionKeywords.some(kw => normalized.includes(kw))) {
-      return true;
-    }
+    const themeKeywords = [
+      'theme',
+      'giao diện',
+      'màu',
+      'sáng',
+      'tối',
+      'dark',
+      'light',
+      'mode',
+      'bật',
+      'tắt',
+      'đổi',
+      'change',
+      'switch',
+    ];
 
-    const screenKeywords = Object.values(SCREEN_CONFIG).flatMap(c => c.keywords);
-    const meaningfulKeywords = screenKeywords.filter(k => k.length > 3);
+    const locationKeywords = ['ở đâu', 'chỗ nào', 'làm sao', 'như thế nào', 'cách', 'where', 'how'];
 
-    if (meaningfulKeywords.some(kw => normalized.includes(kw))) {
-      return true;
-    }
+    const taskKeywords = [
+      'password',
+      'pass',
+      'mật khẩu',
+      'đổi pass',
+      'đổi mật khẩu',
+      'báo cáo',
+      'report',
+      'thống kê',
+      'hsba',
+      'khám',
+      'bệnh nhân',
+      'cài đặt',
+      'settings',
+      'thiết bị',
+      'danh sách',
+      'tài khoản',
+      'account',
+    ];
+
+    if (navKeywords.some((kw) => normalized.includes(kw))) return true;
+    if (themeKeywords.some((kw) => normalized.includes(kw))) return true;
+    if (locationKeywords.some((kw) => normalized.includes(kw))) return true;
+    if (taskKeywords.some((kw) => normalized.includes(kw))) return true;
+
+    const screenKeywords = Object.values(SCREEN_CONFIG).flatMap((c) => c.keywords);
+    const meaningfulKeywords = screenKeywords.filter((k) => k.length > 3);
+    if (meaningfulKeywords.some((kw) => normalized.includes(kw))) return true;
 
     return false;
   }
 
+  /**
+   * Process streaming response
+   */
   private async processStream(
     body: ReadableStream<Uint8Array>,
     signal: AbortSignal
@@ -396,14 +961,14 @@ export class LlmService {
     return this.ngZone.runOutsideAngular(async () => {
       const reader = body.getReader();
       const decoder = new TextDecoder();
-      let fullResponse = '';
+
+      let fullContent = '';
       let detectedToolCalls: ToolCall[] = [];
       let buffer = '';
 
       try {
         while (!signal.aborted) {
           const { done, value } = await reader.read();
-
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
@@ -418,50 +983,71 @@ export class LlmService {
             try {
               const json = JSON.parse(trimmed);
 
-              // HANDLE THINKING: Append separate thinking field if present
-              if (json.message?.thinking) {
-                fullResponse += json.message.thinking;
+              if (json.message?.thinking && !json.message?.content) {
+                continue;
               }
 
               if (json.message?.content) {
-                fullResponse += json.message.content;
+                const cleanPart = json.message.content
+                  .replace(/<think>[\s\S]*?<\/think>/gi, '')
+                  .replace(/<think>[\s\S]*?$/gi, '')
+                  .replace(/^[\s\S]*?<\/think>/gi, '');
+
+                if (cleanPart) {
+                  fullContent += cleanPart;
+                }
               }
 
-              if (
-                json.message?.tool_calls &&
-                Array.isArray(json.message.tool_calls)
-              ) {
+              if (Array.isArray(json.message?.tool_calls)) {
                 for (const tc of json.message.tool_calls) {
-                  if (
-                    tc.function?.name &&
-                    !detectedToolCalls.some(
-                      (existing) => existing.name === tc.function.name
-                    )
-                  ) {
-                    detectedToolCalls.push({
-                      name: tc.function.name,
-                      arguments: tc.function.arguments || {},
-                    });
+                  const isDuplicate = detectedToolCalls.some(
+                    (existing) => existing.name === tc.function?.name
+                  );
+
+                  if (tc.function?.name && !isDuplicate) {
+                    if (this.isValidToolName(tc.function.name)) {
+                      detectedToolCalls.push({
+                        name: tc.function.name,
+                        arguments: tc.function.arguments || {},
+                      });
+                    }
                   }
                 }
               }
 
-              const displayContent = this.cleanResponseForDisplay(fullResponse);
+              if (fullContent.trim()) {
+                const displayContent = this.cleanResponseForDisplay(fullContent);
 
-              this.streamUpdate$.next({
-                content: displayContent,
-                tokenEstimate: this.estimateTokens(displayContent),
-                toolCalls:
-                  detectedToolCalls.length > 0
-                    ? [...detectedToolCalls]
-                    : undefined,
-                isThinking: !!json.message?.thinking, // Signal UI that we are in thought mode
-              });
+                this.streamUpdate$.next({
+                  content: displayContent,
+                  thinking: undefined,
+                  tokenEstimate: this.estimateTokens(displayContent),
+                  toolCalls: detectedToolCalls.length > 0 ? [...detectedToolCalls] : undefined,
+                  isThinking: false,
+                });
+              }
 
               if (json.done === true) break;
-            } catch (e) {
-              console.warn('[LLM] JSON parse failed, skipping chunk');
+            } catch {
+              continue;
             }
+          }
+        }
+
+        // Handle remaining buffer
+        if (buffer.trim()) {
+          try {
+            const json = JSON.parse(buffer);
+            if (json.message?.content) {
+              const cleanPart = json.message.content
+                .replace(/<think>[\s\S]*?<\/think>/gi, '')
+                .replace(/<think>[\s\S]*?$/gi, '');
+              if (cleanPart.trim()) {
+                fullContent += cleanPart;
+              }
+            }
+          } catch {
+            // Ignore malformed
           }
         }
       } catch (streamError) {
@@ -471,35 +1057,47 @@ export class LlmService {
       } finally {
         reader.releaseLock();
 
-        // Check for text-based tool calls if native ones failed
-        if (
-          detectedToolCalls.length === 0 &&
-          fullResponse.includes('<tool_call>')
-        ) {
-          const textToolCall = this.extractToolCallFromText(fullResponse);
-          if (textToolCall) {
-            detectedToolCalls.push(textToolCall);
+        // Fallback: extract text-based tool calls
+        if (detectedToolCalls.length === 0) {
+          const hasToolPattern =
+            fullContent.includes('<tool_call>') ||
+            /navigate_to_screen\s+/i.test(fullContent) ||
+            /change_theme\s+(dark|light|toggle)/i.test(fullContent);
+
+          if (hasToolPattern) {
+            const textToolCall = this.extractToolCallFromText(fullContent);
+            if (textToolCall && this.isValidToolName(textToolCall.name)) {
+              detectedToolCalls.push(textToolCall);
+            }
           }
         }
 
+        // Execute tools
         if (detectedToolCalls.length > 0) {
           await this.ngZone.run(async () => {
             await this.executeToolCalls(detectedToolCalls);
           });
         }
 
-        const finalContent = this.cleanResponseForDisplay(fullResponse);
+        // Final UI update
+        const finalContent = this.cleanResponseForDisplay(fullContent);
         this.streamUpdate$.next({
           content: finalContent,
+          thinking: undefined,
           tokenEstimate: this.estimateTokens(finalContent),
           toolCalls: detectedToolCalls.length > 0 ? detectedToolCalls : undefined,
+          isThinking: false,
         });
       }
     });
   }
 
+  /**
+   * Extract tool call from text format
+   */
   private extractToolCallFromText(text: string): ToolCall | null {
     try {
+      // Format 1: <tool_call>JSON</tool_call>
       const hermesMatch = text.match(
         /<tool_call>\s*(\{[\s\S]*?"name"[\s\S]*?"arguments"[\s\S]*?\})\s*<\/tool_call>/i
       );
@@ -510,14 +1108,28 @@ export class LlmService {
         }
       }
 
+      // Format 2: Inline JSON
       const jsonMatch = text.match(
         /\{\s*"name"\s*:\s*"([^"]+)"\s*,\s*"(?:arguments|parameters)"\s*:\s*(\{[^}]*\})\s*\}/i
       );
       if (jsonMatch) {
-        return {
-          name: jsonMatch[1],
-          arguments: JSON.parse(jsonMatch[2]),
-        };
+        return { name: jsonMatch[1], arguments: JSON.parse(jsonMatch[2]) };
+      }
+
+      // Format 3: Plain text navigation
+      const plainNavMatch = text.match(/navigate_to_screen\s+[\/]?(?:app[\/])?([^\s\n]+)/i);
+      if (plainNavMatch) {
+        let path = plainNavMatch[1].trim();
+        if (!path.startsWith('/')) {
+          path = '/app/' + path;
+        }
+        return { name: 'navigate_to_screen', arguments: { path } };
+      }
+
+      // Format 4: Plain text theme
+      const plainThemeMatch = text.match(/change_theme\s+(dark|light|toggle)/i);
+      if (plainThemeMatch) {
+        return { name: 'change_theme', arguments: { mode: plainThemeMatch[1].toLowerCase() } };
       }
     } catch (e) {
       console.warn('[LLM] Tool call parse error:', e);
@@ -525,136 +1137,206 @@ export class LlmService {
     return null;
   }
 
-  private cleanResponseForDisplay(text: string): string {
-    if (!text) return '';
-    let result = text;
+  // ============================================================================
+  // TOOL EXECUTION
+  // ============================================================================
 
-    // UPDATED: Do NOT remove <think> tags. User wants to see reasoning.
-    
-    // Only remove technical tool artifacts
-    result = result.replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, '');
-    result = result.replace(
-      /```json\s*\{[^`]*"name"\s*:[^`]*(?:"arguments"|"parameters")\s*:[^`]*\}\s*```/gi,
-      ''
-    );
-    // REMOVED: result = result.replace(/\/(?:no_)?think\b/gi, ''); 
-    result = result.replace(/\n{3,}/g, '\n\n');
-
-    return result.trim();
+  /**
+   * Validate tool name
+   */
+  private isValidToolName(name: string): name is AllowedToolName {
+    return ALLOWED_TOOLS.includes(name as AllowedToolName);
   }
 
-private async executeToolCalls(toolCalls: ToolCall[]): Promise<void> {
-    for (const call of toolCalls) {
+  /**
+   * Validate tool arguments
+   */
+  private validateToolArguments(args: Record<string, unknown>): boolean {
+    const argsStr = JSON.stringify(args);
+
+    if (argsStr.length > this.MAX_TOOL_ARGS_LENGTH) {
+      console.warn('[LLM] Tool arguments too long');
+      return false;
+    }
+
+    const checkValue = (value: unknown): boolean => {
+      if (typeof value === 'string') {
+        if (/<script|javascript:|on\w+=/i.test(value)) return false;
+        if (/\.\.\/|\.\.\\/.test(value)) return false;
+      } else if (typeof value === 'object' && value !== null) {
+        return Object.values(value).every(checkValue);
+      }
+      return true;
+    };
+
+    return Object.values(args).every(checkValue);
+  }
+
+  /**
+   * Execute validated tool calls
+   */
+  private async executeToolCalls(toolCalls: ToolCall[]): Promise<void> {
+    const limitedCalls = toolCalls.slice(0, 3);
+
+    for (const call of limitedCalls) {
+      if (!this.isValidToolName(call.name)) {
+        console.warn('[LLM] Blocked invalid tool:', call.name);
+        continue;
+      }
+
+      if (!this.validateToolArguments(call.arguments)) {
+        console.warn('[LLM] Blocked invalid tool arguments');
+        this.setLastAssistantMessage('Không thể thực hiện do tham số không hợp lệ.');
+        continue;
+      }
+
       try {
         const result = await this.executeTool(call.name, call.arguments);
-        
-        const confirmation = this.getToolConfirmation(
-          call.name,
-          call.arguments,
-          result
-        );
 
-        this.messages.update(msgs => [
+        this.messages.update((msgs) => [
           ...msgs,
           this.createMessage(
-            'tool', 
-            JSON.stringify({ success: result, message: confirmation }),
+            'tool',
+            JSON.stringify({ success: result.success, message: result.data }),
             0,
             call.name
-          )
+          ),
         ]);
 
+        const confirmation = this.getToolConfirmation(call.name, call.arguments, result);
         if (confirmation) {
-              this.appendToLastMessage(confirmation); 
+          this.setLastAssistantMessage(confirmation);
         }
-
       } catch (error) {
-        console.error(`Tool execution failed for ${call.name}:`, error);
+        console.error(`[LLM] Tool execution failed for ${call.name}:`, error);
         const errorMsg = this.getToolErrorMessage(call.name);
-        
-        this.messages.update(msgs => [
+
+        this.messages.update((msgs) => [
           ...msgs,
-          this.createMessage('tool', JSON.stringify({ error: errorMsg }), 0, call.name)
+          this.createMessage('tool', JSON.stringify({ error: errorMsg }), 0, call.name),
         ]);
-        
-        this.appendToLastMessage(errorMsg);
+
+        this.setLastAssistantMessage(errorMsg);
       }
     }
   }
 
+  /**
+   * Execute a single tool
+   */
   private async executeTool(
-    name: string,
+    name: AllowedToolName,
     args: Record<string, unknown>
-  ): Promise<boolean> {
+  ): Promise<ToolResult> {
     switch (name) {
       case 'navigate_to_screen':
       case 'navigate': {
         const path = (args['path'] || args['screen'] || args['url']) as string;
+        if (!path || typeof path !== 'string') {
+          return { success: false, error: 'Đường dẫn không hợp lệ' };
+        }
         return this.triggerNavigation(path);
       }
+
       case 'change_theme':
       case 'toggle_theme': {
         const mode = (args['mode'] || args['theme'] || 'toggle') as string;
         return this.triggerThemeAction(mode);
       }
+
       default:
-        console.warn(`[LLM] Unknown tool: ${name}`);
-        throw new Error(`Unknown tool: ${name}`);
+        return { success: false, error: 'Chức năng không hỗ trợ' };
     }
   }
 
+  /**
+   * Get confirmation message for tool execution - professional tone
+   */
   private getToolConfirmation(
     name: string,
     args: Record<string, unknown>,
-    result: boolean
+    result: ToolResult
   ): string {
-    if (!result) return '';
+    if (!result.success) {
+      return result.error || 'Không thể thực hiện.';
+    }
 
     switch (name) {
       case 'navigate_to_screen':
-      case 'navigate':
-        return '✓ Đang chuyển trang...';
+      case 'navigate': {
+        const screenName = result.data || 'màn hình';
+        const path = (args['path'] || '') as string;
+
+        if (path.includes('settings')) {
+          return `Đang mở **${screenName}**. Bạn có thể đổi mật khẩu tại đây.`;
+        }
+        return `Đang mở **${screenName}**...`;
+      }
+
       case 'change_theme':
       case 'toggle_theme': {
-        const mode = args['mode'] as string;
-        if (mode === 'dark') return '✓ Đã bật giao diện tối.';
-        if (mode === 'light') return '✓ Đã bật giao diện sáng.';
-        return '✓ Đã đổi giao diện.';
+        const currentMode = result.data || '';
+        if (currentMode.includes('tối')) {
+          return 'Đã chuyển sang giao diện tối.';
+        }
+        if (currentMode.includes('sáng')) {
+          return 'Đã chuyển sang giao diện sáng.';
+        }
+        return 'Đã đổi giao diện.';
       }
+
       default:
         return '';
     }
   }
 
+  /**
+   * Get error message for failed tool
+   */
   private getToolErrorMessage(name: string): string {
     switch (name) {
       case 'navigate_to_screen':
       case 'navigate':
-        return '✗ Bạn không có quyền truy cập trang này.';
+        return 'Không thể mở trang này. Có thể bạn không có quyền truy cập.';
+
       case 'change_theme':
       case 'toggle_theme':
-        return '✗ Không thể đổi giao diện lúc này.';
+        return 'Không thể đổi giao diện. Vui lòng thử lại.';
+
       default:
-        return '✗ Không thể thực hiện.';
+        return 'Không thể thực hiện thao tác này.';
     }
   }
 
-  private appendToLastMessage(text: string): void {
+  /**
+   * Set/replace last assistant message
+   */
+  private setLastAssistantMessage(text: string): void {
     this.messages.update((msgs) => {
       const newMsgs = [...msgs];
-      const lastIdx = newMsgs.length - 1;
 
-      if (lastIdx >= 0 && newMsgs[lastIdx].role === 'assistant') {
-        const current = newMsgs[lastIdx].content.trim();
-        newMsgs[lastIdx] = {
-          ...newMsgs[lastIdx],
-          content: current ? `${current}\n\n${text}` : text,
+      let lastAssistantIdx = -1;
+      for (let i = newMsgs.length - 1; i >= 0; i--) {
+        if (newMsgs[i].role === 'assistant') {
+          lastAssistantIdx = i;
+          break;
+        }
+      }
+
+      if (lastAssistantIdx >= 0) {
+        newMsgs[lastAssistantIdx] = {
+          ...newMsgs[lastAssistantIdx],
+          content: text,
+          toolCalls: newMsgs[lastAssistantIdx].toolCalls,
         };
       }
       return newMsgs;
     });
   }
 
+  /**
+   * Apply stream update to UI
+   */
   private applyStreamUpdate(update: StreamUpdate): void {
     this.messages.update((msgs) => {
       const newMsgs = [...msgs];
@@ -664,6 +1346,7 @@ private async executeToolCalls(toolCalls: ToolCall[]): Promise<void> {
         newMsgs[lastIdx] = {
           ...newMsgs[lastIdx],
           content: update.content,
+          thinking: undefined,
           tokenEstimate: update.tokenEstimate,
           toolCalls: update.toolCalls,
           isThinking: update.isThinking,
@@ -673,6 +1356,9 @@ private async executeToolCalls(toolCalls: ToolCall[]): Promise<void> {
     });
   }
 
+  /**
+   * Clean up empty response placeholder
+   */
   private cleanupEmptyResponse(): void {
     this.messages.update((msgs) => {
       const newMsgs = [...msgs];
@@ -680,16 +1366,16 @@ private async executeToolCalls(toolCalls: ToolCall[]): Promise<void> {
 
       if (lastIdx >= 0 && newMsgs[lastIdx].role === 'assistant') {
         const content = newMsgs[lastIdx].content.trim();
+        const thinking = newMsgs[lastIdx].thinking?.trim();
 
-        if (!content) {
+        if (!content && !thinking) {
           const hasToolCalls =
-            newMsgs[lastIdx].toolCalls &&
-            newMsgs[lastIdx].toolCalls!.length > 0;
+            newMsgs[lastIdx].toolCalls && newMsgs[lastIdx].toolCalls!.length > 0;
 
           if (!hasToolCalls) {
             newMsgs[lastIdx] = {
               ...newMsgs[lastIdx],
-              content: 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.',
+              content: 'Có lỗi xảy ra. Vui lòng thử lại.',
             };
           }
         }
@@ -699,298 +1385,91 @@ private async executeToolCalls(toolCalls: ToolCall[]): Promise<void> {
   }
 
   // ============================================================================
-  // RETRY LOGIC
-  // ============================================================================
-
-  private async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
-    let lastError: Error | null = null;
-
-    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        lastError = error as Error;
-
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          throw error;
-        }
-
-        if (attempt < this.MAX_RETRIES) {
-          await this.delay(this.RETRY_DELAY_MS * (attempt + 1));
-        }
-      }
-    }
-
-    throw lastError;
-  }
-
-  // ============================================================================
-  // CONTEXT MANAGEMENT
-  // ============================================================================
-
-  private prepareContextWindow(newUserMessage: string): ChatMessage[] {
-    const newMsgTokens = this.estimateTokens(newUserMessage);
-
-    const availableForHistory =
-      this.MAX_CONTEXT_TOKENS -
-      this._systemPromptTokens -
-      this.TOOL_BUDGET -
-      this.MAX_OUTPUT_TOKENS -
-      newMsgTokens -
-      this.BUFFER_TOKENS;
-
-    const history = this.messages()
-      .filter((m) => m.content.trim() && m.role !== 'system')
-      .map((m) => {
-        if (m.role === 'assistant') {
-          return {
-            ...m,
-            content: this.cleanResponseForDisplay(m.content),
-          };
-        }
-        return m;
-      })
-      .filter((m) => m.content.trim());
-
-    const result: ChatMessage[] = [];
-    let usedTokens = 0;
-
-    for (
-      let i = history.length - 1;
-      i >= 0 && result.length < this.MAX_HISTORY_MESSAGES;
-      i--
-    ) {
-      const msg = history[i];
-      const msgTokens = this.estimateTokens(msg.content);
-
-      if (usedTokens + msgTokens > availableForHistory) break;
-
-      usedTokens += msgTokens;
-      result.unshift({ ...msg, tokenEstimate: msgTokens });
-    }
-
-    if (result.length > 0 && result[0].role === 'assistant') {
-      result.shift();
-    }
-
-    const totalUsed =
-      this._systemPromptTokens + this.TOOL_BUDGET + usedTokens + newMsgTokens;
-    const usagePercent = Math.round(
-      (totalUsed / this.MAX_CONTEXT_TOKENS) * 100
-    );
-    this.contextUsage.set(Math.min(usagePercent, 100));
-
-    return result;
-  }
-
-  private estimateTokens(text: string): number {
-    if (!text) return 0;
-    const vietnameseChars = (
-      text.match(
-        /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/gi
-      ) || []
-    ).length;
-    const baseTokens = Math.ceil(text.length / this.AVG_CHARS_PER_TOKEN);
-    const vietnameseBonus = Math.ceil(vietnameseChars * 0.3);
-    return baseTokens + vietnameseBonus + 4;
-  }
-
-  // ============================================================================
-  // SYSTEM PROMPT
-  // ============================================================================
-
-  private getDynamicSystemPrompt(): string {
-    const currentUser = this.authService.currentUser();
-    const permissionsHash = JSON.stringify(currentUser?.permissions || []);
-
-    if (permissionsHash !== this._lastUserPermissionsHash) {
-      this._cachedSystemPrompt = '';
-      this._cachedAllowedRoutes = null;
-      this._cachedToolDefinitions = null;
-      this._routeEnumCache = null;
-      this._lastUserPermissionsHash = permissionsHash;
-    }
-
-    if (this._cachedSystemPrompt) {
-      return this._cachedSystemPrompt;
-    }
-
-    const userName = currentUser?.fullName?.split(' ').pop() || 'bạn';
-    const allowedRoutes = this.getAllowedRoutes();
-
-    const routeList = allowedRoutes
-      .slice(0, 10)
-      .map((r) => `• ${r.title}: ${r.fullUrl}`)
-      .join('\n');
-
-    // Prompt optimized for Qwen 3 with Thinking allowed
-    // Note: We removed "/no_think" from the previous prompt
-    const prompt = `
-Bạn là IT Assistant của Bệnh viện Hoàn Mỹ.
-User: ${userName}
-
-NHIỆM VỤ:
-1. Điều hướng: Nếu user yêu cầu hoặc hỏi về tính năng có màn hình (ví dụ: "đổi mật khẩu ở đâu", "xem báo cáo"), hãy dùng tool navigate_to_screen NGAY LẬP TỨC.
-2. Đổi theme: Dùng tool change_theme nếu user nhắc đến giao diện/màu sắc.
-3. Chat thông thường: Trả lời ngắn gọn, hỗ trợ user.
-
-SCREENS CÓ SẴN:
-${routeList}
-
-Liên hệ IT: hotline 1108/1109`;
-
-    this._cachedSystemPrompt = prompt;
-    this._systemPromptTokens = this.estimateTokens(prompt);
-
-    return prompt;
-  }
-
-  // ============================================================================
-  // TOOL DEFINITIONS
-  // ============================================================================
-
-  private getToolDefinitions(): unknown[] {
-    if (this._cachedToolDefinitions) {
-      return this._cachedToolDefinitions;
-    }
-
-    const routeEnums = this.getRouteEnums();
-
-    const tools = [
-      {
-        type: 'function',
-        function: {
-          name: 'navigate_to_screen',
-          description:
-            'Điều hướng đến màn hình. Sử dụng khi user muốn mở, xem, hoặc hỏi cách truy cập một chức năng.',
-          parameters: {
-            type: 'object',
-            properties: {
-              path: {
-                type: 'string',
-                description: 'Đường dẫn màn hình (path)',
-                enum: routeEnums,
-              },
-            },
-            required: ['path'],
-            additionalProperties: false,
-          },
-        },
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'change_theme',
-          description:
-            'Đổi theme. Sử dụng khi user muốn đổi giao diện, màu sáng/tối.',
-          parameters: {
-            type: 'object',
-            properties: {
-              mode: {
-                type: 'string',
-                description:
-                  'Chế độ theme: "light" (sáng), "dark" (tối), hoặc "toggle" (đổi)',
-                enum: ['light', 'dark', 'toggle'],
-              },
-            },
-            required: ['mode'],
-            additionalProperties: false,
-          },
-        },
-      },
-    ];
-
-    this._cachedToolDefinitions = tools;
-    return tools;
-  }
-
-  private getRouteEnums(): string[] {
-    if (this._routeEnumCache) {
-      return this._routeEnumCache;
-    }
-
-    this._routeEnumCache = this.getAllowedRoutes().map((r) => r.fullUrl);
-    return this._routeEnumCache;
-  }
-
-  // ============================================================================
   // NAVIGATION & THEME
   // ============================================================================
 
-  private triggerNavigation(path: string): boolean {
+  /**
+   * Navigate to a screen
+   */
+  private triggerNavigation(path: string): ToolResult {
     if (this.isNavigating() || this.router.url === path) {
-      return true;
+      return { success: true, data: 'Trang hiện tại' };
     }
 
     const allowedRoutes = this.getAllowedRoutes();
-    const isAllowed = allowedRoutes.some(
+    const route = allowedRoutes.find(
       (r) =>
-        r.fullUrl === path || r.purePath === path || path.endsWith(r.purePath)
+        r.fullUrl === path ||
+        r.purePath === path ||
+        path.endsWith(r.purePath) ||
+        r.fullUrl.endsWith(path)
     );
 
-    if (!isAllowed) {
-      console.warn('Navigation blocked - permission denied:', path);
-      return false;
+    if (!route) {
+      console.warn('[LLM] Navigation blocked:', path);
+      return { success: false, error: 'Không có quyền truy cập trang này.' };
     }
 
     this.isNavigating.set(true);
-
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const targetUrl = route.fullUrl;
 
     setTimeout(() => {
-      this.router.navigateByUrl(normalizedPath).finally(() => {
+      this.router.navigateByUrl(targetUrl).finally(() => {
         setTimeout(() => this.isNavigating.set(false), 500);
       });
     }, 800);
 
-    return true;
+    return { success: true, data: route.title };
   }
 
-  private triggerThemeAction(action: string): boolean {
+  /**
+   * Change theme
+   */
+  private triggerThemeAction(action: string): ToolResult {
     const now = Date.now();
-    if (now - this.lastThemeChange < this.THEME_COOLDOWN) {
-      return true;
+    if (now - this.lastThemeChange < this.THEME_COOLDOWN_MS) {
+      const currentMode = this.themeService.isDarkTheme() ? 'Giao diện tối' : 'Giao diện sáng';
+      return { success: true, data: currentMode };
     }
     this.lastThemeChange = now;
 
     const isDark = this.themeService.isDarkTheme();
     const mode = action.toLowerCase();
 
-    if (
-      (mode === 'dark' && !isDark) ||
-      (mode === 'light' && isDark) ||
-      mode === 'toggle'
-    ) {
+    if ((mode === 'dark' && !isDark) || (mode === 'light' && isDark) || mode === 'toggle') {
       this.themeService.toggleTheme();
     }
 
-    return true;
+    const newMode = this.themeService.isDarkTheme() ? 'Giao diện tối' : 'Giao diện sáng';
+    return { success: true, data: newMode };
   }
 
   // ============================================================================
   // ROUTES & PERMISSIONS
   // ============================================================================
 
+  /**
+   * Get allowed routes for user
+   */
   private getAllowedRoutes(): RouteInfo[] {
-    if (!this._cachedAllowedRoutes) {
-      this._cachedAllowedRoutes = this.scanRoutes(this.router.config);
+    if (!this.cachedAllowedRoutes) {
+      this.cachedAllowedRoutes = this.scanRoutes(this.router.config);
     }
-    return this._cachedAllowedRoutes;
+    return this.cachedAllowedRoutes;
   }
 
-  private scanRoutes(routes: Routes, parentPath: string = ''): RouteInfo[] {
+  /**
+   * Recursively scan routes
+   */
+  private scanRoutes(routes: Routes, parentPath = ''): RouteInfo[] {
     const results: RouteInfo[] = [];
 
     for (const route of routes) {
       if (route.redirectTo || route.path === '**') continue;
 
       const pathPart = route.path || '';
-      const fullPath = parentPath
-        ? `${parentPath}/${pathPart}`
-        : `/${pathPart}`;
-      const purePath = fullPath.startsWith('/app/')
-        ? fullPath.substring(5)
-        : fullPath.substring(1);
+      const fullPath = parentPath ? `${parentPath}/${pathPart}` : `/${pathPart}`;
+      const purePath = fullPath.startsWith('/app/') ? fullPath.substring(5) : fullPath.substring(1);
 
       if (!this.checkRoutePermission(route)) continue;
 
@@ -1013,6 +1492,9 @@ Liên hệ IT: hotline 1108/1109`;
     return results;
   }
 
+  /**
+   * Check route permission
+   */
   private checkRoutePermission(route: Route): boolean {
     const requiredPerm = route.data?.['permission'] as string | undefined;
     if (!requiredPerm) return true;
@@ -1025,19 +1507,13 @@ Liên hệ IT: hotline 1108/1109`;
   // DISAMBIGUATION
   // ============================================================================
 
+  /**
+   * Check for ambiguous navigation
+   */
   private checkAmbiguousNavigation(userMessage: string): string | null {
     const lowerMsg = userMessage.toLowerCase().trim();
 
-    const navKeywords = [
-      'mở',
-      'chuyển',
-      'đi',
-      'vào',
-      'xem',
-      'open',
-      'go',
-      'navigate',
-    ];
+    const navKeywords = ['mở', 'chuyển', 'đi', 'vào', 'xem', 'open', 'go', 'navigate', 'show'];
     const hasNavKeyword = navKeywords.some((kw) => lowerMsg.includes(kw));
 
     if (!hasNavKeyword) return null;
@@ -1047,10 +1523,7 @@ Liên hệ IT: hotline 1108/1109`;
       query = query.replace(new RegExp(kw, 'g'), '').trim();
     });
     query = query
-      .replace(
-        /trang|màn hình|screen|page|báo cáo|report|cho tôi|giúp|đến/g,
-        ''
-      )
+      .replace(/trang|màn hình|screen|page|báo cáo|report|cho tôi|giúp|đến/g, '')
       .trim();
 
     if (!query || query.length < 2) return null;
@@ -1072,18 +1545,18 @@ Liên hệ IT: hotline 1108/1109`;
 
     const options = matches
       .slice(0, 5)
-      .map(
-        (m, i) =>
-          `${i + 1}. ${m.title}${m.description ? ` - ${m.description}` : ''}`
-      )
+      .map((m, i) => `${i + 1}. ${m.title}${m.description ? ` - ${m.description}` : ''}`)
       .join('\n');
 
-    return `Tìm thấy ${matches.length} màn hình phù hợp:\n\n${options}\n\nBạn muốn mở màn hình nào?`;
+    return `Tìm thấy ${matches.length} màn hình phù hợp:\n\n${options}\n\nBạn cần mở màn hình nào?`;
   }
 
+  /**
+   * Find matching screens
+   */
   private findMatchingScreens(query: string): RouteInfo[] {
     const normalizedQuery = query.toLowerCase().trim();
-    const queryWords = normalizedQuery.split(/\s+/);
+    const queryWords = normalizedQuery.split(/\s+/).filter((w) => w.length > 1);
     const allowedRoutes = this.getAllowedRoutes();
 
     return allowedRoutes.filter((route) => {
@@ -1103,16 +1576,249 @@ Liên hệ IT: hotline 1108/1109`;
   }
 
   // ============================================================================
+  // CONTEXT MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Prepare context window with history
+   */
+  private prepareContextWindow(newUserMessage: string): ChatMessage[] {
+    const newMsgTokens = this.estimateTokens(newUserMessage);
+
+    const availableForHistory =
+      this.MAX_CONTEXT_TOKENS -
+      this.systemPromptTokens -
+      this.TOOL_BUDGET_TOKENS -
+      this.MAX_OUTPUT_TOKENS -
+      newMsgTokens -
+      this.BUFFER_TOKENS;
+
+    const history = this.messages()
+      .filter((m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool')
+      .map((m) => {
+        if (m.role === 'assistant') {
+          const cleaned = this.cleanResponseForDisplay(m.content);
+          return { ...m, content: this.truncateForHistory(cleaned, 150) };
+        }
+        return { ...m, content: this.truncateForHistory(m.content, 200) };
+      })
+      .filter((m) => m.content.trim());
+
+    const result: ChatMessage[] = [];
+    let usedTokens = 0;
+    const maxHistoryMessages = Math.min(this.MAX_HISTORY_MESSAGES, 4);
+
+    for (let i = history.length - 1; i >= 0 && result.length < maxHistoryMessages; i--) {
+      const msg = history[i];
+      const msgTokens = this.estimateTokens(msg.content);
+
+      if (usedTokens + msgTokens > availableForHistory) break;
+
+      usedTokens += msgTokens;
+      result.unshift({ ...msg, tokenEstimate: msgTokens });
+    }
+
+    if (result.length > 0 && result[0].role === 'assistant') {
+      result.shift();
+    }
+
+    const totalUsed = this.systemPromptTokens + this.TOOL_BUDGET_TOKENS + usedTokens + newMsgTokens;
+    const usagePercent = Math.round((totalUsed / this.MAX_CONTEXT_TOKENS) * 100);
+    this.contextUsage.set(Math.min(usagePercent, 100));
+
+    return result;
+  }
+
+  /**
+   * Truncate text for history
+   */
+  private truncateForHistory(text: string, maxChars: number): string {
+    if (!text || text.length <= maxChars) return text;
+
+    const truncated = text.substring(0, maxChars);
+    const lastSpace = truncated.lastIndexOf(' ');
+    if (lastSpace > maxChars * 0.7) {
+      return truncated.substring(0, lastSpace) + '...';
+    }
+    return truncated + '...';
+  }
+
+  /**
+   * Estimate token count
+   */
+  private estimateTokens(text: string): number {
+    if (!text) return 0;
+    const vietnameseChars = (
+      text.match(
+        /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/gi
+      ) || []
+    ).length;
+    const baseTokens = Math.ceil(text.length / this.AVG_CHARS_PER_TOKEN);
+    const vietnameseBonus = Math.ceil(vietnameseChars * 0.3);
+    return baseTokens + vietnameseBonus + 4;
+  }
+
+  /**
+   * Get adaptive output token limit
+   */
+  private getAdaptiveOutputTokens(message: string, hasToolIntent: boolean): number {
+    const msgLen = message.length;
+
+    if (hasToolIntent) return 256;
+    if (msgLen < 30) return 128;
+    if (msgLen < 100) return 512;
+
+    return Math.min(this.MAX_OUTPUT_TOKENS, 1024);
+  }
+
+  // ============================================================================
+  // SYSTEM PROMPT
+  // ============================================================================
+
+  /**
+   * Generate dynamic system prompt - concise and professional
+   */
+  private getDynamicSystemPrompt(): string {
+    const currentUser = this.authService.currentUser();
+    const permissionsHash = JSON.stringify(currentUser?.permissions || []);
+
+    if (permissionsHash !== this.lastUserPermissionsHash) {
+      this.cachedSystemPrompt = '';
+      this.cachedAllowedRoutes = null;
+      this.cachedToolDefinitions = null;
+      this.routeEnumCache = null;
+      this.lastUserPermissionsHash = permissionsHash;
+    }
+
+    if (this.cachedSystemPrompt) {
+      return this.cachedSystemPrompt;
+    }
+
+    const allowedRoutes = this.getAllowedRoutes();
+
+    const routeList = allowedRoutes
+      .slice(0, 10)
+      .map((r) => `${r.purePath}:${r.title}`)
+      .join('|');
+
+    const prompt = `Trợ lý IT Bệnh viện Hoàn Mỹ.
+PHẠM VI: Chỉ điều hướng màn hình + đổi theme. Không reset pass/sửa máy/truy cập DB.
+HÀNH ĐỘNG: Dùng navigate_to_screen (đổi pass→settings) hoặc change_theme.
+NGOÀI PHẠM VI: "Liên hệ IT Helpdesk 1108/1109"
+ROUTES: ${routeList}
+Trả lời ngắn gọn, chuyên nghiệp./no_think`;
+
+    this.cachedSystemPrompt = prompt;
+    this.systemPromptTokens = this.estimateTokens(prompt);
+
+    return prompt;
+  }
+
+  // ============================================================================
+  // TOOL DEFINITIONS
+  // ============================================================================
+
+  /**
+   * Get tool definitions
+   */
+  private getToolDefinitions(): unknown[] {
+    if (this.cachedToolDefinitions) {
+      return this.cachedToolDefinitions;
+    }
+
+    const routeEnums = this.getRouteEnums();
+
+    const tools = [
+      {
+        type: 'function',
+        function: {
+          name: 'navigate_to_screen',
+          description: 'Mở màn hình/trang',
+          parameters: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', enum: routeEnums },
+            },
+            required: ['path'],
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'change_theme',
+          description: 'Đổi giao diện sáng/tối',
+          parameters: {
+            type: 'object',
+            properties: {
+              mode: { type: 'string', enum: ['light', 'dark', 'toggle'] },
+            },
+            required: ['mode'],
+          },
+        },
+      },
+    ];
+
+    this.cachedToolDefinitions = tools;
+    return tools;
+  }
+
+  /**
+   * Get route enums
+   */
+  private getRouteEnums(): string[] {
+    if (this.routeEnumCache) {
+      return this.routeEnumCache;
+    }
+
+    this.routeEnumCache = this.getAllowedRoutes().map((r) => r.fullUrl);
+    return this.routeEnumCache;
+  }
+
+  // ============================================================================
+  // RETRY LOGIC
+  // ============================================================================
+
+  /**
+   * Execute with retry
+   */
+  private async executeWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as Error;
+
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          throw error;
+        }
+
+        if (attempt < this.MAX_RETRIES) {
+          console.log(`[LLM] Retry attempt ${attempt + 1}/${this.MAX_RETRIES}`);
+          await this.delay(this.RETRY_DELAY_MS * (attempt + 1));
+        }
+      }
+    }
+
+    throw lastError;
+  }
+
+  // ============================================================================
   // UTILITIES
   // ============================================================================
 
-  private sanitizeInput(content: string): string {
-    return content
-      .trim()
-      .slice(0, 1000)
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  /**
+   * Add assistant message
+   */
+  private addAssistantMessage(content: string): void {
+    this.messages.update((msgs) => [...msgs, this.createMessage('assistant', content)]);
   }
 
+  /**
+   * Create chat message
+   */
   private createMessage(
     role: 'user' | 'assistant' | 'system' | 'tool',
     content: string,
@@ -1129,6 +1835,9 @@ Liên hệ IT: hotline 1108/1109`;
     };
   }
 
+  /**
+   * Check server health
+   */
   private async checkServerHealth(): Promise<void> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -1148,6 +1857,9 @@ Liên hệ IT: hotline 1108/1109`;
     }
   }
 
+  /**
+   * Get base URL
+   */
   private getBaseUrl(): string {
     try {
       const urlObj = new URL(this.apiUrl);
@@ -1157,28 +1869,30 @@ Liên hệ IT: hotline 1108/1109`;
     }
   }
 
+  /**
+   * Add greeting message - professional tone
+   */
   private addGreetingMessage(): void {
-    const name =
-      this.authService.currentUser()?.fullName?.split(' ').pop() || 'bạn';
     this.messages.update((msgs) => [
       ...msgs,
       this.createMessage(
         'assistant',
-        `Chào ${name}! Tôi là IT Assistant. Bạn cần hỗ trợ gì?`
+        'Xin chào. Tôi là Trợ lý IT của Bệnh viện Hoàn Mỹ. Tôi có thể hỗ trợ điều hướng hệ thống hoặc đổi giao diện.'
       ),
     ]);
   }
 
+  /**
+   * Handle errors
+   */
   private handleError(error: unknown): void {
-    const isAbort =
-      error instanceof DOMException && error.name === 'AbortError';
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
 
     if (!isAbort) {
-      console.error('[LLM] Error details:', {
+      console.error('[LLM] Error:', {
         name: error instanceof Error ? error.name : 'Unknown',
         message: error instanceof Error ? error.message : String(error),
         model: this.MODEL_NAME,
-        apiUrl: this.apiUrl,
       });
 
       this.messages.update((msgs) => {
@@ -1188,19 +1902,19 @@ Liên hệ IT: hotline 1108/1109`;
         if (lastIdx >= 0 && newMsgs[lastIdx].role === 'assistant') {
           const errorMessage =
             error instanceof Error && error.message.includes('404')
-              ? `Model "${this.MODEL_NAME}" không tìm thấy. Chạy: ollama pull ${this.MODEL_NAME}`
-              : 'Hệ thống đang bận, vui lòng thử lại.';
+              ? `Model "${this.MODEL_NAME}" không khả dụng. Liên hệ IT Helpdesk.`
+              : 'Hệ thống đang bận. Vui lòng thử lại sau.';
 
-          newMsgs[lastIdx] = {
-            ...newMsgs[lastIdx],
-            content: errorMessage,
-          };
+          newMsgs[lastIdx] = { ...newMsgs[lastIdx], content: errorMessage };
         }
         return newMsgs;
       });
     }
   }
 
+  /**
+   * Abort current request
+   */
   private abortCurrentRequest(): void {
     if (this.currentAbortController) {
       this.currentAbortController.abort();
@@ -1208,26 +1922,36 @@ Liên hệ IT: hotline 1108/1109`;
     }
   }
 
+  /**
+   * Full cleanup
+   */
   private cleanup(): void {
     this.abortCurrentRequest();
     this.clearSessionTimeout();
     this.resetChat();
     this.isOpen.set(false);
+    this.modelLoaded.set(false);
 
-    this._cachedSystemPrompt = '';
-    this._cachedAllowedRoutes = null;
-    this._cachedToolDefinitions = null;
-    this._routeEnumCache = null;
+    this.cachedSystemPrompt = '';
+    this.cachedAllowedRoutes = null;
+    this.cachedToolDefinitions = null;
+    this.routeEnumCache = null;
   }
 
+  /**
+   * Reset session timeout
+   */
   private resetSessionTimeout(): void {
     this.clearSessionTimeout();
     this.sessionTimeout = setTimeout(() => {
       this.resetChat();
       this.isOpen.set(false);
-    }, this.SESSION_TIMEOUT);
+    }, this.SESSION_TIMEOUT_MS);
   }
 
+  /**
+   * Clear session timeout
+   */
   private clearSessionTimeout(): void {
     if (this.sessionTimeout) {
       clearTimeout(this.sessionTimeout);
@@ -1235,10 +1959,16 @@ Liên hệ IT: hotline 1108/1109`;
     }
   }
 
+  /**
+   * Delay helper
+   */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  /**
+   * Generate message ID
+   */
   private generateMessageId(): string {
     return `msg_${Date.now()}_${++this.messageIdCounter}`;
   }

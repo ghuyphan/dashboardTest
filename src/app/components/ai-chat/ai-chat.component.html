@@ -53,7 +53,7 @@
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
     
     @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
-      @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
+      @if (msg.role !== 'system' && msg.role !== 'tool' && (msg.role !== 'assistant' || msg.content)) {
         <div class="message-row" 
              [ngClass]="msg.role" 
              [class.is-thinking]="msg.isThinking">
