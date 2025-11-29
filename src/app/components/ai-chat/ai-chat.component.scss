@@ -659,6 +659,12 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   transform: translateY(8px);
   contain: layout style; 
 
+  /* New State: Active Thinking */
+  &.is-thinking .bubble {
+     border-color: rgba(0, 131, 155, 0.5);
+     box-shadow: 0 0 15px rgba(0, 131, 155, 0.1);
+  }
+
   &.user {
     flex-direction: row-reverse;
     .bubble {
@@ -752,7 +758,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     max-width: 85%;
     word-break: break-word;
     position: relative;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     
     /* Markdown Content Styles */
     ::ng-deep {
@@ -784,11 +790,48 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
         color: #fca5a5;
         border-color: rgba(255, 255, 255, 0.1);
       }
+
+      /* * THINKING PROCESS BLOCK
+       * Injected via TS processContent() for Qwen/DeepSeek <think> tags
+       */
+      .ai-thought-process {
+        margin-bottom: 14px;
+        padding: 10px 14px;
+        background: rgba(0, 0, 0, 0.03);
+        border-left: 3px solid var(--gray-400);
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-style: italic;
+        line-height: 1.5;
+
+        .thought-label {
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+          color: var(--teal-blue);
+          display: block;
+          letter-spacing: 0.5px;
+          opacity: 0.8;
+        }
+
+        /* Dark mode support for thinking block */
+        [data-theme='dark'] & {
+           background: rgba(255, 255, 255, 0.03);
+           border-left-color: var(--gray-600);
+           color: #94a3b8; /* Slate 400 */
+           
+           .thought-label {
+              color: #2dd4bf; /* Teal 400 */
+           }
+        }
+      }
     }
   }
 
   /* ==========================================================================
-     AI THINKING BUBBLE - Neural Processing Effect
+     AI THINKING BUBBLE - Neural Processing Effect (For Initial Loading)
      ========================================================================== */
   .thinking-bubble {
     display: flex;

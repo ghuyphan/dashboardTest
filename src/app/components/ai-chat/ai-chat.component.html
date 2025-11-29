@@ -1,6 +1,5 @@
 <div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()">
   
-  <!-- HEADER -->
   <div class="ai-header">
     <div class="header-left">
       <div class="ai-avatar-wrapper">
@@ -20,7 +19,6 @@
     </div>
 
     <div class="header-right">
-      <!-- Context Usage Indicator -->
       @if (llmService.modelLoaded() && llmService.contextUsage() > 50) {
         <div 
           class="context-indicator" 
@@ -38,7 +36,6 @@
     </div>
   </div>
 
-  <!-- LOADING VIEW -->
   <div class="ai-body loading-view" *ngIf="llmService.isModelLoading() && !llmService.modelLoaded()">
     <div class="scan-container">
       <div class="scan-grid"></div>
@@ -53,12 +50,13 @@
     </p>
   </div>
 
-  <!-- CHAT VIEW -->
   <div class="ai-body chat-view" *ngIf="llmService.modelLoaded()" #scrollContainer>
     
     @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
       @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
-        <div class="message-row" [ngClass]="msg.role">
+        <div class="message-row" 
+             [ngClass]="msg.role" 
+             [class.is-thinking]="msg.isThinking">
           
           @if (msg.role === 'assistant') {
             <div class="msg-avatar">
@@ -68,13 +66,12 @@
             </div>
           }
 
-          <div class="bubble" [innerHTML]="msg.content | markdown"></div>
+          <div class="bubble" [innerHTML]="processContent(msg.content) | markdown"></div>
         </div>
       }
     }
 
-    <!-- Thinking Indicator -->
-    @if (shouldShowThinking()) {
+    @if (shouldShowLoadingIndicator()) {
       <div class="message-row assistant">
         <div class="msg-avatar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -89,7 +86,6 @@
     }
   </div>
   
-  <!-- Navigation Overlay -->
   @if (llmService.isNavigating()) {
     <div class="nav-overlay">
       <div class="warp-tunnel"></div>
@@ -102,10 +98,8 @@
     </div>
   }
 
-  <!-- FOOTER -->
   <div class="ai-footer" *ngIf="llmService.modelLoaded()">
     <div class="toolbar">
-      <!-- Context warning message -->
       @if (llmService.contextUsage() >= 80) {
         <span class="context-warning">
           <i class="fas fa-exclamation-triangle"></i>
