@@ -105,13 +105,15 @@
         </span>
       }
       
-      <button 
-        class="clear-chat-btn" 
-        (click)="llmService.resetChat()" 
-        title="Xóa lịch sử chat" 
-        [disabled]="llmService.isGenerating()">
-        <i class="fas fa-trash-alt"></i> Xóa lịch sử
-      </button>
+      @if (hasUserMessages()) {
+        <button 
+          class="clear-chat-btn" 
+          (click)="llmService.resetChat()" 
+          title="Xóa lịch sử chat" 
+          [disabled]="llmService.isGenerating()">
+          <i class="fas fa-trash-alt"></i> Xóa lịch sử
+        </button>
+      }
     </div>
 
     <div class="input-container">

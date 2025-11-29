@@ -9,7 +9,8 @@ import {
   NgZone,
   AfterViewInit,
   OnDestroy,
-  TrackByFunction
+  TrackByFunction,
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -39,6 +40,11 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef<HTMLDivElement>;
 
   public readonly trackByMessage: TrackByFunction<ChatMessage> = (index, msg) => msg.id;
+
+  // [FIX] Only allow clearing if there are actual user interactions
+  public hasUserMessages = computed(() => {
+    return this.llmService.messages().some(m => m.role === 'user');
+  });
 
   constructor(private elementRef: ElementRef) {
     effect(() => {

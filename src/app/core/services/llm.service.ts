@@ -121,12 +121,12 @@ export class LlmService {
   private readonly ngZone = inject(NgZone);
 
   private readonly apiUrl = environment.llmUrl;
-  private readonly MODEL_NAME = 'qwen3-vl:4b-instruct';
+  private readonly MODEL_NAME = 'qwen3:4b-instruct';
 
   // Settings
   private readonly SESSION_TIMEOUT_MS = 15 * 60 * 1000;
   private readonly THEME_COOLDOWN_MS = 1000;
-  private readonly MAX_CONTEXT_TOKENS = 8192;
+  private readonly MAX_CONTEXT_TOKENS = 4096;
   private readonly MAX_HISTORY_MESSAGES = 4;
   private readonly MAX_OUTPUT_TOKENS = 1024;
   private readonly TOOL_BUDGET_TOKENS = 300;
@@ -134,7 +134,7 @@ export class LlmService {
   private readonly UI_UPDATE_DEBOUNCE_MS = 30;
   private readonly MAX_RETRIES = 2;
   private readonly RETRY_DELAY_MS = 800;
-  private readonly CONNECT_TIMEOUT_MS = 30000;
+  private readonly CONNECT_TIMEOUT_MS = 60000;
   private readonly MAX_INPUT_LENGTH = 500;
   private readonly MAX_OUTPUT_LENGTH = 2000;
   private readonly RATE_LIMIT_MAX = 15;
@@ -1088,7 +1088,7 @@ YÊU CẦU: Trả lời ngắn gọn, có đầu đuôi (đầy đủ chủ ng�
 
   private async checkServerHealth(): Promise<void> {
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 5000);
+    const timeout = setTimeout(() => ctrl.abort(), 10000);
 
     try {
       const url = new URL(this.apiUrl);
