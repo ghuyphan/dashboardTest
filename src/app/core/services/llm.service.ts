@@ -40,6 +40,7 @@ interface RouteInfo {
   fullUrl: string;
   key: string;
   keywords?: string[];
+  description?: string;
 }
 
 interface ToolResult {
@@ -47,6 +48,60 @@ interface ToolResult {
   data?: string;
   error?: string;
 }
+
+// ============================================================================
+// INTENT TYPES
+// ============================================================================
+
+type Intent = 'nav' | 'theme' | 'it_support' | 'feature_help';
+
+// ============================================================================
+// KNOWLEDGE BASE - CHỈ CÁC QUY TRÌNH THỰC TẾ
+// ============================================================================
+
+const IT_HOTLINE = '**1108** hoặc **1109**';
+const ESCALATION_MSG = `Vui lòng liên hệ IT hotline ${IT_HOTLINE} để được hỗ trợ trực tiếp.`;
+
+// Chỉ chứa các hướng dẫn IT thực tế, không bịa đặt
+const IT_KNOWLEDGE = `
+QUY TRÌNH HỖ TRỢ IT CƠ BẢN:
+
+[MẬT KHẨU]
+- Đổi mật khẩu: Vào Settings > Đổi mật khẩu (khi đang đăng nhập)
+- Quên mật khẩu: Liên hệ IT hotline để yêu cầu reset mật khẩu
+- Tài khoản bị khóa (sai 5 lần): Liên hệ IT hotline để mở khóa
+- Lưu ý: KHÔNG chia sẻ mật khẩu cho bất kỳ ai
+
+[MÁY IN]
+- Không in được: Kiểm tra kết nối > Restart máy in > Báo IT
+- Kẹt giấy: Tắt nguồn, mở nắp, nhẹ nhàng gỡ giấy
+- In mờ/nhòe: Cần thay mực, báo IT
+
+[MẠNG]
+- Mất mạng: Kiểm tra dây cắm > Restart máy > Báo IT
+- Chậm/lag: Đóng tab không dùng, restart trình duyệt
+
+[HỆ THỐNG]
+- Treo/đơ: Nhấn F5 refresh hoặc đăng xuất rồi đăng nhập lại
+- Lỗi lưu: KHÔNG tắt máy, báo IT ngay
+- Không load: Xóa cache (Ctrl+Shift+Delete)
+
+[GIỚI HẠN]
+Đây chỉ là hướng dẫn cơ bản. Vấn đề phức tạp hơn cần liên hệ IT hotline.
+`;
+
+// Mô tả các màn hình thực tế trong hệ thống
+const FEATURE_DESCRIPTIONS: Record<string, string> = {
+  'home': 'Trang chủ: Hiển thị tổng quan và thông báo hệ thống.',
+  'settings': 'Cài đặt: Đổi mật khẩu, cập nhật thông tin cá nhân.',
+  'equipment/catalog': 'Danh mục thiết bị: Tra cứu, quét QR, theo dõi bàn giao thiết bị y tế.',
+  'reports/bed-usage': 'Báo cáo giường: Thống kê công suất sử dụng giường theo khoa/phòng.',
+  'reports/examination-overview': 'Báo cáo khám: Thống kê lượt khám, BHYT, viện phí, doanh thu.',
+  'reports/missing-medical-records': 'Báo cáo HSBA thiếu: Danh sách hồ sơ bệnh án chưa hoàn thiện.',
+  'reports/cls-level3': 'Báo cáo CLS tầng 3: Thống kê xét nghiệm, CĐHA tầng 3.',
+  'reports/cls-level6': 'Báo cáo CLS tầng 6: Thống kê xét nghiệm, CĐHA tầng 6.',
+  'reports/specialty-cls': 'Báo cáo CLS chuyên khoa: Thống kê theo từng chuyên khoa.',
+};
 
 // ============================================================================
 // TEXT NORMALIZATION
@@ -61,21 +116,70 @@ const ABBREVIATIONS: [RegExp, string][] = [
   [/\br\b/g, 'rồi'],
   [/\bbt\b/g, 'bình thường'],
   [/\bad\b/g, 'admin'],
+  [/\bmk\b/g, 'mật khẩu'],
+  [/\bpass\b/g, 'password'],
 ];
 
 function normalize(text: string): string {
   let s = text.toLowerCase().trim();
-
   for (const [re, repl] of ABBREVIATIONS) {
     s = s.replace(re, repl);
   }
-
-  // Remove diacritics
   s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   s = s.replace(/đ/g, 'd').replace(/Đ/g, 'D');
-
   return s.replace(/\s+/g, ' ').trim();
 }
+
+// ============================================================================
+// LANGUAGE DETECTION
+// ============================================================================
+
+function detectLanguage(text: string): 'vi' | 'en' {
+  const lower = text.toLowerCase();
+  
+  // Vietnamese diacritics = definitely Vietnamese
+  if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/.test(text)) {
+    return 'vi';
+  }
+  
+  // Common Vietnamese words without diacritics
+  const vnWords = /\b(toi|ban|cua|nay|do|duoc|khong|co|la|va|cho|voi|den|xem|mo|chuyen|vao|giup|can|mat khau|quen|doi|bi khoa)\b/;
+  if (vnWords.test(lower)) {
+    return 'vi';
+  }
+  
+  // Strong English sentence starters
+  const enStarters = /^(please|can you|could you|i want|i need|how do i|what is|show me|help me|take me|i forgot|change my)/i;
+  if (enStarters.test(lower)) {
+    return 'en';
+  }
+  
+  // Default to Vietnamese
+  return 'vi';
+}
+
+// ============================================================================
+// PASSWORD-SPECIFIC PATTERNS (Checked first, before general intents)
+// ============================================================================
+
+const PASSWORD_FORGOT_PATTERNS = [
+  'quen mat khau', 'forgot password', 'khong nho mat khau',
+  'mat khau la gi', 'quen pass', 'forget password', 'quen mk',
+  'khong biet mat khau', 'mat khau gi',
+];
+
+const PASSWORD_LOCKED_PATTERNS = [
+  'bi khoa', 'tai khoan bi khoa', 'khoa tai khoan', 'account locked', 'locked out',
+  'sai mat khau', 'wrong password', 'nhap sai', 'dang nhap khong duoc',
+  'khong dang nhap duoc', 'cannot login', 'cant login', 'login failed',
+  'sai pass', 'sai mk', 'nhap sai mat khau',
+];
+
+const PASSWORD_CHANGE_PATTERNS = [
+  'doi mat khau', 'change password', 'thay mat khau', 'cap nhat mat khau',
+  'update password', 'muon doi pass', 'doi mk', 'thay doi mat khau',
+  'reset mat khau cua toi', 'doi pass',
+];
 
 // ============================================================================
 // WHITELIST CLASSIFICATION
@@ -84,17 +188,18 @@ function normalize(text: string): string {
 interface WhitelistEntry {
   patterns: string[];
   response?: string | string[];
-  intent?: 'nav' | 'theme';
+  intent?: Intent;
 }
 
 interface ClassifyResult {
   type: 'direct' | 'llm' | 'blocked';
   response?: string;
-  intent?: 'nav' | 'theme';
-  extractedCommand?: string; // Clean command to send to LLM
+  intent?: Intent;
+  extractedCommand?: string;
+  language: 'vi' | 'en';
 }
 
-// Blocklist: Always rejected (checked first)
+// Blocklist: Always rejected
 const BLOCKLIST: RegExp[] = [
   // === Injection attempts ===
   /ignore.*(previous|all|above)?\s*instruction/i,
@@ -108,7 +213,7 @@ const BLOCKLIST: RegExp[] = [
   /gia vo.*la/i,
   /act\s*as\s*(if|a)/i,
 
-  // === Harmful content ===
+  // === Harmful ===
   /(cach|thuoc|lam sao).*(tu tu|chet|giet|hai|doc)/i,
   /(hack|crack|bypass|exploit).*(password|system|admin|server|database)/i,
   /(sql injection|xss|ddos|malware|ransomware|trojan|phishing)/i,
@@ -117,10 +222,10 @@ const BLOCKLIST: RegExp[] = [
   /truy cap\s*trai phep/i,
   /unauthorized\s*access/i,
 
-  // === Out-of-scope (Vietnamese) ===
+  // === Out-of-scope ===
   /viet\s*(code|script|tho|truyen|bai|van)/i,
   /code\s*(python|java|sql|js|javascript|html|css)/i,
-  /(fix|sua|debug)\s*(code|bug|loi)/i,
+  /(fix|sua|debug)\s*(code|bug)/i,
   /dich.*sang\s*(tieng|anh|viet|phap|trung)/i,
   /(chinh tri|bau cu|ton giao|dang phai)/i,
   /gia\s*(vang|bitcoin|chung khoan|stock|coin)/i,
@@ -131,49 +236,37 @@ const BLOCKLIST: RegExp[] = [
   /thu do\s*(cua|of)/i,
   /ai la.*(tong thong|president|thu tuong)/i,
   /giai\s*(phuong trinh|toan|bai tap)/i,
-
-  // === Out-of-scope (English) ===
   /write\s*(a|me|the)?\s*(poem|story|essay|code|script|song)/i,
   /tell\s*(me)?\s*(a\s*)?(joke|story|about)/i,
-  /explain\s*(how|what|why|the)/i,
-  /what\s*(is|are|was|were)\s*(the|a)?/i,
-  /who\s*(is|are|was|were)/i,
-  /how\s*(do|does|to|can|did)/i,
-  /can you\s*(help|tell|explain|write)/i,
   /create\s*(a|an|the)?\s*(image|picture|song|video)/i,
   /generate\s*(a|an)?\s*(random|new)/i,
   /translate\s*(this|to|from)/i,
   /summarize|paraphrase/i,
-  /give\s*(me)?\s*(advice|tips|suggestions)/i,
 ];
 
-// Whitelist: Only these patterns pass through
+// Whitelist with expanded intents (NO password patterns here - handled separately)
 const WHITELIST: WhitelistEntry[] = [
   // ===== GREETINGS =====
   {
     patterns: ['chao', 'xin chao', 'hello', 'hi', 'hey', 'alo', 'co ai khong', 'good morning', 'good afternoon'],
     response: [
-      'Xin chào. Tôi có thể hỗ trợ bạn điều hướng hệ thống hoặc thay đổi giao diện.',
-      'Chào bạn! Bạn cần mở trang nào?',
+      'Xin chào! Tôi có thể hỗ trợ:\n• Điều hướng màn hình\n• Thay đổi giao diện\n• Hướng dẫn IT cơ bản\n\nBạn cần gì?',
+      'Chào bạn! Tôi là trợ lý IT. Bạn cần hỗ trợ gì?',
     ],
   },
   {
     patterns: ['ban la ai', 'ban ten gi', 'bot la gi', 'who are you', 'la ai', 'what are you'],
-    response: 'Tôi là Trợ lý ảo IT của Bệnh viện Hoàn Mỹ. Tôi có thể hỗ trợ điều hướng và thay đổi giao diện.',
+    response: `Tôi là Trợ lý IT của Bệnh viện Hoàn Mỹ.\n\nTôi có thể hỗ trợ:\n• Điều hướng đến các màn hình\n• Thay đổi giao diện Sáng/Tối\n• Hướng dẫn xử lý sự cố IT cơ bản\n\nVấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
   },
   {
     patterns: ['giup gi', 'lam duoc gi', 'help', 'huong dan', 'chuc nang', 'ho tro gi', 'what can you do'],
-    response: 'Tôi có thể hỗ trợ bạn:\n• Điều hướng đến các màn hình chức năng\n• Chuyển đổi giao diện Sáng/Tối\n\nBạn cần mở trang nào?',
+    response: `Tôi có thể hỗ trợ:\n\n**Điều hướng:** "Mở báo cáo giường", "Vào settings"\n**Giao diện:** "Đổi theme tối", "Chuyển sang sáng"\n**IT cơ bản:** "Máy in lỗi", "Mạng chậm"\n**Mật khẩu:** "Đổi mật khẩu" (nếu đang đăng nhập)\n\nQuên mật khẩu hoặc bị khóa tài khoản: Liên hệ IT hotline ${IT_HOTLINE}`,
   },
 
   // ===== ACKNOWLEDGMENTS =====
   {
     patterns: ['cam on', 'thank', 'thanks'],
-    response: [
-      'Không có gì. Bạn cần hỗ trợ thêm gì không?',
-      'Rất vui được hỗ trợ bạn!',
-      'Dạ, tôi luôn sẵn sàng.',
-    ],
+    response: ['Không có gì! Bạn cần hỗ trợ thêm không?', 'Rất vui được hỗ trợ!'],
   },
   {
     patterns: ['ok', 'duoc', 'vang', 'da', 'u', 'hieu roi', 'da hieu', 'got it', 'understood'],
@@ -185,10 +278,20 @@ const WHITELIST: WhitelistEntry[] = [
   },
   {
     patterns: ['tam biet', 'bye', 'goodbye', 'chao nhe', 'hen gap lai', 'see you'],
-    response: 'Tạm biệt. Hẹn gặp lại!',
+    response: 'Tạm biệt! Hẹn gặp lại.',
   },
 
-  // ===== NAVIGATION INTENT =====
+  // ===== ESCALATION - Direct to hotline =====
+  {
+    patterns: [
+      'gap nguoi', 'noi chuyen voi nguoi', 'goi dien', 'lien he it', 'hotline', 'so dien thoai',
+      'can gap', 'khan cap', 'gap', 'urgent', 'emergency', 'human', 'real person',
+      'khong giai quyet duoc', 'van khong duoc', 'khong giup duoc', 'bo tay',
+    ],
+    response: `Tôi hiểu bạn cần hỗ trợ trực tiếp.\n\n📞 **IT Hotline:**\n• Ext: **1108**\n• Ext: **1109**\n\nĐội IT sẽ hỗ trợ bạn ngay!`,
+  },
+
+  // ===== NAVIGATION INTENT (No password patterns - handled separately) =====
   {
     patterns: [
       'mo', 'xem', 'chuyen', 'vao', 'di den', 'den', 'toi', 'dua toi',
@@ -200,7 +303,7 @@ const WHITELIST: WhitelistEntry[] = [
   {
     patterns: [
       'dashboard', 'home', 'trang chu', 'tong quan',
-      'settings', 'cai dat', 'tai khoan', 'account', 'mat khau', 'password', 'profile', 'ho so',
+      'settings', 'cai dat', 'tai khoan', 'account', 'profile', 'ho so',
       'thiet bi', 'equipment', 'catalog', 'may moc', 'qr', 'ban giao',
       'bao cao', 'report', 'thong ke',
       'giuong', 'bed', 'cong suat',
@@ -222,38 +325,92 @@ const WHITELIST: WhitelistEntry[] = [
     ],
     intent: 'theme',
   },
+
+  // ===== IT SUPPORT INTENT (No password patterns - handled separately) =====
+  {
+    patterns: [
+      'loi', 'error', 'khong duoc', 'bi loi', 'failed', 'khong the',
+      'may in', 'printer', 'in khong duoc', 'ket giay',
+      'mang', 'network', 'internet', 'mat mang', 'cham', 'lag', 'treo', 'dong bang',
+      'khong load', 'khong hien thi', 'bi treo', 'refresh',
+    ],
+    intent: 'it_support',
+  },
+
+  // ===== FEATURE HELP INTENT =====
+  {
+    patterns: [
+      'la gi', 'de lam gi', 'dung de', 'cach dung', 'su dung', 'how to use',
+      'man hinh nay', 'trang nay', 'chuc nang nay', 'nut nay',
+      'giai thich', 'explain', 'what is this', 'whats this',
+    ],
+    intent: 'feature_help',
+  },
 ];
 
-// Collect all intent patterns for density checking
-const ALL_NAV_PATTERNS = WHITELIST
-  .filter(e => e.intent === 'nav')
-  .flatMap(e => e.patterns);
-
-const ALL_THEME_PATTERNS = WHITELIST
-  .filter(e => e.intent === 'theme')
-  .flatMap(e => e.patterns);
+// Collect patterns for validation
+const ALL_NAV_PATTERNS = WHITELIST.filter(e => e.intent === 'nav').flatMap(e => e.patterns);
+const ALL_THEME_PATTERNS = WHITELIST.filter(e => e.intent === 'theme').flatMap(e => e.patterns);
+const ALL_IT_PATTERNS = WHITELIST.filter(e => e.intent === 'it_support').flatMap(e => e.patterns);
+const ALL_FEATURE_PATTERNS = WHITELIST.filter(e => e.intent === 'feature_help').flatMap(e => e.patterns);
 
 // Security thresholds
-const MAX_INTENT_INPUT_LENGTH = 60; // Hard limit for tool intent inputs
-const MIN_KEYWORD_DENSITY = 0.25;   // At least 25% of words must be relevant
-const MIN_PATTERN_RATIO = 0.15;     // Pattern must be at least 15% of input length
+const MAX_INTENT_INPUT_LENGTH = 80;
+const MIN_KEYWORD_DENSITY = 0.2;
 
 function classify(input: string): ClassifyResult {
   const raw = input.toLowerCase();
   const normalized = normalize(input);
   const words = normalized.split(' ').filter(w => w.length > 0);
+  const language = detectLanguage(input);
 
-  // Step 1: Blocklist check (on both raw and normalized)
+  // Step 1: Blocklist check
   for (const pattern of BLOCKLIST) {
     if (pattern.test(raw) || pattern.test(normalized)) {
       return {
         type: 'blocked',
-        response: 'Nội dung này nằm ngoài phạm vi hỗ trợ. Tôi chỉ có thể giúp điều hướng và thay đổi giao diện.',
+        response: language === 'en'
+          ? `This is outside my scope. I can help with navigation, theme, and basic IT support. For complex issues, please contact IT hotline ${IT_HOTLINE}.`
+          : `Nội dung này nằm ngoài phạm vi hỗ trợ. Tôi có thể giúp điều hướng, đổi giao diện và hỗ trợ IT cơ bản. Vấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
+        language,
       };
     }
   }
 
-  // Step 2: Whitelist check
+  // Step 2: PASSWORD-SPECIFIC HANDLING (before general intents)
+  // Check forgot password - needs IT hotline
+  if (PASSWORD_FORGOT_PATTERNS.some(p => normalized.includes(p))) {
+    return {
+      type: 'direct',
+      response: language === 'en'
+        ? `**Forgot password?**\n\nPlease contact IT hotline ${IT_HOTLINE} to request a password reset.\n\n⚠️ Note: IT will verify your identity before resetting.`
+        : `**Quên mật khẩu?**\n\nVui lòng liên hệ IT hotline ${IT_HOTLINE} để yêu cầu reset mật khẩu.\n\n⚠️ Lưu ý: IT sẽ xác minh danh tính trước khi reset.`,
+      language,
+    };
+  }
+
+  // Check locked account - needs IT hotline
+  if (PASSWORD_LOCKED_PATTERNS.some(p => normalized.includes(p))) {
+    return {
+      type: 'direct',
+      response: language === 'en'
+        ? `**Account locked?**\n\nIf you enter the wrong password **5 times**, your account will be automatically locked.\n\n📞 Please contact IT hotline ${IT_HOTLINE} to unlock.\n\n💡 Tip: Check Caps Lock before entering password.`
+        : `**Tài khoản bị khóa?**\n\nNếu bạn nhập sai mật khẩu **5 lần**, tài khoản sẽ tự động bị khóa.\n\n📞 Vui lòng liên hệ IT hotline ${IT_HOTLINE} để được mở khóa.\n\n💡 Mẹo: Kiểm tra Caps Lock trước khi nhập mật khẩu.`,
+      language,
+    };
+  }
+
+  // Check change password - navigate to settings
+  if (PASSWORD_CHANGE_PATTERNS.some(p => normalized.includes(p))) {
+    return {
+      type: 'llm',
+      intent: 'nav',
+      extractedCommand: 'settings',  // Direct to settings page
+      language,
+    };
+  }
+
+  // Step 3: Regular whitelist check
   for (const entry of WHITELIST) {
     const matchedPattern = entry.patterns.find(pattern => {
       if (pattern.length <= 3) {
@@ -263,22 +420,23 @@ function classify(input: string): ClassifyResult {
     });
 
     if (matchedPattern) {
-      // Direct response - no security concern
+      // Direct response
       if (entry.response) {
         const resp = Array.isArray(entry.response)
           ? entry.response[Math.floor(Math.random() * entry.response.length)]
           : entry.response;
-        return { type: 'direct', response: resp };
+        return { type: 'direct', response: resp, language };
       }
 
-      // Intent matched - apply security checks
+      // Intent matched - validate
       if (entry.intent) {
-        const securityCheck = validateIntentSecurity(normalized, words, matchedPattern, entry.intent);
+        const securityCheck = validateIntentSecurity(normalized, words, entry.intent);
         
         if (!securityCheck.safe) {
           return {
             type: 'blocked',
-            response: securityCheck.reason || 'Vui lòng nhập lệnh điều hướng ngắn gọn hơn.',
+            response: securityCheck.reason || 'Vui lòng nhập lệnh ngắn gọn hơn.',
+            language,
           };
         }
 
@@ -286,108 +444,77 @@ function classify(input: string): ClassifyResult {
           type: 'llm', 
           intent: entry.intent,
           extractedCommand: securityCheck.cleanCommand,
+          language,
         };
       }
     }
   }
 
-  // Step 3: Not in whitelist - block with helpful message
+  // Step 4: Not in whitelist
   if (input.length < 10) {
     return {
       type: 'blocked',
-      response: 'Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?',
+      response: language === 'en' 
+        ? 'Sorry, I didn\'t understand. Could you please be more specific?'
+        : 'Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?',
+      language,
     };
   }
 
   return {
     type: 'blocked',
-    response: 'Tôi chỉ có thể hỗ trợ điều hướng và thay đổi giao diện. Bạn cần mở trang nào?',
+    response: language === 'en'
+      ? `I can help with: navigation, theme changes, and basic IT support. For other issues, please contact IT hotline ${IT_HOTLINE}.`
+      : `Tôi có thể hỗ trợ: điều hướng, đổi giao diện, và hỗ trợ IT cơ bản. Vấn đề khác vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
+    language,
   };
 }
 
-/**
- * Validate that an intent request isn't a Trojan Horse attack
- */
 function validateIntentSecurity(
   normalized: string,
   words: string[],
-  matchedPattern: string,
-  intent: 'nav' | 'theme'
+  intent: Intent
 ): { safe: boolean; reason?: string; cleanCommand?: string } {
   
   const cleanInput = normalized.replace(/\s/g, '');
-  const cleanPattern = matchedPattern.replace(/\s/g, '');
   
-  // Check 1: Hard length limit - legitimate commands are short
+  // Length limit
   if (cleanInput.length > MAX_INTENT_INPUT_LENGTH) {
     return { 
       safe: false, 
-      reason: 'Vui lòng nhập lệnh ngắn gọn. Ví dụ: "mở báo cáo giường" hoặc "đổi theme tối".' 
+      reason: 'Vui lòng nhập lệnh ngắn gọn hơn.' 
     };
   }
 
-  // Check 2: Pattern density - pattern should be significant part of input
-  if (cleanInput.length > 20) {
-    const patternRatio = cleanPattern.length / cleanInput.length;
+  // Get relevant patterns for this intent
+  let relevantPatterns: string[];
+  switch (intent) {
+    case 'nav': relevantPatterns = ALL_NAV_PATTERNS; break;
+    case 'theme': relevantPatterns = ALL_THEME_PATTERNS; break;
+    case 'it_support': relevantPatterns = ALL_IT_PATTERNS; break;
+    case 'feature_help': relevantPatterns = ALL_FEATURE_PATTERNS; break;
+  }
+
+  // Check keyword density for longer inputs
+  if (words.length > 5) {
+    const relevantWordCount = words.filter(word => 
+      relevantPatterns.some(p => {
+        const pNorm = normalize(p);
+        return pNorm.includes(word) || word.includes(pNorm);
+      })
+    ).length;
     
-    if (patternRatio < MIN_PATTERN_RATIO) {
-      // Check keyword density as second chance
-      const relevantPatterns = intent === 'nav' ? ALL_NAV_PATTERNS : ALL_THEME_PATTERNS;
-      
-      const relevantWordCount = words.filter(word => 
-        relevantPatterns.some(p => {
-          const pNorm = normalize(p);
-          return pNorm.includes(word) || word.includes(pNorm);
-        })
-      ).length;
-      
-      const density = relevantWordCount / words.length;
-      
-      if (density < MIN_KEYWORD_DENSITY) {
-        return { 
-          safe: false, 
-          reason: 'Tôi chỉ hỗ trợ các lệnh điều hướng đơn giản. Vui lòng thử lại.' 
-        };
-      }
+    const density = relevantWordCount / words.length;
+    
+    if (density < MIN_KEYWORD_DENSITY) {
+      return { 
+        safe: false, 
+        reason: `Tôi chỉ hỗ trợ các lệnh đơn giản. Vui lòng liên hệ IT hotline ${IT_HOTLINE} nếu cần hỗ trợ thêm.`
+      };
     }
   }
 
-  // Check 3: Extract clean command (remove filler words, keep only relevant parts)
-  const cleanCommand = extractCleanCommand(normalized, intent);
-
-  return { safe: true, cleanCommand };
-}
-
-/**
- * Extract only the relevant command parts from input
- * "please open the dashboard for me" -> "open dashboard"
- */
-function extractCleanCommand(normalized: string, intent: 'nav' | 'theme'): string {
-  const fillerWords = [
-    'cho', 'toi', 'giup', 'xin', 'vui long', 'lam on', 'di', 'cua', 'cai',
-    'please', 'can', 'could', 'would', 'the', 'a', 'an', 'for', 'me', 'to', 'i', 'want'
-  ];
-
-  const relevantPatterns = intent === 'nav' ? ALL_NAV_PATTERNS : ALL_THEME_PATTERNS;
-  
-  const words = normalized.split(' ');
-  const relevantWords = words.filter(word => {
-    if (fillerWords.includes(word)) return false;
-    if (word.length < 2) return false;
-    
-    // Keep if it matches any relevant pattern
-    return relevantPatterns.some(p => {
-      const pNorm = normalize(p);
-      return pNorm.includes(word) || word.includes(pNorm) || pNorm === word;
-    });
-  });
-
-  // If we filtered too much, return original (truncated)
-  if (relevantWords.length === 0) {
-    return normalized.slice(0, 50);
-  }
-
-  return relevantWords.join(' ');
+  return { safe: true, cleanCommand: normalized };
 }
 
 // ============================================================================
@@ -396,7 +523,7 @@ function extractCleanCommand(normalized: string, intent: 'nav' | 'theme'): strin
 
 const SCREEN_KEYWORDS: Record<string, string[]> = {
   home: ['home', 'trang chủ', 'chính', 'dashboard', 'tổng quan'],
-  settings: ['settings', 'cài đặt', 'tài khoản', 'account', 'mật khẩu', 'password', 'profile', 'hồ sơ'],
+  settings: ['settings', 'cài đặt', 'tài khoản', 'account', 'profile', 'hồ sơ', 'đổi mật khẩu'],
   'equipment/catalog': ['thiết bị', 'máy móc', 'catalog', 'danh sách', 'qr', 'bàn giao'],
   'equipment/dashboard': ['thiết bị dashboard', 'biểu đồ thiết bị'],
   'reports/bed-usage': ['giường', 'bed', 'công suất'],
@@ -423,12 +550,12 @@ export class LlmService {
   private readonly ngZone = inject(NgZone);
 
   private readonly apiUrl = environment.llmUrl;
-  private readonly MODEL = 'qwen3:4b';
+  private readonly MODEL = 'qwen3:4b-instruct';
 
   // Settings
   private readonly MAX_CTX = 4096;
   private readonly MAX_HISTORY = 3;
-  private readonly MAX_OUTPUT = 150;
+  private readonly MAX_OUTPUT = 200;
   private readonly TOOL_BUDGET = 200;
   private readonly CHARS_PER_TOKEN = 2.5;
   private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
@@ -438,17 +565,24 @@ export class LlmService {
   private readonly RETRY_DELAY = 800;
   private readonly TIMEOUT = 60000;
   private readonly MAX_INPUT = 300;
-  private readonly MAX_OUTPUT_CHARS = 1000;
+  private readonly MAX_OUTPUT_CHARS = 800;
   private readonly RATE_LIMIT = 15;
   private readonly RATE_WINDOW = 60_000;
   private readonly RATE_COOLDOWN = 10_000;
 
-  // Typing simulation
   private readonly TYPING_BASE_DELAY = 400;
   private readonly TYPING_MAX_DELAY = 1000;
 
-  // Lower temperature for deterministic tool calling
+  // Qwen3 optimized settings
   private readonly SAMPLING = {
+    temperature: 0.3,
+    top_p: 0.85,
+    top_k: 20,
+    repeat_penalty: 1.15,
+  };
+
+  // Stricter settings for tool calling
+  private readonly TOOL_SAMPLING = {
     temperature: 0.1,
     top_p: 0.8,
     top_k: 10,
@@ -480,8 +614,7 @@ export class LlmService {
   private routeCache: RouteInfo[] | null = null;
   private routeMap: Map<string, RouteInfo> | null = null;
   private toolCache: unknown[] | null = null;
-  private promptCache = '';
-  private promptTokens = 0;
+  private promptCache: Map<Intent, string> = new Map();
   private permHash = '';
 
   private readonly streamUpdate$ = new Subject<StreamUpdate>();
@@ -524,12 +657,11 @@ export class LlmService {
       return;
     }
 
-    // Add user message immediately
     this.messages.update((m) => [...m, this.createMsg('user', input)]);
     this.resetSessionTimer();
     this.abort();
 
-    // Classify using whitelist
+    // Classify
     const result = classify(input);
 
     // Direct response or blocked
@@ -538,7 +670,7 @@ export class LlmService {
       return;
     }
 
-    // Navigation disambiguation (only for nav intent)
+    // Disambiguation for nav
     if (result.intent === 'nav') {
       const disambig = this.checkDisambiguation(input);
       if (disambig) {
@@ -547,14 +679,22 @@ export class LlmService {
       }
     }
 
-    // Pass to LLM with cleaned command
+    // Feature help - can be handled locally for known routes
+    if (result.intent === 'feature_help') {
+      const featureResponse = this.handleFeatureHelp(input, result.language);
+      if (featureResponse) {
+        await this.respondWithTyping(featureResponse);
+        return;
+      }
+    }
+
+    // Pass to LLM
     this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
     this.isGenerating.set(true);
 
     try {
-      // Use extracted clean command if available, otherwise original input
       const commandToSend = result.extractedCommand || input;
-      await this.retry(() => this.stream(commandToSend, result.intent));
+      await this.retry(() => this.stream(commandToSend, result.intent!, result.language));
     } catch (e) {
       this.handleErr(e);
     } finally {
@@ -595,7 +735,6 @@ export class LlmService {
       await this.checkHealth();
       this.modelLoaded.set(true);
       this.loadProgress.set('Sẵn sàng');
-      this.buildPrompt();
       this.buildTools();
       if (this.messages().length === 0) this.addGreeting();
     } catch (e) {
@@ -604,6 +743,38 @@ export class LlmService {
     } finally {
       this.isModelLoading.set(false);
     }
+  }
+
+  // ============================================================================
+  // FEATURE HELP - Local handling
+  // ============================================================================
+
+  private handleFeatureHelp(input: string, language: 'vi' | 'en'): string | null {
+    const currentPath = this.router.url.split('?')[0];
+    const currentKey = currentPath.replace(/^\/app\//, '').replace(/^\//, '');
+    
+    const normalized = normalize(input);
+    const askingAboutCurrent = ['man hinh nay', 'trang nay', 'day la gi', 'this screen', 'this page', 'whats this'].some(
+      p => normalized.includes(p)
+    );
+
+    if (askingAboutCurrent && FEATURE_DESCRIPTIONS[currentKey]) {
+      const desc = FEATURE_DESCRIPTIONS[currentKey];
+      return language === 'en' 
+        ? `This screen: ${desc}\n\nNeed more help? Contact IT hotline ${IT_HOTLINE}.`
+        : `${desc}\n\nCần hỗ trợ thêm? Liên hệ IT hotline ${IT_HOTLINE}.`;
+    }
+
+    for (const [key, desc] of Object.entries(FEATURE_DESCRIPTIONS)) {
+      const keywords = SCREEN_KEYWORDS[key] || [];
+      if (keywords.some(kw => normalized.includes(normalize(kw)))) {
+        return language === 'en'
+          ? `${desc}\n\nWant to open it? Just say "open ${key}".`
+          : `${desc}\n\nBạn muốn mở? Chỉ cần nói "mở ${key}".`;
+      }
+    }
+
+    return null;
   }
 
   // ============================================================================
@@ -677,15 +848,16 @@ export class LlmService {
   // STREAMING
   // ============================================================================
 
-  private async stream(userMsg: string, strictIntent?: 'nav' | 'theme'): Promise<void> {
+  private async stream(userMsg: string, intent: Intent, language: 'vi' | 'en'): Promise<void> {
     this.abortCtrl = new AbortController();
     const { signal } = this.abortCtrl;
 
-    // In strict mode: no history context (prevents context manipulation attacks)
-    const context = strictIntent ? [] : this.prepareContext(userMsg);
-    const prompt = this.buildPrompt();
-    const tools = this.buildTools();
-    const maxTokens = 80;
+    const isToolIntent = intent === 'nav' || intent === 'theme';
+    const context = isToolIntent ? [] : this.prepareContext(userMsg);
+    const prompt = this.buildPromptForIntent(intent, language);
+    const tools = isToolIntent ? this.buildTools() : [];
+    const sampling = isToolIntent ? this.TOOL_SAMPLING : this.SAMPLING;
+    const maxTokens = isToolIntent ? 80 : 150;
 
     const payload = {
       model: this.MODEL,
@@ -694,10 +866,10 @@ export class LlmService {
         ...context.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: userMsg },
       ],
-      tools,
+      tools: tools.length > 0 ? tools : undefined,
       stream: true,
       options: {
-        ...this.SAMPLING,
+        ...sampling,
         num_predict: maxTokens,
         num_ctx: this.MAX_CTX,
       },
@@ -719,7 +891,7 @@ export class LlmService {
       if (!res.ok) throw new Error(`API ${res.status}`);
       if (!res.body) throw new Error('No body');
 
-      await this.processStream(res.body, signal, strictIntent);
+      await this.processStream(res.body, signal, intent, language);
     } finally {
       clearTimeout(timeout);
     }
@@ -728,7 +900,8 @@ export class LlmService {
   private async processStream(
     body: ReadableStream<Uint8Array>, 
     signal: AbortSignal, 
-    strictIntent?: 'nav' | 'theme'
+    intent: Intent,
+    language: 'vi' | 'en'
   ): Promise<void> {
     return this.ngZone.runOutsideAngular(async () => {
       const reader = body.getReader();
@@ -737,8 +910,8 @@ export class LlmService {
       let toolCalls: ToolCall[] = [];
       let buffer = '';
       
-      // In strict mode, suppress conversational text output
-      const suppressText = !!strictIntent;
+      const isToolIntent = intent === 'nav' || intent === 'theme';
+      const suppressText = isToolIntent;
 
       try {
         while (!signal.aborted) {
@@ -763,7 +936,6 @@ export class LlmService {
                 if (!toolCalls.some((tc) => tc.name === t.name)) toolCalls.push(t);
               }
 
-              // Only update UI with text if NOT in strict mode
               if (!suppressText && content.trim() && !toolCalls.length) {
                 this.streamUpdate$.next({
                   content: this.sanitizeOut(content),
@@ -796,30 +968,94 @@ export class LlmService {
           console.log('[LLM] Tool calls:', toolCalls);
         }
 
-        // Fallback: extract tool from text output
-        if (!toolCalls.length) {
+        // Fallback: extract tool from text
+        if (isToolIntent && !toolCalls.length) {
           const extracted = this.extractToolFromText(content);
           if (extracted) toolCalls.push(extracted);
         }
 
         if (toolCalls.length) {
           await this.ngZone.run(() => this.execTools(toolCalls));
+        } else if (isToolIntent) {
+          const fallbackMsg = language === 'en'
+            ? `Could not complete request. Please try again or contact IT hotline ${IT_HOTLINE}.`
+            : `Không thể thực hiện yêu cầu. Vui lòng thử lại hoặc liên hệ IT hotline ${IT_HOTLINE}.`;
+          this.streamUpdate$.next({ content: fallbackMsg, tokenEstimate: 0 });
         } else {
-          // If strict intent but no tool called, fail safely
-          if (strictIntent) {
-            this.streamUpdate$.next({
-              content: 'Không thể thực hiện yêu cầu. Vui lòng thử lại với lệnh rõ ràng hơn.',
-              tokenEstimate: 0,
-            });
-          } else {
-            this.streamUpdate$.next({
-              content: this.sanitizeOut(content),
-              tokenEstimate: this.tokens(content),
-            });
+          let finalContent = this.sanitizeOut(content);
+          if (finalContent.length < 20 || !finalContent.trim()) {
+            finalContent = language === 'en'
+              ? `I couldn't find specific information. Please contact IT hotline ${IT_HOTLINE} for assistance.`
+              : `Tôi không tìm thấy thông tin cụ thể. Vui lòng liên hệ IT hotline ${IT_HOTLINE} để được hỗ trợ.`;
           }
+          this.streamUpdate$.next({
+            content: finalContent,
+            tokenEstimate: this.tokens(content),
+          });
         }
       }
     });
+  }
+
+  // ============================================================================
+  // PROMPT BUILDING
+  // ============================================================================
+
+  private buildPromptForIntent(intent: Intent, language: 'vi' | 'en'): string {
+    const langInstruction = language === 'en' 
+      ? 'Respond in English.' 
+      : 'Trả lời bằng tiếng Việt.';
+
+    const routes = this.getRoutes();
+    const routeStr = routes.slice(0, 12).map((r) => `${r.key}:${r.title}`).join('|');
+
+    switch (intent) {
+      case 'nav':
+      case 'theme':
+        return `IT Bot BV Hoàn Mỹ. /no_think
+TASK: Navigation + Theme ONLY.
+TOOLS: nav(k=route_key) | theme(m=dark/light/toggle)
+ROUTES: ${routeStr}
+RULE: Call tool immediately. No text. No explanation.
+${langInstruction}`;
+
+      case 'it_support':
+        return `IT Bot BV Hoàn Mỹ. /no_think
+ROLE: Hướng dẫn xử lý sự cố IT cơ bản.
+${langInstruction}
+
+${IT_KNOWLEDGE}
+
+RULES:
+- Chỉ hướng dẫn theo kiến thức trên, KHÔNG bịa đặt.
+- Trả lời ngắn gọn, đúng trọng tâm.
+- Vấn đề phức tạp/không biết: Hướng dẫn liên hệ IT hotline 1108 hoặc 1109.
+- KHÔNG hứa hẹn tính năng không có.
+- KHÔNG đoán mò giải pháp.`;
+
+      case 'feature_help':
+        const featureStr = Object.entries(FEATURE_DESCRIPTIONS)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join('\n');
+        
+        return `IT Bot BV Hoàn Mỹ. /no_think
+ROLE: Giải thích chức năng màn hình.
+${langInstruction}
+
+CÁC MÀN HÌNH:
+${featureStr}
+
+RULES:
+- Chỉ giải thích các màn hình có trong danh sách trên.
+- Nếu không biết: "Tôi không có thông tin về màn hình này. Vui lòng liên hệ IT hotline 1108/1109."
+- Trả lời ngắn gọn.
+- KHÔNG bịa đặt tính năng.`;
+
+      default:
+        return `IT Bot BV Hoàn Mỹ. /no_think
+Trả lời ngắn gọn. ${langInstruction}
+Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
+    }
   }
 
   // ============================================================================
@@ -983,8 +1219,8 @@ export class LlmService {
 
   private getToolErr(name: string): string {
     return name === 'nav'
-      ? 'Không thể mở trang này. Có thể bạn chưa được cấp quyền.'
-      : 'Không thể thay đổi giao diện. Vui lòng thử lại.';
+      ? `Không thể mở trang này. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`
+      : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`;
   }
 
   // ============================================================================
@@ -1099,6 +1335,7 @@ export class LlmService {
           fullUrl: fullPath,
           key,
           keywords: SCREEN_KEYWORDS[key],
+          description: FEATURE_DESCRIPTIONS[key],
         });
       }
 
@@ -1124,15 +1361,12 @@ export class LlmService {
   private checkDisambiguation(msg: string): string | null {
     const normalized = normalize(msg);
 
-    // Theme intent - let model handle
     const themePatterns = ['theme', 'giao dien', 'che do', 'sang', 'toi', 'dark', 'light'];
     if (themePatterns.some(p => normalized.includes(p))) return null;
 
-    // Check for navigation intent
     const navPatterns = ['mo', 'xem', 'chuyen', 'vao', 'den', 'toi', 'open', 'go', 'show'];
     if (!navPatterns.some(p => normalized.includes(p))) return null;
 
-    // Extract target
     let query = normalized;
     const removeWords = ['mo', 'xem', 'chuyen', 'vao', 'di', 'den', 'toi', 'navigate', 'open', 'go', 'show',
                          'trang', 'man hinh', 'screen', 'page', 'bao cao', 'report', 'cho toi', 'giup', 'cua', 'di'];
@@ -1166,18 +1400,18 @@ export class LlmService {
   }
 
   // ============================================================================
-  // CONTEXT & PROMPT
+  // CONTEXT
   // ============================================================================
 
   private prepareContext(newMsg: string): ChatMessage[] {
     const newTokens = this.tokens(newMsg);
-    const available = this.MAX_CTX - this.promptTokens - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
+    const available = this.MAX_CTX - 500 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
 
     const history = this.messages()
       .filter((m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool')
       .map((m) => ({
         ...m,
-        content: m.content.length > 100 ? m.content.substring(0, 100) + '...' : m.content,
+        content: m.content.length > 150 ? m.content.substring(0, 150) + '...' : m.content,
       }));
 
     const result: ChatMessage[] = [];
@@ -1193,7 +1427,7 @@ export class LlmService {
     if (result.length && result[0].role === 'assistant') result.shift();
 
     this.contextUsage.set(
-      Math.min(100, Math.round(((this.promptTokens + used + newTokens) / this.MAX_CTX) * 100))
+      Math.min(100, Math.round(((500 + used + newTokens) / this.MAX_CTX) * 100))
     );
 
     return result;
@@ -1202,35 +1436,6 @@ export class LlmService {
   private tokens(text: string): number {
     if (!text) return 0;
     return Math.ceil(text.length / this.CHARS_PER_TOKEN) + 2;
-  }
-
-  private buildPrompt(): string {
-    const hash = JSON.stringify(this.authService.currentUser()?.permissions || []);
-
-    if (hash !== this.permHash) {
-      this.promptCache = '';
-      this.routeCache = null;
-      this.routeMap = null;
-      this.toolCache = null;
-      this.permHash = hash;
-    }
-
-    if (this.promptCache) return this.promptCache;
-
-    const routes = this.getRoutes();
-    const routeStr = routes.slice(0, 10).map((r) => `${r.key}:${r.title}`).join('|');
-
-    // Strict system prompt - tool calling only
-    this.promptCache = `IT Bot HM Hospital.
-TASK: nav screens + change theme ONLY.
-STRICT: DO NOT chat. DO NOT explain. DO NOT answer questions.
-TOOLS: nav(k=route_key) | theme(m=dark/light/toggle)
-ROUTES: ${routeStr}
-ACTION: Call tool immediately. No text response.`;
-
-    this.promptTokens = this.tokens(this.promptCache);
-
-    return this.promptCache;
   }
 
   private buildTools(): unknown[] {
@@ -1323,7 +1528,7 @@ ACTION: Call tool immediately. No text response.`;
       const arr = [...msgs];
       const last = arr.length - 1;
       if (last >= 0 && arr[last].role === 'assistant' && !arr[last].content.trim()) {
-        arr[last] = { ...arr[last], content: 'Không thể thực hiện yêu cầu này.' };
+        arr[last] = { ...arr[last], content: `Không thể thực hiện yêu cầu. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.` };
       }
       return arr;
     });
@@ -1342,7 +1547,7 @@ ACTION: Call tool immediately. No text response.`;
   private addGreeting(): void {
     this.messages.update((m) => [
       ...m,
-      this.createMsg('assistant', 'Xin chào. Tôi có thể hỗ trợ bạn điều hướng hệ thống hoặc thay đổi giao diện.'),
+      this.createMsg('assistant', `Xin chào! Tôi là trợ lý IT của Bệnh viện Hoàn Mỹ.\n\nTôi có thể hỗ trợ:\n• Điều hướng màn hình\n• Thay đổi giao diện\n• Hướng dẫn IT cơ bản\n\nVấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`),
     ]);
   }
 
@@ -1389,8 +1594,8 @@ ACTION: Call tool immediately. No text response.`;
       const last = arr.length - 1;
       if (last >= 0 && arr[last].role === 'assistant') {
         const msg = error instanceof Error && error.message.includes('404')
-          ? `Model "${this.MODEL}" không khả dụng.`
-          : 'Hệ thống đang bận. Vui lòng thử lại.';
+          ? `Model "${this.MODEL}" không khả dụng. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`
+          : `Hệ thống đang bận. Vui lòng thử lại hoặc liên hệ IT hotline ${IT_HOTLINE}.`;
         arr[last] = { ...arr[last], content: msg };
       }
       return arr;
@@ -1408,7 +1613,7 @@ ACTION: Call tool immediately. No text response.`;
     this.resetChat();
     this.isOpen.set(false);
     this.modelLoaded.set(false);
-    this.promptCache = '';
+    this.promptCache.clear();
     this.routeCache = null;
     this.routeMap = null;
     this.toolCache = null;
