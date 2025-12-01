@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -88,9 +89,8 @@ export class EmergencySummaryComponent implements OnInit {
     effect(() => {
       this.palette = this.themeService.currentPalette();
       if (!this.isLoading && this.rawData.length > 0) {
-        this.processData(this.rawData);
+        this.updateWidgetColors();
       }
-      this.updateWidgetColors();
       this.cd.markForCheck();
     });
   }
@@ -102,9 +102,18 @@ export class EmergencySummaryComponent implements OnInit {
   }
 
   private setDefaultDateRange(): void {
-    const range = DateUtils.getReportingWeekRange();
-    this.fromDate = range.fromDate;
-    this.toDate = range.toDate;
+    // Default filter to "Today"
+    const now = new Date();
+    const todayStr = this.formatDate(now);
+    this.fromDate = todayStr;
+    this.toDate = todayStr;
+  }
+
+  private formatDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   private initializeWidgets(): void {
@@ -145,45 +154,62 @@ export class EmergencySummaryComponent implements OnInit {
     this.insuranceChartOptions = null;
     this.cd.markForCheck();
 
-    this.reportService.getEmergencySummary(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (data) => {
-          this.rawData = data.map((item) => ({
-            ...item,
-            NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
-          }));
-          this.processData(this.rawData);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo.');
-          this.rawData = [];
-          this.initializeWidgets();
-        },
-      });
+    // Calculate Last Year's Range
+    const currStart = new Date(this.fromDate);
+    const currEnd = new Date(this.toDate);
+    
+    const prevStart = new Date(currStart);
+    prevStart.setFullYear(currStart.getFullYear() - 1);
+    
+    const prevEnd = new Date(currEnd);
+    prevEnd.setFullYear(currEnd.getFullYear() - 1);
+
+    const prevFromDate = this.formatDate(prevStart);
+    const prevToDate = this.formatDate(prevEnd);
+
+    forkJoin({
+      current: this.reportService.getEmergencySummary(this.fromDate, this.toDate),
+      previous: this.reportService.getEmergencySummary(prevFromDate, prevToDate)
+    })
+    .pipe(
+      finalize(() => {
+        this.isLoading = false;
+        this.cd.markForCheck();
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe({
+      next: ({ current, previous }) => {
+        this.rawData = current.map((item) => ({
+          ...item,
+          NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
+        }));
+        
+        this.processData(current, previous);
+      },
+      error: (err) => {
+        console.error(err);
+        this.toastService.showError('Không thể tải dữ liệu báo cáo.');
+        this.rawData = [];
+        this.initializeWidgets();
+      },
+    });
   }
 
-  private processData(data: EmergencyStat[]): void {
-    if (!data || data.length === 0) {
+  private processData(currentData: EmergencyStat[], previousData: EmergencyStat[]): void {
+    if (!currentData || currentData.length === 0) {
       this.initializeWidgets();
       return;
     }
 
-    // 1. Calculate Totals
+    // Totals
     let totalCC = 0;
     let totalNhapVien = 0;
     let totalChuyenVien = 0;
     let totalBHYT = 0;
     let totalVienPhi = 0;
 
-    data.forEach(item => {
+    currentData.forEach(item => {
       totalCC += (item.LUOT_CC || 0);
       totalNhapVien += (item.NHAP_VIEN || 0);
       totalChuyenVien += (item.CHUYEN_VIEN || 0);
@@ -191,7 +217,7 @@ export class EmergencySummaryComponent implements OnInit {
       totalVienPhi += (item.VIEN_PHI || 0);
     });
 
-    // 2. Update Widgets
+    // Widgets
     const insuranceRate = totalCC > 0 ? (totalBHYT / totalCC) * 100 : 0;
 
     this.widgetData = [
@@ -201,55 +227,112 @@ export class EmergencySummaryComponent implements OnInit {
       { id: 'insurance', icon: 'fas fa-id-card', title: 'Tỷ lệ BHYT', value: `${insuranceRate.toFixed(1)}%`, caption: `Có BHYT (${this.formatNumber(totalBHYT)})`, accentColor: this.palette.deepSapphire },
     ];
 
-    // 3. Prepare Chart Data (Sort by Date)
-    const sortedData = [...data].sort((a, b) => new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime());
-    
-    const dates = sortedData.map(d => {
+    // Charts Data
+    const sortedCurrent = [...currentData].sort((a, b) => new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime());
+    const sortedPrevious = [...previousData].sort((a, b) => new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime());
+
+    const dates = sortedCurrent.map(d => {
       const dateObj = new Date(d.NGAY_TIEP_NHAN);
       return this.datePipe.transform(dateObj, 'dd/MM') || '';
     });
-    
-    const ccData = sortedData.map(d => d.LUOT_CC);
-    const nhapVienData = sortedData.map(d => d.NHAP_VIEN);
-    const chuyenVienData = sortedData.map(d => d.CHUYEN_VIEN);
 
-    this.buildCharts(dates, ccData, nhapVienData, chuyenVienData, totalBHYT, totalVienPhi);
+    const ccDataCurrent = sortedCurrent.map(d => d.LUOT_CC);
+    const ccDataPrevious = dates.map((_, index) => {
+       return sortedPrevious[index] ? sortedPrevious[index].LUOT_CC : null;
+    });
+
+    const nhapVienData = sortedCurrent.map(d => d.NHAP_VIEN);
+    const chuyenVienData = sortedCurrent.map(d => d.CHUYEN_VIEN);
+
+    this.buildCharts(dates, ccDataCurrent, ccDataPrevious, nhapVienData, chuyenVienData, totalBHYT, totalVienPhi);
   }
 
-  private buildCharts(dates: string[], ccData: number[], nhapVienData: number[], chuyenVienData: number[], totalBHYT: number, totalVienPhi: number): void {
+  private buildCharts(
+    dates: string[], 
+    ccCurrent: number[], 
+    ccPrevious: (number | null)[],
+    nhapVienData: number[], 
+    chuyenVienData: number[], 
+    totalBHYT: number, 
+    totalVienPhi: number
+  ): void {
+    
     const commonGrid = { left: '3%', right: '4%', bottom: '10%', top: '15%', containLabel: true };
-    const commonTooltip = { trigger: 'axis', backgroundColor: this.palette.bgCard, borderColor: this.palette.gray200, textStyle: { color: this.palette.textPrimary }, confine: true };
+    const commonTooltip = { 
+      trigger: 'axis', 
+      backgroundColor: this.palette.bgCard, 
+      borderColor: this.palette.gray200, 
+      textStyle: { color: this.palette.textPrimary }, 
+      confine: true 
+    };
 
-    // Chart 1: Trend Line (Total Emergency)
+    // 1. Trend Chart (Comparison) - UPDATED
     this.trendChartOptions = {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
       grid: commonGrid,
       legend: { show: true, bottom: 0, textStyle: { color: this.palette.textSecondary } },
-      xAxis: { type: 'category', data: dates, axisLabel: { color: this.palette.textPrimary }, axisLine: { lineStyle: { color: this.palette.gray200 } } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } },
-      series: [{
-        name: 'Tổng lượt cấp cứu', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
-        data: ccData, itemStyle: { color: this.palette.chart3 }, lineStyle: { width: 3 },
-        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: this.palette.chart3 }, { offset: 1, color: this.palette.bgCard }] }, opacity: 0.2 }
-      }]
+      xAxis: { 
+        type: 'category', 
+        data: dates, 
+        axisLabel: { color: this.palette.textPrimary }, 
+        axisLine: { lineStyle: { color: this.palette.gray200 } } 
+      },
+      yAxis: { 
+        type: 'value', 
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } 
+      },
+      series: [
+        {
+          name: 'Năm nay',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 8,
+          data: ccCurrent,
+          itemStyle: { color: this.palette.primary }, 
+          lineStyle: { width: 3 },
+          // [FIX] Removed areaStyle gradient
+        },
+        {
+          name: 'Năm ngoái',
+          type: 'line',
+          smooth: true,
+          symbol: 'circle', // [FIX] Changed from 'none' to ensure single points are visible
+          symbolSize: 6,    // [FIX] Set explicit size
+          data: ccPrevious,
+          itemStyle: { color: this.palette.gray400 }, 
+          lineStyle: { width: 2, type: 'dashed' },
+        }
+      ]
     };
 
-    // Chart 2: Transfer (Bar) - Following "Image 2" concept
+    // 2. Transfer Chart
     this.transferChartOptions = {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
       grid: commonGrid,
-      xAxis: { type: 'category', data: dates, axisLabel: { color: this.palette.textPrimary }, axisLine: { lineStyle: { color: this.palette.gray200 } } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } },
+      xAxis: { 
+        type: 'category', 
+        data: dates, 
+        axisLabel: { color: this.palette.textPrimary }, 
+        axisLine: { lineStyle: { color: this.palette.gray200 } } 
+      },
+      yAxis: { 
+        type: 'value', 
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } 
+      },
       series: [{
-        name: 'Số ca chuyển tuyến', type: 'bar', barWidth: '50%', data: chuyenVienData,
+        name: 'Số ca chuyển tuyến', 
+        type: 'bar', 
+        barWidth: '50%', 
+        data: chuyenVienData,
         itemStyle: { color: this.palette.pastelCoral, borderRadius: [4, 4, 0, 0] },
         label: { show: true, position: 'top', color: this.palette.textPrimary }
       }]
     };
 
-    // Chart 3: Admission vs Total (Combo) - Following "Image 3" concept
+    // 3. Admission Chart (Colors Updated)
     this.admissionChartOptions = {
       backgroundColor: 'transparent',
       tooltip: { ...commonTooltip, formatter: (params: any) => {
@@ -265,26 +348,60 @@ export class EmergencySummaryComponent implements OnInit {
       }},
       grid: commonGrid,
       legend: { show: true, bottom: 0, textStyle: { color: this.palette.textSecondary } },
-      xAxis: { type: 'category', data: dates, axisLabel: { color: this.palette.textPrimary }, axisLine: { lineStyle: { color: this.palette.gray200 } } },
-      yAxis: [{ type: 'value', name: 'Số lượng', splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } }],
+      xAxis: { 
+        type: 'category', 
+        data: dates, 
+        axisLabel: { color: this.palette.textPrimary }, 
+        axisLine: { lineStyle: { color: this.palette.gray200 } } 
+      },
+      yAxis: [{ 
+        type: 'value', 
+        name: 'Số lượng', 
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } 
+      }],
       series: [
-        { name: 'Tổng lượt CC', type: 'bar', barWidth: '40%', barGap: '-100%', data: ccData, itemStyle: { color: this.palette.chart3, opacity: 0.3 }, z: 1 },
-        { name: 'Nhập viện', type: 'bar', barWidth: '40%', data: nhapVienData, itemStyle: { color: this.palette.deepSapphire }, label: { show: true, position: 'top', color: this.palette.textPrimary, fontSize: 10 }, z: 2 }
+        { 
+          name: 'Tổng lượt CC', 
+          type: 'bar', 
+          barWidth: '40%', 
+          barGap: '-100%', 
+          data: ccCurrent, 
+          itemStyle: { color: this.palette.gray300, opacity: 0.5 }, // [FIX] Changed color
+          z: 1 
+        },
+        { 
+          name: 'Nhập viện', 
+          type: 'bar', 
+          barWidth: '40%', 
+          data: nhapVienData, 
+          itemStyle: { color: this.palette.chart2 }, // [FIX] Changed color
+          label: { show: true, position: 'top', color: this.palette.textPrimary, fontSize: 10 }, 
+          z: 2 
+        }
       ]
     };
 
-    // Chart 4: Insurance (Pie)
+    // 4. Insurance Chart
     this.insuranceChartOptions = {
       backgroundColor: 'transparent',
-      tooltip: { trigger: 'item', backgroundColor: this.palette.bgCard, borderColor: this.palette.gray200, textStyle: { color: this.palette.textPrimary }, formatter: '{b}: {c} ({d}%)' },
+      tooltip: { 
+        trigger: 'item', 
+        backgroundColor: this.palette.bgCard, 
+        borderColor: this.palette.gray200, 
+        textStyle: { color: this.palette.textPrimary }, 
+        formatter: '{b}: {c} ({d}%)' 
+      },
       legend: { bottom: 0, left: 'center', textStyle: { color: this.palette.textSecondary } },
       series: [{
-        name: 'Đối tượng', type: 'pie', radius: ['40%', '70%'], center: ['50%', '45%'],
+        name: 'Đối tượng', 
+        type: 'pie', 
+        radius: ['40%', '70%'], 
+        center: ['50%', '45%'],
         itemStyle: { borderRadius: 5, borderColor: this.palette.bgCard, borderWidth: 2 },
         label: { show: true, formatter: '{b}: {d}%', color: this.palette.textPrimary },
         data: [
-          { value: totalBHYT, name: 'BHYT', itemStyle: { color: this.palette.primary } },
-          { value: totalVienPhi, name: 'Viện phí', itemStyle: { color: this.palette.chart9 } }
+          { value: totalBHYT, name: 'BHYT', itemStyle: { color: this.palette.secondary } },
+          { value: totalVienPhi, name: 'Viện phí', itemStyle: { color: this.palette.warning } }
         ]
       }]
     };

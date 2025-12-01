@@ -1,3 +1,4 @@
+/* src/app/components/date-filter/date-filter.component.ts */
 import {
   Component,
   inject,
@@ -5,7 +6,8 @@ import {
   output,
   input,
   ViewEncapsulation,
-  computed
+  computed,
+  OnInit
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +30,7 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
   styleUrl: './date-filter.component.scss',
   encapsulation: ViewEncapsulation.Emulated
 })
-export class DateFilterComponent {
+export class DateFilterComponent implements OnInit {
   private datePipe = inject(DatePipe);
   private toastService = inject(ToastService);
 
@@ -36,8 +38,9 @@ export class DateFilterComponent {
   public isLoading = input<boolean>(false);
   public buttonLabel = input<string>('Xem Báo Cáo');
   
-  // Optional strict constraints from parent. 
-  // If maxDate is NOT provided, it defaults to Today (preventing future dates).
+  // Allow configuring the default range (Default: 'thisWeek')
+  public defaultRange = input<QuickRange>('thisWeek');
+
   public minDate = input<string>(''); 
   public maxDate = input<string>(''); 
 
@@ -57,63 +60,54 @@ export class DateFilterComponent {
     { key: 'thisYear', label: 'Năm nay' },
   ];
 
-  // --- COMPUTED CONSTRAINTS (Strictly enforcing No Future Dates by default) ---
   private readonly todayStr = new Date().toISOString().split('T')[0];
 
-  // Effective Max: Use parent's maxDate if provided, otherwise default to Today
   public effectiveMax = computed(() => {
     return this.maxDate() ? this.maxDate() : this.todayStr;
   });
 
-  // From Date Max: Cannot exceed To Date (if selected) AND cannot exceed effective max
   public fromMax = computed(() => {
     const to = this.toDate();
     const max = this.effectiveMax();
-    // If "To" date is selected and is earlier than "Max", restrict "From" to "To"
     if (to && to < max) return to;
     return max;
   });
 
-  // To Date Min: Cannot be less than From Date
   public toMin = computed(() => {
     const from = this.fromDate();
     const min = this.minDate();
-    // If "From" date is selected and is later than "Min", restrict "To" to "From"
     if (from && (!min || from > min)) return from;
     return min || '';
   });
 
-  // To Date Max: Always the effective max (Today or custom)
   public toMax = computed(() => this.effectiveMax());
 
   constructor() {
-    // Initialize with "This Week"
-    this.setRange('thisWeek', false);
+    // Constructor logic moved to ngOnInit to respect inputs
+  }
+
+  ngOnInit(): void {
+    // Initialize with the provided default range
+    this.setRange(this.defaultRange(), false);
   }
 
   onDateChange(type: 'from' | 'to', value: string) {
-    // 1. Strict Future Validation (Server-side safety check for client input)
     if (value > this.effectiveMax()) {
       this.toastService.showWarning('Ngày chọn không được vượt quá hôm nay (hoặc giới hạn cho phép).');
-      // Revert to valid max
       value = this.effectiveMax();
       
-      // Force UI update via signal tick
       if (type === 'from') this.fromDate.set(value);
       else this.toDate.set(value);
     }
 
-    // 2. Logic Binding
     if (type === 'from') {
       this.fromDate.set(value);
-      // Auto-correct: If From > To, push To forward
       if (this.toDate() && value > this.toDate()) {
         this.toDate.set(value);
       }
     } 
     else if (type === 'to') {
       this.toDate.set(value);
-      // Auto-correct: If To < From, push From backward
       if (this.fromDate() && value < this.fromDate()) {
         this.fromDate.set(value);
       }
@@ -122,60 +116,57 @@ export class DateFilterComponent {
     this.activeRange.set('custom');
   }
 
-setRange(range: QuickRange, emit: boolean = false) {
-  this.activeRange.set(range);
-  const now = new Date();
-  
-  // Initialize with defaults
-  let startStr = '';
-  let endStr = '';
+  setRange(range: QuickRange, emit: boolean = false) {
+    this.activeRange.set(range);
+    const now = new Date();
+    
+    let startStr = '';
+    let endStr = '';
 
-  switch (range) {
-    case 'today':
-      startStr = endStr = this.todayStr;
-      break;
+    switch (range) {
+      case 'today':
+        startStr = endStr = this.todayStr;
+        break;
 
-    case 'thisWeek':
-      // [UPDATED] Use the centralized utility
-      const weekRange = DateUtils.getReportingWeekRange();
-      startStr = weekRange.fromDate;
-      endStr = weekRange.toDate;
-      break;
-      
-    case 'thisMonth':
-      const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      startStr = this.formatDate(mStart);
-      endStr = this.formatDate(mEnd);
-      break;
+      case 'thisWeek':
+        const weekRange = DateUtils.getReportingWeekRange();
+        startStr = weekRange.fromDate;
+        endStr = weekRange.toDate;
+        break;
+        
+      case 'thisMonth':
+        const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        startStr = this.formatDate(mStart);
+        endStr = this.formatDate(mEnd);
+        break;
 
-    case 'thisQuarter':
-      const qMonth = Math.floor(now.getMonth() / 3) * 3;
-      const qStart = new Date(now.getFullYear(), qMonth, 1);
-      const qEnd = new Date(now.getFullYear(), qMonth + 3, 0);
-      startStr = this.formatDate(qStart);
-      endStr = this.formatDate(qEnd);
-      break;
+      case 'thisQuarter':
+        const qMonth = Math.floor(now.getMonth() / 3) * 3;
+        const qStart = new Date(now.getFullYear(), qMonth, 1);
+        const qEnd = new Date(now.getFullYear(), qMonth + 3, 0);
+        startStr = this.formatDate(qStart);
+        endStr = this.formatDate(qEnd);
+        break;
 
-    case 'thisYear':
-      const yStart = new Date(now.getFullYear(), 0, 1);
-      const yEnd = new Date(now.getFullYear(), 11, 31);
-      startStr = this.formatDate(yStart);
-      endStr = this.formatDate(yEnd);
-      break;
+      case 'thisYear':
+        const yStart = new Date(now.getFullYear(), 0, 1);
+        const yEnd = new Date(now.getFullYear(), 11, 31);
+        startStr = this.formatDate(yStart);
+        endStr = this.formatDate(yEnd);
+        break;
+    }
+
+    const finalStart = this.applyConstraints(startStr);
+    const finalEnd = this.applyConstraints(endStr);
+
+    this.fromDate.set(finalStart);
+    this.toDate.set(finalEnd);
+
+    if (emit) {
+      this.applyFilter();
+    }
   }
-
-  // Apply constraints
-  const finalStart = this.applyConstraints(startStr);
-  const finalEnd = this.applyConstraints(endStr);
-
-  this.fromDate.set(finalStart);
-  this.toDate.set(finalEnd);
-
-  if (emit) {
-    this.applyFilter();
-  }
-}
 
   applyFilter() {
     this.filterSubmit.emit({
