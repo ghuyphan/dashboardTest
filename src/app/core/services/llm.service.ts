@@ -64,24 +64,6 @@ type AllowedTool = (typeof ALLOWED_TOOLS)[number];
 
 const IT_HOTLINE = '**1108** hoặc **1109**';
 
-// Descriptions for the System Prompt (Context for the AI)
-const FEATURE_DESCRIPTIONS: Record<string, string> = {
-  home: 'Trang chủ: Hiển thị tổng quan và thông báo hệ thống.',
-  settings: 'Cài đặt: Đổi mật khẩu, cập nhật thông tin cá nhân.',
-  'equipment/catalog':
-    'Danh mục thiết bị: Tra cứu, quét QR, theo dõi bàn giao thiết bị y tế.',
-  'reports/bed-usage':
-    'Báo cáo giường: Thống kê công suất sử dụng giường theo khoa/phòng.',
-  'reports/examination-overview':
-    'Báo cáo khám: Thống kê lượt khám, BHYT, viện phí, doanh thu.',
-  'reports/missing-medical-records':
-    'Báo cáo HSBA thiếu: Danh sách hồ sơ bệnh án chưa hoàn thiện.',
-  'reports/cls-level3': 'Báo cáo CLS tầng 3: Thống kê xét nghiệm, CĐHA tầng 3.',
-  'reports/cls-level6': 'Báo cáo CLS tầng 6: Thống kê xét nghiệm, CĐHA tầng 6.',
-  'reports/specialty-cls':
-    'Báo cáo CLS chuyên khoa: Thống kê theo từng chuyên khoa.',
-};
-
 // Keywords for Client-Side Route Matching (fallback)
 const SCREEN_KEYWORDS: Record<string, string[]> = {
   home: ['home', 'trang chủ', 'chính', 'dashboard', 'tổng quan'],
@@ -254,12 +236,12 @@ export class LlmService {
   // Point this to your Node.js Server
   private readonly apiUrl = environment.llmUrl;
 
-  // Configuration
+  // Configuration - OPTIMIZED for Qwen3:4b
   private readonly MAX_CTX = 4096;
   private readonly MAX_HISTORY = 3;
   private readonly MAX_OUTPUT = 200;
-  private readonly TOOL_BUDGET = 200;
-  private readonly CHARS_PER_TOKEN = 2.5;
+  private readonly TOOL_BUDGET = 150;
+  private readonly CHARS_PER_TOKEN = 2.0; // More conservative for Vietnamese
   private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
   private readonly THEME_COOLDOWN = 1000;
   private readonly UI_DEBOUNCE = 30;
@@ -387,18 +369,15 @@ export class LlmService {
     }
   }
 
-public async loadModel(): Promise<void> {
+  public async loadModel(): Promise<void> {
     if (this.modelLoaded() || this.isModelLoading()) return;
 
     this.isModelLoading.set(true);
     this.loadProgress.set('Đang kết nối...');
 
-    // [FIX] Create a minimum delay promise (e.g., 1 second) 
-    // to prevent the UI from flickering instantly on error
-    const minDelay = this.delay(1000); 
+    const minDelay = this.delay(1000);
 
     try {
-      // Wait for BOTH the health check AND the minimum delay
       await Promise.all([this.checkHealth(), minDelay]);
 
       this.modelLoaded.set(true);
@@ -406,7 +385,6 @@ public async loadModel(): Promise<void> {
       this.buildTools();
       if (this.messages().length === 0) this.addGreeting();
     } catch (e) {
-      // Even if checkHealth fails fast, we still waited for minDelay
       console.error('[LLM] Connection Error:', e);
       this.loadProgress.set('Không thể kết nối máy chủ AI');
     } finally {
@@ -426,16 +404,23 @@ public async loadModel(): Promise<void> {
     const { signal } = this.abortCtrl;
 
     const context = this.prepareContext(userMsg);
-    const systemPrompt = this.buildSystemPrompt(language);
     const tools = this.buildTools();
+    const routes = this.getRoutes();
 
+    // Build minimal metadata for backend
+    const metadata = {
+      language,
+      routes: routes.slice(0, 15).map((r) => r.key),
+    };
+
+    // OPTIMIZED: Let backend handle system prompt entirely
     const payload = {
       messages: [
-        { role: 'system', content: systemPrompt },
         ...context.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: userMsg },
       ],
-      tools: tools,
+      tools,
+      metadata,
       stream: true,
     };
 
@@ -449,7 +434,6 @@ public async loadModel(): Promise<void> {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // FIXED: Changed getToken() to getIdToken()
           Authorization: `Bearer ${this.authService.getAccessToken()}`,
         },
         body: JSON.stringify(payload),
@@ -554,41 +538,8 @@ public async loadModel(): Promise<void> {
   }
 
   // ============================================================================
-  // PROMPTS & TOOLS
+  // TOOLS (Definition only - backend handles prompt)
   // ============================================================================
-
-  private buildSystemPrompt(language: 'vi' | 'en'): string {
-    const langInstruction =
-      language === 'en' ? 'Respond in English.' : 'Trả lời bằng tiếng Việt.';
-
-    const routes = this.getRoutes();
-    const routeStr = routes
-      .slice(0, 15)
-      .map((r) => `${r.key}:${r.title}`)
-      .join('|');
-
-    return `Trợ lý IT Assistant. /no_think
-ROLE: Trợ lý IT thân thiện.
-${langInstruction}
-
-CAPABILITIES:
-- Điều hướng màn hình (nav tool)
-- Đổi giao diện sáng/tối (theme tool)
-- Hướng dẫn IT cơ bản
-
-SCREENS AVAILABLE:
-${Object.entries(FEATURE_DESCRIPTIONS)
-  .map(([k, v]) => `${k}: ${v}`)
-  .join('\n')}
-
-ROUTES: ${routeStr}
-
-RULES:
-- Trả lời ngắn gọn, thân thiện.
-- Nếu user muốn mở màn hình hoặc đổi theme: DÙNG TOOL.
-- Nếu không biết: "Vui lòng liên hệ IT hotline 1108/1109."
-- Không bịa đặt thông tin.`;
-  }
 
   private buildTools(): unknown[] {
     if (this.toolCache) return this.toolCache;
@@ -838,7 +789,6 @@ RULES:
           fullUrl: fullPath,
           key,
           keywords: SCREEN_KEYWORDS[key],
-          description: FEATURE_DESCRIPTIONS[key],
         });
       }
 
@@ -858,8 +808,9 @@ RULES:
 
   private prepareContext(newMsg: string): ChatMessage[] {
     const newTokens = this.tokens(newMsg);
+    // Reserve: ~400 for system prompt (backend), tools, output
     const available =
-      this.MAX_CTX - 500 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
+      this.MAX_CTX - 400 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
 
     const history = this.messages()
       .filter(
@@ -868,8 +819,8 @@ RULES:
       .map((m) => ({
         ...m,
         content:
-          m.content.length > 150
-            ? m.content.substring(0, 150) + '...'
+          m.content.length > 120
+            ? m.content.substring(0, 120) + '...'
             : m.content,
       }));
 
@@ -889,7 +840,7 @@ RULES:
 
     if (result.length && result[0].role === 'assistant') result.shift();
     this.contextUsage.set(
-      Math.min(100, Math.round(((500 + used + newTokens) / this.MAX_CTX) * 100))
+      Math.min(100, Math.round(((400 + used + newTokens) / this.MAX_CTX) * 100))
     );
     return result;
   }

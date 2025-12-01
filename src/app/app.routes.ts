@@ -134,7 +134,7 @@ export const routes: Routes = [
           showSearchBar: false,
         },
       },
-            {
+      {
         path: 'reports/cls-level3',
         loadComponent: () =>
           import(
@@ -168,8 +168,21 @@ export const routes: Routes = [
           ).then((m) => m.SpecialtyClsReportComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'BaoCao.KhamCLSTheoCK', 
+          permission: 'BaoCao.KhamCLSTheoCK',
           title: 'Khám CLS theo chuyên khoa',
+          showSearchBar: false,
+        },
+      },
+      {
+        path: 'reports/emergency-summary',
+        loadComponent: () =>
+          import(
+            './features/reports/emergency-summary/emergency-summary.component'
+          ).then((m) => m.EmergencySummaryComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'CapCuu.CapCuu01', 
+          title: 'Cấp cứu tỉ lệ',
           showSearchBar: false,
         },
       },

@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment.development';
 import { ExaminationStat } from '../../shared/models/examination-stat.model';
 import { ClsLevel6Stat, ClsLevel3Stat } from '../../shared/models/cls-stat.model';
 import { SpecialtyClsStat } from '../../shared/models/specialty-cls-stat.model';
+import { EmergencyStat } from '../../shared/models/emergency-stat';
 import {
   MedicalRecordSummary,
   MedicalRecordDetail,
@@ -21,6 +22,7 @@ export class ReportService {
   private clsLevel6Url = environment.clsLevel6Url;
   private clsLevel3Url = environment.clsLevel3Url;
   private specialtyClsUrl = environment.specialtyClsUrl;
+  private emergencyUrl = environment.emergencyUrl;
 
   constructor() {}
 
@@ -90,6 +92,17 @@ export class ReportService {
       .set('DenNgay', toDate);
 
     return this.http.get<SpecialtyClsStat[]>(this.specialtyClsUrl, { params });
+  }
+
+  /**
+   * Get Emergency Summary Report
+   */
+  getEmergencySummary(fromDate: string, toDate: string): Observable<EmergencyStat[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+      
+    return this.http.get<EmergencyStat[]>(this.emergencyUrl, { params });
   }
 }
 
