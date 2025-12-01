@@ -76,10 +76,8 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
     'Báo cáo khám: Thống kê lượt khám, BHYT, viện phí, doanh thu.',
   'reports/missing-medical-records':
     'Báo cáo HSBA thiếu: Danh sách hồ sơ bệnh án chưa hoàn thiện.',
-  'reports/cls-level3':
-    'Báo cáo CLS tầng 3: Thống kê xét nghiệm, CĐHA tầng 3.',
-  'reports/cls-level6':
-    'Báo cáo CLS tầng 6: Thống kê xét nghiệm, CĐHA tầng 6.',
+  'reports/cls-level3': 'Báo cáo CLS tầng 3: Thống kê xét nghiệm, CĐHA tầng 3.',
+  'reports/cls-level6': 'Báo cáo CLS tầng 6: Thống kê xét nghiệm, CĐHA tầng 6.',
   'reports/specialty-cls':
     'Báo cáo CLS chuyên khoa: Thống kê theo từng chuyên khoa.',
 };
@@ -445,7 +443,7 @@ export class LlmService {
         headers: {
           'Content-Type': 'application/json',
           // FIXED: Changed getToken() to getIdToken()
-          Authorization: `Bearer ${this.authService.getIdToken()}`,
+          Authorization: `Bearer ${this.authService.getAccessToken()}`,
         },
         body: JSON.stringify(payload),
         signal,
@@ -854,12 +852,7 @@ RULES:
   private prepareContext(newMsg: string): ChatMessage[] {
     const newTokens = this.tokens(newMsg);
     const available =
-      this.MAX_CTX -
-      500 -
-      this.TOOL_BUDGET -
-      this.MAX_OUTPUT -
-      newTokens -
-      50;
+      this.MAX_CTX - 500 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
 
     const history = this.messages()
       .filter(
@@ -889,10 +882,7 @@ RULES:
 
     if (result.length && result[0].role === 'assistant') result.shift();
     this.contextUsage.set(
-      Math.min(
-        100,
-        Math.round(((500 + used + newTokens) / this.MAX_CTX) * 100)
-      )
+      Math.min(100, Math.round(((500 + used + newTokens) / this.MAX_CTX) * 100))
     );
     return result;
   }
@@ -1049,8 +1039,7 @@ RULES:
       } catch (e) {
         lastErr = e as Error;
         if (e instanceof DOMException && e.name === 'AbortError') throw e;
-        if (i < this.MAX_RETRIES)
-          await this.delay(this.RETRY_DELAY * (i + 1));
+        if (i < this.MAX_RETRIES) await this.delay(this.RETRY_DELAY * (i + 1));
       }
     }
     throw lastErr;

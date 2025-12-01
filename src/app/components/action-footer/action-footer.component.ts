@@ -75,9 +75,9 @@ export class ActionFooterComponent implements OnInit, OnDestroy {
     this.versionService.isDevMode.update(v => !v);
     
     if (this.isDevMode()) {
-      this.toastService.showSuccess('↑ ↑ ↓ ↓ ← → ← → B A. Chế độ Konami kích hoạt! AI Assistant đã được bật.');
+      this.toastService.showSuccess('Đã bật tùy chọn nhà phát triển');
     } else {
-      this.toastService.showInfo('Chế độ Konami Tắt. AI Assistant đã ẩn.');
+      this.toastService.showInfo('Đã tắt tùy chọn nhà phát triển');
     }
   }
 }
