@@ -20,21 +20,10 @@ import { DateUtils } from '../../../shared/utils/date.utils';
 
 import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
-
-interface WidgetData {
-  id: string;
-  icon: string;
-  title: string;
-  value: string;
-  caption: string;
-  accentColor: string;
-}
 
 @Component({
   selector: 'app-emergency-admission-comparison',
@@ -43,8 +32,7 @@ interface WidgetData {
     CommonModule,
     ChartCardComponent,
     DateFilterComponent,
-    WidgetCardComponent,
-    TableCardComponent
+    HasPermissionDirective,
   ],
   providers: [DatePipe, DecimalPipe],
   templateUrl: './emergency-admission-comparison.component.html',
@@ -67,19 +55,9 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
   public fromDate: string = '';
   public toDate: string = '';
   
-  public widgetData: WidgetData[] = [];
   // Biểu đồ chính chứa Bar + 2 Line
   public comparisonChartOptions: EChartsCoreOption | null = null; 
   
-  public tableColumns: GridColumn[] = [
-    { key: 'NGAY_TIEP_NHAN_DISPLAY', label: 'Ngày', sortable: true, width: '120px' },
-    { key: 'LUOT_CC', label: 'Tổng Lượt CC', sortable: true, width: '100px' },
-    { key: 'NHAP_VIEN', label: 'Nhập Viện', sortable: true, width: '100px' },
-    { key: 'BHYT', label: 'Lượt BHYT', sortable: true, width: '100px' },
-    { key: 'VIEN_PHI', label: 'Viện Phí', sortable: true, width: '100px' },
-    { key: 'CHUYEN_VIEN', label: 'Chuyển Viện', sortable: true, width: '100px' },
-  ];
-
   private palette!: ThemePalette;
   private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
@@ -87,17 +65,14 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     effect(() => {
       this.palette = this.themeService.currentPalette();
       if (!this.isLoading && this.rawData.length > 0) {
-        this.updateWidgets(this.rawData);
         this.buildChart(this.rawData);
       }
-      this.updateWidgetColors();
       this.cd.markForCheck();
     });
   }
 
   ngOnInit(): void {
     this.setDefaultDateRange();
-    this.initializeWidgets();
     this.loadData();
   }
 
@@ -106,28 +81,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     const range = DateUtils.getReportingWeekRange();
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
-  }
-
-  private initializeWidgets(): void {
-    this.widgetData = [
-      { id: 'total', icon: 'fas fa-ambulance', title: 'Tổng Lượt CC', value: '0', caption: 'Cấp cứu', accentColor: '#00839b' },
-      { id: 'admission', icon: 'fas fa-procedures', title: 'Tổng Nhập Viện', value: '0', caption: 'Từ Cấp cứu', accentColor: '#f89c5b' },
-      { id: 'insurance', icon: 'fas fa-id-card', title: 'Tổng BHYT', value: '0', caption: 'Lượt có BHYT', accentColor: '#082567' },
-      { id: 'ratio', icon: 'fas fa-percent', title: 'Tỷ lệ Nhập viện', value: '0%', caption: 'CC -> Nội trú', accentColor: '#ffb3ba' },
-    ];
-  }
-
-  private updateWidgetColors(): void {
-    if (this.widgetData.length > 0 && this.palette) {
-      const setC = (id: string, color: string) => {
-        const item = this.widgetData.find((x) => x.id === id);
-        if (item) item.accentColor = color;
-      };
-      setC('total', this.palette.primary);
-      setC('admission', this.palette.chart6);
-      setC('insurance', this.palette.deepSapphire);
-      setC('ratio', this.palette.pastelCoral);
-    }
   }
 
   public onDateFilter(range: DateRange): void {
@@ -159,43 +112,15 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
             NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
           }));
           
-          this.updateWidgets(this.rawData);
           this.buildChart(this.rawData);
         },
         error: (err) => {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu báo cáo cấp cứu.');
           this.rawData = [];
-          this.initializeWidgets();
+          this.comparisonChartOptions = null;
         },
       });
-  }
-
-  private updateWidgets(data: EmergencyStat[]): void {
-    const totals = data.reduce(
-      (a, c) => ({
-        cc: a.cc + (c.LUOT_CC || 0),
-        nv: a.nv + (c.NHAP_VIEN || 0),
-        bhyt: a.bhyt + (c.BHYT || 0),
-        cv: a.cv + (c.CHUYEN_VIEN || 0),
-      }),
-      { cc: 0, nv: 0, bhyt: 0, cv: 0 }
-    );
-    
-    const ratio = totals.cc > 0 ? (totals.nv / totals.cc) * 100 : 0;
-
-    const update = (id: string, val: string, cap: string = '') => {
-      const w = this.widgetData.find((x) => x.id === id);
-      if (w) {
-        w.value = val;
-        if (cap) w.caption = cap;
-      }
-    };
-    
-    update('total', this.formatNumber(totals.cc), 'Tổng số lượt');
-    update('admission', this.formatNumber(totals.nv), `Chiếm ${ratio.toFixed(1)}%`);
-    update('insurance', this.formatNumber(totals.bhyt), `Lượt có BHYT`);
-    update('ratio', `${ratio.toFixed(1)}%`, 'Tỷ lệ Nhập viện');
   }
 
   private buildChart(data: EmergencyStat[]): void {
@@ -207,10 +132,10 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     const sorted = [...data].sort((a, b) => new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime());
 
     // Prepare labels: Use 'Tuần XX' if data is grouped by week, otherwise use date
-    const dates = sorted.map(d => {
-      const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
-      return d.TUAN_NAM ? `Tuần ${d.TUAN_NAM}` : (dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : 'N/A');
-    });
+const dates = sorted.map(d => {
+  const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
+  return d.TUAN_NAM ? `Tuần ${d.TUAN_NAM}` : (dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : 'N/A');
+});
 
     // Extract series data
     const admissions = sorted.map(d => d.NHAP_VIEN || 0); // Số ca nhập viện từ cấp cứu (BAR)
@@ -220,8 +145,8 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     // ECharts Colors (Matching the image style as closely as possible)
     const colors = {
       admissions: this.palette.chart2,     // Bar color (Blue/Teal)
-      totalCC: this.palette.chart6,        // Line 1 color (Orange/Yellowish)
-      bhytCC: this.palette.pastelCoral     // Line 2 color (Red/Coral)
+      totalCC: this.palette.tealMidtone,        // Line 1 color (Orange/Yellowish)
+      bhytCC: this.palette.primary     // Line 2 color (Red/Coral)
     };
 
     const commonGrid = { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true };
@@ -236,6 +161,10 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     
     this.comparisonChartOptions = {
       backgroundColor: 'transparent',
+      textStyle: {
+        fontFamily: GLOBAL_FONT_FAMILY,
+        color: this.palette.textSecondary,
+      },
       tooltip: { 
         ...commonTooltip,
         formatter: (params: any) => {
@@ -321,10 +250,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         }
       ]
     };
-  }
-
-  private formatNumber(num: number): string {
-    return this.numberPipe.transform(num, '1.0-0') || '0';
   }
   
   public onExport(): void {

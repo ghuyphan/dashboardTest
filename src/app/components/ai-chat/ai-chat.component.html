@@ -136,7 +136,7 @@
         [(ngModel)]="userInput" 
         (keyup.enter)="handleMainButton()"
         [disabled]="llmService.isGenerating() || (!llmService.modelLoaded() && !hasUserMessages())"
-        placeholder="Hỏi về cách sử dụng..." 
+        placeholder="Bạn muốn tôi giúp gì hôm nay?" 
         class="chat-input"
         autocomplete="off"
       >
