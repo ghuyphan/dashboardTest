@@ -10,10 +10,11 @@ export const idTokenInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
   const loginUrl = environment.authUrl;
-  
-  // [FIX] Check if the URL is pointing to Ollama (port 11434)
-  // If it is, skip adding any headers and just pass the request through.
-  if (req.url.includes('11434')) { 
+
+  // 1. SKIP the Proxy/LLM entirely in this interceptor
+  // The 'authInterceptor' handles the Bearer token, which is all the Proxy needs.
+  // We don't need to add 'id_token' or 'id_user' for the LLM.
+  if (req.url.includes('11434') || req.url.includes('3000') || req.url.includes('/api/llm')) { 
     return next(req);
   }
 

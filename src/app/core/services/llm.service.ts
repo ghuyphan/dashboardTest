@@ -167,7 +167,7 @@ interface ClassifyResult {
   type: 'direct' | 'llm' | 'blocked';
   response?: string;
   intent?: Intent;
-  navTarget?: string; // Hint for navigation
+  navTarget?: string;
   language: 'vi' | 'en';
 }
 
@@ -216,7 +216,7 @@ const BLOCKLIST: RegExp[] = [
   /summarize|paraphrase/i,
 ];
 
-// QUICK RESPONSES: Greetings, thanks, etc.
+// QUICK RESPONSES
 interface QuickResponse {
   patterns: string[];
   response: string | string[];
@@ -292,7 +292,6 @@ function detectIntent(normalized: string, original: string): Intent {
     return 'theme';
   }
 
-  // Theme with Vietnamese diacritics
   if (/sáng|tối|đổi màu|chuyển màu/i.test(original)) {
     return 'theme';
   }
@@ -308,7 +307,7 @@ function detectIntent(normalized: string, original: string): Intent {
 
   // Screen names → nav
   if (
-    /\b(home|settings|cai dat|dashboard|equipment|thiet bi|report|bao cao|giuong|bed|kham|hsba|cls)\b/.test(
+    /\b(home|settings|cai dat|dashboard|equipment|thiet bi|report|bao cao|giuong|bed|kham|hsba|cls|tang|lau|level)\b/.test(
       normalized
     )
   ) {
@@ -377,7 +376,7 @@ function classify(input: string): ClassifyResult {
     return {
       type: 'llm',
       intent: 'nav',
-      navTarget: 'settings', // Hint: navigate to settings
+      navTarget: 'settings',
       language,
     };
   }
@@ -402,46 +401,102 @@ function classify(input: string): ClassifyResult {
 }
 
 // ============================================================================
-// CONSTANTS
+// SCREEN KEYWORDS - More comprehensive with numbers
 // ============================================================================
 
 const SCREEN_KEYWORDS: Record<string, string[]> = {
-  home: ['home', 'trang chủ', 'chính', 'dashboard', 'tổng quan'],
+  home: [
+    'home',
+    'trang chu',
+    'chinh',
+    'dashboard',
+    'tong quan',
+    'main',
+    'index',
+  ],
   settings: [
     'settings',
-    'cài đặt',
-    'tài khoản',
+    'cai dat',
+    'tai khoan',
     'account',
     'profile',
-    'hồ sơ',
-    'đổi mật khẩu',
+    'ho so',
     'mat khau',
+    'password',
   ],
   'equipment/catalog': [
-    'thiết bị',
-    'máy móc',
+    'thiet bi',
+    'may moc',
     'catalog',
-    'danh sách',
+    'danh sach',
     'qr',
-    'bàn giao',
+    'ban giao',
+    'equipment',
   ],
-  'equipment/dashboard': ['thiết bị dashboard', 'biểu đồ thiết bị'],
-  'reports/bed-usage': ['giường', 'bed', 'công suất'],
+  'equipment/dashboard': [
+    'thiet bi dashboard',
+    'bieu do thiet bi',
+    'equipment dashboard',
+  ],
+  'reports/bed-usage': [
+    'giuong',
+    'bed',
+    'cong suat',
+    'bed usage',
+    'su dung giuong',
+  ],
   'reports/examination-overview': [
-    'khám',
+    'kham',
     'examination',
     'bhyt',
-    'viện phí',
+    'vien phi',
     'doanh thu',
+    'kham benh',
+    'tong quan kham',
   ],
   'reports/missing-medical-records': [
     'hsba',
-    'hồ sơ bệnh án',
+    'ho so benh an',
     'medical records',
+    'hsba thieu',
+    'thieu hsba',
   ],
-  'reports/cls-level3': ['cls', 'tầng 3', 'lầu 3', 'level3'],
-  'reports/cls-level6': ['cls', 'tầng 6', 'lầu 6', 'level6'],
-  'reports/specialty-cls': ['cls chuyên khoa', 'specialty'],
+  'reports/cls-level3': [
+    'cls 3',
+    'cls tang 3',
+    'cls lau 3',
+    'cls t3',
+    'tang 3',
+    'lau 3',
+    't3',
+    'level 3',
+    'level3',
+    'cls level 3',
+    'xet nghiem tang 3',
+    'cdha tang 3',
+    '3',
+  ],
+  'reports/cls-level6': [
+    'cls 6',
+    'cls tang 6',
+    'cls lau 6',
+    'cls t6',
+    'tang 6',
+    'lau 6',
+    't6',
+    'level 6',
+    'level6',
+    'cls level 6',
+    'xet nghiem tang 6',
+    'cdha tang 6',
+    '6',
+  ],
+  'reports/specialty-cls': [
+    'cls chuyen khoa',
+    'specialty',
+    'chuyen khoa',
+    'specialty cls',
+  ],
 };
 
 const ALLOWED_TOOLS = ['nav', 'theme'] as const;
@@ -575,19 +630,22 @@ export class LlmService {
     }
 
     // =========================================
-    // NAVIGATION: Check for route matches first
+    // NAVIGATION: Handle directly without LLM
     // =========================================
     if (result.intent === 'nav') {
       const navResult = await this.handleNavigation(input, result);
       if (navResult.handled) return;
-      // If not handled, continue to LLM
     }
 
     // =========================================
-    // THEME: Let LLM handle
+    // THEME: Handle directly without LLM
     // =========================================
+    if (result.intent === 'theme') {
+      const themeResult = await this.handleTheme(input);
+      if (themeResult.handled) return;
+    }
 
-    // Pass to LLM
+    // Pass to LLM for general/it_support
     this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
     this.isGenerating.set(true);
 
@@ -646,14 +704,13 @@ export class LlmService {
   }
 
   // ============================================================================
-  // NAVIGATION HANDLING
+  // NAVIGATION HANDLING - Direct, no LLM needed
   // ============================================================================
 
   private async handleNavigation(
     input: string,
     result: ClassifyResult
   ): Promise<{ handled: boolean }> {
-    // Extract target from input or use hint
     const target = result.navTarget || this.extractNavTarget(input);
     if (!target) return { handled: false };
 
@@ -683,14 +740,21 @@ export class LlmService {
       return { handled: true };
     }
 
-    // No matches → let LLM handle (might suggest alternatives)
-    return { handled: false };
+    // No matches → show available screens
+    const routes = this.getRoutes();
+    const sample = routes
+      .slice(0, 5)
+      .map((r) => `• ${r.title}`)
+      .join('\n');
+    await this.respondWithTyping(
+      `Không tìm thấy màn hình "${target}". Các màn hình có sẵn:\n\n${sample}\n\nBạn muốn mở màn hình nào?`
+    );
+    return { handled: true };
   }
 
   private extractNavTarget(input: string): string {
     const normalized = normalize(input);
 
-    // Remove navigation verbs, keep the target
     const removeWords = [
       'mo',
       'vao',
@@ -698,7 +762,6 @@ export class LlmService {
       'xem',
       'chuyen',
       'di',
-      'toi',
       'open',
       'go',
       'to',
@@ -714,6 +777,8 @@ export class LlmService {
       'giup',
       'can',
       'muon',
+      'bao cao',
+      'report',
     ];
 
     let target = normalized;
@@ -725,23 +790,64 @@ export class LlmService {
   }
 
   private findMatchingRoutes(target: string): RouteInfo[] {
-    if (!target || target.length < 2) return [];
+    if (!target || target.length < 1) return [];
 
     const routes = this.getRoutes();
-    const words = target.split(' ').filter((w) => w.length > 1);
+    const normalizedTarget = target.toLowerCase();
+    const targetWords = normalizedTarget.split(' ').filter((w) => w.length > 0);
 
-    if (words.length === 0) return [];
+    // Extract number from target (3, 6, etc.)
+    const numberMatch = normalizedTarget.match(/\b(\d+)\b/);
+    const targetNumber = numberMatch ? numberMatch[1] : null;
 
+    // Check for CLS-related keywords
+    const hasCLS = /cls|xet nghiem|cdha/.test(normalizedTarget);
+
+    // Special handling: if input contains number + CLS context
+    if (targetNumber && hasCLS) {
+      const exactMatches = routes.filter((r) => {
+        const key = r.key.toLowerCase();
+        const keywords = r.keywords?.map((k) => k.toLowerCase()) || [];
+
+        // Route must contain this number
+        const routeHasNumber =
+          key.includes(targetNumber) ||
+          keywords.some((kw) => kw.includes(targetNumber));
+
+        return routeHasNumber;
+      });
+
+      if (exactMatches.length > 0) return exactMatches;
+    }
+
+    // Special handling: just number with floor/level context
+    if (targetNumber && /tang|lau|level|t\d|l\d/.test(normalizedTarget)) {
+      const floorMatches = routes.filter((r) => {
+        const key = r.key.toLowerCase();
+        const keywords = r.keywords?.map((k) => k.toLowerCase()) || [];
+
+        return (
+          key.includes(`level${targetNumber}`) ||
+          keywords.some((kw) => kw.includes(targetNumber))
+        );
+      });
+
+      if (floorMatches.length > 0) return floorMatches;
+    }
+
+    // General matching
     return routes.filter((r) => {
       const title = normalize(r.title);
       const key = r.key.toLowerCase();
       const keywords = r.keywords?.map((k) => normalize(k)) || [];
 
-      return words.some(
+      // Check if any target word matches
+      return targetWords.some(
         (w) =>
-          title.includes(w) ||
-          key.includes(w) ||
-          keywords.some((kw) => kw.includes(w) || w.includes(kw))
+          w.length > 1 &&
+          (title.includes(w) ||
+            key.includes(w) ||
+            keywords.some((kw) => kw.includes(w) || w.includes(kw)))
       );
     });
   }
@@ -753,7 +859,6 @@ export class LlmService {
   ): string {
     if (!result.success) return result.error || 'Có lỗi xảy ra.';
 
-    // Special case: password change
     const isPasswordChange = navTarget === 'settings';
 
     if (result.data === 'SAME') {
@@ -768,6 +873,52 @@ export class LlmService {
     }
 
     return `Đang chuyển đến **${route.title}**...`;
+  }
+
+  // ============================================================================
+  // THEME HANDLING - Direct, no LLM needed
+  // ============================================================================
+
+  private async handleTheme(input: string): Promise<{ handled: boolean }> {
+    const normalized = normalize(input);
+    const original = input.toLowerCase();
+
+    let mode: string | null = null;
+
+    // Detect theme mode from input
+    if (
+      /\b(dark|toi|ban dem|night)\b/.test(normalized) ||
+      /tối/.test(original)
+    ) {
+      mode = 'dark';
+    } else if (
+      /\b(light|sang|ban ngay|day)\b/.test(normalized) ||
+      /sáng/.test(original)
+    ) {
+      mode = 'light';
+    } else if (/\b(toggle|doi|chuyen|switch|thay doi)\b/.test(normalized)) {
+      mode = 'toggle';
+    }
+
+    // Default to toggle if theme intent but no specific mode
+    if (!mode) {
+      mode = 'toggle';
+    }
+
+    this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
+    this.isGenerating.set(true);
+    await this.delay(600);
+
+    const result = this.doTheme(mode);
+    const msg =
+      result.data === 'dark'
+        ? 'Đã chuyển sang **giao diện tối**.'
+        : 'Đã chuyển sang **giao diện sáng**.';
+
+    this.updateLastMessageContent(msg);
+    this.isGenerating.set(false);
+    this.finalize();
+    return { handled: true };
   }
 
   // ============================================================================
@@ -876,7 +1027,7 @@ export class LlmService {
   }
 
   // ============================================================================
-  // STREAMING
+  // STREAMING (UPDATED FIX)
   // ============================================================================
 
   private async stream(
@@ -887,12 +1038,17 @@ export class LlmService {
     this.abortCtrl = new AbortController();
     const { signal } = this.abortCtrl;
 
-    const isToolIntent = intent === 'nav' || intent === 'theme';
-    const context = isToolIntent ? [] : this.prepareContext(userMsg);
+    // 1. PREPARE DATA
+    const context = this.prepareContext(userMsg);
+    // Note: You can inject logic here to strip 'model' if moving that logic to proxy in future
     const prompt = this.buildPromptForIntent(intent, language);
-    const tools = isToolIntent ? this.buildTools() : [];
-    const sampling = isToolIntent ? this.TOOL_SAMPLING : this.SAMPLING;
-    const maxTokens = isToolIntent ? 80 : 150;
+    
+    // 2. GET TOKEN (CRITICAL FIX)
+    // Fetch API does NOT use Angular interceptors, so we must add the token manually.
+    const token = this.authService.getAccessToken();
+    if (!token) {
+      throw new Error('No auth token available');
+    }
 
     const payload = {
       model: this.MODEL,
@@ -901,33 +1057,40 @@ export class LlmService {
         ...context.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: userMsg },
       ],
-      tools: tools.length > 0 ? tools : undefined,
       stream: true,
       options: {
-        ...sampling,
-        num_predict: maxTokens,
+        temperature: 0.3,
+        num_predict: 150,
         num_ctx: this.MAX_CTX,
       },
     };
 
-    if (this.DEBUG)
-      console.log('[LLM] Request:', JSON.stringify(payload, null, 2));
-
     const timeout = setTimeout(() => this.abortCtrl?.abort(), this.TIMEOUT);
 
     try {
+      // 3. SEND REQUEST WITH TOKEN
       const res = await fetch(this.apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // <--- THE FIX
+        },
         body: JSON.stringify(payload),
         signal,
       });
 
       clearTimeout(timeout);
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      if (!res.body) throw new Error('No body');
 
-      await this.processStream(res.body, signal, intent, language);
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Unauthorized: Token expired or invalid');
+        }
+        throw new Error(`API Error ${res.status}`);
+      }
+      
+      if (!res.body) throw new Error('No body received');
+
+      await this.processStream(res.body, signal, language);
     } finally {
       clearTimeout(timeout);
     }
@@ -936,18 +1099,13 @@ export class LlmService {
   private async processStream(
     body: ReadableStream<Uint8Array>,
     signal: AbortSignal,
-    intent: Intent,
     language: 'vi' | 'en'
   ): Promise<void> {
     return this.ngZone.runOutsideAngular(async () => {
       const reader = body.getReader();
       const decoder = new TextDecoder();
       let content = '';
-      let toolCalls: ToolCall[] = [];
       let buffer = '';
-
-      const isToolIntent = intent === 'nav' || intent === 'theme';
-      const suppressText = isToolIntent;
 
       try {
         while (!signal.aborted) {
@@ -967,13 +1125,7 @@ export class LlmService {
 
               if (json.message?.content) content += json.message.content;
 
-              const tools = this.parseTools(json);
-              for (const t of tools) {
-                if (!toolCalls.some((tc) => tc.name === t.name))
-                  toolCalls.push(t);
-              }
-
-              if (!suppressText && content.trim() && !toolCalls.length) {
+              if (content.trim()) {
                 this.streamUpdate$.next({
                   content: this.sanitizeOut(content),
                   tokenEstimate: this.tokens(content),
@@ -991,11 +1143,6 @@ export class LlmService {
           try {
             const json = JSON.parse(buffer);
             if (json.message?.content) content += json.message.content;
-            const tools = this.parseTools(json);
-            for (const t of tools) {
-              if (!toolCalls.some((tc) => tc.name === t.name))
-                toolCalls.push(t);
-            }
           } catch {
             /* ignore */
           }
@@ -1005,42 +1152,19 @@ export class LlmService {
 
         if (this.DEBUG) {
           console.log('[LLM] Final content:', content);
-          console.log('[LLM] Tool calls:', toolCalls);
         }
 
-        // Fallback: extract tool from text
-        if (isToolIntent && !toolCalls.length) {
-          const extracted = this.extractToolFromText(content);
-          if (extracted) toolCalls.push(extracted);
-        }
-
-        if (toolCalls.length) {
-          await this.ngZone.run(() => this.execTools(toolCalls));
-        } else if (isToolIntent) {
-          // For nav intent: suggest available screens
-          const routes = this.getRoutes();
-          const sample = routes
-            .slice(0, 5)
-            .map((r) => `• ${r.title}`)
-            .join('\n');
-          const fallbackMsg =
+        let finalContent = this.sanitizeOut(content);
+        if (finalContent.length < 10 || !finalContent.trim()) {
+          finalContent =
             language === 'en'
-              ? `I'm not sure which screen you want. Available screens:\n\n${sample}`
-              : `Tôi không chắc bạn muốn mở màn hình nào. Các màn hình có sẵn:\n\n${sample}`;
-          this.streamUpdate$.next({ content: fallbackMsg, tokenEstimate: 0 });
-        } else {
-          let finalContent = this.sanitizeOut(content);
-          if (finalContent.length < 10 || !finalContent.trim()) {
-            finalContent =
-              language === 'en'
-                ? `I'm not sure how to help with that. For IT issues, contact hotline ${IT_HOTLINE}.`
-                : `Tôi không chắc cách hỗ trợ vấn đề này. Liên hệ IT hotline ${IT_HOTLINE} nếu cần.`;
-          }
-          this.streamUpdate$.next({
-            content: finalContent,
-            tokenEstimate: this.tokens(content),
-          });
+              ? `I'm not sure how to help with that. For IT issues, contact hotline ${IT_HOTLINE}.`
+              : `Tôi không chắc cách hỗ trợ vấn đề này. Liên hệ IT hotline ${IT_HOTLINE} nếu cần.`;
         }
+        this.streamUpdate$.next({
+          content: finalContent,
+          tokenEstimate: this.tokens(content),
+        });
       }
     });
   }
@@ -1053,23 +1177,7 @@ export class LlmService {
     const langInstruction =
       language === 'en' ? 'Respond in English.' : 'Trả lời bằng tiếng Việt.';
 
-    const routes = this.getRoutes();
-    const routeStr = routes
-      .slice(0, 12)
-      .map((r) => `${r.key}:${r.title}`)
-      .join('|');
-
     switch (intent) {
-case 'nav':
-case 'theme':
-  return `IT Bot BV Hoàn Mỹ. /no_think
-TASK: Navigation + Theme.
-TOOLS: nav(k=route_key) | theme(m=dark/light/toggle)
-ROUTES: ${routeStr}
-// CHANGE THIS LINE BELOW:
-RULE: YOU MUST USE THE 'nav' TOOL to change screens. DO NOT just say you opened it.
-${langInstruction}`;
-
       case 'it_support':
         return `IT Bot BV Hoàn Mỹ. /no_think
 ROLE: Hướng dẫn xử lý sự cố IT cơ bản.
@@ -1080,7 +1188,8 @@ ${IT_KNOWLEDGE}
 RULES:
 - Trả lời ngắn gọn, thân thiện.
 - Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.
-- Không bịa đặt giải pháp.`;
+- Không bịa đặt giải pháp.
+- Không dùng emoji.`;
 
       case 'general':
       default:
@@ -1093,175 +1202,26 @@ ROLE: Trợ lý IT thân thiện.
 ${langInstruction}
 
 CAPABILITIES:
-- Điều hướng màn hình (nav tool)
-- Đổi giao diện sáng/tối (theme tool)
+- Điều hướng màn hình (nói "mở [tên màn hình]")
+- Đổi giao diện sáng/tối (nói "đổi theme")
 - Hướng dẫn IT cơ bản
 
 SCREENS:
 ${featureStr}
 
-TOOLS: nav(k=route_key) | theme(m=dark/light/toggle)
-ROUTES: ${routeStr}
-
 RULES:
 - Trả lời ngắn gọn, thân thiện.
-- Nếu user muốn mở màn hình hoặc đổi theme: dùng tool.
+- Nếu user muốn mở màn hình: hướng dẫn họ nói "mở [tên màn hình]"
+- Nếu user muốn đổi theme: hướng dẫn họ nói "đổi giao diện tối/sáng"
 - Nếu không biết: "Vui lòng liên hệ IT hotline 1108/1109."
-- Không bịa đặt thông tin.`;
+- Không bịa đặt thông tin.
+- Không dùng emoji.`;
     }
   }
 
   // ============================================================================
-  // TOOL PARSING
+  // TOOL EXECUTION (Legacy - kept for compatibility)
   // ============================================================================
-
-  private parseTools(json: Record<string, unknown>): ToolCall[] {
-    const results: ToolCall[] = [];
-
-    try {
-      const msg = (json['message'] ?? json) as Record<string, unknown>;
-
-      const toolCalls = msg['tool_calls'] ?? json['tool_calls'];
-      if (Array.isArray(toolCalls)) {
-        for (const tc of toolCalls) {
-          const parsed = this.parseSingleToolCall(
-            tc as Record<string, unknown>
-          );
-          if (parsed) results.push(parsed);
-        }
-      }
-
-      const funcCall = msg['function_call'] ?? json['function_call'];
-      if (funcCall && typeof funcCall === 'object') {
-        const fc = funcCall as Record<string, unknown>;
-        const name = this.mapToolName(fc['name'] as string);
-        if (name) {
-          results.push({
-            name,
-            arguments: this.parseArgs(fc['arguments'] ?? fc['args']),
-          });
-        }
-      }
-    } catch (e) {
-      if (this.DEBUG) console.error('[LLM] parseTools error:', e);
-    }
-
-    return results;
-  }
-
-  private parseSingleToolCall(call: Record<string, unknown>): ToolCall | null {
-    try {
-      if (call['function'] && typeof call['function'] === 'object') {
-        const fn = call['function'] as Record<string, unknown>;
-        const name = this.mapToolName(fn['name'] as string);
-        if (name) {
-          return {
-            name,
-            arguments: this.parseArgs(
-              fn['arguments'] ?? fn['args'] ?? fn['parameters']
-            ),
-          };
-        }
-      }
-
-      if (call['name'] && typeof call['name'] === 'string') {
-        const name = this.mapToolName(call['name']);
-        if (name) {
-          return {
-            name,
-            arguments: this.parseArgs(
-              call['arguments'] ?? call['args'] ?? call['input']
-            ),
-          };
-        }
-      }
-    } catch (e) {
-      if (this.DEBUG) console.error('[LLM] parseSingleToolCall error:', e);
-    }
-
-    return null;
-  }
-
-  private mapToolName(name: string): string | null {
-    if (!name) return null;
-    const n = name.toLowerCase();
-    if (n === 'nav' || n.includes('navigate')) return 'nav';
-    if (n === 'theme' || n.includes('theme')) return 'theme';
-    return null;
-  }
-
-  private parseArgs(args: unknown): Record<string, unknown> {
-    if (!args) return {};
-
-    if (typeof args === 'object' && args !== null && !Array.isArray(args)) {
-      return args as Record<string, unknown>;
-    }
-
-    if (typeof args === 'string') {
-      const trimmed = args.trim();
-      if (trimmed.startsWith('{')) {
-        try {
-          return JSON.parse(trimmed);
-        } catch {
-          /* ignore */
-        }
-      }
-      return { k: trimmed };
-    }
-
-    return {};
-  }
-
-  private extractToolFromText(text: string): ToolCall | null {
-    if (!text) return null;
-
-    try {
-      const navMatch = text.match(/\bnav\s+["']?(\S+)["']?/i);
-      if (navMatch) {
-        return {
-          name: 'nav',
-          arguments: { k: navMatch[1].replace(/['"]/g, '') },
-        };
-      }
-
-      const themeMatch = text.match(/\btheme\s+(dark|light|toggle)/i);
-      if (themeMatch) {
-        return { name: 'theme', arguments: { m: themeMatch[1].toLowerCase() } };
-      }
-
-      const vnMatch = text.match(/(?:mở|chuyển|vào)\s+(?:trang\s+)?(\S+)/i);
-      if (vnMatch) {
-        const key = this.findRouteKey(vnMatch[1]);
-        if (key) return { name: 'nav', arguments: { k: key } };
-      }
-    } catch {
-      /* ignore */
-    }
-
-    return null;
-  }
-
-  // ============================================================================
-  // TOOL EXECUTION
-  // ============================================================================
-
-  private async execTools(calls: ToolCall[]): Promise<void> {
-    for (const call of calls.slice(0, 2)) {
-      if (!ALLOWED_TOOLS.includes(call.name as AllowedTool)) continue;
-
-      try {
-        const result = await this.execTool(
-          call.name as AllowedTool,
-          call.arguments
-        );
-        const msg = this.getToolConfirmation(call.name, result);
-        if (msg) this.setLastMsg(msg);
-      } catch (e) {
-        console.error(`[LLM] Tool error ${call.name}:`, e);
-        this.setLastMsg(this.getToolErr(call.name));
-      }
-    }
-  }
 
   private async execTool(
     name: AllowedTool,
@@ -1281,32 +1241,6 @@ RULES:
         return this.doTheme(mode);
       }
     }
-  }
-
-  private getToolConfirmation(name: string, result: ToolResult): string {
-    if (!result.success) return result.error || 'Có lỗi xảy ra.';
-
-    if (result.data === 'SAME') {
-      return 'Bạn đang ở màn hình này rồi.';
-    }
-
-    if (name === 'nav') {
-      return `Đang chuyển đến **${result.data}**...`;
-    }
-
-    if (name === 'theme') {
-      return result.data === 'dark'
-        ? 'Đã chuyển sang **giao diện tối**.'
-        : 'Đã chuyển sang **giao diện sáng**.';
-    }
-
-    return 'Đã hoàn tất.';
-  }
-
-  private getToolErr(name: string): string {
-    return name === 'nav'
-      ? `Không thể mở trang này. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`
-      : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`;
   }
 
   // ============================================================================
@@ -1350,14 +1284,9 @@ RULES:
           r.key.includes(lower) ||
           r.fullUrl.includes(lower) ||
           r.title.toLowerCase().includes(lower) ||
-          r.keywords?.some((kw) => kw.includes(lower))
+          r.keywords?.some((kw) => kw.toLowerCase().includes(lower))
       ) || null
     );
-  }
-
-  private findRouteKey(query: string): string | null {
-    const route = this.resolveRoute(query);
-    return route?.key || null;
   }
 
   private doTheme(action: string): ToolResult {
