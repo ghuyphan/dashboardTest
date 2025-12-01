@@ -15,7 +15,7 @@ import { User } from '../../core/models/user.model';
 import { SearchService } from '../../core/services/search.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { LlmService } from '../../core/services/llm.service';
-import { VersionService } from '../../core/services/version.service'; // [NEW] Import
+import { VersionService } from '../../core/services/version.service';
 
 @Component({
   selector: 'app-header',
@@ -32,6 +32,7 @@ import { VersionService } from '../../core/services/version.service'; // [NEW] I
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
+  // --- Inputs ---
   public currentUser = input<User | null>(null);
   public userInitials = input<string>('');
   public rolesDisplay = input<string>('');
@@ -39,12 +40,14 @@ export class HeaderComponent {
   public showSearchBar = input<boolean>(false);
   public showBackButton = input<boolean>(false);
   
+  // --- Injections ---
   private router = inject(Router);
   public searchService = inject(SearchService);
   public themeService = inject(ThemeService);
   public llmService = inject(LlmService);
-  public versionService = inject(VersionService); // [NEW] Inject VersionService
+  public versionService = inject(VersionService);
 
+  // --- Outputs ---
   public sidebarToggled = output<void>();
   public logoutClicked = output<void>();
   public backClicked = output<void>();
@@ -52,6 +55,8 @@ export class HeaderComponent {
   get searchTerm(): string {
     return this.searchService.searchTerm();
   }
+
+  // --- Event Handlers ---
 
   onMobileToggleClick(): void {
     this.sidebarToggled.emit();
@@ -73,11 +78,8 @@ export class HeaderComponent {
 
   onAiToggle(event: Event): void {
     event.stopPropagation(); 
+    // Simply toggle. The service handles initialization/greeting automatically now.
     this.llmService.toggleChat();
-    
-    if (this.llmService.isOpen() && !this.llmService.modelLoaded()) {
-      this.llmService.loadModel();
-    }
   }
 
   onSettingsClick(): void {
@@ -85,6 +87,7 @@ export class HeaderComponent {
   }
 
   onSupportClick(): void {
+    // Placeholder for support action
   }
 
   onSearchChange(event: Event): void {
