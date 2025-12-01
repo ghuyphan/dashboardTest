@@ -74,7 +74,7 @@ const SCREEN_KEYWORDS: Record<string, string[]> = {
     'account',
     'profile',
     'hồ sơ',
-    'đổi mật khẩu',
+     'đổi mật khẩu', 'đổi pass', 'thay đổi mật khẩu' 
   ],
   'equipment/catalog': [
     'thiết bị',
@@ -156,6 +156,17 @@ const QUICK_RESPONSES = [
     patterns: ['tam biet', 'bye', 'goodbye', 'chao nhe'],
     response: 'Tạm biệt! Hẹn gặp lại.',
   },
+    {
+    patterns: [
+      'quen mat khau', 'quen pass', 'forgot password', 'reset pass', 
+      'reset mat khau', 'cap lai mat khau', 'cap lai pass', 'mat pass',
+      'sai pass', 'sai mat khau', 'sai mk', 'sai password',
+      'lay lai pass', 'lay lai mat khau', 'lay lai mk',
+      'dang nhap khong duoc', 'khong dang nhap duoc', 'loi dang nhap', 'k dang nhap',
+      'login error', 'cant login'
+    ],
+    response: `🔐 **Hỗ trợ Tài khoản & Mật khẩu:**\n\nDạ, để đảm bảo bảo mật:\n- Nếu quên/sai mật khẩu: Vui lòng gọi **${IT_HOTLINE}** để được cấp lại.\n- Nếu lỗi đăng nhập: Gọi hotline để IT kiểm tra tài khoản nhé!`,
+  },
 ];
 
 function normalize(text: string): string {
@@ -209,7 +220,14 @@ function classify(input: string): ClassifyResult {
 
   // 2. Quick Responses
   for (const entry of QUICK_RESPONSES) {
-    if (entry.patterns.some((p) => normalized.includes(p))) {
+    // Cũ: entry.patterns.some((p) => normalized.includes(p))  <-- LỖI TẠI ĐÂY
+    
+    // Mới: Dùng Regex \b để bắt nguyên từ
+    const isMatch = entry.patterns.some((p) => 
+      new RegExp(`\\b${p}\\b`, 'i').test(normalized)
+    );
+
+    if (isMatch) {
       const resp = Array.isArray(entry.response)
         ? entry.response[Math.floor(Math.random() * entry.response.length)]
         : entry.response;
