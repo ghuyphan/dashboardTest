@@ -10,6 +10,7 @@ import {
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../core/services/toast.service';
+import { DateUtils } from '../../shared/utils/date.utils';
 
 export interface DateRange {
   fromDate: string;
@@ -121,62 +122,60 @@ export class DateFilterComponent {
     this.activeRange.set('custom');
   }
 
-  setRange(range: QuickRange, emit: boolean = false) {
-    this.activeRange.set(range);
-    const now = new Date();
-    let start = new Date();
-    let end = new Date();
+setRange(range: QuickRange, emit: boolean = false) {
+  this.activeRange.set(range);
+  const now = new Date();
+  
+  // Initialize with defaults
+  let startStr = '';
+  let endStr = '';
 
-    switch (range) {
-      case 'today':
-        // start/end are now
-        break;
-      case 'thisWeek':
-        // Modified Logic: Previous Wednesday -> This Week Thursday
-        
-        // 1. Anchor to Current Week's Monday (ISO: Mon=1...Sun=0/7)
-        const currentDay = now.getDay(); // 0 (Sun) to 6 (Sat)
-        // Dist from today to Monday: Sun(0)->-6, Mon(1)->0, Tue(2)->-1...
-        const distToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-        
-        const monday = new Date(now);
-        monday.setDate(now.getDate() + distToMonday);
+  switch (range) {
+    case 'today':
+      startStr = endStr = this.todayStr;
+      break;
 
-        // 2. Start = Previous Wednesday (Monday - 5 days)
-        start = new Date(monday);
-        start.setDate(monday.getDate() - 5);
+    case 'thisWeek':
+      // [UPDATED] Use the centralized utility
+      const weekRange = DateUtils.getReportingWeekRange();
+      startStr = weekRange.fromDate;
+      endStr = weekRange.toDate;
+      break;
+      
+    case 'thisMonth':
+      const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      startStr = this.formatDate(mStart);
+      endStr = this.formatDate(mEnd);
+      break;
 
-        // 3. End = This Week Thursday (Monday + 3 days)
-        end = new Date(monday);
-        end.setDate(monday.getDate() + 3);
-        break;
-        
-      case 'thisMonth':
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        break;
-      case 'thisQuarter':
-        const qMonth = Math.floor(now.getMonth() / 3) * 3;
-        start = new Date(now.getFullYear(), qMonth, 1);
-        end = new Date(now.getFullYear(), qMonth + 3, 0);
-        break;
-      case 'thisYear':
-        start = new Date(now.getFullYear(), 0, 1);
-        end = new Date(now.getFullYear(), 11, 31);
-        break;
-    }
+    case 'thisQuarter':
+      const qMonth = Math.floor(now.getMonth() / 3) * 3;
+      const qStart = new Date(now.getFullYear(), qMonth, 1);
+      const qEnd = new Date(now.getFullYear(), qMonth + 3, 0);
+      startStr = this.formatDate(qStart);
+      endStr = this.formatDate(qEnd);
+      break;
 
-    // Apply constraints to calculated range (clip future dates to Today)
-    const finalStart = this.applyConstraints(this.formatDate(start));
-    const finalEnd = this.applyConstraints(this.formatDate(end));
-
-    this.fromDate.set(finalStart);
-    this.toDate.set(finalEnd);
-
-    if (emit) {
-      this.applyFilter();
-    }
+    case 'thisYear':
+      const yStart = new Date(now.getFullYear(), 0, 1);
+      const yEnd = new Date(now.getFullYear(), 11, 31);
+      startStr = this.formatDate(yStart);
+      endStr = this.formatDate(yEnd);
+      break;
   }
+
+  // Apply constraints
+  const finalStart = this.applyConstraints(startStr);
+  const finalEnd = this.applyConstraints(endStr);
+
+  this.fromDate.set(finalStart);
+  this.toDate.set(finalEnd);
+
+  if (emit) {
+    this.applyFilter();
+  }
+}
 
   applyFilter() {
     this.filterSubmit.emit({

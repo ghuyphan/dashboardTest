@@ -387,19 +387,26 @@ export class LlmService {
     }
   }
 
-  public async loadModel(): Promise<void> {
+public async loadModel(): Promise<void> {
     if (this.modelLoaded() || this.isModelLoading()) return;
 
     this.isModelLoading.set(true);
     this.loadProgress.set('Đang kết nối...');
 
+    // [FIX] Create a minimum delay promise (e.g., 1 second) 
+    // to prevent the UI from flickering instantly on error
+    const minDelay = this.delay(1000); 
+
     try {
-      await this.checkHealth();
+      // Wait for BOTH the health check AND the minimum delay
+      await Promise.all([this.checkHealth(), minDelay]);
+
       this.modelLoaded.set(true);
       this.loadProgress.set('Sẵn sàng');
       this.buildTools();
       if (this.messages().length === 0) this.addGreeting();
     } catch (e) {
+      // Even if checkHealth fails fast, we still waited for minDelay
       console.error('[LLM] Connection Error:', e);
       this.loadProgress.set('Không thể kết nối máy chủ AI');
     } finally {

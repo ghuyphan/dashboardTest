@@ -117,14 +117,10 @@ export class ClsLevel6ReportComponent implements OnInit {
     this.loadData();
   }
 
-  private setDefaultDateRange(): void {
-    const now = new Date();
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day == 0 ? -6 : 1);
-    const start = new Date(now.setDate(diff));
-    const end = new Date(now.setDate(start.getDate() + 6));
-    this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
-    this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
+private setDefaultDateRange(): void {
+    const range = DateUtils.getReportingWeekRange();
+    this.fromDate = range.fromDate;
+    this.toDate = range.toDate;
   }
   private initializeWidgets(): void {
     this.widgetData = [

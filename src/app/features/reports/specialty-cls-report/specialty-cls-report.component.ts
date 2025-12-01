@@ -77,7 +77,7 @@ export class SpecialtyClsReportComponent implements OnInit {
   public specialtyChartOptions: EChartsCoreOption | null = null;
   public groupPieChartOptions: EChartsCoreOption | null = null;
   public topSpecialtyChartOptions: EChartsCoreOption | null = null;
-  
+
   public tableColumns: GridColumn[] = [
     {
       key: 'NGAY_KHAM_DISPLAY',
@@ -115,15 +115,11 @@ export class SpecialtyClsReportComponent implements OnInit {
   }
 
   private setDefaultDateRange(): void {
-    const now = new Date();
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-    const start = new Date(now.setDate(diff));
-    const end = new Date(now.setDate(start.getDate() + 6));
-    this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
-    this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
+    const range = DateUtils.getReportingWeekRange();
+    this.fromDate = range.fromDate;
+    this.toDate = range.toDate;
   }
-  
+
   private initializeWidgets(): void {
     this.widgetData = [
       {
@@ -152,7 +148,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     ];
   }
-  
+
   private updateWidgetColors(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const setC = (id: string, color: string) => {
@@ -201,9 +197,9 @@ export class SpecialtyClsReportComponent implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          this.rawData = (data || []).map(item => ({
-             ...item,
-             NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAY_KHAM)
+          this.rawData = (data || []).map((item) => ({
+            ...item,
+            NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAY_KHAM),
           }));
           this.processData(this.rawData);
         },
@@ -234,7 +230,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       const group = item.NHOM_CLS || 'Khác';
       const specialty = item.TEN_CHUYEN_KHOA || 'Chưa xác định';
       const lowerGroup = group.toLowerCase();
-      const sortOrder = item.NHOM ?? 999; 
+      const sortOrder = item.NHOM ?? 999;
 
       if (lowerGroup.includes('khám') || lowerGroup.includes('kham'))
         totalKham += qty;
@@ -245,9 +241,9 @@ export class SpecialtyClsReportComponent implements OnInit {
         (specialtyTotals.get(specialty) || 0) + qty
       );
       groupTotals.set(group, (groupTotals.get(group) || 0) + qty);
-      
+
       uniqueGroups.add(group);
-      
+
       if (!groupOrderMap.has(group)) {
         groupOrderMap.set(group, sortOrder);
       }
@@ -291,11 +287,11 @@ export class SpecialtyClsReportComponent implements OnInit {
     ];
 
     const sortedSpecialtyNames = sortedSpecialties.map((s) => s[0]);
-    
+
     const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
-       const orderA = groupOrderMap.get(a) ?? 999;
-       const orderB = groupOrderMap.get(b) ?? 999;
-       return orderA - orderB;
+      const orderA = groupOrderMap.get(a) ?? 999;
+      const orderB = groupOrderMap.get(b) ?? 999;
+      return orderA - orderB;
     });
 
     this.buildCharts(
@@ -317,14 +313,14 @@ export class SpecialtyClsReportComponent implements OnInit {
     groupOrderMap: Map<string, number>
   ): void {
     const themePalette = [
-      this.palette.primary,       
-      this.palette.chart6,        
-      this.palette.deepSapphire,  
-      this.palette.success,       
-      this.palette.pastelCoral,   
-      this.palette.secondary,     
-      '#8b5cf6',                  
-      this.palette.chart7,        
+      this.palette.primary,
+      this.palette.chart6,
+      this.palette.deepSapphire,
+      this.palette.success,
+      this.palette.pastelCoral,
+      this.palette.secondary,
+      '#8b5cf6',
+      this.palette.chart7,
     ];
 
     const commonOptions = {
@@ -423,10 +419,10 @@ export class SpecialtyClsReportComponent implements OnInit {
     const pieData = Array.from(groupTotals.entries())
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => {
-          const orderA = groupOrderMap.get(a.name) ?? 999;
-          const orderB = groupOrderMap.get(b.name) ?? 999;
-          if (orderA !== orderB) return orderA - orderB;
-          return b.value - a.value;
+        const orderA = groupOrderMap.get(a.name) ?? 999;
+        const orderB = groupOrderMap.get(b.name) ?? 999;
+        if (orderA !== orderB) return orderA - orderB;
+        return b.value - a.value;
       });
 
     this.groupPieChartOptions = {
@@ -529,11 +525,11 @@ export class SpecialtyClsReportComponent implements OnInit {
       ],
     };
   }
-  
+
   private formatNumber(num: number): string {
     return this.numberPipe.transform(num, '1.0-0') || '0';
   }
-  
+
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;
     this.isExporting = true;

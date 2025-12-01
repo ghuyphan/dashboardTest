@@ -25,6 +25,7 @@ import { DateFilterComponent, DateRange } from '../../components/date-filter/dat
 import { TableCardComponent } from '../../components/table-card/table-card.component';
 import { GridColumn } from '../../components/reusable-table/reusable-table.component';
 
+
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -112,15 +113,10 @@ export class ExaminationOverviewComponent implements OnInit {
     this.loadData();
   }
 
-  private setDefaultDateRange(): void {
-    const now = new Date();
-    const day = now.getDay(); 
-    const diff = now.getDate() - day + (day == 0 ? -6 : 1);
-    const start = new Date(now.setDate(diff));
-    const end = new Date(now.setDate(start.getDate() + 6));
-
-    this.fromDate = this.datePipe.transform(start, 'yyyy-MM-dd') || '';
-    this.toDate = this.datePipe.transform(end, 'yyyy-MM-dd') || '';
+private setDefaultDateRange(): void {
+    const range = DateUtils.getReportingWeekRange();
+    this.fromDate = range.fromDate;
+    this.toDate = range.toDate;
   }
 
   public onDateFilter(range: DateRange): void {
