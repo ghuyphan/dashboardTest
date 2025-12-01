@@ -1,0 +1,62 @@
+<div class="page-container">
+  <div class="page-content">
+    
+    <app-date-filter
+      (filterSubmit)="onDateFilter($event)"
+      [isLoading]="isLoading"
+      buttonLabel="Lọc dữ liệu"
+      defaultRange="thisWeek"
+    ></app-date-filter>
+
+    <div class="widget-section">
+      <div class="widget-grid">
+        @for (widget of widgetData; track widget.id) {
+          <app-widget-card
+            [icon]="widget.icon"
+            [title]="widget.title"
+            [value]="widget.value"
+            [caption]="widget.caption"
+            [accentColor]="widget.accentColor"
+            [isLoading]="isLoading"
+          />
+        }
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      
+      <app-chart-card
+        class="grid-item span-full large-chart"
+        title="Biểu đồ Cấp cứu lượt nhập viện"
+        icon="fas fa-chart-bar"
+        iconClass="icon-info"
+        [isLoading]="isLoading"
+        [chartOptions]="comparisonChartOptions"
+        skeletonType="bar"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+        emptyText="Chưa có dữ liệu cấp cứu."
+      >
+      </app-chart-card>
+
+      <app-table-card
+        class="grid-item span-full"
+        title="Chi tiết số liệu"
+        icon="fas fa-table"
+        iconClass="icon-success"
+        [isLoading]="isLoading"
+        [data]="rawData"
+        [columns]="tableColumns"
+        [showPaginator]="true"
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 25]"
+        [clientSideSort]="true"
+        emptyStateText="Không tìm thấy dữ liệu."
+        [enableExport]="true"
+        [isExporting]="isExporting"
+        (exportClicked)="onExport()"
+      >
+      </app-table-card>
+
+    </div>
+  </div>
+</div>

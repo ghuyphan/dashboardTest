@@ -186,6 +186,19 @@ export const routes: Routes = [
           showSearchBar: false,
         },
       },
+      {
+        path: 'reports/emergency-admission-comparison',
+        loadComponent: () =>
+          import(
+            './features/reports/emergency-admission-comparison/emergency-admission-comparison.component'
+          ).then((m) => m.EmergencyAdmissionComparisonComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'CapCuu.CapCuu02', 
+          title: 'Cấp cứu lượt nhập viện', // Tiêu đề theo yêu cầu
+          showSearchBar: false,
+        },
+      },
 
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],
