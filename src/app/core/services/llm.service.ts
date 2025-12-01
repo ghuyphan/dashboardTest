@@ -53,21 +53,19 @@ interface ToolResult {
 // INTENT TYPES
 // ============================================================================
 
-type Intent = 'nav' | 'theme' | 'it_support' | 'feature_help';
+type Intent = 'nav' | 'theme' | 'it_support' | 'general';
 
 // ============================================================================
-// KNOWLEDGE BASE - CHỈ CÁC QUY TRÌNH THỰC TẾ
+// KNOWLEDGE BASE
 // ============================================================================
 
 const IT_HOTLINE = '**1108** hoặc **1109**';
-const ESCALATION_MSG = `Vui lòng liên hệ IT hotline ${IT_HOTLINE} để được hỗ trợ trực tiếp.`;
 
-// Chỉ chứa các hướng dẫn IT thực tế, không bịa đặt
 const IT_KNOWLEDGE = `
 QUY TRÌNH HỖ TRỢ IT CƠ BẢN:
 
 [MẬT KHẨU]
-- Đổi mật khẩu: Vào Settings > Đổi mật khẩu (khi đang đăng nhập)
+- Đổi mật khẩu: Vào Cài đặt, nhập mật khẩu cũ và mật khẩu mới
 - Quên mật khẩu: Liên hệ IT hotline để yêu cầu reset mật khẩu
 - Tài khoản bị khóa (sai 5 lần): Liên hệ IT hotline để mở khóa
 - Lưu ý: KHÔNG chia sẻ mật khẩu cho bất kỳ ai
@@ -85,22 +83,23 @@ QUY TRÌNH HỖ TRỢ IT CƠ BẢN:
 - Treo/đơ: Nhấn F5 refresh hoặc đăng xuất rồi đăng nhập lại
 - Lỗi lưu: KHÔNG tắt máy, báo IT ngay
 - Không load: Xóa cache (Ctrl+Shift+Delete)
-
-[GIỚI HẠN]
-Đây chỉ là hướng dẫn cơ bản. Vấn đề phức tạp hơn cần liên hệ IT hotline.
 `;
 
-// Mô tả các màn hình thực tế trong hệ thống
 const FEATURE_DESCRIPTIONS: Record<string, string> = {
-  'home': 'Trang chủ: Hiển thị tổng quan và thông báo hệ thống.',
-  'settings': 'Cài đặt: Đổi mật khẩu, cập nhật thông tin cá nhân.',
-  'equipment/catalog': 'Danh mục thiết bị: Tra cứu, quét QR, theo dõi bàn giao thiết bị y tế.',
-  'reports/bed-usage': 'Báo cáo giường: Thống kê công suất sử dụng giường theo khoa/phòng.',
-  'reports/examination-overview': 'Báo cáo khám: Thống kê lượt khám, BHYT, viện phí, doanh thu.',
-  'reports/missing-medical-records': 'Báo cáo HSBA thiếu: Danh sách hồ sơ bệnh án chưa hoàn thiện.',
+  home: 'Trang chủ: Hiển thị tổng quan và thông báo hệ thống.',
+  settings: 'Cài đặt: Đổi mật khẩu, cập nhật thông tin cá nhân.',
+  'equipment/catalog':
+    'Danh mục thiết bị: Tra cứu, quét QR, theo dõi bàn giao thiết bị y tế.',
+  'reports/bed-usage':
+    'Báo cáo giường: Thống kê công suất sử dụng giường theo khoa/phòng.',
+  'reports/examination-overview':
+    'Báo cáo khám: Thống kê lượt khám, BHYT, viện phí, doanh thu.',
+  'reports/missing-medical-records':
+    'Báo cáo HSBA thiếu: Danh sách hồ sơ bệnh án chưa hoàn thiện.',
   'reports/cls-level3': 'Báo cáo CLS tầng 3: Thống kê xét nghiệm, CĐHA tầng 3.',
   'reports/cls-level6': 'Báo cáo CLS tầng 6: Thống kê xét nghiệm, CĐHA tầng 6.',
-  'reports/specialty-cls': 'Báo cáo CLS chuyên khoa: Thống kê theo từng chuyên khoa.',
+  'reports/specialty-cls':
+    'Báo cáo CLS chuyên khoa: Thống kê theo từng chuyên khoa.',
 };
 
 // ============================================================================
@@ -135,71 +134,44 @@ function normalize(text: string): string {
 // ============================================================================
 
 function detectLanguage(text: string): 'vi' | 'en' {
-  const lower = text.toLowerCase();
-  
-  // Vietnamese diacritics = definitely Vietnamese
-  if (/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/.test(text)) {
+  if (
+    /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/.test(
+      text
+    )
+  ) {
     return 'vi';
   }
-  
-  // Common Vietnamese words without diacritics
-  const vnWords = /\b(toi|ban|cua|nay|do|duoc|khong|co|la|va|cho|voi|den|xem|mo|chuyen|vao|giup|can|mat khau|quen|doi|bi khoa)\b/;
+
+  const lower = text.toLowerCase();
+
+  const vnWords =
+    /\b(toi|ban|cua|nay|do|duoc|khong|co|la|va|cho|voi|den|xem|mo|chuyen|vao|giup|can|mat khau|quen|doi|bi khoa)\b/;
   if (vnWords.test(lower)) {
     return 'vi';
   }
-  
-  // Strong English sentence starters
-  const enStarters = /^(please|can you|could you|i want|i need|how do i|what is|show me|help me|take me|i forgot|change my)/i;
+
+  const enStarters =
+    /^(please|can you|could you|i want|i need|how do i|what is|show me|help me|take me|i forgot|change my)/i;
   if (enStarters.test(lower)) {
     return 'en';
   }
-  
-  // Default to Vietnamese
+
   return 'vi';
 }
 
 // ============================================================================
-// PASSWORD-SPECIFIC PATTERNS (Checked first, before general intents)
+// CLASSIFICATION - RELAXED APPROACH
 // ============================================================================
-
-const PASSWORD_FORGOT_PATTERNS = [
-  'quen mat khau', 'forgot password', 'khong nho mat khau',
-  'mat khau la gi', 'quen pass', 'forget password', 'quen mk',
-  'khong biet mat khau', 'mat khau gi',
-];
-
-const PASSWORD_LOCKED_PATTERNS = [
-  'bi khoa', 'tai khoan bi khoa', 'khoa tai khoan', 'account locked', 'locked out',
-  'sai mat khau', 'wrong password', 'nhap sai', 'dang nhap khong duoc',
-  'khong dang nhap duoc', 'cannot login', 'cant login', 'login failed',
-  'sai pass', 'sai mk', 'nhap sai mat khau',
-];
-
-const PASSWORD_CHANGE_PATTERNS = [
-  'doi mat khau', 'change password', 'thay mat khau', 'cap nhat mat khau',
-  'update password', 'muon doi pass', 'doi mk', 'thay doi mat khau',
-  'reset mat khau cua toi', 'doi pass',
-];
-
-// ============================================================================
-// WHITELIST CLASSIFICATION
-// ============================================================================
-
-interface WhitelistEntry {
-  patterns: string[];
-  response?: string | string[];
-  intent?: Intent;
-}
 
 interface ClassifyResult {
   type: 'direct' | 'llm' | 'blocked';
   response?: string;
   intent?: Intent;
-  extractedCommand?: string;
+  navTarget?: string; // Hint for navigation
   language: 'vi' | 'en';
 }
 
-// Blocklist: Always rejected
+// BLOCKLIST: Security & out-of-scope
 const BLOCKLIST: RegExp[] = [
   // === Injection attempts ===
   /ignore.*(previous|all|above)?\s*instruction/i,
@@ -222,7 +194,7 @@ const BLOCKLIST: RegExp[] = [
   /truy cap\s*trai phep/i,
   /unauthorized\s*access/i,
 
-  // === Out-of-scope ===
+  // === Clearly out-of-scope ===
   /viet\s*(code|script|tho|truyen|bai|van)/i,
   /code\s*(python|java|sql|js|javascript|html|css)/i,
   /(fix|sua|debug)\s*(code|bug)/i,
@@ -244,277 +216,189 @@ const BLOCKLIST: RegExp[] = [
   /summarize|paraphrase/i,
 ];
 
-// Whitelist with expanded intents (NO password patterns here - handled separately)
-const WHITELIST: WhitelistEntry[] = [
-  // ===== GREETINGS =====
+// QUICK RESPONSES: Greetings, thanks, etc.
+interface QuickResponse {
+  patterns: string[];
+  response: string | string[];
+}
+
+const QUICK_RESPONSES: QuickResponse[] = [
   {
-    patterns: ['chao', 'xin chao', 'hello', 'hi', 'hey', 'alo', 'co ai khong', 'good morning', 'good afternoon'],
+    patterns: ['xin chao', 'chao ban', 'hello', 'hi', 'hey', 'alo'],
     response: [
-      'Xin chào! Tôi có thể hỗ trợ:\n• Điều hướng màn hình\n• Thay đổi giao diện\n• Hướng dẫn IT cơ bản\n\nBạn cần gì?',
+      'Xin chào! Tôi có thể hỗ trợ điều hướng, đổi giao diện, và hướng dẫn IT cơ bản. Bạn cần gì?',
       'Chào bạn! Tôi là trợ lý IT. Bạn cần hỗ trợ gì?',
     ],
   },
   {
-    patterns: ['ban la ai', 'ban ten gi', 'bot la gi', 'who are you', 'la ai', 'what are you'],
-    response: `Tôi là Trợ lý IT của Bệnh viện Hoàn Mỹ.\n\nTôi có thể hỗ trợ:\n• Điều hướng đến các màn hình\n• Thay đổi giao diện Sáng/Tối\n• Hướng dẫn xử lý sự cố IT cơ bản\n\nVấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
-  },
-  {
-    patterns: ['giup gi', 'lam duoc gi', 'help', 'huong dan', 'chuc nang', 'ho tro gi', 'what can you do'],
-    response: `Tôi có thể hỗ trợ:\n\n**Điều hướng:** "Mở báo cáo giường", "Vào settings"\n**Giao diện:** "Đổi theme tối", "Chuyển sang sáng"\n**IT cơ bản:** "Máy in lỗi", "Mạng chậm"\n**Mật khẩu:** "Đổi mật khẩu" (nếu đang đăng nhập)\n\nQuên mật khẩu hoặc bị khóa tài khoản: Liên hệ IT hotline ${IT_HOTLINE}`,
-  },
-
-  // ===== ACKNOWLEDGMENTS =====
-  {
     patterns: ['cam on', 'thank', 'thanks'],
-    response: ['Không có gì! Bạn cần hỗ trợ thêm không?', 'Rất vui được hỗ trợ!'],
+    response: ['Không có gì!', 'Rất vui được hỗ trợ!'],
   },
   {
-    patterns: ['ok', 'duoc', 'vang', 'da', 'u', 'hieu roi', 'da hieu', 'got it', 'understood'],
+    patterns: ['ok', 'duoc roi', 'hieu roi', 'da hieu', 'got it'],
     response: 'Bạn cần hỗ trợ thêm gì không?',
   },
   {
-    patterns: ['khong', 'no', 'thoi', 'khoi', 'het roi', 'khong can'],
-    response: 'Vâng, tôi sẽ ở đây khi bạn cần.',
-  },
-  {
-    patterns: ['tam biet', 'bye', 'goodbye', 'chao nhe', 'hen gap lai', 'see you'],
+    patterns: ['tam biet', 'bye', 'goodbye', 'chao nhe'],
     response: 'Tạm biệt! Hẹn gặp lại.',
   },
-
-  // ===== ESCALATION - Direct to hotline =====
   {
     patterns: [
-      'gap nguoi', 'noi chuyen voi nguoi', 'goi dien', 'lien he it', 'hotline', 'so dien thoai',
-      'can gap', 'khan cap', 'gap', 'urgent', 'emergency', 'human', 'real person',
-      'khong giai quyet duoc', 'van khong duoc', 'khong giup duoc', 'bo tay',
+      'hotline',
+      'so dien thoai',
+      'lien he it',
+      'gap nguoi',
+      'khan cap',
+      'urgent',
     ],
-    response: `Tôi hiểu bạn cần hỗ trợ trực tiếp.\n\n📞 **IT Hotline:**\n• Ext: **1108**\n• Ext: **1109**\n\nĐội IT sẽ hỗ trợ bạn ngay!`,
-  },
-
-  // ===== NAVIGATION INTENT (No password patterns - handled separately) =====
-  {
-    patterns: [
-      'mo', 'xem', 'chuyen', 'vao', 'di den', 'den', 'toi', 'dua toi',
-      'navigate', 'open', 'go to', 'go', 'show', 'display', 'take me',
-      'man hinh', 'trang', 'menu',
-    ],
-    intent: 'nav',
-  },
-  {
-    patterns: [
-      'dashboard', 'home', 'trang chu', 'tong quan',
-      'settings', 'cai dat', 'tai khoan', 'account', 'profile', 'ho so',
-      'thiet bi', 'equipment', 'catalog', 'may moc', 'qr', 'ban giao',
-      'bao cao', 'report', 'thong ke',
-      'giuong', 'bed', 'cong suat',
-      'kham', 'examination', 'bhyt', 'vien phi', 'doanh thu',
-      'hsba', 'ho so benh an', 'medical record',
-      'cls', 'tang 3', 'tang 6', 'lau 3', 'lau 6', 'level 3', 'level 6',
-      'chuyen khoa', 'specialty',
-    ],
-    intent: 'nav',
-  },
-
-  // ===== THEME INTENT =====
-  {
-    patterns: [
-      'theme', 'giao dien', 'che do',
-      'sang', 'toi', 'dark', 'light',
-      'doi mau', 'chuyen mau', 'doi giao dien',
-      'ban dem', 'ban ngay', 'night mode', 'day mode',
-    ],
-    intent: 'theme',
-  },
-
-  // ===== IT SUPPORT INTENT (No password patterns - handled separately) =====
-  {
-    patterns: [
-      'loi', 'error', 'khong duoc', 'bi loi', 'failed', 'khong the',
-      'may in', 'printer', 'in khong duoc', 'ket giay',
-      'mang', 'network', 'internet', 'mat mang', 'cham', 'lag', 'treo', 'dong bang',
-      'khong load', 'khong hien thi', 'bi treo', 'refresh',
-    ],
-    intent: 'it_support',
-  },
-
-  // ===== FEATURE HELP INTENT =====
-  {
-    patterns: [
-      'la gi', 'de lam gi', 'dung de', 'cach dung', 'su dung', 'how to use',
-      'man hinh nay', 'trang nay', 'chuc nang nay', 'nut nay',
-      'giai thich', 'explain', 'what is this', 'whats this',
-    ],
-    intent: 'feature_help',
+    response: `📞 **IT Hotline:** 1108 hoặc 1109\n\nĐội IT sẽ hỗ trợ bạn ngay!`,
   },
 ];
 
-// Collect patterns for validation
-const ALL_NAV_PATTERNS = WHITELIST.filter(e => e.intent === 'nav').flatMap(e => e.patterns);
-const ALL_THEME_PATTERNS = WHITELIST.filter(e => e.intent === 'theme').flatMap(e => e.patterns);
-const ALL_IT_PATTERNS = WHITELIST.filter(e => e.intent === 'it_support').flatMap(e => e.patterns);
-const ALL_FEATURE_PATTERNS = WHITELIST.filter(e => e.intent === 'feature_help').flatMap(e => e.patterns);
+// PASSWORD patterns
+const PASSWORD_FORGOT = [
+  'quen mat khau',
+  'forgot password',
+  'khong nho mat khau',
+  'quen pass',
+  'quen mk',
+];
 
-// Security thresholds
-const MAX_INTENT_INPUT_LENGTH = 80;
-const MIN_KEYWORD_DENSITY = 0.2;
+const PASSWORD_LOCKED = [
+  'bi khoa',
+  'tai khoan khoa',
+  'account locked',
+  'locked out',
+  'khong dang nhap duoc',
+  'cannot login',
+];
+
+const PASSWORD_CHANGE = [
+  'doi mat khau',
+  'change password',
+  'thay mat khau',
+  'doi pass',
+  'doi mk',
+];
+
+// INTENT DETECTION
+function detectIntent(normalized: string, original: string): Intent {
+  // Theme - check with original text for Vietnamese diacritics
+  if (
+    /\b(theme|giao dien|che do|dark|light|ban dem|ban ngay|night mode|day mode)\b/.test(
+      normalized
+    )
+  ) {
+    return 'theme';
+  }
+
+  // Theme with Vietnamese diacritics
+  if (/sáng|tối|đổi màu|chuyển màu/i.test(original)) {
+    return 'theme';
+  }
+
+  // Navigation
+  if (
+    /\b(mo|vao|den|xem|chuyen|open|go to|go|navigate|show|take me|man hinh|trang|menu)\b/.test(
+      normalized
+    )
+  ) {
+    return 'nav';
+  }
+
+  // Screen names → nav
+  if (
+    /\b(home|settings|cai dat|dashboard|equipment|thiet bi|report|bao cao|giuong|bed|kham|hsba|cls)\b/.test(
+      normalized
+    )
+  ) {
+    return 'nav';
+  }
+
+  // IT Support
+  if (
+    /\b(loi|error|khong duoc|bi loi|may in|printer|mang|network|internet|treo|lag|cham|refresh)\b/.test(
+      normalized
+    )
+  ) {
+    return 'it_support';
+  }
+
+  return 'general';
+}
 
 function classify(input: string): ClassifyResult {
   const raw = input.toLowerCase();
   const normalized = normalize(input);
-  const words = normalized.split(' ').filter(w => w.length > 0);
   const language = detectLanguage(input);
 
-  // Step 1: Blocklist check
+  // =========================================
+  // STEP 1: BLOCKLIST
+  // =========================================
   for (const pattern of BLOCKLIST) {
     if (pattern.test(raw) || pattern.test(normalized)) {
       return {
         type: 'blocked',
-        response: language === 'en'
-          ? `This is outside my scope. I can help with navigation, theme, and basic IT support. For complex issues, please contact IT hotline ${IT_HOTLINE}.`
-          : `Nội dung này nằm ngoài phạm vi hỗ trợ. Tôi có thể giúp điều hướng, đổi giao diện và hỗ trợ IT cơ bản. Vấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
+        response:
+          language === 'en'
+            ? `This is outside my scope. I can help with navigation, theme, and basic IT support. For complex issues, contact IT hotline ${IT_HOTLINE}.`
+            : `Nội dung này nằm ngoài phạm vi hỗ trợ. Tôi có thể giúp điều hướng, đổi giao diện và hỗ trợ IT cơ bản. Vấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
         language,
       };
     }
   }
 
-  // Step 2: PASSWORD-SPECIFIC HANDLING (before general intents)
-  // Check forgot password - needs IT hotline
-  if (PASSWORD_FORGOT_PATTERNS.some(p => normalized.includes(p))) {
+  // =========================================
+  // STEP 2: PASSWORD
+  // =========================================
+  if (PASSWORD_FORGOT.some((p) => normalized.includes(p))) {
     return {
       type: 'direct',
-      response: language === 'en'
-        ? `**Forgot password?**\n\nPlease contact IT hotline ${IT_HOTLINE} to request a password reset.\n\n⚠️ Note: IT will verify your identity before resetting.`
-        : `**Quên mật khẩu?**\n\nVui lòng liên hệ IT hotline ${IT_HOTLINE} để yêu cầu reset mật khẩu.\n\n⚠️ Lưu ý: IT sẽ xác minh danh tính trước khi reset.`,
+      response:
+        language === 'en'
+          ? `**Forgot password?**\n\nPlease contact IT hotline ${IT_HOTLINE} to request a password reset.`
+          : `**Quên mật khẩu?**\n\nVui lòng liên hệ IT hotline ${IT_HOTLINE} để yêu cầu reset mật khẩu.`,
       language,
     };
   }
 
-  // Check locked account - needs IT hotline
-  if (PASSWORD_LOCKED_PATTERNS.some(p => normalized.includes(p))) {
+  if (PASSWORD_LOCKED.some((p) => normalized.includes(p))) {
     return {
       type: 'direct',
-      response: language === 'en'
-        ? `**Account locked?**\n\nIf you enter the wrong password **5 times**, your account will be automatically locked.\n\n📞 Please contact IT hotline ${IT_HOTLINE} to unlock.\n\n💡 Tip: Check Caps Lock before entering password.`
-        : `**Tài khoản bị khóa?**\n\nNếu bạn nhập sai mật khẩu **5 lần**, tài khoản sẽ tự động bị khóa.\n\n📞 Vui lòng liên hệ IT hotline ${IT_HOTLINE} để được mở khóa.\n\n💡 Mẹo: Kiểm tra Caps Lock trước khi nhập mật khẩu.`,
+      response:
+        language === 'en'
+          ? `**Account locked?**\n\nPlease contact IT hotline ${IT_HOTLINE} to unlock your account.`
+          : `**Tài khoản bị khóa?**\n\nVui lòng liên hệ IT hotline ${IT_HOTLINE} để được mở khóa.`,
       language,
     };
   }
 
-  // Check change password - navigate to settings
-  if (PASSWORD_CHANGE_PATTERNS.some(p => normalized.includes(p))) {
+  if (PASSWORD_CHANGE.some((p) => normalized.includes(p))) {
     return {
       type: 'llm',
       intent: 'nav',
-      extractedCommand: 'settings',  // Direct to settings page
+      navTarget: 'settings', // Hint: navigate to settings
       language,
     };
   }
 
-  // Step 3: Regular whitelist check
-  for (const entry of WHITELIST) {
-    const matchedPattern = entry.patterns.find(pattern => {
-      if (pattern.length <= 3) {
-        return words.includes(pattern);
-      }
-      return normalized.includes(pattern);
-    });
-
-    if (matchedPattern) {
-      // Direct response
-      if (entry.response) {
-        const resp = Array.isArray(entry.response)
-          ? entry.response[Math.floor(Math.random() * entry.response.length)]
-          : entry.response;
-        return { type: 'direct', response: resp, language };
-      }
-
-      // Intent matched - validate
-      if (entry.intent) {
-        const securityCheck = validateIntentSecurity(normalized, words, entry.intent);
-        
-        if (!securityCheck.safe) {
-          return {
-            type: 'blocked',
-            response: securityCheck.reason || 'Vui lòng nhập lệnh ngắn gọn hơn.',
-            language,
-          };
-        }
-
-        return { 
-          type: 'llm', 
-          intent: entry.intent,
-          extractedCommand: securityCheck.cleanCommand,
-          language,
-        };
-      }
+  // =========================================
+  // STEP 3: QUICK RESPONSES
+  // =========================================
+  for (const entry of QUICK_RESPONSES) {
+    if (entry.patterns.some((p) => normalized.includes(p))) {
+      const resp = Array.isArray(entry.response)
+        ? entry.response[Math.floor(Math.random() * entry.response.length)]
+        : entry.response;
+      return { type: 'direct', response: resp, language };
     }
   }
 
-  // Step 4: Not in whitelist
-  if (input.length < 10) {
-    return {
-      type: 'blocked',
-      response: language === 'en' 
-        ? 'Sorry, I didn\'t understand. Could you please be more specific?'
-        : 'Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?',
-      language,
-    };
-  }
-
-  return {
-    type: 'blocked',
-    response: language === 'en'
-      ? `I can help with: navigation, theme changes, and basic IT support. For other issues, please contact IT hotline ${IT_HOTLINE}.`
-      : `Tôi có thể hỗ trợ: điều hướng, đổi giao diện, và hỗ trợ IT cơ bản. Vấn đề khác vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
-    language,
-  };
-}
-
-function validateIntentSecurity(
-  normalized: string,
-  words: string[],
-  intent: Intent
-): { safe: boolean; reason?: string; cleanCommand?: string } {
-  
-  const cleanInput = normalized.replace(/\s/g, '');
-  
-  // Length limit
-  if (cleanInput.length > MAX_INTENT_INPUT_LENGTH) {
-    return { 
-      safe: false, 
-      reason: 'Vui lòng nhập lệnh ngắn gọn hơn.' 
-    };
-  }
-
-  // Get relevant patterns for this intent
-  let relevantPatterns: string[];
-  switch (intent) {
-    case 'nav': relevantPatterns = ALL_NAV_PATTERNS; break;
-    case 'theme': relevantPatterns = ALL_THEME_PATTERNS; break;
-    case 'it_support': relevantPatterns = ALL_IT_PATTERNS; break;
-    case 'feature_help': relevantPatterns = ALL_FEATURE_PATTERNS; break;
-  }
-
-  // Check keyword density for longer inputs
-  if (words.length > 5) {
-    const relevantWordCount = words.filter(word => 
-      relevantPatterns.some(p => {
-        const pNorm = normalize(p);
-        return pNorm.includes(word) || word.includes(pNorm);
-      })
-    ).length;
-    
-    const density = relevantWordCount / words.length;
-    
-    if (density < MIN_KEYWORD_DENSITY) {
-      return { 
-        safe: false, 
-        reason: `Tôi chỉ hỗ trợ các lệnh đơn giản. Vui lòng liên hệ IT hotline ${IT_HOTLINE} nếu cần hỗ trợ thêm.`
-      };
-    }
-  }
-
-  return { safe: true, cleanCommand: normalized };
+  // =========================================
+  // STEP 4: EVERYTHING ELSE → LLM
+  // =========================================
+  const intent = detectIntent(normalized, input);
+  return { type: 'llm', intent, language };
 }
 
 // ============================================================================
@@ -523,12 +407,38 @@ function validateIntentSecurity(
 
 const SCREEN_KEYWORDS: Record<string, string[]> = {
   home: ['home', 'trang chủ', 'chính', 'dashboard', 'tổng quan'],
-  settings: ['settings', 'cài đặt', 'tài khoản', 'account', 'profile', 'hồ sơ', 'đổi mật khẩu'],
-  'equipment/catalog': ['thiết bị', 'máy móc', 'catalog', 'danh sách', 'qr', 'bàn giao'],
+  settings: [
+    'settings',
+    'cài đặt',
+    'tài khoản',
+    'account',
+    'profile',
+    'hồ sơ',
+    'đổi mật khẩu',
+    'mat khau',
+  ],
+  'equipment/catalog': [
+    'thiết bị',
+    'máy móc',
+    'catalog',
+    'danh sách',
+    'qr',
+    'bàn giao',
+  ],
   'equipment/dashboard': ['thiết bị dashboard', 'biểu đồ thiết bị'],
   'reports/bed-usage': ['giường', 'bed', 'công suất'],
-  'reports/examination-overview': ['khám', 'examination', 'bhyt', 'viện phí', 'doanh thu'],
-  'reports/missing-medical-records': ['hsba', 'hồ sơ bệnh án', 'medical records'],
+  'reports/examination-overview': [
+    'khám',
+    'examination',
+    'bhyt',
+    'viện phí',
+    'doanh thu',
+  ],
+  'reports/missing-medical-records': [
+    'hsba',
+    'hồ sơ bệnh án',
+    'medical records',
+  ],
   'reports/cls-level3': ['cls', 'tầng 3', 'lầu 3', 'level3'],
   'reports/cls-level6': ['cls', 'tầng 6', 'lầu 6', 'level6'],
   'reports/specialty-cls': ['cls chuyên khoa', 'specialty'],
@@ -570,10 +480,7 @@ export class LlmService {
   private readonly RATE_WINDOW = 60_000;
   private readonly RATE_COOLDOWN = 10_000;
 
-  private readonly TYPING_BASE_DELAY = 400;
-  private readonly TYPING_MAX_DELAY = 1000;
-
-  // Qwen3 optimized settings
+  // Sampling settings
   private readonly SAMPLING = {
     temperature: 0.3,
     top_p: 0.85,
@@ -581,7 +488,6 @@ export class LlmService {
     repeat_penalty: 1.15,
   };
 
-  // Stricter settings for tool calling
   private readonly TOOL_SAMPLING = {
     temperature: 0.1,
     top_p: 0.8,
@@ -614,8 +520,6 @@ export class LlmService {
   private routeCache: RouteInfo[] | null = null;
   private routeMap: Map<string, RouteInfo> | null = null;
   private toolCache: unknown[] | null = null;
-  private promptCache: Map<Intent, string> = new Map();
-  private permHash = '';
 
   private readonly streamUpdate$ = new Subject<StreamUpdate>();
 
@@ -670,31 +574,27 @@ export class LlmService {
       return;
     }
 
-    // Disambiguation for nav
+    // =========================================
+    // NAVIGATION: Check for route matches first
+    // =========================================
     if (result.intent === 'nav') {
-      const disambig = this.checkDisambiguation(input);
-      if (disambig) {
-        await this.respondWithTyping(disambig);
-        return;
-      }
+      const navResult = await this.handleNavigation(input, result);
+      if (navResult.handled) return;
+      // If not handled, continue to LLM
     }
 
-    // Feature help - can be handled locally for known routes
-    if (result.intent === 'feature_help') {
-      const featureResponse = this.handleFeatureHelp(input, result.language);
-      if (featureResponse) {
-        await this.respondWithTyping(featureResponse);
-        return;
-      }
-    }
+    // =========================================
+    // THEME: Let LLM handle
+    // =========================================
 
     // Pass to LLM
     this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
     this.isGenerating.set(true);
 
     try {
-      const commandToSend = result.extractedCommand || input;
-      await this.retry(() => this.stream(commandToSend, result.intent!, result.language));
+      await this.retry(() =>
+        this.stream(input, result.intent!, result.language)
+      );
     } catch (e) {
       this.handleErr(e);
     } finally {
@@ -746,35 +646,128 @@ export class LlmService {
   }
 
   // ============================================================================
-  // FEATURE HELP - Local handling
+  // NAVIGATION HANDLING
   // ============================================================================
 
-  private handleFeatureHelp(input: string, language: 'vi' | 'en'): string | null {
-    const currentPath = this.router.url.split('?')[0];
-    const currentKey = currentPath.replace(/^\/app\//, '').replace(/^\//, '');
-    
+  private async handleNavigation(
+    input: string,
+    result: ClassifyResult
+  ): Promise<{ handled: boolean }> {
+    // Extract target from input or use hint
+    const target = result.navTarget || this.extractNavTarget(input);
+    if (!target) return { handled: false };
+
+    const matches = this.findMatchingRoutes(target);
+
+    // Single match → navigate directly
+    if (matches.length === 1) {
+      this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
+      this.isGenerating.set(true);
+      await this.delay(600);
+
+      const navResult = this.doNav(matches[0].key);
+      const msg = this.getNavMessage(navResult, matches[0], result.navTarget);
+
+      this.updateLastMessageContent(msg);
+      this.isGenerating.set(false);
+      this.finalize();
+      return { handled: true };
+    }
+
+    // Multiple matches → ask user to choose
+    if (matches.length > 1) {
+      const options = matches.map((m, i) => `${i + 1}. ${m.title}`).join('\n');
+      await this.respondWithTyping(
+        `Tìm thấy ${matches.length} màn hình phù hợp:\n\n${options}\n\nBạn muốn mở màn hình nào?`
+      );
+      return { handled: true };
+    }
+
+    // No matches → let LLM handle (might suggest alternatives)
+    return { handled: false };
+  }
+
+  private extractNavTarget(input: string): string {
     const normalized = normalize(input);
-    const askingAboutCurrent = ['man hinh nay', 'trang nay', 'day la gi', 'this screen', 'this page', 'whats this'].some(
-      p => normalized.includes(p)
+
+    // Remove navigation verbs, keep the target
+    const removeWords = [
+      'mo',
+      'vao',
+      'den',
+      'xem',
+      'chuyen',
+      'di',
+      'toi',
+      'open',
+      'go',
+      'to',
+      'navigate',
+      'show',
+      'take',
+      'me',
+      'trang',
+      'man hinh',
+      'screen',
+      'page',
+      'cho',
+      'giup',
+      'can',
+      'muon',
+    ];
+
+    let target = normalized;
+    removeWords.forEach(
+      (w) => (target = target.replace(new RegExp(`\\b${w}\\b`, 'g'), ''))
     );
 
-    if (askingAboutCurrent && FEATURE_DESCRIPTIONS[currentKey]) {
-      const desc = FEATURE_DESCRIPTIONS[currentKey];
-      return language === 'en' 
-        ? `This screen: ${desc}\n\nNeed more help? Contact IT hotline ${IT_HOTLINE}.`
-        : `${desc}\n\nCần hỗ trợ thêm? Liên hệ IT hotline ${IT_HOTLINE}.`;
-    }
+    return target.replace(/\s+/g, ' ').trim();
+  }
 
-    for (const [key, desc] of Object.entries(FEATURE_DESCRIPTIONS)) {
-      const keywords = SCREEN_KEYWORDS[key] || [];
-      if (keywords.some(kw => normalized.includes(normalize(kw)))) {
-        return language === 'en'
-          ? `${desc}\n\nWant to open it? Just say "open ${key}".`
-          : `${desc}\n\nBạn muốn mở? Chỉ cần nói "mở ${key}".`;
+  private findMatchingRoutes(target: string): RouteInfo[] {
+    if (!target || target.length < 2) return [];
+
+    const routes = this.getRoutes();
+    const words = target.split(' ').filter((w) => w.length > 1);
+
+    if (words.length === 0) return [];
+
+    return routes.filter((r) => {
+      const title = normalize(r.title);
+      const key = r.key.toLowerCase();
+      const keywords = r.keywords?.map((k) => normalize(k)) || [];
+
+      return words.some(
+        (w) =>
+          title.includes(w) ||
+          key.includes(w) ||
+          keywords.some((kw) => kw.includes(w) || w.includes(kw))
+      );
+    });
+  }
+
+  private getNavMessage(
+    result: ToolResult,
+    route: RouteInfo,
+    navTarget?: string
+  ): string {
+    if (!result.success) return result.error || 'Có lỗi xảy ra.';
+
+    // Special case: password change
+    const isPasswordChange = navTarget === 'settings';
+
+    if (result.data === 'SAME') {
+      if (isPasswordChange) {
+        return `Bạn đang ở màn hình **${route.title}** rồi. Nhập mật khẩu cũ và mật khẩu mới bên dưới để đổi.`;
       }
+      return `Bạn đang ở màn hình **${route.title}** rồi.`;
     }
 
-    return null;
+    if (isPasswordChange) {
+      return `Đang chuyển đến **${route.title}**. Nhập mật khẩu cũ và mật khẩu mới để đổi.`;
+    }
+
+    return `Đang chuyển đến **${route.title}**...`;
   }
 
   // ============================================================================
@@ -782,16 +775,42 @@ export class LlmService {
   // ============================================================================
 
   private async respondWithTyping(response: string): Promise<void> {
-    this.isTyping.set(true);
+    this.isGenerating.set(true);
+    this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
 
-    const delay = Math.min(
-      this.TYPING_BASE_DELAY + response.length * 1.5,
-      this.TYPING_MAX_DELAY
-    );
-    await this.delay(delay);
+    const thinkingDelay = 600 + Math.random() * 600;
+    await this.delay(thinkingDelay);
 
-    this.messages.update((m) => [...m, this.createMsg('assistant', response)]);
-    this.isTyping.set(false);
+    const chunkSize = 4;
+    let currentText = '';
+
+    for (let i = 0; i < response.length; i += chunkSize) {
+      if (!this.isGenerating()) break;
+
+      const chunk = response.slice(i, i + chunkSize);
+      currentText += chunk;
+      this.updateLastMessageContent(currentText);
+
+      await this.delay(10 + Math.random() * 20);
+    }
+
+    this.isGenerating.set(false);
+    this.finalize();
+  }
+
+  private updateLastMessageContent(text: string): void {
+    this.messages.update((msgs) => {
+      const arr = [...msgs];
+      const lastIndex = arr.length - 1;
+      if (lastIndex >= 0 && arr[lastIndex].role === 'assistant') {
+        arr[lastIndex] = {
+          ...arr[lastIndex],
+          content: text,
+          tokenEstimate: this.tokens(text),
+        };
+      }
+      return arr;
+    });
   }
 
   // ============================================================================
@@ -803,14 +822,22 @@ export class LlmService {
 
     if (now < this.rateCooldownUntil) {
       const sec = Math.ceil((this.rateCooldownUntil - now) / 1000);
-      return { ok: false, msg: `Hệ thống đang bận. Vui lòng thử lại sau ${sec} giây.` };
+      return {
+        ok: false,
+        msg: `Hệ thống đang bận. Vui lòng thử lại sau ${sec} giây.`,
+      };
     }
 
-    this.msgTimestamps = this.msgTimestamps.filter((t) => now - t < this.RATE_WINDOW);
+    this.msgTimestamps = this.msgTimestamps.filter(
+      (t) => now - t < this.RATE_WINDOW
+    );
 
     if (this.msgTimestamps.length >= this.RATE_LIMIT) {
       this.rateCooldownUntil = now + this.RATE_COOLDOWN;
-      return { ok: false, msg: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi giây lát.' };
+      return {
+        ok: false,
+        msg: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi giây lát.',
+      };
     }
 
     this.msgTimestamps.push(now);
@@ -827,7 +854,10 @@ export class LlmService {
     if (r.length > this.MAX_INPUT) r = r.slice(0, this.MAX_INPUT);
     r = r.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
     r = r.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n');
-    r = r.replace(/```[\s\S]*?```|<[^>]+>|\[INST\]|\[\/INST\]|<<SYS>>|<\|im_\w+\|>/gi, '');
+    r = r.replace(
+      /```[\s\S]*?```|<[^>]+>|\[INST\]|\[\/INST\]|<<SYS>>|<\|im_\w+\|>/gi,
+      ''
+    );
     return r.trim();
   }
 
@@ -840,7 +870,8 @@ export class LlmService {
     r = r.replace(/\{\s*"name"\s*:[^}]+\}/gi, '');
     r = r.replace(/nav\s+\S+|theme\s+(dark|light|toggle)/gi, '');
     r = r.replace(/https?:\/\/(?!localhost)[^\s<>]+/gi, '');
-    if (r.length > this.MAX_OUTPUT_CHARS) r = r.substring(0, this.MAX_OUTPUT_CHARS) + '...';
+    if (r.length > this.MAX_OUTPUT_CHARS)
+      r = r.substring(0, this.MAX_OUTPUT_CHARS) + '...';
     return r.replace(/\n{3,}/g, '\n\n').trim();
   }
 
@@ -848,7 +879,11 @@ export class LlmService {
   // STREAMING
   // ============================================================================
 
-  private async stream(userMsg: string, intent: Intent, language: 'vi' | 'en'): Promise<void> {
+  private async stream(
+    userMsg: string,
+    intent: Intent,
+    language: 'vi' | 'en'
+  ): Promise<void> {
     this.abortCtrl = new AbortController();
     const { signal } = this.abortCtrl;
 
@@ -875,7 +910,8 @@ export class LlmService {
       },
     };
 
-    if (this.DEBUG) console.log('[LLM] Request:', JSON.stringify(payload, null, 2));
+    if (this.DEBUG)
+      console.log('[LLM] Request:', JSON.stringify(payload, null, 2));
 
     const timeout = setTimeout(() => this.abortCtrl?.abort(), this.TIMEOUT);
 
@@ -898,8 +934,8 @@ export class LlmService {
   }
 
   private async processStream(
-    body: ReadableStream<Uint8Array>, 
-    signal: AbortSignal, 
+    body: ReadableStream<Uint8Array>,
+    signal: AbortSignal,
     intent: Intent,
     language: 'vi' | 'en'
   ): Promise<void> {
@@ -909,7 +945,7 @@ export class LlmService {
       let content = '';
       let toolCalls: ToolCall[] = [];
       let buffer = '';
-      
+
       const isToolIntent = intent === 'nav' || intent === 'theme';
       const suppressText = isToolIntent;
 
@@ -933,7 +969,8 @@ export class LlmService {
 
               const tools = this.parseTools(json);
               for (const t of tools) {
-                if (!toolCalls.some((tc) => tc.name === t.name)) toolCalls.push(t);
+                if (!toolCalls.some((tc) => tc.name === t.name))
+                  toolCalls.push(t);
               }
 
               if (!suppressText && content.trim() && !toolCalls.length) {
@@ -956,9 +993,12 @@ export class LlmService {
             if (json.message?.content) content += json.message.content;
             const tools = this.parseTools(json);
             for (const t of tools) {
-              if (!toolCalls.some((tc) => tc.name === t.name)) toolCalls.push(t);
+              if (!toolCalls.some((tc) => tc.name === t.name))
+                toolCalls.push(t);
             }
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         }
       } finally {
         reader.releaseLock();
@@ -977,16 +1017,24 @@ export class LlmService {
         if (toolCalls.length) {
           await this.ngZone.run(() => this.execTools(toolCalls));
         } else if (isToolIntent) {
-          const fallbackMsg = language === 'en'
-            ? `Could not complete request. Please try again or contact IT hotline ${IT_HOTLINE}.`
-            : `Không thể thực hiện yêu cầu. Vui lòng thử lại hoặc liên hệ IT hotline ${IT_HOTLINE}.`;
+          // For nav intent: suggest available screens
+          const routes = this.getRoutes();
+          const sample = routes
+            .slice(0, 5)
+            .map((r) => `• ${r.title}`)
+            .join('\n');
+          const fallbackMsg =
+            language === 'en'
+              ? `I'm not sure which screen you want. Available screens:\n\n${sample}`
+              : `Tôi không chắc bạn muốn mở màn hình nào. Các màn hình có sẵn:\n\n${sample}`;
           this.streamUpdate$.next({ content: fallbackMsg, tokenEstimate: 0 });
         } else {
           let finalContent = this.sanitizeOut(content);
-          if (finalContent.length < 20 || !finalContent.trim()) {
-            finalContent = language === 'en'
-              ? `I couldn't find specific information. Please contact IT hotline ${IT_HOTLINE} for assistance.`
-              : `Tôi không tìm thấy thông tin cụ thể. Vui lòng liên hệ IT hotline ${IT_HOTLINE} để được hỗ trợ.`;
+          if (finalContent.length < 10 || !finalContent.trim()) {
+            finalContent =
+              language === 'en'
+                ? `I'm not sure how to help with that. For IT issues, contact hotline ${IT_HOTLINE}.`
+                : `Tôi không chắc cách hỗ trợ vấn đề này. Liên hệ IT hotline ${IT_HOTLINE} nếu cần.`;
           }
           this.streamUpdate$.next({
             content: finalContent,
@@ -1002,21 +1050,24 @@ export class LlmService {
   // ============================================================================
 
   private buildPromptForIntent(intent: Intent, language: 'vi' | 'en'): string {
-    const langInstruction = language === 'en' 
-      ? 'Respond in English.' 
-      : 'Trả lời bằng tiếng Việt.';
+    const langInstruction =
+      language === 'en' ? 'Respond in English.' : 'Trả lời bằng tiếng Việt.';
 
     const routes = this.getRoutes();
-    const routeStr = routes.slice(0, 12).map((r) => `${r.key}:${r.title}`).join('|');
+    const routeStr = routes
+      .slice(0, 12)
+      .map((r) => `${r.key}:${r.title}`)
+      .join('|');
 
     switch (intent) {
-      case 'nav':
-      case 'theme':
-        return `IT Bot BV Hoàn Mỹ. /no_think
-TASK: Navigation + Theme ONLY.
+case 'nav':
+case 'theme':
+  return `IT Bot BV Hoàn Mỹ. /no_think
+TASK: Navigation + Theme.
 TOOLS: nav(k=route_key) | theme(m=dark/light/toggle)
 ROUTES: ${routeStr}
-RULE: Call tool immediately. No text. No explanation.
+// CHANGE THIS LINE BELOW:
+RULE: YOU MUST USE THE 'nav' TOOL to change screens. DO NOT just say you opened it.
 ${langInstruction}`;
 
       case 'it_support':
@@ -1027,34 +1078,36 @@ ${langInstruction}
 ${IT_KNOWLEDGE}
 
 RULES:
-- Chỉ hướng dẫn theo kiến thức trên, KHÔNG bịa đặt.
-- Trả lời ngắn gọn, đúng trọng tâm.
-- Vấn đề phức tạp/không biết: Hướng dẫn liên hệ IT hotline 1108 hoặc 1109.
-- KHÔNG hứa hẹn tính năng không có.
-- KHÔNG đoán mò giải pháp.`;
+- Trả lời ngắn gọn, thân thiện.
+- Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.
+- Không bịa đặt giải pháp.`;
 
-      case 'feature_help':
+      case 'general':
+      default:
         const featureStr = Object.entries(FEATURE_DESCRIPTIONS)
           .map(([k, v]) => `${k}: ${v}`)
           .join('\n');
-        
+
         return `IT Bot BV Hoàn Mỹ. /no_think
-ROLE: Giải thích chức năng màn hình.
+ROLE: Trợ lý IT thân thiện.
 ${langInstruction}
 
-CÁC MÀN HÌNH:
+CAPABILITIES:
+- Điều hướng màn hình (nav tool)
+- Đổi giao diện sáng/tối (theme tool)
+- Hướng dẫn IT cơ bản
+
+SCREENS:
 ${featureStr}
 
-RULES:
-- Chỉ giải thích các màn hình có trong danh sách trên.
-- Nếu không biết: "Tôi không có thông tin về màn hình này. Vui lòng liên hệ IT hotline 1108/1109."
-- Trả lời ngắn gọn.
-- KHÔNG bịa đặt tính năng.`;
+TOOLS: nav(k=route_key) | theme(m=dark/light/toggle)
+ROUTES: ${routeStr}
 
-      default:
-        return `IT Bot BV Hoàn Mỹ. /no_think
-Trả lời ngắn gọn. ${langInstruction}
-Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
+RULES:
+- Trả lời ngắn gọn, thân thiện.
+- Nếu user muốn mở màn hình hoặc đổi theme: dùng tool.
+- Nếu không biết: "Vui lòng liên hệ IT hotline 1108/1109."
+- Không bịa đặt thông tin.`;
     }
   }
 
@@ -1071,7 +1124,9 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
       const toolCalls = msg['tool_calls'] ?? json['tool_calls'];
       if (Array.isArray(toolCalls)) {
         for (const tc of toolCalls) {
-          const parsed = this.parseSingleToolCall(tc as Record<string, unknown>);
+          const parsed = this.parseSingleToolCall(
+            tc as Record<string, unknown>
+          );
           if (parsed) results.push(parsed);
         }
       }
@@ -1081,7 +1136,10 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
         const fc = funcCall as Record<string, unknown>;
         const name = this.mapToolName(fc['name'] as string);
         if (name) {
-          results.push({ name, arguments: this.parseArgs(fc['arguments'] ?? fc['args']) });
+          results.push({
+            name,
+            arguments: this.parseArgs(fc['arguments'] ?? fc['args']),
+          });
         }
       }
     } catch (e) {
@@ -1097,14 +1155,24 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
         const fn = call['function'] as Record<string, unknown>;
         const name = this.mapToolName(fn['name'] as string);
         if (name) {
-          return { name, arguments: this.parseArgs(fn['arguments'] ?? fn['args'] ?? fn['parameters']) };
+          return {
+            name,
+            arguments: this.parseArgs(
+              fn['arguments'] ?? fn['args'] ?? fn['parameters']
+            ),
+          };
         }
       }
 
       if (call['name'] && typeof call['name'] === 'string') {
         const name = this.mapToolName(call['name']);
         if (name) {
-          return { name, arguments: this.parseArgs(call['arguments'] ?? call['args'] ?? call['input']) };
+          return {
+            name,
+            arguments: this.parseArgs(
+              call['arguments'] ?? call['args'] ?? call['input']
+            ),
+          };
         }
       }
     } catch (e) {
@@ -1132,7 +1200,11 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     if (typeof args === 'string') {
       const trimmed = args.trim();
       if (trimmed.startsWith('{')) {
-        try { return JSON.parse(trimmed); } catch { /* ignore */ }
+        try {
+          return JSON.parse(trimmed);
+        } catch {
+          /* ignore */
+        }
       }
       return { k: trimmed };
     }
@@ -1146,7 +1218,10 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     try {
       const navMatch = text.match(/\bnav\s+["']?(\S+)["']?/i);
       if (navMatch) {
-        return { name: 'nav', arguments: { k: navMatch[1].replace(/['"]/g, '') } };
+        return {
+          name: 'nav',
+          arguments: { k: navMatch[1].replace(/['"]/g, '') },
+        };
       }
 
       const themeMatch = text.match(/\btheme\s+(dark|light|toggle)/i);
@@ -1159,7 +1234,9 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
         const key = this.findRouteKey(vnMatch[1]);
         if (key) return { name: 'nav', arguments: { k: key } };
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     return null;
   }
@@ -1173,8 +1250,11 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
       if (!ALLOWED_TOOLS.includes(call.name as AllowedTool)) continue;
 
       try {
-        const result = await this.execTool(call.name as AllowedTool, call.arguments);
-        const msg = this.getConfirmation(call.name, result);
+        const result = await this.execTool(
+          call.name as AllowedTool,
+          call.arguments
+        );
+        const msg = this.getToolConfirmation(call.name, result);
         if (msg) this.setLastMsg(msg);
       } catch (e) {
         console.error(`[LLM] Tool error ${call.name}:`, e);
@@ -1183,10 +1263,16 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     }
   }
 
-  private async execTool(name: AllowedTool, args: Record<string, unknown>): Promise<ToolResult> {
+  private async execTool(
+    name: AllowedTool,
+    args: Record<string, unknown>
+  ): Promise<ToolResult> {
     switch (name) {
       case 'nav': {
-        const key = (args['k'] || args['key'] || args['path'] || args['screen']) as string;
+        const key = (args['k'] ||
+          args['key'] ||
+          args['path'] ||
+          args['screen']) as string;
         if (!key) return { success: false, error: 'Đường dẫn không hợp lệ.' };
         return this.doNav(key);
       }
@@ -1197,7 +1283,7 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     }
   }
 
-  private getConfirmation(name: string, result: ToolResult): string {
+  private getToolConfirmation(name: string, result: ToolResult): string {
     if (!result.success) return result.error || 'Có lỗi xảy ra.';
 
     if (result.data === 'SAME') {
@@ -1258,12 +1344,15 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     const routes = this.getRoutes();
     const lower = key.toLowerCase();
 
-    return routes.find((r) =>
-      r.key.includes(lower) ||
-      r.fullUrl.includes(lower) ||
-      r.title.toLowerCase().includes(lower) ||
-      r.keywords?.some((kw) => kw.includes(lower))
-    ) || null;
+    return (
+      routes.find(
+        (r) =>
+          r.key.includes(lower) ||
+          r.fullUrl.includes(lower) ||
+          r.title.toLowerCase().includes(lower) ||
+          r.keywords?.some((kw) => kw.includes(lower))
+      ) || null
+    );
   }
 
   private findRouteKey(query: string): string | null {
@@ -1325,7 +1414,9 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
 
       const path = route.path || '';
       const fullPath = parent ? `${parent}/${path}` : `/${path}`;
-      const key = fullPath.startsWith('/app/') ? fullPath.substring(5) : fullPath.substring(1);
+      const key = fullPath.startsWith('/app/')
+        ? fullPath.substring(5)
+        : fullPath.substring(1);
 
       if (!this.checkPerm(route)) continue;
 
@@ -1355,69 +1446,34 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
   }
 
   // ============================================================================
-  // DISAMBIGUATION
-  // ============================================================================
-
-  private checkDisambiguation(msg: string): string | null {
-    const normalized = normalize(msg);
-
-    const themePatterns = ['theme', 'giao dien', 'che do', 'sang', 'toi', 'dark', 'light'];
-    if (themePatterns.some(p => normalized.includes(p))) return null;
-
-    const navPatterns = ['mo', 'xem', 'chuyen', 'vao', 'den', 'toi', 'open', 'go', 'show'];
-    if (!navPatterns.some(p => normalized.includes(p))) return null;
-
-    let query = normalized;
-    const removeWords = ['mo', 'xem', 'chuyen', 'vao', 'di', 'den', 'toi', 'navigate', 'open', 'go', 'show',
-                         'trang', 'man hinh', 'screen', 'page', 'bao cao', 'report', 'cho toi', 'giup', 'cua', 'di'];
-    removeWords.forEach((w) => (query = query.replace(new RegExp(`\\b${w}\\b`, 'g'), '')));
-    query = query.trim();
-
-    if (!query || query.length < 2) return null;
-
-    const matches = this.findMatches(query);
-
-    if (matches.length === 0) {
-      const routes = this.getRoutes();
-      const sample = routes.slice(0, 5).map((r) => `• ${r.title}`).join('\n');
-      return `Không tìm thấy trang "${query}". Gợi ý:\n\n${sample}`;
-    }
-
-    if (matches.length === 1) return null;
-
-    const opts = matches.slice(0, 5).map((m, i) => `${i + 1}. ${m.title}`).join('\n');
-    return `Tìm thấy ${matches.length} trang phù hợp:\n\n${opts}\n\nBạn muốn mở trang số mấy?`;
-  }
-
-  private findMatches(query: string): RouteInfo[] {
-    const words = query.split(' ').filter((w) => w.length > 1);
-    return this.getRoutes().filter((r) => {
-      const title = normalize(r.title);
-      const key = r.key.toLowerCase();
-      const kw = r.keywords?.map(k => normalize(k)) || [];
-      return words.some((w) => title.includes(w) || key.includes(w) || kw.some((k) => k.includes(w)));
-    });
-  }
-
-  // ============================================================================
   // CONTEXT
   // ============================================================================
 
   private prepareContext(newMsg: string): ChatMessage[] {
     const newTokens = this.tokens(newMsg);
-    const available = this.MAX_CTX - 500 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
+    const available =
+      this.MAX_CTX - 500 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
 
     const history = this.messages()
-      .filter((m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool')
+      .filter(
+        (m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool'
+      )
       .map((m) => ({
         ...m,
-        content: m.content.length > 150 ? m.content.substring(0, 150) + '...' : m.content,
+        content:
+          m.content.length > 150
+            ? m.content.substring(0, 150) + '...'
+            : m.content,
       }));
 
     const result: ChatMessage[] = [];
     let used = 0;
 
-    for (let i = history.length - 1; i >= 0 && result.length < this.MAX_HISTORY; i--) {
+    for (
+      let i = history.length - 1;
+      i >= 0 && result.length < this.MAX_HISTORY;
+      i--
+    ) {
       const tokens = this.tokens(history[i].content);
       if (used + tokens > available) break;
       used += tokens;
@@ -1463,7 +1519,9 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
           description: 'Change theme',
           parameters: {
             type: 'object',
-            properties: { m: { type: 'string', enum: ['light', 'dark', 'toggle'] } },
+            properties: {
+              m: { type: 'string', enum: ['light', 'dark', 'toggle'] },
+            },
             required: ['m'],
           },
         },
@@ -1517,7 +1575,11 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
       const arr = [...msgs];
       const last = arr.length - 1;
       if (last >= 0 && arr[last].role === 'assistant') {
-        arr[last] = { ...arr[last], content: u.content, tokenEstimate: u.tokenEstimate };
+        arr[last] = {
+          ...arr[last],
+          content: u.content,
+          tokenEstimate: u.tokenEstimate,
+        };
       }
       return arr;
     });
@@ -1527,14 +1589,25 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     this.messages.update((msgs) => {
       const arr = [...msgs];
       const last = arr.length - 1;
-      if (last >= 0 && arr[last].role === 'assistant' && !arr[last].content.trim()) {
-        arr[last] = { ...arr[last], content: `Không thể thực hiện yêu cầu. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.` };
+      if (
+        last >= 0 &&
+        arr[last].role === 'assistant' &&
+        !arr[last].content.trim()
+      ) {
+        arr[last] = {
+          ...arr[last],
+          content: `Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?`,
+        };
       }
       return arr;
     });
   }
 
-  private createMsg(role: ChatMessage['role'], content: string, tokenEstimate?: number): ChatMessage {
+  private createMsg(
+    role: ChatMessage['role'],
+    content: string,
+    tokenEstimate?: number
+  ): ChatMessage {
     return {
       id: `m_${Date.now()}_${++this.msgCounter}`,
       role,
@@ -1547,7 +1620,10 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
   private addGreeting(): void {
     this.messages.update((m) => [
       ...m,
-      this.createMsg('assistant', `Xin chào! Tôi là trợ lý IT của Bệnh viện Hoàn Mỹ.\n\nTôi có thể hỗ trợ:\n• Điều hướng màn hình\n• Thay đổi giao diện\n• Hướng dẫn IT cơ bản\n\nVấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`),
+      this.createMsg(
+        'assistant',
+        `Xin chào! Tôi là trợ lý IT của Bệnh viện Hoàn Mỹ. Bạn cần hỗ trợ gì?`
+      ),
     ]);
   }
 
@@ -1577,7 +1653,10 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
 
     try {
       const url = new URL(this.apiUrl);
-      const res = await fetch(`${url.protocol}//${url.host}/`, { method: 'GET', signal: ctrl.signal });
+      const res = await fetch(`${url.protocol}//${url.host}/`, {
+        method: 'GET',
+        signal: ctrl.signal,
+      });
       if (!res.ok && res.status !== 404) throw new Error('Server unreachable');
     } finally {
       clearTimeout(timeout);
@@ -1593,9 +1672,10 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
       const arr = [...msgs];
       const last = arr.length - 1;
       if (last >= 0 && arr[last].role === 'assistant') {
-        const msg = error instanceof Error && error.message.includes('404')
-          ? `Model "${this.MODEL}" không khả dụng. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`
-          : `Hệ thống đang bận. Vui lòng thử lại hoặc liên hệ IT hotline ${IT_HOTLINE}.`;
+        const msg =
+          error instanceof Error && error.message.includes('404')
+            ? `Model "${this.MODEL}" không khả dụng. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`
+            : `Hệ thống đang bận. Vui lòng thử lại hoặc liên hệ IT hotline ${IT_HOTLINE}.`;
         arr[last] = { ...arr[last], content: msg };
       }
       return arr;
@@ -1613,7 +1693,6 @@ Vấn đề phức tạp: Liên hệ IT hotline 1108 hoặc 1109.`;
     this.resetChat();
     this.isOpen.set(false);
     this.modelLoaded.set(false);
-    this.promptCache.clear();
     this.routeCache = null;
     this.routeMap = null;
     this.toolCache = null;
