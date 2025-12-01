@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap, switchMap } from 'rxjs/operators';
@@ -8,13 +8,16 @@ import { User } from '../models/user.model';
 import { NavItem } from '../models/nav-item.model';
 import { CustomRouteReuseStrategy } from '../strategies/custom-route-reuse-strategy';
 
+// ============================================================================
+// INTERFACES (Ensure these match your models)
+// ============================================================================
 interface LoginResponse {
   MaKetQua: number;
   TenKetQua?: string;
   ErrorMessage?: string;
   APIKey: {
     access_token: string;
-    id_token?: string; // OPTIONAL: Not all APIs return this
+    id_token?: string; // Optional
     date_token?: string;
     expires_in?: string;
     token_type?: string;
@@ -38,6 +41,9 @@ interface ApiPermissionNode {
   ORDER: number;
 }
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 const TOKEN_STORAGE_KEY = 'authToken';
 const ID_TOKEN_STORAGE_KEY = 'idToken';
 const ROLES_STORAGE_KEY = 'userRoles';
@@ -57,12 +63,12 @@ export class AuthService {
   private accessToken: string | null = null;
   private idToken: string | null = null;
 
-  // 1. Define internal writable signals
+  // 1. Signals
   private _isLoggedIn = signal<boolean>(false);
   private _currentUser = signal<User | null>(null);
   private _navItems = signal<NavItem[]>([]);
 
-  // 2. Expose public read-only signals
+  // 2. Public Read-only Signals
   public readonly isLoggedIn = this._isLoggedIn.asReadonly();
   public readonly currentUser = this._currentUser.asReadonly();
   public readonly navItems = this._navItems.asReadonly();
@@ -74,6 +80,10 @@ export class AuthService {
     this.initializeAuthState();
   }
 
+  // ============================================================================
+  // PUBLIC API
+  // ============================================================================
+
   changePassword(payload: { OldPassword: string, NewPassword: string, ConfirmPassword: string }): Observable<any> {
     const url = environment.changePassUrl;
     const body = {
@@ -82,60 +92,10 @@ export class AuthService {
       NewPassword: payload.NewPassword,
       ConfirmPassword: payload.ConfirmPassword
     };
-
     return this.http.put(url, body);
   }
 
-  // ------------------------------------
-
-  private initializeAuthState(): void {
-    const storedToken = this.getStoredToken();
-    const storedIdToken = this.getStoredIdToken(); // Might be null
-    const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY);
-    const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY);
-    const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY);
-
-    let roles: string[] = [];
-    let permissions: string[] = [];
-    let navItems: NavItem[] = [];
-    let isDataValid = false;
-
-    try {
-      const r = this.getStoredItem(ROLES_STORAGE_KEY);
-      const p = this.getStoredItem(PERMISSIONS_STORAGE_KEY);
-      const n = this.getStoredItem(NAV_ITEMS_STORAGE_KEY);
-
-      if (r) roles = JSON.parse(r);
-      if (p) permissions = JSON.parse(p);
-      if (n) navItems = JSON.parse(n);
-      
-      isDataValid = true;
-    } catch (e) {
-      console.error('Auth data corrupted, clearing session.', e);
-      this.clearLocalAuthData(false);
-      return;
-    }
-
-    // BUG FIX: Do not check for storedIdToken here, as it is optional
-    if (storedToken && storedUsername && isDataValid) {
-      this.accessToken = storedToken;
-      this.idToken = storedIdToken; // Accept null
-
-      const user: User = {
-        id: storedUserId || '',
-        username: storedUsername,
-        roles: roles,
-        permissions: permissions,
-        fullName: storedFullName || ''
-      };
-
-      this._currentUser.set(user);
-      this._navItems.set(navItems);
-      this._isLoggedIn.set(true);
-    }
-  }
-
-  public init(): Observable<any> {
+  init(): Observable<any> {
     if (this._isLoggedIn()) {
       const userId = this.getUserId();
       if (userId) {
@@ -143,10 +103,10 @@ export class AuthService {
           catchError((err) => {
             // Only logout if strictly unauthorized (Session expired)
             if (err.status === 401) {
-                console.warn("Session expired during init, logging out.");
-                this.logout();
+              console.warn("Session expired during init, logging out.");
+              this.logout();
             } else {
-                console.error("Failed to refresh permissions (Network/Server error), keeping local state.", err);
+              console.error("Failed to refresh permissions, keeping local state.", err);
             }
             return of(null);
           })
@@ -204,8 +164,100 @@ export class AuthService {
     );
   }
 
+  logout(): void {
+    CustomRouteReuseStrategy.clearAllHandles();
+    this.clearLocalAuthData(true);
+  }
+
+  // ============================================================================
+  // ACCESSORS (Used by Interceptors & Components)
+  // ============================================================================
+
+  getAccessToken(): string | null { 
+    return this.accessToken || this.getStoredToken(); 
+  }
+
+  getIdToken(): string | null { 
+    return this.idToken || this.getStoredIdToken(); 
+  }
+
+  getUserId(): string | null { 
+    return this._currentUser()?.id || this.getStoredItem(USER_ID_STORAGE_KEY); 
+  }
+
+  getUsername(): string | null { 
+    return this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY); 
+  }
+
+  hasRole(role: string): boolean {
+    const u = this._currentUser();
+    return u ? u.roles.includes(role) : false;
+  }
+
+  hasPermission(permission: string): boolean {
+    const u = this._currentUser();
+    return u ? u.permissions.includes(permission) : false;
+  }
+
+  hasActionPermission(modulePrefix: string, action: string): boolean {
+    const u = this._currentUser();
+    if (!u) return false;
+    const p = u.permissions.find(perm => perm.startsWith(modulePrefix));
+    return p ? p.split('_').includes(action) : false;
+  }
+
+  // ============================================================================
+  // INTERNAL LOGIC
+  // ============================================================================
+
+  private initializeAuthState(): void {
+    const storedToken = this.getStoredToken();
+    const storedIdToken = this.getStoredIdToken();
+    const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY);
+    const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY);
+    const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY);
+
+    let roles: string[] = [];
+    let permissions: string[] = [];
+    let navItems: NavItem[] = [];
+    let isDataValid = false;
+
+    try {
+      const r = this.getStoredItem(ROLES_STORAGE_KEY);
+      const p = this.getStoredItem(PERMISSIONS_STORAGE_KEY);
+      const n = this.getStoredItem(NAV_ITEMS_STORAGE_KEY);
+
+      if (r) roles = JSON.parse(r);
+      if (p) permissions = JSON.parse(p);
+      if (n) navItems = JSON.parse(n);
+      
+      isDataValid = true;
+    } catch (e) {
+      console.error('Auth data corrupted, clearing session.', e);
+      this.clearLocalAuthData(false);
+      return;
+    }
+
+    if (storedToken && storedUsername && isDataValid) {
+      this.accessToken = storedToken;
+      this.idToken = storedIdToken;
+
+      const user: User = {
+        id: storedUserId || '',
+        username: storedUsername,
+        roles: roles,
+        permissions: permissions,
+        fullName: storedFullName || ''
+      };
+
+      this._currentUser.set(user);
+      this._navItems.set(navItems);
+      this._isLoggedIn.set(true);
+    }
+  }
+
   private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
-    // Fallback to sessionStorage if that's where the token is
+    // Determine storage type based on where token exists
     if (!localStorage.getItem(TOKEN_STORAGE_KEY) && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
         storage = sessionStorage;
     }
@@ -249,11 +301,6 @@ export class AuthService {
     );
   }
 
-  logout(): void {
-    CustomRouteReuseStrategy.clearAllHandles();
-    this.clearLocalAuthData(true);
-  }
-
   private clearLocalAuthData(navigate: boolean = true): void {
     this.accessToken = null;
     this.idToken = null;
@@ -279,56 +326,6 @@ export class AuthService {
     if (navigate) {
       this.router.navigate(['/login']);
     }
-  }
-
-  // --- Storage Helpers ---
-  private getStoredItem(key: string): string | null {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(key)) return localStorage.getItem(key);
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return sessionStorage.getItem(key);
-    return null;
-  }
-
-  private getStoredToken(): string | null { return this.getStoredItem(TOKEN_STORAGE_KEY); }
-  private getStoredIdToken(): string | null { return this.getStoredItem(ID_TOKEN_STORAGE_KEY); }
-
-  private clearOtherStorage(remember: boolean): void {
-    const other = remember ? sessionStorage : localStorage;
-    try {
-       // Simply clear() is safer if you don't store non-auth data
-       if (typeof other !== 'undefined') other.clear(); 
-    } catch (e) { }
-  }
-
-  // --- Accessors & Logic ---
-  getAccessToken(): string | null { return this.accessToken || this.getStoredToken(); }
-  getIdToken(): string | null { return this.idToken || this.getStoredIdToken(); }
-
-  public getUserId(): string | null { return this._currentUser()?.id || this.getStoredItem(USER_ID_STORAGE_KEY); }
-  public getUsername(): string | null { return this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY); }
-
-  hasRole(role: string): boolean {
-    const u = this._currentUser();
-    return u ? u.roles.includes(role) : false;
-  }
-
-  getUserRoles(): string[] {
-    return this._currentUser()?.roles || [];
-  }
-
-  hasPermission(permission: string): boolean {
-    const u = this._currentUser();
-    return u ? u.permissions.includes(permission) : false;
-  }
-
-  getUserPermissions(): string[] {
-    return this._currentUser()?.permissions || [];
-  }
-
-  hasActionPermission(modulePrefix: string, action: string): boolean {
-    const u = this._currentUser();
-    if (!u) return false;
-    const p = u.permissions.find(perm => perm.startsWith(modulePrefix));
-    return p ? p.split('_').includes(action) : false;
   }
 
   private buildNavTree(nodes: ApiPermissionNode[], parentId: string = "0"): NavItem[] {
@@ -361,5 +358,21 @@ export class AuthService {
        else if (error.error?.ErrorMessage) msg = error.error.ErrorMessage;
     }
     return throwError(() => new Error(msg));
+  }
+
+  private getStoredItem(key: string): string | null {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(key)) return localStorage.getItem(key);
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return sessionStorage.getItem(key);
+    return null;
+  }
+
+  private getStoredToken(): string | null { return this.getStoredItem(TOKEN_STORAGE_KEY); }
+  private getStoredIdToken(): string | null { return this.getStoredItem(ID_TOKEN_STORAGE_KEY); }
+
+  private clearOtherStorage(remember: boolean): void {
+    const other = remember ? sessionStorage : localStorage;
+    try {
+       if (typeof other !== 'undefined') other.clear(); 
+    } catch (e) { }
   }
 }

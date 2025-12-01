@@ -12,9 +12,8 @@ export const idTokenInterceptor: HttpInterceptorFn = (
   const loginUrl = environment.authUrl;
 
   // 1. SKIP the Proxy/LLM entirely in this interceptor
-  // The 'authInterceptor' handles the Bearer token, which is all the Proxy needs.
-  // We don't need to add 'id_token' or 'id_user' for the LLM.
-  if (req.url.includes('11434') || req.url.includes('3000') || req.url.includes('/api/llm')) { 
+  // This interceptor only deals with "id_token" custom headers which the Proxy doesn't need.
+  if (req.url.includes('3000') || req.url.includes('/api/llm')) { 
     return next(req);
   }
 
@@ -24,6 +23,7 @@ export const idTokenInterceptor: HttpInterceptorFn = (
     return next(req);
   }
 
+  // Use public accessors
   const idToken = authService.getIdToken();
   const userId = authService.getUserId();
 

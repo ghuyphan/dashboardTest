@@ -13,12 +13,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  // Get the Access Token (Bearer)
   const token = authService.getAccessToken();
   
   let authReq = req;
 
-  // Only attach the Authorization Bearer Token
-  // We REMOVED X-User-Id and X-User-Name headers to prevent ID Spoofing vulnerabilities.
+  // Attach Authorization Bearer Token if not present
   if (token && !req.headers.has('Authorization')) {
     authReq = req.clone({
       setHeaders: {
@@ -30,7 +30,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status === 401) {
-        // Token expired or invalid
+        // Token expired or invalid -> Logout
         authService.logout();
       }
       return throwError(() => error);
