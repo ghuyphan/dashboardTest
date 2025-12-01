@@ -560,7 +560,7 @@ export class LlmService {
       .map((r) => `${r.key}:${r.title}`)
       .join('|');
 
-    return `IT Bot BV Hoàn Mỹ. /no_think
+    return `Trợ lý IT Assistant. /no_think
 ROLE: Trợ lý IT thân thiện.
 ${langInstruction}
 

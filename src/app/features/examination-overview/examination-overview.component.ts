@@ -135,7 +135,7 @@ export class ExaminationOverviewComponent implements OnInit {
 
   private initializeWidgetsStructure(): void {
     this.widgetData = [
-      { id: 'total', icon: 'fas fa-users', title: 'Tổng Tiếp Nhận', value: '0', caption: 'Total', accentColor: this.palette?.deepSapphire || '#082567' },
+      // { id: 'total', icon: 'fas fa-users', title: 'Tổng Tiếp Nhận', value: '0', caption: 'Total', accentColor: this.palette?.deepSapphire || '#082567' },
       { id: 'ck', icon: 'fas fa-stethoscope', title: 'Khám Bệnh (CK)', value: '0', caption: 'Clinic', accentColor: this.palette?.primary || '#00839b' },
       { id: 'emergency', icon: 'fas fa-ambulance', title: 'Cấp Cứu', value: '0', caption: 'Emergency', accentColor: this.palette?.pastelCoral || '#ffb3ba' },
       { id: 'inpatient', icon: 'fas fa-procedures', title: 'Nội Trú', value: '0', caption: 'Inpatient', accentColor: this.palette?.warning || '#f59e0b' },
@@ -288,15 +288,15 @@ export class ExaminationOverviewComponent implements OnInit {
         },
       },
       series: [
-        {
-          name: 'Tổng Tiếp Nhận',
-          type: 'line',
-          smooth: true,
-          showSymbol: showPoints,
-          data: sorted.map((d) => d.TONG_LUOT_TIEP_NHAN),
-          itemStyle: { color: c.total },
-          z: 10
-        },
+        // {
+        //   name: 'Tổng Tiếp Nhận',
+        //   type: 'line',
+        //   smooth: true,
+        //   showSymbol: showPoints,
+        //   data: sorted.map((d) => d.TONG_LUOT_TIEP_NHAN),
+        //   itemStyle: { color: c.total },
+        //   z: 10
+        // },
         {
           name: 'Khám Bệnh (CK)',
           type: 'line',

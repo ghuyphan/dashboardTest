@@ -132,13 +132,25 @@ export class DateFilterComponent {
         // start/end are now
         break;
       case 'thisWeek':
-        // Calculate Monday of current week
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day == 0 ? -6 : 1);
-        start = new Date(now.setDate(diff));
-        const lastDay = start.getDate() + 6;
-        end = new Date(now.setDate(lastDay));
+        // Modified Logic: Previous Wednesday -> This Week Thursday
+        
+        // 1. Anchor to Current Week's Monday (ISO: Mon=1...Sun=0/7)
+        const currentDay = now.getDay(); // 0 (Sun) to 6 (Sat)
+        // Dist from today to Monday: Sun(0)->-6, Mon(1)->0, Tue(2)->-1...
+        const distToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+        
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + distToMonday);
+
+        // 2. Start = Previous Wednesday (Monday - 5 days)
+        start = new Date(monday);
+        start.setDate(monday.getDate() - 5);
+
+        // 3. End = This Week Thursday (Monday + 3 days)
+        end = new Date(monday);
+        end.setDate(monday.getDate() + 3);
         break;
+        
       case 'thisMonth':
         start = new Date(now.getFullYear(), now.getMonth(), 1);
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
