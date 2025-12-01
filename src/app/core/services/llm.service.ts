@@ -49,195 +49,14 @@ interface ToolResult {
   error?: string;
 }
 
-interface ClassifyResult {
-  type: 'direct' | 'server' | 'blocked';
-  response?: string;
-  language: 'vi' | 'en';
-}
-
 // ============================================================================
-// INTENT TYPES & CONSTANTS
+// CONSTANTS
 // ============================================================================
 
 const ALLOWED_TOOLS = ['nav', 'theme'] as const;
 type AllowedTool = (typeof ALLOWED_TOOLS)[number];
 
 const IT_HOTLINE = '**1108** hoặc **1109**';
-
-// Keywords for Client-Side Route Matching (fallback)
-const SCREEN_KEYWORDS: Record<string, string[]> = {
-  home: ['home', 'trang chủ', 'chính', 'dashboard', 'tổng quan'],
-  settings: [
-    'settings',
-    'cài đặt',
-    'tài khoản',
-    'account',
-    'profile',
-    'hồ sơ',
-     'đổi mật khẩu', 'đổi pass', 'thay đổi mật khẩu' 
-  ],
-  'equipment/catalog': [
-    'thiết bị',
-    'máy móc',
-    'catalog',
-    'danh sách',
-    'qr',
-    'bàn giao',
-  ],
-  'equipment/dashboard': ['thiết bị dashboard', 'biểu đồ thiết bị'],
-  'reports/bed-usage': ['giường', 'bed', 'công suất'],
-  'reports/examination-overview': [
-    'khám',
-    'examination',
-    'bhyt',
-    'viện phí',
-    'doanh thu',
-  ],
-  'reports/missing-medical-records': [
-    'hsba',
-    'hồ sơ bệnh án',
-    'medical records',
-  ],
-  'reports/cls-level3': ['cls', 'tầng 3', 'lầu 3', 'level3'],
-  'reports/cls-level6': ['cls', 'tầng 6', 'lầu 6', 'level6'],
-  'reports/specialty-cls': ['cls chuyên khoa', 'specialty'],
-};
-
-// ============================================================================
-// TEXT NORMALIZATION & CLIENT-SIDE CHECKS
-// ============================================================================
-
-const ABBREVIATIONS: [RegExp, string][] = [
-  [/\b(ko|k|hông|hem)\b/g, 'không'],
-  [/\b(dc|đc|đuoc)\b/g, 'được'],
-  [/\b(oke|okie|okê|oki)\b/g, 'ok'],
-  [/\b(tks|thks|thanks|thank)\b/g, 'cảm ơn'],
-  [/\b(j|ji)\b/g, 'gì'],
-  [/\br\b/g, 'rồi'],
-  [/\bbt\b/g, 'bình thường'],
-  [/\bad\b/g, 'admin'],
-  [/\bmk\b/g, 'mật khẩu'],
-  [/\bpass\b/g, 'password'],
-];
-
-// Security Blocklist
-const BLOCKLIST: RegExp[] = [
-  /ignore.*(previous|all|above)?\s*instruction/i,
-  /disregard.*(previous|all)?\s*(instruction|prompt)/i,
-  /system\s*prompt/i,
-  /\b(DAN|jailbreak|STAN|DUDE)\b/i,
-  /\[INST\]|<<SYS>>|<\|im_/i,
-  /act\s*as\s*(if|a)/i,
-  /(hack|crack|bypass|exploit)/i,
-  /(sql injection|xss|ddos|malware)/i,
-  /(lay|danh cap|steal|extract).*thong tin/i,
-  /viet\s*(code|script|tho|truyen)/i,
-  /code\s*(python|java|sql|js)/i,
-];
-
-// Quick Responses
-const QUICK_RESPONSES = [
-  {
-    patterns: ['xin chao', 'chao ban', 'hello', 'hi', 'hey', 'alo'],
-    response: [
-      'Xin chào! Tôi có thể hỗ trợ điều hướng, đổi giao diện, và hướng dẫn IT cơ bản. Bạn cần gì?',
-      'Chào bạn! Tôi là trợ lý IT. Bạn cần hỗ trợ gì?',
-    ],
-  },
-  {
-    patterns: ['cam on', 'thank', 'thanks'],
-    response: ['Không có gì!', 'Rất vui được hỗ trợ!'],
-  },
-  {
-    patterns: ['ok', 'duoc roi', 'hieu roi', 'da hieu', 'got it'],
-    response: 'Bạn cần hỗ trợ thêm gì không?',
-  },
-  {
-    patterns: ['tam biet', 'bye', 'goodbye', 'chao nhe'],
-    response: 'Tạm biệt! Hẹn gặp lại.',
-  },
-    {
-    patterns: [
-      'quen mat khau', 'quen pass', 'forgot password', 'reset pass', 
-      'reset mat khau', 'cap lai mat khau', 'cap lai pass', 'mat pass',
-      'sai pass', 'sai mat khau', 'sai mk', 'sai password',
-      'lay lai pass', 'lay lai mat khau', 'lay lai mk',
-      'dang nhap khong duoc', 'khong dang nhap duoc', 'loi dang nhap', 'k dang nhap',
-      'login error', 'cant login'
-    ],
-    response: `🔐 **Hỗ trợ Tài khoản & Mật khẩu:**\n\nDạ, để đảm bảo bảo mật:\n- Nếu quên/sai mật khẩu: Vui lòng gọi **${IT_HOTLINE}** để được cấp lại.\n- Nếu lỗi đăng nhập: Gọi hotline để IT kiểm tra tài khoản nhé!`,
-  },
-];
-
-function normalize(text: string): string {
-  let s = text.toLowerCase().trim();
-  for (const [re, repl] of ABBREVIATIONS) {
-    s = s.replace(re, repl);
-  }
-  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  s = s.replace(/đ/g, 'd').replace(/Đ/g, 'D');
-  return s.replace(/\s+/g, ' ').trim();
-}
-
-function detectLanguage(text: string): 'vi' | 'en' {
-  if (
-    /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/.test(
-      text
-    )
-  ) {
-    return 'vi';
-  }
-  const lower = text.toLowerCase();
-  const vnWords =
-    /\b(toi|ban|cua|nay|do|duoc|khong|co|la|va|cho|voi|den|xem|mo|chuyen|vao|giup|can|mat khau|quen|doi|bi khoa)\b/;
-  if (vnWords.test(lower)) return 'vi';
-
-  const enStarters =
-    /^(please|can you|could you|i want|i need|how do i|what is|show me|help me|take me|i forgot|change my)/i;
-  if (enStarters.test(lower)) return 'en';
-
-  return 'vi';
-}
-
-function classify(input: string): ClassifyResult {
-  const raw = input.toLowerCase();
-  const normalized = normalize(input);
-  const language = detectLanguage(input);
-
-  // 1. Blocklist
-  for (const pattern of BLOCKLIST) {
-    if (pattern.test(raw) || pattern.test(normalized)) {
-      return {
-        type: 'blocked',
-        response:
-          language === 'en'
-            ? `This is outside my scope. For complex issues, contact IT hotline ${IT_HOTLINE}.`
-            : `Nội dung này nằm ngoài phạm vi hỗ trợ. Vấn đề phức tạp vui lòng liên hệ IT hotline ${IT_HOTLINE}.`,
-        language,
-      };
-    }
-  }
-
-  // 2. Quick Responses
-  for (const entry of QUICK_RESPONSES) {
-    // Cũ: entry.patterns.some((p) => normalized.includes(p))  <-- LỖI TẠI ĐÂY
-    
-    // Mới: Dùng Regex \b để bắt nguyên từ
-    const isMatch = entry.patterns.some((p) => 
-      new RegExp(`\\b${p}\\b`, 'i').test(normalized)
-    );
-
-    if (isMatch) {
-      const resp = Array.isArray(entry.response)
-        ? entry.response[Math.floor(Math.random() * entry.response.length)]
-        : entry.response;
-      return { type: 'direct', response: resp as string, language };
-    }
-  }
-
-  // 3. Server
-  return { type: 'server', language };
-}
 
 // ============================================================================
 // SERVICE
@@ -251,15 +70,14 @@ export class LlmService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly ngZone = inject(NgZone);
 
-  // Point this to your Node.js Server
   private readonly apiUrl = environment.llmUrl;
 
-  // Configuration - OPTIMIZED for Qwen3:4b
+  // Configuration
   private readonly MAX_CTX = 4096;
   private readonly MAX_HISTORY = 3;
   private readonly MAX_OUTPUT = 200;
   private readonly TOOL_BUDGET = 150;
-  private readonly CHARS_PER_TOKEN = 2.0; // More conservative for Vietnamese
+  private readonly CHARS_PER_TOKEN = 2.0;
   private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
   private readonly THEME_COOLDOWN = 1000;
   private readonly UI_DEBOUNCE = 30;
@@ -267,9 +85,6 @@ export class LlmService {
   private readonly RETRY_DELAY = 1000;
   private readonly TIMEOUT = 60000;
   private readonly MAX_INPUT = 500;
-  private readonly RATE_LIMIT = 20;
-  private readonly RATE_WINDOW = 60_000;
-  private readonly RATE_COOLDOWN = 10_000;
 
   private readonly DEBUG = false;
 
@@ -289,8 +104,7 @@ export class LlmService {
   private lastThemeChange = 0;
   private abortCtrl: AbortController | null = null;
   private msgCounter = 0;
-  private msgTimestamps: number[] = [];
-  private rateCooldownUntil = 0;
+  private sessionId: string;
 
   // Cache
   private routeCache: RouteInfo[] | null = null;
@@ -300,6 +114,8 @@ export class LlmService {
   private readonly streamUpdate$ = new Subject<StreamUpdate>();
 
   constructor() {
+    this.sessionId = this.generateSessionId();
+
     effect(() => {
       if (!this.authService.isLoggedIn()) this.cleanup();
     });
@@ -331,32 +147,17 @@ export class LlmService {
     const input = this.sanitize(content);
     if (!input) return;
 
-    // 1. Rate Check
-    const rateCheck = this.checkRate();
-    if (!rateCheck.ok) {
-      await this.respondWithTyping(rateCheck.msg!);
-      return;
-    }
-
-    // 2. UI Updates
+    // UI Updates
     this.messages.update((m) => [...m, this.createMsg('user', input)]);
     this.resetSessionTimer();
     this.abort();
 
-    // 3. Classification
-    const result = classify(input);
-
-    if (result.type === 'direct' || result.type === 'blocked') {
-      await this.respondWithTyping(result.response!);
-      return;
-    }
-
-    // 4. Send to Server
+    // Prepare assistant placeholder
     this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
     this.isGenerating.set(true);
 
     try {
-      await this.retry(() => this.streamToServer(input, result.language));
+      await this.retry(() => this.streamToServer(input));
     } catch (e) {
       this.handleErr(e);
     } finally {
@@ -379,8 +180,7 @@ export class LlmService {
     this.messages.set([]);
     this.contextUsage.set(0);
     this.msgCounter = 0;
-    this.msgTimestamps = [];
-    this.rateCooldownUntil = 0;
+    this.sessionId = this.generateSessionId();
 
     if (this.modelLoaded() && this.authService.isLoggedIn()) {
       this.addGreeting();
@@ -414,10 +214,7 @@ export class LlmService {
   // SERVER STREAMING LOGIC
   // ============================================================================
 
-  private async streamToServer(
-    userMsg: string,
-    language: 'vi' | 'en'
-  ): Promise<void> {
+  private async streamToServer(userMsg: string): Promise<void> {
     this.abortCtrl = new AbortController();
     const { signal } = this.abortCtrl;
 
@@ -425,13 +222,19 @@ export class LlmService {
     const tools = this.buildTools();
     const routes = this.getRoutes();
 
-    // Build minimal metadata for backend
+    // Build metadata for backend - includes session for context tracking
     const metadata = {
-      language,
-      routes: routes.slice(0, 15).map((r) => r.key),
+      sessionId: this.sessionId,
+      routes: routes.map((r) => ({
+        key: r.key,
+        title: r.title,
+        keywords: r.keywords,
+      })),
+      currentPath: this.router.url.split('?')[0],
+      currentTheme: this.themeService.isDarkTheme() ? 'dark' : 'light',
     };
 
-    // OPTIMIZED: Let backend handle system prompt entirely
+    // Send to backend - let server handle all classification
     const payload = {
       messages: [
         ...context.map((m) => ({ role: m.role, content: m.content })),
@@ -464,7 +267,7 @@ export class LlmService {
       if (!res.ok) throw new Error(`API ${res.status}`);
       if (!res.body) throw new Error('No body');
 
-      await this.processStream(res.body, signal, language);
+      await this.processStream(res.body, signal);
     } finally {
       clearTimeout(timeout);
     }
@@ -472,8 +275,7 @@ export class LlmService {
 
   private async processStream(
     body: ReadableStream<Uint8Array>,
-    signal: AbortSignal,
-    language: 'vi' | 'en'
+    signal: AbortSignal
   ): Promise<void> {
     return this.ngZone.runOutsideAngular(async () => {
       const reader = body.getReader();
@@ -523,6 +325,7 @@ export class LlmService {
           }
         }
 
+        // Process remaining buffer
         if (buffer.trim()) {
           try {
             const json = JSON.parse(buffer);
@@ -539,15 +342,9 @@ export class LlmService {
         if (toolCalls.length) {
           await this.ngZone.run(() => this.execTools(toolCalls));
         } else {
-          let finalContent = this.sanitizeOut(content);
-          if (!finalContent.trim()) {
-            finalContent =
-              language === 'en'
-                ? `I'm not sure how to help with that. For IT issues, contact hotline ${IT_HOTLINE}.`
-                : `Tôi không chắc cách hỗ trợ vấn đề này. Liên hệ IT hotline ${IT_HOTLINE} nếu cần.`;
-          }
+          const finalContent = this.sanitizeOut(content);
           this.streamUpdate$.next({
-            content: finalContent,
+            content: finalContent || 'Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?',
             tokenEstimate: this.tokens(content),
           });
         }
@@ -556,7 +353,7 @@ export class LlmService {
   }
 
   // ============================================================================
-  // TOOLS (Definition only - backend handles prompt)
+  // TOOLS
   // ============================================================================
 
   private buildTools(): unknown[] {
@@ -602,9 +399,7 @@ export class LlmService {
 
       if (Array.isArray(toolCalls)) {
         for (const tc of toolCalls) {
-          const parsed = this.parseSingleToolCall(
-            tc as Record<string, unknown>
-          );
+          const parsed = this.parseSingleToolCall(tc as Record<string, unknown>);
           if (parsed) results.push(parsed);
         }
       }
@@ -622,9 +417,7 @@ export class LlmService {
         if (name) {
           return {
             name,
-            arguments: this.parseArgs(
-              fn['arguments'] ?? fn['args'] ?? fn['parameters']
-            ),
+            arguments: this.parseArgs(fn['arguments'] ?? fn['args'] ?? fn['parameters']),
           };
         }
       }
@@ -670,10 +463,7 @@ export class LlmService {
       if (!ALLOWED_TOOLS.includes(call.name as AllowedTool)) continue;
 
       try {
-        const result = await this.execTool(
-          call.name as AllowedTool,
-          call.arguments
-        );
+        const result = await this.execTool(call.name as AllowedTool, call.arguments);
         const msg = this.getConfirmation(call.name, result);
         if (msg) this.setLastMsg(msg);
       } catch (e) {
@@ -689,10 +479,7 @@ export class LlmService {
   ): Promise<ToolResult> {
     switch (name) {
       case 'nav': {
-        const key = (args['k'] ||
-          args['key'] ||
-          args['path'] ||
-          args['screen']) as string;
+        const key = (args['k'] || args['key'] || args['path'] || args['screen']) as string;
         if (!key) return { success: false, error: 'Đường dẫn không hợp lệ.' };
         return this.doNav(key);
       }
@@ -747,7 +534,7 @@ export class LlmService {
   }
 
   // ============================================================================
-  // ROUTING & UTILS
+  // ROUTING
   // ============================================================================
 
   private getRoutes(): RouteInfo[] {
@@ -806,7 +593,7 @@ export class LlmService {
           title: route.data['title'] as string,
           fullUrl: fullPath,
           key,
-          keywords: SCREEN_KEYWORDS[key],
+          keywords: route.data?.['keywords'] as string[] | undefined,
         });
       }
 
@@ -824,32 +611,25 @@ export class LlmService {
     return user?.permissions?.some((p) => p.startsWith(perm)) ?? false;
   }
 
+  // ============================================================================
+  // CONTEXT & MESSAGING
+  // ============================================================================
+
   private prepareContext(newMsg: string): ChatMessage[] {
     const newTokens = this.tokens(newMsg);
-    // Reserve: ~400 for system prompt (backend), tools, output
-    const available =
-      this.MAX_CTX - 400 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
+    const available = this.MAX_CTX - 400 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
 
     const history = this.messages()
-      .filter(
-        (m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool'
-      )
+      .filter((m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool')
       .map((m) => ({
         ...m,
-        content:
-          m.content.length > 120
-            ? m.content.substring(0, 120) + '...'
-            : m.content,
+        content: m.content.length > 120 ? m.content.substring(0, 120) + '...' : m.content,
       }));
 
     const result: ChatMessage[] = [];
     let used = 0;
 
-    for (
-      let i = history.length - 1;
-      i >= 0 && result.length < this.MAX_HISTORY;
-      i--
-    ) {
+    for (let i = history.length - 1; i >= 0 && result.length < this.MAX_HISTORY; i--) {
       const tokens = this.tokens(history[i].content);
       if (used + tokens > available) break;
       used += tokens;
@@ -866,39 +646,6 @@ export class LlmService {
   private tokens(text: string): number {
     if (!text) return 0;
     return Math.ceil(text.length / this.CHARS_PER_TOKEN) + 2;
-  }
-
-  private async respondWithTyping(response: string): Promise<void> {
-    this.isGenerating.set(true);
-    this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
-    const thinkingDelay = 400 + Math.random() * 400;
-    await this.delay(thinkingDelay);
-    const chunkSize = 4;
-    let currentText = '';
-    for (let i = 0; i < response.length; i += chunkSize) {
-      if (!this.isGenerating()) break;
-      const chunk = response.slice(i, i + chunkSize);
-      currentText += chunk;
-      this.updateLastMessageContent(currentText);
-      await this.delay(10 + Math.random() * 20);
-    }
-    this.isGenerating.set(false);
-    this.finalize();
-  }
-
-  private updateLastMessageContent(text: string): void {
-    this.messages.update((msgs) => {
-      const arr = [...msgs];
-      const lastIndex = arr.length - 1;
-      if (lastIndex >= 0 && arr[lastIndex].role === 'assistant') {
-        arr[lastIndex] = {
-          ...arr[lastIndex],
-          content: text,
-          tokenEstimate: this.tokens(text),
-        };
-      }
-      return arr;
-    });
   }
 
   private setLastMsg(text: string): void {
@@ -951,11 +698,7 @@ export class LlmService {
     this.messages.update((msgs) => {
       const arr = [...msgs];
       const last = arr.length - 1;
-      if (
-        last >= 0 &&
-        arr[last].role === 'assistant' &&
-        !arr[last].content.trim()
-      ) {
+      if (last >= 0 && arr[last].role === 'assistant' && !arr[last].content.trim()) {
         arr[last] = {
           ...arr[last],
           content: `Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?`,
@@ -1007,6 +750,14 @@ export class LlmService {
       : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`;
   }
 
+  // ============================================================================
+  // UTILITIES
+  // ============================================================================
+
+  private generateSessionId(): string {
+    return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+
   private async retry<T>(fn: () => Promise<T>): Promise<T> {
     let lastErr: Error | null = null;
     for (let i = 0; i <= this.MAX_RETRIES; i++) {
@@ -1036,41 +787,13 @@ export class LlmService {
     }
   }
 
-  private checkRate(): { ok: boolean; msg?: string } {
-    const now = Date.now();
-    if (now < this.rateCooldownUntil) {
-      const sec = Math.ceil((this.rateCooldownUntil - now) / 1000);
-      return {
-        ok: false,
-        msg: `Hệ thống đang bận. Vui lòng thử lại sau ${sec} giây.`,
-      };
-    }
-    this.msgTimestamps = this.msgTimestamps.filter(
-      (t) => now - t < this.RATE_WINDOW
-    );
-    if (this.msgTimestamps.length >= this.RATE_LIMIT) {
-      this.rateCooldownUntil = now + this.RATE_COOLDOWN;
-      return {
-        ok: false,
-        msg: 'Bạn đang gửi tin nhắn quá nhanh. Vui lòng đợi giây lát.',
-      };
-    }
-    this.msgTimestamps.push(now);
-    return { ok: true };
-  }
-
   private sanitize(content: string): string {
     if (!content) return '';
     let r = content.trim();
     if (r.length > this.MAX_INPUT) r = r.slice(0, this.MAX_INPUT);
     r = r.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
     r = r.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n');
-    return r
-      .replace(
-        /```[\s\S]*?```|<[^>]+>|\[INST\]|\[\/INST\]|<<SYS>>|<\|im_\w+\|>/gi,
-        ''
-      )
-      .trim();
+    return r.trim();
   }
 
   private sanitizeOut(content: string): string {
