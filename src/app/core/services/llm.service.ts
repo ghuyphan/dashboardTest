@@ -57,7 +57,7 @@ interface ToolResult {
 const ALLOWED_TOOLS = ['nav', 'theme'] as const;
 type AllowedTool = (typeof ALLOWED_TOOLS)[number];
 
-const IT_HOTLINE = '**1108** hoặc **1109**';
+
 
 // ============================================================================
 // SERVICE
@@ -101,6 +101,7 @@ export class LlmService {
   public readonly messages = signal<ChatMessage[]>([]);
   public readonly isNavigating = signal(false);
   public readonly contextUsage = signal(0);
+  public readonly itHotline = signal('**1108** hoặc **1109**');
 
   // State
   private sessionTimer?: ReturnType<typeof setTimeout>;
@@ -226,7 +227,10 @@ export class LlmService {
     // Replace API path with Health path safely for both relative and absolute URLs
     const healthUrl = this.apiUrl.replace('/api/llm', '/health');
     try {
-      await firstValueFrom(this.http.get(healthUrl));
+      const res = await firstValueFrom(this.http.get<any>(healthUrl));
+      if (res?.config?.hotline) {
+        this.itHotline.set(res.config.hotline);
+      }
     } catch (e) {
       throw new Error('Server unreachable');
     }
@@ -779,8 +783,8 @@ export class LlmService {
 
   private getToolErr(name: string): string {
     return name === 'nav'
-      ? `Không thể mở trang này. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`
-      : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`;
+      ? `Không thể mở trang này. Vui lòng liên hệ IT hotline ${this.itHotline()}.`
+      : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${this.itHotline()}.`;
   }
 
   private generateSessionId(): string {
@@ -833,7 +837,7 @@ export class LlmService {
         const msg =
           error instanceof Error && error.message.includes('429')
             ? 'Hệ thống đang bận. Vui lòng thử lại sau.'
-            : `Có lỗi xảy ra. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`;
+            : `Có lỗi xảy ra. Vui lòng liên hệ IT hotline ${this.itHotline()}.`;
         arr[last] = { ...arr[last], content: msg };
       }
       return arr;
