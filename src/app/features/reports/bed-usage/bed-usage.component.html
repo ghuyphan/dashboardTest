@@ -4,49 +4,35 @@
     <div class="widget-section">
       <div class="widget-grid">
         @if (isLoading() && widgetData().length === 0) {
-          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
-            <app-widget-card [isLoading]="true" title="Loading"></app-widget-card>
-          }
+        @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+        <app-widget-card [isLoading]="true" title="Loading"></app-widget-card>
+        }
         } @else {
-          @for (widget of widgetData(); track trackByWidgetId($index, widget)) {
-            <app-widget-card
-              [icon]="widget.icon"
-              [title]="widget.title"
-              [value]="widget.value"
-              [caption]="widget.caption"
-              [accentColor]="widget.accentColor"
-              [isLoading]="isLoading()">
-            </app-widget-card>
-          }
+        @for (widget of widgetData(); track trackByWidgetId($index, widget)) {
+        <app-widget-card [icon]="widget.icon" [title]="widget.title" [value]="widget.value" [caption]="widget.caption"
+          [accentColor]="widget.accentColor" [isLoading]="isLoading()">
+        </app-widget-card>
+        }
         }
       </div>
     </div>
 
     <div class="dashboard-grid">
-      <app-chart-card
-        class="grid-item span-full" 
-        title="Tình hình sử dụng giường bệnh"
-        icon="fas fa-bed-pulse"
-        iconClass="icon-info"
-        [isLoading]="isLoading()"
-        [chartOptions]="chartOptions()"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
+      <app-chart-card class="grid-item span-full" title="Tình hình sử dụng giường bệnh" icon="fas fa-bed-pulse"
+        iconClass="icon-info" [isLoading]="isLoading()" [chartOptions]="chartOptions()"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" (chartLegendSelectChanged)="onLegendChange($event)">
 
-        <div
-          header-actions
-          class="refresh-control"
-          (click)="loadData()"
-          [class.loading]="isLoading()"
+        <div header-actions class="refresh-control" (click)="loadData()" [class.loading]="isLoading()"
           title="Cập nhật dữ liệu mới nhất">
-          
+
           <div class="refresh-icon">
             <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
           </div>
-          
+
           @if (currentDateTime()) {
-            <span class="refresh-text">
-              {{ currentDateTime() }}
-            </span>
+          <span class="refresh-text">
+            {{ currentDateTime() }}
+          </span>
           }
         </div>
 
