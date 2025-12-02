@@ -359,8 +359,19 @@ export class EmergencySummaryComponent implements OnInit {
     totalVienPhi: number
   ): void {
     // Determine if we need dataZoom based on number of data points
+    // CHANGE: You can adjust this number (e.g. > 10) depending on preference
     const needsDataZoom = dates.length > 7;
-    
+
+    // --- FOCUS LOGIC: Calculate start % to focus on last X items ---
+    const totalItems = dates.length;
+    const itemsToFocus = 15; // Focus on last 15 items
+    let startPercent = 0;
+
+    if (needsDataZoom && totalItems > itemsToFocus) {
+      startPercent = Math.floor(100 - (itemsToFocus / totalItems) * 100);
+    }
+    // ----------------------------------------------------------------
+
     const commonGrid = {
       left: '3%',
       right: '4%',
@@ -376,34 +387,53 @@ export class EmergencySummaryComponent implements OnInit {
       confine: true,
     };
 
-    // DataZoom configuration - only when needed
-    const dataZoomConfig = needsDataZoom ? [
-      {
-        type: 'slider' as const,
-        show: true,
-        xAxisIndex: [0],
-        start: 0,
-        end: 100,
-        bottom: '2%',
-        height: 20,
-        borderColor: this.palette.gray200,
-        fillerColor: `${this.palette.primary}33`,
-        textStyle: { color: this.palette.textSecondary, fontSize: 10 },
-        handleStyle: {
-          color: this.palette.primary,
-          borderColor: this.palette.primary,
-        },
-        moveHandleStyle: { color: this.palette.primary },
-      },
-      {
-        type: 'inside' as const,
-        xAxisIndex: [0],
-        start: 0,
-        end: 100,
-      },
-    ] : undefined;
+    // --- CRITICAL FIX: Explicitly set show: false / disabled: true when not needed ---
+    // If we just pass [] or undefined, ECharts merges options and keeps the OLD slider.
+    const dataZoomConfig = needsDataZoom
+      ? [
+          {
+            type: 'slider' as const,
+            show: true,
+            xAxisIndex: [0],
+            start: startPercent, // Use calculated start
+            end: 100,
+            bottom: '2%',
+            height: 20,
+            borderColor: this.palette.gray200,
+            fillerColor: `${this.palette.primary}33`,
+            textStyle: { color: this.palette.textSecondary, fontSize: 10 },
+            handleStyle: {
+              color: this.palette.primary,
+              borderColor: this.palette.primary,
+            },
+            moveHandleStyle: { color: this.palette.primary },
+          },
+          {
+            type: 'inside' as const,
+            xAxisIndex: [0],
+            start: startPercent, // Use calculated start
+            end: 100,
+          },
+        ]
+      : [
+          // Explicitly Turn OFF if switching from Month -> Week
+          {
+            type: 'slider' as const,
+            show: false,
+            xAxisIndex: [0],
+            start: 0,
+            end: 100,
+          },
+          {
+            type: 'inside' as const,
+            disabled: true,
+            xAxisIndex: [0],
+            start: 0,
+            end: 100,
+          },
+        ];
 
-    // 1. Trend Chart (Comparison) - WITH CONDITIONAL DATAZOOM
+    // 1. Trend Chart (Comparison)
     this.trendChartOptions = {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
@@ -413,14 +443,14 @@ export class EmergencySummaryComponent implements OnInit {
         top: 0,
         textStyle: { color: this.palette.textSecondary },
       },
-      ...(dataZoomConfig && { dataZoom: dataZoomConfig }),
+      dataZoom: dataZoomConfig,
       xAxis: {
         type: 'category',
         data: dates,
-        axisLabel: { 
-          color: this.palette.textPrimary, 
-          rotate: needsDataZoom ? 45 : 0, 
-          interval: needsDataZoom ? 0 : 'auto' 
+        axisLabel: {
+          color: this.palette.textPrimary,
+          rotate: needsDataZoom ? 45 : 0,
+          interval: needsDataZoom ? 0 : 'auto',
         },
         axisLine: { lineStyle: { color: this.palette.gray200 } },
       },
@@ -469,19 +499,19 @@ export class EmergencySummaryComponent implements OnInit {
       ],
     };
 
-    // 2. Transfer Chart - WITH CONDITIONAL DATAZOOM
+    // 2. Transfer Chart
     this.transferChartOptions = {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
       grid: commonGrid,
-      ...(dataZoomConfig && { dataZoom: dataZoomConfig }),
+      dataZoom: dataZoomConfig,
       xAxis: {
         type: 'category',
         data: dates,
-        axisLabel: { 
-          color: this.palette.textPrimary, 
-          rotate: needsDataZoom ? 45 : 0, 
-          interval: needsDataZoom ? 0 : 'auto' 
+        axisLabel: {
+          color: this.palette.textPrimary,
+          rotate: needsDataZoom ? 45 : 0,
+          interval: needsDataZoom ? 0 : 'auto',
         },
         axisLine: { lineStyle: { color: this.palette.gray200 } },
       },
@@ -512,7 +542,7 @@ export class EmergencySummaryComponent implements OnInit {
       ],
     };
 
-    // 3. Admission Chart (Colors Updated) - WITH CONDITIONAL DATAZOOM
+    // 3. Admission Chart
     this.admissionChartOptions = {
       backgroundColor: 'transparent',
       tooltip: {
@@ -539,14 +569,14 @@ export class EmergencySummaryComponent implements OnInit {
         top: 0,
         textStyle: { color: this.palette.textSecondary },
       },
-      ...(dataZoomConfig && { dataZoom: dataZoomConfig }),
+      dataZoom: dataZoomConfig,
       xAxis: {
         type: 'category',
         data: dates,
-        axisLabel: { 
-          color: this.palette.textPrimary, 
-          rotate: needsDataZoom ? 45 : 0, 
-          interval: needsDataZoom ? 0 : 'auto' 
+        axisLabel: {
+          color: this.palette.textPrimary,
+          rotate: needsDataZoom ? 45 : 0,
+          interval: needsDataZoom ? 0 : 'auto',
         },
         axisLine: { lineStyle: { color: this.palette.gray200 } },
       },
@@ -587,7 +617,7 @@ export class EmergencySummaryComponent implements OnInit {
       ],
     };
 
-    // 4. Insurance Chart (NO DATAZOOM - it's a pie chart)
+    // 4. Insurance Chart (No DataZoom needed)
     this.insuranceChartOptions = {
       backgroundColor: 'transparent',
       tooltip: {

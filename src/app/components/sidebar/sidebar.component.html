@@ -18,15 +18,8 @@
         (click)="onToggleSidebarClick()"
         aria-label="Toggle sidebar"
       >
-        <svg
-          width="1.2em"
-          height="1.2em"
-          viewBox="0 0 105 105"
-          xmlns="http://www.w3.org/2000/svg"
-          style="display: block"
-        >
+        <svg width="1.2em" height="1.2em" viewBox="0 0 105 105" xmlns="http://www.w3.org/2000/svg" style="display: block">
           <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />
-          
           <rect x="10" y="25" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
           <rect x="10" y="40" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
           <rect x="10" y="55" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
@@ -78,17 +71,55 @@
                   <ul class="submenu" [class.open]="item.isOpen" #submenuEl>
                     @for (child of item.children; track child.label) {
                       <ng-container *appHasPermission="child.permissions">
-                        <li>
-                          <a
-                            [routerLink]="child.link"
-                            routerLinkActive="active"
-                            [appTooltip]="child.label"
-                            (click)="onNavLinkClick()"
+                        
+                        @if (!child.children || child.children.length === 0) {
+                          <li>
+                            <a
+                              [routerLink]="child.link"
+                              routerLinkActive="active"
+                              [appTooltip]="child.label"
+                              (click)="onNavLinkClick()"
+                            >
+                              <i [class]="child.icon"></i>
+                              <span>{{ child.label }}</span>
+                            </a>
+                          </li>
+                        }
+
+                        @if (child.children && child.children.length > 0) {
+                          <li 
+                            [class.has-submenu]="true" 
+                            [class.open]="child.isOpen"
+                            routerLinkActive="active-parent"
                           >
-                            <i [class]="child.icon"></i>
-                            <span>{{ child.label }}</span>
-                          </a>
-                        </li>
+                            <button 
+                              class="level-2-btn"
+                              (click)="toggleSubmenu(child, $event)"
+                            >
+                              <i [class]="child.icon"></i>
+                              <span>{{ child.label }}</span>
+                              <i class="fas fa-chevron-down toggle-icon"></i>
+                            </button>
+
+                            <ul class="submenu level-3" [class.open]="child.isOpen">
+                              @for (subChild of child.children; track subChild.label) {
+                                <ng-container *appHasPermission="subChild.permissions">
+                                  <li>
+                                    <a
+                                      [routerLink]="subChild.link"
+                                      routerLinkActive="active"
+                                      [appTooltip]="subChild.label"
+                                      (click)="onNavLinkClick()"
+                                    >
+                                      <i [class]="subChild.icon"></i>
+                                      <span>{{ subChild.label }}</span>
+                                    </a>
+                                  </li>
+                                </ng-container>
+                              }
+                            </ul>
+                          </li>
+                        }
                       </ng-container>
                     }
                   </ul>

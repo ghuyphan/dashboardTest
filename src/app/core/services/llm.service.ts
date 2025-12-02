@@ -80,7 +80,7 @@ export class LlmService {
   private readonly CHARS_PER_TOKEN = 2.0;
   private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
   private readonly THEME_COOLDOWN = 1000;
-  private readonly UI_DEBOUNCE = 30;
+  private readonly UI_DEBOUNCE = 15;
   private readonly MAX_RETRIES = 1;
   private readonly RETRY_DELAY = 1000;
   private readonly TIMEOUT = 60000;

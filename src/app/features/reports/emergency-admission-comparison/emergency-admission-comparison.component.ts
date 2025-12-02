@@ -77,7 +77,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
   }
 
   private setDefaultDateRange(): void {
-    // Mặc định là Tuần này
     const range = DateUtils.getReportingWeekRange();
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
@@ -131,25 +130,88 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
 
     const sorted = [...data].sort((a, b) => new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime());
 
-    // Prepare labels: Use 'Tuần XX' if data is grouped by week, otherwise use date
-const dates = sorted.map(d => {
-  const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
-  return d.TUAN_NAM ? `Tuần ${d.TUAN_NAM}` : (dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : 'N/A');
-});
+    // Prepare labels: Use Date (dd/MM)
+    const dates = sorted.map(d => {
+      const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
+      return dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : 'N/A';
+    });
 
     // Extract series data
-    const admissions = sorted.map(d => d.NHAP_VIEN || 0); // Số ca nhập viện từ cấp cứu (BAR)
-    const totalCC = sorted.map(d => d.LUOT_CC || 0);      // Tổng số lượt cấp cứu (LINE 1)
-    const bhytCC = sorted.map(d => d.BHYT || 0);          // Tổng số lượt cấp cứu có BHYT (LINE 2)
+    const admissions = sorted.map(d => d.NHAP_VIEN || 0); 
+    const totalCC = sorted.map(d => d.LUOT_CC || 0);      
+    const bhytCC = sorted.map(d => d.BHYT || 0);          
 
-    // ECharts Colors (Matching the image style as closely as possible)
+    // --- DataZoom Logic ---
+    const totalItems = dates.length;
+    const needsDataZoom = totalItems > 10;
+    const itemsToFocus = 15;
+    let startPercent = 0;
+
+    if (needsDataZoom && totalItems > itemsToFocus) {
+      startPercent = Math.floor(100 - ((itemsToFocus / totalItems) * 100));
+    }
+
+    // Configure DataZoom
+    const dataZoomConfig = needsDataZoom ? [
+      {
+        type: 'slider' as const,
+        show: true,
+        xAxisIndex: [0],
+        start: startPercent,
+        end: 100,
+        bottom: 0, // FIX: Pin to absolute bottom
+        height: 20,
+        borderColor: this.palette.gray200,
+        fillerColor: `${this.palette.primary}33`,
+        textStyle: { color: this.palette.textSecondary, fontSize: 10 },
+        handleStyle: {
+          color: this.palette.primary,
+          borderColor: this.palette.primary,
+        },
+        moveHandleStyle: { color: this.palette.primary },
+      },
+      {
+        type: 'inside' as const,
+        xAxisIndex: [0],
+        start: startPercent,
+        end: 100,
+      },
+    ] : [
+      {
+        type: 'slider' as const,
+        show: false,
+        xAxisIndex: [0],
+        start: 0,
+        end: 100
+      },
+      {
+        type: 'inside' as const,
+        disabled: true,
+        xAxisIndex: [0],
+        start: 0,
+        end: 100
+      }
+    ];
+
+    // ECharts Colors
     const colors = {
-      admissions: this.palette.chart2,     // Bar color (Blue/Teal)
-      totalCC: this.palette.tealMidtone,        // Line 1 color (Orange/Yellowish)
-      bhytCC: this.palette.primary     // Line 2 color (Red/Coral)
+      admissions: this.palette.chart2,     
+      totalCC: this.palette.tealMidtone,   
+      bhytCC: this.palette.primary         
     };
 
-    const commonGrid = { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true };
+    // FIX: Layout Configuration
+    // Move Legend to TOP, DataZoom at BOTTOM
+    const commonGrid = { 
+      left: '3%', 
+      right: '4%', 
+      // Top padding for Legend
+      top: 40, 
+      // Bottom padding: if Zoom exists, give space (e.g., 30px), else standard space
+      bottom: needsDataZoom ? 30 : '3%', 
+      containLabel: true 
+    };
+    
     const commonTooltip = { 
       trigger: 'axis', 
       backgroundColor: this.palette.bgCard, 
@@ -181,9 +243,12 @@ const dates = sorted.map(d => {
         }
       },
       grid: commonGrid,
+      dataZoom: dataZoomConfig,
       legend: { 
         data: ['Số ca nhập viện từ cấp cứu', 'Tổng số lượt cấp cứu', 'Tổng số lượt cấp cứu có BHYT'], 
-        bottom: 0, 
+        // FIX: Move legend to Top to avoid collision with slider
+        top: 0, 
+        left: 'center',
         textStyle: { color: this.palette.textSecondary } 
       },
       xAxis: { 
@@ -191,8 +256,8 @@ const dates = sorted.map(d => {
         data: dates, 
         axisLabel: { 
           color: this.palette.textPrimary,
-          interval: 0,
-          rotate: 45,
+          rotate: needsDataZoom ? 45 : 0,
+          interval: needsDataZoom ? 0 : 'auto',
           margin: 10
         }, 
         axisLine: { lineStyle: { color: this.palette.gray200 } } 
@@ -207,7 +272,6 @@ const dates = sorted.map(d => {
         }
       ],
       series: [
-        // Bar Chart (Admissions) - Primary visual
         { 
           name: 'Số ca nhập viện từ cấp cứu', 
           type: 'bar', 
@@ -218,7 +282,6 @@ const dates = sorted.map(d => {
           label: { show: true, position: 'top', color: this.palette.textPrimary, fontSize: 10, distance: 5 },
           z: 1
         },
-        // Line Chart 1 (Total CC) - Comparison line
         { 
           name: 'Tổng số lượt cấp cứu', 
           type: 'line', 
@@ -230,10 +293,8 @@ const dates = sorted.map(d => {
           itemStyle: { color: colors.totalCC },
           lineStyle: { width: 3 },
           z: 2,
-          // Optional: Display value on line
           label: { show: true, position: 'top', color: colors.totalCC, formatter: (p: any) => this.vnNumberFormatter.format(p.value) }
         },
-        // Line Chart 2 (BHYT CC) - Second comparison line
         { 
           name: 'Tổng số lượt cấp cứu có BHYT', 
           type: 'line', 
@@ -245,7 +306,6 @@ const dates = sorted.map(d => {
           itemStyle: { color: colors.bhytCC },
           lineStyle: { width: 3 },
           z: 2,
-          // Optional: Display value on line
           label: { show: true, position: 'top', color: colors.bhytCC, formatter: (p: any) => this.vnNumberFormatter.format(p.value) }
         }
       ]

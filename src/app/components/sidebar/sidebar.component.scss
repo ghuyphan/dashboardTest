@@ -1,3 +1,5 @@
+/* src/app/components/sidebar/sidebar.component.scss */
+
 :host {
   --header-height: 50px;
   --sidebar-width: 240px;
@@ -323,7 +325,7 @@
   transform: scale(1.15);
 }
 
-/* --- Submenu Styling --- */
+/* --- Submenu Styling (Level 2) --- */
 .sidebar-nav ul li.has-submenu button[aria-expanded='true'] {
   background-color: transparent;
   color: var(--text-secondary);
@@ -368,7 +370,48 @@
   transform: rotate(180deg);
 }
 
-/* --- Accordion Submenu --- */
+/* --- NEW: Level 2 Toggle Button Styling --- */
+/* This styles the button that opens Level 3 */
+.level-2-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0.75rem 0.625rem 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--border-radius-md);
+  
+  &:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
+
+  i:not(.toggle-icon) {
+    margin-right: 0.75rem;
+    width: 1.25rem;
+    text-align: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .toggle-icon {
+    margin-left: auto;
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+  }
+}
+
+/* Rotate chevron for Level 2 open state */
+li.open > .level-2-btn .toggle-icon {
+  transform: rotate(180deg);
+}
+
+
+/* --- Accordion Submenu Container --- */
 .submenu {
   list-style: none;
   padding: 0;
@@ -385,13 +428,14 @@
 }
 
 .submenu.open {
-  max-height: 500px;
+  max-height: 1000px; /* Increased to support nested items */
   opacity: 1;
   margin-bottom: 0.25rem;
   margin-top: 0.25rem;
   overflow: visible;
 }
 
+/* Level 2 Items */
 .submenu li a {
   padding: 0.75rem 0.625rem 0.75rem 1.25rem;
   font-size: 0.875rem;
@@ -437,6 +481,27 @@
   background-color: var(--aqua-island);
   border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
   display: block;
+}
+
+/* --- NEW: Level 3 Nested Submenu --- */
+.submenu.level-3 {
+  margin-left: 0.5rem; /* Align with parent border */
+  border-left: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.02); /* Subtle background for depth */
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+  
+  [data-theme='dark'] & {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  li a {
+    padding-left: 2.25rem; /* Deeper indentation for L3 links */
+    font-size: 0.825rem;   /* Slightly smaller text */
+    
+    &::before {
+      left: 0.75rem; /* Adjust active indicator position */
+    }
+  }
 }
 
 /* --- COLLAPSED STATE --- */
@@ -521,6 +586,7 @@
   pointer-events: none;
 }
 
+/* Hide expanded menu styles in collapsed mode (handled by Flyout) */
 .sidebar.collapsed .sidebar-nav ul li .submenu li a {
   width: auto !important;
   height: auto !important;
