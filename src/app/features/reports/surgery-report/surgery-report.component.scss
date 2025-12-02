@@ -69,11 +69,20 @@
     gap: var(--spacing-md);
   }
 
-  .grid-item {
-    min-height: 450px;
-    display: flex;
-    flex-direction: column;
+.grid-item {
+  min-height: 450px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ADD THIS BLOCK: */
+.grid-item.tall-chart {
+  min-height: 550px; /* Increase this value as needed */
+
+  @media (max-width: 768px) {
+    min-height: 400px; /* Keep it reasonable on mobile */
   }
+}
 }
 
 /* Spanning Helpers */

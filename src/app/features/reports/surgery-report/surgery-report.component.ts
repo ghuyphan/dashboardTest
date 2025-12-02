@@ -102,7 +102,6 @@ export class SurgeryReportComponent implements OnInit {
   }
 
   private setDefaultDateRange(): void {
-    // Default to Week as requested
     const range = DateUtils.getReportingWeekRange();
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
@@ -273,7 +272,7 @@ export class SurgeryReportComponent implements OnInit {
       grid: { left: '3%', right: '4%', bottom: '5%', top: '12%', containLabel: true },
     };
 
-    // 1. Daily Trend Chart (Line + Average MarkLine)
+    // 1. Daily Trend Chart (Line + Trend Line)
     const sortedDates = [...dateMap.keys()].sort();
     const dateLabels = sortedDates.map(d => {
       const dt = new Date(d);
@@ -281,8 +280,36 @@ export class SurgeryReportComponent implements OnInit {
     });
     const dateValues = sortedDates.map(d => dateMap.get(d) || 0);
 
+    // --- Calculate Linear Regression (Trending Line) ---
+    let trendData: number[] = [];
+    const n = dateValues.length;
+    
+    if (n > 1) {
+      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      for (let i = 0; i < n; i++) {
+        sumX += i;
+        sumY += dateValues[i];
+        sumXY += i * dateValues[i];
+        sumXX += i * i;
+      }
+      
+      // Slope (m)
+      const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+      // Intercept (b)
+      const intercept = (sumY - slope * sumX) / n;
+      
+      // Generate trend points
+      trendData = Array.from({length: n}, (_, i) => Number((slope * i + intercept).toFixed(2)));
+    }
+
     this.trendChartOptions = {
       ...commonOptions,
+      legend: {
+        show: true,
+        textStyle: { color: this.palette.textSecondary },
+        top: 0,
+        left: 'center'
+      },
       xAxis: {
         type: 'category',
         boundaryGap: false, 
@@ -317,17 +344,33 @@ export class SurgeryReportComponent implements OnInit {
             opacity: 0.3
           },
           label: { show: true, position: 'top', color: this.palette.textPrimary },
-          // Add Average Line to simulate trend reference
+          // Markline for Average
           markLine: {
-            data: [{ type: 'average', name: 'Trung bình' }],
-            lineStyle: { color: this.palette.secondary, type: 'dashed' },
-            label: { position: 'end', formatter: 'TB: {c}' }
+            data: [{ type: 'average', name: 'TB' }],
+            lineStyle: { color: this.palette.secondary, type: 'dashed', opacity: 0.7 },
+            label: { position: 'insideEndTop', formatter: 'TB: {c}' },
+            symbol: 'none'
           }
+        },
+        // Trend Line
+        {
+          name: 'Xu hướng',
+          type: 'line',
+          data: trendData,
+          symbol: 'none',
+          smooth: false,
+          lineStyle: { 
+            type: 'dashed', 
+            color: this.palette.warning, 
+            width: 2 
+          },
+          tooltip: { show: false },
+          itemStyle: { opacity: 0 }
         }
       ]
     };
 
-    // 2. Specialty Chart (Vertical Bar - matching 680.png)
+    // 2. Specialty Chart (Vertical Bar)
     const sortedSpecs = [...specialtyMap.entries()].sort((a, b) => b[1] - a[1]);
     this.specialtyChartOptions = {
       ...commonOptions,
