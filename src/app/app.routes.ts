@@ -199,6 +199,19 @@ export const routes: Routes = [
           showSearchBar: false,
         },
       },
+      {
+        path: 'reports/surgery',
+        loadComponent: () =>
+          import(
+            './features/reports/surgery-report/surgery-report.component'
+          ).then((m) => m.SurgeryReportComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'PTTT.PhauThuat', // Ensure this permission exists or adjust as needed
+          title: 'Thống kê Phẫu thuật',
+          showSearchBar: false,
+        },
+      },
 
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],
