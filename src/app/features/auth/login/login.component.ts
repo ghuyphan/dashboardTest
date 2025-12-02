@@ -78,8 +78,6 @@ export class LoginComponent {
             const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
             this.toastService.showError(errorMessage);
           }
-
-          console.error('Login failed', err);
           this.cd.markForCheck();
         }
       });

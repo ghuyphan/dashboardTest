@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component'; // Import new layout
+import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
@@ -38,7 +38,10 @@ export const routes: Routes = [
           import('./features/dashboard/home/home.component').then(
             (m) => m.HomeComponent
           ),
-        data: { title: 'Trang chủ' },
+        data: {
+          title: 'Trang chủ',
+          keywords: ['dashboard', 'tong quan', 'main', 'home']
+        },
       },
       {
         path: 'settings',
@@ -48,6 +51,7 @@ export const routes: Routes = [
           ),
         data: {
           title: 'Cài đặt tài khoản',
+          keywords: ['doi mat khau', 'tai khoan', 'password', 'mk', 'change password', 'profile'],
           showBackButton: true,
         },
       },
@@ -62,6 +66,7 @@ export const routes: Routes = [
         data: {
           permission: 'QLThietBi.DMThietBi',
           title: 'Danh mục thiết bị',
+          keywords: ['thiet bi', 'may moc', 'catalog', 'danh sach thiet bi'],
           showSearchBar: true,
         },
       },
@@ -89,6 +94,7 @@ export const routes: Routes = [
         data: {
           permission: 'QLThietBi.TQThietBi',
           title: 'Tổng quan thiết bị',
+          keywords: ['thiet bi dashboard', 'bieu do thiet bi', 'equipment dashboard'],
           showSearchBar: false,
           showBackButton: false,
         },
@@ -103,6 +109,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.CongSuatGiuongBenh',
           title: 'Công suất giường bệnh',
+          keywords: ['giuong', 'bed', 'cong suat', 'bed usage', 'giuong benh'],
           showSearchBar: false,
         },
       },
@@ -117,6 +124,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.TongQuanKCB',
           title: 'Tổng quan khám chữa bệnh',
+          keywords: ['kham', 'kcb', 'bhyt', 'vien phi', 'doanh thu', 'kham benh'],
           showSearchBar: false,
         },
       },
@@ -131,6 +139,7 @@ export const routes: Routes = [
         data: {
           permission: 'KHTH.ChuaTaoHSBANgoaiTru',
           title: 'Chưa tạo HSBA (OP)',
+          keywords: ['hsba', 'ho so benh an', 'thieu hsba', 'benh an ngoai tru'],
           showSearchBar: false,
         },
       },
@@ -142,8 +151,9 @@ export const routes: Routes = [
           ).then((m) => m.ClsLevel3ReportComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'BaoCao.KhamCLST3', // Update this permission key
+          permission: 'BaoCao.KhamCLST3',
           title: 'Tầng 3 Khám và CLS',
+          keywords: ['cls 3', 'tang 3', 'xet nghiem tang 3', 'can lam sang 3'],
           showSearchBar: false,
         },
       },
@@ -155,8 +165,9 @@ export const routes: Routes = [
           ).then((m) => m.ClsLevel6ReportComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'BaoCao.KhamCLST6', // Update this permission key
+          permission: 'BaoCao.KhamCLST6',
           title: 'Tầng 6 Khám và CLS',
+          keywords: ['cls 6', 'tang 6', 'xet nghiem tang 6', 'can lam sang 6'],
           showSearchBar: false,
         },
       },
@@ -170,6 +181,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.KhamCLSTheoCK',
           title: 'Khám CLS theo chuyên khoa',
+          keywords: ['cls chuyen khoa', 'specialty', 'ck', 'can lam sang chuyen khoa'],
           showSearchBar: false,
         },
       },
@@ -181,8 +193,9 @@ export const routes: Routes = [
           ).then((m) => m.EmergencySummaryComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'CapCuu.CapCuu01', 
+          permission: 'CapCuu.CapCuu01',
           title: 'Cấp cứu tỉ lệ',
+          keywords: ['cap cuu ti le', 'ti le cap cuu', 'emergency ratio', 'cc'],
           showSearchBar: false,
         },
       },
@@ -194,8 +207,9 @@ export const routes: Routes = [
           ).then((m) => m.EmergencyAdmissionComparisonComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'CapCuu.CapCuu02', 
-          title: 'Cấp cứu lượt nhập viện', // Tiêu đề theo yêu cầu
+          permission: 'CapCuu.CapCuu02',
+          title: 'Cấp cứu lượt nhập viện',
+          keywords: ['cap cuu nhap vien', 'luot nhap vien', 'nhap vien tu cap cuu'],
           showSearchBar: false,
         },
       },
@@ -207,8 +221,23 @@ export const routes: Routes = [
           ).then((m) => m.SurgeryReportComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'PTTT.PhauThuat', // Ensure this permission exists or adjust as needed
+          permission: 'PTTT.PhauThuat',
           title: 'Thống kê Phẫu thuật',
+          keywords: ['phau thuat', 'pttt', 'mo', 'surgery'],
+          showSearchBar: false,
+        },
+      },
+      {
+        path: 'reports/detailed-examination',
+        loadComponent: () =>
+          import(
+            './features/reports/detailed-examination-report/detailed-examination-report.component'
+          ).then((m) => m.DetailedExaminationReportComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'KhamBenh.ChiTiet',
+          title: 'Chi tiết khám bệnh',
+          keywords: ['chi tiet kham', 'kham benh chi tiet', 'so luot kham'],
           showSearchBar: false,
         },
       },

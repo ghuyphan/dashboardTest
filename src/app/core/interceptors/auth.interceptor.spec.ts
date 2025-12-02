@@ -1,29 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient, withInterceptors, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse, HttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, HttpErrorResponse, HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
-import { authInterceptor } from './auth.interceptor'; // Import the functional interceptor
-import { AuthService } from '../services/auth.service'; // Import the service it depends on
-import { environment } from '../../../environments/environment.development'; // Import environment for login URL
+import { authInterceptor } from './auth.interceptor';
+import { AuthService } from '../services/auth.service';
+import { environment } from '../../../environments/environment.development'; 
 
-// --- Mock AuthService ---
-// Use Partial<AuthService> for easier mocking if needed, or define specific methods.
 class MockAuthService {
   accessToken: string | null = null;
   logoutCalled = false;
-  // Make API_URL_LOGIN accessible for tests if needed, or use environment directly
   API_URL_LOGIN = environment.authUrl; // Use the actual environment URL
 
   getAccessToken(): string | null {
-    // console.log('MockAuthService: getAccessToken called, returning:', this.accessToken); // Debugging
     return this.accessToken;
   }
 
   logout(): void {
     this.logoutCalled = true;
     this.accessToken = null; // Simulate token clearing on logout
-    console.log('MockAuthService: logout called');
   }
 
   // Add other methods if your interceptor might eventually call them
@@ -32,7 +27,6 @@ class MockAuthService {
 // --- Mock Router ---
 class MockRouter {
   navigate(commands: any[]): Promise<boolean> {
-    console.log('MockRouter: navigate called with:', commands);
     return Promise.resolve(true); // Simulate successful navigation
   }
 }
@@ -45,13 +39,10 @@ describe('authInterceptor', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        // Provide HttpClient with the interceptor under test
+
         provideHttpClient(withInterceptors([authInterceptor])),
-        // Provide the testing backend for HttpClient
         provideHttpClientTesting(),
-        // Provide the mock AuthService instead of the real one
         { provide: AuthService, useClass: MockAuthService },
-        // Provide the mock Router
         { provide: Router, useClass: MockRouter }
       ]
     });

@@ -6,12 +6,13 @@ import {
   DestroyRef,
   NgZone,
 } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, Routes, Route } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ThemeService } from './theme.service';
 import { environment } from '../../../environments/environment.development';
-import { Subject, debounceTime } from 'rxjs';
+import { Subject, debounceTime, firstValueFrom } from 'rxjs';
 
 // ============================================================================
 // INTERFACES
@@ -64,12 +65,14 @@ const IT_HOTLINE = '**1108** hoặc **1109**';
 
 @Injectable({ providedIn: 'root' })
 export class LlmService {
+  private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly ngZone = inject(NgZone);
 
+  // e.g. 'http://localhost:3000/api/llm'
   private readonly apiUrl = environment.llmUrl;
 
   // Configuration
@@ -80,7 +83,7 @@ export class LlmService {
   private readonly CHARS_PER_TOKEN = 2.0;
   private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
   private readonly THEME_COOLDOWN = 1000;
-  private readonly UI_DEBOUNCE = 15;
+  private readonly UI_DEBOUNCE = 20;
   private readonly MAX_RETRIES = 1;
   private readonly RETRY_DELAY = 1000;
   private readonly TIMEOUT = 60000;
@@ -137,6 +140,11 @@ export class LlmService {
 
     if (willOpen) {
       this.resetSessionTimer();
+      // Clear cache on open to ensure we have fresh permissions/routes
+      this.routeCache = null;
+      this.routeMap = null;
+      this.toolCache = null;
+
       if (!this.modelLoaded() && !this.isModelLoading()) this.loadModel();
     } else {
       this.clearSessionTimer();
@@ -211,6 +219,20 @@ export class LlmService {
   }
 
   // ============================================================================
+  // HEALTH CHECK
+  // ============================================================================
+
+  private async checkHealth(): Promise<void> {
+    // Replace API path with Health path safely for both relative and absolute URLs
+    const healthUrl = this.apiUrl.replace('/api/llm', '/health');
+    try {
+      await firstValueFrom(this.http.get(healthUrl));
+    } catch (e) {
+      throw new Error('Server unreachable');
+    }
+  }
+
+  // ============================================================================
   // SERVER STREAMING LOGIC
   // ============================================================================
 
@@ -220,9 +242,8 @@ export class LlmService {
 
     const context = this.prepareContext(userMsg);
     const tools = this.buildTools();
-    const routes = this.getRoutes();
+    const routes = this.getRoutes(); // 🚀 Automatically scans router config
 
-    // Build metadata for backend - includes session for context tracking
     const metadata = {
       sessionId: this.sessionId,
       routes: routes.map((r) => ({
@@ -234,7 +255,6 @@ export class LlmService {
       currentTheme: this.themeService.isDarkTheme() ? 'dark' : 'light',
     };
 
-    // Send to backend - let server handle all classification
     const payload = {
       messages: [
         ...context.map((m) => ({ role: m.role, content: m.content })),
@@ -325,16 +345,13 @@ export class LlmService {
           }
         }
 
-        // Process remaining buffer
         if (buffer.trim()) {
           try {
             const json = JSON.parse(buffer);
             if (json.message?.content) content += json.message.content;
             const tools = this.parseTools(json);
             tools.forEach((t) => toolCalls.push(t));
-          } catch {
-            /* ignore */
-          }
+          } catch { /* ignore */ }
         }
       } finally {
         reader.releaseLock();
@@ -353,7 +370,7 @@ export class LlmService {
   }
 
   // ============================================================================
-  // TOOLS
+  // TOOLS & ROUTE SCANNING (UNIFIED)
   // ============================================================================
 
   private buildTools(): unknown[] {
@@ -391,6 +408,101 @@ export class LlmService {
     return this.toolCache;
   }
 
+  private getRoutes(): RouteInfo[] {
+    if (!this.routeCache) {
+      // 🚀 Completely dynamic scanning of Router Config
+      this.routeCache = this.scanRoutes(this.router.config);
+      if (this.DEBUG) console.log('🚀 LLM Routes:', this.routeCache);
+    }
+    return this.routeCache;
+  }
+
+  private scanRoutes(routes: Routes, parentPath = ''): RouteInfo[] {
+    const results: RouteInfo[] = [];
+
+    for (const route of routes) {
+      if (route.redirectTo || route.path === '**') continue;
+
+      const path = route.path || '';
+      // Ensure clean path concatenation
+      const fullPath = parentPath
+        ? parentPath.endsWith('/')
+          ? `${parentPath}${path}`
+          : `${parentPath}/${path}`
+        : `/${path}`;
+
+      // Check user permissions before exposing to AI
+      if (!this.checkPerm(route)) continue;
+
+      // Extract metadata from route data
+      const title = route.data?.['title'] as string;
+      const keywords = route.data?.['keywords'] as string[];
+
+      if (title) {
+        // Create a clean key for the LLM (remove 'app/' prefix if present)
+        let key = fullPath.startsWith('/') ? fullPath.substring(1) : fullPath;
+        key = key.replace(/^app\//, '');
+
+        results.push({
+          title,
+          fullUrl: fullPath,
+          key,
+          keywords: keywords || [],
+        });
+      }
+
+      // Recursively scan children
+      if (route.children) {
+        results.push(...this.scanRoutes(route.children, fullPath));
+      }
+    }
+    return results;
+  }
+
+  private checkPerm(route: Route): boolean {
+    const perm = route.data?.['permission'] as string | undefined;
+    if (!perm) return true;
+    const user = this.authService.currentUser();
+    return user?.permissions?.some((p) => p.startsWith(perm)) ?? false;
+  }
+
+  private ensureRouteMap(): void {
+    if (!this.routeMap) {
+      this.routeMap = new Map();
+      for (const r of this.getRoutes()) {
+        this.routeMap.set(r.key, r);
+      }
+    }
+  }
+
+  private resolveRoute(key: string): RouteInfo | null {
+    this.ensureRouteMap();
+    // 1. Direct Match
+    if (this.routeMap!.has(key)) return this.routeMap!.get(key)!;
+
+    // 2. Clean Match (try removing prefixes)
+    const cleanKey = key.replace(/^\/?(app\/)?/, '');
+    if (this.routeMap!.has(cleanKey)) return this.routeMap!.get(cleanKey)!;
+
+    // 3. Fuzzy Search (Fallback)
+    const routes = this.getRoutes();
+    const lower = key.toLowerCase();
+
+    return (
+      routes.find(
+        (r) =>
+          r.key.toLowerCase().includes(lower) ||
+          r.fullUrl.toLowerCase().includes(lower) ||
+          r.title.toLowerCase().includes(lower) ||
+          r.keywords?.some((kw) => kw.includes(lower))
+      ) || null
+    );
+  }
+
+  // ============================================================================
+  // TOOL PARSING & HELPERS
+  // ============================================================================
+
   private parseTools(json: Record<string, unknown>): ToolCall[] {
     const results: ToolCall[] = [];
     try {
@@ -421,9 +533,7 @@ export class LlmService {
           };
         }
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
     return null;
   }
 
@@ -437,9 +547,7 @@ export class LlmService {
       if (trimmed.startsWith('{')) {
         try {
           return JSON.parse(trimmed);
-        } catch {
-          /* ignore */
-        }
+        } catch { /* ignore */ }
       }
       return { k: trimmed };
     }
@@ -453,10 +561,6 @@ export class LlmService {
     if (n === 'theme' || n.includes('theme')) return 'theme';
     return null;
   }
-
-  // ============================================================================
-  // TOOL EXECUTION
-  // ============================================================================
 
   private async execTools(calls: ToolCall[]): Promise<void> {
     for (const call of calls.slice(0, 2)) {
@@ -496,11 +600,13 @@ export class LlmService {
 
     const route = this.resolveRoute(key);
     if (!route) return { success: false, error: 'Không tìm thấy trang này.' };
-    if (currentPath === route.fullUrl) return { success: true, data: 'SAME' };
+
+    const targetPath = route.fullUrl;
+    if (currentPath === targetPath) return { success: true, data: 'SAME' };
 
     this.isNavigating.set(true);
     setTimeout(() => {
-      this.router.navigateByUrl(route.fullUrl).finally(() => {
+      this.router.navigateByUrl(targetPath).finally(() => {
         setTimeout(() => this.isNavigating.set(false), 500);
       });
     }, 600);
@@ -534,85 +640,7 @@ export class LlmService {
   }
 
   // ============================================================================
-  // ROUTING
-  // ============================================================================
-
-  private getRoutes(): RouteInfo[] {
-    if (!this.routeCache) {
-      this.routeCache = this.scanRoutes(this.router.config);
-    }
-    return this.routeCache;
-  }
-
-  private ensureRouteMap(): void {
-    if (!this.routeMap) {
-      this.routeMap = new Map();
-      for (const r of this.getRoutes()) {
-        this.routeMap.set(r.key, r);
-      }
-    }
-  }
-
-  private resolveRoute(key: string): RouteInfo | null {
-    this.ensureRouteMap();
-    if (this.routeMap!.has(key)) return this.routeMap!.get(key)!;
-
-    const cleanKey = key.replace(/^\/?(app\/)?/, '');
-    if (this.routeMap!.has(cleanKey)) return this.routeMap!.get(cleanKey)!;
-
-    const routes = this.getRoutes();
-    const lower = key.toLowerCase();
-
-    return (
-      routes.find(
-        (r) =>
-          r.key.includes(lower) ||
-          r.fullUrl.includes(lower) ||
-          r.title.toLowerCase().includes(lower) ||
-          r.keywords?.some((kw) => kw.includes(lower))
-      ) || null
-    );
-  }
-
-  private scanRoutes(routes: Routes, parent = ''): RouteInfo[] {
-    const results: RouteInfo[] = [];
-
-    for (const route of routes) {
-      if (route.redirectTo || route.path === '**') continue;
-
-      const path = route.path || '';
-      const fullPath = parent ? `${parent}/${path}` : `/${path}`;
-      const key = fullPath.startsWith('/app/')
-        ? fullPath.substring(5)
-        : fullPath.substring(1);
-
-      if (!this.checkPerm(route)) continue;
-
-      if (route.data?.['title']) {
-        results.push({
-          title: route.data['title'] as string,
-          fullUrl: fullPath,
-          key,
-          keywords: route.data?.['keywords'] as string[] | undefined,
-        });
-      }
-
-      if (route.children) {
-        results.push(...this.scanRoutes(route.children, fullPath));
-      }
-    }
-    return results;
-  }
-
-  private checkPerm(route: Route): boolean {
-    const perm = route.data?.['permission'] as string | undefined;
-    if (!perm) return true;
-    const user = this.authService.currentUser();
-    return user?.permissions?.some((p) => p.startsWith(perm)) ?? false;
-  }
-
-  // ============================================================================
-  // CONTEXT & MESSAGING
+  // UTILITIES
   // ============================================================================
 
   private prepareContext(newMsg: string): ChatMessage[] {
@@ -750,10 +778,6 @@ export class LlmService {
       : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${IT_HOTLINE}.`;
   }
 
-  // ============================================================================
-  // UTILITIES
-  // ============================================================================
-
   private generateSessionId(): string {
     return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
@@ -770,21 +794,6 @@ export class LlmService {
       }
     }
     throw lastErr;
-  }
-
-  private async checkHealth(): Promise<void> {
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 10000);
-    try {
-      const url = new URL(this.apiUrl);
-      const res = await fetch(`${url.protocol}//${url.host}/health`, {
-        method: 'GET',
-        signal: ctrl.signal,
-      });
-      if (!res.ok) throw new Error('Server unreachable');
-    } finally {
-      clearTimeout(timeout);
-    }
   }
 
   private sanitize(content: string): string {

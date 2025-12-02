@@ -1,6 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 @Pipe({
   name: 'markdown',
@@ -18,6 +19,7 @@ export class MarkdownPipe implements PipeTransform {
   transform(value: string | null | undefined): SafeHtml {
     if (!value) return '';
     const html = marked.parse(value) as string;
-    return this.sanitizer.bypassSecurityTrustHtml(html);
+    const sanitizedHtml = DOMPurify.sanitize(html);
+    return this.sanitizer.bypassSecurityTrustHtml(sanitizedHtml);
   }
 }

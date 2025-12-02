@@ -82,7 +82,7 @@ export class DropdownDataService {
   }
 
   private handleError(context: string, error: HttpErrorResponse) {
-    console.error(`Error fetching ${context}:`, error);
+    console.error(`Error fetching ${context}:`);
     return of([]); 
   }
 }

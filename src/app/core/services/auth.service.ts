@@ -106,7 +106,6 @@ export class AuthService {
               console.warn("Session expired during init, logging out.");
               this.logout();
             } else {
-              console.error("Failed to refresh permissions, keeping local state.", err);
             }
             return of(null);
           })
@@ -316,7 +315,7 @@ export class AuthService {
             if (typeof s !== 'undefined') keys.forEach(k => s.removeItem(k));
         });
     } catch (e) {
-      console.error('Failed to remove auth data', e);
+      console.error('Failed to remove auth data');
     }
 
     this._isLoggedIn.set(false);

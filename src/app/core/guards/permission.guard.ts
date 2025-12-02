@@ -12,7 +12,6 @@ export const permissionGuard: CanActivateFn = (
   const requiredPermission = route.data['permission'] as string;
 
   if (!requiredPermission) {
-    console.error('PermissionGuard: Route is missing "permission" property in data.', route.pathFromRoot);
     router.navigate(['/app/home']);
     return false;
   }
@@ -21,7 +20,6 @@ export const permissionGuard: CanActivateFn = (
   const user = authService.currentUser();
 
   if (!user || !user.permissions || user.permissions.length === 0) {
-    console.warn('PermissionGuard: User not logged in or has no permissions. Redirecting to login.');
     router.navigate(['/login']);
     return false;
   }
@@ -33,7 +31,6 @@ export const permissionGuard: CanActivateFn = (
   if (hasPermission) {
     return true;
   } else {
-    console.warn(`PermissionGuard: Access denied - User lacks permission starting with: '${requiredPermission}'. Redirecting to /app/home.`);
     router.navigate(['/app/home']);
     return false;
   }
