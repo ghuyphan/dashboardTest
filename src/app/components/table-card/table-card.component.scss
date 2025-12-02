@@ -6,7 +6,8 @@
 }
 
 .table-card {
-  background-color: var(--surface-card); /* Semantic Variable */
+  background-color: var(--surface-card);
+  /* Semantic Variable */
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);
@@ -15,9 +16,10 @@
   height: 100%;
   overflow: hidden;
   position: relative;
-  
+
   /* Subtle border for dark mode definition */
   border: 1px solid transparent;
+
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
@@ -27,7 +29,8 @@
   flex-shrink: 0;
   margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border-color); /* Semantic Variable */
+  border-bottom: 1px solid var(--border-color);
+  /* Semantic Variable */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,7 +39,8 @@
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--text-primary); /* Semantic Variable */
+  color: var(--text-primary);
+  /* Semantic Variable */
   margin: 0;
   display: flex;
   align-items: center;
@@ -45,11 +49,26 @@
 
   i {
     font-size: 1rem;
-    &.icon-info { color: var(--color-info); }
-    &.icon-warning { color: var(--color-warning); }
-    &.icon-danger { color: var(--color-danger); }
-    &.icon-success { color: var(--color-success); }
-    &.text-teal { color: var(--teal-blue); }
+
+    &.icon-info {
+      color: var(--color-info);
+    }
+
+    &.icon-warning {
+      color: var(--color-warning);
+    }
+
+    &.icon-danger {
+      color: var(--color-danger);
+    }
+
+    &.icon-success {
+      color: var(--color-success);
+    }
+
+    &.text-teal {
+      color: var(--teal-blue);
+    }
   }
 }
 
@@ -61,7 +80,8 @@
 
 .btn-icon-action {
   background: transparent;
-  border: 1px solid var(--border-color); /* Semantic Variable */
+  border: 1px solid var(--border-color);
+  /* Semantic Variable */
   border-radius: var(--border-radius-sm);
   width: 32px;
   height: 32px;
@@ -70,12 +90,13 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-secondary); /* Semantic Variable */
+  color: var(--text-secondary);
+  /* Semantic Variable */
 
   &:hover:not(:disabled) {
     background-color: var(--gray-100);
     color: var(--text-primary);
-    
+
     [data-theme='dark'] & {
       background-color: var(--gray-200);
       border-color: var(--gray-300);
@@ -87,11 +108,18 @@
     cursor: not-allowed;
   }
 
-  i { font-size: 1rem; }
+  i {
+    font-size: 1rem;
+  }
 }
 
-.text-success { color: var(--color-success); }
-.text-teal { color: var(--teal-blue); }
+.text-success {
+  color: var(--color-success);
+}
+
+.text-teal {
+  color: var(--teal-blue);
+}
 
 .card-body {
   flex-grow: 1;
@@ -103,8 +131,9 @@
   /* Override reusable table host to fit perfectly inside the card body */
   ::ng-deep app-reusable-table {
     height: 100%;
+
     .reusable-table-wrapper {
-      border: none; 
+      border: none;
       box-shadow: none;
       border-radius: 0;
       background: transparent;
@@ -119,29 +148,47 @@
   flex-direction: column;
   gap: var(--spacing-md);
   height: 100%;
-  
+
   .skeleton-header {
     height: 40px;
-    background-color: var(--gray-100); /* Adaptive Gray */
+    background-color: var(--gray-100);
+    /* Adaptive Gray */
     border-radius: 4px;
     animation: pulse 1.5s infinite ease-in-out;
   }
-  
+
   .skeleton-row {
     height: 30px;
-    background-color: var(--gray-50); /* Adaptive Gray */
+    background-color: var(--gray-50);
+    /* Adaptive Gray */
     border-radius: 4px;
     animation: pulse 1.5s infinite ease-in-out;
     animation-delay: 0.1s;
-    
-    &:nth-child(3) { animation-delay: 0.2s; }
-    &:nth-child(4) { animation-delay: 0.3s; }
-    &:nth-child(5) { animation-delay: 0.4s; }
+
+    &:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 0.3s;
+    }
+
+    &:nth-child(5) {
+      animation-delay: 0.4s;
+    }
   }
 }
 
 @keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }

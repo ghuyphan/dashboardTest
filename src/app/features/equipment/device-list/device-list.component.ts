@@ -66,7 +66,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
 
   public readonly deviceColumns: GridColumn[] = this.initializeColumns();
-  
+
   // Convert to signals for better reactivity
   public isLoading = signal(true);
   public pagedDeviceData = signal<Device[]>([]);
@@ -109,7 +109,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
           code: this.selectedDevice()!.Ma,
         } : null,
       },
-      
+
       // Device list (will be auto-sampled by LlmService if too large)
       devices: devices.map(d => ({
         id: d.Id,
@@ -126,7 +126,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         ngayMua: d.NgayMua,
         ngayHetHanBH: d.NgayHetHanBH,
       })),
-      
+
       // Summary statistics for quick AI responses
       summary: this.generateDeviceSummary(),
     };
@@ -137,7 +137,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   private generateDeviceSummary() {
     const devices = this.pagedDeviceData();
-    
+
     if (devices.length === 0) {
       return {
         note: 'Không có thiết bị nào trong danh sách hiện tại',
@@ -352,6 +352,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         title: 'Tạo mới thiết bị',
         context: { device: null, title: 'Tạo mới Thiết bị' },
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result) this.resetToFirstPage();
       });
@@ -364,6 +365,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         title: 'Sửa thiết bị',
         context: { device: { ...device }, title: 'Sửa thiết bị' },
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result) this.triggerReload();
       });
@@ -385,6 +387,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
           cancelText: 'Hủy bỏ',
         },
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((confirmed) => {
         if (confirmed) this.performDeviceDeletion(device);
       });
@@ -392,7 +395,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private performDeviceDeletion(device: Device): void {
     if (!device.Id) return;
-    
+
     this.isLoading.set(true);
     this.cdr.markForCheck();
 

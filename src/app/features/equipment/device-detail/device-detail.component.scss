@@ -24,15 +24,16 @@
 .detail-card {
   max-width: 100%;
   margin: 0;
-  
+
   /* Semantic Background */
   background: var(--surface-card);
-  
+
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  
+
   /* Semantic Border (Subtle in Dark Mode) */
   border: 1px solid transparent;
+
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
@@ -48,18 +49,20 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color); /* Semantic */
+  border-bottom: 1px solid var(--border-color);
+  /* Semantic */
 
   .header-icon {
     flex-shrink: 0;
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    
+
     /* Brand colors work well in both modes, or adjust for dark mode */
     background-color: var(--teal-blue-light);
-    color: #003d4d; /* Dark Teal text */
-    
+    color: #003d4d;
+    /* Dark Teal text */
+
     [data-theme='dark'] & {
       background-color: rgba(45, 212, 191, 0.2);
       color: var(--teal-blue);
@@ -79,7 +82,8 @@
   .device-name {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--text-primary); /* Semantic */
+    color: var(--text-primary);
+    /* Semantic */
     margin: 0;
     line-height: 1.2;
     overflow: hidden;
@@ -89,7 +93,8 @@
 
   .device-code {
     font-size: 1rem;
-    color: var(--text-secondary); /* Semantic */
+    color: var(--text-secondary);
+    /* Semantic */
     font-family: monospace;
   }
 
@@ -99,10 +104,10 @@
     font-weight: 600;
     border-radius: 99px;
     color: #fff;
-    
+
     /* Default gray */
     background-color: var(--gray-500);
-    
+
     /* Map status colors based on component logic classes (status-in-use etc.) */
   }
 }
@@ -149,7 +154,8 @@
   .info-label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--text-secondary); /* Semantic */
+    color: var(--text-secondary);
+    /* Semantic */
     margin-bottom: var(--spacing-xs);
     text-transform: uppercase;
   }
@@ -157,7 +163,8 @@
   .info-value {
     font-size: 1rem;
     font-weight: 500;
-    color: var(--text-primary); /* Semantic */
+    color: var(--text-primary);
+    /* Semantic */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -175,11 +182,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
-  
+
   /* Semantic Background for Side Panel */
   background-color: var(--gray-50);
+
   [data-theme='dark'] & {
-    background-color: var(--gray-100); /* Slightly distinct from card bg */
+    background-color: var(--gray-100);
+    /* Slightly distinct from card bg */
   }
 
   padding: var(--spacing-lg);
@@ -194,7 +203,8 @@
 .meta-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary); /* Semantic */
+  color: var(--text-primary);
+  /* Semantic */
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--border-color);
@@ -205,7 +215,8 @@
 
   .qr-code-box {
     padding: var(--spacing-sm);
-    background-color: white; /* QR codes need white bg always */
+    background-color: white;
+    /* QR codes need white bg always */
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
     display: inline-block;
@@ -252,9 +263,20 @@
 }
 
 @keyframes pulse-warning {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.1); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* --- PRINT STYLING --- */
@@ -289,7 +311,7 @@
       width: auto !important;
       height: auto !important;
     }
-    
+
     .qr-compact-label {
       border: 1px solid #000 !important;
       border-radius: 8px !important;

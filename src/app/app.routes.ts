@@ -195,7 +195,7 @@ export const routes: Routes = [
         data: {
           permission: 'CapCuu.CapCuu01',
           title: 'Cấp cứu tỉ lệ',
-          keywords: ['cap cuu ti le', 'ti le cap cuu', 'emergency ratio', 'cc'],
+          keywords: ['cap cuu', 'cap cuu ti le', 'ti le cap cuu', 'emergency ratio', 'cc'],
           showSearchBar: false,
         },
       },
@@ -209,7 +209,7 @@ export const routes: Routes = [
         data: {
           permission: 'CapCuu.CapCuu02',
           title: 'Cấp cứu lượt nhập viện',
-          keywords: ['cap cuu nhap vien', 'luot nhap vien', 'nhap vien tu cap cuu'],
+          keywords: ['cap cuu', 'cap cuu nhap vien', 'luot nhap vien', 'nhap vien tu cap cuu'],
           showSearchBar: false,
         },
       },

@@ -249,7 +249,7 @@ export class LlmService {
       routes: routes.map((r) => ({
         key: r.key,
         title: r.title,
-        keywords: r.keywords,
+        keywords: r.keywords || [],
       })),
       currentPath: this.router.url.split('?')[0],
       currentTheme: this.themeService.isDarkTheme() ? 'dark' : 'light',
@@ -264,9 +264,6 @@ export class LlmService {
       metadata,
       stream: true,
     };
-
-    if (this.DEBUG)
-      console.log('[LLM] Request Payload:', JSON.stringify(payload, null, 2));
 
     const timeout = setTimeout(() => this.abortCtrl?.abort(), this.TIMEOUT);
 
@@ -318,7 +315,6 @@ export class LlmService {
 
             try {
               const json = JSON.parse(line);
-              if (this.DEBUG) console.log('[LLM] Chunk:', json);
 
               if (json.message?.content) {
                 content += json.message.content;
@@ -412,7 +408,6 @@ export class LlmService {
     if (!this.routeCache) {
       // 🚀 Completely dynamic scanning of Router Config
       this.routeCache = this.scanRoutes(this.router.config);
-      if (this.DEBUG) console.log('🚀 LLM Routes:', this.routeCache);
     }
     return this.routeCache;
   }
@@ -432,7 +427,9 @@ export class LlmService {
         : `/${path}`;
 
       // Check user permissions before exposing to AI
-      if (!this.checkPerm(route)) continue;
+      if (!this.checkPerm(route)) {
+        continue;
+      }
 
       // Extract metadata from route data
       const title = route.data?.['title'] as string;
@@ -461,7 +458,15 @@ export class LlmService {
 
   private checkPerm(route: Route): boolean {
     const perm = route.data?.['permission'] as string | undefined;
-    if (!perm) return true;
+    // [SECURITY] Fail-Closed: If no permission is defined, hide it by default.
+    if (!perm) {
+      const path = route.path ?? '';
+      // Whitelist public routes that are safe to expose
+      // 'app' and '' are container routes that must be allowed to scan children
+      const whitelist = ['home', 'settings', 'profile', 'app', ''];
+      if (whitelist.includes(path)) return true;
+      return false;
+    }
     const user = this.authService.currentUser();
     return user?.permissions?.some((p) => p.startsWith(perm)) ?? false;
   }

@@ -21,6 +21,7 @@
   gap: var(--spacing-lg);
 
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -70,19 +71,41 @@
     display: flex;
     flex-direction: column;
   }
+
+  .grid-item.tall-chart {
+    min-height: 550px;
+    /* Increase this value as needed */
+
+    @media (max-width: 768px) {
+      min-height: 400px;
+      /* Keep it reasonable on mobile */
+    }
+  }
 }
 
 /* Spanning Helpers */
-.span-4 { 
-  grid-column: span 4; 
-  @media (max-width: 1400px) { grid-column: span 2; } 
-  @media (max-width: 992px) { grid-column: 1 / -1; } 
+.span-4 {
+  grid-column: span 4;
+
+  @media (max-width: 1400px) {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 992px) {
+    grid-column: 1 / -1;
+  }
 }
 
-.span-2 { 
-  grid-column: span 2; 
-  @media (max-width: 1400px) { grid-column: span 1; } 
-  @media (max-width: 992px) { grid-column: 1 / -1; } 
+.span-2 {
+  grid-column: span 2;
+
+  @media (max-width: 1400px) {
+    grid-column: span 1;
+  }
+
+  @media (max-width: 992px) {
+    grid-column: 1 / -1;
+  }
 }
 
 .span-full {

@@ -12,7 +12,12 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding: var(--spacing-xs);
+  /* [MODIFIED] Removed padding as requested for edge-to-edge look */
+  padding: 0;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
 }
 
 .grid-container {
@@ -20,28 +25,42 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  
-  background-color: var(--white);
+
+  background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-md);
+  /* Refined shadow for depth */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color);
   overflow: hidden;
-  
+
   /* PERFORMANCE FIX: Helps browser optimize rendering */
-  contain: content; 
+  contain: content;
+
+  [data-theme="dark"] & {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    border-color: var(--border-color);
+  }
 }
 
 p {
   margin-bottom: var(--spacing-lg);
-  color: var(--gray-600);
+  color: var(--text-secondary);
 }
 
 :host ::ng-deep app-reusable-table {
   flex: 1;
   min-height: 0;
   display: flex;
-  
+
   .reusable-table-wrapper {
+    /* Remove inner border/radius since the grid-container handles it */
+    border: none !important;
     border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+
+  .table-container {
+    background-color: transparent !important;
   }
 }
 
@@ -51,5 +70,5 @@ p {
   align-items: center;
   justify-content: center;
   font-style: italic;
-  color: var(--gray-500);
+  color: var(--text-disabled);
 }

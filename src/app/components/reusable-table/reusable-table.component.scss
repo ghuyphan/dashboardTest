@@ -10,38 +10,39 @@ app-reusable-table {
   overflow: hidden;
 
   /* --- CSS Variables Scope --- */
-  --row-height: 44px;
-  --header-height: 48px;
-  
+  --row-height: 48px;
+  /* Slightly taller for better touch targets */
+  --header-height: 52px;
+
   /* Local Scoped Colors - Defaults (Light Mode) */
   --border-color-local: var(--border-color);
   --text-color-local: var(--text-primary);
+
+  /* [MODIFIED] Use global table header variables for Teal/Blue look */
   --header-bg-local: var(--table-header-bg);
   --header-text-local: var(--table-header-text);
 
   /* Row Backgrounds */
   --row-bg-odd: var(--surface-card);
-  --row-bg-even: var(--gray-50);
-  --row-bg-hover: var(--gray-100);
-  --row-bg-selected: rgba(0, 131, 155, 0.08); /* Primary tint */
-  
+  --row-bg-even: var(--surface-card);
+  /* Cleaner look without heavy striping */
+  --row-bg-hover: var(--gray-50);
+  --row-bg-selected: rgba(var(--primary-rgb), 0.08);
+
   /* Sticky Column Divider */
-  --sticky-border-color: rgba(0, 0, 0, 0.08);
+  --sticky-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  --sticky-border-color: var(--border-color-local);
 
   /* Dark Mode Overrides */
   &[data-theme="dark"],
   [data-theme="dark"] & {
-    /* Darker header background */
-    --header-bg-local: #1e293b; /* Slate 800 */
-    --header-text-local: #f8fafc;
-
-    /* Row Colors: Ensure 'even' isn't darker than the card background */
-    --row-bg-odd: var(--surface-card); 
-    --row-bg-even: rgba(255, 255, 255, 0.03); 
-    --row-bg-hover: rgba(255, 255, 255, 0.06);
-    --row-bg-selected: rgba(45, 212, 191, 0.15); /* Teal tint */
-    
-    --sticky-border-color: rgba(255, 255, 255, 0.12);
+    --header-bg-local: #1e293b;
+    --header-text-local: #94a3b8;
+    --row-bg-odd: var(--surface-card);
+    --row-bg-even: var(--surface-card);
+    --row-bg-hover: rgba(255, 255, 255, 0.04);
+    --row-bg-selected: rgba(45, 212, 191, 0.15);
+    --sticky-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -57,20 +58,17 @@ app-reusable-table {
   position: relative;
   overflow: hidden;
 
-  /* Border handling */
-  border: 1px solid transparent;
-  [data-theme="dark"] & {
-    border-color: var(--border-color);
-  }
+  /* Subtle border for definition */
+  border: 1px solid var(--border-color-local);
 }
 
 .table-container {
   flex: 1;
-  overflow: auto; /* Enables both X and Y scrolling */
+  overflow: auto;
   position: relative;
   background-color: var(--surface-card);
 
-  /* Performance Optimization: Isolate painting */
+  /* Performance */
   contain: layout style;
   will-change: scroll-position;
   scroll-behavior: smooth;
@@ -80,18 +78,18 @@ app-reusable-table {
   scrollbar-color: var(--gray-300) transparent;
 
   &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--gray-300);
-    border-radius: 4px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-    
+    border-radius: 3px;
+
     &:hover {
       background-color: var(--gray-400);
     }
@@ -99,9 +97,13 @@ app-reusable-table {
 
   [data-theme="dark"] & {
     scrollbar-color: var(--gray-600) transparent;
+
     &::-webkit-scrollbar-thumb {
       background-color: var(--gray-600);
-      &:hover { background-color: var(--gray-500); }
+
+      &:hover {
+        background-color: var(--gray-500);
+      }
     }
   }
 }
@@ -111,15 +113,11 @@ app-reusable-table {
    ========================================================= */
 table.mat-table {
   width: 100%;
-  border-collapse: separate; /* Required for sticky positioning to work correctly */
+  border-collapse: separate;
   border-spacing: 0;
-  
-  /* Responsive Fix: Force minimum width so columns don't collapse on mobile.
-     This triggers the container's horizontal scrollbar. */
-  min-width: 1000px; 
+  min-width: 1000px;
   table-layout: fixed;
-  
-  background-color: transparent; 
+  background-color: transparent;
 }
 
 /* --- Header Row --- */
@@ -128,42 +126,43 @@ table.mat-table {
   min-height: var(--header-height) !important;
   background-color: var(--header-bg-local) !important;
   border-bottom: 1px solid var(--border-color-local);
-  
-  /* Sticky Header: Stays at top during vertical scroll */
+
   position: sticky;
   top: 0;
-  z-index: 100; 
+  z-index: 100;
 }
 
 .mat-mdc-header-cell {
   color: var(--header-text-local) !important;
   font-weight: 600 !important;
-  font-size: 0.8125rem !important; /* 13px */
-  padding: 0 var(--spacing-sm) !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 var(--spacing-md) !important;
   vertical-align: middle;
-  
-  /* Layout */
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  
-  /* Separators */
-  border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
-  &:last-of-type {
-    border-right: none !important;
-  }
 
-  /* Background needs to be explicit for sticky behavior */
-  background-color: inherit; 
+  /* Remove vertical dividers for cleaner look, keep bottom border */
+  border-right: none !important;
 
-  /* Sort Arrow Color */
+  background-color: inherit;
+
   .mat-sort-header-arrow {
     color: currentColor !important;
-    opacity: 0.7;
+    opacity: 0.5;
   }
 
   &:hover {
-    filter: brightness(1.1);
+    color: var(--header-text-local) !important;
+    /* Keep white on hover if bg is dark */
+    opacity: 0.9;
+
+    .mat-sort-header-arrow {
+      opacity: 1;
+    }
   }
 }
 
@@ -171,45 +170,53 @@ table.mat-table {
 .mat-mdc-row {
   height: var(--row-height) !important;
   min-height: var(--row-height) !important;
-  transition: background-color 0.15s ease;
-  
-  /* Zebra Striping */
-  &:nth-child(odd) { background-color: var(--row-bg-odd) !important; }
-  &:nth-child(even) { background-color: var(--row-bg-even) !important; }
+  transition: background-color 0.1s ease;
 
-  /* Hover State */
+  /* Subtle separator */
+  border-bottom: 1px solid var(--border-color-local);
+
+  &:nth-child(odd) {
+    background-color: var(--row-bg-odd) !important;
+  }
+
+  &:nth-child(even) {
+    background-color: var(--row-bg-even) !important;
+  }
+
   &.clickable-row:hover {
     background-color: var(--row-bg-hover) !important;
     cursor: pointer;
-    /* Ensure hover effect sits above zebra striping */
-    z-index: 1; 
+    z-index: 1;
   }
 
-  /* Selected State */
-  &.selected, 
+  &.selected,
   &.multi-selected {
     background-color: var(--row-bg-selected) !important;
-    
+
     .mat-mdc-cell {
       color: var(--primary) !important;
-      font-weight: 600 !important;
+      font-weight: 500 !important;
     }
   }
 }
 
 .mat-mdc-cell {
-  font-size: 0.875rem !important; /* 14px */
+  font-size: 0.875rem !important;
   color: var(--text-color-local) !important;
-  padding: 0 var(--spacing-sm) !important;
+  padding: 0 var(--spacing-md) !important;
   border-bottom: 1px solid var(--border-color-local) !important;
-  
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
-  /* Add padding to first/last data cells (not select/actions) */
-  &:first-of-type:not(.mat-column-select) { padding-left: var(--spacing-md) !important; }
-  &:last-of-type:not(.mat-column-actions) { padding-right: var(--spacing-md) !important; }
+  &:first-of-type:not(.mat-column-select) {
+    padding-left: var(--spacing-lg) !important;
+  }
+
+  &:last-of-type:not(.mat-column-actions) {
+    padding-right: var(--spacing-lg) !important;
+  }
 }
 
 /* --- Sticky Columns (Select & Actions) --- */
@@ -220,49 +227,40 @@ table.mat-table {
   max-width: 48px !important;
   padding: 0 !important;
   text-align: center;
-  
+
   position: sticky !important;
   left: 0 !important;
-  /* Higher Z-index than normal cells, lower than header */
-  z-index: 101 !important; 
-  
-  /* CRITICAL: Inherit background from the row/header so content doesn't scroll "under" transparently */
-  background-color: inherit; 
-  
-  /* Divider Line */
+  z-index: 101 !important;
+  background-color: inherit;
+
+  /* Shadow instead of border for depth */
   border-right: 1px solid var(--sticky-border-color) !important;
 
-  /* Sticky Header overlap fix */
   &.mat-mdc-header-cell {
-    /* Highest Z-index intersection (Sticky Header + Sticky Column) */
-    z-index: 102 !important; 
-    border-right-color: rgba(255, 255, 255, 0.15) !important;
+    z-index: 102 !important;
   }
 }
 
 /* 2. Actions Column (Sticky Right) */
 .mat-column-actions {
-  width: 48px !important;
-  max-width: 48px !important;
+  width: 56px !important;
+  max-width: 56px !important;
   padding: 0 !important;
   text-align: center;
-  
+
   position: sticky !important;
   right: 0 !important;
   z-index: 101 !important;
-  
   background-color: inherit;
-  
-  /* Divider Line */
+
   border-left: 1px solid var(--sticky-border-color) !important;
-  
-  /* Sticky Header overlap fix */
+  box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.05);
+  /* Subtle shadow indicating stickiness */
+
   &.mat-mdc-header-cell {
     z-index: 102 !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
   }
 
-  /* Ensure menu is visible */
   overflow: visible !important;
 }
 
@@ -274,7 +272,8 @@ table.mat-table {
 .action-menu-btn {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 6px;
+  /* Soft square */
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -282,36 +281,64 @@ table.mat-table {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 
   &:hover {
-    background-color: var(--gray-200);
-    color: var(--text-primary);
+    background-color: var(--gray-100);
+    color: var(--primary);
+
     [data-theme="dark"] & {
-      background-color: rgba(255,255,255,0.1);
+      background-color: rgba(255, 255, 255, 0.1);
     }
   }
-  
-  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
 }
 
 /* Status Chips */
 .status-chip {
-  padding: 2px 10px;
-  border-radius: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   display: inline-block;
-  line-height: 1.5;
-  
-  &.status-in-use { background-color: rgba(0, 110, 150, 0.15); color: var(--secondary); }
-  &.status-ready { background-color: rgba(22, 163, 74, 0.15); color: var(--color-success); }
-  &.status-maintenance { background-color: var(--gray-200); color: var(--gray-700); }
-  &.status-broken { background-color: rgba(220, 53, 69, 0.15); color: var(--color-danger); }
-  
+  line-height: 1;
+  white-space: nowrap;
+
+  &.status-in-use {
+    background-color: rgba(0, 110, 150, 0.1);
+    color: var(--secondary);
+    border: 1px solid rgba(0, 110, 150, 0.2);
+  }
+
+  &.status-ready {
+    background-color: rgba(22, 163, 74, 0.1);
+    color: var(--color-success);
+    border: 1px solid rgba(22, 163, 74, 0.2);
+  }
+
+  &.status-maintenance {
+    background-color: var(--gray-100);
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+  }
+
+  &.status-broken {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--color-danger);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+  }
+
   [data-theme="dark"] & {
-    /* Ensure text remains readable on dark bg */
-    &.status-maintenance { background-color: var(--gray-700); color: var(--gray-300); }
+    &.status-maintenance {
+      background-color: var(--gray-800);
+      color: var(--gray-400);
+      border-color: var(--gray-700);
+    }
   }
 }
 
@@ -320,29 +347,29 @@ table.mat-table {
   background-color: var(--surface-card) !important;
   border-top: 1px solid var(--border-color-local);
   color: var(--text-secondary) !important;
-  font-size: 0.8125rem !important;
-  
+
   .mat-mdc-paginator-container {
-    padding: 0 8px !important;
-    min-height: 48px !important;
-    
-    @media (max-width: 480px) {
+    padding: 0 16px !important;
+    min-height: 52px !important;
+
+    @media (max-width: 600px) {
       flex-wrap: wrap;
       justify-content: center;
-      padding-bottom: 8px;
+      padding: 8px !important;
+
+      .mat-mdc-paginator-page-size {
+        margin-bottom: 8px;
+      }
     }
   }
 
-  .mat-mdc-select-value { color: var(--text-primary) !important; }
-  .mat-mdc-select-arrow { color: var(--text-secondary) !important; }
-  
-  .mat-mdc-icon-button {
+  .mat-mdc-select-value {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+  }
+
+  .mat-mdc-select-arrow {
     color: var(--text-secondary) !important;
-    &[disabled] { opacity: 0.4; }
-    &:hover:not([disabled]) {
-      background-color: var(--gray-100) !important;
-      [data-theme="dark"] & { background-color: var(--gray-700) !important; }
-    }
   }
 }
 
@@ -352,22 +379,60 @@ table.mat-table {
 .loading-shade {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.7);
+  /* [MODIFIED] More transparent background with stronger blur for premium glass effect */
+  background: rgba(255, 255, 255, 0.6);
+
   [data-theme="dark"] & {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.5);
   }
-  backdrop-filter: blur(2px);
+
+  backdrop-filter: blur(8px);
+  /* Increased blur */
+  -webkit-backdrop-filter: blur(8px);
+
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   opacity: 1;
-  transition: opacity 0.2s ease;
-  
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
   &.hidden {
     opacity: 0;
     pointer-events: none;
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+  }
+
+  /* Custom Spinner Styling within the shade */
+  .app-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border-width: 4px;
+    border-color: rgba(var(--primary-rgb), 0.15);
+    border-top-color: var(--primary);
+    filter: drop-shadow(0 4px 6px rgba(var(--primary-rgb), 0.2));
+  }
+
+  p {
+    margin-top: var(--spacing-md);
+    font-weight: 500;
+    color: var(--primary);
+    letter-spacing: 0.02em;
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
   }
 }
 
@@ -376,48 +441,54 @@ table.mat-table {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
+  padding: 4rem 1rem;
   color: var(--text-secondary);
-  background-color: var(--surface-card);
-  
+
   .no-data-icon {
-    font-size: 3rem;
-    width: 3rem;
-    height: 3rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-disabled);
-    opacity: 0.5;
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
+    color: var(--gray-300);
+
+    [data-theme="dark"] & {
+      color: var(--gray-700);
+    }
+  }
+
+  .no-data-text {
+    font-size: 1rem;
+    font-weight: 500;
   }
 
   .reset-btn {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: none;
+    gap: 8px;
+    background: var(--surface-ground);
     border: 1px solid var(--border-color-local);
-    padding: 6px 16px;
-    border-radius: 20px;
+    padding: 8px 20px;
+    border-radius: 24px;
     color: var(--primary);
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       background-color: var(--gray-100);
-      [data-theme="dark"] & { background-color: var(--gray-700); }
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      [data-theme="dark"] & {
+        background-color: var(--gray-800);
+      }
     }
   }
 }
 
 /* Mat No Data Row */
 .mat-no-data-row {
-  /* Ensure empty row background matches context */
-  &:nth-child(even) { background-color: var(--gray-50) !important; }
-  
-  [data-theme="dark"] & {
-     background-color: var(--surface-card) !important;
-  }
-  
   .mat-mdc-cell {
     border-bottom: none !important;
     padding: 0 !important;
@@ -428,27 +499,35 @@ table.mat-table {
    GLOBAL HELPERS
    ========================================================= */
 .highlight {
-  background-color: #fde047; /* Yellow-300 */
-  color: #000;
+  background-color: rgba(253, 224, 71, 0.3);
+  /* Yellow-300 transparent */
+  color: inherit;
   padding: 0 2px;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+  border-bottom: 2px solid #fde047;
 }
 
 /* --- Mobile Adjustments --- */
 @media (max-width: 768px) {
   .reusable-table-wrapper {
+    border: none;
+    /* Remove border on mobile for full width feel */
+    border-radius: 0;
+
     .mat-mdc-header-cell,
     .mat-mdc-cell {
-      padding: var(--spacing-xs) var(--spacing-xs) !important;
-      font-size: 0.75rem !important;
+      padding: 0 var(--spacing-sm) !important;
+      font-size: 0.8125rem !important;
     }
-    
-    /* Adjust sticky columns for smaller touch targets */
-    .mat-column-select,
-    .mat-column-actions {
+
+    .mat-column-select {
       width: 40px !important;
-      min-width: 40px !important;
+      max-width: 40px !important;
+    }
+
+    .mat-column-actions {
+      width: 48px !important;
+      max-width: 48px !important;
     }
   }
 }

@@ -36,6 +36,22 @@ interface ActionableDevice { Id: number; Ten: string; Ma: string; ViTri: string;
 type FilterType = 'status' | 'category' | 'location';
 interface ChartFilter { type: FilterType; name: string; }
 
+interface DashboardStats {
+  totalDevices: number;
+  attentionValue: number;
+  inUse: number;
+  ready: number;
+  needsAttention: number;
+  expiring: number;
+}
+
+interface ChartClickParams {
+  name: string;
+  value: number;
+  percent?: number;
+  data?: any;
+}
+
 @Component({
   selector: 'app-device-dashboard',
   standalone: true,
@@ -62,7 +78,7 @@ export class DeviceDashboardComponent implements OnInit {
 
   public currentFilter: ChartFilter | null = null;
   public visibleFilter: ChartFilter | null = null;
-  private filterTransitionTimer: any;
+  private filterTransitionTimer: ReturnType<typeof setTimeout> | undefined;
 
   public widgetData: WidgetData[] = [];
   public statusChartOptions: EChartsCoreOption | null = null;
@@ -265,31 +281,31 @@ export class DeviceDashboardComponent implements OnInit {
 
     this.statusChartOptions = statusData.length
       ? this.buildDonutOption(
-          statusData,
-          this.currentFilter?.type === 'status' ? highlight : undefined
-        )
+        statusData,
+        this.currentFilter?.type === 'status' ? highlight : undefined
+      )
       : null;
     this.categoryChartOptions = categoryData.length
       ? this.buildBarOption(
-          categoryData.map((d) => d.name).reverse(),
-          categoryData.map((d) => d.value).reverse(),
-          this.palette.primary,
-          this.currentFilter?.type === 'category' ? highlight : undefined
-        )
+        categoryData.map((d) => d.name).reverse(),
+        categoryData.map((d) => d.value).reverse(),
+        this.palette.primary,
+        this.currentFilter?.type === 'category' ? highlight : undefined
+      )
       : null;
     this.locationChartOptions = locationData.length
       ? this.buildBarOption(
-          locationData.map((d) => d.name).reverse(),
-          locationData.map((d) => d.value).reverse(),
-          this.palette.secondary,
-          this.currentFilter?.type === 'location' ? highlight : undefined
-        )
+        locationData.map((d) => d.name).reverse(),
+        locationData.map((d) => d.value).reverse(),
+        this.palette.secondary,
+        this.currentFilter?.type === 'location' ? highlight : undefined
+      )
       : null;
     this.trendChartOptions = stats.trendData.length
       ? this.buildLineOption(
-          stats.trendData.map((d) => d.month),
-          stats.trendData.map((d) => d.value)
-        )
+        stats.trendData.map((d) => d.month),
+        stats.trendData.map((d) => d.value)
+      )
       : null;
 
     this.statusChartSubtext = `Tổng số: ${this.formatNumber(
@@ -409,7 +425,7 @@ export class DeviceDashboardComponent implements OnInit {
     };
   }
 
-  private updateWidgets(data: any): void {
+  private updateWidgets(data: DashboardStats): void {
     const update = (id: string, val: string) => {
       const w = this.widgetData.find((x) => x.id === id);
       if (w) w.value = val;
@@ -420,6 +436,7 @@ export class DeviceDashboardComponent implements OnInit {
       new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
+        currencyDisplay: 'symbol',
       }).format(data.attentionValue)
     );
     update('inUse', this.formatNumber(data.inUse));
@@ -467,8 +484,7 @@ export class DeviceDashboardComponent implements OnInit {
             position: 'outer',
             color: this.palette.textPrimary,
             formatter: (param: any) =>
-              `${param.name}: ${this.vnNumberFormatter.format(param.value)} (${
-                param.percent
+              `${param.name}: ${this.vnNumberFormatter.format(param.value)} (${param.percent
               }%)`,
           },
         },
@@ -573,7 +589,7 @@ export class DeviceDashboardComponent implements OnInit {
     return this.vnNumberFormatter.format(val);
   }
 
-  onChartClick(type: FilterType, params: any) {
+  onChartClick(type: FilterType, params: ChartClickParams) {
     const name = params.name;
     if (!name) return;
     clearTimeout(this.filterTransitionTimer);
@@ -595,7 +611,7 @@ export class DeviceDashboardComponent implements OnInit {
     }, 300);
   }
 
-  navigateToDetail(d: any) {
+  navigateToDetail(d: ActionableDevice) {
     if (d?.Id) this.router.navigate(['/app/equipment/catalog', d.Id]);
   }
 

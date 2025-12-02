@@ -1,11 +1,11 @@
-import { 
-  Component, 
-  OnInit, 
-  OnDestroy, 
-  inject, 
-  effect, 
-  signal, 
-  computed, 
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  effect,
+  signal,
+  computed,
   ChangeDetectionStrategy,
   ViewChild,      // [FIX] Added
   ElementRef      // [FIX] Added
@@ -31,6 +31,13 @@ import { SearchService } from '../../core/services/search.service';
 import { FooterActionService } from '../../core/services/footer-action.service';
 import { AiChatComponent } from '../../components/ai-chat/ai-chat.component';
 
+interface RouteData {
+  title?: string;
+  showSearchBar?: boolean;
+  showBackButton?: boolean;
+  [key: string]: any;
+}
+
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -45,7 +52,7 @@ import { AiChatComponent } from '../../components/ai-chat/ai-chat.component';
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush 
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
@@ -56,15 +63,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private footerService = inject(FooterActionService);
 
   // --- State Signals ---
-  public sidebarOpen = signal(false); 
+  public sidebarOpen = signal(false);
   public contentLoaded = signal(false);
-  
+
   public screenTitle = signal('Đang tải...');
   public searchVisible = signal(false);
   public backButtonVisible = signal(false);
 
   // --- Derived State ---
-  public currentUser = this.authService.currentUser; 
+  public currentUser = this.authService.currentUser;
 
   public rolesDisplay = computed(() => {
     const user = this.currentUser();
@@ -98,7 +105,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (window.innerWidth <= 992) {
       this.sidebarOpen.set(false);
     }
-    
+
     window.addEventListener('resize', this.resizeListener);
     this.contentLoaded.set(true);
   }
@@ -121,17 +128,17 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       .pipe(
         filter(event => event instanceof NavigationEnd),
         tap(() => {
-            // 1. Close sidebar on mobile
-            if (window.innerWidth <= 992 && this.sidebarOpen()) {
-                requestAnimationFrame(() => {
-                  this.sidebarOpen.set(false);
-                });
-            }
-            
-            // [FIX] 2. Reset scroll position for the internal container
-            if (this.mainContent?.nativeElement) {
-              this.mainContent.nativeElement.scrollTop = 0;
-            }
+          // 1. Close sidebar on mobile
+          if (window.innerWidth <= 992 && this.sidebarOpen()) {
+            requestAnimationFrame(() => {
+              this.sidebarOpen.set(false);
+            });
+          }
+
+          // [FIX] 2. Reset scroll position for the internal container
+          if (this.mainContent?.nativeElement) {
+            this.mainContent.nativeElement.scrollTop = 0;
+          }
         }),
         startWith(null),
         map(() => this.activatedRoute),
@@ -141,9 +148,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         }),
         filter(route => route.outlet === 'primary'),
         mergeMap(route => route.data),
-        takeUntilDestroyed() 
+        takeUntilDestroyed()
       )
-      .subscribe((data: any) => {
+      .subscribe((data: RouteData) => {
         this.screenTitle.set(data['title'] || 'Dashboard');
         this.searchVisible.set(data['showSearchBar'] === true);
         this.backButtonVisible.set(data['showBackButton'] === true);

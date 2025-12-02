@@ -1,13 +1,13 @@
 import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  ReactiveFormsModule, 
-  FormBuilder, 
-  FormGroup, 
-  Validators, 
-  AbstractControl, 
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
   ValidationErrors,
-  FormControl 
+  FormControl
 } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -41,7 +41,7 @@ export class SettingsComponent implements OnInit {
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);
-  
+
   public form: FormGroup<ChangePasswordForm>;
 
   public showOld = signal(false);
@@ -73,12 +73,12 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   private updatePasswordCriteria(value: string): void {
     if (!value) {
       this.passwordCriteria.set({
-        minLength: false, maxLength: false, hasUpper: false, 
+        minLength: false, maxLength: false, hasUpper: false,
         hasLower: false, hasNumber: false, hasSpecial: false
       });
       return;
@@ -108,10 +108,10 @@ export class SettingsComponent implements OnInit {
 
   public onSubmit(): void {
     if (this.form.invalid) return;
-    
+
     const criteria = this.passwordCriteria();
     const allCriteriaMet = Object.values(criteria).every(Boolean);
-    
+
     if (!allCriteriaMet) {
       this.toastService.showWarning('Mật khẩu mới chưa đáp ứng đủ điều kiện bảo mật.');
       return;
@@ -135,24 +135,26 @@ export class SettingsComponent implements OnInit {
         confirmText: 'Đổi & Đăng xuất',
         cancelText: 'Hủy bỏ'
       }
-    }).subscribe((confirmed) => {
-      if (confirmed) {
-        this.performChangePassword();
-      }
-    });
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.performChangePassword();
+        }
+      });
   }
 
   private performChangePassword(): void {
     this.isLoading.set(true);
-    
+
     const rawValue = this.form.getRawValue();
-    
+
     const payload = {
-        OldPassword: rawValue.OldPassword || '',
-        NewPassword: rawValue.NewPassword || '',
-        ConfirmPassword: rawValue.ConfirmPassword || ''
+      OldPassword: rawValue.OldPassword || '',
+      NewPassword: rawValue.NewPassword || '',
+      ConfirmPassword: rawValue.ConfirmPassword || ''
     };
-    
+
     this.authService.changePassword(payload)
       .pipe(
         finalize(() => this.isLoading.set(false)),
@@ -160,20 +162,20 @@ export class SettingsComponent implements OnInit {
       )
       .subscribe({
         next: (res) => {
-           if (res && res.MaKetQua && Number(res.MaKetQua) !== 200) {
-             const msg = res.TenKetQua || res.ErrorMessage || 'Đổi mật khẩu thất bại.';
-             this.toastService.showError(msg);
-             return;
-           }
-           this.toastService.showSuccess('Đổi mật khẩu thành công. Đang chuyển hướng...');
-           setTimeout(() => {
-             this.authService.logout();
-           }, 1500);
+          if (res && res.MaKetQua && Number(res.MaKetQua) !== 200) {
+            const msg = res.TenKetQua || res.ErrorMessage || 'Đổi mật khẩu thất bại.';
+            this.toastService.showError(msg);
+            return;
+          }
+          this.toastService.showSuccess('Đổi mật khẩu thành công. Đang chuyển hướng...');
+          setTimeout(() => {
+            this.authService.logout();
+          }, 1500);
         },
         error: (err) => {
           console.error('Change Password Error:', err);
           let msg = 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.';
-          
+
           if (err.error?.TenKetQua) msg = err.error.TenKetQua;
           else if (err.error?.ErrorMessage) msg = err.error.ErrorMessage;
           else if (typeof err.error === 'string') msg = err.error;

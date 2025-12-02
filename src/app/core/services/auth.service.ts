@@ -52,6 +52,7 @@ const PERMISSIONS_STORAGE_KEY = 'userPermissions';
 const FULLNAME_STORAGE_KEY = 'userFullName';
 const NAV_ITEMS_STORAGE_KEY = 'userNavItems';
 const USER_ID_STORAGE_KEY = 'userId';
+const CHECKSUM_STORAGE_KEY = 'authChecksum';
 
 @Injectable({
   providedIn: 'root'
@@ -144,15 +145,15 @@ export class AuthService {
           if (this.idToken) {
             storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken);
           }
-          
+
           const { UserInfo } = loginResponse;
           storage.setItem(USER_ID_STORAGE_KEY, UserInfo.id_user);
           storage.setItem(USERNAME_STORAGE_KEY, UserInfo.user_name);
           storage.setItem(FULLNAME_STORAGE_KEY, UserInfo.ten_nhan_vien || '');
-          
+
           const rolesFromApi = UserInfo.nhom_chuc_danh ? [UserInfo.nhom_chuc_danh] : [];
           storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(rolesFromApi));
-          
+
         } catch (e) {
           return throwError(() => new Error('Failed to save auth token to web storage.'));
         }
@@ -172,20 +173,20 @@ export class AuthService {
   // ACCESSORS (Used by Interceptors & Components)
   // ============================================================================
 
-  getAccessToken(): string | null { 
-    return this.accessToken || this.getStoredToken(); 
+  getAccessToken(): string | null {
+    return this.accessToken || this.getStoredToken();
   }
 
-  getIdToken(): string | null { 
-    return this.idToken || this.getStoredIdToken(); 
+  getIdToken(): string | null {
+    return this.idToken || this.getStoredIdToken();
   }
 
-  getUserId(): string | null { 
-    return this._currentUser()?.id || this.getStoredItem(USER_ID_STORAGE_KEY); 
+  getUserId(): string | null {
+    return this._currentUser()?.id || this.getStoredItem(USER_ID_STORAGE_KEY);
   }
 
-  getUsername(): string | null { 
-    return this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY); 
+  getUsername(): string | null {
+    return this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY);
   }
 
   hasRole(role: string): boolean {
@@ -229,7 +230,7 @@ export class AuthService {
       if (r) roles = JSON.parse(r);
       if (p) permissions = JSON.parse(p);
       if (n) navItems = JSON.parse(n);
-      
+
       isDataValid = true;
     } catch (e) {
       console.error('Auth data corrupted, clearing session.', e);
@@ -237,7 +238,17 @@ export class AuthService {
       return;
     }
 
+    // [SECURITY] Verify Checksum
+    const storedChecksum = this.getStoredItem(CHECKSUM_STORAGE_KEY);
+    const calculatedChecksum = this.generateChecksum(storedToken, storedUsername, roles, permissions);
+
     if (storedToken && storedUsername && isDataValid) {
+      if (storedChecksum !== calculatedChecksum) {
+        console.warn('[Security] Auth data tampering detected! Clearing session.');
+        this.clearLocalAuthData(false);
+        return;
+      }
+
       this.accessToken = storedToken;
       this.idToken = storedIdToken;
 
@@ -258,7 +269,7 @@ export class AuthService {
   private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
     // Determine storage type based on where token exists
     if (!localStorage.getItem(TOKEN_STORAGE_KEY) && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
-        storage = sessionStorage;
+      storage = sessionStorage;
     }
 
     const permissionsUrl = `${this.API_URL_PERMISSIONS_BASE}/${userId}`;
@@ -288,6 +299,10 @@ export class AuthService {
         try {
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
           storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree));
+
+          // [SECURITY] Save Checksum
+          const checksum = this.generateChecksum(this.accessToken, user.username, user.roles, user.permissions);
+          storage.setItem(CHECKSUM_STORAGE_KEY, checksum);
         } catch (e) {
           console.error('Failed to save permissions/nav data to web storage', e);
         }
@@ -305,15 +320,15 @@ export class AuthService {
     this.idToken = null;
 
     try {
-        const keys = [
-            TOKEN_STORAGE_KEY, ID_TOKEN_STORAGE_KEY, ROLES_STORAGE_KEY,
-            USERNAME_STORAGE_KEY, PERMISSIONS_STORAGE_KEY, FULLNAME_STORAGE_KEY,
-            NAV_ITEMS_STORAGE_KEY, USER_ID_STORAGE_KEY
-        ];
-        
-        [localStorage, sessionStorage].forEach(s => {
-            if (typeof s !== 'undefined') keys.forEach(k => s.removeItem(k));
-        });
+      const keys = [
+        TOKEN_STORAGE_KEY, ID_TOKEN_STORAGE_KEY, ROLES_STORAGE_KEY,
+        USERNAME_STORAGE_KEY, PERMISSIONS_STORAGE_KEY, FULLNAME_STORAGE_KEY,
+        NAV_ITEMS_STORAGE_KEY, USER_ID_STORAGE_KEY, CHECKSUM_STORAGE_KEY
+      ];
+
+      [localStorage, sessionStorage].forEach(s => {
+        if (typeof s !== 'undefined') keys.forEach(k => s.removeItem(k));
+      });
     } catch (e) {
       console.error('Failed to remove auth data');
     }
@@ -349,12 +364,12 @@ export class AuthService {
 
   private handleError(error: any, isLoginError: boolean = false): Observable<never> {
     if (isLoginError) this.clearLocalAuthData(false);
-    
+
     let msg = error.message || 'Lỗi hệ thống.';
     if (error instanceof HttpErrorResponse) {
-       if (error.status === 401) msg = 'Phiên đăng nhập hết hạn.';
-       else if (error.status === 403) msg = 'Không có quyền truy cập.';
-       else if (error.error?.ErrorMessage) msg = error.error.ErrorMessage;
+      if (error.status === 401) msg = 'Phiên đăng nhập hết hạn.';
+      else if (error.status === 403) msg = 'Không có quyền truy cập.';
+      else if (error.error?.ErrorMessage) msg = error.error.ErrorMessage;
     }
     return throwError(() => new Error(msg));
   }
@@ -371,7 +386,19 @@ export class AuthService {
   private clearOtherStorage(remember: boolean): void {
     const other = remember ? sessionStorage : localStorage;
     try {
-       if (typeof other !== 'undefined') other.clear(); 
+      if (typeof other !== 'undefined') other.clear();
     } catch (e) { }
+  }
+
+  private generateChecksum(token: string | null, username: string | null, roles: string[], permissions: string[]): string {
+    const data = `${token}|${username}|${JSON.stringify(roles)}|${JSON.stringify(permissions)}`;
+    // Simple hash for tamper detection (not cryptographic security)
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString(16);
   }
 }
