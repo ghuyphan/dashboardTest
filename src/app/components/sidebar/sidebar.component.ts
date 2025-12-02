@@ -45,6 +45,7 @@ export class SidebarComponent implements AfterViewInit {
 
   @ViewChild('navContent') private navContentEl!: ElementRef<HTMLDivElement>;
 
+  // [FIX] Signal to gate animations until view is stable
   public transitionsEnabled = signal(false);
 
   private openAccordionItems = new Set<NavItem>();
@@ -52,6 +53,7 @@ export class SidebarComponent implements AfterViewInit {
   public isMobileView: boolean = false;
 
   private breakpointObserver = inject(BreakpointObserver);
+  private router = inject(Router);
 
   constructor() {
     this.breakpointObserver
@@ -65,9 +67,8 @@ export class SidebarComponent implements AfterViewInit {
     effect(() => {
       const open = this.isOpen();
       if (open) {
-        // When opening, we might want to restore state or keep everything closed
-        // keeping it simple: close all to avoid clutter
-        this.hideAllSubmenus(); 
+        this.hideAllSubmenus();
+        this.restoreAccordionState();
         this.restoreScrollPosition();
       } else {
         this.saveScrollPosition();
@@ -77,25 +78,26 @@ export class SidebarComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    // [FIX] Enable transitions shortly after render to prevent initial "closing" animation glitch
     setTimeout(() => {
       this.transitionsEnabled.set(true);
     }, 300);
   }
 
-  /**
-   * Recursive helper to close all menus in the tree
-   */
-  private hideAllSubmenus(): void {
-    const closeRecursive = (items: NavItem[]) => {
-      items.forEach(item => {
+  hideAllSubmenus(): void {
+    this.navItems().forEach((item) => {
+      if (item.children) {
         item.isOpen = false;
-        if (item.children) {
-          closeRecursive(item.children);
-        }
-      });
-    };
-    closeRecursive(this.navItems());
-    this.openAccordionItems.clear();
+      }
+    });
+  }
+
+  restoreAccordionState(): void {
+    this.navItems().forEach((item) => {
+      if (item.children) {
+        item.isOpen = this.openAccordionItems.has(item);
+      }
+    });
   }
 
   private saveScrollPosition(): void {
@@ -116,29 +118,21 @@ export class SidebarComponent implements AfterViewInit {
     this.toggleSidebar.emit();
   }
 
-  /**
-   * Public method to toggle any item at any level
-   */
   toggleSubmenu(item: NavItem, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
 
-    // If sidebar is collapsed (and not mobile), we don't toggle accordion style
-    // The FlyoutDirective handles the initial open, but internal clicks 
-    // (Level 2 -> Level 3) still need this logic to expand the inner list.
     if (!this.isOpen() && !this.isMobileView) {
-       // For flyouts, we just toggle the boolean, simpler logic
-       item.isOpen = !item.isOpen;
-       return;
+      return;
     }
 
     if (this.openAccordionItems.has(item)) {
       this.openAccordionItems.delete(item);
-      item.isOpen = false;
     } else {
       this.openAccordionItems.add(item);
-      item.isOpen = true;
     }
+
+    item.isOpen = this.openAccordionItems.has(item);
   }
 
   public onNavLinkClick(): void {
