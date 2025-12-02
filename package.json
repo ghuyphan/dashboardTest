@@ -1,6 +1,6 @@
 {
   "name": "hoan-my-portal",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -9,7 +9,11 @@
     "test": "ng test",
     "version:patch": "node scripts/bump-version.js patch",
     "version:minor": "node scripts/bump-version.js minor",
-    "version:major": "node scripts/bump-version.js major"
+    "version:major": "node scripts/bump-version.js major",
+    "build:prod:patch": "npm run version:patch && ng build --configuration production",
+    "build:prod:minor": "npm run version:minor && ng build --configuration production",
+    "build:prod:major": "npm run version:major && ng build --configuration production",
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
@@ -44,12 +48,15 @@
     "@types/d3": "^7.4.3",
     "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.0",
+    "angular-eslint": "21.0.1",
+    "eslint": "^9.39.1",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.7.2"
+    "typescript": "~5.7.2",
+    "typescript-eslint": "8.46.4"
   }
 }
