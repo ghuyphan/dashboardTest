@@ -1,29 +1,35 @@
 import {
   Injectable,
   signal,
+  computed,
   inject,
-  effect,
-  DestroyRef,
   NgZone,
+  DestroyRef,
+  effect,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, Routes, Route } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ThemeService } from './theme.service';
-import { environment } from '../../../environments/environment.development';
-import { Subject, debounceTime, firstValueFrom } from 'rxjs';
-
-// ============================================================================
-// INTERFACES
-// ============================================================================
+import { firstValueFrom, Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system' | 'tool';
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  tokenEstimate?: number;
-  timestamp?: number;
+  timestamp: number;
+  isStreaming?: boolean;
+  isError?: boolean;
+}
+
+export interface RouteInfo {
+  title: string;
+  fullUrl: string;
+  key: string;
+  keywords?: string[];
 }
 
 interface ToolCall {
@@ -31,71 +37,43 @@ interface ToolCall {
   arguments: Record<string, unknown>;
 }
 
+interface ToolResult {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+}
+
+type AllowedTool = 'nav' | 'theme';
+const ALLOWED_TOOLS: AllowedTool[] = ['nav', 'theme'];
+
 interface StreamUpdate {
   content: string;
   tokenEstimate: number;
 }
 
-interface RouteInfo {
-  title: string;
-  fullUrl: string;
-  key: string;
-  keywords?: string[];
-  description?: string;
-}
-
-interface ToolResult {
-  success: boolean;
-  data?: string;
-  error?: string;
-}
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const ALLOWED_TOOLS = ['nav', 'theme'] as const;
-type AllowedTool = (typeof ALLOWED_TOOLS)[number];
-
-
-
-// ============================================================================
-// SERVICE
-// ============================================================================
-
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class LlmService {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
-  private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly ngZone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
 
-  // e.g. 'http://localhost:3000/api/llm'
-  private readonly apiUrl = environment.llmUrl;
-
-  // Configuration
-  private readonly MAX_CTX = 4096;
-  private readonly MAX_HISTORY = 3;
-  private readonly MAX_OUTPUT = 200;
-  private readonly TOOL_BUDGET = 150;
-  private readonly CHARS_PER_TOKEN = 2.0;
-  private readonly SESSION_TIMEOUT = 15 * 60 * 1000;
-  private readonly THEME_COOLDOWN = 1000;
-  private readonly UI_DEBOUNCE = 20;
-  private readonly MAX_RETRIES = 1;
-  private readonly RETRY_DELAY = 1000;
-  private readonly TIMEOUT = 60000;
-  private readonly MAX_INPUT = 500;
-
-  private readonly DEBUG = false;
+  private readonly apiUrl = '/api/llm';
+  private readonly TIMEOUT = 30000;
+  private readonly MAX_HISTORY = 10;
+  private readonly UI_DEBOUNCE = 16; // ~60fps
+  private readonly THEME_COOLDOWN = 2000;
+  private readonly DEBUG = !environment.production;
 
   // Signals
   public readonly isOpen = signal(false);
-  public readonly isModelLoading = signal(false);
   public readonly isGenerating = signal(false);
-  public readonly isTyping = signal(false);
+  public readonly isTyping = signal(false); // UI typing effect
+  public readonly isModelLoading = signal(false);
   public readonly modelLoaded = signal(false);
   public readonly loadProgress = signal('');
   public readonly messages = signal<ChatMessage[]>([]);
@@ -113,7 +91,6 @@ export class LlmService {
   // Cache
   private routeCache: RouteInfo[] | null = null;
   private routeMap: Map<string, RouteInfo> | null = null;
-  private toolCache: unknown[] | null = null;
 
   private readonly streamUpdate$ = new Subject<StreamUpdate>();
 
@@ -144,7 +121,6 @@ export class LlmService {
       // Clear cache on open to ensure we have fresh permissions/routes
       this.routeCache = null;
       this.routeMap = null;
-      this.toolCache = null;
 
       if (!this.modelLoaded() && !this.isModelLoading()) this.loadModel();
     } else {
@@ -209,7 +185,6 @@ export class LlmService {
 
       this.modelLoaded.set(true);
       this.loadProgress.set('Sẵn sàng');
-      this.buildTools();
       if (this.messages().length === 0) this.addGreeting();
     } catch (e) {
       console.error('[LLM] Connection Error:', e);
@@ -235,38 +210,31 @@ export class LlmService {
       throw new Error('Server unreachable');
     }
   }
-
   // ============================================================================
   // SERVER STREAMING LOGIC
   // ============================================================================
 
-  private async streamToServer(userMsg: string): Promise<void> {
+  private async streamToServer(input: string): Promise<void> {
     this.abortCtrl = new AbortController();
-    const { signal } = this.abortCtrl;
+    const signal = this.abortCtrl.signal;
 
-    const context = this.prepareContext(userMsg);
-    const tools = this.buildTools();
-    const routes = this.getRoutes(); // 🚀 Automatically scans router config
+    const context = this.prepareContext(input);
+    const clientRoutes = this.getRoutes().map((r) => ({
+      key: r.key,
+      title: r.title,
+      keywords: r.keywords || [],
+      fullUrl: r.fullUrl,
+    }));
 
-    const metadata = {
-      sessionId: this.sessionId,
-      routes: routes.map((r) => ({
-        key: r.key,
-        title: r.title,
-        keywords: r.keywords || [],
-      })),
-      currentPath: this.router.url.split('?')[0],
-      currentTheme: this.themeService.isDarkTheme() ? 'dark' : 'light',
-    };
+    const messages = context.map(m => ({ role: m.role, content: m.content }));
 
     const payload = {
-      messages: [
-        ...context.map((m) => ({ role: m.role, content: m.content })),
-        { role: 'user', content: userMsg },
-      ],
-      tools,
-      metadata,
-      stream: true,
+      messages,
+      metadata: {
+        sessionId: this.sessionId,
+        routes: clientRoutes,
+        currentTheme: this.themeService.isDarkTheme() ? 'dark' : 'light',
+      }
     };
 
     const timeout = setTimeout(() => this.abortCtrl?.abort(), this.TIMEOUT);
@@ -320,10 +288,28 @@ export class LlmService {
             try {
               const json = JSON.parse(line);
 
+              // 1. Handle text content
               if (json.message?.content) {
                 content += json.message.content;
               }
 
+              // 2. Handle JSON_ACTION in text content
+              const actionRegex = /JSON_ACTION:\s*(\{.*?\})/g;
+              let match;
+              while ((match = actionRegex.exec(content)) !== null) {
+                try {
+                  const actionJson = JSON.parse(match[1]);
+                  const toolCall = this.parseSingleToolCall(actionJson);
+
+                  if (toolCall && !toolCalls.some(tc => tc.name === toolCall.name && JSON.stringify(tc.arguments) === JSON.stringify(toolCall.arguments))) {
+                    toolCalls.push(toolCall);
+                  }
+                } catch (e) {
+                  // Invalid JSON in action, ignore
+                }
+              }
+
+              // 3. Handle explicit tool_calls
               const tools = this.parseTools(json);
               for (const t of tools) {
                 if (!toolCalls.some((tc) => tc.name === t.name)) {
@@ -345,12 +331,23 @@ export class LlmService {
           }
         }
 
+        // Process remaining buffer
         if (buffer.trim()) {
           try {
             const json = JSON.parse(buffer);
             if (json.message?.content) content += json.message.content;
-            const tools = this.parseTools(json);
-            tools.forEach((t) => toolCalls.push(t));
+
+            const actionRegex = /JSON_ACTION:\s*(\{.*?\})/g;
+            let match;
+            while ((match = actionRegex.exec(content)) !== null) {
+              try {
+                const actionJson = JSON.parse(match[1]);
+                const toolCall = this.parseSingleToolCall(actionJson);
+                if (toolCall && !toolCalls.some(tc => tc.name === toolCall.name && JSON.stringify(tc.arguments) === JSON.stringify(toolCall.arguments))) {
+                  toolCalls.push(toolCall);
+                }
+              } catch { }
+            }
           } catch { /* ignore */ }
         }
       } finally {
@@ -369,50 +366,9 @@ export class LlmService {
     });
   }
 
-  // ============================================================================
-  // TOOLS & ROUTE SCANNING (UNIFIED)
-  // ============================================================================
-
-  private buildTools(): unknown[] {
-    if (this.toolCache) return this.toolCache;
-    const routeKeys = this.getRoutes().map((r) => r.key);
-
-    this.toolCache = [
-      {
-        type: 'function',
-        function: {
-          name: 'nav',
-          description: 'Navigate to screen',
-          parameters: {
-            type: 'object',
-            properties: { k: { type: 'string', enum: routeKeys } },
-            required: ['k'],
-          },
-        },
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'theme',
-          description: 'Change theme',
-          parameters: {
-            type: 'object',
-            properties: {
-              m: { type: 'string', enum: ['light', 'dark', 'toggle'] },
-            },
-            required: ['m'],
-          },
-        },
-      },
-    ];
-    return this.toolCache;
-  }
-
   private getRoutes(): RouteInfo[] {
-    if (!this.routeCache) {
-      // 🚀 Completely dynamic scanning of Router Config
-      this.routeCache = this.scanRoutes(this.router.config);
-    }
+    if (this.routeCache) return this.routeCache;
+    this.routeCache = this.scanRoutes(this.router.config);
     return this.routeCache;
   }
 
@@ -420,8 +376,6 @@ export class LlmService {
     const results: RouteInfo[] = [];
 
     for (const route of routes) {
-      if (route.redirectTo || route.path === '**') continue;
-
       const path = route.path || '';
       // Ensure clean path concatenation
       const fullPath = parentPath
@@ -532,15 +486,27 @@ export class LlmService {
 
   private parseSingleToolCall(call: Record<string, unknown>): ToolCall | null {
     try {
+      // Handle both native tool_call format and our custom JSON_ACTION format
+      // Native: { function: { name: "...", arguments: "..." } }
+      // Custom: { tool: "...", args: { ... } }
+
+      let name: string | null = null;
+      let args: unknown = null;
+
       if (call['function'] && typeof call['function'] === 'object') {
         const fn = call['function'] as Record<string, unknown>;
-        const name = this.mapToolName(fn['name'] as string);
-        if (name) {
-          return {
-            name,
-            arguments: this.parseArgs(fn['arguments'] ?? fn['args'] ?? fn['parameters']),
-          };
-        }
+        name = this.mapToolName(fn['name'] as string);
+        args = fn['arguments'] ?? fn['args'] ?? fn['parameters'];
+      } else if (call['tool']) {
+        name = this.mapToolName(call['tool'] as string);
+        args = call['args'] ?? call['arguments'];
+      }
+
+      if (name) {
+        return {
+          name,
+          arguments: this.parseArgs(args),
+        };
       }
     } catch { /* ignore */ }
     return null;
@@ -652,220 +618,164 @@ export class LlmService {
   // UTILITIES
   // ============================================================================
 
-  private prepareContext(newMsg: string): ChatMessage[] {
-    const newTokens = this.tokens(newMsg);
-    const available = this.MAX_CTX - 400 - this.TOOL_BUDGET - this.MAX_OUTPUT - newTokens - 50;
-
+  private prepareContext(input: string): ChatMessage[] {
+    // We only send the last few messages to save context window
     const history = this.messages()
-      .filter((m) => m.content.trim() && m.role !== 'system' && m.role !== 'tool')
-      .map((m) => ({
-        ...m,
-        content: m.content.length > 120 ? m.content.substring(0, 120) + '...' : m.content,
-      }));
+      .slice(-this.MAX_HISTORY)
+      .filter((m) => !m.isError && m.content.trim());
 
-    const result: ChatMessage[] = [];
-    let used = 0;
+    // Calculate rough usage
+    const totalTokens = history.reduce((acc, m) => acc + this.tokens(m.content), 0);
+    this.contextUsage.set(totalTokens);
 
-    for (let i = history.length - 1; i >= 0 && result.length < this.MAX_HISTORY; i--) {
-      const tokens = this.tokens(history[i].content);
-      if (used + tokens > available) break;
-      used += tokens;
-      result.unshift(history[i]);
-    }
-
-    if (result.length && result[0].role === 'assistant') result.shift();
-    this.contextUsage.set(
-      Math.min(100, Math.round(((400 + used + newTokens) / this.MAX_CTX) * 100))
-    );
-    return result;
+    return history;
   }
 
-  private tokens(text: string): number {
-    if (!text) return 0;
-    return Math.ceil(text.length / this.CHARS_PER_TOKEN) + 2;
+  private tokens(str: string): number {
+    return Math.ceil(str.length / 3.5);
   }
 
-  private setLastMsg(text: string): void {
-    this.messages.update((msgs) => {
-      const arr = [...msgs];
-      for (let i = arr.length - 1; i >= 0; i--) {
-        if (arr[i].role === 'assistant') {
-          arr[i] = { ...arr[i], content: text };
-          break;
-        }
-      }
-      return arr;
+  private setLastMsg(content: string): void {
+    this.messages.update((m) => {
+      if (!m.length) return m;
+      const last = { ...m[m.length - 1] };
+      last.content = content;
+      last.isStreaming = false;
+      return [...m.slice(0, -1), last];
     });
   }
 
   private finalize(): void {
-    this.messages.update((msgs) => {
-      const arr = [...msgs];
-      const last = arr.length - 1;
-      if (last >= 0 && arr[last].role === 'assistant') {
-        let content = arr[last].content.trim();
-        if (!content) return arr;
-        content = content.charAt(0).toUpperCase() + content.slice(1);
-        const endings = ['.', '!', '?', ':', ')', '"', "'", '*'];
-        if (!endings.includes(content.slice(-1)) && content.length > 5) {
-          content += '.';
-        }
-        arr[last] = { ...arr[last], content };
-      }
-      return arr;
+    this.messages.update((m) => {
+      if (!m.length) return m;
+      const last = { ...m[m.length - 1] };
+      last.isStreaming = false;
+      return [...m.slice(0, -1), last];
     });
   }
 
-  private applyUpdate(u: StreamUpdate): void {
-    this.messages.update((msgs) => {
-      const arr = [...msgs];
-      const last = arr.length - 1;
-      if (last >= 0 && arr[last].role === 'assistant') {
-        arr[last] = {
-          ...arr[last],
-          content: u.content,
-          tokenEstimate: u.tokenEstimate,
-        };
-      }
-      return arr;
+  private applyUpdate(update: StreamUpdate): void {
+    this.messages.update((m) => {
+      if (!m.length) return m;
+      const last = { ...m[m.length - 1] };
+      last.content = update.content;
+      last.isStreaming = true;
+      return [...m.slice(0, -1), last];
     });
   }
 
   private cleanupEmpty(): void {
-    this.messages.update((msgs) => {
-      const arr = [...msgs];
-      const last = arr.length - 1;
-      if (last >= 0 && arr[last].role === 'assistant' && !arr[last].content.trim()) {
-        arr[last] = {
-          ...arr[last],
-          content: `Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?`,
-        };
-      }
-      return arr;
-    });
+    this.messages.update((m) =>
+      m.filter((msg) => msg.content.trim() || msg.role !== 'assistant')
+    );
   }
 
   private createMsg(
-    role: ChatMessage['role'],
+    role: 'user' | 'assistant',
     content: string,
-    tokenEstimate?: number
+    timestamp = Date.now()
   ): ChatMessage {
     return {
-      id: `m_${Date.now()}_${++this.msgCounter}`,
+      id: Math.random().toString(36).substring(2, 9),
       role,
       content,
-      tokenEstimate: tokenEstimate ?? this.tokens(content),
-      timestamp: Date.now(),
+      timestamp,
+      isStreaming: role === 'assistant',
     };
   }
 
   private addGreeting(): void {
-    this.messages.update((m) => [
-      ...m,
-      this.createMsg(
-        'assistant',
-        `👋 Xin chào! Tôi là trợ lý IT của Bệnh viện Hoàn Mỹ. Bạn cần hỗ trợ gì?`
-      ),
-    ]);
+    const greeting =
+      'Xin chào! Tôi là trợ lý ảo Hoàn Mỹ. Tôi có thể giúp gì cho bạn hôm nay?';
+    this.messages.set([this.createMsg('assistant', greeting)]);
   }
 
-  private getConfirmation(name: string, result: ToolResult): string {
-    if (!result.success) return result.error || 'Có lỗi xảy ra.';
-    if (result.data === 'SAME') return 'Bạn đang ở màn hình này rồi.';
-    if (name === 'nav') return `Đang chuyển đến **${result.data}**...`;
-    if (name === 'theme') {
-      return result.data === 'dark'
-        ? 'Đã chuyển sang **giao diện tối**.'
-        : 'Đã chuyển sang **giao diện sáng**.';
+  private getConfirmation(tool: string, result: ToolResult): string | null {
+    if (!result.success) return null;
+    if (result.data === 'SAME') return null;
+
+    if (tool === 'nav') {
+      return `Đang mở trang **${result.data}**...`;
     }
-    return 'Đã hoàn tất.';
+    if (tool === 'theme') {
+      const mode = result.data === 'dark' ? 'Tối' : 'Sáng';
+      return `Đã chuyển sang giao diện **${mode}**.`;
+    }
+    return null;
   }
 
-  private getToolErr(name: string): string {
-    return name === 'nav'
-      ? `Không thể mở trang này. Vui lòng liên hệ IT hotline ${this.itHotline()}.`
-      : `Không thể thay đổi giao diện. Vui lòng liên hệ IT hotline ${this.itHotline()}.`;
+  private getToolErr(tool: string): string {
+    if (tool === 'nav') return 'Xin lỗi, tôi không tìm thấy trang bạn yêu cầu.';
+    return 'Xin lỗi, tôi không thể thực hiện yêu cầu này.';
   }
 
   private generateSessionId(): string {
-    return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    return Math.random().toString(36).substring(2, 15);
   }
 
-  private async retry<T>(fn: () => Promise<T>): Promise<T> {
-    let lastErr: Error | null = null;
-    for (let i = 0; i <= this.MAX_RETRIES; i++) {
-      try {
-        return await fn();
-      } catch (e) {
-        lastErr = e as Error;
-        if (e instanceof DOMException && e.name === 'AbortError') throw e;
-        if (i < this.MAX_RETRIES) await this.delay(this.RETRY_DELAY * (i + 1));
+  private async retry<T>(fn: () => Promise<T>, retries = 1): Promise<T> {
+    try {
+      return await fn();
+    } catch (e) {
+      if (retries > 0) {
+        await this.delay(1000);
+        return this.retry(fn, retries - 1);
       }
+      throw e;
     }
-    throw lastErr;
   }
 
-  private sanitize(content: string): string {
-    if (!content) return '';
-    let r = content.trim();
-    if (r.length > this.MAX_INPUT) r = r.slice(0, this.MAX_INPUT);
-    r = r.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-    r = r.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n');
-    return r.trim();
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private sanitizeOut(content: string): string {
-    if (!content) return '';
-    let r = content;
-    r = r.replace(/<think>[\s\S]*?<\/think>/gi, '');
-    r = r.replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, '');
-    r = r.replace(/<\|.*?\|>/g, '');
-    r = r.replace(/\{\s*"name"\s*:[^}]+\}/gi, '');
-    r = r.replace(/nav\s+\S+|theme\s+(dark|light|toggle)/gi, '');
-    r = r.replace(/https?:\/\/(?!localhost)[^\s<>]+/gi, '');
-    if (r.length > 800) r = r.substring(0, 800) + '...';
-    return r.replace(/\n{3,}/g, '\n\n').trim();
+  private sanitize(str: string): string {
+    return str.replace(/<[^>]*>/g, '').trim();
   }
 
-  private handleErr(error: unknown): void {
-    if (error instanceof DOMException && error.name === 'AbortError') return;
-    console.error('[LLM] Error:', error);
-    this.messages.update((msgs) => {
-      const arr = [...msgs];
-      const last = arr.length - 1;
-      if (last >= 0 && arr[last].role === 'assistant') {
-        const msg =
-          error instanceof Error && error.message.includes('429')
-            ? 'Hệ thống đang bận. Vui lòng thử lại sau.'
-            : `Có lỗi xảy ra. Vui lòng liên hệ IT hotline ${this.itHotline()}.`;
-        arr[last] = { ...arr[last], content: msg };
+  private sanitizeOut(str: string): string {
+    // Remove JSON_ACTION artifacts from output
+    return str.replace(/JSON_ACTION:\s*\{.*?\}/g, '').trim();
+  }
+
+  private handleErr(e: unknown): void {
+    console.error('[LLM] Error:', e);
+    const msg =
+      e instanceof Error && e.message.includes('Rate limit')
+        ? 'Hệ thống đang bận, vui lòng thử lại sau giây lát.'
+        : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+
+    this.messages.update((m) => {
+      const last = m[m.length - 1];
+      if (last?.role === 'assistant') {
+        return [
+          ...m.slice(0, -1),
+          { ...last, content: msg, isError: true, isStreaming: false },
+        ];
       }
-      return arr;
+      return [...m, { role: 'assistant', content: msg, timestamp: Date.now(), isError: true, id: Math.random().toString(36).substring(2, 9) }];
     });
   }
 
   private abort(): void {
-    this.abortCtrl?.abort();
-    this.abortCtrl = null;
+    if (this.abortCtrl) {
+      this.abortCtrl.abort();
+      this.abortCtrl = null;
+    }
   }
 
   private cleanup(): void {
     this.abort();
     this.clearSessionTimer();
-    this.resetChat();
-    this.isOpen.set(false);
-    this.modelLoaded.set(false);
-    this.routeCache = null;
-    this.routeMap = null;
-    this.toolCache = null;
   }
 
   private resetSessionTimer(): void {
     this.clearSessionTimer();
     this.sessionTimer = setTimeout(() => {
-      this.resetChat();
-      this.isOpen.set(false);
-    }, this.SESSION_TIMEOUT);
+      if (this.messages().length > 0) {
+        this.resetChat();
+      }
+    }, 1000 * 60 * 15); // 15 min inactivity
   }
 
   private clearSessionTimer(): void {
@@ -873,9 +783,5 @@ export class LlmService {
       clearTimeout(this.sessionTimer);
       this.sessionTimer = undefined;
     }
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((r) => setTimeout(r, ms));
   }
 }
