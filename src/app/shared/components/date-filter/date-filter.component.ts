@@ -6,10 +6,15 @@ import {
   input,
   ViewEncapsulation,
   computed,
-  OnInit
+  OnInit,
+  OnDestroy
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout'; // [IMPORT]
+import { Subject, takeUntil } from 'rxjs'; // [IMPORT]
 import { ToastService } from '../../../core/services/toast.service';
 import { DateUtils } from '../../utils/date.utils';
 
@@ -23,23 +28,31 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
 @Component({
   selector: 'app-date-filter',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  providers: [DatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
+  providers: [
+    DatePipe,
+    provideNativeDateAdapter(),
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' }
+  ],
   templateUrl: './date-filter.component.html',
   styleUrl: './date-filter.component.scss',
   encapsulation: ViewEncapsulation.Emulated
 })
-export class DateFilterComponent implements OnInit {
+export class DateFilterComponent implements OnInit, OnDestroy {
   private datePipe = inject(DatePipe);
   private toastService = inject(ToastService);
+  private breakpointObserver = inject(BreakpointObserver); // [INJECT]
+  private destroy$ = new Subject<void>();
 
   // INPUTS
   public isLoading = input<boolean>(false);
   public buttonLabel = input<string>('Xem Báo Cáo');
-
-  // Allow configuring the default range (Default: 'thisWeek')
   public defaultRange = input<QuickRange>('thisWeek');
-
   public minDate = input<string>('');
   public maxDate = input<string>('');
 
@@ -51,6 +64,9 @@ export class DateFilterComponent implements OnInit {
   public toDate = signal<string>('');
   public activeRange = signal<QuickRange>('thisWeek');
 
+  // [NEW] Signal to track if we are on mobile
+  public isMobile = signal<boolean>(false);
+
   public quickRanges: { key: QuickRange, label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
     { key: 'thisWeek', label: 'Tuần này' },
@@ -61,117 +77,117 @@ export class DateFilterComponent implements OnInit {
 
   private readonly todayStr = new Date().toISOString().split('T')[0];
 
-  public effectiveMax = computed(() => {
-    return this.maxDate() ? this.maxDate() : this.todayStr;
-  });
+  public effectiveMax = computed(() => this.maxDate() ? this.maxDate() : this.todayStr);
 
   public fromMax = computed(() => {
     const to = this.toDate();
     const max = this.effectiveMax();
-    if (to && to < max) return to;
-    return max;
+    return (to && to < max) ? to : max;
   });
 
   public toMin = computed(() => {
     const from = this.fromDate();
     const min = this.minDate();
-    if (from && (!min || from > min)) return from;
-    return min || '';
+    return (from && (!min || from > min)) ? from : (min || '');
   });
 
   public toMax = computed(() => this.effectiveMax());
 
+  // --- Date Object Helpers for Material Datepicker ---
+  public fromDateObj = computed(() => this.parseDateString(this.fromDate()));
+  public toDateObj = computed(() => this.parseDateString(this.toDate()));
+  public fromMaxDate = computed(() => this.parseDateString(this.fromMax()));
+  public toMinDate = computed(() => this.parseDateString(this.toMin()));
+  public toMaxDate = computed(() => this.parseDateString(this.toMax()));
+
   constructor() {
-    // Constructor logic moved to ngOnInit to respect inputs
+    // [LOGIC] Detect Mobile Screen
+    this.breakpointObserver.observe([
+      Breakpoints.Handset,
+      Breakpoints.TabletPortrait
+    ]).pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        this.isMobile.set(result.matches);
+      });
   }
 
   ngOnInit(): void {
-    // Initialize with the provided default range
     this.setRange(this.defaultRange(), false);
   }
 
-  onDateChange(type: 'from' | 'to', value: string) {
-    if (value > this.effectiveMax()) {
-      this.toastService.showWarning('Ngày chọn không được vượt quá hôm nay (hoặc giới hạn cho phép).');
-      value = this.effectiveMax();
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-      if (type === 'from') this.fromDate.set(value);
-      else this.toDate.set(value);
+  // --- Parsing & Formatting Logic ---
+  private parseDateString(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return null;
+    return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  }
+
+  private formatDateString(date: Date): string {
+    return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
+  }
+
+  onDateChange(type: 'from' | 'to', dateValue: Date | null) {
+    if (!dateValue) return;
+    let value = this.formatDateString(dateValue);
+
+    if (value > this.effectiveMax()) {
+      this.toastService.showWarning('Ngày chọn không được vượt quá hôm nay.');
+      value = this.effectiveMax();
     }
 
     if (type === 'from') {
       this.fromDate.set(value);
-      if (this.toDate() && value > this.toDate()) {
-        this.toDate.set(value);
-      }
-    }
-    else if (type === 'to') {
+      if (this.toDate() && value > this.toDate()) this.toDate.set(value);
+    } else {
       this.toDate.set(value);
-      if (this.fromDate() && value < this.fromDate()) {
-        this.fromDate.set(value);
-      }
+      if (this.fromDate() && value < this.fromDate()) this.fromDate.set(value);
     }
-
     this.activeRange.set('custom');
   }
 
   setRange(range: QuickRange, emit: boolean = false) {
     this.activeRange.set(range);
     const now = new Date();
-
-    let startStr = '';
-    let endStr = '';
+    let startStr = '', endStr = '';
 
     switch (range) {
       case 'today':
         startStr = endStr = this.todayStr;
         break;
-
       case 'thisWeek':
         const weekRange = DateUtils.getReportingWeekRange();
         startStr = weekRange.fromDate;
         endStr = weekRange.toDate;
         break;
-
       case 'thisMonth':
-        const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        startStr = this.formatDate(mStart);
-        endStr = this.formatDate(mEnd);
+        startStr = this.formatDate(new Date(now.getFullYear(), now.getMonth(), 1));
+        endStr = this.formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
         break;
-
       case 'thisQuarter':
         const qMonth = Math.floor(now.getMonth() / 3) * 3;
-        const qStart = new Date(now.getFullYear(), qMonth, 1);
-        const qEnd = new Date(now.getFullYear(), qMonth + 3, 0);
-        startStr = this.formatDate(qStart);
-        endStr = this.formatDate(qEnd);
+        startStr = this.formatDate(new Date(now.getFullYear(), qMonth, 1));
+        endStr = this.formatDate(new Date(now.getFullYear(), qMonth + 3, 0));
         break;
-
       case 'thisYear':
-        const yStart = new Date(now.getFullYear(), 0, 1);
-        const yEnd = new Date(now.getFullYear(), 11, 31);
-        startStr = this.formatDate(yStart);
-        endStr = this.formatDate(yEnd);
+        startStr = this.formatDate(new Date(now.getFullYear(), 0, 1));
+        endStr = this.formatDate(new Date(now.getFullYear(), 11, 31));
         break;
     }
 
-    const finalStart = this.applyConstraints(startStr);
-    const finalEnd = this.applyConstraints(endStr);
+    this.fromDate.set(this.applyConstraints(startStr));
+    this.toDate.set(this.applyConstraints(endStr));
 
-    this.fromDate.set(finalStart);
-    this.toDate.set(finalEnd);
-
-    if (emit) {
-      this.applyFilter();
-    }
+    if (emit) this.applyFilter();
   }
 
   applyFilter() {
-    this.filterSubmit.emit({
-      fromDate: this.fromDate(),
-      toDate: this.toDate()
-    });
+    this.filterSubmit.emit({ fromDate: this.fromDate(), toDate: this.toDate() });
   }
 
   private formatDate(date: Date): string {
@@ -180,13 +196,9 @@ export class DateFilterComponent implements OnInit {
 
   private applyConstraints(dateStr: string): string {
     if (!dateStr) return dateStr;
-
-    const min = this.minDate();
-    const max = this.effectiveMax();
-
+    const min = this.minDate(), max = this.effectiveMax();
     if (min && dateStr < min) return min;
     if (max && dateStr > max) return max;
-
     return dateStr;
   }
 }

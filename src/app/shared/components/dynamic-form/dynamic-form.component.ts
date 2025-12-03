@@ -4,11 +4,13 @@ import {
   ChangeDetectionStrategy,
   inject,
   input,
-  output, 
+  output,
   effect,
-  ViewEncapsulation
+  ViewEncapsulation,
+  signal,
+  OnDestroy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common'; // Added DatePipe
 import {
   FormBuilder,
   FormGroup,
@@ -22,6 +24,12 @@ import {
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+
+// [NEW] Datepicker Imports
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Subject, takeUntil } from 'rxjs';
 
 const CURRENCY_LOCALE = 'en-US';
 const CURRENCY_CLEAN_REGEX = /[^0-9.]+/g;
@@ -64,35 +72,56 @@ export type DynamicFormValue = Record<string, any>;
   selector: 'app-dynamic-form',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
-    MatSelectModule, 
+    CommonModule,
+    ReactiveFormsModule,
+    MatSelectModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    // [NEW]
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
+  providers: [
+    DatePipe,
+    provideNativeDateAdapter(),
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' }
   ],
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None 
+  encapsulation: ViewEncapsulation.None
 })
-export class DynamicFormComponent implements OnInit {
+export class DynamicFormComponent implements OnInit, OnDestroy {
   public formConfig = input<FormConfig | undefined>();
   public isLoading = input<boolean>(false);
 
   public formSubmitted = output<DynamicFormValue>();
   public formCancelled = output<void>();
-  
-  // New Output for signaling reconstruction
   public formReady = output<FormGroup>();
 
   public dynamicForm: FormGroup<Record<string, FormControl<any>>>;
 
+  // [NEW] Mobile Detection
+  public isMobile = signal<boolean>(false);
+  private destroy$ = new Subject<void>();
+  private breakpointObserver = inject(BreakpointObserver);
+
   private readonly fb = inject(FormBuilder);
   private readonly currencyFormatter = new Intl.NumberFormat(CURRENCY_LOCALE);
+  private readonly datePipe = inject(DatePipe);
 
   constructor() {
     this.dynamicForm = this.fb.group<Record<string, FormControl<any>>>({});
-    
+
+    // [NEW] Mobile Logic
+    this.breakpointObserver.observe([
+      Breakpoints.Handset,
+      Breakpoints.TabletPortrait
+    ]).pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        this.isMobile.set(result.matches);
+      });
+
     effect(() => {
       const config = this.formConfig();
       if (config) {
@@ -101,13 +130,16 @@ export class DynamicFormComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   private buildForm(config: FormConfig): void {
     const formControls = this.createFormControls(config);
     this.dynamicForm = new FormGroup(formControls);
-    
-    // Notify parent that the form group instance has changed
     this.formReady.emit(this.dynamicForm);
   }
 
@@ -130,9 +162,17 @@ export class DynamicFormComponent implements OnInit {
 
   private prepareControlValue(config: FormControlConfig): any {
     const value = config.value ?? null;
+
     if (config.controlType === 'currency') {
       return this.cleanCurrency(value);
     }
+
+    // [NEW] Handle String to Date conversion for Material Datepicker
+    if (config.controlType === 'date' && value && typeof value === 'string') {
+      // Assuming 'yyyy-MM-dd' or ISO string
+      return new Date(value);
+    }
+
     return value;
   }
 
@@ -165,8 +205,29 @@ export class DynamicFormComponent implements OnInit {
       this.markAllControlsAsTouched();
       return;
     }
-    const formValue = this.dynamicForm.getRawValue();
-    this.formSubmitted.emit(formValue);
+
+    // Convert Date objects back to string ('yyyy-MM-dd') before emitting
+    const rawValue = this.dynamicForm.getRawValue();
+    const formattedValue = this.formatDatesInFormValue(rawValue);
+
+    this.formSubmitted.emit(formattedValue);
+  }
+
+  // [NEW] Helper to ensure consistency (BE usually expects strings)
+  private formatDatesInFormValue(formValue: DynamicFormValue): DynamicFormValue {
+    const newValue = { ...formValue };
+    const config = this.formConfig();
+
+    if (!config) return newValue;
+
+    for (const row of config.formRows) {
+      for (const control of row.controls) {
+        if (control.controlType === 'date' && newValue[control.controlName] instanceof Date) {
+          newValue[control.controlName] = this.datePipe.transform(newValue[control.controlName], 'yyyy-MM-dd');
+        }
+      }
+    }
+    return newValue;
   }
 
   private markAllControlsAsTouched(): void {
@@ -257,6 +318,10 @@ export class DynamicFormComponent implements OnInit {
   }
 
   public patchFormValues(values: Partial<DynamicFormValue>): void {
+    // If patching dates as strings, we might need to convert them to Dates manually
+    // However, MatDatepicker often handles parsing strings if standard format.
+    // For robustness, you could intercept here, but typically ReactiveForms 
+    // patchValue is direct.
     this.dynamicForm.patchValue(values);
   }
 

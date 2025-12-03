@@ -1,5 +1,5 @@
 <div class="settings-container">
-  
+
   <div class="settings-card profile-card">
     <div class="card-header">
       <div class="card-title-wrapper">
@@ -12,7 +12,7 @@
           <label>Họ và tên</label>
           <div class="read-only-value">{{ currentUser()?.fullName || 'N/A' }}</div>
         </div>
-        
+
         <div class="info-item">
           <label>Tên đăng nhập</label>
           <div class="read-only-value username">{{ currentUser()?.username || 'N/A' }}</div>
@@ -22,9 +22,9 @@
           <label>Vai trò / Nhóm quyền</label>
           <div class="roles-list">
             @for (role of currentUser()?.roles; track role) {
-              <span class="role-badge">{{ role }}</span>
+            <span class="role-badge">{{ role }}</span>
             } @empty {
-              <span class="read-only-value">Không có vai trò</span>
+            <span class="read-only-value">Không có vai trò</span>
             }
           </div>
         </div>
@@ -42,13 +42,13 @@
 
     <div class="card-body">
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        
+
         <div class="form-group">
           <label for="oldPass">Mật khẩu hiện tại <span class="req">*</span></label>
           <div class="input-group">
             <input [type]="showOld() ? 'text' : 'password'" id="oldPass" formControlName="OldPassword"
-                   class="form-control" placeholder="Nhập mật khẩu cũ"
-                   [class.is-invalid]="form.get('OldPassword')?.invalid && form.get('OldPassword')?.touched">
+              class="form-control" placeholder="Nhập mật khẩu cũ"
+              [class.is-invalid]="form.get('OldPassword')?.invalid && form.get('OldPassword')?.touched">
             <button type="button" class="toggle-btn" (click)="toggleVisibility('old')" tabindex="-1">
               <i class="fas" [class]="showOld() ? 'fa-eye-slash' : 'fa-eye'"></i>
             </button>
@@ -59,8 +59,8 @@
           <label for="newPass">Mật khẩu mới <span class="req">*</span></label>
           <div class="input-group">
             <input [type]="showNew() ? 'text' : 'password'" id="newPass" formControlName="NewPassword"
-                   class="form-control" placeholder="Nhập mật khẩu mới"
-                   [class.is-invalid]="form.get('NewPassword')?.touched && form.get('NewPassword')?.invalid">
+              class="form-control" placeholder="Nhập mật khẩu mới"
+              [class.is-invalid]="form.get('NewPassword')?.touched && form.get('NewPassword')?.invalid">
             <button type="button" class="toggle-btn" (click)="toggleVisibility('new')" tabindex="-1">
               <i class="fas" [class]="showNew() ? 'fa-eye-slash' : 'fa-eye'"></i>
             </button>
@@ -71,14 +71,14 @@
           <label for="confirmPass">Xác nhận mật khẩu mới <span class="req">*</span></label>
           <div class="input-group">
             <input [type]="showConfirm() ? 'text' : 'password'" id="confirmPass" formControlName="ConfirmPassword"
-                   class="form-control" placeholder="Nhập lại mật khẩu mới"
-                   [class.is-invalid]="form.hasError('mismatch') && form.get('ConfirmPassword')?.touched">
+              class="form-control" placeholder="Nhập lại mật khẩu mới"
+              [class.is-invalid]="form.hasError('mismatch') && form.get('ConfirmPassword')?.touched">
             <button type="button" class="toggle-btn" (click)="toggleVisibility('confirm')" tabindex="-1">
               <i class="fas" [class]="showConfirm() ? 'fa-eye-slash' : 'fa-eye'"></i>
             </button>
           </div>
           @if (form.hasError('mismatch') && form.get('ConfirmPassword')?.touched) {
-            <div class="invalid-feedback">Mật khẩu xác nhận không khớp.</div>
+          <div class="invalid-feedback">Mật khẩu xác nhận không khớp.</div>
           }
         </div>
 
@@ -112,17 +112,18 @@
           </ul>
         </div>
 
-        <div class="login-warning" style="margin: 1rem 0; padding: 0.75rem; background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404; display: flex; gap: 0.5rem; border-radius: 4px;">
-            <i class="fas fa-info-circle" style="margin-top: 3px;"></i>
-            <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để tiếp tục sử dụng.</span>
+        <div class="login-warning">
+          <i class="fas fa-info-circle"></i>
+          <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để tiếp tục
+            sử dụng.</span>
         </div>
 
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading()">
             @if (isLoading()) {
-              <i class="fas fa-spinner fa-spin"></i> Đang xử lý...
+            <i class="fas fa-spinner fa-spin"></i> Đang xử lý...
             } @else {
-              <i class="fas fa-save"></i> Lưu thay đổi
+            <i class="fas fa-save"></i> Lưu thay đổi
             }
           </button>
         </div>
@@ -130,5 +131,4 @@
       </form>
     </div>
   </div>
-
 </div>

@@ -1,16 +1,12 @@
 :host {
   display: block;
   --input-height: 42px;
-  --icon-size: 1.25rem;
 }
 
 .filter-card {
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
-
-  /* [FIX] Use variable spacing and add mobile override */
   padding: var(--spacing-md);
-
   box-shadow: var(--box-shadow-md);
   border: 1px solid transparent;
 
@@ -18,18 +14,15 @@
   flex-direction: column;
   gap: var(--spacing-md);
 
-  /* Dark Mode Border */
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
 
-  /* [FIX] Match ChartCard mobile padding (8px) */
   @media (max-width: 768px) {
     padding: var(--spacing-sm);
     gap: var(--spacing-sm);
   }
 
-  /* Desktop: Row Layout */
   @media (min-width: 992px) {
     flex-direction: row;
     align-items: flex-end;
@@ -40,13 +33,17 @@
 .filter-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  /* Side by side on mobile */
   gap: var(--spacing-md);
   flex-shrink: 0;
+  width: 100%;
+
+  @media (min-width: 992px) {
+    max-width: 300px;
+  }
 
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
-    /* Stack on very small screens */
+    max-width: none;
   }
 }
 
@@ -71,15 +68,24 @@
   display: flex;
   align-items: center;
   width: 100%;
+
+  .custom-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    z-index: 2;
+    transform: translateY(-50%) scale(0.9);
+  }
 }
 
 .form-control-date {
   height: var(--input-height);
   width: 100%;
-  min-width: 140px;
-  padding: 0 12px;
+  min-width: 120px;
+  padding: 0 36px 0 12px;
 
-  /* Semantic Colors */
   background-color: var(--input-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
@@ -91,25 +97,7 @@
 
   transition: all 0.2s ease;
   outline: none;
-
-  /* Browser Native Picker Styling */
-  &::-webkit-calendar-picker-indicator {
-    cursor: pointer;
-    opacity: 0.6;
-    transition: 0.2s;
-
-    /* Invert icon in dark mode (managed globally in styles.scss, but forced here just in case) */
-    [data-theme='dark'] & {
-      filter: invert(1);
-    }
-  }
-
-  /* Ensure native picker respects theme */
-  color-scheme: light;
-
-  [data-theme='dark'] & {
-    color-scheme: dark;
-  }
+  cursor: pointer;
 
   &:hover:not(:disabled) {
     border-color: var(--gray-400);
@@ -124,16 +112,12 @@
     }
   }
 
-  /* --- IMPROVED DISABLED STATE --- */
   &:disabled {
     cursor: not-allowed;
     background-color: var(--gray-100);
-    /* Explicit background */
     color: var(--text-secondary);
-    /* High contrast text */
     border-color: var(--gray-200);
     opacity: 1;
-    /* Prevent browser default fading */
 
     [data-theme='dark'] & {
       background-color: rgba(255, 255, 255, 0.05);
@@ -147,12 +131,10 @@
 .quick-actions-container {
   flex: 1;
   min-width: 0;
-  /* Allow flex shrink */
   position: relative;
   display: flex;
   align-items: center;
 
-  /* Fade masks for scrolling hint */
   &::after {
     content: '';
     position: absolute;
@@ -166,7 +148,6 @@
     transition: opacity 0.2s;
   }
 
-  /* Show fade on mobile/overflow */
   @media (max-width: 992px) {
     &::after {
       opacity: 1;
@@ -179,45 +160,46 @@
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
-  /* Space for scrollbar/shadow */
   scrollbar-width: none;
 
-  /* Firefox */
   &::-webkit-scrollbar {
     display: none;
   }
 
-  /* Chrome */
-
-  /* Snap behavior for nice touch feel */
   scroll-snap-type: x mandatory;
-
-  /* Ensure proper height */
   height: var(--input-height);
   align-items: center;
 }
 
+/* [UPDATED] Match animation to global buttons */
 .btn-pill {
   appearance: none;
   background-color: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
-
   height: 32px;
   padding: 0 16px;
   border-radius: 99px;
-
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s var(--transition-smooth);
   scroll-snap-align: start;
+
+  /* [FIX] Use SPRING transition for transform to match main buttons */
+  transition: transform 0.2s var(--transition-spring),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s var(--transition-smooth);
 
   &:hover:not(:disabled) {
     background-color: var(--gray-100);
     color: var(--text-primary);
-    transform: translateY(-2px);
+
+    /* [FIX] Increased lift to -3px to match global button feel */
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-sm);
 
     [data-theme='dark'] & {
       background-color: var(--gray-700);
@@ -232,7 +214,6 @@
 
     [data-theme='dark'] & {
       color: #000;
-      /* Black text on bright teal for contrast */
     }
   }
 
@@ -250,7 +231,6 @@
     height: var(--input-height);
     width: 100%;
 
-    /* On Desktop, auto width */
     @media (min-width: 992px) {
       width: auto;
       min-width: 120px;

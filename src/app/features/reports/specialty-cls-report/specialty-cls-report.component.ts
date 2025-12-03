@@ -312,6 +312,7 @@ export class SpecialtyClsReportComponent implements OnInit {
     sortedSpecialties: [string, number][],
     groupOrderMap: Map<string, number>
   ): void {
+    // Distinct colors from ThemeService, removing danger (red)
     const themePalette = [
       this.palette.primary,
       this.palette.chart6,
@@ -319,13 +320,22 @@ export class SpecialtyClsReportComponent implements OnInit {
       this.palette.success,
       this.palette.pastelCoral,
       this.palette.secondary,
-      '#8b5cf6',
       this.palette.chart7,
+      this.palette.tealMidtone,
+      this.palette.warning,
+      // this.palette.danger, // Removed red
+      this.palette.info,
+      this.palette.peacockLight,
+      this.palette.chart3,
+      this.palette.chart9,
     ];
+
+    // Ensure uniqueness if any palette variable maps to the same color
+    const uniquePalette = [...new Set(themePalette)];
 
     const commonOptions = {
       backgroundColor: 'transparent',
-      color: themePalette,
+      color: uniquePalette,
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         color: this.palette.textSecondary,
@@ -511,8 +521,8 @@ export class SpecialtyClsReportComponent implements OnInit {
           data: top10Data.map((d) => d[1]),
           itemStyle: {
             color: (params: any) =>
-              themePalette[
-              (top10Data.length - 1 - params.dataIndex) % themePalette.length
+              uniquePalette[
+              (top10Data.length - 1 - params.dataIndex) % uniquePalette.length
               ],
             borderRadius: [0, 4, 4, 0],
           },

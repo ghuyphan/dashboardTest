@@ -3,7 +3,8 @@
    ============================================================ */
 .dynamic-form-container {
   width: 100%;
-  max-width: 800px; /* Increased slightly for better layout */
+  max-width: 800px;
+  /* Increased slightly for better layout */
   box-sizing: border-box;
 
   .form-row {
@@ -23,14 +24,15 @@
     label {
       font-weight: 600;
       margin-bottom: 6px;
-      color: var(--text-primary); /* Semantic Variable */
+      color: var(--text-primary);
+      /* Semantic Variable */
       font-size: 0.875rem;
     }
-    
+
     &.field-highlight .form-control {
       border-color: var(--teal-blue);
       background-color: var(--aqua-island-light);
-      
+
       /* Dark mode adjustment for highlight */
       [data-theme='dark'] & {
         background-color: rgba(45, 212, 191, 0.15);
@@ -44,23 +46,51 @@
     margin-left: 2px;
   }
 
+  /* --- INPUT WRAPPER FOR DATEPICKER --- */
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    /* Position the toggle button absolutely to the right */
+    .custom-toggle {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      z-index: 2;
+      transform: translateY(-50%) scale(0.9);
+    }
+
+    /* Ensure error borders work on wrapper if needed, 
+       but currently applied to input via class.is-invalid logic */
+  }
+
   /* INPUT MIXIN APPLIED DIRECTLY */
   .form-control {
     width: 100%;
     border-radius: var(--border-radius-md);
     box-sizing: border-box;
-    
+
     /* Semantic Colors */
     border: 1px solid var(--border-color);
     background-color: var(--input-bg);
     color: var(--text-primary);
-    
+
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     min-height: 38px;
     font-size: 0.9375rem;
     font-family: var(--font-family-sans);
     line-height: var(--line-height-base);
     padding: 8px 12px;
+
+    /* [NEW] Add padding for datepicker toggle icon */
+    &.date-input {
+      padding-right: 36px;
+      cursor: pointer;
+    }
 
     &::placeholder {
       color: var(--text-disabled);
@@ -80,6 +110,7 @@
 
     &.is-invalid {
       border-color: var(--color-danger);
+
       &:focus {
         box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
       }
@@ -115,13 +146,16 @@
     justify-content: flex-end;
     gap: var(--spacing-sm);
     padding-top: var(--spacing-md);
-    border-top: 1px solid var(--border-color); /* Semantic Variable */
+    border-top: 1px solid var(--border-color);
+    /* Semantic Variable */
 
     @media (max-width: 480px) {
       flex-direction: column-reverse;
       gap: 0.75rem;
-      
-      .btn { width: 100%; }
+
+      .btn {
+        width: 100%;
+      }
     }
   }
 
@@ -133,7 +167,7 @@
     cursor: pointer;
     font-weight: 500;
     font-size: 0.9375rem;
-    
+
     /* Standard Transition */
     transition: all 0.2s var(--transition-spring);
 
@@ -153,16 +187,18 @@
   .btn-secondary {
     background-color: var(--gray-200);
     color: var(--gray-800);
-    &:hover:not(:disabled) { 
-      background-color: var(--gray-300); 
+
+    &:hover:not(:disabled) {
+      background-color: var(--gray-300);
     }
   }
 
   .btn-primary {
     background-color: var(--teal-blue);
     color: white;
-    &:hover:not(:disabled) { 
-      background-color: var(--peacock-blue); 
+
+    &:hover:not(:disabled) {
+      background-color: var(--peacock-blue);
     }
   }
 
@@ -184,7 +220,7 @@
   /* ============================================================
      MATERIAL FORM FIELD OVERRIDES (Scoped to container)
      ============================================================ */
-  
+
   .custom-dropdown-wrapper {
     width: 100%;
     position: relative;
@@ -206,7 +242,8 @@
     height: 38px !important;
     display: flex;
     align-items: center;
-    background-color: var(--input-bg) !important; /* Semantic Variable */
+    background-color: var(--input-bg) !important;
+    /* Semantic Variable */
 
     .mat-mdc-form-field-infix {
       padding: 0 !important;
@@ -216,6 +253,7 @@
       align-items: center;
       width: 100%;
     }
+
     .mat-mdc-select-value {
       display: flex;
       align-items: center;
@@ -223,19 +261,22 @@
   }
 
   .mat-mdc-form-field {
+
     /* Border Colors */
     .mdc-notched-outline__leading,
     .mdc-notched-outline__notch,
     .mdc-notched-outline__trailing {
-      border-color: var(--border-color) !important; /* Semantic Variable */
+      border-color: var(--border-color) !important;
+      /* Semantic Variable */
       border-width: 1px !important;
     }
-    
+
     /* Radius */
     .mdc-notched-outline__leading {
       border-top-left-radius: var(--border-radius-md) !important;
       border-bottom-left-radius: var(--border-radius-md) !important;
     }
+
     .mdc-notched-outline__trailing {
       border-top-right-radius: var(--border-radius-md) !important;
       border-bottom-right-radius: var(--border-radius-md) !important;
@@ -250,11 +291,13 @@
 
     /* Focus */
     &.mat-focused {
+
       .mdc-notched-outline__leading,
       .mdc-notched-outline__notch,
       .mdc-notched-outline__trailing {
         border-color: var(--teal-blue) !important;
       }
+
       .mat-mdc-text-field-wrapper {
         box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2) !important;
       }
@@ -262,18 +305,23 @@
 
     /* Text Colors */
     .mat-mdc-select-value-text {
-      color: var(--text-primary) !important; /* Semantic Variable */
+      color: var(--text-primary) !important;
+      /* Semantic Variable */
       font-family: var(--font-family-sans) !important;
       font-size: 0.9375rem !important;
     }
+
     .mat-mdc-select-placeholder {
-      color: var(--text-disabled) !important; /* Semantic Variable */
+      color: var(--text-disabled) !important;
+      /* Semantic Variable */
       font-family: var(--font-family-sans) !important;
       font-size: 0.9375rem !important;
       opacity: 1 !important;
     }
+
     .mat-mdc-select-arrow {
-      color: var(--text-secondary) !important; /* Semantic Variable */
+      color: var(--text-secondary) !important;
+      /* Semantic Variable */
     }
   }
 }
@@ -282,14 +330,21 @@
    GLOBAL OVERRIDES FOR OVERLAY PANEL
    ============================================================ */
 .dynamic-form-select-panel.mat-mdc-select-panel {
-  background-color: var(--surface-card) !important; /* Semantic Variable */
+  background-color: var(--surface-card) !important;
+  /* Semantic Variable */
   border: 1px solid var(--border-color);
   box-shadow: var(--box-shadow-md) !important;
   border-radius: var(--border-radius-md) !important;
   margin-top: 4px;
 
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--gray-300);
     border-radius: 3px;
@@ -298,7 +353,8 @@
   .mat-mdc-option {
     font-family: var(--font-family-sans) !important;
     font-size: 0.9375rem !important;
-    color: var(--text-primary) !important; /* Semantic Variable */
+    color: var(--text-primary) !important;
+    /* Semantic Variable */
     min-height: 40px !important;
 
     &:hover:not(.mdc-list-item--disabled) {
@@ -307,6 +363,7 @@
 
     &.mdc-list-item--selected {
       background-color: var(--aqua-island-light) !important;
+
       .mdc-list-item__primary-text {
         color: var(--deep-sapphire) !important;
         font-weight: 600 !important;
@@ -315,8 +372,9 @@
       /* Dark mode selection state */
       [data-theme='dark'] & {
         background-color: rgba(45, 212, 191, 0.15) !important;
+
         .mdc-list-item__primary-text {
-           color: var(--teal-blue) !important;
+          color: var(--teal-blue) !important;
         }
       }
     }

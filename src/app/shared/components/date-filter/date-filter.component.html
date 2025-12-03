@@ -1,34 +1,25 @@
 <div class="filter-card" [class.is-loading]="isLoading()">
-  
+
   <div class="filter-inputs">
     <div class="filter-group">
       <label for="fromDate">Từ ngày</label>
       <div class="input-wrapper">
-        <input 
-          type="date" 
-          id="fromDate" 
-          [ngModel]="fromDate()" 
-          (ngModelChange)="onDateChange('from', $event)" 
-          class="form-control-date" 
-          [disabled]="isLoading()"
-          [max]="fromMax()"
-        />
+        <input id="fromDate" class="form-control-date" [matDatepicker]="pickerFrom" [value]="fromDateObj()"
+          (dateChange)="onDateChange('from', $event.value)" [max]="fromMaxDate()" [disabled]="isLoading()"
+          placeholder="dd/mm/yyyy" readonly (click)="pickerFrom.open()" />
+        <mat-datepicker-toggle [for]="pickerFrom" class="custom-toggle"></mat-datepicker-toggle>
+        <mat-datepicker #pickerFrom [touchUi]="isMobile()"></mat-datepicker>
       </div>
     </div>
-    
+
     <div class="filter-group">
       <label for="toDate">Đến ngày</label>
       <div class="input-wrapper">
-        <input 
-          type="date" 
-          id="toDate" 
-          [ngModel]="toDate()" 
-          (ngModelChange)="onDateChange('to', $event)" 
-          class="form-control-date" 
-          [disabled]="isLoading()"
-          [min]="toMin()"
-          [max]="toMax()"
-        />
+        <input id="toDate" class="form-control-date" [matDatepicker]="pickerTo" [value]="toDateObj()"
+          (dateChange)="onDateChange('to', $event.value)" [min]="toMinDate()" [max]="toMaxDate()"
+          [disabled]="isLoading()" placeholder="dd/mm/yyyy" readonly (click)="pickerTo.open()" />
+        <mat-datepicker-toggle [for]="pickerTo" class="custom-toggle"></mat-datepicker-toggle>
+        <mat-datepicker #pickerTo [touchUi]="isMobile()"></mat-datepicker>
       </div>
     </div>
   </div>
@@ -36,14 +27,10 @@
   <div class="quick-actions-container">
     <div class="quick-actions-scroll">
       @for (range of quickRanges; track range.key) {
-        <button 
-          type="button"
-          class="btn-pill" 
-          [class.active]="activeRange() === range.key"
-          (click)="setRange(range.key, true)"
-          [disabled]="isLoading()"> 
-          {{ range.label }}
-        </button>
+      <button type="button" class="btn-pill" [class.active]="activeRange() === range.key"
+        (click)="setRange(range.key, true)" [disabled]="isLoading()">
+        {{ range.label }}
+      </button>
       }
     </div>
   </div>
@@ -51,12 +38,12 @@
   <div class="action-buttons">
     <button type="button" class="btn btn-primary" (click)="applyFilter()" [disabled]="isLoading()">
       @if (isLoading()) {
-        <i class="fas fa-spinner fa-spin"></i>
+      <i class="fas fa-spinner fa-spin"></i>
       } @else {
-        <i class="fas fa-filter"></i>
+      <i class="fas fa-filter"></i>
       }
       <span>{{ buttonLabel() }}</span>
     </button>
   </div>
-  
+
 </div>

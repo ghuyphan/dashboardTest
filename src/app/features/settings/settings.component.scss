@@ -1,3 +1,4 @@
+/* src/app/features/settings/settings.component.scss */
 :host {
   display: flex;
   flex-direction: column;
@@ -16,18 +17,23 @@
   box-sizing: border-box;
 
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* --- UPDATED SETTINGS CARD --- */
 .settings-card {
-  background-color: var(--surface-card); /* Semantic */
+  background-color: var(--surface-card);
+  /* Semantic */
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);
   display: flex;
   flex-direction: column;
   position: relative;
+
   /* Use subtle border in dark mode for definition */
   [data-theme='dark'] & {
     border: 1px solid var(--border-color);
@@ -37,7 +43,8 @@
     flex-shrink: 0;
     margin-bottom: var(--spacing-sm);
     padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-color); /* Semantic */
+    border-bottom: 1px solid var(--border-color);
+    /* Semantic */
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -54,7 +61,8 @@
   h3 {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--text-primary); /* Semantic */
+    color: var(--text-primary);
+    /* Semantic */
     margin: 0;
     display: flex;
     align-items: center;
@@ -63,18 +71,20 @@
 
     i {
       font-size: 1rem;
-      color: var(--teal-blue);
+      color: var(--primary);
+      /* Semantic: Matches brand color in both modes */
     }
   }
 
   .card-subtitle {
     font-size: 0.875rem;
     font-weight: 400;
-    color: var(--text-secondary); /* Semantic */
-    margin-left: var(--spacing-sm); 
+    color: var(--text-secondary);
+    /* Semantic */
+    margin-left: var(--spacing-sm);
     padding-left: var(--spacing-sm);
     border-left: 1px solid var(--border-color);
-    
+
     @media (max-width: 576px) {
       border-left: none;
       padding-left: 0;
@@ -109,12 +119,15 @@
     flex-direction: column;
     gap: 6px;
 
-    &.full-width { grid-column: 1 / -1; }
+    &.full-width {
+      grid-column: 1 / -1;
+    }
 
     label {
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--text-secondary); /* Semantic */
+      color: var(--text-secondary);
+      /* Semantic */
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -122,8 +135,9 @@
     .read-only-value {
       font-size: 1rem;
       font-weight: 500;
-      color: var(--text-primary); /* Semantic */
-      
+      color: var(--text-primary);
+      /* Semantic */
+
       &.username {
         font-family: monospace;
         background-color: var(--gray-100);
@@ -133,9 +147,9 @@
         display: inline-block;
         width: fit-content;
         font-size: 0.9rem;
-        
+
         [data-theme='dark'] & {
-           background-color: var(--gray-200);
+          background-color: var(--gray-200);
         }
       }
     }
@@ -154,12 +168,13 @@
       font-size: 0.75rem;
       font-weight: 600;
       line-height: 1.2;
-      background-color: var(--teal-blue-light); 
-      color:  var(--text-primary); 
-      
+      /* Use global var which already handles transparency in dark mode */
+      background-color: var(--teal-blue-light);
+      color: var(--text-primary);
+
       [data-theme='dark'] & {
-        background-color: rgba(45, 212, 191, 0.2);
-        color: var(--teal-blue);
+        /* Text color adjusted for better contrast on dark bg */
+        color: var(--primary);
       }
     }
   }
@@ -173,10 +188,14 @@
     display: block;
     margin-bottom: 6px;
     font-weight: 600;
-    color: var(--text-primary); /* Semantic */
+    color: var(--text-primary);
+    /* Semantic */
     font-size: 0.875rem;
 
-    .req { color: var(--color-danger); margin-left: 2px; }
+    .req {
+      color: var(--color-danger);
+      margin-left: 2px;
+    }
   }
 
   .input-group {
@@ -189,28 +208,34 @@
     width: 100%;
     min-height: 38px;
     padding: 8px 40px 8px 12px;
-    
+
     /* Semantic Input Colors */
     background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    
+
     border-radius: var(--border-radius-md);
     font-size: 0.9375rem;
     font-family: var(--font-family-sans);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
-    &::placeholder { color: var(--text-disabled); }
+    &::placeholder {
+      color: var(--text-disabled);
+    }
 
     &:focus {
       outline: none;
-      border-color: var(--teal-blue);
+      border-color: var(--primary);
+      /* Semantic */
       box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2);
     }
 
     &.is-invalid {
       border-color: var(--color-danger);
-      &:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); }
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+      }
     }
   }
 
@@ -230,11 +255,12 @@
     justify-content: center;
     border-radius: 50%;
     transition: all 0.2s;
-    
-    &:hover { 
+
+    &:hover {
       background-color: var(--gray-100);
-      color: var(--teal-blue);
-      
+      color: var(--primary);
+      /* Semantic */
+
       [data-theme='dark'] & {
         background-color: var(--gray-200);
       }
@@ -250,15 +276,12 @@
 
 /* --- Requirements List --- */
 .requirements-list {
-  background-color: var(--gray-50); /* Light mode default */
+  /* Semantic 'ground' color handles light (gray-50) vs dark (gray-800) automatically */
+  background-color: var(--surface-ground);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
   margin-top: var(--spacing-lg);
-
-  [data-theme='dark'] & {
-    background-color: var(--gray-200); /* Slightly lighter than card in dark mode */
-  }
 
   .req-title {
     font-weight: 600;
@@ -271,7 +294,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    
+
     li {
       font-size: 0.85rem;
       margin-bottom: 6px;
@@ -282,7 +305,7 @@
       transition: color 0.2s ease;
 
       i {
-        font-size: 0.7rem; 
+        font-size: 0.7rem;
         width: 16px;
         text-align: center;
         color: var(--text-disabled);
@@ -291,12 +314,20 @@
       &.valid {
         color: var(--color-success);
         font-weight: 500;
-        i { color: var(--color-success); font-size: 0.9rem; }
+
+        i {
+          color: var(--color-success);
+          font-size: 0.9rem;
+        }
       }
-      
+
       &.static-rule {
         color: var(--text-secondary);
-        i { font-size: 0.9rem; color: var(--color-info); }
+
+        i {
+          font-size: 0.9rem;
+          color: var(--color-info);
+        }
       }
     }
   }
@@ -306,7 +337,7 @@
   display: flex;
   justify-content: flex-end;
   margin-top: var(--spacing-xl);
-  
+
   .btn {
     display: inline-flex;
     align-items: center;
@@ -314,6 +345,38 @@
     gap: 8px;
     min-width: 140px;
     padding: 10px 20px;
-    i { font-size: 1rem; }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+.login-warning {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-mds);
+  border-radius: var(--border-radius-sm);
+  border-left: 4px solid var(--color-warning);
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  font-size: 0.9rem;
+
+  // Light Mode: Light yellow background, dark text
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+
+  i {
+    color: var(--color-warning);
+    margin-top: 3px; // Aligns icon with text
+    flex-shrink: 0;
+  }
+
+  // Dark Mode Override
+  [data-theme='dark'] & {
+    // Slightly more opaque background for visibility on dark cards
+    background-color: rgba(245, 158, 11, 0.15);
+    // Light text color for readability against dark background
+    color: var(--text-secondary);
   }
 }

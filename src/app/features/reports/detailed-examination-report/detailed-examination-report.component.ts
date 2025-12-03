@@ -179,14 +179,9 @@ export class DetailedExaminationReportComponent implements OnInit {
         const item = this.widgetData.find((x) => x.id === id);
         if (item) item.accentColor = color;
       };
-
-      // SYNC: Colors from Palette (loaded from CSS variables in ThemeService)
       setC('total-visits', this.palette.chart3);
       setC('total-patients', this.palette.chart2);
-
-      // Use Chart 4 (Orange/Coral) for the Metric instead of hardcoded hex
-      setC('avg-metric', this.palette.chart4);
-
+      setC('avg-metric', this.palette.chart9);
       setC('re-exam-rate', this.palette.success);
     }
   }
@@ -224,6 +219,8 @@ export class DetailedExaminationReportComponent implements OnInit {
                 TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
                 BAC_SI: detail.BAC_SI || 'Chưa xác định',
                 SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
+                // Note: For table detail rows we still sum new+old, 
+                // but for global stats we will use root props
                 SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
                 BENH_MOI: detail.BENH_MOI || 0,
                 BENH_CU: detail.BENH_CU || 0,
@@ -257,43 +254,36 @@ export class DetailedExaminationReportComponent implements OnInit {
     }
 
     let totalVisits = 0;
+    let totalPatientsDirect = 0; // Using SO_NGUOI_KHAM_TONG
 
     // Maps for charts
     const dateMap = new Map<string, { visits: number; patients: number }>();
     const specialtyMap = new Map<string, number>();
     const doctorMap = new Map<string, number>();
 
-    // Counters
+    // Counters for Pie Chart Breakdown (New vs Old)
     let totalNew = 0;
     let totalOld = 0;
 
-    // OPTIMIZATION 1: Process Daily Stats for Trend Chart & Total Visits
-    // Single pass over days
+    // 1. Process Daily Stats (Root Level) - Direct access, no calculation
     for (const day of this.dailyStats) {
       const v = day.SO_LUOT_KHAM_TONG || 0;
-      totalVisits += v;
+      const p = day.SO_NGUOI_KHAM_TONG || 0; // Direct from API
 
-      // Safe calculation for daily patients
-      let dailyP = 0;
-      if (day.CHUYEN_KHOA_KHAM && day.CHUYEN_KHOA_KHAM.length > 0) {
-        // Only reduce if needed, otherwise use field if reliable
-        dailyP = day.CHUYEN_KHOA_KHAM.reduce((acc, curr) => acc + (curr.BENH_MOI || 0) + (curr.BENH_CU || 0), 0);
-      } else {
-        dailyP = day.SO_NGUOI_KHAM_TONG || 0;
-      }
+      totalVisits += v;
+      totalPatientsDirect += p;
 
       const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
-      dateMap.set(dateKey, { visits: v, patients: dailyP });
+      dateMap.set(dateKey, { visits: v, patients: p });
     }
 
-    // OPTIMIZATION 2: Process Detailed Raw Data for other charts
-    // Single pass over flattened data
+    // 2. Process Detailed Data for breakdown charts only
     for (const item of this.rawData) {
       const spec = item.TEN_CHUYEN_KHOA;
       const doc = item.BAC_SI;
       const visits = item.SO_LUOT_KHAM || 0;
 
-      // Aggregates
+      // Aggregates for Pie Chart
       totalNew += item.BENH_MOI || 0;
       totalOld += item.BENH_CU || 0;
 
@@ -302,7 +292,6 @@ export class DetailedExaminationReportComponent implements OnInit {
       doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
     }
 
-    const totalPatientsCalculated = totalNew + totalOld;
     const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
     const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
 
@@ -319,7 +308,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         id: 'total-patients',
         icon: 'fas fa-user-injured',
         title: 'Tổng Người Bệnh',
-        value: this.formatNumber(totalPatientsCalculated),
+        value: this.formatNumber(totalPatientsDirect), // Uses SO_NGUOI_KHAM_TONG sum
         caption: 'Total Patients',
         accentColor: this.palette.chart2,
       },
@@ -329,7 +318,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'TB Lượt (HS 6.5)',
         value: avgMetricValue,
         caption: 'Workload (Div 6.5)',
-        accentColor: this.palette.chart4, // Dynamically sourced color
+        accentColor: this.palette.chart9,
       },
       {
         id: 're-exam-rate',
@@ -348,10 +337,8 @@ export class DetailedExaminationReportComponent implements OnInit {
   }
 
   private buildTrendChart(dateMap: Map<string, { visits: number; patients: number }>): void {
-    // Sort keys just once
     const sortedDates = Array.from(dateMap.keys()).sort();
 
-    // Map data arrays
     const dateLabels = new Array(sortedDates.length);
     const visitsData = new Array(sortedDates.length);
     const patientsData = new Array(sortedDates.length);
@@ -363,7 +350,7 @@ export class DetailedExaminationReportComponent implements OnInit {
 
       const data = dateMap.get(d)!;
       visitsData[index] = data.visits;
-      patientsData[index] = data.patients;
+      patientsData[index] = data.patients; // Uses SO_NGUOI_KHAM_TONG
       workloadData[index] = parseFloat((data.visits / STANDARD_DIVISOR).toFixed(2));
     });
 
@@ -416,7 +403,7 @@ export class DetailedExaminationReportComponent implements OnInit {
           type: 'line',
           data: workloadData,
           smooth: true,
-          itemStyle: { color: this.palette.chart4 }, // Use Palette Color
+          itemStyle: { color: this.palette.chart9 },
           lineStyle: { width: 3, type: 'dashed' },
           symbolSize: 8,
           symbol: 'circle'
