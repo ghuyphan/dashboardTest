@@ -913,3 +913,53 @@ body>ul.submenu.open {
   height: 100%;
   @extend .skeleton;
 }
+
+/* ==================================================
+   6. VIEW TRANSITIONS & ANIMATIONS
+   ================================================== */
+
+/* Custom "Slide & Scale" Transition */
+::view-transition-old(root) {
+  animation: 0.4s cubic-bezier(0.4, 0, 0.2, 1) both slideOutScale;
+}
+
+::view-transition-new(root) {
+  animation: 0.4s cubic-bezier(0.4, 0, 0.2, 1) both slideInScale;
+}
+
+@keyframes slideOutScale {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.98);
+  }
+}
+
+@keyframes slideInScale {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(1.02);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Flicker Prevention: Ensure components transition smoothly */
+app-header,
+app-action-footer,
+.main-panel {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Ensure body background matches theme explicitly to prevent white flashes */
+body,
+app-root {
+  background-color: var(--surface-background);
+}

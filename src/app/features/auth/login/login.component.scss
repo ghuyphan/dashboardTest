@@ -4,8 +4,12 @@
 }
 
 /* Ensure input labels use semantic colors */
+.auth-input-group {
+  margin-bottom: clamp(16px, 4vw, 20px);
+}
+
 .auth-input-group label {
-  color: var(--text-primary); 
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -17,10 +21,10 @@
   border: none;
   padding: 0 clamp(12px, 3vw, 1rem);
   cursor: pointer;
-  
+
   /* Semantic Icon Color */
   color: var(--text-disabled);
-  
+
   font-size: clamp(15px, 4vw, 17px);
   line-height: 1;
   min-height: 44px;
@@ -51,8 +55,9 @@
   display: flex;
   align-items: center;
   gap: clamp(6px, 2vw, 0.5rem);
-  
-  color: var(--text-primary); /* Semantic Variable */
+
+  color: var(--text-primary);
+  /* Semantic Variable */
   cursor: pointer;
 
   label {
@@ -71,7 +76,7 @@
     margin-right: clamp(2px, 1vw, 0.25rem);
     vertical-align: middle;
     flex-shrink: 0;
-    border: 1px solid var(--border-color); 
+    border: 1px solid var(--border-color);
     cursor: pointer;
   }
 }
@@ -82,7 +87,7 @@
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
-    
+
     &:hover {
       text-decoration: underline;
       color: var(--peacock-blue);
@@ -94,10 +99,10 @@
   display: flex;
   align-items: center;
   margin: clamp(20px, 5vw, 2rem) 0;
-  
+
   /* Semantic Muted Text */
   color: var(--text-secondary);
-  
+
   font-size: clamp(0.875rem, 3.5vw, 15px);
   gap: clamp(8px, 2vw, 12px);
 
@@ -141,14 +146,15 @@
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
   background: var(--teal-blue);
-  color: #FFFFFF; /* Always white text on primary button */
+  color: #FFFFFF;
+  /* Always white text on primary button */
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
   font-size: clamp(0.9375rem, 4vw, 16px);
   font-weight: 600;
   cursor: pointer;
   min-height: 44px;
-  
+
   transition: all 0.2s var(--transition-spring);
 
   &:hover:not(:disabled) {
@@ -156,16 +162,66 @@
     transform: translateY(-2px);
     box-shadow: var(--box-shadow-md);
   }
-  
+
   &:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: var(--box-shadow-sm);
   }
 
-  &:disabled { 
-    opacity: 0.7; 
-    cursor: not-allowed; 
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
     transform: none;
     box-shadow: none;
   }
+}
+
+/* --- INPUT STYLES --- */
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+input {
+  width: 100%;
+  padding: clamp(12px, 3vw, 14px) 1rem clamp(12px, 3vw, 14px) clamp(40px, 5vw, 44px);
+  border: 1px solid var(--border-color);
+  border-radius: clamp(8px, 2.5vw, 12px);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: clamp(0.9375rem, 4vw, 16px);
+  transition: all 0.2s var(--transition-smooth);
+
+  &::placeholder {
+    color: var(--text-disabled);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--teal-blue);
+    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
+  }
+
+  &.is-invalid {
+    border-color: var(--color-danger);
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+    }
+  }
+}
+
+.input-icon {
+  position: absolute;
+  left: clamp(12px, 3vw, 1rem);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-disabled);
+  font-size: clamp(16px, 4vw, 18px);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.input-wrapper:focus-within .input-icon {
+  color: var(--teal-blue);
 }
