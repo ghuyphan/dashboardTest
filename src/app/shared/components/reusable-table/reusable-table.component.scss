@@ -579,9 +579,9 @@ table.mat-table {
       max-width: 40px !important;
     }
 
+    /* REMOVED ON MOBILE */
     .mat-column-actions {
-      width: 48px !important;
-      max-width: 48px !important;
+      display: none !important;
     }
   }
 }

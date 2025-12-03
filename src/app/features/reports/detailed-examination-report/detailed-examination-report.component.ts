@@ -27,7 +27,6 @@ import { WidgetCardComponent } from '../../../shared/components/widget-card/widg
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 const STANDARD_DIVISOR = 6.5; // Department standard coefficient
-const CORAL_COLOR = '#FF7F50';
 
 interface WidgetData {
   id: string;
@@ -145,7 +144,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tổng Lượt Khám',
         value: '0',
         caption: 'Total Visits',
-        accentColor: '#9bdad9', // Placeholder (Chart-3)
+        accentColor: 'var(--chart-3)',
       },
       {
         id: 'total-patients',
@@ -153,7 +152,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Số Người Bệnh',
         value: '0',
         caption: 'Unique Patients',
-        accentColor: '#006e96', // Placeholder (Chart-2)
+        accentColor: 'var(--chart-2)',
       },
       {
         id: 'avg-metric',
@@ -161,7 +160,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'TB Lượt (Hệ số 6.5)',
         value: '0',
         caption: 'Visits / 6.5',
-        accentColor: CORAL_COLOR,
+        accentColor: 'var(--chart-4)',
       },
       {
         id: 're-exam-rate',
@@ -169,7 +168,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tỷ Lệ Tái Khám',
         value: '0%',
         caption: 'Re-examination Rate',
-        accentColor: '#16a34a',
+        accentColor: 'var(--success)',
       },
     ];
   }
@@ -181,11 +180,13 @@ export class DetailedExaminationReportComponent implements OnInit {
         if (item) item.accentColor = color;
       };
 
-      // SYNC: Match Widget Colors to Chart Series Colors
-      setC('total-visits', this.palette.chart3); // Visits Bar Color
-      setC('total-patients', this.palette.chart2); // Patients Bar Color
+      // SYNC: Colors from Palette (loaded from CSS variables in ThemeService)
+      setC('total-visits', this.palette.chart3);
+      setC('total-patients', this.palette.chart2);
 
-      setC('avg-metric', CORAL_COLOR);
+      // Use Chart 4 (Orange/Coral) for the Metric instead of hardcoded hex
+      setC('avg-metric', this.palette.chart4);
+
       setC('re-exam-rate', this.palette.success);
     }
   }
@@ -209,19 +210,26 @@ export class DetailedExaminationReportComponent implements OnInit {
       .subscribe({
         next: (response: any) => {
           this.dailyStats = response as DailyExaminationStat[];
-          this.rawData = this.dailyStats.flatMap(day => {
+
+          // Flatten data for Table and Export
+          this.rawData = [];
+          for (const day of this.dailyStats) {
             const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
-            return (day.CHUYEN_KHOA_KHAM || []).map(detail => ({
-              NGAYKHAM: day.NGAY_KHAM,
-              NGAY_KHAM_DISPLAY: dateDisplay,
-              TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
-              BAC_SI: detail.BAC_SI || 'Chưa xác định',
-              SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
-              SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
-              BENH_MOI: detail.BENH_MOI || 0,
-              BENH_CU: detail.BENH_CU || 0,
-            } as DetailedExaminationStat));
-          });
+            const details = day.CHUYEN_KHOA_KHAM || [];
+
+            for (const detail of details) {
+              this.rawData.push({
+                NGAYKHAM: day.NGAY_KHAM,
+                NGAY_KHAM_DISPLAY: dateDisplay,
+                TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
+                BAC_SI: detail.BAC_SI || 'Chưa xác định',
+                SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
+                SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
+                BENH_MOI: detail.BENH_MOI || 0,
+                BENH_CU: detail.BENH_CU || 0,
+              } as DetailedExaminationStat);
+            }
+          }
 
           this.processData();
         },
@@ -249,22 +257,26 @@ export class DetailedExaminationReportComponent implements OnInit {
     }
 
     let totalVisits = 0;
-    let totalPatientsCalculated = 0;
 
+    // Maps for charts
     const dateMap = new Map<string, { visits: number; patients: number }>();
     const specialtyMap = new Map<string, number>();
     const doctorMap = new Map<string, number>();
 
+    // Counters
     let totalNew = 0;
     let totalOld = 0;
 
-    this.dailyStats.forEach(day => {
+    // OPTIMIZATION 1: Process Daily Stats for Trend Chart & Total Visits
+    // Single pass over days
+    for (const day of this.dailyStats) {
       const v = day.SO_LUOT_KHAM_TONG || 0;
       totalVisits += v;
 
       // Safe calculation for daily patients
       let dailyP = 0;
       if (day.CHUYEN_KHOA_KHAM && day.CHUYEN_KHOA_KHAM.length > 0) {
+        // Only reduce if needed, otherwise use field if reliable
         dailyP = day.CHUYEN_KHOA_KHAM.reduce((acc, curr) => acc + (curr.BENH_MOI || 0) + (curr.BENH_CU || 0), 0);
       } else {
         dailyP = day.SO_NGUOI_KHAM_TONG || 0;
@@ -272,18 +284,25 @@ export class DetailedExaminationReportComponent implements OnInit {
 
       const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
       dateMap.set(dateKey, { visits: v, patients: dailyP });
-    });
+    }
 
-    this.rawData.forEach(item => {
+    // OPTIMIZATION 2: Process Detailed Raw Data for other charts
+    // Single pass over flattened data
+    for (const item of this.rawData) {
+      const spec = item.TEN_CHUYEN_KHOA;
+      const doc = item.BAC_SI;
+      const visits = item.SO_LUOT_KHAM || 0;
+
+      // Aggregates
       totalNew += item.BENH_MOI || 0;
       totalOld += item.BENH_CU || 0;
-      const spec = item.TEN_CHUYEN_KHOA;
-      specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + (item.SO_LUOT_KHAM || 0));
-      const doc = item.BAC_SI;
-      doctorMap.set(doc, (doctorMap.get(doc) || 0) + (item.SO_LUOT_KHAM || 0));
-    });
 
-    totalPatientsCalculated = totalNew + totalOld;
+      // Map aggregation
+      specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
+      doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+    }
+
+    const totalPatientsCalculated = totalNew + totalOld;
     const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
     const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
 
@@ -294,7 +313,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tổng Lượt Khám',
         value: this.formatNumber(totalVisits),
         caption: 'Total Visits',
-        accentColor: this.palette.chart3, // Matched to Chart Bar
+        accentColor: this.palette.chart3,
       },
       {
         id: 'total-patients',
@@ -302,7 +321,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tổng Người Bệnh',
         value: this.formatNumber(totalPatientsCalculated),
         caption: 'Total Patients',
-        accentColor: this.palette.chart2, // Matched to Chart Bar
+        accentColor: this.palette.chart2,
       },
       {
         id: 'avg-metric',
@@ -310,7 +329,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'TB Lượt (HS 6.5)',
         value: avgMetricValue,
         caption: 'Workload (Div 6.5)',
-        accentColor: CORAL_COLOR,
+        accentColor: this.palette.chart4, // Dynamically sourced color
       },
       {
         id: 're-exam-rate',
@@ -329,18 +348,23 @@ export class DetailedExaminationReportComponent implements OnInit {
   }
 
   private buildTrendChart(dateMap: Map<string, { visits: number; patients: number }>): void {
+    // Sort keys just once
     const sortedDates = Array.from(dateMap.keys()).sort();
-    const dateLabels = sortedDates.map((d) => {
+
+    // Map data arrays
+    const dateLabels = new Array(sortedDates.length);
+    const visitsData = new Array(sortedDates.length);
+    const patientsData = new Array(sortedDates.length);
+    const workloadData = new Array(sortedDates.length);
+
+    sortedDates.forEach((d, index) => {
       const dateObj = new Date(d);
-      return this.datePipe.transform(dateObj, 'dd/MM') || d;
-    });
+      dateLabels[index] = this.datePipe.transform(dateObj, 'dd/MM') || d;
 
-    const visitsData = sortedDates.map(d => dateMap.get(d)?.visits || 0);
-    const patientsData = sortedDates.map(d => dateMap.get(d)?.patients || 0);
-
-    const workloadData = sortedDates.map(d => {
-      const v = dateMap.get(d)?.visits || 0;
-      return parseFloat((v / STANDARD_DIVISOR).toFixed(2));
+      const data = dateMap.get(d)!;
+      visitsData[index] = data.visits;
+      patientsData[index] = data.patients;
+      workloadData[index] = parseFloat((data.visits / STANDARD_DIVISOR).toFixed(2));
     });
 
     this.trendChartOptions = {
@@ -385,7 +409,6 @@ export class DetailedExaminationReportComponent implements OnInit {
           data: patientsData,
           itemStyle: { color: this.palette.chart2, borderRadius: [4, 4, 0, 0] },
           barWidth: '30%',
-          // ENABLED LABEL FOR PATIENTS
           label: { show: true, position: 'top', color: this.palette.textPrimary }
         },
         {
@@ -393,7 +416,7 @@ export class DetailedExaminationReportComponent implements OnInit {
           type: 'line',
           data: workloadData,
           smooth: true,
-          itemStyle: { color: CORAL_COLOR },
+          itemStyle: { color: this.palette.chart4 }, // Use Palette Color
           lineStyle: { width: 3, type: 'dashed' },
           symbolSize: 8,
           symbol: 'circle'

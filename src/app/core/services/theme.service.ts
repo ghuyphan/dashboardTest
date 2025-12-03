@@ -39,6 +39,8 @@ export interface ThemePalette {
   chart1: string;
   chart2: string;
   chart3: string;
+  chart4: string; // Added
+  chart5: string; // Added
   chart6: string;
   chart7: string;
   chart8: string;
@@ -136,6 +138,8 @@ export class ThemeService {
       chart1: c('--chart-1', '#00839b'),
       chart2: c('--chart-2', '#006e96'),
       chart3: c('--chart-3', '#9bdad9'),
+      chart4: c('--chart-4', '#ffb3ba'), // Mapped to Pastel Coral
+      chart5: c('--chart-5', '#66a9c5'), // Mapped to Peacock Light
       chart6: c('--chart-6', '#f89c5b'),
       chart7: c('--chart-7', '#4a4a4a'),
       chart8: c('--chart-8', '#52c3d7'),

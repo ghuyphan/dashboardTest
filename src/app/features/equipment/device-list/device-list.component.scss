@@ -12,8 +12,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  /* [MODIFIED] Removed padding as requested for edge-to-edge look */
-  padding: 0;
+  padding: var(--spacing-xs);
 
   @media (max-width: 768px) {
     padding: 0;

@@ -146,6 +146,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public clientSideSort = input(false);
   public headerColor = input<string | null>(null);
 
+  // NEW: Option to toggle action column visibility on PC
+  public showActionColumn = input(true);
+
   public rowClick = output<T | undefined>();
   public sortChanged = output<SortChangedEvent>();
   public pageChanged = output<PageEvent>();
@@ -173,8 +176,10 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     effect(() => {
       const cols = this.columns();
       const multiSelect = this.enableMultiSelect();
+      const showActions = this.showActionColumn();
+
       if (!multiSelect) this.selection.clear();
-      this.updateDisplayedColumns(cols, multiSelect);
+      this.updateDisplayedColumns(cols, multiSelect, showActions);
     });
 
     effect(() => {
@@ -201,13 +206,10 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     if (this.scrollTimer) clearTimeout(this.scrollTimer);
   }
 
-  // --- [NEW] Helper to safely check if value is a valid date ---
   public isDateValue(value: any): boolean {
     if (value === null || value === undefined || value === '') return false;
-    // Explicitly handle "N/A" or "na" strings
     if (typeof value === 'string' && (value === 'N/A' || value.toLowerCase() === 'na')) return false;
 
-    // Check if the date is valid
     const date = new Date(value);
     return !isNaN(date.getTime());
   }
@@ -230,12 +232,19 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   private updateDisplayedColumns(
     cols: GridColumn[],
-    enableMultiSelect: boolean
+    enableMultiSelect: boolean,
+    showActions: boolean
   ): void {
-    const baseColumns = cols.map((col) => col.key);
+    // Filter columns based on showActionColumn input
+    const visibleCols = showActions
+      ? cols
+      : cols.filter(col => col.type !== 'actions');
+
+    const baseColumns = visibleCols.map((col) => col.key);
     this.displayedColumns = enableMultiSelect
       ? ['select', ...baseColumns]
       : baseColumns;
+
     this.cdr.markForCheck();
   }
 
