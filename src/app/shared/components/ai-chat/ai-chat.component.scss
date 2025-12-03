@@ -16,12 +16,12 @@ $ai-glow-dark: rgba(45, 212, 191, 0.5);
 $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 
 :host {
-  --header-offset: 48px;
+  --header-offset: 49px;
   --chat-width: 400px;
   --chat-height: 650px;
   --bubble-radius: 18px;
   --bubble-padding: 12px 16px;
-  
+
   display: block;
   position: relative;
   z-index: 1100;
@@ -33,41 +33,41 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 .ai-window {
   position: fixed;
   top: var(--header-offset);
-  right: 65px; 
-  
+  right: 15px;
+
   width: var(--chat-width);
   height: var(--chat-height);
   max-width: calc(100vw - 40px);
   max-height: calc(100vh - var(--header-offset) - 20px);
 
   background-color: var(--surface-card);
-  border-radius: 16px; 
+  border-radius: 16px;
   border: 1px solid var(--border-color);
-  
+
   box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
 
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
+
   transform-origin: top right;
   transform: scale(0.95) translateY(-10px);
   opacity: 0;
   visibility: hidden;
-  
-  contain: paint layout;
-  will-change: transform, opacity; 
 
-  transition: 
+  contain: paint layout;
+  will-change: transform, opacity;
+
+  transition:
     transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s 0.3s; 
+    visibility 0s 0.3s;
 
   &.open {
     transform: scale(1) translateY(0);
     opacity: 1;
     visibility: visible;
-    transition: 
+    transition:
       transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
       opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
       visibility 0s 0s;
@@ -76,22 +76,22 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   /* Navigation Mode - Subtle glow */
   &.navigating-mode {
     border-color: var(--teal-blue);
-    box-shadow: 
+    box-shadow:
       0 0 0 1px rgba(0, 131, 155, 0.2),
       0 0 40px rgba(0, 131, 155, 0.12),
-      0 15px 40px rgba(0,0,0,0.15);
+      0 15px 40px rgba(0, 0, 0, 0.15);
   }
 
   [data-theme='dark'] & {
-    box-shadow: 
+    box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.05),
       0 20px 40px rgba(0, 0, 0, 0.6);
-      
+
     &.navigating-mode {
-      box-shadow: 
+      box-shadow:
         0 0 0 1px rgba(45, 212, 191, 0.3),
         0 0 50px rgba(45, 212, 191, 0.12),
-        0 15px 40px rgba(0,0,0,0.5);
+        0 15px 40px rgba(0, 0, 0, 0.5);
     }
   }
 }
@@ -99,7 +99,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 /* --- HEADER --- */
 .ai-header {
   flex-shrink: 0;
-  padding: 16px; 
+  padding: 16px;
   background: var(--surface-card);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -126,7 +126,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 
   .ai-avatar-wrapper {
     position: relative;
-    
+
     .avatar-ring {
       position: relative;
       width: 38px;
@@ -138,9 +138,9 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       align-items: center;
       justify-content: center;
       box-shadow: 0 2px 12px rgba(0, 131, 155, 0.25);
-      
-      svg { 
-        width: 20px; 
+
+      svg {
+        width: 20px;
         height: 20px;
       }
     }
@@ -155,7 +155,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       border: 2px solid var(--surface-card);
       border-radius: 50%;
       transition: all 0.3s ease;
-      
+
       &.online {
         background-color: var(--color-success);
         box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
@@ -197,7 +197,9 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     color: var(--text-secondary);
     transition: all 0.3s ease;
 
-    i { font-size: 0.75rem; }
+    i {
+      font-size: 0.75rem;
+    }
 
     .context-value {
       min-width: 28px;
@@ -207,14 +209,20 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     &.medium {
       background-color: rgba(251, 191, 36, 0.15);
       color: var(--color-warning);
-      [data-theme='dark'] & { background-color: rgba(251, 191, 36, 0.2); }
+
+      [data-theme='dark'] & {
+        background-color: rgba(251, 191, 36, 0.2);
+      }
     }
 
     &.high {
       background-color: rgba(239, 68, 68, 0.15);
       color: var(--color-danger);
       animation: contextPulse 1.5s ease-in-out infinite;
-      [data-theme='dark'] & { background-color: rgba(239, 68, 68, 0.2); }
+
+      [data-theme='dark'] & {
+        background-color: rgba(239, 68, 68, 0.2);
+      }
     }
   }
 
@@ -235,25 +243,40 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       background-color: var(--gray-100);
       color: var(--color-danger);
       transform: rotate(90deg);
-      [data-theme='dark'] & { background-color: var(--gray-200); }
+
+      [data-theme='dark'] & {
+        background-color: var(--gray-200);
+      }
     }
   }
 }
 
 @keyframes subtlePulse {
-  0%, 100% { 
+
+  0%,
+  100% {
     box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
     transform: scale(1);
   }
-  50% { 
+
+  50% {
     box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.08);
     transform: scale(1.05);
   }
 }
 
 @keyframes contextPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.02); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
 }
 
 /* --- CHAT BODY --- */
@@ -261,29 +284,39 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   flex: 1;
   overflow-y: auto;
   padding: 20px 16px;
-  background-color: var(--surface-background); 
+  background-color: var(--surface-background);
   display: flex;
   flex-direction: column;
   gap: 16px;
   will-change: scroll-position;
   scroll-behavior: smooth;
-  overflow-anchor: auto; 
+  overflow-anchor: auto;
 
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) transparent;
 
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--gray-300);
     border-radius: 10px;
   }
-  
+
   [data-theme='dark'] & {
     scrollbar-color: var(--gray-700) transparent;
+
     &::-webkit-scrollbar-thumb {
       background-color: var(--gray-700);
-      &:hover { background-color: var(--gray-600); }
+
+      &:hover {
+        background-color: var(--gray-600);
+      }
     }
   }
 
@@ -295,20 +328,20 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     padding: 0;
     position: relative;
     overflow: hidden;
-    
+
     /* Ambient background glow */
     &::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: 
+      background:
         radial-gradient(ellipse at 30% 30%, rgba(0, 131, 155, 0.06) 0%, transparent 50%),
         radial-gradient(ellipse at 70% 70%, rgba(0, 131, 155, 0.04) 0%, transparent 50%);
       animation: ambientPulse 4s ease-in-out infinite alternate;
       pointer-events: none;
-      
+
       [data-theme='dark'] & {
-        background: 
+        background:
           radial-gradient(ellipse at 30% 30%, rgba(45, 212, 191, 0.08) 0%, transparent 50%),
           radial-gradient(ellipse at 70% 70%, rgba(45, 212, 191, 0.05) 0%, transparent 50%);
       }
@@ -317,8 +350,13 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 }
 
 @keyframes ambientPulse {
-  0% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================
@@ -340,7 +378,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  
+
   /* Three morphing orbs effect */
   &::before,
   &::after {
@@ -352,7 +390,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     mix-blend-mode: screen;
     animation: morphOrb 4s ease-in-out infinite;
   }
-  
+
   &::before {
     width: 80px;
     height: 80px;
@@ -361,7 +399,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     left: 15%;
     animation-delay: 0s;
   }
-  
+
   &::after {
     width: 70px;
     height: 70px;
@@ -370,28 +408,32 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     right: 10%;
     animation-delay: -1.5s;
   }
-  
+
   [data-theme='dark'] & {
     &::before {
       background: #2dd4bf;
       opacity: 0.5;
     }
+
     &::after {
       background: #38bdf8;
       opacity: 0.5;
     }
   }
-  
+
   /* Error state - red/orange orbs */
   &.error {
+
     &::before,
     &::after {
       animation: none;
       opacity: 0.4;
     }
+
     &::before {
       background: var(--color-danger);
     }
+
     &::after {
       background: #f97316;
     }
@@ -405,7 +447,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   border-radius: 50%;
   border: 1px solid rgba(0, 131, 155, 0.15);
   animation: gentleSpin 8s linear infinite;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -417,22 +459,22 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     background: var(--teal-blue);
     border-radius: 50%;
     box-shadow: 0 0 8px var(--teal-blue);
-    
+
     [data-theme='dark'] & {
       background: #2dd4bf;
       box-shadow: 0 0 10px #2dd4bf;
     }
   }
-  
+
   [data-theme='dark'] & {
     border-color: rgba(45, 212, 191, 0.2);
   }
-  
+
   /* Error state - stop animation, red accent */
   &.error {
     animation: none;
     border-color: rgba(220, 53, 69, 0.2);
-    
+
     &::before {
       background: var(--color-danger);
       box-shadow: 0 0 8px var(--color-danger);
@@ -458,7 +500,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     font-size: 24px;
     color: var(--teal-blue);
     animation: breathe 2s ease-in-out infinite;
-    
+
     [data-theme='dark'] & {
       color: #2dd4bf;
     }
@@ -466,44 +508,64 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 
   &.error-state {
     border-color: var(--color-danger);
-    i { 
-      color: var(--color-danger); 
+
+    i {
+      color: var(--color-danger);
       animation: none;
     }
   }
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 }
 
 @keyframes morphOrb {
-  0%, 100% { 
+
+  0%,
+  100% {
     transform: translate(0, 0) scale(1);
     border-radius: 50%;
   }
-  25% { 
+
+  25% {
     transform: translate(15px, -10px) scale(1.1);
     border-radius: 45% 55% 50% 50%;
   }
-  50% { 
+
+  50% {
     transform: translate(5px, 10px) scale(0.95);
     border-radius: 55% 45% 55% 45%;
   }
-  75% { 
+
+  75% {
     transform: translate(-10px, 5px) scale(1.05);
     border-radius: 50% 50% 45% 55%;
   }
 }
 
 @keyframes gentleSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(0.92); opacity: 0.8; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(0.92);
+    opacity: 0.8;
+  }
 }
 
 /* --- AI Loading Text --- */
@@ -515,8 +577,10 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   align-items: center;
   gap: 4px;
   position: relative;
-  
-  &.text-danger { color: var(--color-danger); }
+
+  &.text-danger {
+    color: var(--color-danger);
+  }
 }
 
 /* Modern animated dots - ChatGPT style */
@@ -524,7 +588,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   display: inline-flex;
   gap: 3px;
   margin-left: 4px;
-  
+
   span {
     width: 5px;
     height: 5px;
@@ -533,23 +597,35 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     animation: dotFade 1.4s ease-in-out infinite;
     color: transparent;
     font-size: 0;
-    
+
     [data-theme='dark'] & {
       background: #2dd4bf;
     }
   }
-  
-  span:nth-child(1) { animation-delay: 0s; }
-  span:nth-child(2) { animation-delay: 0.2s; }
-  span:nth-child(3) { animation-delay: 0.4s; }
+
+  span:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
 }
 
 @keyframes dotFade {
-  0%, 80%, 100% { 
+
+  0%,
+  80%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
-  40% { 
+
+  40% {
     opacity: 1;
     transform: scale(1);
   }
@@ -576,29 +652,29 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
-  display: flex; 
-  align-items: center; 
+  display: flex;
+  align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  
+
   i {
     font-size: 0.8rem;
   }
-  
-  &:hover { 
+
+  &:hover {
     background-color: var(--gray-100);
     border-color: var(--teal-blue);
     color: var(--teal-blue);
-    
+
     i {
       animation: spinOnce 0.5s ease;
     }
   }
-  
+
   &:active {
     transform: scale(0.97);
   }
-  
+
   [data-theme='dark'] & {
     &:hover {
       background-color: var(--gray-200);
@@ -609,8 +685,13 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 }
 
 @keyframes spinOnce {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* --- CHAT MESSAGES --- */
@@ -622,10 +703,11 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   animation: messageSlideUp 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
   opacity: 0;
   transform: translateY(12px);
-  contain: layout style; 
+  contain: layout style;
 
   &.user {
     flex-direction: row-reverse;
+
     .bubble {
       background-color: $color-bg-user;
       color: $color-text-user;
@@ -633,13 +715,17 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       box-shadow: 0 2px 8px rgba(0, 131, 155, 0.2);
       border: none;
       margin-left: 40px;
-      ::ng-deep a { color: white; text-decoration: underline; }
+
+      ::ng-deep a {
+        color: white;
+        text-decoration: underline;
+      }
     }
   }
 
   &.assistant {
     flex-direction: row;
-    
+
     .msg-avatar {
       width: 32px;
       height: 32px;
@@ -653,7 +739,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       color: var(--teal-blue);
       box-shadow: var(--box-shadow-sm);
       margin-top: 2px;
-      
+
       [data-theme='dark'] & {
         color: #2dd4bf;
       }
@@ -673,6 +759,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     justify-content: center;
     width: 100%;
     margin: 8px 0;
+
     .bubble {
       background-color: var(--gray-100);
       color: var(--text-secondary);
@@ -684,6 +771,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       padding: 4px 12px;
       max-width: 90%;
       box-shadow: none;
+
       [data-theme='dark'] & {
         background-color: rgba(255, 255, 255, 0.05);
       }
@@ -698,23 +786,49 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     word-break: break-word;
     position: relative;
     transition: background-color 0.2s ease;
-    
+
     /* Markdown Content Styles */
     ::ng-deep {
-      & > p:first-child { margin-top: 0; }
-      & > p:last-child { margin-bottom: 0; }
-      & > p { margin-bottom: 8px; }
-      strong { font-weight: 600; color: inherit; }
-      ul, ol { margin: 6px 0 10px 0; padding-left: 20px; }
-      li { margin-bottom: 4px; }
+      &>p:first-child {
+        margin-top: 0;
+      }
+
+      &>p:last-child {
+        margin-bottom: 0;
+      }
+
+      &>p {
+        margin-bottom: 8px;
+      }
+
+      strong {
+        font-weight: 600;
+        color: inherit;
+      }
+
+      ul,
+      ol {
+        margin: 6px 0 10px 0;
+        padding-left: 20px;
+      }
+
+      li {
+        margin-bottom: 4px;
+      }
+
       a {
         color: var(--teal-blue);
         text-decoration: none;
         font-weight: 500;
         border-bottom: 1px dotted currentColor;
         transition: all 0.2s;
-        &:hover { color: var(--secondary); border-bottom-style: solid; }
+
+        &:hover {
+          color: var(--secondary);
+          border-bottom-style: solid;
+        }
       }
+
       code {
         background-color: var(--gray-100);
         color: var(--color-danger);
@@ -724,6 +838,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
         font-size: 0.85em;
         border: 1px solid var(--border-color);
       }
+
       [data-theme='dark'] & code {
         background-color: rgba(255, 255, 255, 0.1);
         color: #fca5a5;
@@ -747,7 +862,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     background: var(--surface-card);
     border: 1px solid var(--border-color) !important;
     box-shadow: var(--box-shadow-sm);
-    
+
     /* Subtle shimmer sweep */
     &::before {
       content: '';
@@ -756,24 +871,20 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0, 131, 155, 0.04),
-        transparent
-      );
-      animation: shimmerSweep 2s ease-in-out infinite;
-      
-      [data-theme='dark'] & {
-        background: linear-gradient(
-          90deg,
+      background: linear-gradient(90deg,
           transparent,
-          rgba(45, 212, 191, 0.06),
-          transparent
-        );
+          rgba(0, 131, 155, 0.04),
+          transparent);
+      animation: shimmerSweep 2s ease-in-out infinite;
+
+      [data-theme='dark'] & {
+        background: linear-gradient(90deg,
+            transparent,
+            rgba(45, 212, 191, 0.06),
+            transparent);
       }
     }
-    
+
     [data-theme='dark'] & {
       background: #1e293b;
       border-color: rgba(45, 212, 191, 0.15) !important;
@@ -786,12 +897,12 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       position: relative;
       z-index: 1;
       color: var(--text-secondary);
-      
+
       [data-theme='dark'] & {
         color: rgba(255, 255, 255, 0.7);
       }
     }
-    
+
     /* ==========================================================================
        AUDIO WAVEFORM BARS - Modern AI Style (ChatGPT/Siri inspired)
        ========================================================================== */
@@ -802,37 +913,41 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       height: 24px;
       position: relative;
       z-index: 1;
-      
+
       span {
         width: 3px;
         border-radius: 3px;
         background: linear-gradient(180deg, var(--teal-blue), var(--peacock-blue));
         animation: waveformBar 1.2s ease-in-out infinite;
         transform-origin: center;
-        
+
         [data-theme='dark'] & {
           background: linear-gradient(180deg, #2dd4bf, #38bdf8);
         }
       }
-      
+
       /* Staggered animation for smooth wave effect - 5 bars */
-      span:nth-child(1) { 
+      span:nth-child(1) {
         animation-delay: 0s;
         height: 8px;
       }
-      span:nth-child(2) { 
+
+      span:nth-child(2) {
         animation-delay: 0.1s;
         height: 16px;
       }
-      span:nth-child(3) { 
+
+      span:nth-child(3) {
         animation-delay: 0.2s;
         height: 10px;
       }
-      span:nth-child(4) { 
+
+      span:nth-child(4) {
         animation-delay: 0.3s;
         height: 18px;
       }
-      span:nth-child(5) { 
+
+      span:nth-child(5) {
         animation-delay: 0.4s;
         height: 6px;
       }
@@ -841,29 +956,39 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 }
 
 @keyframes shimmerSweep {
-  0% { left: -100%; }
-  50%, 100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+
+  50%,
+  100% {
+    left: 100%;
+  }
 }
 
 @keyframes waveformBar {
-  0%, 100% { 
+
+  0%,
+  100% {
     transform: scaleY(0.4);
     opacity: 0.5;
   }
-  50% { 
+
+  50% {
     transform: scaleY(1);
     opacity: 1;
   }
 }
 
 @keyframes messageSlideUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(12px); 
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -873,10 +998,10 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 .nav-overlay {
   position: absolute;
   inset: 60px 0 70px 0;
-  
+
   background-color: var(--surface-overlay);
   backdrop-filter: blur(12px);
-  
+
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -893,7 +1018,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     /* Multiple expanding rings */
     &::before,
     &::after {
@@ -905,17 +1030,17 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       border-radius: 50%;
       border: 1.5px solid rgba(0, 131, 155, 0.3);
       animation: portalRing 2.5s ease-out infinite;
-      
+
       [data-theme='dark'] & {
         border-color: rgba(45, 212, 191, 0.4);
       }
     }
-    
+
     &::before {
       width: 60px;
       height: 60px;
     }
-    
+
     &::after {
       width: 60px;
       height: 60px;
@@ -941,7 +1066,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     position: relative;
     animation: floatBounce 1.5s ease-in-out infinite;
     box-shadow: 0 8px 30px rgba(0, 131, 155, 0.3);
-    
+
     [data-theme='dark'] & {
       box-shadow: 0 8px 30px rgba(45, 212, 191, 0.25);
     }
@@ -959,7 +1084,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     color: var(--text-primary);
     margin: 0;
   }
-  
+
   [data-theme='dark'] & {
     background-color: rgba(15, 23, 42, 0.92);
   }
@@ -970,6 +1095,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.6;
   }
+
   100% {
     transform: translate(-50%, -50%) scale(4);
     opacity: 0;
@@ -977,19 +1103,31 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 }
 
 @keyframes floatBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* --- FOOTER --- */
 .ai-footer {
   flex-shrink: 0;
-  padding: 12px 16px 16px 16px; 
+  padding: 12px 16px 16px 16px;
   background: var(--surface-card);
   border-top: 1px solid var(--border-color);
   display: flex;
@@ -1036,8 +1174,11 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
         color: var(--color-danger);
         background-color: rgba(220, 53, 69, 0.08);
       }
-      
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
   }
 
@@ -1049,13 +1190,13 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     border-radius: 24px;
     padding: 6px 6px 6px 16px;
     transition: all 0.25s ease;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
 
     &:focus-within {
       border-color: var(--teal-blue);
       background-color: var(--surface-card);
       box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
-        
+
       [data-theme='dark'] & {
         box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12);
         background-color: var(--gray-100);
@@ -1073,7 +1214,10 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     min-width: 0;
     line-height: 1.5;
     padding: 4px 0;
-    &::placeholder { color: var(--text-disabled); }
+
+    &::placeholder {
+      color: var(--text-disabled);
+    }
   }
 
   .send-btn {
@@ -1094,7 +1238,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     position: relative;
     overflow: hidden;
 
-    i { 
+    i {
       font-size: 1rem;
       position: relative;
       z-index: 1;
@@ -1106,7 +1250,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       cursor: not-allowed;
       box-shadow: none;
       transform: none;
-      
+
       [data-theme='dark'] & {
         background: var(--gray-700);
         color: var(--gray-500);
@@ -1117,9 +1261,9 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       transform: scale(1.08);
       box-shadow: 0 4px 12px rgba(0, 131, 155, 0.35);
     }
-    
-    &:not(:disabled):active { 
-      transform: scale(0.95); 
+
+    &:not(:disabled):active {
+      transform: scale(0.95);
     }
 
     /* AI Generating State - Minimal pulsing border */
@@ -1128,28 +1272,28 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       border: 2px solid var(--teal-blue);
       box-shadow: none;
       animation: gentleBorderPulse 2s ease-in-out infinite;
-      
+
       .stop-icon {
         width: 10px;
         height: 10px;
         background: var(--teal-blue);
         border-radius: 2px;
         transition: all 0.2s;
-        
+
         [data-theme='dark'] & {
           background: #2dd4bf;
         }
       }
-      
+
       &:hover {
         border-color: var(--color-danger);
         animation: none;
-        
-        .stop-icon { 
+
+        .stop-icon {
           background: var(--color-danger);
         }
       }
-      
+
       [data-theme='dark'] & {
         border-color: #2dd4bf;
       }
@@ -1158,11 +1302,14 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
 }
 
 @keyframes gentleBorderPulse {
-  0%, 100% { 
+
+  0%,
+  100% {
     border-color: var(--teal-blue);
     opacity: 1;
   }
-  50% { 
+
+  50% {
     border-color: var(--peacock-blue);
     opacity: 0.7;
   }
@@ -1181,7 +1328,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     max-height: none;
     border-radius: 0;
     border: none;
-    transform: translateY(20px); 
+    transform: translateY(20px);
     z-index: 2000;
   }
 
@@ -1206,18 +1353,26 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       font-size: 0.7rem;
     }
   }
-  
+
   .message-row {
-    &.user .bubble { margin-left: 20px; }
+    &.user .bubble {
+      margin-left: 20px;
+    }
+
     &.assistant {
-      .bubble { margin-right: 20px; }
+      .bubble {
+        margin-right: 20px;
+      }
     }
   }
 }
 
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
