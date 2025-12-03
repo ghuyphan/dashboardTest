@@ -496,7 +496,9 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 
-  i {
+  /* UPDATED: Target both i (for error icon) and svg (for sparkle) */
+  i,
+  svg {
     font-size: 24px;
     color: var(--teal-blue);
     animation: breathe 2s ease-in-out infinite;

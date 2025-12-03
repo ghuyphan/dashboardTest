@@ -7,8 +7,8 @@ import {
   signal,
   computed,
   ChangeDetectionStrategy,
-  ViewChild,      // [FIX] Added
-  ElementRef      // [FIX] Added
+  ViewChild,
+  ElementRef
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
@@ -30,6 +30,8 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { SearchService } from '../../core/services/search.service';
 import { FooterActionService } from '../../core/services/footer-action.service';
 import { AiChatComponent } from '../../shared/components/ai-chat/ai-chat.component';
+import { ModalService } from '../../core/services/modal.service';
+import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
 
 interface RouteData {
   title?: string;
@@ -61,6 +63,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private searchService = inject(SearchService);
   private location = inject(Location);
   private footerService = inject(FooterActionService);
+  private modalService = inject(ModalService);
 
   // --- State Signals ---
   public sidebarOpen = signal(false);
@@ -193,7 +196,23 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.authService.logout();
+    this.modalService.open(ConfirmationModalComponent, {
+      title: 'Xác nhận',
+      size: 'sm',
+      context: {
+        layout: 'center',
+        icon: 'fas fa-sign-out-alt',
+        iconColor: 'var(--color-danger)',
+        title: 'Đăng xuất?',
+        message: 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?',
+        confirmText: 'Đăng xuất',
+        cancelText: 'Hủy bỏ'
+      }
+    }).subscribe((confirmed) => {
+      if (confirmed) {
+        this.authService.logout();
+      }
+    });
   }
 
   onBackClicked(): void {

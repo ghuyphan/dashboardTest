@@ -31,7 +31,6 @@
   <div class="ai-body chat-view" #scrollContainer
     [class.loading-view]="!llmService.modelLoaded() && llmService.messages().length === 0">
 
-    <!-- ERROR STATE: Not loading and not loaded -->
     @if (!llmService.modelLoaded() && !llmService.isModelLoading() && llmService.messages().length === 0) {
     <div class="scan-container">
       <div class="scan-grid error"></div>
@@ -46,13 +45,14 @@
       <i class="fas fa-sync"></i> Thử lại
     </button>
     }
-    <!-- LOADING STATE: Currently loading -->
     @else if (!llmService.modelLoaded() && llmService.isModelLoading()) {
     <div class="scan-container">
       <div class="scan-grid"></div>
       <div class="scan-radar"></div>
       <div class="scan-icon">
-        <i class="fas fa-robot"></i>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+        </svg>
       </div>
     </div>
     <div class="loading-text">
@@ -60,7 +60,6 @@
       <span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
     </div>
     }
-    <!-- CHAT VIEW: Model loaded or has messages -->
     @else {
     @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
     @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
@@ -79,7 +78,6 @@
     }
     }
 
-    <!-- THINKING INDICATOR - Modern Waveform Style -->
     @if (shouldShowLoadingIndicator()) {
     <div class="message-row assistant">
       <div class="msg-avatar">
@@ -102,7 +100,6 @@
     }
   </div>
 
-  <!-- NAVIGATION OVERLAY -->
   @if (llmService.isNavigating()) {
   <div class="nav-overlay">
     <div class="warp-tunnel"></div>

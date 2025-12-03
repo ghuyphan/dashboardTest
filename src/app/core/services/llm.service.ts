@@ -686,7 +686,7 @@ export class LlmService {
 
   private addGreeting(): void {
     const greeting =
-      'Xin chào! Tôi là trợ lý ảo Hoàn Mỹ. Tôi có thể giúp gì cho bạn hôm nay?';
+      'Xin chào! 👋 Tôi là trợ lý ảo Hoàn Mỹ. Tôi có thể giúp gì cho bạn hôm nay? ✨';
     this.messages.set([this.createMsg('assistant', greeting)]);
   }
 
@@ -706,7 +706,7 @@ export class LlmService {
 
   private getToolErr(tool: string): string {
     if (tool === 'nav') return 'Xin lỗi, tôi không tìm thấy trang bạn yêu cầu.';
-    return 'Xin lỗi, tôi không thể thực hiện yêu cầu này.';
+    return 'Xin lỗi, tôi không thể thực hiện yêu cầu này. 😅';;
   }
 
   private generateSessionId(): string {
