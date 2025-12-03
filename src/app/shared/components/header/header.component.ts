@@ -3,10 +3,11 @@ import {
   inject,
   input,
   output,
+  viewChild,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -47,6 +48,9 @@ export class HeaderComponent {
   public llmService = inject(LlmService);
   public versionService = inject(VersionService);
 
+  // --- View Queries ---
+  private menuTrigger = viewChild(MatMenuTrigger);
+
   // --- Outputs ---
   public sidebarToggled = output<void>();
   public logoutClicked = output<void>();
@@ -76,18 +80,16 @@ export class HeaderComponent {
     this.themeService.toggleTheme();
   }
 
-  onAiToggle(event: Event): void {
-    event.stopPropagation();
-    // Simply toggle. The service handles initialization/greeting automatically now.
-    this.llmService.toggleChat();
-  }
-
   onSettingsClick(): void {
     this.router.navigate(['/app/settings']);
   }
 
-  onSupportClick(): void {
-    // Placeholder for support action
+  onAiMenuClick(event: Event): void {
+    // Stop propagation to prevent document click handler from immediately closing the chat
+    event.stopPropagation();
+    this.llmService.toggleChat();
+    // Manually close the menu
+    this.menuTrigger()?.closeMenu();
   }
 
   onSearchChange(event: Event): void {

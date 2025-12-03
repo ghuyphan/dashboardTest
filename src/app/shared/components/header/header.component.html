@@ -1,132 +1,101 @@
 <header class="dashboard-header">
   <div class="header-left-controls">
-    
-    <button
-      type="button"
-      class="header-icon-btn mobile-sidebar-toggle"
-      (click)="onMobileToggleClick()"
-      aria-label="Toggle sidebar"
-    >
+
+    <button type="button" class="header-icon-btn mobile-sidebar-toggle" (click)="onMobileToggleClick()"
+      aria-label="Toggle sidebar">
       <svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display: block">
-          <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />
-          <rect x="10" y="25" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
-          <rect x="10" y="40" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
-          <rect x="10" y="55" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
-          <rect x="42" y="20" width="50" height="60" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
+        <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />
+        <rect x="10" y="25" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
+        <rect x="10" y="40" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
+        <rect x="10" y="55" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
+        <rect x="42" y="20" width="50" height="60" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
       </svg>
     </button>
-    
+
     @if (showBackButton()) {
-      <button
-        type="button"
-        class="header-icon-btn header-back-btn"
-        (click)="onBackClick()"
-        aria-label="Go back"
-      >
-        <i class="fas fa-arrow-left"></i>
-      </button>
+    <button type="button" class="header-icon-btn header-back-btn" (click)="onBackClick()" aria-label="Go back">
+      <i class="fas fa-arrow-left"></i>
+    </button>
     }
 
     <h2 class="header-title">{{ currentScreenName() }}</h2>
   </div>
 
   @if (showSearchBar()) {
-    <div class="header-search-container">
-      <div class="search-icon-wrapper">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon text-disabled">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-      </div>
-      <input
-        type="text"
-        class="header-search-input"
-        placeholder="Tìm kiếm..."
-        [value]="searchTerm"
-        (input)="onSearchChange($event)"
-        aria-label="Search"
-      />
-      @if (searchTerm) {
-        <button
-          type="button"
-          class="search-clear-btn"
-          (click)="onClearSearch()"
-          aria-label="Clear search"
-        >
-          <i class="fas fa-times"></i>
-        </button>
-      }
+  <div class="header-search-container">
+    <div class="search-icon-wrapper">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="search-icon text-disabled">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
     </div>
+    <input type="text" class="header-search-input" placeholder="Tìm kiếm..." [value]="searchTerm"
+      (input)="onSearchChange($event)" aria-label="Search" />
+    @if (searchTerm) {
+    <button type="button" class="search-clear-btn" (click)="onClearSearch()" aria-label="Clear search">
+      <i class="fas fa-times"></i>
+    </button>
+    }
+  </div>
   }
 
   <div class="header-right-controls">
-    
-    @if (versionService.isDevMode()) {
-      <button 
-        type="button" 
-        class="header-icon-btn ai-trigger-btn" 
-        (click)="onAiToggle($event)" 
-        [class.active]="llmService.isOpen()"
-        title="Trợ lý AI"
-      >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" 
-                stroke="currentColor" stroke-width="2" stroke-linejoin="round" 
-                [attr.fill]="llmService.isOpen() ? 'currentColor' : 'none'"/>
-        </svg>
-      </button>
-    }
 
     @if (currentUser()) {
-      <div class="user-menu">
-        
-        <button type="button" class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
-          <div class="avatar-wrapper">
-            <div class="header-avatar-initials">{{ userInitials() }}</div>
-            <div class="avatar-chevron-badge">
-              <i class="fas fa-chevron-down"></i>
-            </div>
-          </div>
-        </button>
-  
-        <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before">
-          
-          <div class="menu-section-wrapper" (click)="$event.stopPropagation()">
-            <div class="dropdown-profile-header">
-              <div class="dropdown-avatar-initials">{{ userInitials() }}</div>
-              <div class="dropdown-profile-text">
-                <span class="username">{{ currentUser()?.fullName }}</span>
-                <span class="user-role">{{ rolesDisplay() }}</span>
-              </div>
-            </div>
-          </div>
-  
-          <div class="menu-items-wrapper">
-            <button type="button" mat-menu-item (click)="onThemeToggle($event)" class="custom-menu-item">
-              <div class="menu-icon-bg">
-                <i class="fas" [class]="themeService.isDarkTheme() ? 'fa-sun' : 'fa-moon'"></i>
-              </div>
-              <span>{{ themeService.isDarkTheme() ? 'Chế độ sáng' : 'Chế độ tối' }}</span>
-            </button>
+    <div class="user-menu">
 
-            <button type="button" mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
-              <div class="menu-icon-bg"><i class="fas fa-gear"></i></div>
-              <span>Cài đặt</span>
-            </button>
-  
-            <button type="button" mat-menu-item (click)="onSupportClick()" class="custom-menu-item">
-              <div class="menu-icon-bg"><i class="fas fa-question-circle"></i></div>
-              <span>Hỗ trợ</span>
-            </button>
-  
-            <button type="button" mat-menu-item (click)="onLogoutClick()" class="custom-menu-item logout-item">
-              <div class="menu-icon-bg"><i class="fas fa-sign-out-alt"></i></div>
-              <span>Đăng xuất</span>
-            </button>
+      <button type="button" class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
+        <div class="avatar-wrapper">
+          <div class="header-avatar-initials">{{ userInitials() }}</div>
+          <div class="avatar-chevron-badge">
+            <i class="fas fa-chevron-down"></i>
           </div>
-  
-        </mat-menu>
-      </div>
+        </div>
+      </button>
+
+      <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before">
+
+        <div class="menu-section-wrapper" (click)="$event.stopPropagation()">
+          <div class="dropdown-profile-header">
+            <div class="dropdown-avatar-initials">{{ userInitials() }}</div>
+            <div class="dropdown-profile-text">
+              <span class="username">{{ currentUser()?.fullName }}</span>
+              <span class="user-role">{{ rolesDisplay() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-items-wrapper">
+          <button type="button" mat-menu-item (click)="onThemeToggle($event)" class="custom-menu-item">
+            <div class="menu-icon-bg">
+              <i class="fas" [class]="themeService.isDarkTheme() ? 'fa-sun' : 'fa-moon'"></i>
+            </div>
+            <span>{{ themeService.isDarkTheme() ? 'Chế độ sáng' : 'Chế độ tối' }}</span>
+          </button>
+
+          <button type="button" mat-menu-item (click)="onSettingsClick()" class="custom-menu-item">
+            <div class="menu-icon-bg"><i class="fas fa-gear"></i></div>
+            <span>Cài đặt</span>
+          </button>
+
+          <button type="button" mat-menu-item (click)="onAiMenuClick($event)" class="custom-menu-item">
+            <div class="menu-icon-bg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+              </svg>
+            </div>
+            <span>Trợ lý IT</span>
+          </button>
+
+          <button type="button" mat-menu-item (click)="onLogoutClick()" class="custom-menu-item logout-item">
+            <div class="menu-icon-bg"><i class="fas fa-sign-out-alt"></i></div>
+            <span>Đăng xuất</span>
+          </button>
+        </div>
+
+      </mat-menu>
+    </div>
     }
   </div>
 </header>
