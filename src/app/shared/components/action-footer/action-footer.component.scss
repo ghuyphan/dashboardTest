@@ -46,89 +46,81 @@
 
   @media (max-width: 767px) {
     flex-wrap: nowrap;
+    gap: var(--spacing-xs);
     /* Allow horizontal scroll if too many buttons */
     overflow-x: auto;
-    scrollbar-width: none;
+    font-size: 0.75rem;
+    color: var(--text-disabled);
+    font-family: monospace;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: var(--spacing-md);
 
-    &::-webkit-scrollbar {
-      display: none;
+    &:hover {
+      color: var(--text-secondary);
+      background-color: var(--gray-100);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    /* Easter Egg State */
+    &.dev-active {
+      color: var(--teal-blue);
+      font-weight: 700;
+      background-color: rgba(0, 131, 155, 0.1);
+
+      .dev-icon {
+        animation: pulse 1s infinite;
+      }
     }
   }
-}
 
-/* --- Version Display Styles --- */
-.version-wrapper {
-  font-size: 0.75rem;
-  color: var(--text-disabled);
-  font-family: monospace;
-  cursor: pointer;
-  user-select: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: var(--spacing-md);
+  @keyframes pulse {
+    0% {
+      opacity: 0.5;
+    }
 
-  &:hover {
-    color: var(--text-secondary);
-    background-color: var(--gray-100);
-  }
+    50% {
+      opacity: 1;
+    }
 
-  &:active {
-    transform: scale(0.95);
-  }
-
-  /* Easter Egg State */
-  &.dev-active {
-    color: var(--teal-blue);
-    font-weight: 700;
-    background-color: rgba(0, 131, 155, 0.1);
-
-    .dev-icon {
-      animation: pulse 1s infinite;
+    100% {
+      opacity: 0.5;
     }
   }
-}
 
-@keyframes pulse {
-  0% {
-    opacity: 0.5;
-  }
+  /* Existing button styles below this line (no changes) */
 
-  50% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.5;
-  }
-}
-
-/* Existing button styles below this line (no changes) */
-
-/* Override Danger Button specific to Footer if needed, 
+  /* Override Danger Button specific to Footer if needed, 
    otherwise relies on global .btn-danger but scoped here for specificity */
-:host .btn-danger {
-  color: var(--white);
-  background-color: var(--color-danger);
-  border-color: var(--color-danger);
+  :host .btn-danger {
+    color: var(--white);
+    background-color: var(--color-danger);
+    border-color: var(--color-danger);
 
-  &:hover {
-    background-color: #b02a37;
-    border-color: #a72a38;
+    &:hover {
+      background-color: #b02a37;
+      border-color: #a72a38;
+    }
   }
-}
 
-:host .btn:disabled,
-:host .btn.disabled {
-  background-color: var(--gray-200);
-  color: var(--gray-500);
-  border-color: var(--gray-200);
-  cursor: not-allowed;
-  opacity: 0.65;
-  box-shadow: none;
-  transform: none;
+  :host .btn:disabled,
+  :host .btn.disabled {
+    background-color: var(--gray-200);
+    color: var(--gray-500);
+    border-color: var(--gray-200);
+    cursor: not-allowed;
+    opacity: 0.65;
+    box-shadow: none;
+    transform: none;
+  }
 }

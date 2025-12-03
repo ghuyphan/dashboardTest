@@ -35,14 +35,29 @@ import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
 const ROW_NAVIGATION_DELAY_MS = 50;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
-const DEFAULT_TRACK_BY_FIELD = 'Id';
+const DEFAULT_TRACK_BY_FIELD = 'id'; // Standardized to lowercase 'id' usually
+
+// --- NEW: Types for True Reusability ---
+export type ColumnType = 'text' | 'currency' | 'date' | 'status' | 'actions';
 
 export interface GridColumn {
   key: string;
   label: string;
+  type?: ColumnType; // Defines how to render the cell
   sortable: boolean;
   width?: string;
   sticky?: 'start' | 'end' | false;
+  // For 'status' type: Function to determine class based on value
+  statusClassFn?: (value: string) => string;
+}
+
+export interface TableAction<T = any> {
+  action: string;
+  label: string;
+  icon: string;
+  color?: 'primary' | 'accent' | 'warn';
+  // Optional: Function to hide action based on row data
+  visibleFn?: (row: T) => boolean;
 }
 
 export type SortDirection = 'asc' | 'desc' | '';
@@ -114,11 +129,13 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
 })
 export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   private cdr = inject(ChangeDetectorRef);
+  private elementRef = inject(ElementRef); // Injected for scoped DOM queries
   private scrollTimer: any = null;
 
   // --- Inputs (Signals) ---
   public data = input<T[]>([]);
   public columns = input<GridColumn[]>([]);
+  public rowActions = input<TableAction<T>[]>([]); // Dynamic Actions
   public searchTerm = input('');
   public isLoading = input(false);
   public pageSize = input(DEFAULT_PAGE_SIZE);
@@ -138,7 +155,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public sortChanged = output<SortChangedEvent>();
   public pageChanged = output<PageEvent>();
   public searchCleared = output<void>();
-  public rowAction = output<RowActionEvent<T>>();
+  public actionTriggered = output<RowActionEvent<T>>();
   public selectionChanged = output<T[]>();
 
   // --- View Queries (Signals) ---
@@ -164,11 +181,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
       const cols = this.columns();
       const multiSelect = this.enableMultiSelect();
 
-      // CRITICAL FIX: Clear selection when selection mode changes or columns change
-      // This prevents ghost selections when switching from multi to single mode
-      this.selection.clear();
-      this.selectedRow = null;
-      this.rowClick.emit(undefined);
+      // Clear selection only if necessary to avoid UI flickering
+      if (!multiSelect) this.selection.clear();
 
       this.updateDisplayedColumns(cols, multiSelect);
     });
@@ -227,6 +241,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   private handleDataChange(data: T[]): void {
     this.dataSource.data = data;
+    // Don't auto-clear selection on data refresh unless ID changes, 
+    // but here we keep it simple to avoid stale references.
     this.clearSelection();
     this.scrollToTop();
   }
@@ -245,6 +261,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   public onRowClick(row: T): void {
     if (this.enableMultiSelect()) {
+      // In multi-select, clicking row usually doesn't toggle check
+      // unless desired. Standard is checking box.
+      // But keeping your logic:
       this.toggleRowSelection(row, null);
     } else {
       this.toggleSingleRowSelection(row);
@@ -292,6 +311,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent): void {
+    // Only handle if this table is actually focused or visible (Context sensitive)
+    // For now, simple check:
     if (this.enableMultiSelect()) return;
     if (this.isNavigationKey(event.key)) {
       event.preventDefault();
@@ -328,7 +349,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     if (this.scrollTimer) clearTimeout(this.scrollTimer);
 
     this.scrollTimer = setTimeout(() => {
-      const rowElements = document.querySelectorAll('.clickable-row');
+      // FIXED: Scope the selector to this component instance only
+      const rowElements = this.elementRef.nativeElement.querySelectorAll('.clickable-row');
       const rowElement = rowElements[index];
       if (rowElement) {
         rowElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -346,23 +368,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     return item[this.trackByField()] ?? index;
   };
 
-  public getStatusClass(status: string): string {
-    if (!status) return 'status-default';
-    const lower = status.toLowerCase();
-    if (lower.includes('đang sử dụng')) return 'status-in-use';
-    if (lower.includes('sẵn sàng')) return 'status-ready';
-    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa'))
-      return 'status-maintenance';
-    if (lower.includes('bảo trì') || lower.includes('sửa chữa'))
-      return 'status-repair';
-    if (lower.includes('hỏng') || lower.includes('thanh lý'))
-      return 'status-broken';
-    return 'status-default';
-  }
-
-  public onRowAction(action: string, element: T, event: MouseEvent): void {
+  public onActionClick(action: string, element: T, event: MouseEvent): void {
     event.stopPropagation();
-    this.rowAction.emit({ action, data: element });
+    this.actionTriggered.emit({ action, data: element });
   }
 
   public onCheckboxClick(event: MouseEvent): void {
@@ -403,23 +411,6 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   public getSelectedRows(): T[] {
     return this.selection.selected;
-  }
-
-  public isRowSelected(row: T): boolean {
-    return this.selection.isSelected(row);
-  }
-
-  public clearAllSelections(): void {
-    this.clearSelection();
-  }
-
-  public selectRows(rows: T[]): void {
-    this.selection.clear();
-    this.selection.select(...rows);
-  }
-
-  public getCurrentPageData(): T[] {
-    return this.dataSource.filteredData;
   }
 
   public refresh(): void {

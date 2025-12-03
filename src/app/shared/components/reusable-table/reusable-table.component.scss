@@ -11,23 +11,19 @@ app-reusable-table {
 
   /* --- CSS Variables Scope --- */
   --row-height: 48px;
-  /* Slightly taller for better touch targets */
   --header-height: 52px;
 
   /* Local Scoped Colors - Defaults (Light Mode) */
-  --border-color-local: var(--border-color);
-  --text-color-local: var(--text-primary);
-
-  /* [MODIFIED] Use global table header variables for Teal/Blue look */
-  --header-bg-local: var(--table-header-bg);
-  --header-text-local: var(--table-header-text);
+  --border-color-local: var(--border-color, #e2e8f0);
+  --text-color-local: var(--text-primary, #0f172a);
+  --header-bg-local: var(--table-header-bg, #f8fafc);
+  --header-text-local: var(--table-header-text, #475569);
 
   /* Row Backgrounds */
-  --row-bg-odd: var(--surface-card);
-  --row-bg-even: var(--surface-card);
-  /* Cleaner look without heavy striping */
-  --row-bg-hover: var(--gray-50);
-  --row-bg-selected: rgba(var(--primary-rgb), 0.08);
+  --row-bg-odd: var(--surface-card, #ffffff);
+  --row-bg-even: var(--surface-card, #ffffff);
+  --row-bg-hover: var(--gray-50, #f8fafc);
+  --row-bg-selected: rgba(var(--primary-rgb, 37, 99, 235), 0.08);
 
   /* Sticky Column Divider */
   --sticky-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
@@ -38,8 +34,8 @@ app-reusable-table {
   [data-theme="dark"] & {
     --header-bg-local: #1e293b;
     --header-text-local: #94a3b8;
-    --row-bg-odd: var(--surface-card);
-    --row-bg-even: var(--surface-card);
+    --row-bg-odd: var(--surface-card, #0f172a);
+    --row-bg-even: var(--surface-card, #0f172a);
     --row-bg-hover: rgba(255, 255, 255, 0.04);
     --row-bg-selected: rgba(45, 212, 191, 0.15);
     --sticky-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
@@ -53,12 +49,10 @@ app-reusable-table {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--surface-card);
-  border-radius: var(--border-radius-md);
+  background-color: var(--surface-card, #ffffff);
+  border-radius: var(--border-radius-md, 8px);
   position: relative;
   overflow: hidden;
-
-  /* Subtle border for definition */
   border: 1px solid var(--border-color-local);
 }
 
@@ -66,7 +60,7 @@ app-reusable-table {
   flex: 1;
   overflow: auto;
   position: relative;
-  background-color: var(--surface-card);
+  background-color: var(--surface-card, #ffffff);
 
   /* Performance */
   contain: layout style;
@@ -75,7 +69,7 @@ app-reusable-table {
 
   /* Custom Scrollbar Styling */
   scrollbar-width: thin;
-  scrollbar-color: var(--gray-300) transparent;
+  scrollbar-color: var(--gray-300, #cbd5e1) transparent;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -87,22 +81,22 @@ app-reusable-table {
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--gray-300);
+    background-color: var(--gray-300, #cbd5e1);
     border-radius: 3px;
 
     &:hover {
-      background-color: var(--gray-400);
+      background-color: var(--gray-400, #94a3b8);
     }
   }
 
   [data-theme="dark"] & {
-    scrollbar-color: var(--gray-600) transparent;
+    scrollbar-color: var(--gray-600, #475569) transparent;
 
     &::-webkit-scrollbar-thumb {
-      background-color: var(--gray-600);
+      background-color: var(--gray-600, #475569);
 
       &:hover {
-        background-color: var(--gray-500);
+        background-color: var(--gray-500, #64748b);
       }
     }
   }
@@ -115,9 +109,16 @@ table.mat-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 1000px;
-  table-layout: fixed;
+  min-width: 100%;
+  /* Changed from fixed 1000px to allow responsiveness */
+  table-layout: auto;
+  /* Allow auto layout for better responsiveness */
   background-color: transparent;
+
+  /* Force min-width on mobile to enable horizontal scroll if needed */
+  @media (max-width: 768px) {
+    min-width: 800px;
+  }
 }
 
 /* --- Header Row --- */
@@ -126,7 +127,6 @@ table.mat-table {
   min-height: var(--header-height) !important;
   background-color: var(--header-bg-local) !important;
   border-bottom: 1px solid var(--border-color-local);
-
   position: sticky;
   top: 0;
   z-index: 100;
@@ -138,16 +138,12 @@ table.mat-table {
   font-size: 0.75rem !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0 var(--spacing-md) !important;
+  padding: 0 var(--spacing-md, 16px) !important;
   vertical-align: middle;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  /* Remove vertical dividers for cleaner look, keep bottom border */
   border-right: none !important;
-
   background-color: inherit;
 
   .mat-sort-header-arrow {
@@ -157,7 +153,6 @@ table.mat-table {
 
   &:hover {
     color: var(--header-text-local) !important;
-    /* Keep white on hover if bg is dark */
     opacity: 0.9;
 
     .mat-sort-header-arrow {
@@ -171,8 +166,6 @@ table.mat-table {
   height: var(--row-height) !important;
   min-height: var(--row-height) !important;
   transition: background-color 0.1s ease;
-
-  /* Subtle separator */
   border-bottom: 1px solid var(--border-color-local);
 
   &:nth-child(odd) {
@@ -194,7 +187,7 @@ table.mat-table {
     background-color: var(--row-bg-selected) !important;
 
     .mat-mdc-cell {
-      color: var(--primary) !important;
+      color: var(--primary, #0f172a) !important;
       font-weight: 500 !important;
     }
   }
@@ -203,37 +196,31 @@ table.mat-table {
 .mat-mdc-cell {
   font-size: 0.875rem !important;
   color: var(--text-color-local) !important;
-  padding: 0 var(--spacing-md) !important;
+  padding: 0 var(--spacing-md, 16px) !important;
   border-bottom: 1px solid var(--border-color-local) !important;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   &:first-of-type:not(.mat-column-select) {
-    padding-left: var(--spacing-lg) !important;
+    padding-left: var(--spacing-lg, 24px) !important;
   }
 
   &:last-of-type:not(.mat-column-actions) {
-    padding-right: var(--spacing-lg) !important;
+    padding-right: var(--spacing-lg, 24px) !important;
   }
 }
 
 /* --- Sticky Columns (Select & Actions) --- */
-
-/* 1. Checkbox Column (Sticky Left) */
 .mat-column-select {
   width: 48px !important;
   max-width: 48px !important;
   padding: 0 !important;
   text-align: center;
-
   position: sticky !important;
   left: 0 !important;
   z-index: 101 !important;
   background-color: inherit;
-
-  /* Shadow instead of border for depth */
   border-right: 1px solid var(--sticky-border-color) !important;
 
   &.mat-mdc-header-cell {
@@ -241,21 +228,17 @@ table.mat-table {
   }
 }
 
-/* 2. Actions Column (Sticky Right) */
 .mat-column-actions {
   width: 56px !important;
   max-width: 56px !important;
   padding: 0 !important;
   text-align: center;
-
   position: sticky !important;
   right: 0 !important;
   z-index: 101 !important;
   background-color: inherit;
-
   border-left: 1px solid var(--sticky-border-color) !important;
   box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.05);
-  /* Subtle shadow indicating stickiness */
 
   &.mat-mdc-header-cell {
     z-index: 102 !important;
@@ -273,10 +256,9 @@ table.mat-table {
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  /* Soft square */
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #64748b);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -284,8 +266,8 @@ table.mat-table {
   transition: all 0.2s;
 
   &:hover {
-    background-color: var(--gray-100);
-    color: var(--primary);
+    background-color: var(--gray-100, #f1f5f9);
+    color: var(--primary, #2563eb);
 
     [data-theme="dark"] & {
       background-color: rgba(255, 255, 255, 0.1);
@@ -309,67 +291,140 @@ table.mat-table {
   line-height: 1;
   white-space: nowrap;
 
+  &.status-default {
+    background-color: var(--gray-100, #f1f5f9);
+    color: var(--gray-700, #334155);
+  }
+
+  /* Add other status classes as needed (in-use, ready, etc.) */
   &.status-in-use {
     background-color: rgba(0, 110, 150, 0.1);
-    color: var(--secondary);
-    border: 1px solid rgba(0, 110, 150, 0.2);
-  }
-
-  &.status-ready {
-    background-color: rgba(22, 163, 74, 0.1);
-    color: var(--color-success);
-    border: 1px solid rgba(22, 163, 74, 0.2);
-  }
-
-  &.status-maintenance {
-    background-color: var(--gray-100);
-    color: var(--gray-600);
-    border: 1px solid var(--gray-200);
+    color: var(--secondary, #006e96);
   }
 
   &.status-broken {
     background-color: rgba(220, 53, 69, 0.1);
-    color: var(--color-danger);
-    border: 1px solid rgba(220, 53, 69, 0.2);
-  }
-
-  [data-theme="dark"] & {
-    &.status-maintenance {
-      background-color: var(--gray-800);
-      color: var(--gray-400);
-      border-color: var(--gray-700);
-    }
+    color: var(--color-danger, #dc3545);
   }
 }
 
-/* Paginator */
+
+/* =========================================================
+   [MODIFIED] COMPACT PAGINATOR & FOOTER
+   ========================================================= */
 .mat-mdc-paginator {
   background-color: var(--surface-card) !important;
   border-top: 1px solid var(--border-color-local);
-  color: var(--text-secondary) !important;
+  color: var(--text-secondary, #64748b) !important;
+  font-size: 0.8125rem !important;
+  /* Smaller text */
 
+  /* Reduce height */
   .mat-mdc-paginator-container {
-    padding: 0 16px !important;
-    min-height: 52px !important;
+    padding: 0 8px !important;
+    min-height: 42px !important;
+    /* Reduced from 52px */
+    height: 42px !important;
 
+    /* Mobile Responsiveness */
     @media (max-width: 600px) {
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 8px !important;
+      padding: 0 4px !important;
+      justify-content: space-between;
 
-      .mat-mdc-paginator-page-size {
-        margin-bottom: 8px;
+      /* Hide "Items per page" text label on very small screens to save space */
+      .mat-mdc-paginator-page-size-label {
+        display: none;
+      }
+
+      .mat-mdc-paginator-range-label {
+        margin: 0 8px !important;
       }
     }
   }
 
-  .mat-mdc-select-value {
-    color: var(--text-primary) !important;
+  /* Range Label (1 - 10 of 100) */
+  .mat-mdc-paginator-range-label {
+    margin: 0 12px 0 12px !important;
     font-weight: 500;
+    color: var(--text-primary);
   }
 
-  .mat-mdc-select-arrow {
-    color: var(--text-secondary) !important;
+  /* --- [MODIFIED] PAGE SIZE SELECT (Row Size Menu) --- */
+  .mat-mdc-paginator-page-size {
+    align-items: center;
+    margin-right: 8px !important;
+  }
+
+  /* Custom styling for the Select Box to look "Contained" in Light Mode */
+  .mat-mdc-form-field {
+
+    /* Target the text input area */
+    .mat-mdc-text-field-wrapper {
+      padding: 0 !important;
+      height: 28px !important;
+      /* Compact height */
+
+      /* Create the "box" look */
+      background-color: var(--surface-ground, #f8faf9);
+      border: 1px solid var(--border-color-local);
+      border-radius: 4px;
+
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+
+      /* Dark mode override for the box */
+      [data-theme="dark"] & {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    /* Focused State */
+    &.mat-focused .mat-mdc-text-field-wrapper {
+      border-color: var(--primary, #2563eb);
+      background-color: var(--surface-card, #fff);
+    }
+
+    /* Hide the default underline ripple to keep it clean */
+    .mat-mdc-form-field-focus-overlay,
+    .mat-mdc-line-ripple {
+      display: none !important;
+    }
+
+    /* Select Value Text */
+    .mat-mdc-select-value {
+      padding: 0 8px !important;
+      font-size: 0.8125rem !important;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Arrow Icon */
+    .mat-mdc-select-arrow-wrapper {
+      transform: translateY(0) !important;
+      /* Fix alignment */
+    }
+
+    .mat-mdc-select-arrow {
+      color: var(--text-secondary);
+    }
+  }
+
+  /* Navigation Buttons */
+  .mat-mdc-icon-button {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 6px !important;
+    margin-left: 4px !important;
+
+    mat-icon {
+      font-size: 18px;
+    }
+
+    &[disabled] {
+      opacity: 0.3;
+    }
   }
 }
 
@@ -379,7 +434,6 @@ table.mat-table {
 .loading-shade {
   position: absolute;
   inset: 0;
-  /* [MODIFIED] More transparent background with stronger blur for premium glass effect */
   background: rgba(255, 255, 255, 0.6);
 
   [data-theme="dark"] & {
@@ -387,14 +441,11 @@ table.mat-table {
   }
 
   backdrop-filter: blur(8px);
-  /* Increased blur */
   -webkit-backdrop-filter: blur(8px);
-
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-
   opacity: 1;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -405,7 +456,6 @@ table.mat-table {
     -webkit-backdrop-filter: blur(0);
   }
 
-  /* Custom Spinner Styling within the shade */
   .app-loading-spinner {
     width: 48px;
     height: 48px;
@@ -416,7 +466,7 @@ table.mat-table {
   }
 
   p {
-    margin-top: var(--spacing-md);
+    margin-top: var(--spacing-md, 16px);
     font-weight: 500;
     color: var(--primary);
     letter-spacing: 0.02em;
@@ -441,14 +491,15 @@ table.mat-table {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 1rem;
+  padding: 3rem 1rem;
+  /* Reduced padding */
   color: var(--text-secondary);
 
   .no-data-icon {
-    font-size: 4rem;
-    width: 4rem;
-    height: 4rem;
-    margin-bottom: 1rem;
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.5rem;
     color: var(--gray-300);
 
     [data-theme="dark"] & {
@@ -457,32 +508,28 @@ table.mat-table {
   }
 
   .no-data-text {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
   }
 
   .reset-btn {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
     display: flex;
     align-items: center;
     gap: 8px;
     background: var(--surface-ground);
     border: 1px solid var(--border-color-local);
-    padding: 8px 20px;
+    padding: 6px 16px;
     border-radius: 24px;
     color: var(--primary);
     font-weight: 500;
     cursor: pointer;
+    font-size: 0.85rem;
     transition: all 0.2s;
 
     &:hover {
       background-color: var(--gray-100);
       transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-      [data-theme="dark"] & {
-        background-color: var(--gray-800);
-      }
     }
   }
 }
@@ -500,7 +547,6 @@ table.mat-table {
    ========================================================= */
 .highlight {
   background-color: rgba(253, 224, 71, 0.3);
-  /* Yellow-300 transparent */
   color: inherit;
   padding: 0 2px;
   border-radius: 2px;
@@ -511,15 +557,15 @@ table.mat-table {
 @media (max-width: 768px) {
   .reusable-table-wrapper {
     border: none;
-    /* Remove border on mobile for full width feel */
     border-radius: 0;
 
     .mat-mdc-header-cell,
     .mat-mdc-cell {
-      padding: 0 var(--spacing-sm) !important;
+      padding: 0 var(--spacing-sm, 8px) !important;
       font-size: 0.8125rem !important;
     }
 
+    /* Make checkboxes slightly larger on mobile for touch */
     .mat-column-select {
       width: 40px !important;
       max-width: 40px !important;
