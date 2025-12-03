@@ -5,15 +5,15 @@ import { ComponentPortal } from '@angular/cdk/portal';
 
 import { ModalOptions } from '../models/modal-options.model';
 import { ModalRef, MODAL_OPTIONS } from '../models/modal-ref.model';
-import { ModalComponent } from '../../components/modal/modal.component';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ModalService {
-  
+
   // Inject the CDK Overlay and Angular's Injector
-  constructor(private overlay: Overlay, private injector: Injector) {}
+  constructor(private overlay: Overlay, private injector: Injector) { }
 
   /**
    * Opens the modal with a specified component and configuration.
@@ -28,7 +28,7 @@ export class ModalService {
     component: Type<T>,
     options?: Omit<ModalOptions, 'component'>
   ): Observable<R | undefined> {
-    
+
     // Combine component and options
     const modalOptions: ModalOptions = {
       component,
@@ -74,8 +74,8 @@ export class ModalService {
 
     const overlayConfig = new OverlayConfig({
       hasBackdrop: true,
-      backdropClass: 'app-modal-backdrop', 
-      panelClass: 'app-modal-panel', 
+      backdropClass: 'app-modal-backdrop',
+      panelClass: 'app-modal-panel',
       positionStrategy,
     });
 

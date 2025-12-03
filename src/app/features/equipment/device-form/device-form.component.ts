@@ -12,10 +12,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { DropdownDataService, DropdownOption } from '../../../core/services/dropdown-data.service';
 import { environment } from '../../../../environments/environment.development';
-import { DateUtils } from '../../../shared/utils/date.utils'; 
+import { DateUtils } from '../../../shared/utils/date.utils';
 
-import { DynamicFormComponent } from '../../../components/dynamic-form/dynamic-form.component';
-import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
+import { DynamicFormComponent } from '../../../shared/components/dynamic-form/dynamic-form.component';
+import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-device-form',
@@ -23,7 +23,7 @@ import { ConfirmationModalComponent } from '../../../components/confirmation-mod
   imports: [CommonModule, DynamicFormComponent],
   templateUrl: './device-form.component.html',
   styleUrl: './device-form.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush 
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DeviceFormComponent implements OnInit {
   public device = input<Device | null>(null);
@@ -99,7 +99,7 @@ export class DeviceFormComponent implements OnInit {
     deviceData: Device | null
   ): void {
     const isEditMode = !!deviceData;
-    const data: any = deviceData || {}; 
+    const data: any = deviceData || {};
 
     const trangThaiValue = data.TrangThai_Id ?? data.TrangThai ?? null;
     const categoryIdValue = data.LoaiThietBi_Id ?? data.CategoryID ?? null;
@@ -128,7 +128,7 @@ export class DeviceFormComponent implements OnInit {
               validationMessages: {
                 required: 'Tên là bắt buộc.',
                 maxLength: 'Tên không được vượt quá 100 ký tự.',
-                minLength: 'Tên phải ít nhất 3 ký tự' 
+                minLength: 'Tên phải ít nhất 3 ký tự'
               },
               layout_flexGrow: 1,
             },
@@ -142,7 +142,7 @@ export class DeviceFormComponent implements OnInit {
               label: 'Model',
               value: data.Model || '',
               validators: { required: true, maxLength: 50, minLength: 2 },
-              validationMessages: { 
+              validationMessages: {
                 required: 'Model là bắt buộc.',
                 maxLength: 'Model không được vượt quá 50 ký tự.',
                 minLength: 'Model quá ngắn.'
@@ -155,7 +155,7 @@ export class DeviceFormComponent implements OnInit {
               label: 'Số Serial',
               value: data.SerialNumber || '',
               validators: { required: true, maxLength: 50, minLength: 3 },
-              validationMessages: { 
+              validationMessages: {
                 required: 'Số Serial là bắt buộc.',
                 maxLength: 'Số Serial không được vượt quá 50 ký tự.',
                 minLength: 'Serial quá ngắn.'
@@ -234,7 +234,7 @@ export class DeviceFormComponent implements OnInit {
               label: 'Giá mua (VND)',
               value: data.GiaMua || null,
               validators: { max: 10000000000, min: 0 },
-              validationMessages: { 
+              validationMessages: {
                 max: 'Giá mua không hợp lệ (tối đa 10 tỷ).',
                 min: 'Giá mua không được âm.'
               },
@@ -267,7 +267,7 @@ export class DeviceFormComponent implements OnInit {
     }
 
     this.isSaving = true;
-    this.cdr.markForCheck(); 
+    this.cdr.markForCheck();
 
     const currentUserId = this.authService.getUserId();
     if (!currentUserId) {
@@ -290,7 +290,7 @@ export class DeviceFormComponent implements OnInit {
       next: (response: any) => {
         const msg = response.TenKetQua || 'Lưu thành công!';
         this.toastService.showSuccess(msg);
-        
+
         this.modalRef.canClose = () => true;
         this.modalRef.close(response);
       },
@@ -368,10 +368,10 @@ export class DeviceFormComponent implements OnInit {
     if (!dateStr || dateStr === '0001-01-01T00:00:00') return '';
     const date = DateUtils.parse(dateStr);
     if (date) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
     return '';
   }
@@ -380,10 +380,10 @@ export class DeviceFormComponent implements OnInit {
     if (!htmlDate) return null;
     const date = DateUtils.parse(htmlDate);
     if (date) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
     return null;
   }

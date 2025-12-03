@@ -1,31 +1,24 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  effect,
-  DestroyRef,
-} from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, effect, DestroyRef } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { finalize } from 'rxjs/operators';
-import type { EChartsCoreOption } from 'echarts/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
+
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
-import { DateUtils } from '../../../shared/utils/date.utils';
+import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { SurgeryStat } from '../../../core/models/surgery-stat.model';
+import { DateUtils } from '../../../shared/utils/date.utils';
+import type { EChartsCoreOption } from 'echarts/core';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
-
-const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
+const GLOBAL_FONT_FAMILY =
+  'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 interface WidgetData {
   id: string;
@@ -64,7 +57,7 @@ export class SurgeryReportComponent implements OnInit {
   public isLoading = false;
   public isExporting = false;
   public rawData: SurgeryStat[] = [];
-  
+
   public fromDate: string = '';
   public toDate: string = '';
 
@@ -283,7 +276,7 @@ export class SurgeryReportComponent implements OnInit {
     // --- Calculate Linear Regression (Trending Line) ---
     let trendData: number[] = [];
     const n = dateValues.length;
-    
+
     if (n > 1) {
       let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
       for (let i = 0; i < n; i++) {
@@ -292,14 +285,14 @@ export class SurgeryReportComponent implements OnInit {
         sumXY += i * dateValues[i];
         sumXX += i * i;
       }
-      
+
       // Slope (m)
       const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
       // Intercept (b)
       const intercept = (sumY - slope * sumX) / n;
-      
+
       // Generate trend points
-      trendData = Array.from({length: n}, (_, i) => Number((slope * i + intercept).toFixed(2)));
+      trendData = Array.from({ length: n }, (_, i) => Number((slope * i + intercept).toFixed(2)));
     }
 
     this.trendChartOptions = {
@@ -312,7 +305,7 @@ export class SurgeryReportComponent implements OnInit {
       },
       xAxis: {
         type: 'category',
-        boundaryGap: false, 
+        boundaryGap: false,
         data: dateLabels,
         axisLine: { lineStyle: { color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textPrimary }
@@ -359,10 +352,10 @@ export class SurgeryReportComponent implements OnInit {
           data: trendData,
           symbol: 'none',
           smooth: false,
-          lineStyle: { 
-            type: 'dashed', 
-            color: this.palette.warning, 
-            width: 2 
+          lineStyle: {
+            type: 'dashed',
+            color: this.palette.warning,
+            width: 2
           },
           tooltip: { show: false },
           itemStyle: { opacity: 0 }
@@ -378,8 +371,8 @@ export class SurgeryReportComponent implements OnInit {
       xAxis: {
         type: 'category',
         data: sortedSpecs.map(s => s[0]),
-        axisLabel: { 
-          rotate: 25, 
+        axisLabel: {
+          rotate: 25,
           interval: 0,
           width: 100,
           overflow: 'truncate',
@@ -395,9 +388,9 @@ export class SurgeryReportComponent implements OnInit {
         type: 'bar',
         barWidth: '40%',
         data: sortedSpecs.map(s => s[1]),
-        itemStyle: { 
+        itemStyle: {
           color: this.palette.chart6,
-          borderRadius: [4, 4, 0, 0] 
+          borderRadius: [4, 4, 0, 0]
         },
         label: { show: true, position: 'top', color: this.palette.textPrimary }
       }]
@@ -407,7 +400,7 @@ export class SurgeryReportComponent implements OnInit {
     const sortedSurgeons = [...surgeonMap.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .reverse(); 
+      .reverse();
 
     this.surgeonChartOptions = {
       ...commonOptions,
@@ -419,10 +412,10 @@ export class SurgeryReportComponent implements OnInit {
       yAxis: {
         type: 'category',
         data: sortedSurgeons.map(s => s[0]),
-        axisLabel: { 
-          width: 110, 
+        axisLabel: {
+          width: 110,
           overflow: 'truncate',
-          color: this.palette.textPrimary 
+          color: this.palette.textPrimary
         },
         axisLine: { show: false },
         axisTick: { show: false }
@@ -432,9 +425,9 @@ export class SurgeryReportComponent implements OnInit {
         type: 'bar',
         barWidth: '60%',
         data: sortedSurgeons.map(s => s[1]),
-        itemStyle: { 
+        itemStyle: {
           color: this.palette.tealMidtone,
-          borderRadius: [0, 4, 4, 0] 
+          borderRadius: [0, 4, 4, 0]
         },
         label: { show: true, position: 'right', color: this.palette.textPrimary }
       }]
@@ -449,7 +442,7 @@ export class SurgeryReportComponent implements OnInit {
     if (this.isExporting || !this.rawData.length) return;
     this.isExporting = true;
     this.cd.markForCheck();
-    
+
     setTimeout(() => {
       const columns: ExportColumn[] = [
         { key: 'NGAY_PT_DISPLAY', header: 'Ngày Phẫu Thuật', type: 'date' },
@@ -457,13 +450,13 @@ export class SurgeryReportComponent implements OnInit {
         { key: 'CHUYEN_KHOA', header: 'Chuyên Khoa' },
         { key: 'SO_LUONG', header: 'Số Lượng' }
       ];
-      
+
       this.excelService.exportToExcel(
         this.rawData,
         `BaoCao_PhauThuat_${this.fromDate}_${this.toDate}`,
         columns
       );
-      
+
       this.isExporting = false;
       this.toastService.showSuccess('Xuất Excel thành công.');
       this.cd.markForCheck();

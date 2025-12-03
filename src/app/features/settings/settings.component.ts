@@ -15,7 +15,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ModalService } from '../../core/services/modal.service';
-import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
+import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
 import { User } from '../../core/models/user.model';
 
 interface ChangePasswordForm {

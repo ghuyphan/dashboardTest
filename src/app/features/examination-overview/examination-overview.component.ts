@@ -19,11 +19,11 @@ import { ThemeService, ThemePalette } from '../../core/services/theme.service';
 import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
 import { DateUtils } from '../../shared/utils/date.utils';
 
-import { WidgetCardComponent } from '../../components/widget-card/widget-card.component';
-import { ChartCardComponent } from '../../components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../components/table-card/table-card.component';
-import { GridColumn } from '../../components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../shared/components/widget-card/widget-card.component';
+import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
+import { DateFilterComponent, DateRange } from '../../shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../shared/components/reusable-table/reusable-table.component';
 
 
 const GLOBAL_FONT_FAMILY =
@@ -64,9 +64,9 @@ export class ExaminationOverviewComponent implements OnInit {
 
   public isLoading = false;
   public isExporting = false;
-  
+
   public rawData: ExaminationStat[] = [];
-  
+
   public fromDate: string = '';
   public toDate: string = '';
 
@@ -74,7 +74,7 @@ export class ExaminationOverviewComponent implements OnInit {
 
   public trendChartOptions: EChartsCoreOption | null = null;
   public typeChartOptions: EChartsCoreOption | null = null;
-  public patientStatusChartOptions: EChartsCoreOption | null = null; 
+  public patientStatusChartOptions: EChartsCoreOption | null = null;
 
   public tableColumns: GridColumn[] = [
     { key: 'NGAY_TIEP_NHAN', label: 'Ngày', sortable: true, width: '120px' },
@@ -113,7 +113,7 @@ export class ExaminationOverviewComponent implements OnInit {
     this.loadData();
   }
 
-private setDefaultDateRange(): void {
+  private setDefaultDateRange(): void {
     const range = DateUtils.getReportingWeekRange();
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
@@ -143,10 +143,10 @@ private setDefaultDateRange(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const w = this.widgetData;
       const setC = (id: string, color: string) => {
-         const item = w.find(x => x.id === id);
-         if (item) item.accentColor = color;
+        const item = w.find(x => x.id === id);
+        if (item) item.accentColor = color;
       };
-      
+
       setC('total', this.palette.deepSapphire);
       setC('ck', this.palette.primary);
       setC('emergency', this.palette.pastelCoral);
@@ -157,14 +157,14 @@ private setDefaultDateRange(): void {
 
   public loadData(): void {
     if (!this.fromDate || !this.toDate) return;
-    
+
     this.isLoading = true;
     this.trendChartOptions = null;
     this.typeChartOptions = null;
     this.patientStatusChartOptions = null;
-    
+
     this.cd.markForCheck();
-    
+
     this.reportService
       .getExaminationOverview(this.fromDate, this.toDate)
       .pipe(
@@ -204,7 +204,7 @@ private setDefaultDateRange(): void {
 
     this.widgetData = this.widgetData.map(w => {
       let val = 0;
-      switch(w.id) {
+      switch (w.id) {
         case 'total': val = t.total; break;
         case 'ck': val = t.ck; break;
         case 'emergency': val = t.cc; break;
@@ -236,7 +236,7 @@ private setDefaultDateRange(): void {
       nt: this.palette.warning,
       dnt: this.palette.tealMidtone,
       bhyt: this.palette.secondary,
-      vp: this.palette.warning, 
+      vp: this.palette.warning,
       newp: this.palette.chart3,
       oldp: this.palette.chart2,
     };
@@ -265,8 +265,8 @@ private setDefaultDateRange(): void {
 
     this.trendChartOptions = {
       ...commonOps,
-      legend: { 
-        bottom: 0, 
+      legend: {
+        bottom: 0,
         textStyle: { color: this.palette.textSecondary },
         type: 'scroll', // Scrollable Legend
       },
@@ -365,8 +365,8 @@ private setDefaultDateRange(): void {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Prevent tooltip cropping
       },
-      legend: { 
-        bottom: 0, 
+      legend: {
+        bottom: 0,
         textStyle: { color: this.palette.textSecondary },
         type: 'scroll', // Scrollable Legend
       },
@@ -381,8 +381,8 @@ private setDefaultDateRange(): void {
             borderColor: this.palette.bgCard,
             borderWidth: 2,
           },
-          label: { 
-            show: true, 
+          label: {
+            show: true,
             position: 'outer',
             formatter: (params: any) => {
               return `${params.name}: ${this.vnNumberFormatter.format(params.value)} (${params.percent}%)`;
@@ -404,7 +404,7 @@ private setDefaultDateRange(): void {
   public trackByWidget(index: number, item: WidgetData): string {
     return item.id;
   }
-  
+
   public onExport(): void {
     if (this.isExporting) return;
     if (!this.rawData || this.rawData.length === 0) {
@@ -429,8 +429,8 @@ private setDefaultDateRange(): void {
       ];
 
       this.excelService.exportToExcel(
-        this.rawData, 
-        `TongQuanKhamBenh_${this.fromDate}_${this.toDate}`, 
+        this.rawData,
+        `TongQuanKhamBenh_${this.fromDate}_${this.toDate}`,
         columns
       );
 

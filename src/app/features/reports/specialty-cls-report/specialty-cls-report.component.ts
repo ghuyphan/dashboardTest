@@ -23,14 +23,14 @@ import {
 import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
   DateFilterComponent,
   DateRange,
-} from '../../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
+} from '../../../shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 const MAX_RANGE_DAYS = 92;
@@ -512,7 +512,7 @@ export class SpecialtyClsReportComponent implements OnInit {
           itemStyle: {
             color: (params: any) =>
               themePalette[
-                (top10Data.length - 1 - params.dataIndex) % themePalette.length
+              (top10Data.length - 1 - params.dataIndex) % themePalette.length
               ],
             borderRadius: [0, 4, 4, 0],
           },

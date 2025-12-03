@@ -10,22 +10,17 @@ import {
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import type { EChartsCoreOption } from 'echarts/core';
-
-import { Device } from '../../../shared/models/device.model';
-import { ToastService } from '../../../core/services/toast.service';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { DateUtils } from '../../../shared/utils/date.utils';
-import {
-  ThemeService,
-  ThemePalette,
-} from '../../../core/services/theme.service';
 import { DeviceService } from '../../../core/services/device.service';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
+import { ToastService } from '../../../core/services/toast.service';
+import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
+import { Device } from '../../../shared/models/device.model';
+import { DateUtils } from '../../../shared/utils/date.utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { EChartsCoreOption } from 'echarts/core';
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';

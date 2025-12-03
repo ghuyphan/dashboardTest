@@ -7,8 +7,8 @@ import {
   ChangeDetectionStrategy,
   ElementRef
 } from '@angular/core';
-import { ModalOptions } from '../../core/models/modal-options.model';
-import { ModalRef, MODAL_OPTIONS } from '../../core/models/modal-ref.model';
+import { ModalOptions } from '../../../core/models/modal-options.model';
+import { ModalRef, MODAL_OPTIONS } from '../../../core/models/modal-ref.model';
 
 @Component({
   selector: 'app-modal',
@@ -19,7 +19,7 @@ import { ModalRef, MODAL_OPTIONS } from '../../core/models/modal-ref.model';
   changeDetection: ChangeDetectionStrategy.OnPush // [1] Performance optimization
 })
 export class ModalComponent implements AfterViewInit {
-  
+
   // [2] Use Signal-based viewChild
   // We use { read: ViewContainerRef } to get the container specifically
   private modalContentHost = viewChild.required('modalContentHost', { read: ViewContainerRef });
@@ -28,7 +28,7 @@ export class ModalComponent implements AfterViewInit {
   private modalRef = inject(ModalRef);
   public options = inject<ModalOptions>(MODAL_OPTIONS);
 
-  constructor() {}
+  constructor() { }
 
   ngAfterViewInit(): void {
     this.loadModalContent();
@@ -36,7 +36,7 @@ export class ModalComponent implements AfterViewInit {
 
   private loadModalContent(): void {
     const container = this.modalContentHost();
-    container.clear(); 
+    container.clear();
 
     if (this.options?.component) {
       // Create the component
@@ -49,7 +49,7 @@ export class ModalComponent implements AfterViewInit {
           componentRef.setInput(key, value);
         });
       }
-      
+
       // [4] Optimization: REMOVED manual assignment of modalRef.
       // The Child component should inject ModalRef via DI, which is cleaner and strictly typed.
       // componentRef.instance.modalRef = this.modalRef; <--- DELETED
@@ -61,7 +61,7 @@ export class ModalComponent implements AfterViewInit {
           this.closeModal(data);
         });
       }
-      
+
       // Trigger change detection for the new component
       componentRef.changeDetectorRef.markForCheck();
     }

@@ -29,8 +29,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { SelectionModel } from '@angular/cdk/collections';
 
-import { TooltipDirective } from '../../shared/directives/tooltip.directive';
-import { HighlightSearchPipe } from '../../shared/pipes/highlight-search.pipe';
+import { TooltipDirective } from '../../directives/tooltip.directive';
+import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
 
 const ROW_NAVIGATION_DELAY_MS = 50;
 const DEFAULT_PAGE_SIZE = 10;

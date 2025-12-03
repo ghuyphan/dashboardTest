@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ToastComponent } from './components/toast/toast.component';
+import { ToastComponent } from './shared/components/toast/toast.component';
 import { ThemeService } from './core/services/theme.service';
 
 @Component({
@@ -15,6 +15,6 @@ import { ThemeService } from './core/services/theme.service';
 })
 export class AppComponent {
   title = 'hoan-my-portal';
-  
+
   public themeService = inject(ThemeService);
 }

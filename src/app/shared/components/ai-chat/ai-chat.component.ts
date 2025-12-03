@@ -14,8 +14,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LlmService, ChatMessage } from '../../core/services/llm.service';
-import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
+import { LlmService, ChatMessage } from '../../../core/services/llm.service';
+import { MarkdownPipe } from '../../pipes/markdown.pipe';
 
 @Component({
   selector: 'app-ai-chat',
@@ -97,7 +97,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
 
   shouldShowLoadingIndicator(): boolean {
     if (!this.llmService.isGenerating()) return false;
-    
+
     const msgs = this.llmService.messages();
     if (msgs.length === 0) return true;
 
@@ -143,7 +143,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     // Check if click is inside chat or on a trigger button
     const isTrigger = target.closest('.ai-fab') || target.closest('.ai-trigger-btn');
     const isInside = this.elementRef.nativeElement.contains(target);
-    
+
     if (this.llmService.isOpen() && !isInside && !isTrigger) {
       this.closeChat();
     }
@@ -165,7 +165,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   }
 
   private setupEfficientScrollListener(el: HTMLElement): void {
-    this.scrollCleanup?.(); 
+    this.scrollCleanup?.();
 
     this.ngZone.runOutsideAngular(() => {
       const handler = () => {

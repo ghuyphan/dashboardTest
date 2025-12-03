@@ -12,7 +12,7 @@ import {
   viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThemeService, ThemePalette } from '../../core/services/theme.service';
+import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 
 type ValueFormat = 'number' | 'currency' | 'string' | 'percent';
 type CurrencyCode = 'VND' | 'USD' | 'EUR';
@@ -35,7 +35,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   public value = input<string>('0');
   public caption = input<string>('Caption');
   public isLoading = input<boolean>(false);
-  
+
   // [OPTIMIZATION] Allow disabling animation manually
   public enableAnimation = input<boolean>(true);
 
@@ -48,7 +48,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   public resolvedAccentColor = computed(() => {
     const rawInput = this.accentColor();
     const palette = this.themeService.currentPalette(); // Reactive!
-    
+
     if (rawInput in palette) {
       return palette[rawInput as keyof ThemePalette];
     }
@@ -59,7 +59,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   public iconWrapperStyle = computed(() => ({
     'background-color': this.resolvedAccentColor() + '33' // Add 20% opacity (hex alpha)
   }));
-  
+
   public iconStyle = computed(() => ({
     'color': this.resolvedAccentColor()
   }));
@@ -167,10 +167,10 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
   private animate(start: number, end: number): void {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
-    
+
     // [OPTIMIZATION] Check user preference for reduced motion
-    const prefersReducedMotion = typeof window !== 'undefined' && 
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion = typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // If start equals end, or animations disabled/unwanted, render immediately
     if (start === end || !this.enableAnimation() || prefersReducedMotion) {
@@ -185,10 +185,10 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
         const elapsed = currentTime - startTime;
         // Removed the invalid line here
         const progress = Math.min(elapsed / this.ANIMATION_DURATION_MS, 1);
-        const easedProgress = 1 - Math.pow(1 - progress, 4); 
-        
+        const easedProgress = 1 - Math.pow(1 - progress, 4);
+
         let interpolatedValue = start + (end - start) * easedProgress;
-        
+
         if (this.valueFormat !== 'percent') {
           interpolatedValue = Math.round(interpolatedValue);
         }

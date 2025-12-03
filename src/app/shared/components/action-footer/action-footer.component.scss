@@ -1,21 +1,22 @@
 :host {
   display: block;
   flex-shrink: 0;
-  background-color: var(--surface-card); 
+  background-color: var(--surface-card);
   border-top: 1px solid transparent;
+
   [data-theme='dark'] & {
     border-top-color: var(--border-color);
   }
+
   z-index: 980;
-  
+
   transform: translateY(0);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 0.2s ease,
-              border-color 0.2s ease;
+  margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
   &.hidden {
     transform: translateY(100%);
-    margin-top: -55px; 
+    margin-top: -55px;
   }
 }
 
@@ -26,9 +27,11 @@
   padding: var(--spacing-sm) var(--spacing-md);
   z-index: 100;
   display: flex;
-  justify-content: space-between; /* Changed from flex-start to space-between */
-  align-items: center; /* Ensure vertical alignment */
-  
+  justify-content: space-between;
+  /* Changed from flex-start to space-between */
+  align-items: center;
+  /* Ensure vertical alignment */
+
   @media (max-width: 767px) {
     padding: var(--spacing-xs) var(--spacing-md);
   }
@@ -38,14 +41,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
-  flex: 1; /* Take up available space */
+  flex: 1;
+  /* Take up available space */
 
   @media (max-width: 767px) {
     flex-wrap: nowrap;
     /* Allow horizontal scroll if too many buttons */
-    overflow-x: auto; 
-    scrollbar-width: none; 
-    &::-webkit-scrollbar { display: none; }
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
 
@@ -69,7 +76,7 @@
     color: var(--text-secondary);
     background-color: var(--gray-100);
   }
-  
+
   &:active {
     transform: scale(0.95);
   }
@@ -79,7 +86,7 @@
     color: var(--teal-blue);
     font-weight: 700;
     background-color: rgba(0, 131, 155, 0.1);
-    
+
     .dev-icon {
       animation: pulse 1s infinite;
     }
@@ -87,10 +94,19 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
+  0% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.5;
+  }
 }
+
 /* Existing button styles below this line (no changes) */
 
 .btn-label {
@@ -105,15 +121,16 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.875rem;
-  position: relative; 
+  position: relative;
   transition: transform 0.2s var(--transition-spring),
     box-shadow 0.2s var(--transition-smooth),
     background-color 0.2s ease,
     color 0.2s ease;
-    
+
   text-align: center;
   cursor: pointer;
   border-radius: var(--border-radius-md);
+
   &::after {
     content: '';
     position: absolute;
@@ -131,7 +148,7 @@
     padding: 0;
     gap: 0;
     justify-content: center;
-    line-height: 1; 
+    line-height: 1;
   }
 
   /* Interaction Physics */

@@ -14,8 +14,8 @@ import { timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import { environment } from '../../../../environments/environment.development';
 import {
   ThemeService,
@@ -94,13 +94,13 @@ export class BedUsageComponent implements OnInit {
   public chartOptions = computed<EChartsCoreOption | null>(() => {
     const data = this.rawData();
     const palette = this.themeService.currentPalette();
-    const visibleMap = this.visibleSeriesMap(); 
+    const visibleMap = this.visibleSeriesMap();
 
     if (data.length === 0) return null;
 
     const chartData = this.transformApiData(data);
     chartData.sort((a, b) => a.viName.localeCompare(b.viName));
-    
+
     return this.buildChartOptions(chartData, palette, visibleMap);
   });
 
@@ -195,7 +195,7 @@ export class BedUsageComponent implements OnInit {
       totals.daBook +
       totals.chuaSanSang +
       totals.choMuonGiuong;
-    
+
     const rate = totals.totalBeds > 0 ? (occupied / totals.totalBeds) * 100 : 0;
     const occupancyRate = `${rate.toFixed(1).replace('.', ',')}%`;
     const format = (val: number) => this.vnNumberFormatter.format(val);
@@ -245,11 +245,11 @@ export class BedUsageComponent implements OnInit {
   }
 
   private buildChartOptions(
-    data: DepartmentChartData[], 
+    data: DepartmentChartData[],
     palette: ThemePalette,
     visibleMap: Record<string, boolean> | null
   ): EChartsCoreOption {
-    
+
     const xAxisData = data.map((item) =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
@@ -304,7 +304,7 @@ export class BedUsageComponent implements OnInit {
         left: '2%',
         right: '3%',
         bottom: '5%',
-        top: '12%', 
+        top: '12%',
         containLabel: true,
       },
       xAxis: {
@@ -362,7 +362,7 @@ export class BedUsageComponent implements OnInit {
         {
           name: 'Tổng (Total)',
           type: 'bar',
-          barGap: '-100%', 
+          barGap: '-100%',
           barWidth: CHART_BAR_WIDTH,
           data: dynamicTotals,
           itemStyle: { color: 'transparent' },
@@ -391,13 +391,13 @@ export class BedUsageComponent implements OnInit {
       let result = `<div style="font-weight:bold;margin-bottom:4px;">${item.viName}</div>`;
       if (item.enName)
         result += `<div style="color:${palette.textSecondary};font-size:11px;margin-bottom:8px;">${item.enName}</div>`;
-      
+
       let visibleTotal = 0;
 
       params.forEach((p: any) => {
         if (p.seriesName === 'Tổng (Total)') return;
         if (p.value !== 0) {
-            result += `
+          result += `
               <div style="display:flex; justify-content:space-between; gap:15px; font-size:12px;">
                 <span>${p.marker} ${p.seriesName}</span>
                 <span style="font-weight:bold;">${this.vnNumberFormatter.format(p.value)}</span>
@@ -405,13 +405,13 @@ export class BedUsageComponent implements OnInit {
         }
         visibleTotal += (typeof p.value === 'number' ? p.value : 0);
       });
-      
+
       result += `
         <div style="margin-top:6px; padding-top:6px; border-top:1px solid ${palette.gray200}; display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
           <span>Tổng cộng</span>
           <span>${this.vnNumberFormatter.format(visibleTotal)}</span>
         </div>`;
-      
+
       return result;
     };
   }

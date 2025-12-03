@@ -11,7 +11,7 @@ import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { FooterAction } from '../../../core/models/footer-action.model';
 import { DeviceFormComponent } from '../device-form/device-form.component';
-import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
+import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { CustomRouteReuseStrategy } from '../../../core/strategies/custom-route-reuse-strategy';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
@@ -33,7 +33,7 @@ import { DeviceService } from '../../../core/services/device.service';
 })
 export class DeviceDetailComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
-  
+
   public device: Device | null = null;
   public isLoading = true;
   public qrCodeValue: string = '';
@@ -68,7 +68,7 @@ export class DeviceDetailComponent implements OnInit {
 
   loadDevice(id: string): void {
     this.isLoading = true;
-    
+
     this.deviceService.getDeviceById(id)
       .pipe(
         finalize(() => this.isLoading = false),
@@ -151,7 +151,7 @@ export class DeviceDetailComponent implements OnInit {
       device_code: device.Ma || '',
       model: device.Model || '',
       serial: device.SerialNumber || '',
-      department: device.ViTri || '', 
+      department: device.ViTri || '',
       status: device.TrangThai_Ten || '',
       description: device.MoTa || '',
       price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(device.GiaMua || 0),
@@ -162,8 +162,8 @@ export class DeviceDetailComponent implements OnInit {
       this.toastService.showInfo('Đang chuẩn bị bản in...');
 
       await this.pdfService.generatePdf(
-        'assets/templates/device_template.pdf', 
-        reportData, 
+        'assets/templates/device_template.pdf',
+        reportData,
         `Bien_Ban_${device.Ma}.pdf`,
         'print'
       );
@@ -208,8 +208,8 @@ export class DeviceDetailComponent implements OnInit {
       },
       {
         label: 'In Biên Bản',
-        icon: 'fas fa-file-pdf', 
-        action: () => this.onPrintReport(device), 
+        icon: 'fas fa-file-pdf',
+        action: () => this.onPrintReport(device),
         permission: 'QLThietBi.DMThietBi.RPRINT',
         className: 'btn-primary',
       },

@@ -26,14 +26,14 @@ import {
 } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
   DateFilterComponent,
   DateRange,
-} from '../../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
+} from '../../../shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
 
 interface WidgetData {
   id: string;
@@ -290,9 +290,8 @@ export class EmergencySummaryComponent implements OnInit {
         icon: 'fas fa-procedures',
         title: 'Nhập Viện',
         value: this.formatNumber(totalNhapVien),
-        caption: `Chiếm ${
-          totalCC > 0 ? ((totalNhapVien / totalCC) * 100).toFixed(1) : 0
-        }%`,
+        caption: `Chiếm ${totalCC > 0 ? ((totalNhapVien / totalCC) * 100).toFixed(1) : 0
+          }%`,
         accentColor: this.palette.chart6,
       },
       {
@@ -391,47 +390,47 @@ export class EmergencySummaryComponent implements OnInit {
     // If we just pass [] or undefined, ECharts merges options and keeps the OLD slider.
     const dataZoomConfig = needsDataZoom
       ? [
-          {
-            type: 'slider' as const,
-            show: true,
-            xAxisIndex: [0],
-            start: startPercent, // Use calculated start
-            end: 100,
-            bottom: '2%',
-            height: 20,
-            borderColor: this.palette.gray200,
-            fillerColor: `${this.palette.primary}33`,
-            textStyle: { color: this.palette.textSecondary, fontSize: 10 },
-            handleStyle: {
-              color: this.palette.primary,
-              borderColor: this.palette.primary,
-            },
-            moveHandleStyle: { color: this.palette.primary },
+        {
+          type: 'slider' as const,
+          show: true,
+          xAxisIndex: [0],
+          start: startPercent, // Use calculated start
+          end: 100,
+          bottom: '2%',
+          height: 20,
+          borderColor: this.palette.gray200,
+          fillerColor: `${this.palette.primary}33`,
+          textStyle: { color: this.palette.textSecondary, fontSize: 10 },
+          handleStyle: {
+            color: this.palette.primary,
+            borderColor: this.palette.primary,
           },
-          {
-            type: 'inside' as const,
-            xAxisIndex: [0],
-            start: startPercent, // Use calculated start
-            end: 100,
-          },
-        ]
+          moveHandleStyle: { color: this.palette.primary },
+        },
+        {
+          type: 'inside' as const,
+          xAxisIndex: [0],
+          start: startPercent, // Use calculated start
+          end: 100,
+        },
+      ]
       : [
-          // Explicitly Turn OFF if switching from Month -> Week
-          {
-            type: 'slider' as const,
-            show: false,
-            xAxisIndex: [0],
-            start: 0,
-            end: 100,
-          },
-          {
-            type: 'inside' as const,
-            disabled: true,
-            xAxisIndex: [0],
-            start: 0,
-            end: 100,
-          },
-        ];
+        // Explicitly Turn OFF if switching from Month -> Week
+        {
+          type: 'slider' as const,
+          show: false,
+          xAxisIndex: [0],
+          start: 0,
+          end: 100,
+        },
+        {
+          type: 'inside' as const,
+          disabled: true,
+          xAxisIndex: [0],
+          start: 0,
+          end: 100,
+        },
+      ];
 
     // 1. Trend Chart (Comparison)
     this.trendChartOptions = {

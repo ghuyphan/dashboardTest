@@ -24,12 +24,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../core/services/auth.service';
 import { NavItem } from '../../core/models/nav-item.model';
-import { ActionFooterComponent } from '../../components/action-footer/action-footer.component';
-import { SidebarComponent } from '../../components/sidebar/sidebar.component';
-import { HeaderComponent } from '../../components/header/header.component';
+import { ActionFooterComponent } from '../../shared/components/action-footer/action-footer.component';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { HeaderComponent } from '../../shared/components/header/header.component';
 import { SearchService } from '../../core/services/search.service';
 import { FooterActionService } from '../../core/services/footer-action.service';
-import { AiChatComponent } from '../../components/ai-chat/ai-chat.component';
+import { AiChatComponent } from '../../shared/components/ai-chat/ai-chat.component';
 
 interface RouteData {
   title?: string;

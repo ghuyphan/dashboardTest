@@ -29,7 +29,7 @@ import {
   TimelineComponent // [FIX] Added for responsive media queries
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import { ThemeService } from '../../core/services/theme.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 echarts.use([
   BarChart, LineChart, PieChart, ScatterChart,
@@ -63,10 +63,10 @@ export class ChartCardComponent implements AfterViewInit {
   public subtitle = input<string>('');
   public icon = input<string>('');
   public iconClass = input<string>('');
-  
+
   public isLoading = input<boolean>(false);
   public chartOptions = input<EChartsCoreOption | null>(null);
-  
+
   public emptyText = input<string>('Không có dữ liệu');
   public emptyIcon = input<string>('fas fa-chart-bar');
   public skeletonType = input<ChartSkeletonType>('bar');
@@ -86,12 +86,12 @@ export class ChartCardComponent implements AfterViewInit {
   });
 
   private chartInstance?: EChartsType;
-  
+
   private resizeObserver?: ResizeObserver;
   private windowResizeListener?: () => void;
   private resizeTimer?: ReturnType<typeof setTimeout>;
   private readonly RESIZE_DEBOUNCE_MS = 200;
-  
+
   private lastWidth = 0;
   private lastHeight = 0;
   private isDestroyed = false;
@@ -114,9 +114,9 @@ export class ChartCardComponent implements AfterViewInit {
     });
 
     effect(() => {
-      this.effectiveTheme(); 
+      this.effectiveTheme();
       const options = untracked(() => this.chartOptions());
-      
+
       if (this.chartInstance && options) {
         this.disposeChart();
         setTimeout(() => this.initChart(options), 0);
@@ -136,7 +136,7 @@ export class ChartCardComponent implements AfterViewInit {
 
   private initChart(options: EChartsCoreOption | null): void {
     if (this.isDestroyed || !this.isBrowser || !this.chartContainerRef() || !options) return;
-    if (this.chartInstance) return; 
+    if (this.chartInstance) return;
 
     const el = this.chartContainerRef().nativeElement;
 
@@ -147,7 +147,7 @@ export class ChartCardComponent implements AfterViewInit {
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance = echarts.init(el, this.effectiveTheme(), {
         renderer: 'canvas',
-        useDirtyRect: false 
+        useDirtyRect: false
       });
 
       this.lastWidth = el.clientWidth;
@@ -170,14 +170,14 @@ export class ChartCardComponent implements AfterViewInit {
 
   private updateChart(options: EChartsCoreOption): void {
     if (!this.chartInstance) return;
-    
+
     this.ngZone.runOutsideAngular(() => {
       this.applyAutoFormatting(options);
       const responsiveOptions = this.makeOptionsResponsive(options);
 
       this.chartInstance?.setOption(responsiveOptions, {
         notMerge: false,
-        lazyUpdate: true 
+        lazyUpdate: true
       });
     });
   }
@@ -268,17 +268,17 @@ export class ChartCardComponent implements AfterViewInit {
     if (option.series) {
       const seriesList = Array.isArray(option.series) ? option.series : [option.series];
       seriesList.forEach((series: any) => {
-         series.tooltip = series.tooltip || {};
-         if (!series.tooltip.valueFormatter) {
-            series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
-         }
+        series.tooltip = series.tooltip || {};
+        if (!series.tooltip.valueFormatter) {
+          series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
+        }
 
-         if (series.label?.show && !series.label.formatter) {
-             series.label.formatter = (params: any) => {
-                 const val = Array.isArray(params.value) ? params.value[1] : params.value;
-                 return typeof val === 'number' ? formatFn(val) : val;
-             };
-         }
+        if (series.label?.show && !series.label.formatter) {
+          series.label.formatter = (params: any) => {
+            const val = Array.isArray(params.value) ? params.value[1] : params.value;
+            return typeof val === 'number' ? formatFn(val) : val;
+          };
+        }
       });
     }
   }
@@ -291,7 +291,7 @@ export class ChartCardComponent implements AfterViewInit {
         this.triggerResize();
       });
       this.resizeObserver.observe(el);
-    } 
+    }
     else {
       this.ngZone.runOutsideAngular(() => {
         this.windowResizeListener = () => this.triggerResize();
@@ -302,7 +302,7 @@ export class ChartCardComponent implements AfterViewInit {
 
   private triggerResize(): void {
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
-    
+
     this.ngZone.runOutsideAngular(() => {
       this.resizeTimer = setTimeout(() => {
         this.performResize();
@@ -338,7 +338,7 @@ export class ChartCardComponent implements AfterViewInit {
         this.chartInstance?.resize({
           width: 'auto',
           height: 'auto',
-          animation: { duration: 300 } 
+          animation: { duration: 300 }
         });
       });
     }
@@ -355,7 +355,7 @@ export class ChartCardComponent implements AfterViewInit {
 
   private cleanup(): void {
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
-    
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = undefined;

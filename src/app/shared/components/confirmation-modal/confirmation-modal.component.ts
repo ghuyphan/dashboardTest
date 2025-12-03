@@ -1,6 +1,6 @@
 import { Component, input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ModalRef } from '../../core/models/modal-ref.model';
+import { ModalRef } from '../../../core/models/modal-ref.model';
 
 @Component({
   selector: 'app-confirmation-modal',
@@ -9,7 +9,7 @@ import { ModalRef } from '../../core/models/modal-ref.model';
   templateUrl: './confirmation-modal.component.html',
   styleUrls: ['./confirmation-modal.component.scss'],
   // Signals automatically notify Angular when to update the view.
-  changeDetection: ChangeDetectionStrategy.OnPush, 
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmationModalComponent {
   protected modalRef = inject(ModalRef);

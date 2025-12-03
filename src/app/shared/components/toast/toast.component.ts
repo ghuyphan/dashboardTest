@@ -7,8 +7,8 @@ import {
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ToastMessage, ToastType } from '../../core/models/toast-message.model';
-import { ToastService } from '../../core/services/toast.service';
+import { ToastMessage, ToastType } from '../../../core/models/toast-message.model';
+import { ToastService } from '../../../core/services/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface ToastTimerState {
@@ -26,7 +26,7 @@ interface ToastTimerState {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent implements OnDestroy {
-  public toastService = inject(ToastService); 
+  public toastService = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
 
   // --- UI State Signals ---
@@ -50,7 +50,7 @@ export class ToastComponent implements OnDestroy {
   constructor() {
     effect(() => {
       const newToasts = this.toastService.toasts();
-      
+
       // [FIX] Create Sets of IDs for reliable O(1) lookup
       const previousIds = new Set(this._previousToasts.map(t => t.id));
       const currentIds = new Set(newToasts.map(t => t.id));
@@ -65,7 +65,7 @@ export class ToastComponent implements OnDestroy {
 
       // 2. Initialize timers ONLY for truly new toasts
       const addedToasts = newToasts.filter(t => !previousIds.has(t.id));
-      
+
       addedToasts.forEach(toast => {
         const duration = toast.duration ?? this.DEFAULT_DURATION;
         // Only start timer if duration is positive and we haven't already tracked this ID
@@ -75,7 +75,7 @@ export class ToastComponent implements OnDestroy {
             startTime: Date.now(),
             remaining: duration
           });
-          
+
           if (!this.isHovering()) {
             this.runTimer(toast.id);
           }
@@ -89,7 +89,7 @@ export class ToastComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearAllTimers();
-    
+
     // Clear all pending dismiss timers
     this.dismissTimers.forEach(timerId => clearTimeout(timerId));
     this.dismissTimers = [];
@@ -100,7 +100,7 @@ export class ToastComponent implements OnDestroy {
   private runTimer(id: number): void {
     const state = this.timerState.get(id);
     if (!state || state.remaining <= 0) return;
-    
+
     if (state.timerId) clearTimeout(state.timerId);
 
     state.startTime = Date.now();
@@ -149,20 +149,20 @@ export class ToastComponent implements OnDestroy {
   // --- User Actions ---
 
   closeToast(id: number): void {
-    this.clearTimer(id); 
+    this.clearTimer(id);
     const wrapper = document.getElementById('toast-' + id);
     const card = wrapper?.querySelector('.toast-card');
-    
+
     if (card) {
       card.classList.add('dismissing');
-      
+
       // Track the dismiss timer
       const timerId = setTimeout(() => {
         this.toastService.removeToast(id);
         // Remove timer from tracking array once executed
         this.dismissTimers = this.dismissTimers.filter(t => t !== timerId);
-      }, 300); 
-      
+      }, 300);
+
       this.dismissTimers.push(timerId);
     } else {
       this.toastService.removeToast(id);
@@ -207,14 +207,14 @@ export class ToastComponent implements OnDestroy {
 
   handleTouchStart(event: TouchEvent, toastId: number): void {
     if (event.touches.length !== 1) return;
-    this.pauseAllTimers(); 
+    this.pauseAllTimers();
     this.touchStartX = event.touches[0].clientX;
     this.touchMoveX = this.touchStartX;
     this.swipingToastId = toastId;
-    
+
     const wrapper = document.getElementById('toast-' + toastId);
     this.swipedElement = wrapper?.querySelector('.toast-card') as HTMLElement;
-    
+
     if (this.swipedElement) {
       this.swipedElement.classList.add('swiping');
     }
@@ -222,10 +222,10 @@ export class ToastComponent implements OnDestroy {
 
   handleTouchMove(event: TouchEvent, toastId: number): void {
     if (this.swipingToastId !== toastId || !this.swipedElement) return;
-    
+
     this.touchMoveX = event.touches[0].clientX;
     const deltaX = this.touchMoveX - this.touchStartX;
-    
+
     if (deltaX > 0) {
       event.preventDefault();
       this.swipedElement.style.transform = `translateX(${deltaX}px)`;
@@ -235,11 +235,11 @@ export class ToastComponent implements OnDestroy {
 
   handleTouchEnd(event: TouchEvent, toast: ToastMessage): void {
     if (this.swipingToastId !== toast.id || !this.swipedElement) return;
-    
+
     this.swipedElement.classList.remove('swiping');
     const deltaX = this.touchMoveX - this.touchStartX;
     const width = this.swipedElement.offsetWidth;
-    
+
     if (deltaX > width * this.SWIPE_DISMISS_THRESHOLD_PERCENT) {
       this.closeToast(toast.id);
     } else {
@@ -247,7 +247,7 @@ export class ToastComponent implements OnDestroy {
       this.swipedElement.style.opacity = '';
       this.resumeAllTimers();
     }
-    
+
     this.swipingToastId = null;
     this.swipedElement = null;
   }

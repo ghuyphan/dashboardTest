@@ -18,8 +18,8 @@ import { ThemeService, ThemePalette } from '../../../core/services/theme.service
 import { EmergencyStat } from '../../../shared/models/emergency-stat';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
@@ -54,10 +54,10 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
   public rawData: EmergencyStat[] = [];
   public fromDate: string = '';
   public toDate: string = '';
-  
+
   // Biểu đồ chính chứa Bar + 2 Line
-  public comparisonChartOptions: EChartsCoreOption | null = null; 
-  
+  public comparisonChartOptions: EChartsCoreOption | null = null;
+
   private palette!: ThemePalette;
   private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
@@ -90,7 +90,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
 
   public loadData(): void {
     if (!this.fromDate || !this.toDate) return;
-    
+
     this.isLoading = true;
     this.comparisonChartOptions = null;
     this.cd.markForCheck();
@@ -110,7 +110,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
             ...item,
             NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
           }));
-          
+
           this.buildChart(this.rawData);
         },
         error: (err) => {
@@ -137,9 +137,9 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     });
 
     // Extract series data
-    const admissions = sorted.map(d => d.NHAP_VIEN || 0); 
-    const totalCC = sorted.map(d => d.LUOT_CC || 0);      
-    const bhytCC = sorted.map(d => d.BHYT || 0);          
+    const admissions = sorted.map(d => d.NHAP_VIEN || 0);
+    const totalCC = sorted.map(d => d.LUOT_CC || 0);
+    const bhytCC = sorted.map(d => d.BHYT || 0);
 
     // --- DataZoom Logic ---
     const totalItems = dates.length;
@@ -195,39 +195,39 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
 
     // ECharts Colors
     const colors = {
-      admissions: this.palette.chart2,     
-      totalCC: this.palette.tealMidtone,   
-      bhytCC: this.palette.primary         
+      admissions: this.palette.chart2,
+      totalCC: this.palette.tealMidtone,
+      bhytCC: this.palette.primary
     };
 
     // FIX: Layout Configuration
     // Move Legend to TOP, DataZoom at BOTTOM
-    const commonGrid = { 
-      left: '3%', 
-      right: '4%', 
+    const commonGrid = {
+      left: '3%',
+      right: '4%',
       // Top padding for Legend
-      top: 40, 
+      top: 40,
       // Bottom padding: if Zoom exists, give space (e.g., 30px), else standard space
-      bottom: needsDataZoom ? 30 : '3%', 
-      containLabel: true 
+      bottom: needsDataZoom ? 30 : '3%',
+      containLabel: true
     };
-    
-    const commonTooltip = { 
-      trigger: 'axis', 
-      backgroundColor: this.palette.bgCard, 
-      borderColor: this.palette.gray200, 
-      textStyle: { color: this.palette.textPrimary }, 
+
+    const commonTooltip = {
+      trigger: 'axis',
+      backgroundColor: this.palette.bgCard,
+      borderColor: this.palette.gray200,
+      textStyle: { color: this.palette.textPrimary },
       confine: true,
       axisPointer: { type: 'shadow' }
     };
-    
+
     this.comparisonChartOptions = {
       backgroundColor: 'transparent',
       textStyle: {
         fontFamily: GLOBAL_FONT_FAMILY,
         color: this.palette.textSecondary,
       },
-      tooltip: { 
+      tooltip: {
         ...commonTooltip,
         formatter: (params: any) => {
           let result = `<div style="font-weight:bold">${params[0].name}</div>`;
@@ -244,27 +244,27 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
       },
       grid: commonGrid,
       dataZoom: dataZoomConfig,
-      legend: { 
-        data: ['Số ca nhập viện từ cấp cứu', 'Tổng số lượt cấp cứu', 'Tổng số lượt cấp cứu có BHYT'], 
+      legend: {
+        data: ['Số ca nhập viện từ cấp cứu', 'Tổng số lượt cấp cứu', 'Tổng số lượt cấp cứu có BHYT'],
         // FIX: Move legend to Top to avoid collision with slider
-        top: 0, 
+        top: 0,
         left: 'center',
-        textStyle: { color: this.palette.textSecondary } 
+        textStyle: { color: this.palette.textSecondary }
       },
-      xAxis: { 
-        type: 'category', 
-        data: dates, 
-        axisLabel: { 
+      xAxis: {
+        type: 'category',
+        data: dates,
+        axisLabel: {
           color: this.palette.textPrimary,
           rotate: needsDataZoom ? 45 : 0,
           interval: needsDataZoom ? 0 : 'auto',
           margin: 10
-        }, 
-        axisLine: { lineStyle: { color: this.palette.gray200 } } 
+        },
+        axisLine: { lineStyle: { color: this.palette.gray200 } }
       },
       yAxis: [
-        { 
-          type: 'value', 
+        {
+          type: 'value',
           name: 'Số Lượng',
           nameTextStyle: { color: this.palette.textSecondary },
           splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
@@ -272,20 +272,20 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         }
       ],
       series: [
-        { 
-          name: 'Số ca nhập viện từ cấp cứu', 
-          type: 'bar', 
-          yAxisIndex: 0, 
-          barWidth: '50%', 
-          data: admissions, 
+        {
+          name: 'Số ca nhập viện từ cấp cứu',
+          type: 'bar',
+          yAxisIndex: 0,
+          barWidth: '50%',
+          data: admissions,
           itemStyle: { color: colors.admissions, borderRadius: [4, 4, 0, 0] },
           label: { show: true, position: 'top', color: this.palette.textPrimary, fontSize: 10, distance: 5 },
           z: 1
         },
-        { 
-          name: 'Tổng số lượt cấp cứu', 
-          type: 'line', 
-          yAxisIndex: 0, 
+        {
+          name: 'Tổng số lượt cấp cứu',
+          type: 'line',
+          yAxisIndex: 0,
           data: totalCC,
           smooth: true,
           symbol: 'circle',
@@ -295,10 +295,10 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           z: 2,
           label: { show: true, position: 'top', color: colors.totalCC, formatter: (p: any) => this.vnNumberFormatter.format(p.value) }
         },
-        { 
-          name: 'Tổng số lượt cấp cứu có BHYT', 
-          type: 'line', 
-          yAxisIndex: 0, 
+        {
+          name: 'Tổng số lượt cấp cứu có BHYT',
+          type: 'line',
+          yAxisIndex: 0,
           data: bhytCC,
           smooth: true,
           symbol: 'circle',
@@ -311,7 +311,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
       ]
     };
   }
-  
+
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;
     this.isExporting = true;
@@ -326,8 +326,8 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         { key: 'CHUYEN_VIEN', header: 'Số Ca Chuyển Viện' },
       ];
       this.excelService.exportToExcel(
-        this.rawData, 
-        `BaoCao_CapCuu_LuuTru_${this.fromDate}_${this.toDate}`, 
+        this.rawData,
+        `BaoCao_CapCuu_LuuTru_${this.fromDate}_${this.toDate}`,
         columns
       );
       this.isExporting = false;

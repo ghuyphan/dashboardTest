@@ -25,14 +25,14 @@ import {
 } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
   DateFilterComponent,
   DateRange,
-} from '../../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
+} from '../../../shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
@@ -202,8 +202,8 @@ export class ClsLevel3ReportComponent implements OnInit {
               item.KHAM_CLS === 1
                 ? 'Khám'
                 : item.KHAM_CLS === 2
-                ? 'CLS'
-                : 'Khác',
+                  ? 'CLS'
+                  : 'Khác',
           }));
           this.processData(this.rawData);
         },
@@ -449,30 +449,30 @@ export class ClsLevel3ReportComponent implements OnInit {
       },
       dataZoom: enableZoom
         ? [
-            {
-              type: 'slider',
-              yAxisIndex: 0,
-              width: 12,
-              right: '2%',
-              top: '5%',
-              bottom: '5%',
-              startValue: startValue,
-              endValue: endValue,
-              fillerColor: this.palette.secondary + '40',
-              borderColor: 'transparent',
-              handleSize: '0%',
-              showDetail: false,
-              brushSelect: false,
-            },
-            {
-              type: 'inside',
-              yAxisIndex: 0,
-              startValue: startValue,
-              endValue: endValue,
-              zoomOnMouseWheel: false,
-              moveOnMouseWheel: true,
-            },
-          ]
+          {
+            type: 'slider',
+            yAxisIndex: 0,
+            width: 12,
+            right: '2%',
+            top: '5%',
+            bottom: '5%',
+            startValue: startValue,
+            endValue: endValue,
+            fillerColor: this.palette.secondary + '40',
+            borderColor: 'transparent',
+            handleSize: '0%',
+            showDetail: false,
+            brushSelect: false,
+          },
+          {
+            type: 'inside',
+            yAxisIndex: 0,
+            startValue: startValue,
+            endValue: endValue,
+            zoomOnMouseWheel: false,
+            moveOnMouseWheel: true,
+          },
+        ]
         : undefined,
       series: [
         {

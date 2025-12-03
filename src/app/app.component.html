@@ -1,21 +1,2 @@
 <router-outlet></router-outlet>
 <app-toast></app-toast>
-
-@if (themeService.isTransitioning()) {
-  <div 
-    class="theme-transition-curtain" 
-    [class.going-dark]="themeService.isDarkTransition()" 
-    [class.going-light]="!themeService.isDarkTransition()">
-    
-    <div class="curtain-loader">
-       <div class="app-loading-spinner"></div>
-       <p>
-         @if (themeService.isDarkTransition()) {
-           Đang chuyển sang chế độ tối...
-         } @else {
-           Đang chuyển sang chế độ sáng...
-         }
-       </p>
-    </div>
-  </div>
-}

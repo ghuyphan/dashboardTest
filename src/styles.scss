@@ -345,15 +345,6 @@ body {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-base);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-app-root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 main {
@@ -798,16 +789,8 @@ body>ul.submenu.open {
         background-color: var(--gray-200);
         font-weight: 600;
 
-        &::before {
-          content: "";
-          position: absolute;
-          left: 0;
-          top: var(--spacing-xs);
-          bottom: var(--spacing-xs);
-          width: var(--spacing-xs);
-          background-color: var(--chart-3); // aqua-island
-          border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
-          display: block;
+        i {
+          color: var(--primary);
         }
       }
     }
@@ -817,149 +800,11 @@ body>ul.submenu.open {
 @keyframes flyout-menu-fade-in {
   from {
     opacity: 0;
-    transform: translateX(-8px) scale(0.95);
+    transform: translateY(-5px);
   }
 
   to {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateY(0);
   }
-}
-
-.app-modal-backdrop {
-  background: rgba(0, 0, 0, 0.4);
-
-  [data-theme="dark"] & {
-    background: rgba(0, 0, 0, 0.75);
-  }
-
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  transition: none !important;
-  animation: none !important;
-}
-
-.app-modal-panel {
-  padding: 0;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-/* --- Chips & Skeletons --- */
-.status-chip {
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-medium);
-  border: none;
-  text-transform: capitalize;
-  line-height: 1.5;
-  white-space: nowrap;
-  color: #ffffff;
-  background-color: var(--gray-500); // Default
-}
-
-.status-in-use {
-  background-color: var(--secondary);
-}
-
-.status-ready {
-  background-color: var(--color-success);
-}
-
-.status-maintenance {
-  background-color: var(--gray-500);
-}
-
-.status-repair {
-  background-color: var(--color-warning);
-  color: #000;
-}
-
-.status-broken {
-  background-color: var(--color-danger);
-}
-
-.status-default {
-  background-color: var(--gray-500);
-}
-
-.skeleton {
-  background-color: var(--gray-200);
-
-  [data-theme="dark"] & {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-
-  border-radius: var(--border-radius-md);
-  animation: skeleton-pulse 1.5s infinite ease-in-out;
-}
-
-.skeleton-text {
-  height: 1em;
-  width: 100%;
-  margin-bottom: 0.5rem;
-  @extend .skeleton;
-}
-
-.skeleton-circle {
-  border-radius: 50%;
-  @extend .skeleton;
-}
-
-.skeleton-rect {
-  width: 100%;
-  height: 100%;
-  @extend .skeleton;
-}
-
-/* ==================================================
-   6. VIEW TRANSITIONS & ANIMATIONS
-   ================================================== */
-
-/* Custom "Slide & Scale" Transition */
-::view-transition-old(root) {
-  animation: 0.4s cubic-bezier(0.4, 0, 0.2, 1) both slideOutScale;
-}
-
-::view-transition-new(root) {
-  animation: 0.4s cubic-bezier(0.4, 0, 0.2, 1) both slideInScale;
-}
-
-@keyframes slideOutScale {
-  from {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: translateX(-20px) scale(0.98);
-  }
-}
-
-@keyframes slideInScale {
-  from {
-    opacity: 0;
-    transform: translateX(20px) scale(1.02);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
-/* Flicker Prevention: Ensure components transition smoothly */
-app-header,
-app-action-footer,
-.main-panel {
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Ensure body background matches theme explicitly to prevent white flashes */
-body,
-app-root {
-  background-color: var(--surface-background);
 }

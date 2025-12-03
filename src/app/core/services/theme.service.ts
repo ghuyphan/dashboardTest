@@ -22,8 +22,8 @@ export interface ThemePalette {
   textDisabled: string;
 
   // Semantic
-  primary: string;   
-  secondary: string; 
+  primary: string;
+  secondary: string;
   success: string;
   warning: string;
   danger: string;
@@ -34,7 +34,7 @@ export interface ThemePalette {
   tealMidtone: string;
   pastelCoral: string;
   peacockLight: string;
-  
+
   // Indexed Chart Colors (from styles)
   chart1: string;
   chart2: string;
@@ -57,19 +57,12 @@ export class ThemeService {
   public isDarkTheme = signal<boolean>(this.getInitialTheme());
   public currentPalette = signal<ThemePalette>(this.getColors());
 
-  // [FIX] Controls visibility of curtain
-  public isTransitioning = signal<boolean>(false);
-  
-  // [FIX] Locks the color of the curtain to the TARGET theme
-  // (Prevents the curtain from flipping colors mid-animation)
-  public isDarkTransition = signal<boolean>(false);
-
   constructor() {
     this.renderer = this.rendererFactory.createRenderer(null, null);
 
     effect(() => {
       const isDark = this.isDarkTheme();
-      
+
       if (isDark) {
         this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'dark');
         localStorage.setItem('theme', 'dark');
@@ -86,35 +79,15 @@ export class ThemeService {
   }
 
   public toggleTheme(): void {
-    const nextStateIsDark = !this.isDarkTheme();
-    
-    // 1. Lock the curtain color to where we are GOING
-    this.isDarkTransition.set(nextStateIsDark);
-
-    // 2. Show the curtain
-    this.isTransitioning.set(true);
-
-    // 3. Wait for curtain to fade in (matches CSS animation: 0.3s)
-    setTimeout(() => {
-      
-      // 4. Switch the actual theme behind the curtain
-      this.isDarkTheme.set(nextStateIsDark);
-
-      // 5. Short delay to let charts/tables repaint while hidden
-      setTimeout(() => {
-        // 6. Remove curtain
-        this.isTransitioning.set(false);
-      }, 150);
-
-    }, 300);
+    this.isDarkTheme.update(d => !d);
   }
 
   private getInitialTheme(): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
-    
+
     const stored = localStorage.getItem('theme');
     if (stored) return stored === 'dark';
-    
+
     if (window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
@@ -140,7 +113,7 @@ export class ThemeService {
       gray700: c('--gray-700', '#334155'),
       gray800: c('--gray-800', '#1e293b'),
       gray900: c('--gray-900', '#0f172a'),
-      
+
       bgPage: c('--surface-background', '#f8fafc'),
       bgCard: c('--surface-card', '#ffffff'),
 

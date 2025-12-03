@@ -24,11 +24,11 @@ import {
 } from '../../../core/services/excel-export.service';
 import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
   DateFilterComponent,
   DateRange,
-} from '../../../components/date-filter/date-filter.component';
+} from '../../../shared/components/date-filter/date-filter.component';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
@@ -81,7 +81,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
     this.loadData();
   }
 
-private setDefaultDateRange(): void {
+  private setDefaultDateRange(): void {
     const range = DateUtils.getReportingWeekRange();
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;

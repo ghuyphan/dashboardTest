@@ -13,8 +13,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute } from '@angular/router';
 
 import { ReusableTableComponent, GridColumn, RowActionEvent } from '../reusable-table/reusable-table.component';
-import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
-import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
 
 export interface ExportConfig {
   fileName: string;
@@ -48,7 +48,7 @@ export class TableCardComponent<T> {
   public title = input.required<string>();
   public icon = input<string>('');
   public iconClass = input<string>('');
-  
+
   // --- Table Inputs (Passthrough) ---
   public data = input<T[]>([]);
   public columns = input<GridColumn[]>([]);
@@ -58,10 +58,10 @@ export class TableCardComponent<T> {
   public pageSizeOptions = input<number[]>([5, 10, 25, 50]);
   public clientSideSort = input<boolean>(true);
   public emptyStateText = input<string>('Không có dữ liệu.');
-  
+
   // --- Export Inputs ---
   public enableExport = input<boolean>(false);
-  public isExporting = input<boolean>(false); 
+  public isExporting = input<boolean>(false);
   public exportConfig = input<ExportConfig | null>(null);
 
   /**
@@ -95,7 +95,7 @@ export class TableCardComponent<T> {
     if (basePermission) {
       return `${basePermission}.REXPORT`;
     }
-    
+
     return undefined;
   });
 
@@ -107,12 +107,12 @@ export class TableCardComponent<T> {
   // --- Logic ---
   public onExport(): void {
     const config = this.exportConfig();
-    
+
     // 1. Automatic Export (if config is provided)
     if (config) {
       this.excelService.exportToExcel(this.data(), config.fileName, config.columns);
-    } 
-    
+    }
+
     // 2. Always emit event (Parent might want to handle custom logic)
     this.exportClicked.emit();
   }

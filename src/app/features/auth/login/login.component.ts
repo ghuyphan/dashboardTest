@@ -7,7 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ModalService } from '../../../core/services/modal.service';
-import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
+import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-login',
@@ -48,7 +48,7 @@ export class LoginComponent {
     this.isLoading = true;
 
     this.authService.login(this.credentials)
-      .pipe(takeUntilDestroyed(this.destroyRef)) 
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           this.isLoading = false;

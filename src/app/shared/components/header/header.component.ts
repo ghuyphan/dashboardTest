@@ -11,11 +11,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 
-import { User } from '../../core/models/user.model';
-import { SearchService } from '../../core/services/search.service';
-import { ThemeService } from '../../core/services/theme.service';
-import { LlmService } from '../../core/services/llm.service';
-import { VersionService } from '../../core/services/version.service';
+import { User } from '../../../core/models/user.model';
+import { SearchService } from '../../../core/services/search.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { LlmService } from '../../../core/services/llm.service';
+import { VersionService } from '../../../core/services/version.service';
 
 @Component({
   selector: 'app-header',
@@ -39,7 +39,7 @@ export class HeaderComponent {
   public currentScreenName = input<string>('Dashboard');
   public showSearchBar = input<boolean>(false);
   public showBackButton = input<boolean>(false);
-  
+
   // --- Injections ---
   private router = inject(Router);
   public searchService = inject(SearchService);
@@ -77,7 +77,7 @@ export class HeaderComponent {
   }
 
   onAiToggle(event: Event): void {
-    event.stopPropagation(); 
+    event.stopPropagation();
     // Simply toggle. The service handles initialization/greeting automatically now.
     this.llmService.toggleChat();
   }

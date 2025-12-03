@@ -19,13 +19,14 @@ import { ExcelExportService, ExportColumn } from '../../../core/services/excel-e
 import { DetailedExaminationStat } from '../../../shared/models/detailed-examination-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
-import { ChartCardComponent } from '../../../components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../components/table-card/table-card.component';
-import { GridColumn } from '../../../components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../components/widget-card/widget-card.component';
+import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
+import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
+const STANDARD_DIVISOR = 6.5; // Department standard coefficient
 
 interface WidgetData {
   id: string;
@@ -34,6 +35,21 @@ interface WidgetData {
   value: string;
   caption: string;
   accentColor: string;
+}
+
+interface SpecialtyDetail {
+  TEN_CHUYEN_KHOA: string;
+  BAC_SI: string;
+  BENH_CU: number;
+  BENH_MOI: number;
+  SO_LUOT_KHAM: number;
+}
+
+interface DailyExaminationStat {
+  NGAY_KHAM: string;
+  SO_LUOT_KHAM_TONG: number;
+  SO_NGUOI_KHAM_TONG: number;
+  CHUYEN_KHOA_KHAM: SpecialtyDetail[];
 }
 
 @Component({
@@ -63,21 +79,19 @@ export class DetailedExaminationReportComponent implements OnInit {
 
   public isLoading = false;
   public isExporting = false;
+
   public rawData: DetailedExaminationStat[] = [];
-  
+  private dailyStats: DailyExaminationStat[] = [];
+
   public fromDate: string = '';
   public toDate: string = '';
 
   public widgetData: WidgetData[] = [];
 
-  // --- Charts based on image requirements ---
-  // (1) General Trend (Visits vs Patients)
+  // --- Charts ---
   public trendChartOptions: EChartsCoreOption | null = null;
-  // (2) Patient Classification (New vs Old)
   public patientTypeChartOptions: EChartsCoreOption | null = null;
-  // (3) Specialty Statistics
   public specialtyChartOptions: EChartsCoreOption | null = null;
-  // (4) Doctor Statistics
   public doctorChartOptions: EChartsCoreOption | null = null;
 
   public tableColumns: GridColumn[] = [
@@ -96,8 +110,8 @@ export class DetailedExaminationReportComponent implements OnInit {
   constructor() {
     effect(() => {
       this.palette = this.themeService.currentPalette();
-      if (!this.isLoading && this.rawData.length > 0) {
-        this.processData(this.rawData);
+      if (!this.isLoading && (this.rawData.length > 0 || this.dailyStats.length > 0)) {
+        this.processData();
       }
       this.updateWidgetColors();
       this.cd.markForCheck();
@@ -141,11 +155,11 @@ export class DetailedExaminationReportComponent implements OnInit {
         accentColor: '#f89c5b',
       },
       {
-        id: 'avg-visit',
+        id: 'avg-metric',
         icon: 'fas fa-chart-line',
-        title: 'TB Lượt/Người',
+        title: 'TB Lượt (Hệ số 6.5)', // Updated Title
         value: '0',
-        caption: 'Visits per Patient',
+        caption: 'Visits / 6.5',
         accentColor: '#082567',
       },
       {
@@ -167,7 +181,7 @@ export class DetailedExaminationReportComponent implements OnInit {
       };
       setC('total-visits', this.palette.primary);
       setC('total-patients', this.palette.chart6);
-      setC('avg-visit', this.palette.deepSapphire);
+      setC('avg-metric', this.palette.deepSapphire);
       setC('re-exam-rate', this.palette.success);
     }
   }
@@ -189,19 +203,29 @@ export class DetailedExaminationReportComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (data) => {
-          this.rawData = data.map((item) => ({
-            ...item,
-            NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAYKHAM),
-            BAC_SI: item.BAC_SI || 'Chưa xác định',
-            TEN_CHUYEN_KHOA: item.TEN_CHUYEN_KHOA || 'Khác'
-          }));
-          this.processData(this.rawData);
+        next: (response: any) => {
+          this.dailyStats = response as DailyExaminationStat[];
+          this.rawData = this.dailyStats.flatMap(day => {
+            const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
+            return (day.CHUYEN_KHOA_KHAM || []).map(detail => ({
+              NGAYKHAM: day.NGAY_KHAM,
+              NGAY_KHAM_DISPLAY: dateDisplay,
+              TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
+              BAC_SI: detail.BAC_SI || 'Chưa xác định',
+              SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
+              SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
+              BENH_MOI: detail.BENH_MOI || 0,
+              BENH_CU: detail.BENH_CU || 0,
+            } as DetailedExaminationStat));
+          });
+
+          this.processData();
         },
         error: (err) => {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu báo cáo chi tiết.');
           this.rawData = [];
+          this.dailyStats = [];
           this.initializeWidgets();
         },
       });
@@ -214,48 +238,42 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.doctorChartOptions = null;
   }
 
-  private processData(data: DetailedExaminationStat[]): void {
-    if (!data || data.length === 0) {
+  private processData(): void {
+    if ((!this.dailyStats || this.dailyStats.length === 0) && this.rawData.length === 0) {
       this.initializeWidgets();
       return;
     }
 
     let totalVisits = 0;
     let totalPatients = 0;
-    let totalNew = 0;
-    let totalOld = 0;
 
     const dateMap = new Map<string, { visits: number; patients: number }>();
     const specialtyMap = new Map<string, number>();
     const doctorMap = new Map<string, number>();
 
-    data.forEach((item) => {
-      const visits = item.SO_LUOT_KHAM || 0;
-      const patients = item.SO_NGUOI_KHAM || 0;
-      
-      totalVisits += visits;
-      totalPatients += patients;
-      totalNew += item.BENH_MOI || 0;
-      totalOld += item.BENH_CU || 0;
+    let totalNew = 0;
+    let totalOld = 0;
 
-      // 1. Date Aggregation
-      const dateKey = item.NGAYKHAM ? item.NGAYKHAM.split('T')[0] : 'N/A';
-      const currentDay = dateMap.get(dateKey) || { visits: 0, patients: 0 };
-      currentDay.visits += visits;
-      currentDay.patients += patients;
-      dateMap.set(dateKey, currentDay);
-
-      // 3. Specialty Aggregation
-      const spec = item.TEN_CHUYEN_KHOA;
-      specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
-
-      // 4. Doctor Aggregation
-      const doc = item.BAC_SI;
-      doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+    this.dailyStats.forEach(day => {
+      const v = day.SO_LUOT_KHAM_TONG || 0;
+      const p = day.SO_NGUOI_KHAM_TONG || 0;
+      totalVisits += v;
+      totalPatients += p;
+      const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
+      dateMap.set(dateKey, { visits: v, patients: p });
     });
 
-    // Calculate Widgets
-    const avgVisitPerPatient = totalPatients > 0 ? (totalVisits / totalPatients).toFixed(2) : '0';
+    this.rawData.forEach(item => {
+      totalNew += item.BENH_MOI || 0;
+      totalOld += item.BENH_CU || 0;
+      const spec = item.TEN_CHUYEN_KHOA;
+      specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + (item.SO_LUOT_KHAM || 0));
+      const doc = item.BAC_SI;
+      doctorMap.set(doc, (doctorMap.get(doc) || 0) + (item.SO_LUOT_KHAM || 0));
+    });
+
+    // --- UPDATED CALCULATION: Total Visits / 6.5 ---
+    const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
     const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
 
     this.widgetData = [
@@ -276,11 +294,11 @@ export class DetailedExaminationReportComponent implements OnInit {
         accentColor: this.palette.chart6,
       },
       {
-        id: 'avg-visit',
+        id: 'avg-metric',
         icon: 'fas fa-chart-line',
-        title: 'TB Lượt/Người',
-        value: avgVisitPerPatient,
-        caption: 'Avg Visits/Patient',
+        title: 'TB Lượt (HS 6.5)',
+        value: avgMetricValue,
+        caption: 'Workload (Div 6.5)', // Updated Caption
         accentColor: this.palette.deepSapphire,
       },
       {
@@ -293,29 +311,41 @@ export class DetailedExaminationReportComponent implements OnInit {
       },
     ];
 
-    // Build Charts
     this.buildTrendChart(dateMap);
     this.buildPatientTypeChart(totalNew, totalOld);
     this.buildSpecialtyChart(specialtyMap);
     this.buildDoctorChart(doctorMap);
   }
 
-  // (1) Chart: Visits vs Patients over time
+  // (1) Chart: Visits (Bar) + Patients (Bar) + Coefficient Line
   private buildTrendChart(dateMap: Map<string, { visits: number; patients: number }>): void {
     const sortedDates = Array.from(dateMap.keys()).sort();
     const dateLabels = sortedDates.map((d) => {
       const dateObj = new Date(d);
       return this.datePipe.transform(dateObj, 'dd/MM') || d;
     });
-    
+
     const visitsData = sortedDates.map(d => dateMap.get(d)?.visits || 0);
     const patientsData = sortedDates.map(d => dateMap.get(d)?.patients || 0);
 
+    // --- UPDATED CHART LINE: Daily Visits / 6.5 ---
+    const workloadData = sortedDates.map(d => {
+      const v = dateMap.get(d)?.visits || 0;
+      return parseFloat((v / STANDARD_DIVISOR).toFixed(2));
+    });
+
     this.trendChartOptions = {
       ...this.getCommonChartOptions(),
-      legend: { 
-        top: 0, 
-        textStyle: { color: this.palette.textSecondary } 
+      legend: {
+        top: 0,
+        textStyle: { color: this.palette.textSecondary }
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: this.palette.bgCard,
+        borderColor: this.palette.gray200,
+        textStyle: { color: this.palette.textPrimary },
+        axisPointer: { type: 'shadow' }
       },
       xAxis: {
         type: 'category',
@@ -323,36 +353,44 @@ export class DetailedExaminationReportComponent implements OnInit {
         axisLabel: { color: this.palette.textPrimary },
         axisLine: { lineStyle: { color: this.palette.gray200 } },
       },
-      yAxis: [
-        {
-          type: 'value',
-          name: 'Lượt',
-          splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
-          axisLabel: { color: this.palette.textSecondary },
-        }
-      ],
+      yAxis: {
+        type: 'value',
+        name: 'Số lượng',
+        position: 'left',
+        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        axisLabel: { color: this.palette.textSecondary },
+      },
       series: [
         {
           name: 'Tổng lượt khám',
           type: 'bar',
           data: visitsData,
-          itemStyle: { color: this.palette.primary, borderRadius: [4, 4, 0, 0] },
-          barWidth: '40%'
+          itemStyle: { color: this.palette.chart3, borderRadius: [4, 4, 0, 0] },
+          barGap: '10%',
+          barWidth: '30%',
+          label: { show: true, position: 'top', color: this.palette.textPrimary }
         },
         {
           name: 'Số người bệnh',
-          type: 'line',
+          type: 'bar',
           data: patientsData,
+          itemStyle: { color: this.palette.chart2, borderRadius: [4, 4, 0, 0] },
+          barWidth: '30%'
+        },
+        {
+          name: 'TB Lượt/6.5',
+          type: 'line',
+          data: workloadData,
           smooth: true,
-          itemStyle: { color: this.palette.chart6 },
-          lineStyle: { width: 3 },
-          symbolSize: 8
+          itemStyle: { color: this.palette.deepSapphire },
+          lineStyle: { width: 3, type: 'dashed' },
+          symbolSize: 8,
+          symbol: 'circle'
         }
       ]
     };
   }
 
-  // (2) Chart: New vs Old Patients
   private buildPatientTypeChart(newCount: number, oldCount: number): void {
     this.patientTypeChartOptions = {
       backgroundColor: 'transparent',
@@ -385,18 +423,17 @@ export class DetailedExaminationReportComponent implements OnInit {
             color: this.palette.textPrimary
           },
           data: [
-            { value: newCount, name: 'Khám Mới (Bệnh mới)', itemStyle: { color: this.palette.chart3 } },
-            { value: oldCount, name: 'Tái Khám (Bệnh cũ)', itemStyle: { color: this.palette.chart2 } },
+            { value: newCount, name: 'Khám Mới', itemStyle: { color: this.palette.primary } },
+            { value: oldCount, name: 'Tái Khám', itemStyle: { color: this.palette.chart6 } },
           ],
         },
       ],
     };
   }
 
-  // (3) Chart: Statistics by Specialty (Top 10)
   private buildSpecialtyChart(map: Map<string, number>): void {
     const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const keys = sorted.map(s => s[0]).reverse(); // Reverse for horizontal bar
+    const keys = sorted.map(s => s[0]).reverse();
     const values = sorted.map(s => s[1]).reverse();
 
     this.specialtyChartOptions = {
@@ -411,7 +448,7 @@ export class DetailedExaminationReportComponent implements OnInit {
       yAxis: {
         type: 'category',
         data: keys,
-        axisLabel: { 
+        axisLabel: {
           color: this.palette.textPrimary,
           width: 130,
           overflow: 'truncate'
@@ -430,7 +467,6 @@ export class DetailedExaminationReportComponent implements OnInit {
     };
   }
 
-  // (4) Chart: Statistics by Doctor (Top 10)
   private buildDoctorChart(map: Map<string, number>): void {
     const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
     const keys = sorted.map(s => s[0]).reverse();
@@ -448,7 +484,7 @@ export class DetailedExaminationReportComponent implements OnInit {
       yAxis: {
         type: 'category',
         data: keys,
-        axisLabel: { 
+        axisLabel: {
           color: this.palette.textPrimary,
           width: 130,
           overflow: 'truncate'

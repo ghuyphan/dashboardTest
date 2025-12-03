@@ -25,14 +25,14 @@ import {
   filter,
 } from 'rxjs/operators';
 
-import { ReusableTableComponent, GridColumn, SortChangedEvent, SortDirection } from '../../../components/reusable-table/reusable-table.component';
+import { ReusableTableComponent, GridColumn, SortChangedEvent, SortDirection } from '../../../shared/components/reusable-table/reusable-table.component';
 import { FooterActionService } from '../../../core/services/footer-action.service';
 import { FooterAction } from '../../../core/models/footer-action.model';
 import { SearchService } from '../../../core/services/search.service';
 import { ModalService } from '../../../core/services/modal.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { DeviceFormComponent } from '../device-form/device-form.component';
-import { ConfirmationModalComponent } from '../../../components/confirmation-modal/confirmation-modal.component';
+import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
 import { DeviceService, DeviceQueryParams } from '../../../core/services/device.service';
 
