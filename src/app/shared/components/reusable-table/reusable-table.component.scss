@@ -1,3 +1,5 @@
+/* src/app/shared/components/reusable-table/reusable-table.component.scss */
+
 /* =========================================================
    COMPONENT HOST & VARIABLES
    ========================================================= */
@@ -110,12 +112,9 @@ table.mat-table {
   border-collapse: separate;
   border-spacing: 0;
   min-width: 100%;
-  /* Changed from fixed 1000px to allow responsiveness */
   table-layout: auto;
-  /* Allow auto layout for better responsiveness */
   background-color: transparent;
 
-  /* Force min-width on mobile to enable horizontal scroll if needed */
   @media (max-width: 768px) {
     min-width: 800px;
   }
@@ -296,7 +295,6 @@ table.mat-table {
     color: var(--gray-700, #334155);
   }
 
-  /* Add other status classes as needed (in-use, ready, etc.) */
   &.status-in-use {
     background-color: rgba(0, 110, 150, 0.1);
     color: var(--secondary, #006e96);
@@ -317,21 +315,16 @@ table.mat-table {
   border-top: 1px solid var(--border-color-local);
   color: var(--text-secondary, #64748b) !important;
   font-size: 0.8125rem !important;
-  /* Smaller text */
 
-  /* Reduce height */
   .mat-mdc-paginator-container {
     padding: 0 8px !important;
     min-height: 42px !important;
-    /* Reduced from 52px */
     height: 42px !important;
 
-    /* Mobile Responsiveness */
     @media (max-width: 600px) {
       padding: 0 4px !important;
       justify-content: space-between;
 
-      /* Hide "Items per page" text label on very small screens to save space */
       .mat-mdc-paginator-page-size-label {
         display: none;
       }
@@ -342,10 +335,10 @@ table.mat-table {
     }
   }
 
-  /* Range Label (1 - 10 of 100) */
+  /* [FIX] Removed bold font weight */
   .mat-mdc-paginator-range-label {
     margin: 0 12px 0 12px !important;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--text-primary);
   }
 
@@ -355,7 +348,7 @@ table.mat-table {
     margin-right: 8px !important;
   }
 
-  /* Custom styling for the Select Box to look "Contained" in Light Mode */
+  /* Custom styling for the Select Box to look "Contained" */
   .mat-mdc-form-field {
 
     /* Target the text input area */
@@ -364,7 +357,6 @@ table.mat-table {
       height: 28px !important;
       /* Compact height */
 
-      /* Create the "box" look */
       background-color: var(--surface-ground, #f8faf9);
       border: 1px solid var(--border-color-local);
       border-radius: 4px;
@@ -380,13 +372,23 @@ table.mat-table {
       }
     }
 
+    /* [FIX] Fix internal padding and spacing for compact height */
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      border-top: 0 !important;
+      width: auto !important;
+      min-height: unset !important;
+      height: 100% !important;
+      display: flex;
+      align-items: center;
+    }
+
     /* Focused State */
     &.mat-focused .mat-mdc-text-field-wrapper {
       border-color: var(--primary, #2563eb);
       background-color: var(--surface-card, #fff);
     }
 
-    /* Hide the default underline ripple to keep it clean */
     .mat-mdc-form-field-focus-overlay,
     .mat-mdc-line-ripple {
       display: none !important;
@@ -396,18 +398,26 @@ table.mat-table {
     .mat-mdc-select-value {
       padding: 0 8px !important;
       font-size: 0.8125rem !important;
-      font-weight: 600;
+      /* [FIX] Removed bold font weight */
+      font-weight: 400;
       color: var(--text-primary);
     }
 
-    /* Arrow Icon */
+    /* [FIX] Arrow Icon Position - Center it properly */
     .mat-mdc-select-arrow-wrapper {
-      transform: translateY(0) !important;
-      /* Fix alignment */
+      transform: none !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100% !important;
+      margin-right: 4px;
     }
 
     .mat-mdc-select-arrow {
       color: var(--text-secondary);
+      /* Ensure SVG icon is sized correctly */
+      width: 10px;
+      height: 10px;
     }
   }
 
@@ -492,7 +502,6 @@ table.mat-table {
   align-items: center;
   justify-content: center;
   padding: 3rem 1rem;
-  /* Reduced padding */
   color: var(--text-secondary);
 
   .no-data-icon {
@@ -565,7 +574,6 @@ table.mat-table {
       font-size: 0.8125rem !important;
     }
 
-    /* Make checkboxes slightly larger on mobile for touch */
     .mat-column-select {
       width: 40px !important;
       max-width: 40px !important;

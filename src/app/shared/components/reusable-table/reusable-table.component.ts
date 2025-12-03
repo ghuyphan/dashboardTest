@@ -35,19 +35,17 @@ import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
 const ROW_NAVIGATION_DELAY_MS = 50;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
-const DEFAULT_TRACK_BY_FIELD = 'id'; // Standardized to lowercase 'id' usually
+const DEFAULT_TRACK_BY_FIELD = 'id';
 
-// --- NEW: Types for True Reusability ---
 export type ColumnType = 'text' | 'currency' | 'date' | 'status' | 'actions';
 
 export interface GridColumn {
   key: string;
   label: string;
-  type?: ColumnType; // Defines how to render the cell
+  type?: ColumnType;
   sortable: boolean;
   width?: string;
   sticky?: 'start' | 'end' | false;
-  // For 'status' type: Function to determine class based on value
   statusClassFn?: (value: string) => string;
 }
 
@@ -56,7 +54,6 @@ export interface TableAction<T = any> {
   label: string;
   icon: string;
   color?: 'primary' | 'accent' | 'warn';
-  // Optional: Function to hide action based on row data
   visibleFn?: (row: T) => boolean;
 }
 
@@ -129,13 +126,12 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
 })
 export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   private cdr = inject(ChangeDetectorRef);
-  private elementRef = inject(ElementRef); // Injected for scoped DOM queries
+  private elementRef = inject(ElementRef);
   private scrollTimer: any = null;
 
-  // --- Inputs (Signals) ---
   public data = input<T[]>([]);
   public columns = input<GridColumn[]>([]);
-  public rowActions = input<TableAction<T>[]>([]); // Dynamic Actions
+  public rowActions = input<TableAction<T>[]>([]);
   public searchTerm = input('');
   public isLoading = input(false);
   public pageSize = input(DEFAULT_PAGE_SIZE);
@@ -150,20 +146,17 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public clientSideSort = input(false);
   public headerColor = input<string | null>(null);
 
-  // --- Outputs (Signals) ---
   public rowClick = output<T | undefined>();
   public sortChanged = output<SortChangedEvent>();
   public pageChanged = output<PageEvent>();
   public searchCleared = output<void>();
-  public actionTriggered = output<RowActionEvent<T>>();
+  public rowAction = output<RowActionEvent<T>>();
   public selectionChanged = output<T[]>();
 
-  // --- View Queries (Signals) ---
   public sort = viewChild(MatSort);
   public paginator = viewChild(MatPaginator);
   public tableContainer = viewChild<ElementRef>('tableContainer');
 
-  // --- Public Properties ---
   public readonly dataSource = new MatTableDataSource<T>();
   public displayedColumns: string[] = [];
   public selectedRow: T | null = null;
@@ -180,10 +173,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     effect(() => {
       const cols = this.columns();
       const multiSelect = this.enableMultiSelect();
-
-      // Clear selection only if necessary to avoid UI flickering
       if (!multiSelect) this.selection.clear();
-
       this.updateDisplayedColumns(cols, multiSelect);
     });
 
@@ -211,6 +201,17 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     if (this.scrollTimer) clearTimeout(this.scrollTimer);
   }
 
+  // --- [NEW] Helper to safely check if value is a valid date ---
+  public isDateValue(value: any): boolean {
+    if (value === null || value === undefined || value === '') return false;
+    // Explicitly handle "N/A" or "na" strings
+    if (typeof value === 'string' && (value === 'N/A' || value.toLowerCase() === 'na')) return false;
+
+    // Check if the date is valid
+    const date = new Date(value);
+    return !isNaN(date.getTime());
+  }
+
   private initializeSelectionListener(): void {
     this.selection.changed.subscribe(() => {
       this.selectionChanged.emit(this.selection.selected);
@@ -235,14 +236,11 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     this.displayedColumns = enableMultiSelect
       ? ['select', ...baseColumns]
       : baseColumns;
-
     this.cdr.markForCheck();
   }
 
   private handleDataChange(data: T[]): void {
     this.dataSource.data = data;
-    // Don't auto-clear selection on data refresh unless ID changes, 
-    // but here we keep it simple to avoid stale references.
     this.clearSelection();
     this.scrollToTop();
   }
@@ -261,9 +259,6 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   public onRowClick(row: T): void {
     if (this.enableMultiSelect()) {
-      // In multi-select, clicking row usually doesn't toggle check
-      // unless desired. Standard is checking box.
-      // But keeping your logic:
       this.toggleRowSelection(row, null);
     } else {
       this.toggleSingleRowSelection(row);
@@ -311,8 +306,6 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent): void {
-    // Only handle if this table is actually focused or visible (Context sensitive)
-    // For now, simple check:
     if (this.enableMultiSelect()) return;
     if (this.isNavigationKey(event.key)) {
       event.preventDefault();
@@ -349,7 +342,6 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     if (this.scrollTimer) clearTimeout(this.scrollTimer);
 
     this.scrollTimer = setTimeout(() => {
-      // FIXED: Scope the selector to this component instance only
       const rowElements = this.elementRef.nativeElement.querySelectorAll('.clickable-row');
       const rowElement = rowElements[index];
       if (rowElement) {
@@ -370,7 +362,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   public onActionClick(action: string, element: T, event: MouseEvent): void {
     event.stopPropagation();
-    this.actionTriggered.emit({ action, data: element });
+    this.rowAction.emit({ action, data: element });
   }
 
   public onCheckboxClick(event: MouseEvent): void {
