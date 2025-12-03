@@ -27,6 +27,7 @@ import { WidgetCardComponent } from '../../../shared/components/widget-card/widg
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 const STANDARD_DIVISOR = 6.5; // Department standard coefficient
+const CORAL_COLOR = '#FF7F50';
 
 interface WidgetData {
   id: string;
@@ -144,7 +145,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tổng Lượt Khám',
         value: '0',
         caption: 'Total Visits',
-        accentColor: '#00839b',
+        accentColor: '#9bdad9', // Placeholder (Chart-3)
       },
       {
         id: 'total-patients',
@@ -152,15 +153,15 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Số Người Bệnh',
         value: '0',
         caption: 'Unique Patients',
-        accentColor: '#f89c5b',
+        accentColor: '#006e96', // Placeholder (Chart-2)
       },
       {
         id: 'avg-metric',
         icon: 'fas fa-chart-line',
-        title: 'TB Lượt (Hệ số 6.5)', // Updated Title
+        title: 'TB Lượt (Hệ số 6.5)',
         value: '0',
         caption: 'Visits / 6.5',
-        accentColor: '#082567',
+        accentColor: CORAL_COLOR,
       },
       {
         id: 're-exam-rate',
@@ -179,9 +180,12 @@ export class DetailedExaminationReportComponent implements OnInit {
         const item = this.widgetData.find((x) => x.id === id);
         if (item) item.accentColor = color;
       };
-      setC('total-visits', this.palette.primary);
-      setC('total-patients', this.palette.chart6);
-      setC('avg-metric', this.palette.deepSapphire);
+
+      // SYNC: Match Widget Colors to Chart Series Colors
+      setC('total-visits', this.palette.chart3); // Visits Bar Color
+      setC('total-patients', this.palette.chart2); // Patients Bar Color
+
+      setC('avg-metric', CORAL_COLOR);
       setC('re-exam-rate', this.palette.success);
     }
   }
@@ -245,7 +249,7 @@ export class DetailedExaminationReportComponent implements OnInit {
     }
 
     let totalVisits = 0;
-    let totalPatients = 0;
+    let totalPatientsCalculated = 0;
 
     const dateMap = new Map<string, { visits: number; patients: number }>();
     const specialtyMap = new Map<string, number>();
@@ -256,11 +260,18 @@ export class DetailedExaminationReportComponent implements OnInit {
 
     this.dailyStats.forEach(day => {
       const v = day.SO_LUOT_KHAM_TONG || 0;
-      const p = day.SO_NGUOI_KHAM_TONG || 0;
       totalVisits += v;
-      totalPatients += p;
+
+      // Safe calculation for daily patients
+      let dailyP = 0;
+      if (day.CHUYEN_KHOA_KHAM && day.CHUYEN_KHOA_KHAM.length > 0) {
+        dailyP = day.CHUYEN_KHOA_KHAM.reduce((acc, curr) => acc + (curr.BENH_MOI || 0) + (curr.BENH_CU || 0), 0);
+      } else {
+        dailyP = day.SO_NGUOI_KHAM_TONG || 0;
+      }
+
       const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
-      dateMap.set(dateKey, { visits: v, patients: p });
+      dateMap.set(dateKey, { visits: v, patients: dailyP });
     });
 
     this.rawData.forEach(item => {
@@ -272,7 +283,7 @@ export class DetailedExaminationReportComponent implements OnInit {
       doctorMap.set(doc, (doctorMap.get(doc) || 0) + (item.SO_LUOT_KHAM || 0));
     });
 
-    // --- UPDATED CALCULATION: Total Visits / 6.5 ---
+    totalPatientsCalculated = totalNew + totalOld;
     const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
     const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
 
@@ -283,23 +294,23 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tổng Lượt Khám',
         value: this.formatNumber(totalVisits),
         caption: 'Total Visits',
-        accentColor: this.palette.primary,
+        accentColor: this.palette.chart3, // Matched to Chart Bar
       },
       {
         id: 'total-patients',
         icon: 'fas fa-user-injured',
         title: 'Tổng Người Bệnh',
-        value: this.formatNumber(totalPatients),
+        value: this.formatNumber(totalPatientsCalculated),
         caption: 'Total Patients',
-        accentColor: this.palette.chart6,
+        accentColor: this.palette.chart2, // Matched to Chart Bar
       },
       {
         id: 'avg-metric',
         icon: 'fas fa-chart-line',
         title: 'TB Lượt (HS 6.5)',
         value: avgMetricValue,
-        caption: 'Workload (Div 6.5)', // Updated Caption
-        accentColor: this.palette.deepSapphire,
+        caption: 'Workload (Div 6.5)',
+        accentColor: CORAL_COLOR,
       },
       {
         id: 're-exam-rate',
@@ -317,7 +328,6 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.buildDoctorChart(doctorMap);
   }
 
-  // (1) Chart: Visits (Bar) + Patients (Bar) + Coefficient Line
   private buildTrendChart(dateMap: Map<string, { visits: number; patients: number }>): void {
     const sortedDates = Array.from(dateMap.keys()).sort();
     const dateLabels = sortedDates.map((d) => {
@@ -328,7 +338,6 @@ export class DetailedExaminationReportComponent implements OnInit {
     const visitsData = sortedDates.map(d => dateMap.get(d)?.visits || 0);
     const patientsData = sortedDates.map(d => dateMap.get(d)?.patients || 0);
 
-    // --- UPDATED CHART LINE: Daily Visits / 6.5 ---
     const workloadData = sortedDates.map(d => {
       const v = dateMap.get(d)?.visits || 0;
       return parseFloat((v / STANDARD_DIVISOR).toFixed(2));
@@ -375,14 +384,16 @@ export class DetailedExaminationReportComponent implements OnInit {
           type: 'bar',
           data: patientsData,
           itemStyle: { color: this.palette.chart2, borderRadius: [4, 4, 0, 0] },
-          barWidth: '30%'
+          barWidth: '30%',
+          // ENABLED LABEL FOR PATIENTS
+          label: { show: true, position: 'top', color: this.palette.textPrimary }
         },
         {
           name: 'TB Lượt/6.5',
           type: 'line',
           data: workloadData,
           smooth: true,
-          itemStyle: { color: this.palette.deepSapphire },
+          itemStyle: { color: CORAL_COLOR },
           lineStyle: { width: 3, type: 'dashed' },
           symbolSize: 8,
           symbol: 'circle'
@@ -423,8 +434,8 @@ export class DetailedExaminationReportComponent implements OnInit {
             color: this.palette.textPrimary
           },
           data: [
-            { value: newCount, name: 'Khám Mới', itemStyle: { color: this.palette.primary } },
-            { value: oldCount, name: 'Tái Khám', itemStyle: { color: this.palette.chart6 } },
+            { value: newCount, name: 'Khám Mới', itemStyle: { color: this.palette.chart6 } },
+            { value: oldCount, name: 'Tái Khám', itemStyle: { color: this.palette.primary } },
           ],
         },
       ],

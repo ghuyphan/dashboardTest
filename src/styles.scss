@@ -808,3 +808,16 @@ body>ul.submenu.open {
     transform: translateY(0);
   }
 }
+
+/* ==================================================
+   MODAL BACKDROP OVERLAY
+   ================================================== */
+.app-modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  [data-theme='dark'] & {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+}

@@ -55,7 +55,7 @@ export class TableCardComponent<T> {
   public isLoading = input<boolean>(false);
   public showPaginator = input<boolean>(true);
   public pageSize = input<number>(10);
-  public pageSizeOptions = input<number[]>([5, 10, 25, 50]);
+  public pageSizeOptions = input<number[]>([10, 25, 50, 100]);
   public clientSideSort = input<boolean>(true);
   public emptyStateText = input<string>('Không có dữ liệu.');
 

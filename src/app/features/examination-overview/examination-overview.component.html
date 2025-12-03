@@ -1,86 +1,40 @@
 <div class="page-container">
   <div class="page-content">
-    
-    <app-date-filter
-      (filterSubmit)="onDateFilter($event)"
-      [isLoading]="isLoading"
-      buttonLabel="Lọc dữ liệu"
-    ></app-date-filter>
+
+    <app-date-filter (filterSubmit)="onDateFilter($event)" [isLoading]="isLoading"
+      buttonLabel="Lọc dữ liệu"></app-date-filter>
 
     <div class="widget-section">
       <div class="widget-grid">
         @for (widget of widgetData; track trackByWidget($index, widget)) {
-          <app-widget-card
-            [icon]="widget.icon"
-            [title]="widget.title"
-            [value]="widget.value"
-            [caption]="widget.caption"
-            [accentColor]="widget.accentColor"
-            [isLoading]="isLoading"
-          ></app-widget-card>
+        <app-widget-card [icon]="widget.icon" [title]="widget.title" [value]="widget.value" [caption]="widget.caption"
+          [accentColor]="widget.accentColor" [isLoading]="isLoading"></app-widget-card>
         }
       </div>
     </div>
 
     <div class="dashboard-grid">
-      
-      <app-chart-card
-        class="grid-item span-4"
-        title="Biểu đồ tiếp nhận theo ngày"
-        icon="fas fa-chart-line"
-        iconClass="icon-info"
-        [isLoading]="isLoading"
-        [chartOptions]="trendChartOptions"
-        skeletonType="line"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-      >
+
+      <app-chart-card class="grid-item span-4" title="Biểu đồ tiếp nhận theo ngày" icon="fas fa-chart-line"
+        iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="trendChartOptions" skeletonType="line"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
       </app-chart-card>
 
-      <app-chart-card
-        class="grid-item span-2"
-        title="Tỷ lệ bệnh nhân"
-        subtitle="(Mới / Cũ)"
-        icon="fas fa-user-friends"
-        iconClass="icon-danger"
-        [isLoading]="isLoading"
-        [chartOptions]="patientStatusChartOptions"
-        skeletonType="pie"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-      >
+      <app-chart-card class="grid-item span-2" title="Tỷ lệ bệnh nhân" subtitle="(Mới / Cũ)" icon="fas fa-user-friends"
+        iconClass="icon-danger" [isLoading]="isLoading" [chartOptions]="patientStatusChartOptions" skeletonType="pie"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
       </app-chart-card>
 
-      <app-chart-card
-        class="grid-item span-2"
-        title="Đối tượng"
-        subtitle="(BHYT / Viện Phí)"
-        icon="fas fa-pie-chart"
-        iconClass="icon-warning"
-        [isLoading]="isLoading"
-        [chartOptions]="typeChartOptions"
-        skeletonType="pie"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-      >
+      <app-chart-card class="grid-item span-2" title="Đối tượng" subtitle="(BHYT / Viện Phí)" icon="fas fa-pie-chart"
+        iconClass="icon-warning" [isLoading]="isLoading" [chartOptions]="typeChartOptions" skeletonType="pie"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
       </app-chart-card>
 
-      <app-table-card
-        class="grid-item span-4"
-        title="Dữ liệu chi tiết"
-        icon="fas fa-table"
-        iconClass="icon-success"
-        
-        [isLoading]="isLoading"
-        [data]="rawData"
-        [columns]="tableColumns"
-        [showPaginator]="true"
-        [pageSize]="10"
-        [pageSizeOptions]="[5, 10, 25, 50]"
-        [clientSideSort]="true"
-        emptyStateText="Không có dữ liệu cho khoảng thời gian này."
-        
-        [enableExport]="true"
-        [isExporting]="isExporting"
-        (exportClicked)="onExport()"
-      >
+      <app-table-card class="grid-item span-4" title="Dữ liệu chi tiết" icon="fas fa-table" iconClass="icon-success"
+        [isLoading]="isLoading" [data]="rawData" [columns]="tableColumns" [showPaginator]="true" [pageSize]="10"
+        [pageSizeOptions]="[10, 25, 50, 100]" [clientSideSort]="true"
+        emptyStateText="Không có dữ liệu cho khoảng thời gian này." [enableExport]="true" [isExporting]="isExporting"
+        (exportClicked)="onExport()">
       </app-table-card>
 
     </div>

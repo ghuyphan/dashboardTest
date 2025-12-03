@@ -1,0 +1,70 @@
+/* ==========================================================================
+   SHARED MIXINS FOR CONSISTENT STYLING
+   ========================================================================== */
+
+// Standard button hover effect
+@mixin btn-hover-effect {
+    &:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow-md);
+    }
+
+    &:not(:disabled):active {
+        transform: translateY(0);
+        box-shadow: var(--box-shadow-sm);
+    }
+}
+
+// Standard icon button hover effect
+@mixin icon-btn-hover {
+    &:hover:not(:disabled) {
+        background-color: var(--gray-100);
+        color: var(--teal-blue);
+
+        [data-theme='dark'] & {
+            background-color: var(--gray-200);
+        }
+    }
+}
+
+// Standard focus visible state
+@mixin focus-visible-outline {
+    &:focus-visible {
+        outline: 2px solid var(--aqua-island);
+        outline-offset: 2px;
+    }
+}
+
+// Standard disabled state
+@mixin disabled-state {
+
+    &:disabled,
+    &.disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+}
+
+// Combined button interaction (hover + focus + disabled)
+@mixin btn-interactions {
+    transition: transform 0.2s var(--transition-spring),
+        box-shadow 0.2s var(--transition-smooth),
+        background-color 0.2s var(--transition-smooth),
+        color 0.2s var(--transition-smooth),
+        border-color 0.2s var(--transition-smooth);
+
+    @include btn-hover-effect;
+    @include focus-visible-outline;
+    @include disabled-state;
+}
+
+// Icon button full interactions
+@mixin icon-btn-interactions {
+    transition: all 0.2s var(--transition-smooth);
+
+    @include icon-btn-hover;
+    @include focus-visible-outline;
+    @include disabled-state;
+}
