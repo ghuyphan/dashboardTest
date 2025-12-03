@@ -113,21 +113,6 @@
   gap: 6px;
 
   /* Mobile adjustments */
-  @media (max-width: 768px) {
-    margin-left: 0;
-    font-size: 0.7rem;
-    padding: 2px 4px;
-  }
-
-  &:hover {
-    color: var(--text-secondary);
-    background-color: var(--gray-100);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
   /* Easter Egg State */
   &.dev-active {
     color: var(--teal-blue);

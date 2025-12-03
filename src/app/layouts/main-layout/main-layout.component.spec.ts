@@ -1,20 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing'; // <-- IMPORT THIS
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { MainLayoutComponent } from './main-layout.component';
 
-import { MainLayoutComponent } from './main-layout.component'; // <-- RENAMED
-
-describe('MainLayoutComponent', () => { // <-- RENAMED
-  let component: MainLayoutComponent; // <-- RENAMED
-  let fixture: ComponentFixture<MainLayoutComponent>; // <-- RENAMED
+describe('MainLayoutComponent', () => {
+  let component: MainLayoutComponent;
+  let fixture: ComponentFixture<MainLayoutComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      // IMPORT MainLayoutComponent and RouterTestingModule
-      imports: [MainLayoutComponent, RouterTestingModule] 
+      imports: [MainLayoutComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([])
+      ]
     })
-    .compileComponents();
+      .compileComponents();
 
-    fixture = TestBed.createComponent(MainLayoutComponent); // <-- RENAMED
+    fixture = TestBed.createComponent(MainLayoutComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

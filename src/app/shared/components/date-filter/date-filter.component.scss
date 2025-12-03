@@ -194,7 +194,7 @@
     box-shadow 0.2s var(--transition-smooth);
 
   &:hover:not(:disabled) {
-    background-color: var(--gray-100);
+    background-color: var(--gray-200);
     color: var(--text-primary);
 
     /* [FIX] Increased lift to -3px to match global button feel */

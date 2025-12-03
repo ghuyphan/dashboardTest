@@ -123,18 +123,21 @@ export class BedUsageComponent implements OnInit {
       this.isRefreshing = true;
     }
 
-    this.http
-      .get<ApiResponseData[]>(environment.bedUsageUrl)
-      .pipe(
-        finalize(() => this.handleRequestComplete()),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (data) => {
-          this.rawData.set(data);
-        },
-        error: (error) => this.handleDataError(error),
-      });
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.http
+        .get<ApiResponseData[]>(environment.bedUsageUrl)
+        .pipe(
+          finalize(() => this.handleRequestComplete()),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: (data) => {
+            this.rawData.set(data);
+          },
+          error: (error) => this.handleDataError(error),
+        });
+    }, 0);
   }
 
   public onLegendChange(params: { name: string; selected: Record<string, boolean> }): void {

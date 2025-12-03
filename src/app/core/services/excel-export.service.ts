@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import * as XLSX from '@e965/xlsx';
 import { saveAs } from 'file-saver';
 import { DateUtils } from '../../shared/utils/date.utils';
 
@@ -16,15 +15,18 @@ export class ExcelExportService {
 
   constructor() { }
 
-  public exportToExcel<T>(data: T[], fileName: string, columns: ExportColumn[]): void {
+  public async exportToExcel<T>(data: T[], fileName: string, columns: ExportColumn[]): Promise<void> {
     if (!data || data.length === 0) {
       return;
     }
 
+    // [OPTIMIZATION] Dynamic Import to avoid blocking main bundle
+    const XLSX = await import('@e965/xlsx');
+
     // 1. Transform data: Map internal keys to Display Headers and format values
     const exportData = data.map(row => {
       const newRow: Record<string, any> = {};
-      
+
       columns.forEach(col => {
         const val = (row as any)[col.key];
         // Use the header string as the key for the new object
@@ -36,15 +38,15 @@ export class ExcelExportService {
     });
 
     // 2. Create Worksheet
-    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(exportData);
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
 
     // Optional: Auto-width adjustment (Basic implementation)
-    this.autoFitColumns(worksheet, exportData);
+    this.autoFitColumns(worksheet, exportData, XLSX);
 
     // 3. Create Workbook
-    const workbook: XLSX.WorkBook = { 
-      Sheets: { 'data': worksheet }, 
-      SheetNames: ['data'] 
+    const workbook = {
+      Sheets: { 'data': worksheet },
+      SheetNames: ['data']
     };
 
     // 4. Write to Buffer
@@ -68,7 +70,7 @@ export class ExcelExportService {
   private saveAsExcelFile(buffer: any, fileName: string): void {
     const EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const EXCEL_EXTENSION = '.xlsx';
-    
+
     const data: Blob = new Blob([buffer], { type: EXCEL_TYPE });
     saveAs(data, fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION);
   }
@@ -76,12 +78,12 @@ export class ExcelExportService {
   /**
    * Helper to calculate column width based on content length
    */
-  private autoFitColumns(ws: XLSX.WorkSheet, data: any[]) {
+  private autoFitColumns(ws: any, data: any[], XLSX: any) {
     if (!data || data.length === 0) return;
-    
+
     const objectMaxLength: number[] = [];
     const headers = Object.keys(data[0]);
-    
+
     // Check header lengths
     headers.forEach((key, i) => {
       objectMaxLength[i] = key.length;

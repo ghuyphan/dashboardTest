@@ -212,41 +212,44 @@ export class EmergencySummaryComponent implements OnInit {
     const prevFromDate = this.formatDate(prevStart);
     const prevToDate = this.formatDate(prevEnd);
 
-    forkJoin({
-      current: this.reportService.getEmergencySummary(
-        this.fromDate,
-        this.toDate
-      ),
-      previous: this.reportService.getEmergencySummary(
-        prevFromDate,
-        prevToDate
-      ),
-    })
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: ({ current, previous }) => {
-          this.rawData = current.map((item) => ({
-            ...item,
-            NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(
-              item.NGAY_TIEP_NHAN
-            ),
-          }));
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      forkJoin({
+        current: this.reportService.getEmergencySummary(
+          this.fromDate,
+          this.toDate
+        ),
+        previous: this.reportService.getEmergencySummary(
+          prevFromDate,
+          prevToDate
+        ),
+      })
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: ({ current, previous }) => {
+            this.rawData = current.map((item) => ({
+              ...item,
+              NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(
+                item.NGAY_TIEP_NHAN
+              ),
+            }));
 
-          this.processData(current, previous);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo.');
-          this.rawData = [];
-          this.initializeWidgets();
-        },
-      });
+            this.processData(current, previous);
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu báo cáo.');
+            this.rawData = [];
+            this.initializeWidgets();
+          },
+        });
+    }, 0);
   }
 
   private processData(

@@ -18,25 +18,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
-import * as echarts from 'echarts/core';
-import { BarChart, LineChart, PieChart, ScatterChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  DataZoomComponent,
-  TimelineComponent // [FIX] Added for responsive media queries
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
 import { ThemeService } from '../../../core/services/theme.service';
-
-echarts.use([
-  BarChart, LineChart, PieChart, ScatterChart,
-  TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
-  TimelineComponent, // [FIX] Register component
-  CanvasRenderer
-]);
 
 export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
 
@@ -109,6 +91,7 @@ export class ChartCardComponent implements AfterViewInit {
       if (this.chartInstance && options) {
         this.updateChart(options);
       } else if (options && this.isBrowser) {
+        // [OPTIMIZATION] Lazy load ECharts only when needed
         setTimeout(() => this.initChart(options), 0);
       }
     });
@@ -134,7 +117,7 @@ export class ChartCardComponent implements AfterViewInit {
     }
   }
 
-  private initChart(options: EChartsCoreOption | null): void {
+  private async initChart(options: EChartsCoreOption | null): Promise<void> {
     if (this.isDestroyed || !this.isBrowser || !this.chartContainerRef() || !options) return;
     if (this.chartInstance) return;
 
@@ -143,6 +126,26 @@ export class ChartCardComponent implements AfterViewInit {
     if (el.clientWidth === 0 || el.clientHeight === 0) {
       return;
     }
+
+    // [OPTIMIZATION] Dynamic Import
+    const [
+      echarts,
+      { BarChart, LineChart, PieChart, ScatterChart },
+      { TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent, TimelineComponent },
+      { CanvasRenderer }
+    ] = await Promise.all([
+      import('echarts/core'),
+      import('echarts/charts'),
+      import('echarts/components'),
+      import('echarts/renderers')
+    ]);
+
+    echarts.use([
+      BarChart, LineChart, PieChart, ScatterChart,
+      TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
+      TimelineComponent,
+      CanvasRenderer
+    ]);
 
     this.ngZone.runOutsideAngular(() => {
       this.chartInstance = echarts.init(el, this.effectiveTheme(), {
@@ -156,13 +159,13 @@ export class ChartCardComponent implements AfterViewInit {
       this.applyAutoFormatting(options);
       const responsiveOptions = this.makeOptionsResponsive(options);
 
-      this.chartInstance.setOption(responsiveOptions);
+      this.chartInstance?.setOption(responsiveOptions);
 
-      this.chartInstance.on('click', (params) => {
+      this.chartInstance?.on('click', (params: any) => {
         this.ngZone.run(() => this.chartClick.emit(params));
       });
 
-      this.chartInstance.on('legendselectchanged', (params) => {
+      this.chartInstance?.on('legendselectchanged', (params: any) => {
         this.ngZone.run(() => this.chartLegendSelectChanged.emit(params));
       });
     });

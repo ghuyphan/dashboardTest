@@ -105,12 +105,12 @@ export class TableCardComponent<T> {
   public rowAction = output<RowActionEvent<T>>();
 
   // --- Logic ---
-  public onExport(): void {
+  public async onExport(): Promise<void> {
     const config = this.exportConfig();
 
     // 1. Automatic Export (if config is provided)
     if (config) {
-      this.excelService.exportToExcel(this.data(), config.fileName, config.columns);
+      await this.excelService.exportToExcel(this.data(), config.fileName, config.columns);
     }
 
     // 2. Always emit event (Parent might want to handle custom logic)

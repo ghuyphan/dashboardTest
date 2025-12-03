@@ -156,29 +156,32 @@ export class SurgeryReportComponent implements OnInit {
     this.surgeonChartOptions = null;
     this.cd.markForCheck();
 
-    this.reportService.getSurgeryReport(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (data) => {
-          this.rawData = data.map(item => ({
-            ...item,
-            NGAY_PT_DISPLAY: DateUtils.formatToDisplay(item.NGAY_PT)
-          }));
-          this.processData(this.rawData);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo phẫu thuật.');
-          this.rawData = [];
-          this.initializeWidgets();
-        }
-      });
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.reportService.getSurgeryReport(this.fromDate, this.toDate)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: (data) => {
+            this.rawData = data.map(item => ({
+              ...item,
+              NGAY_PT_DISPLAY: DateUtils.formatToDisplay(item.NGAY_PT)
+            }));
+            this.processData(this.rawData);
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu báo cáo phẫu thuật.');
+            this.rawData = [];
+            this.initializeWidgets();
+          }
+        });
+    }, 0);
   }
 
   private processData(data: SurgeryStat[]): void {

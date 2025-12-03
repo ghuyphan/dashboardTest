@@ -111,3 +111,27 @@
 .span-full {
   grid-column: 1 / -1;
 }
+
+/* --- Chart Placeholder --- */
+.chart-placeholder {
+  background-color: var(--surface-card);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-md);
+  width: 100%;
+  height: 100%;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
+}

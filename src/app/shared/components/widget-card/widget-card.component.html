@@ -1,4 +1,4 @@
-<div class="widget-card">
+<div class="widget-card" [class.is-loading]="isLoading()">
   <div class="widget-layer skeleton-layer" [class.hide]="!isLoading()" aria-hidden="true">
     <div class="widget-icon-wrapper skeleton"></div>
     <div class="widget-content">

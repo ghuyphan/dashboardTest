@@ -18,6 +18,7 @@
     </div>
 
     <div class="dashboard-grid">
+      @defer (on immediate) {
       <app-chart-card class="grid-item span-full" title="Tình hình sử dụng giường bệnh" icon="fas fa-bed-pulse"
         iconClass="icon-info" [isLoading]="isLoading()" [chartOptions]="chartOptions()"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" (chartLegendSelectChanged)="onLegendChange($event)">
@@ -37,6 +38,11 @@
         </div>
 
       </app-chart-card>
+      } @placeholder {
+      <div class="grid-item span-full">
+        <div class="chart-placeholder"></div>
+      </div>
+      }
     </div>
 
   </div>

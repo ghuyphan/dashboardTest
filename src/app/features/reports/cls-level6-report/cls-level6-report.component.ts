@@ -183,36 +183,40 @@ export class ClsLevel6ReportComponent implements OnInit {
     this.roomChartOptions = null;
     this.groupChartOptions = null;
     this.cd.markForCheck();
-    this.reportService
-      .getClsLevel6Report(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (data) => {
-          this.rawData = data.map((item) => ({
-            ...item,
-            NGAY_TH_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TH),
-            TYPE_LABEL:
-              item.KHAM_CLS === 1
-                ? 'Khám'
-                : item.KHAM_CLS === 2
-                  ? 'CLS'
-                  : 'Khác',
-          }));
-          this.processData(this.rawData);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo.');
-          this.rawData = [];
-          this.initializeWidgets();
-        },
-      });
+
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.reportService
+        .getClsLevel6Report(this.fromDate, this.toDate)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: (data) => {
+            this.rawData = data.map((item) => ({
+              ...item,
+              NGAY_TH_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TH),
+              TYPE_LABEL:
+                item.KHAM_CLS === 1
+                  ? 'Khám'
+                  : item.KHAM_CLS === 2
+                    ? 'CLS'
+                    : 'Khác',
+            }));
+            this.processData(this.rawData);
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu báo cáo.');
+            this.rawData = [];
+            this.initializeWidgets();
+          },
+        });
+    }, 0);
   }
 
   private processData(data: ClsLevel6Stat[]): void {
@@ -555,6 +559,7 @@ export class ClsLevel6ReportComponent implements OnInit {
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;
     this.isExporting = true;
+    this.cd.markForCheck();
     setTimeout(() => {
       const columns: ExportColumn[] = [
         { key: 'NGAY_TH', header: 'Ngày Thực Hiện', type: 'date' },

@@ -95,31 +95,34 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     this.comparisonChartOptions = null;
     this.cd.markForCheck();
 
-    this.reportService
-      .getEmergencySummary(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (data) => {
-          this.rawData = data.map((item) => ({
-            ...item,
-            NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
-          }));
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.reportService
+        .getEmergencySummary(this.fromDate, this.toDate)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: (data) => {
+            this.rawData = data.map((item) => ({
+              ...item,
+              NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
+            }));
 
-          this.buildChart(this.rawData);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo cấp cứu.');
-          this.rawData = [];
-          this.comparisonChartOptions = null;
-        },
-      });
+            this.buildChart(this.rawData);
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu báo cáo cấp cứu.');
+            this.rawData = [];
+            this.comparisonChartOptions = null;
+          },
+        });
+    }, 0);
   }
 
   private buildChart(data: EmergencyStat[]): void {

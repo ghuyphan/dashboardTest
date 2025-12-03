@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { TooltipDirective } from './tooltip.directive';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 
 @Component({
   template: `<div [appTooltip]="'Test Tooltip'"></div>`,
@@ -14,7 +17,12 @@ describe('TooltipDirective', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, TooltipDirective]
+      imports: [TestHostComponent, TooltipDirective],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([])
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);

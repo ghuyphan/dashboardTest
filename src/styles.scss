@@ -46,7 +46,6 @@ $light-tokens: (
   "surface-overlay": rgba(255, 255, 255, 0.95),
   "surface-toast": map.get($base-palette, "white"),
   "surface-ground": map.get($base-palette, "slate-50"),
-  // Added for table headers/backgrounds
   "input-bg": map.get($base-palette, "slate-50"),
 
   // Text
@@ -83,36 +82,45 @@ $light-tokens: (
   "chart-9": map.get($base-palette, "beige-midtone")
 );
 
-// --- Semantic Tokens (Dark Theme - Polished) ---
+// --- Semantic Tokens (Dark Theme - Refined) ---
 $dark-tokens: (
   // Backgrounds
   "surface-background": #000000,
   "surface-card": #18181b,
+  // Zinc 900
   "surface-overlay": rgba(9, 9, 11, 0.95),
   "surface-toast": #27272a,
   "surface-ground": #27272a,
-  // Added
 
-  "input-bg": #09090b,
+  // Changed: Slightly lighter than card bg to denote interactivity
+  "input-bg": #27272a,
 
   // Text
   "text-primary": #ffffff,
-  "text-secondary": #e4e4e7,
-  "text-disabled": #71717a,
+  "text-secondary": #a1a1aa,
+  // Zinc 400 - Better readability than dark grey
+  "text-disabled": #52525b,
+  // Zinc 600
 
   "border-color": #3f3f46,
 
   // Brand Mappings (High Visibility)
   "primary": #2dd4bf,
+  // Teal 400 (Bright Teal)
   "secondary": #38bdf8,
+  // Sky 400 (Distinct Blue, less Green than Primary)
 
-  // Custom Brand Colors
-  "deep-sapphire": #a5b4fc,
-  "teal-midtone": #67e8f9,
-  "pastel-coral": #fda4af,
-  "peacock-light": #bae6fd,
+  // Custom Brand Colors - Adjusted to match Light Mode Hue Families
+  "deep-sapphire": #818cf8,
+  // Indigo 400 - "Night Blue" instead of generic purple
+  "teal-midtone": #22d3ee,
+  // Cyan 400 - Electric Cyan (Matches Light mode teal)
+  "pastel-coral": #fb7185,
+  // Rose 400 - Matches Light mode Coral
+  "peacock-light": #7dd3fc,
+  // Sky 300 - Light Blue
 
-  // Status Colors (Brightened for dark bg)
+  // Status Colors
   "color-danger": #f87171,
   // Red 400
   "color-success": #4ade80,
@@ -122,14 +130,20 @@ $dark-tokens: (
   "color-info": #38bdf8,
   // Sky 400
 
-  // Charts (Keep your existing pastel palette, it is good)
-  "chart-1": #5eead4,
-  "chart-2": #93c5fd,
-  "chart-3": #6ee7b7,
-  "chart-6": #fdba74,
-  "chart-7": #a1a1aa,
-  "chart-8": #a5b4fc,
-  "chart-9": #f9a8d4
+  // Charts (Refined for Distinctness & Identity)
+  "chart-1": #2dd4bf,
+  // Matches Primary (Teal)
+  "chart-2": #60a5fa,
+  // Blue 400 (Distinct from Teal, matches Peacock)
+  "chart-3": #a5f3fc,
+  // Cyan 200 (Very Light Aqua - matches Aqua Island)
+  "chart-6": #fb923c,
+  // Orange 400 (Vibrant Orange)
+  "chart-7": #94a3b8,
+  // Slate 400 (Grey)
+  "chart-8": #67e8f9,
+  // Cyan 300 (Bright Cyan - matches Teal Midtone)
+  "chart-9": #fdba74 // Orange 300 (Soft Peach/Gold - matches Beige)
 );
 
 
@@ -298,8 +312,8 @@ html {
 
   // Fix Material Overlays/Panels in Dark Mode
   /* NOTE: General panel overrides have been moved to Global Section (6)
-     to support consistent styling in both Light and Dark modes. 
-     Specific color overrides for Dark Mode remain here if needed.
+      to support consistent styling in both Light and Dark modes. 
+      Specific color overrides for Dark Mode remain here if needed.
   */
 
   /* Fix Material Form Fields colors in Dark Mode */

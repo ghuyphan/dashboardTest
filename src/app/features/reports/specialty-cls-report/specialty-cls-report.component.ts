@@ -187,29 +187,32 @@ export class SpecialtyClsReportComponent implements OnInit {
     this.topSpecialtyChartOptions = null;
     this.cd.markForCheck();
 
-    this.reportService
-      .getSpecialtyClsReport(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        })
-      )
-      .subscribe({
-        next: (data) => {
-          this.rawData = (data || []).map((item) => ({
-            ...item,
-            NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAY_KHAM),
-          }));
-          this.processData(this.rawData);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo.');
-          this.rawData = [];
-          this.initializeWidgets();
-        },
-      });
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.reportService
+        .getSpecialtyClsReport(this.fromDate, this.toDate)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          })
+        )
+        .subscribe({
+          next: (data) => {
+            this.rawData = (data || []).map((item) => ({
+              ...item,
+              NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAY_KHAM),
+            }));
+            this.processData(this.rawData);
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu báo cáo.');
+            this.rawData = [];
+            this.initializeWidgets();
+          },
+        });
+    }, 0);
   }
 
   private processData(data: SpecialtyClsStat[]): void {

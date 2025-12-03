@@ -1,45 +1,36 @@
 <div class="page-container">
   <div class="page-content">
-    
-    <app-date-filter
-      (filterSubmit)="onDateFilter($event)"
-      [isLoading]="isLoading"
-      buttonLabel="Xem báo cáo"
-      defaultRange="thisWeek"
-    ></app-date-filter>
+
+    <app-date-filter (filterSubmit)="onDateFilter($event)" [isLoading]="isLoading" buttonLabel="Xem báo cáo"
+      defaultRange="thisWeek"></app-date-filter>
 
     <div class="dashboard-grid">
-      
-      <app-chart-card
-        class="grid-item span-full"
-        title="Biểu đồ Cấp cứu lượt nhập viện"
-        icon="fas fa-chart-bar"
-        iconClass="icon-info"
-        [isLoading]="isLoading"
-        [chartOptions]="comparisonChartOptions"
-        skeletonType="bar"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        emptyText="Chưa có dữ liệu cấp cứu."
-      >
+
+      @defer (on immediate) {
+      <app-chart-card class="grid-item span-full" title="Biểu đồ Cấp cứu lượt nhập viện" icon="fas fa-chart-bar"
+        iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="comparisonChartOptions" skeletonType="bar"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu cấp cứu.">
         <div header-actions>
           <ng-container *appHasPermission="'KHTH.CapCuuNhapVien.REXPORT'">
-            <button 
-              class="btn-icon-text" 
-              (click)="onExport()" 
-              title="Xuất dữ liệu Excel"
+            <button class="btn-icon-text" (click)="onExport()" title="Xuất dữ liệu Excel"
               [disabled]="isLoading || isExporting || !rawData.length">
-              
+
               @if (isExporting) {
-                <i class="fas fa-spinner fa-spin text-success"></i>
-                <span>Đang xử lý...</span>
+              <i class="fas fa-spinner fa-spin text-success"></i>
+              <span>Đang xử lý...</span>
               } @else {
-                <i class="fas fa-file-excel text-success"></i>
+              <i class="fas fa-file-excel text-success"></i>
               }
             </button>
           </ng-container>
         </div>
 
       </app-chart-card>
+      } @placeholder {
+      <div class="grid-item span-full">
+        <div class="chart-placeholder"></div>
+      </div>
+      }
 
     </div>
   </div>

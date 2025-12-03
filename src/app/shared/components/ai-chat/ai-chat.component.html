@@ -1,21 +1,20 @@
 <div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()">
-  
+
   <div class="ai-header">
     <div class="header-left">
       <div class="ai-avatar-wrapper">
         <div class="avatar-ring">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/>
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
           </svg>
         </div>
-        
-        <div class="pulse-dot" 
-             [class.online]="llmService.modelLoaded()"
-             [class.error]="!llmService.modelLoaded() && !llmService.isModelLoading()">
+
+        <div class="pulse-dot" [class.online]="llmService.modelLoaded()"
+          [class.error]="!llmService.modelLoaded() && !llmService.isModelLoading()">
         </div>
       </div>
       <div class="header-info">
-        <h3 class="title">Trợ lý IT Assistant</h3>
+        <h3 class="title">Trợ lý IT</h3>
         <span class="status" [class.text-danger]="!llmService.modelLoaded() && !llmService.isModelLoading()">
           {{ llmService.loadProgress() || 'Đang khởi động...' }}
         </span>
@@ -29,129 +28,116 @@
     </div>
   </div>
 
-  <div class="ai-body chat-view" 
-       #scrollContainer 
-       [class.loading-view]="!llmService.modelLoaded() && llmService.messages().length === 0">
-    
+  <div class="ai-body chat-view" #scrollContainer
+    [class.loading-view]="!llmService.modelLoaded() && llmService.messages().length === 0">
+
     <!-- ERROR STATE: Not loading and not loaded -->
     @if (!llmService.modelLoaded() && !llmService.isModelLoading() && llmService.messages().length === 0) {
-      <div class="scan-container">
-        <div class="scan-grid error"></div>
-        <div class="scan-radar error"></div>
-        <div class="scan-icon error-state">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
+    <div class="scan-container">
+      <div class="scan-grid error"></div>
+      <div class="scan-radar error"></div>
+      <div class="scan-icon error-state">
+        <i class="fas fa-exclamation-triangle"></i>
       </div>
-      <div class="loading-text text-danger">Mất kết nối máy chủ</div>
-      
-      <button class="btn-retry" (click)="llmService.loadModel(); $event.stopPropagation()">
-        <i class="fas fa-sync"></i> Thử lại
-      </button>
-    } 
+    </div>
+    <div class="loading-text text-danger">Mất kết nối máy chủ</div>
+
+    <button class="btn-retry" (click)="llmService.loadModel(); $event.stopPropagation()">
+      <i class="fas fa-sync"></i> Thử lại
+    </button>
+    }
     <!-- LOADING STATE: Currently loading -->
     @else if (!llmService.modelLoaded() && llmService.isModelLoading()) {
-      <div class="scan-container">
-        <div class="scan-grid"></div>
-        <div class="scan-radar"></div>
-        <div class="scan-icon">
-          <i class="fas fa-robot"></i>
-        </div>
+    <div class="scan-container">
+      <div class="scan-grid"></div>
+      <div class="scan-radar"></div>
+      <div class="scan-icon">
+        <i class="fas fa-robot"></i>
       </div>
-      <div class="loading-text">
-        Đang kết nối
-        <span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
-      </div>
+    </div>
+    <div class="loading-text">
+      Đang kết nối
+      <span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
     }
     <!-- CHAT VIEW: Model loaded or has messages -->
     @else {
-      @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
-        @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
-          <div class="message-row" [ngClass]="msg.role">
-            @if (msg.role === 'assistant') {
-              <div class="msg-avatar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
-                </svg>
-              </div>
-            }
-            <div class="bubble">
-              <div [innerHTML]="processContent(msg.content) | markdown"></div>
-            </div>
-          </div>
-        }
+    @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
+    @if (msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)) {
+    <div class="message-row" [ngClass]="msg.role">
+      @if (msg.role === 'assistant') {
+      <div class="msg-avatar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+        </svg>
+      </div>
       }
-
-      <!-- THINKING INDICATOR - Modern Waveform Style -->
-      @if (shouldShowLoadingIndicator()) {
-        <div class="message-row assistant">
-          <div class="msg-avatar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
-            </svg>
-          </div>
-          <div class="bubble thinking-bubble">
-            <span class="gradient-text">Đang suy nghĩ</span>
-            <div class="typing-dots">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
-        </div>
-      }
-    }
-  </div>
-  
-  <!-- NAVIGATION OVERLAY -->
-  @if (llmService.isNavigating()) {
-    <div class="nav-overlay">
-      <div class="warp-tunnel"></div>
-      <div class="nav-content">
-        <div class="nav-icon-wrapper">
-          <i class="fas fa-rocket nav-icon"></i>
-        </div>
-        <p>Đang chuyển màn hình...</p>
+      <div class="bubble">
+        <div [innerHTML]="processContent(msg.content) | markdown"></div>
       </div>
     </div>
+    }
+    }
+
+    <!-- THINKING INDICATOR - Modern Waveform Style -->
+    @if (shouldShowLoadingIndicator()) {
+    <div class="message-row assistant">
+      <div class="msg-avatar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+        </svg>
+      </div>
+      <div class="bubble thinking-bubble">
+        <span class="gradient-text">Đang suy nghĩ</span>
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+    }
+    }
+  </div>
+
+  <!-- NAVIGATION OVERLAY -->
+  @if (llmService.isNavigating()) {
+  <div class="nav-overlay">
+    <div class="warp-tunnel"></div>
+    <div class="nav-content">
+      <div class="nav-icon-wrapper">
+        <i class="fas fa-rocket nav-icon"></i>
+      </div>
+      <p>Đang chuyển màn hình...</p>
+    </div>
+  </div>
   }
 
   <div class="ai-footer">
     <div class="toolbar">
       @if (hasUserMessages()) {
-        <button 
-          class="clear-chat-btn" 
-          (click)="llmService.resetChat(); $event.stopPropagation()" 
-          title="Xóa lịch sử chat" 
-          [disabled]="llmService.isGenerating()">
-          <i class="fas fa-trash-alt"></i> Xóa lịch sử
-        </button>
+      <button class="clear-chat-btn" (click)="llmService.resetChat(); $event.stopPropagation()" title="Xóa lịch sử chat"
+        [disabled]="llmService.isGenerating()">
+        <i class="fas fa-trash-alt"></i> Xóa lịch sử
+      </button>
       }
     </div>
 
     <div class="input-container">
-      <input 
-        type="text" 
-        [(ngModel)]="userInput" 
-        (keyup.enter)="handleMainButton()"
+      <input type="text" [(ngModel)]="userInput" (keyup.enter)="handleMainButton()"
         [disabled]="llmService.isGenerating() || (!llmService.modelLoaded() && !hasUserMessages())"
-        placeholder="Bạn muốn tôi giúp gì hôm nay?" 
-        class="chat-input"
-        autocomplete="off"
-      >
-      
-      <button 
-        class="send-btn" 
-        (click)="handleMainButton()" 
+        placeholder="Bạn muốn tôi giúp gì hôm nay?" class="chat-input" autocomplete="off">
+
+      <button class="send-btn" (click)="handleMainButton()"
         [disabled]="(!llmService.isGenerating() && !userInput.trim()) || (!llmService.modelLoaded() && !hasUserMessages())"
-        [class.generating]="llmService.isGenerating()"
-        [title]="llmService.isGenerating() ? 'Dừng lại' : 'Gửi'">
-        
+        [class.generating]="llmService.isGenerating()" [title]="llmService.isGenerating() ? 'Dừng lại' : 'Gửi'">
+
         @if (llmService.isGenerating()) {
-          <div class="stop-icon"></div>
+        <div class="stop-icon"></div>
         } @else {
-          <i class="fas fa-arrow-up"></i>
+        <i class="fas fa-arrow-up"></i>
         }
       </button>
     </div>

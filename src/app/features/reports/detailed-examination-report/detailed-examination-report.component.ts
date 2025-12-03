@@ -110,10 +110,11 @@ export class DetailedExaminationReportComponent implements OnInit {
   constructor() {
     effect(() => {
       this.palette = this.themeService.currentPalette();
+      // [OPTIMIZATION] Only update colors, do NOT re-process data
       if (!this.isLoading && (this.rawData.length > 0 || this.dailyStats.length > 0)) {
-        this.processData();
+        this.updateWidgetColors();
+        this.updateChartColors();
       }
-      this.updateWidgetColors();
       this.cd.markForCheck();
     });
   }
@@ -193,51 +194,31 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.resetCharts();
     this.cd.markForCheck();
 
-    this.reportService
-      .getDetailedExaminationReport(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (response: any) => {
-          this.dailyStats = response as DailyExaminationStat[];
-
-          // Flatten data for Table and Export
-          this.rawData = [];
-          for (const day of this.dailyStats) {
-            const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
-            const details = day.CHUYEN_KHOA_KHAM || [];
-
-            for (const detail of details) {
-              this.rawData.push({
-                NGAYKHAM: day.NGAY_KHAM,
-                NGAY_KHAM_DISPLAY: dateDisplay,
-                TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
-                BAC_SI: detail.BAC_SI || 'Chưa xác định',
-                SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
-                // Note: For table detail rows we still sum new+old, 
-                // but for global stats we will use root props
-                SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
-                BENH_MOI: detail.BENH_MOI || 0,
-                BENH_CU: detail.BENH_CU || 0,
-              } as DetailedExaminationStat);
-            }
-          }
-
-          this.processData();
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu báo cáo chi tiết.');
-          this.rawData = [];
-          this.dailyStats = [];
-          this.initializeWidgets();
-        },
-      });
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.reportService
+        .getDetailedExaminationReport(this.fromDate, this.toDate)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: (response: any) => {
+            this.dailyStats = response as DailyExaminationStat[];
+            this.processData(); // Process once
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu báo cáo chi tiết.');
+            this.rawData = [];
+            this.dailyStats = [];
+            this.initializeWidgets();
+          },
+        });
+    }, 0);
   }
 
   private resetCharts(): void {
@@ -248,48 +229,62 @@ export class DetailedExaminationReportComponent implements OnInit {
   }
 
   private processData(): void {
-    if ((!this.dailyStats || this.dailyStats.length === 0) && this.rawData.length === 0) {
+    if (!this.dailyStats || this.dailyStats.length === 0) {
       this.initializeWidgets();
+      this.rawData = [];
       return;
     }
 
+    // [OPTIMIZATION] Single pass for all aggregations
     let totalVisits = 0;
-    let totalPatientsDirect = 0; // Using SO_NGUOI_KHAM_TONG
+    let totalPatientsDirect = 0;
+    let totalNew = 0;
+    let totalOld = 0;
 
-    // Maps for charts
     const dateMap = new Map<string, { visits: number; patients: number }>();
     const specialtyMap = new Map<string, number>();
     const doctorMap = new Map<string, number>();
 
-    // Counters for Pie Chart Breakdown (New vs Old)
-    let totalNew = 0;
-    let totalOld = 0;
+    this.rawData = []; // Reset raw data
 
-    // 1. Process Daily Stats (Root Level) - Direct access, no calculation
     for (const day of this.dailyStats) {
+      // 1. Daily Stats
       const v = day.SO_LUOT_KHAM_TONG || 0;
-      const p = day.SO_NGUOI_KHAM_TONG || 0; // Direct from API
-
+      const p = day.SO_NGUOI_KHAM_TONG || 0;
       totalVisits += v;
       totalPatientsDirect += p;
 
       const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
       dateMap.set(dateKey, { visits: v, patients: p });
-    }
 
-    // 2. Process Detailed Data for breakdown charts only
-    for (const item of this.rawData) {
-      const spec = item.TEN_CHUYEN_KHOA;
-      const doc = item.BAC_SI;
-      const visits = item.SO_LUOT_KHAM || 0;
+      // 2. Detailed Stats (Flattening + Aggregation)
+      const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
+      const details = day.CHUYEN_KHOA_KHAM || [];
 
-      // Aggregates for Pie Chart
-      totalNew += item.BENH_MOI || 0;
-      totalOld += item.BENH_CU || 0;
+      for (const detail of details) {
+        // Flatten for Table
+        this.rawData.push({
+          NGAYKHAM: day.NGAY_KHAM,
+          NGAY_KHAM_DISPLAY: dateDisplay,
+          TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
+          BAC_SI: detail.BAC_SI || 'Chưa xác định',
+          SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
+          SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
+          BENH_MOI: detail.BENH_MOI || 0,
+          BENH_CU: detail.BENH_CU || 0,
+        } as DetailedExaminationStat);
 
-      // Map aggregation
-      specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
-      doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+        // Aggregate for Charts
+        const spec = detail.TEN_CHUYEN_KHOA || 'Khác';
+        const doc = detail.BAC_SI || 'Chưa xác định';
+        const visits = detail.SO_LUOT_KHAM || 0;
+
+        totalNew += detail.BENH_MOI || 0;
+        totalOld += detail.BENH_CU || 0;
+
+        specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
+        doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+      }
     }
 
     const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
@@ -308,7 +303,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         id: 'total-patients',
         icon: 'fas fa-user-injured',
         title: 'Tổng Người Bệnh',
-        value: this.formatNumber(totalPatientsDirect), // Uses SO_NGUOI_KHAM_TONG sum
+        value: this.formatNumber(totalPatientsDirect),
         caption: 'Total Patients',
         accentColor: this.palette.chart2,
       },
@@ -334,6 +329,12 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.buildPatientTypeChart(totalNew, totalOld);
     this.buildSpecialtyChart(specialtyMap);
     this.buildDoctorChart(doctorMap);
+  }
+
+  private updateChartColors(): void {
+    if (this.trendChartOptions) {
+      this.processData();
+    }
   }
 
   private buildTrendChart(dateMap: Map<string, { visits: number; patients: number }>): void {
@@ -557,7 +558,7 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.isExporting = true;
     this.cd.markForCheck();
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const columns: ExportColumn[] = [
         { key: 'NGAY_KHAM_DISPLAY', header: 'Ngày Khám' },
         { key: 'TEN_CHUYEN_KHOA', header: 'Chuyên Khoa' },
@@ -568,7 +569,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         { key: 'BENH_CU', header: 'Tái Khám' },
       ];
 
-      this.excelService.exportToExcel(
+      await this.excelService.exportToExcel(
         this.rawData,
         `BaoCao_KhamBenhChiTiet_${this.fromDate}_${this.toDate}`,
         columns

@@ -5,12 +5,12 @@ import { Router } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../../environments/environment.development'; 
+import { environment } from '../../../environments/environment.development';
 
 class MockAuthService {
   accessToken: string | null = null;
   logoutCalled = false;
-  API_URL_LOGIN = environment.authUrl; // Use the actual environment URL
+  API_URL_LOGIN = environment.authUrl;
 
   getAccessToken(): string | null {
     return this.accessToken;
@@ -18,28 +18,24 @@ class MockAuthService {
 
   logout(): void {
     this.logoutCalled = true;
-    this.accessToken = null; // Simulate token clearing on logout
+    this.accessToken = null;
   }
-
-  // Add other methods if your interceptor might eventually call them
 }
 
-// --- Mock Router ---
 class MockRouter {
   navigate(commands: any[]): Promise<boolean> {
-    return Promise.resolve(true); // Simulate successful navigation
+    return Promise.resolve(true);
   }
 }
 
 describe('authInterceptor', () => {
   let httpMock: HttpTestingController;
   let authService: MockAuthService;
-  let httpClient: HttpClient; // To make actual requests through the interceptor chain
+  let httpClient: HttpClient;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: AuthService, useClass: MockAuthService },
@@ -47,96 +43,80 @@ describe('authInterceptor', () => {
       ]
     });
 
-    // Inject the testing controller and the http client
     httpMock = TestBed.inject(HttpTestingController);
     httpClient = TestBed.inject(HttpClient);
-    // Get the instance of the MockAuthService provided above
-    // Use TestBed.inject(AuthService) which gets the provided mock
     authService = TestBed.inject(AuthService) as unknown as MockAuthService;
   });
 
   afterEach(() => {
-    httpMock.verify(); // Ensure no outstanding requests are lingering
+    httpMock.verify();
   });
 
-  // Test the basic creation/existence (optional but fine)
   it('should be created', () => {
-     // For functional interceptors, you might test setup rather than instance
-     expect(authInterceptor).toBeTruthy();
-     expect(typeof authInterceptor).toBe('function');
+    expect(authInterceptor).toBeTruthy();
+    expect(typeof authInterceptor).toBe('function');
   });
 
   it('should add the Authorization header if an access token exists', () => {
     const testToken = 'my-secret-token-123';
-    authService.accessToken = testToken; // Set the token in the mock service
+    authService.accessToken = testToken;
 
-    // Make an HTTP call using the injected HttpClient
     httpClient.get('/api/data').subscribe();
 
-    // Expect that a request was made and capture it
     const httpRequest = httpMock.expectOne('/api/data');
 
-    // Assert that the header was added correctly
     expect(httpRequest.request.headers.has('Authorization')).toBeTrue();
     expect(httpRequest.request.headers.get('Authorization')).toBe(`Bearer ${testToken}`);
 
-    // Flush the request to complete the observable chain
     httpRequest.flush({});
   });
 
   it('should NOT add the Authorization header if no access token exists', () => {
-    authService.accessToken = null; // Ensure no token is set
+    authService.accessToken = null;
 
     httpClient.get('/api/data').subscribe();
 
     const httpRequest = httpMock.expectOne('/api/data');
 
-    // Assert that the header was NOT added
     expect(httpRequest.request.headers.has('Authorization')).toBeFalse();
 
     httpRequest.flush({});
   });
 
   it('should call authService.logout() and re-throw error on 401 for a protected URL', () => {
-    authService.accessToken = 'existing-but-expired-token'; // Token exists initially
+    authService.accessToken = 'existing-but-expired-token';
 
     httpClient.get('/api/protected/resource').subscribe({
-      next: () => fail('should have failed with 401 error'), // Fail if request succeeds
+      next: () => fail('should have failed with 401 error'),
       error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(401); // Verify the error status
+        expect(error.status).toBe(401);
       }
     });
 
     const httpRequest = httpMock.expectOne('/api/protected/resource');
     expect(httpRequest.request.headers.get('Authorization')).toBe('Bearer existing-but-expired-token');
 
-    // Simulate a 401 response from the backend
     httpRequest.flush('Unauthorized access', { status: 401, statusText: 'Unauthorized' });
 
-    // Assert that the logout method was called on the mock service
     expect(authService.logoutCalled).toBeTrue();
   });
 
   it('should NOT call authService.logout() on 401 error for the LOGIN URL', () => {
-    authService.accessToken = null; // No token for login attempt
-
-    // Get the login URL directly from the environment import
+    authService.accessToken = null;
     const loginUrl = environment.authUrl;
 
     httpClient.post(loginUrl, {}).subscribe({
       next: () => fail('should have failed with 401 error'),
       error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(401); // Verify the error status
+        expect(error.status).toBe(401);
       }
     });
 
     const httpRequest = httpMock.expectOne(loginUrl);
     expect(httpRequest.request.headers.has('Authorization')).toBeFalse();
 
-    // Simulate a 401 response (e.g., invalid credentials)
     httpRequest.flush('Invalid Credentials', { status: 401, statusText: 'Unauthorized' });
 
-    // Assert that the logout method was NOT called
     expect(authService.logoutCalled).toBeFalse();
   });
 
@@ -146,18 +126,15 @@ describe('authInterceptor', () => {
     httpClient.get('/api/resource-error').subscribe({
       next: () => fail('should have failed with 500 error'),
       error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(500); // Verify the error status
+        expect(error.status).toBe(500);
       }
     });
 
     const httpRequest = httpMock.expectOne('/api/resource-error');
     expect(httpRequest.request.headers.get('Authorization')).toBe('Bearer valid-token');
 
-    // Simulate a 500 response
     httpRequest.flush('Internal Server Error', { status: 500, statusText: 'Internal Server Error' });
 
-    // Assert that the logout method was NOT called
     expect(authService.logoutCalled).toBeFalse();
   });
-
 });

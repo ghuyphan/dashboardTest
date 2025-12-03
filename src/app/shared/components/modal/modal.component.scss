@@ -12,40 +12,55 @@
   position: relative;
   width: 90vw;
   min-width: 320px;
-  max-width: 600px; /* Default (md) */
-  max-height: 85vh; /* Desktop height */
-  
+  max-width: 600px;
+  /* Default (md) */
+  max-height: 85vh;
+  /* Desktop height */
+
   /* Appearance */
   background-color: var(--surface-card);
   color: var(--text-primary);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-lg);
-  
+
   /* Border handling for Dark Mode definition */
   border: 1px solid transparent;
+
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
-  
+
   overflow: hidden;
-  
+
   /* Animation */
   animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity; 
+  will-change: transform,
+  opacity;
 
   /* Size Variants */
-  &.modal-size-sm { max-width: 400px; }
-  &.modal-size-md { max-width: 600px; }
-  &.modal-size-lg { max-width: 800px; }
-  &.modal-size-xl { max-width: 1140px; }
+  &.modal-size-sm {
+    max-width: 400px;
+  }
+
+  &.modal-size-md {
+    max-width: 600px;
+  }
+
+  &.modal-size-lg {
+    max-width: 800px;
+  }
+
+  &.modal-size-xl {
+    max-width: 1140px;
+  }
 
   /* Tablet & Mobile Response */
   @media (max-width: 768px) {
     width: 95vw;
     /* Override specific sizes to fit screen if needed */
-    max-width: 95vw; 
+    max-width: 95vw;
     /* Allow more height on mobile */
-    max-height: 90vh; 
+    max-height: 90vh;
     /* Ensure it fits on very small screens with margin */
     min-width: calc(100vw - 32px);
   }
@@ -55,12 +70,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   /* Spacing */
   padding: var(--spacing-md) var(--spacing-lg);
   gap: var(--spacing-md);
-  
-  background-color: var(--surface-card); 
+
+  background-color: var(--surface-card);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 
@@ -76,7 +91,7 @@
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
-  
+
   /* Safety for long titles */
   white-space: nowrap;
   overflow: hidden;
@@ -87,12 +102,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  width: 36px; /* Slightly larger touch target */
+
+  width: 36px;
+  /* Slightly larger touch target */
   height: 36px;
   padding: 0;
-  margin-right: -8px; /* Offset visual margin */
-  
+  margin-right: -8px;
+  /* Offset visual margin */
+
   background: transparent;
   border: none;
   border-radius: 50%;
@@ -103,9 +120,10 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: var(--gray-100);
+    background-color: var(--gray-200);
     color: var(--text-primary);
-    
+    transform: scale(1.1);
+
     [data-theme='dark'] & {
       background-color: var(--gray-200);
     }
@@ -116,26 +134,39 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-lg);
-  
+
   /* Scrollbar behavior */
   overscroll-behavior: contain;
-  scrollbar-gutter: stable; 
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) transparent;
 
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--gray-300);
     border-radius: 3px;
-    &:hover { background-color: var(--gray-400); }
+
+    &:hover {
+      background-color: var(--gray-400);
+    }
   }
-  
+
   [data-theme='dark'] & {
     scrollbar-color: var(--gray-600) transparent;
+
     &::-webkit-scrollbar-thumb {
       background-color: var(--gray-600);
-      &:hover { background-color: var(--gray-500); }
+
+      &:hover {
+        background-color: var(--gray-500);
+      }
     }
   }
 
@@ -145,6 +176,13 @@
 }
 
 @keyframes modalScaleIn {
-  0% { opacity: 0; transform: scale(0.96) translateY(10px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }

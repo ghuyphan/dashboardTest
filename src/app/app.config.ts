@@ -1,4 +1,5 @@
 import { ApplicationConfig, provideAppInitializer, inject, LOCALE_ID } from '@angular/core';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import {
   provideRouter,
   RouteReuseStrategy,
@@ -27,7 +28,7 @@ export const appConfig: ApplicationConfig = {
       withPreloading(PreloadAllModules),
       withViewTransitions(),
       // [FIX] Enable standard scroll restoration
-      withInMemoryScrolling({ scrollPositionRestoration: 'top' }) 
+      withInMemoryScrolling({ scrollPositionRestoration: 'top' })
     ),
 
     provideHttpClient(
@@ -41,5 +42,6 @@ export const appConfig: ApplicationConfig = {
       const authService = inject(AuthService);
       return authService.init();
     }),
+    provideAnimations(),
   ],
 };

@@ -151,22 +151,6 @@
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
   font-size: clamp(0.9375rem, 4vw, 16px);
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 44px;
-
-  transition: all 0.2s var(--transition-spring);
-
-  &:hover:not(:disabled) {
-    background: var(--peacock-blue);
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-md);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: var(--box-shadow-sm);
-  }
 
   &:disabled {
     opacity: 0.7;

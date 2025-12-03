@@ -99,27 +99,30 @@ export class MedicalRecordsStatusComponent implements OnInit {
     this.doctorChartOptions = null;
     this.cd.markForCheck();
 
-    this.reportService
-      .getMedicalRecordStatusSummary(this.fromDate, this.toDate)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cd.markForCheck();
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (data) => {
-          this.summaryData = data || [];
-          this.buildCharts(this.summaryData);
-        },
-        error: (err) => {
-          console.error(err);
-          this.toastService.showError('Không thể tải dữ liệu biểu đồ.');
-          this.summaryData = [];
-          this.doctorChartOptions = null;
-        },
-      });
+    // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    setTimeout(() => {
+      this.reportService
+        .getMedicalRecordStatusSummary(this.fromDate, this.toDate)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cd.markForCheck();
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe({
+          next: (data) => {
+            this.summaryData = data || [];
+            this.buildCharts(this.summaryData);
+          },
+          error: (err) => {
+            console.error(err);
+            this.toastService.showError('Không thể tải dữ liệu biểu đồ.');
+            this.summaryData = [];
+            this.doctorChartOptions = null;
+          },
+        });
+    }, 0);
   }
 
   private buildCharts(data: MedicalRecordSummary[]): void {

@@ -764,7 +764,7 @@ export class LlmService {
       ...m,
       this.createMsg(
         'assistant',
-        `Xin chào! Tôi là trợ lý IT của Bệnh viện Hoàn Mỹ. Bạn cần hỗ trợ gì?`
+        `👋 Xin chào! Tôi là trợ lý IT của Bệnh viện Hoàn Mỹ. Bạn cần hỗ trợ gì?`
       ),
     ]);
   }

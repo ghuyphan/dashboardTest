@@ -15,26 +15,50 @@
 
     <div class="dashboard-grid">
 
+      @defer (on immediate) {
       <app-chart-card class="grid-item span-4 tall-chart" title="Tổng lượt cấp cứu" icon="fas fa-chart-line"
         iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="trendChartOptions" skeletonType="line"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu cấp cứu.">
       </app-chart-card>
+      } @placeholder {
+      <div class="grid-item span-4 tall-chart">
+        <div class="chart-placeholder"></div>
+      </div>
+      }
 
+      @defer (on immediate) {
       <app-chart-card class="grid-item span-2" title="Lượt chuyển tuyến từ Cấp cứu" icon="fas fa-ambulance"
         iconClass="icon-danger" [isLoading]="isLoading" [chartOptions]="transferChartOptions" skeletonType="bar"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu chuyển viện.">
       </app-chart-card>
+      } @placeholder {
+      <div class="grid-item span-2">
+        <div class="chart-placeholder"></div>
+      </div>
+      }
 
+      @defer (on immediate) {
       <app-chart-card class="grid-item span-2" title="Tỷ lệ chuyển đổi Cấp cứu sang IP (%)" subtitle="(Số lượng / %)"
         icon="fas fa-procedures" iconClass="icon-success" [isLoading]="isLoading" [chartOptions]="admissionChartOptions"
         skeletonType="bar" [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
         emptyText="Chưa có dữ liệu nhập viện.">
       </app-chart-card>
+      } @placeholder {
+      <div class="grid-item span-2">
+        <div class="chart-placeholder"></div>
+      </div>
+      }
 
+      @defer (on immediate) {
       <app-chart-card class="grid-item span-2" title="Tỷ lệ cấp cứu theo Đối tượng" icon="fas fa-pie-chart"
         iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="insuranceChartOptions" skeletonType="pie"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu BHYT.">
       </app-chart-card>
+      } @placeholder {
+      <div class="grid-item span-2">
+        <div class="chart-placeholder"></div>
+      </div>
+      }
 
       <app-table-card class="grid-item span-2" title="Dữ liệu chi tiết" icon="fas fa-table" iconClass="icon-success"
         [isLoading]="isLoading" [data]="rawData" [columns]="tableColumns" [showPaginator]="true" [pageSize]="5"

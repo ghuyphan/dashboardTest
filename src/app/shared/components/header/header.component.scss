@@ -75,8 +75,13 @@
   height: 40px;
 
   &:hover {
-    background-color: var(--gray-100);
+    background-color: var(--gray-200);
     color: var(--teal-blue);
+    transform: scale(1.1);
+
+    i {
+      transform: scale(1.15);
+    }
 
     [data-theme='dark'] & {
       background-color: var(--gray-200);
@@ -216,7 +221,7 @@
   outline: none;
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.1);
   }
 
   &:focus-visible {
@@ -392,11 +397,12 @@
 
     /* Hover State (Light Mode) */
     &:hover {
-      background-color: var(--gray-100);
+      background-color: var(--gray-200);
 
       .menu-icon-bg {
         background: var(--surface-background);
         color: var(--text-primary);
+        transform: scale(1.15);
       }
     }
 

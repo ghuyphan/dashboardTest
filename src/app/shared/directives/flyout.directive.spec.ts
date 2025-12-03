@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { FlyoutDirective } from './flyout.directive';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 
 @Component({
   template: `<button [appFlyout]="menu" [flyoutEnabled]="true">Open</button><div #menu>Menu Content</div>`,
@@ -14,7 +17,12 @@ describe('FlyoutDirective', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, FlyoutDirective]
+      imports: [TestHostComponent, FlyoutDirective],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([])
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);
