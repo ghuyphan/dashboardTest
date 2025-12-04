@@ -1,3 +1,5 @@
+@use '../../../styles/mixins' as m;
+
 /* src/app/features/settings/settings.component.scss */
 :host {
   display: flex;
@@ -183,64 +185,25 @@
 /* --- Form Styles --- */
 .form-group {
   margin-bottom: var(--spacing-md);
+  @include m.input-group-styles;
 
+  // Override mixin slightly if needed, or rely on it
   label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
-    color: var(--text-primary);
-    /* Semantic */
-    font-size: 0.875rem;
-
-    .req {
-      color: var(--color-danger);
-      margin-left: 2px;
-    }
+    // Mixin handles basic label styles
+    display: block; // Ensure block display
   }
 
   .input-group {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
+    // Mixin handles relative positioning
 
-  .form-control {
-    width: 100%;
-    min-height: 38px;
-    padding: 8px 40px 8px 12px;
-
-    /* Semantic Input Colors */
-    background-color: var(--input-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-
-    border-radius: var(--border-radius-md);
-    font-size: 0.9375rem;
-    font-family: var(--font-family-sans);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-    &::placeholder {
-      color: var(--text-disabled);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-      /* Semantic */
-      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.2);
-    }
-
-    &.is-invalid {
-      border-color: var(--color-danger);
-
-      &:focus {
-        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
-      }
+    // Add specific padding for toggle button if needed
+    .form-control {
+      padding-right: 40px; // Space for toggle button
     }
   }
 
   .toggle-btn {
-    position: absolute;
+    // Mixin handles basic positioning
     right: 4px;
     top: 50%;
     transform: translateY(-50%);
@@ -248,13 +211,8 @@
     width: 30px;
     background: transparent;
     border: none;
-    color: var(--text-secondary);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     border-radius: 50%;
-    transition: all 0.2s;
 
     &:hover {
       background-color: var(--gray-100);

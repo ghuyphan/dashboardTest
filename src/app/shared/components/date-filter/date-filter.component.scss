@@ -1,3 +1,5 @@
+@use '../../../../styles/mixins' as m;
+
 :host {
   display: block;
   --input-height: 42px;
@@ -48,11 +50,10 @@
 }
 
 .filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
+  // Assuming input-group-styles exists in your mixins based on your provided code
+  @include m.input-group-styles;
 
+  // Override mixin slightly for this specific layout
   label {
     font-size: 0.75rem;
     font-weight: 700;
@@ -61,68 +62,64 @@
     letter-spacing: 0.5px;
     margin-left: 2px;
   }
-}
 
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
+  .input-wrapper {
+    // Mixin handles relative positioning
 
-  .custom-toggle {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-    z-index: 2;
-    transform: translateY(-50%) scale(0.9);
-  }
-}
-
-.form-control-date {
-  height: var(--input-height);
-  width: 100%;
-  min-width: 120px;
-  padding: 0 36px 0 12px;
-
-  background-color: var(--input-bg);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-
-  font-family: var(--font-family-sans);
-  font-size: 0.9rem;
-  font-weight: 500;
-
-  transition: all 0.2s ease;
-  outline: none;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    border-color: var(--gray-400);
-  }
-
-  &:focus:not(:disabled) {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
-
-    [data-theme='dark'] & {
-      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    .custom-toggle {
+      position: absolute; // Ensure absolute is set if mixin doesn't cover it specific to this context
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%) scale(0.9);
+      color: var(--text-secondary);
+      z-index: 2;
     }
   }
 
-  &:disabled {
-    cursor: not-allowed;
-    background-color: var(--gray-100);
-    color: var(--text-secondary);
-    border-color: var(--gray-200);
-    opacity: 1;
+  .form-control-date {
+    // Mixin handles most styles
+    height: var(--input-height);
+    width: 100%;
+    min-width: 120px;
+    padding: 0 36px 0 12px;
+    cursor: pointer;
+    font-weight: 500;
 
-    [data-theme='dark'] & {
-      background-color: rgba(255, 255, 255, 0.05);
-      color: var(--gray-400);
-      border-color: var(--gray-700);
+    // Standard border/bg styles should come from mixin or global class
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    font-family: var(--font-family-sans);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    outline: none;
+
+    &:hover:not(:disabled) {
+      border-color: var(--gray-400);
+    }
+
+    &:focus:not(:disabled) {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
+
+      [data-theme='dark'] & {
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+      }
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      background-color: var(--gray-100);
+      color: var(--text-secondary);
+      border-color: var(--gray-200);
+      opacity: 1;
+
+      [data-theme='dark'] & {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--gray-400);
+        border-color: var(--gray-700);
+      }
     }
   }
 }
@@ -134,6 +131,9 @@
   position: relative;
   display: flex;
   align-items: center;
+
+  // Ensure it doesn't overflow vertically
+  height: var(--input-height);
 
   &::after {
     content: '';
@@ -159,7 +159,7 @@
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 4px; // Space for scrollbar if visible
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -167,11 +167,11 @@
   }
 
   scroll-snap-type: x mandatory;
-  height: var(--input-height);
+  height: 100%; // Fill container
   align-items: center;
 }
 
-/* [UPDATED] Match animation to global buttons */
+/* [UPDATED] Now using global mixin for consistency */
 .btn-pill {
   appearance: none;
   background-color: transparent;
@@ -186,20 +186,27 @@
   cursor: pointer;
   scroll-snap-align: start;
 
-  /* [FIX] Use SPRING transition for transform to match main buttons */
-  transition: transform 0.2s var(--transition-spring),
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s var(--transition-smooth);
+  /* [FIX] Relative position needed for the ::after hit-area fix */
+  position: relative;
 
+  // Include global interaction styles (Transition, Focus, Disabled state)
+  @include m.btn-interactions;
+
+  /* [FIX] Invisible Hit Area Extension to prevent flickering on hover lift */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    bottom: -6px; // Extends hit area downwards to catch the cursor during translateY
+    z-index: 1;
+    background: transparent;
+    border-radius: inherit;
+  }
+
+  // Specific hover colors for this component (overrides mixin default shadows if needed)
   &:hover:not(:disabled) {
     background-color: var(--gray-200);
     color: var(--text-primary);
-
-    /* [FIX] Increased lift to -3px to match global button feel */
-    transform: translateY(-2px);
-    /* box-shadow: var(--box-shadow-sm); Removed */
 
     [data-theme='dark'] & {
       background-color: var(--gray-700);
@@ -215,11 +222,6 @@
     [data-theme='dark'] & {
       color: #000;
     }
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 }
 

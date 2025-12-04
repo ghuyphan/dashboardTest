@@ -1,3 +1,6 @@
+@use '../../../../styles/mixins' as m;
+
+/* src/app/features/auth/login/login.component.scss */
 :host {
   display: block;
   width: 100%;
@@ -6,11 +9,38 @@
 /* Ensure input labels use semantic colors */
 .auth-input-group {
   margin-bottom: clamp(16px, 4vw, 20px);
-}
+  @include m.input-group-styles;
 
-.auth-input-group label {
-  color: var(--text-primary);
-  font-weight: 500;
+  // Override mixin slightly for login specific layout if needed
+  label {
+    font-weight: 500;
+  }
+
+  .input-wrapper {
+    // Mixin handles relative positioning
+
+    // Ensure input has padding for icon
+    .form-control,
+    input {
+      padding-left: clamp(40px, 5vw, 44px); // Space for left icon
+    }
+  }
+
+  .input-icon {
+    // Mixin handles basic positioning
+    left: clamp(12px, 3vw, 1rem);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(16px, 4vw, 18px);
+    pointer-events: none;
+
+    // Specific color transition handled by mixin, but ensure focus-within works
+  }
+
+  // Focus within effect for icon color
+  .input-wrapper:focus-within .input-icon {
+    color: var(--teal-blue);
+  }
 }
 
 .toggle-password {
@@ -164,54 +194,4 @@
     transform: none;
     box-shadow: none;
   }
-}
-
-/* --- INPUT STYLES --- */
-.input-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-input {
-  width: 100%;
-  padding: clamp(12px, 3vw, 14px) 1rem clamp(12px, 3vw, 14px) clamp(40px, 5vw, 44px);
-  border: 1px solid var(--border-color);
-  border-radius: clamp(8px, 2.5vw, 12px);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: clamp(0.9375rem, 4vw, 16px);
-  transition: all 0.2s var(--transition-smooth);
-
-  &::placeholder {
-    color: var(--text-disabled);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: var(--teal-blue);
-    box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.1);
-  }
-
-  &.is-invalid {
-    border-color: var(--color-danger);
-
-    &:focus {
-      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
-    }
-  }
-}
-
-.input-icon {
-  position: absolute;
-  left: clamp(12px, 3vw, 1rem);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-disabled);
-  font-size: clamp(16px, 4vw, 18px);
-  pointer-events: none;
-  transition: color 0.2s ease;
-}
-
-.input-wrapper:focus-within .input-icon {
-  color: var(--teal-blue);
 }
