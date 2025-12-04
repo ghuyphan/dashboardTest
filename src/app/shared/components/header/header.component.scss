@@ -1,9 +1,11 @@
+@use '../../../../styles/mixins' as m;
+
 :host {
   display: block;
   position: sticky;
   top: 0;
   z-index: 1000;
-  --header-height: 60px;
+  --header-height: 50px;
   /* Standardized height */
 }
 
@@ -69,23 +71,16 @@
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
-  transition: all 0.2s;
   width: 40px;
   /* Explicit size for alignment */
   height: 40px;
 
-  &:hover {
-    background-color: var(--gray-200);
-    color: var(--teal-blue);
-    transform: scale(1.1);
+  /* [UPDATED] Use global mixin for consistent interaction */
+  @include m.icon-btn-interactions;
 
-    i {
-      transform: scale(1.15);
-    }
-
-    [data-theme='dark'] & {
-      background-color: var(--gray-200);
-    }
+  /* Ensure icon scaling from mixin (or override if needed) */
+  i {
+    font-size: 1.25rem;
   }
 }
 
@@ -163,9 +158,12 @@
     justify-content: center;
     width: 32px;
     height: 32px;
+    border-radius: 50%;
+    transition: color 0.2s ease;
 
     &:hover {
       color: var(--text-primary);
+      background-color: var(--gray-100);
     }
   }
 }
@@ -222,6 +220,11 @@
 
   &:hover {
     transform: scale(1.1);
+  }
+
+  /* [FIX] Add Active/Click state */
+  &:active {
+    transform: scale(0.95);
   }
 
   &:focus-visible {

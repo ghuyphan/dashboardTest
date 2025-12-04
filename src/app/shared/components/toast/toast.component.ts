@@ -92,27 +92,61 @@ export class ToastComponent implements OnDestroy {
     this.dismissTimers = [];
   }
 
-  // --- New: Copy Logic ---
+  // --- Copy Logic with Fallback ---
   copyToClipboard(toast: ToastMessage, event: Event): void {
-    event.stopPropagation(); // Prevent bubbling
+    event.stopPropagation();
+    event.preventDefault();
 
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(toast.message).then(() => {
-        // 1. Set copied state to show checkmark
-        this.copiedId.set(toast.id);
+    const textToCopy = toast.message;
 
-        // 2. Pause timer so user sees the feedback before it disappears
-        this.pauseAllTimers();
-
-        // 3. Revert icon after 2 seconds
-        setTimeout(() => {
-          this.copiedId.set(null);
-          this.resumeAllTimers();
-        }, 2000);
+    // Try modern Clipboard API first (requires secure context)
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        this.showCopySuccess(toast.id);
       }).catch(err => {
-        console.error('Failed to copy:', err);
+        console.warn('Clipboard API failed, trying fallback:', err);
+        this.fallbackCopyToClipboard(textToCopy, toast.id);
       });
+    } else {
+      // Fallback for HTTP or older browsers
+      this.fallbackCopyToClipboard(textToCopy, toast.id);
     }
+  }
+
+  private fallbackCopyToClipboard(text: string, toastId: number): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '-9999px';
+    textArea.style.opacity = '0';
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        this.showCopySuccess(toastId);
+      } else {
+        console.error('Fallback copy failed');
+      }
+    } catch (err) {
+      console.error('Fallback copy error:', err);
+    }
+
+    document.body.removeChild(textArea);
+  }
+
+  private showCopySuccess(toastId: number): void {
+    this.copiedId.set(toastId);
+    this.pauseAllTimers();
+
+    setTimeout(() => {
+      this.copiedId.set(null);
+      this.resumeAllTimers();
+    }, 2000);
   }
 
   // --- Timer Logic ---
