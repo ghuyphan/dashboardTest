@@ -50,7 +50,7 @@ export const routes: Routes = [
             (m) => m.SettingsComponent
           ),
         data: {
-          title: 'Cài đặt tài khoản',
+          title: 'Cài đặt chung',
           keywords: ['doi mat khau', 'tai khoan', 'password', 'mk', 'change password', 'profile'],
           showBackButton: true,
         },
@@ -240,6 +240,18 @@ export const routes: Routes = [
           keywords: ['chi tiet kham', 'kham benh chi tiet', 'so luot kham'],
           showSearchBar: false,
         },
+      },
+      {
+        path: 'reports/icd-frequency',
+        loadComponent: () =>
+          import('./features/reports/icd-report/icd-report.component')
+            .then(m => m.IcdReportComponent),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.ThongKeICD', // Ensure you have this permission key
+          title: 'Thống kê mô hình bệnh tật (ICD)',
+          keywords: ['icd', 'benh tat', 'top benh', 'ngoai tru', 'noi tru']
+        }
       },
 
       { path: '', redirectTo: 'home', pathMatch: 'full' },

@@ -18,6 +18,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../core/services/theme.service';
 import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
 import { DateUtils } from '../../shared/utils/date.utils';
+import { NumberUtils } from '../../shared/utils/number.utils';
 
 import { WidgetCardComponent } from '../../shared/components/widget-card/widget-card.component';
 import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
@@ -90,7 +91,6 @@ export class ExaminationOverviewComponent implements OnInit {
   ];
 
   private palette!: ThemePalette;
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -385,7 +385,7 @@ export class ExaminationOverviewComponent implements OnInit {
             show: true,
             position: 'outer',
             formatter: (params: any) => {
-              return `${params.name}: ${this.vnNumberFormatter.format(params.value)} (${params.percent}%)`;
+              return `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)`;
             },
             color: this.palette.textPrimary
           },

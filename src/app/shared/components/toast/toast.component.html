@@ -22,16 +22,16 @@
 
       <div class="toast-actions" (touchstart)="$event.stopPropagation()">
 
+        <button class="icon-btn dismiss-btn" (click)="closeToast(toast.id)" aria-label="Đóng">
+          <i class="fas fa-times"></i>
+        </button>
+
         <button class="icon-btn copy-btn" (click)="copyToClipboard(toast, $event)" title="Sao chép">
           @if (copiedId() === toast.id) {
           <i class="fas fa-check text-success"></i>
           } @else {
           <i class="far fa-copy"></i>
           }
-        </button>
-
-        <button class="icon-btn dismiss-btn" (click)="closeToast(toast.id)" aria-label="Đóng">
-          <i class="fas fa-times"></i>
         </button>
 
       </div>

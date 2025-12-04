@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
+import { NumberUtils } from '../../utils/number.utils';
 
 type ValueFormat = 'number' | 'currency' | 'string' | 'percent';
 type CurrencyCode = 'VND' | 'USD' | 'EUR';
@@ -73,7 +74,6 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   private currencyCode: CurrencyCode = 'VND';
   private animationFrameId?: number;
   private readonly ANIMATION_DURATION_MS = 1000;
-  private readonly LOCALE = 'vi-VN';
 
   constructor() {
     effect(() => {
@@ -216,13 +216,11 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   private formatNumericValue(value: number): string {
     switch (this.valueFormat) {
       case 'currency':
-        return new Intl.NumberFormat(this.LOCALE, {
-          style: 'currency', currency: this.currencyCode, maximumFractionDigits: 0, minimumFractionDigits: 0
-        }).format(value);
+        return NumberUtils.formatCurrency(value, this.currencyCode);
       case 'percent':
-        return `${new Intl.NumberFormat(this.LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value)}%`;
+        return NumberUtils.formatPercent(value);
       default:
-        return new Intl.NumberFormat(this.LOCALE).format(value);
+        return NumberUtils.format(value);
     }
   }
 

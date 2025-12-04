@@ -18,6 +18,7 @@ import { ThemeService, ThemePalette } from '../../../core/services/theme.service
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { DetailedExaminationStat } from '../../../shared/models/detailed-examination-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
@@ -105,7 +106,6 @@ export class DetailedExaminationReportComponent implements OnInit {
   ];
 
   private palette!: ThemePalette;
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -421,7 +421,9 @@ export class DetailedExaminationReportComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        formatter: '{b}: {c} ({d}%)'
+        formatter: (params: any) => {
+          return `${params.name}: ${this.formatNumber(params.value)} (${params.percent}%)`;
+        }
       },
       legend: {
         bottom: 0,
@@ -550,7 +552,7 @@ export class DetailedExaminationReportComponent implements OnInit {
   }
 
   private formatNumber(num: number): string {
-    return this.vnNumberFormatter.format(num);
+    return NumberUtils.format(num);
   }
 
   public onExport(): void {

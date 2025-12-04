@@ -19,6 +19,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { Device } from '../../../shared/models/device.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { EChartsCoreOption } from 'echarts/core';
 
@@ -101,7 +102,7 @@ export class DeviceDashboardComponent implements OnInit {
 
   private palette!: ThemePalette;
   private statusColorMap = new Map<string, string>();
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
+  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -428,11 +429,7 @@ export class DeviceDashboardComponent implements OnInit {
     update('totalDevices', this.formatNumber(data.totalDevices));
     update(
       'attentionValue',
-      new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        currencyDisplay: 'symbol',
-      }).format(data.attentionValue)
+      NumberUtils.formatCurrency(data.attentionValue)
     );
     update('inUse', this.formatNumber(data.inUse));
     update('ready', this.formatNumber(data.ready));
@@ -479,7 +476,7 @@ export class DeviceDashboardComponent implements OnInit {
             position: 'outer',
             color: this.palette.textPrimary,
             formatter: (param: any) =>
-              `${param.name}: ${this.vnNumberFormatter.format(param.value)} (${param.percent
+              `${param.name}: ${NumberUtils.format(param.value)} (${param.percent
               }%)`,
           },
         },
@@ -581,7 +578,7 @@ export class DeviceDashboardComponent implements OnInit {
   }
 
   formatNumber(val: number) {
-    return this.vnNumberFormatter.format(val);
+    return NumberUtils.format(val);
   }
 
   onChartClick(type: FilterType, params: ChartClickParams) {

@@ -11,6 +11,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common'; // Added DatePipe
+import { NumberUtils } from '../../../shared/utils/number.utils';
 import {
   FormBuilder,
   FormGroup,
@@ -31,8 +32,6 @@ import { MatNativeDateModule, MAT_DATE_LOCALE, provideNativeDateAdapter } from '
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subject, takeUntil } from 'rxjs';
 
-const CURRENCY_LOCALE = 'en-US';
-const CURRENCY_CLEAN_REGEX = /[^0-9.]+/g;
 const DEFAULT_VALIDATION_MESSAGE = 'Trường này không hợp lệ.';
 
 export interface FormControlConfig {
@@ -107,7 +106,7 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
 
   private readonly fb = inject(FormBuilder);
-  private readonly currencyFormatter = new Intl.NumberFormat(CURRENCY_LOCALE);
+  // REMOVED: private readonly currencyFormatter = new Intl.NumberFormat(CURRENCY_LOCALE);
   private readonly datePipe = inject(DatePipe);
 
   constructor() {
@@ -272,7 +271,12 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     if (value === null || value === undefined || value === '') {
       return null;
     }
-    const stringValue = String(value).replace(CURRENCY_CLEAN_REGEX, '');
+    // Handle vi-VN format: remove dots (thousands), replace comma with dot (decimal)
+    let stringValue = String(value);
+    stringValue = stringValue.replace(/\./g, ''); // Remove thousands separators
+    stringValue = stringValue.replace(/,/g, '.'); // Replace decimal separator
+    stringValue = stringValue.replace(/[^0-9.]/g, ''); // Remove non-numeric chars
+
     const numberValue = parseFloat(stringValue);
     return isNaN(numberValue) ? null : numberValue;
   }
@@ -280,7 +284,7 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
   public formatCurrency(value: any): string {
     const numberValue = this.cleanCurrency(value);
     if (numberValue === null) return '';
-    return this.currencyFormatter.format(numberValue);
+    return NumberUtils.format(numberValue);
   }
 
   public onCurrencyInput(event: Event, controlName: string): void {

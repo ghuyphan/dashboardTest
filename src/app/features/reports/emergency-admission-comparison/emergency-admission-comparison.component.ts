@@ -16,7 +16,9 @@ import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { EmergencyStat } from '../../../shared/models/emergency-stat';
+
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
@@ -59,7 +61,8 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
   public comparisonChartOptions: EChartsCoreOption | null = null;
 
   private palette!: ThemePalette;
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
+
+  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -235,7 +238,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         formatter: (params: any) => {
           let result = `<div style="font-weight:bold">${params[0].name}</div>`;
           params.forEach((p: any) => {
-            const value = this.vnNumberFormatter.format(p.value);
+            const value = NumberUtils.format(p.value);
             result += `
             <div style="display:flex; justify-content:space-between; gap:15px;">
               <span>${p.marker} ${p.seriesName}</span>
@@ -296,7 +299,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           itemStyle: { color: colors.totalCC },
           lineStyle: { width: 3 },
           z: 2,
-          label: { show: true, position: 'top', color: colors.totalCC, formatter: (p: any) => this.vnNumberFormatter.format(p.value) }
+          label: { show: true, position: 'top', color: colors.totalCC, formatter: (p: any) => NumberUtils.format(p.value) }
         },
         {
           name: 'Tổng số lượt cấp cứu có BHYT',
@@ -309,7 +312,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           itemStyle: { color: colors.bhytCC },
           lineStyle: { width: 3 },
           z: 2,
-          label: { show: true, position: 'top', color: colors.bhytCC, formatter: (p: any) => this.vnNumberFormatter.format(p.value) }
+          label: { show: true, position: 'top', color: colors.bhytCC, formatter: (p: any) => NumberUtils.format(p.value) }
         }
       ]
     };

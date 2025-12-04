@@ -22,6 +22,7 @@ import {
 } from '../../../core/services/excel-export.service';
 import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
@@ -95,7 +96,7 @@ export class SpecialtyClsReportComponent implements OnInit {
     { key: 'SO_LUONG', label: 'Số Lượng', sortable: true, width: '15%' },
   ];
   private palette!: ThemePalette;
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
+  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -447,7 +448,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Added to prevent cropping
         formatter: (params: any) =>
-          `${params.name}: <b>${this.vnNumberFormatter.format(
+          `${params.name}: <b>${NumberUtils.format(
             params.value
           )}</b> (${params.percent}%)`,
       },
@@ -540,7 +541,7 @@ export class SpecialtyClsReportComponent implements OnInit {
   }
 
   private formatNumber(num: number): string {
-    return this.numberPipe.transform(num, '1.0-0') || '0';
+    return NumberUtils.format(num);
   }
 
   public onExport(): void {

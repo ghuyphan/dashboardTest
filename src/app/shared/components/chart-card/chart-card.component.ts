@@ -19,6 +19,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import { ThemeService } from '../../../core/services/theme.service';
+import { NumberUtils } from '../../utils/number.utils';
 
 export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
 
@@ -77,8 +78,6 @@ export class ChartCardComponent implements AfterViewInit {
   private lastWidth = 0;
   private lastHeight = 0;
   private isDestroyed = false;
-
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -254,7 +253,7 @@ export class ChartCardComponent implements AfterViewInit {
   private applyAutoFormatting(option: any): void {
     if (!option) return;
 
-    const formatFn = (val: number) => this.vnNumberFormatter.format(val);
+    const formatFn = (val: number) => NumberUtils.format(val);
 
     if (option.yAxis) {
       const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis];

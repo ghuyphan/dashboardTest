@@ -14,6 +14,7 @@ import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { CustomRouteReuseStrategy } from '../../../core/strategies/custom-route-reuse-strategy';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 
 // Services
 import { PdfService } from '../../../core/services/pdf.service';
@@ -154,7 +155,7 @@ export class DeviceDetailComponent implements OnInit {
       department: device.ViTri || '',
       status: device.TrangThai_Ten || '',
       description: device.MoTa || '',
-      price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(device.GiaMua || 0),
+      price: NumberUtils.formatCurrency(device.GiaMua || 0),
       created_date: new Date().toLocaleDateString('vi-VN')
     };
 

@@ -7,7 +7,7 @@ import {
   effect,
   DestroyRef,
 } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
@@ -25,6 +25,7 @@ import {
   ExportColumn,
 } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
@@ -54,7 +55,7 @@ interface WidgetData {
     DateFilterComponent,
     WidgetCardComponent,
   ],
-  providers: [DatePipe, DecimalPipe],
+  providers: [DatePipe],
   templateUrl: './emergency-summary.component.html',
   styleUrl: './emergency-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,7 +66,7 @@ export class EmergencySummaryComponent implements OnInit {
   private excelService = inject(ExcelExportService);
   private cd = inject(ChangeDetectorRef);
   private datePipe = inject(DatePipe);
-  private numberPipe = inject(DecimalPipe);
+
   private destroyRef = inject(DestroyRef);
   public readonly themeService = inject(ThemeService);
 
@@ -557,7 +558,7 @@ export class EmergencySummaryComponent implements OnInit {
           const admitted =
             params.find((p: any) => p.seriesName === 'Nhập viện')?.value || 0;
           params.forEach((p: any) => {
-            result += `${p.marker} ${p.seriesName}: <b>${p.value}</b>`;
+            result += `${p.marker} ${p.seriesName}: <b>${this.formatNumber(p.value)}</b>`;
             if (p.seriesName === 'Nhập viện' && total > 0)
               result += ` (${((admitted / total) * 100).toFixed(1)}%)`;
             result += '<br/>';
@@ -627,7 +628,9 @@ export class EmergencySummaryComponent implements OnInit {
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        formatter: '{b}: {c} ({d}%)',
+        formatter: (params: any) => {
+          return `${params.name}: ${this.formatNumber(params.value)} (${params.percent}%)`;
+        },
       },
       legend: {
         bottom: 0,
@@ -668,7 +671,7 @@ export class EmergencySummaryComponent implements OnInit {
   }
 
   private formatNumber(num: number): string {
-    return this.numberPipe.transform(num, '1.0-0') || '0';
+    return NumberUtils.format(num);
   }
 
   public onExport(): void {

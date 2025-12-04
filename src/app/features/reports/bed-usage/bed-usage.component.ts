@@ -22,6 +22,8 @@ import {
   ThemePalette,
 } from '../../../core/services/theme.service';
 
+import { NumberUtils } from '../../../shared/utils/number.utils';
+
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 const AUTO_REFRESH_INTERVAL = 60_000;
@@ -201,7 +203,7 @@ export class BedUsageComponent implements OnInit {
 
     const rate = totals.totalBeds > 0 ? (occupied / totals.totalBeds) * 100 : 0;
     const occupancyRate = `${rate.toFixed(1).replace('.', ',')}%`;
-    const format = (val: number) => this.vnNumberFormatter.format(val);
+    const format = (val: number) => NumberUtils.format(val);
 
     return [
       { id: 'occupancyRate', title: 'Công Suất', value: occupancyRate, caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: palette.chart1 },
@@ -358,7 +360,7 @@ export class BedUsageComponent implements OnInit {
             position: 'inside',
             color: '#fff',
             fontSize: 9,
-            formatter: (p: any) => (p.value > 0 ? this.vnNumberFormatter.format(p.value) : ''),
+            formatter: (p: any) => (p.value > 0 ? NumberUtils.format(p.value) : ''),
           },
         })),
 
@@ -403,7 +405,7 @@ export class BedUsageComponent implements OnInit {
           result += `
               <div style="display:flex; justify-content:space-between; gap:15px; font-size:12px;">
                 <span>${p.marker} ${p.seriesName}</span>
-                <span style="font-weight:bold;">${this.vnNumberFormatter.format(p.value)}</span>
+                <span style="font-weight:bold;">${NumberUtils.format(p.value)}</span>
               </div>`;
         }
         visibleTotal += (typeof p.value === 'number' ? p.value : 0);
@@ -412,7 +414,7 @@ export class BedUsageComponent implements OnInit {
       result += `
         <div style="margin-top:6px; padding-top:6px; border-top:1px solid ${palette.gray200}; display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
           <span>Tổng cộng</span>
-          <span>${this.vnNumberFormatter.format(visibleTotal)}</span>
+          <span>${NumberUtils.format(visibleTotal)}</span>
         </div>`;
 
       return result;

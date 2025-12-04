@@ -24,6 +24,7 @@ import {
   ExportColumn,
 } from '../../../core/services/excel-export.service';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
 import {
@@ -98,7 +99,7 @@ export class ClsLevel6ReportComponent implements OnInit {
     { key: 'TYPE_LABEL', label: 'Loại', sortable: true, width: '120px' },
   ];
   private palette!: ThemePalette;
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
+  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -543,7 +544,7 @@ export class ClsLevel6ReportComponent implements OnInit {
             position: 'outer',
             color: this.palette.textPrimary,
             formatter: (params: any) =>
-              `${params.name}: ${this.vnNumberFormatter.format(
+              `${params.name}: ${NumberUtils.format(
                 params.value
               )} (${params.percent}%)`,
           },
@@ -554,7 +555,7 @@ export class ClsLevel6ReportComponent implements OnInit {
     };
   }
   private formatNumber(num: number): string {
-    return this.numberPipe.transform(num, '1.0-0') || '0';
+    return NumberUtils.format(num);
   }
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;

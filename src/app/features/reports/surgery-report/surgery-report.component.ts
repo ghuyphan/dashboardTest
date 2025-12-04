@@ -15,6 +15,7 @@ import { ExcelExportService, ExportColumn } from '../../../core/services/excel-e
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { SurgeryStat } from '../../../core/models/surgery-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
+import { NumberUtils } from '../../../shared/utils/number.utils';
 import type { EChartsCoreOption } from 'echarts/core';
 
 const GLOBAL_FONT_FAMILY =
@@ -75,7 +76,7 @@ export class SurgeryReportComponent implements OnInit {
   ];
 
   private palette!: ThemePalette;
-  private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
+  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -438,7 +439,7 @@ export class SurgeryReportComponent implements OnInit {
   }
 
   private formatNumber(num: number): string {
-    return this.vnNumberFormatter.format(num);
+    return NumberUtils.format(num);
   }
 
   public onExport(): void {
