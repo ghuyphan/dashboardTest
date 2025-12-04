@@ -1,58 +1,60 @@
 <div class="toast-container">
   @for (toast of toastService.toasts(); track toast.id; let i = $index) {
-    <div 
-      class="toast-wrapper" 
-      [id]="'toast-' + toast.id"
-      [class.expanded]="isExpanded()"
-      [class.is-front]="i === 0"
-      [style.--index]="i"
-      
-      (mouseenter)="pauseAllTimers()" 
-      (mouseleave)="resumeAllTimers()"
-      
-      (touchstart)="handleTouchStart($event, toast.id)" 
-      (touchmove)="handleTouchMove($event, toast.id)"
-      (touchend)="handleTouchEnd($event, toast)">
-      
-      <div class="toast-card" [ngClass]="'type-' + toast.type">
-        
-        <div class="toast-icon-area">
-          <div class="icon-circle">
-            <span [innerHTML]="getIcon(toast.type)"></span>
-          </div>
-        </div>
+  <div class="toast-wrapper" [id]="'toast-' + toast.id" [class.expanded]="isExpanded()" [class.is-front]="i === 0"
+    [style.--index]="i" (mouseenter)="pauseAllTimers()" (mouseleave)="resumeAllTimers()"
+    (touchstart)="handleTouchStart($event, toast.id)" (touchmove)="handleTouchMove($event, toast.id)"
+    (touchend)="handleTouchEnd($event, toast)">
 
-        <div class="toast-content-area">
-          <h4 class="toast-title">{{ getTitle(toast.type) }}</h4>
-          <div class="toast-message scrollable-content">
-            {{ toast.message }}
-          </div>
-        </div>
+    <div class="toast-card" [ngClass]="'type-' + toast.type">
 
-        <button class="toast-dismiss-btn" (click)="closeToast(toast.id)" aria-label="Close notification">
-          <i class="fas fa-times"></i>
-        </button>
+      <div class="toast-icon-area">
+        <div class="icon-circle">
+          <span [innerHTML]="getIcon(toast.type)"></span>
+        </div>
       </div>
 
-      @if (i === 0 && toastService.toasts().length > 1 && !isExpanded()) {
-        <div class="stack-indicator" (click)="toggleExpanded($event)">
-          <span class="badge">{{ toastService.toasts().length }}</span>
-          <span class="hint">Xem tất cả</span>
+      <div class="toast-content-area">
+        <h4 class="toast-title">{{ getTitle(toast.type) }}</h4>
+        <div class="toast-message scrollable-content">
+          {{ toast.message }}
         </div>
-      }
+      </div>
+
+      <div class="toast-actions" (touchstart)="$event.stopPropagation()">
+
+        <button class="icon-btn copy-btn" (click)="copyToClipboard(toast, $event)" title="Sao chép">
+          @if (copiedId() === toast.id) {
+          <i class="fas fa-check text-success"></i>
+          } @else {
+          <i class="far fa-copy"></i>
+          }
+        </button>
+
+        <button class="icon-btn dismiss-btn" (click)="closeToast(toast.id)" aria-label="Đóng">
+          <i class="fas fa-times"></i>
+        </button>
+
+      </div>
+
     </div>
+
+    @if (i === 0 && toastService.toasts().length > 1 && !isExpanded()) {
+    <div class="stack-indicator" (click)="toggleExpanded($event)">
+      <span class="badge">{{ toastService.toasts().length }}</span>
+      <span class="hint">Xem tất cả</span>
+    </div>
+    }
+  </div>
   }
 
   @if (isExpanded() && toastService.toasts().length > 1) {
-    <div class="toast-global-actions" 
-         (mouseenter)="pauseAllTimers()" 
-         (mouseleave)="resumeAllTimers()">
-      <button class="action-btn collapse-btn" (click)="toggleExpanded($event)">
-        <i class="fas fa-compress-alt"></i> Thu gọn
-      </button>
-      <button class="action-btn clear-btn" (click)="clearAllToasts($event)">
-        <i class="fas fa-trash-alt"></i> Xóa tất cả
-      </button>
-    </div>
+  <div class="toast-global-actions" (mouseenter)="pauseAllTimers()" (mouseleave)="resumeAllTimers()">
+    <button class="action-btn collapse-btn" (click)="toggleExpanded($event)">
+      <i class="fas fa-compress-alt"></i> Thu gọn
+    </button>
+    <button class="action-btn clear-btn" (click)="clearAllToasts($event)">
+      <i class="fas fa-trash-alt"></i> Xóa tất cả
+    </button>
+  </div>
   }
 </div>

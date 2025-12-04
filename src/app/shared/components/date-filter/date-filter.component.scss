@@ -198,8 +198,8 @@
     color: var(--text-primary);
 
     /* [FIX] Increased lift to -3px to match global button feel */
-    transform: translateY(-3px);
-    box-shadow: var(--box-shadow-sm);
+    transform: translateY(-2px);
+    /* box-shadow: var(--box-shadow-sm); Removed */
 
     [data-theme='dark'] & {
       background-color: var(--gray-700);

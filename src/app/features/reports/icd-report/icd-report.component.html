@@ -1,0 +1,43 @@
+<div class="page-container">
+    <div class="page-content">
+
+        <app-date-filter (filterSubmit)="onDateFilter($event)" [isLoading]="isLoading" buttonLabel="Lọc dữ liệu"
+            defaultRange="thisMonth">
+        </app-date-filter>
+
+        <div class="dashboard-grid">
+
+            @defer (on immediate) {
+            <app-chart-card class="grid-item span-2 tall-chart" title="Top 10 Bệnh Ngoại Trú (Theo Mã ICD)"
+                icon="fas fa-walking" iconClass="icon-info" [isLoading]="isLoading"
+                [chartOptions]="outpatientChartOptions" skeletonType="horizontal-bar"
+                [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu ngoại trú.">
+            </app-chart-card>
+            } @placeholder {
+            <div class="grid-item span-2 tall-chart">
+                <div class="chart-placeholder"></div>
+            </div>
+            }
+
+            @defer (on immediate) {
+            <app-chart-card class="grid-item span-2 tall-chart" title="Top 10 Bệnh Nội Trú (Theo Mã ICD)"
+                icon="fas fa-procedures" iconClass="icon-warning" [isLoading]="isLoading"
+                [chartOptions]="inpatientChartOptions" skeletonType="horizontal-bar"
+                [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu nội trú.">
+            </app-chart-card>
+            } @placeholder {
+            <div class="grid-item span-2 tall-chart">
+                <div class="chart-placeholder"></div>
+            </div>
+            }
+
+            <app-table-card class="grid-item span-full" title="Chi tiết thống kê ICD" icon="fas fa-table"
+                iconClass="icon-success" [isLoading]="isLoading" [data]="rawData" [columns]="tableColumns"
+                [showPaginator]="true" [pageSize]="10" [pageSizeOptions]="[10, 25, 50, 100]" [clientSideSort]="true"
+                emptyStateText="Không tìm thấy dữ liệu." [enableExport]="true" [isExporting]="isExporting"
+                (exportClicked)="onExport()">
+            </app-table-card>
+
+        </div>
+    </div>
+</div>

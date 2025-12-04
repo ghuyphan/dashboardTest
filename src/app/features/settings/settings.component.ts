@@ -16,6 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
+import { ThemeService } from '../../core/services/theme.service';
 import { User } from '../../core/models/user.model';
 
 interface ChangePasswordForm {
@@ -37,7 +38,8 @@ export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private modalService = inject(ModalService);
-  private destroyRef = inject(DestroyRef); // [1] Inject DestroyRef
+  public themeService = inject(ThemeService); // [UPDATED] Public for template access
+  private destroyRef = inject(DestroyRef);
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);
@@ -74,6 +76,14 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit(): void { }
+
+  // [NEW] Theme Switcher Logic
+  setTheme(isDark: boolean): void {
+    const current = this.themeService.isDarkTheme();
+    if (current !== isDark) {
+      this.themeService.toggleTheme();
+    }
+  }
 
   private updatePasswordCriteria(value: string): void {
     if (!value) {
@@ -158,7 +168,7 @@ export class SettingsComponent implements OnInit {
     this.authService.changePassword(payload)
       .pipe(
         finalize(() => this.isLoading.set(false)),
-        takeUntilDestroyed(this.destroyRef) // [2] Auto-cancel
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (res) => {

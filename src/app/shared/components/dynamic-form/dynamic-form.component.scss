@@ -174,7 +174,7 @@
     /* Standard Hover: Lift */
     &:not(:disabled):hover {
       transform: translateY(-2px);
-      box-shadow: var(--box-shadow-md);
+      /* box-shadow: var(--box-shadow-md); Removed */
     }
 
     /* Standard Active: Press */

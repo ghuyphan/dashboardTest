@@ -33,6 +33,9 @@ export class ToastComponent implements OnDestroy {
   public isExpanded = signal(true);
   public isHovering = signal(false);
 
+  // [NEW] Track which toast was just copied to show visual feedback
+  public copiedId = signal<number | null>(null);
+
   // Private cache for diffing
   private _previousToasts: ToastMessage[] = [];
   private timerState = new Map<number, ToastTimerState>();
@@ -51,12 +54,10 @@ export class ToastComponent implements OnDestroy {
     effect(() => {
       const newToasts = this.toastService.toasts();
 
-      // [FIX] Create Sets of IDs for reliable O(1) lookup
       const previousIds = new Set(this._previousToasts.map(t => t.id));
       const currentIds = new Set(newToasts.map(t => t.id));
 
       // 1. Cleanup removed toasts
-      // Iterate over the *internal Map* keys to ensure we clean up everything that is no longer in the signal
       for (const id of this.timerState.keys()) {
         if (!currentIds.has(id)) {
           this.clearTimer(id);
@@ -68,7 +69,6 @@ export class ToastComponent implements OnDestroy {
 
       addedToasts.forEach(toast => {
         const duration = toast.duration ?? this.DEFAULT_DURATION;
-        // Only start timer if duration is positive and we haven't already tracked this ID
         if (duration > 0 && !this.timerState.has(toast.id)) {
           this.timerState.set(toast.id, {
             timerId: null,
@@ -82,17 +82,37 @@ export class ToastComponent implements OnDestroy {
         }
       });
 
-      // Update private cache with a clone to ensure reference inequality checks work in next run if needed
       this._previousToasts = [...newToasts];
     });
   }
 
   ngOnDestroy(): void {
     this.clearAllTimers();
-
-    // Clear all pending dismiss timers
     this.dismissTimers.forEach(timerId => clearTimeout(timerId));
     this.dismissTimers = [];
+  }
+
+  // --- New: Copy Logic ---
+  copyToClipboard(toast: ToastMessage, event: Event): void {
+    event.stopPropagation(); // Prevent bubbling
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(toast.message).then(() => {
+        // 1. Set copied state to show checkmark
+        this.copiedId.set(toast.id);
+
+        // 2. Pause timer so user sees the feedback before it disappears
+        this.pauseAllTimers();
+
+        // 3. Revert icon after 2 seconds
+        setTimeout(() => {
+          this.copiedId.set(null);
+          this.resumeAllTimers();
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+      });
+    }
   }
 
   // --- Timer Logic ---
@@ -156,10 +176,8 @@ export class ToastComponent implements OnDestroy {
     if (card) {
       card.classList.add('dismissing');
 
-      // Track the dismiss timer
       const timerId = setTimeout(() => {
         this.toastService.removeToast(id);
-        // Remove timer from tracking array once executed
         this.dismissTimers = this.dismissTimers.filter(t => t !== timerId);
       }, 300);
 

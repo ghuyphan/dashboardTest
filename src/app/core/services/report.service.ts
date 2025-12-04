@@ -8,6 +8,7 @@ import { SpecialtyClsStat } from '../../shared/models/specialty-cls-stat.model';
 import { EmergencyStat } from '../../shared/models/emergency-stat';
 import { SurgeryStat } from '../models/surgery-stat.model';
 import { DetailedExaminationStat } from '../../shared/models/detailed-examination-stat.model';
+import { IcdStat } from '../../shared/models/icd-stat.model';
 import {
   MedicalRecordSummary,
   MedicalRecordDetail,
@@ -27,8 +28,9 @@ export class ReportService {
   private emergencyUrl = environment.emergencyUrl;
   private surgeryUrl = environment.surgeryUrl;
   private detailedExamUrl = environment.detailedExaminationUrl;
+  private icdUrl = environment.icdUrl;
 
-  constructor() {}
+  constructor() { }
 
   getExaminationOverview(
     fromDate: string,
@@ -49,7 +51,6 @@ export class ReportService {
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate);
 
-    // Note: Update 'this.summaryUrl' with environment variable when you create it
     return this.http.get<MedicalRecordSummary[]>(this.summaryUrl, { params });
   }
 
@@ -105,10 +106,10 @@ export class ReportService {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate);
-      
+
     return this.http.get<EmergencyStat[]>(this.emergencyUrl, { params });
   }
-  
+
   getSurgeryReport(fromDate: string, toDate: string): Observable<SurgeryStat[]> {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
@@ -123,6 +124,13 @@ export class ReportService {
       .set('DenNgay', toDate);
 
     return this.http.get<DetailedExaminationStat[]>(this.detailedExamUrl, { params });
+  }
+
+  getTopIcdReport(fromDate: string, toDate: string): Observable<IcdStat[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+    return this.http.get<IcdStat[]>(this.icdUrl, { params });
   }
 }
 

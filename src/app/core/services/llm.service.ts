@@ -62,7 +62,7 @@ export class LlmService {
   private readonly ngZone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly apiUrl = '/api/llm';
+  private readonly apiUrl = environment.llmUrl;
   private readonly TIMEOUT = 30000;
   private readonly MAX_HISTORY = 10;
   private readonly UI_DEBOUNCE = 16; // ~60fps
@@ -686,7 +686,7 @@ export class LlmService {
 
   private addGreeting(): void {
     const greeting =
-      'Xin chào! 👋 Tôi là trợ lý ảo Hoàn Mỹ. Tôi có thể giúp gì cho bạn hôm nay? ✨';
+      'Xin chào! 👋 Tôi là trợ lý ảo IT. Tôi có thể giúp gì cho bạn hôm nay? ✨';
     this.messages.set([this.createMsg('assistant', greeting)]);
   }
 
@@ -695,6 +695,9 @@ export class LlmService {
     if (result.data === 'SAME') return null;
 
     if (tool === 'nav') {
+      if (result.data === 'Cài đặt tài khoản') {
+        return `Đang mở trang **${result.data}**... Bạn có thể đổi mật khẩu ở phần **Đổi mật khẩu** phía dưới nhé. 👇`;
+      }
       return `Đang mở trang **${result.data}**...`;
     }
     if (tool === 'theme') {
@@ -706,7 +709,7 @@ export class LlmService {
 
   private getToolErr(tool: string): string {
     if (tool === 'nav') return 'Xin lỗi, tôi không tìm thấy trang bạn yêu cầu.';
-    return 'Xin lỗi, tôi không thể thực hiện yêu cầu này. 😅';;
+    return 'Xin lỗi, tôi không thể thực hiện yêu cầu này. 😅';
   }
 
   private generateSessionId(): string {

@@ -27,8 +27,7 @@
   will-change: transform, opacity, top;
 
   &:not(.expanded) {
-    transform: translate3d(0, calc(var(--index) * 10px), 0)
-      scale(calc(1 - var(--index) * 0.05));
+    transform: translate3d(0, calc(var(--index) * 10px), 0) scale(calc(1 - var(--index) * 0.05));
     opacity: calc(1 - var(--index) * 0.15);
     z-index: calc(100 - var(--index));
 
@@ -40,6 +39,7 @@
 
     &.is-front:hover {
       transform: translate3d(0, -4px, 0) scale(1.02);
+
       .stack-indicator {
         opacity: 1;
         transform: translateY(0);
@@ -62,9 +62,10 @@
   /* FIX: Use variable background for Dark Mode */
   background: var(--surface-toast);
   border-radius: 12px;
-  padding: 16px;
+  /* Adjusted padding to accommodate actions column */
+  padding: 12px 12px 12px 16px;
   display: flex;
-  gap: 14px;
+  gap: 12px;
 
   /* Use variable shadows */
   box-shadow: var(--box-shadow-lg);
@@ -82,16 +83,19 @@
       background: var(--color-success);
     }
   }
+
   &.type-error {
     .icon-circle {
       background: var(--color-danger);
     }
   }
+
   &.type-warning {
     .icon-circle {
       background: var(--color-warning);
     }
   }
+
   &.type-info {
     .icon-circle {
       background: var(--color-info);
@@ -99,9 +103,11 @@
   }
 
   transition: transform 0.1s linear;
+
   &.swiping {
     cursor: grabbing;
   }
+
   &.dismissing {
     animation: swipeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
@@ -118,7 +124,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white; /* Icons stay white inside colored circle */
+    color: white;
+    /* Icons stay white inside colored circle */
     font-size: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
@@ -136,18 +143,21 @@
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: var(--gray-900); /* Flips to White */
+  color: var(--gray-900);
+  /* Flips to White */
   line-height: 1.2;
 }
 
 .toast-message {
   margin: 0;
   font-size: 13.5px;
-  color: var(--gray-700); /* Flips to Light Gray */
+  color: var(--gray-700);
+  /* Flips to Light Gray */
   line-height: 1.5;
   max-height: 100px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 0;
+  /* Reset padding */
   word-wrap: break-word;
 
   scrollbar-width: thin;
@@ -156,35 +166,73 @@
   &::-webkit-scrollbar {
     width: 4px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--gray-300);
     border-radius: 4px;
   }
 }
 
-.toast-dismiss-btn {
+/* --- NEW ACTIONS AREA --- */
+.toast-actions {
+  display: flex;
+  flex-direction: column;
+  /* Stack buttons vertically */
+  justify-content: flex-start;
+  gap: 4px;
+  margin-top: -4px;
+  /* Align with title row */
+  margin-right: -4px;
+  flex-shrink: 0;
+}
+
+/* Shared Icon Button Styles */
+.icon-btn {
   background: transparent;
   border: none;
   color: var(--gray-400);
   cursor: pointer;
-  padding: 4px;
-  width: 24px;
-  height: 24px;
+  padding: 0;
+
+  /* Larger touch target for mobile */
+  width: 32px;
+  height: 32px;
+
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   transition: all 0.2s;
-  margin-left: 4px;
-  margin-top: -4px;
+
+  i {
+    font-size: 1rem;
+  }
 
   &:hover {
-    background: var(--gray-200); /* Flips correctly */
+    background: var(--gray-100);
     color: var(--gray-800);
+  }
+
+  &.copy-btn {
+    &:hover {
+      color: var(--teal-blue);
+      background: rgba(0, 131, 155, 0.1);
+    }
+
+    .text-success {
+      color: var(--color-success);
+    }
+  }
+
+  &.dismiss-btn {
+    &:hover {
+      color: var(--color-danger);
+      background: rgba(220, 53, 69, 0.1);
+    }
   }
 }
 
@@ -193,8 +241,10 @@
   bottom: -12px;
   left: 50%;
   transform: translateX(-50%) translateY(-5px);
-  background: var(--gray-800); /* Flips to light gray in dark mode */
-  color: var(--gray-100); /* Text becomes dark in dark mode */
+  background: var(--gray-800);
+  /* Flips to light gray in dark mode */
+  color: var(--gray-100);
+  /* Text becomes dark in dark mode */
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 11px;
@@ -247,6 +297,7 @@
     &.clear-btn:hover {
       color: var(--color-danger);
     }
+
     &.collapse-btn:hover {
       color: var(--teal-blue);
     }
@@ -258,30 +309,36 @@
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
   }
 }
+
 @keyframes swipeOut {
   to {
     transform: translateX(100%) scale(0.9);
     opacity: 0;
   }
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 @keyframes toastEntrance {
   from {
     opacity: 0;
     transform: translate3d(40px, 0, 0) scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
@@ -298,8 +355,8 @@
     max-width: none;
     align-items: center;
   }
+
   .toast-wrapper:not(.expanded) {
-    transform: translate3d(0, calc(var(--index) * -10px), 0)
-      scale(calc(1 - var(--index) * 0.05));
+    transform: translate3d(0, calc(var(--index) * -10px), 0) scale(calc(1 - var(--index) * 0.05));
   }
 }
