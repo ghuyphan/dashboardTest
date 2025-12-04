@@ -359,8 +359,6 @@ export class SpecialtyClsReportComponent implements OnInit {
         return record ? record.SO_LUONG : 0;
       }),
     }));
-    const dataLength = specialties.length;
-    const endPercent = dataLength > 15 ? (15 / dataLength) * 100 : 100;
 
     this.specialtyChartOptions = {
       ...commonOptions,
@@ -384,29 +382,6 @@ export class SpecialtyClsReportComponent implements OnInit {
         top: 0,
         textStyle: { color: this.palette.textSecondary },
       },
-      dataZoom: [
-        {
-          type: 'slider',
-          show: true,
-          xAxisIndex: [0],
-          start: 0,
-          end: endPercent,
-          bottom: 10,
-          height: 20,
-          borderColor: 'transparent',
-          backgroundColor: this.palette.gray100,
-          fillerColor: 'rgba(0, 131, 155, 0.2)',
-          handleStyle: { color: this.palette.primary },
-        },
-        {
-          type: 'inside',
-          xAxisIndex: [0],
-          start: 0,
-          end: endPercent,
-          zoomOnMouseWheel: false,
-          moveOnMouseWheel: true,
-        },
-      ],
       xAxis: {
         type: 'category',
         data: specialties,

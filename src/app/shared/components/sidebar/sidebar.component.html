@@ -1,32 +1,16 @@
-<aside
-  class="sidebar"
-  [ngClass]="{ 
+<aside class="sidebar" [ngClass]="{ 
     'collapsed': !isOpen(), 
     'open': isOpen(),
     'no-transition': !transitionsEnabled()
-  }"
->
+  }">
   <div class="sidebar-header">
     <div class="sidebar-logo-wrapper">
-      <img
-        src="HMSG.ico"
-        alt="Logo Hoan My Saigon"
-        class="sidebar-logo"
-      />
-      <button
-        class="sidebar-toggle-btn"
-        (click)="onToggleSidebarClick()"
-        aria-label="Toggle sidebar"
-      >
-        <svg
-          width="1.2em"
-          height="1.2em"
-          viewBox="0 0 105 105"
-          xmlns="http://www.w3.org/2000/svg"
-          style="display: block"
-        >
+      <img ngSrc="HMSG.ico" width="36" height="36" priority alt="Logo Hoan My Saigon" class="sidebar-logo" />
+      <button class="sidebar-toggle-btn" (click)="onToggleSidebarClick()" aria-label="Toggle sidebar">
+        <svg width="1.2em" height="1.2em" viewBox="0 0 105 105" xmlns="http://www.w3.org/2000/svg"
+          style="display: block">
           <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />
-          
+
           <rect x="10" y="25" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
           <rect x="10" y="40" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
           <rect x="10" y="55" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />
@@ -40,64 +24,47 @@
     <nav class="sidebar-nav" role="navigation">
       <ul>
         @defer (on viewport) {
-          @for (item of navItems(); track item.label) {
-            <ng-container *appHasPermission="item.permissions">
-              
-              @if (!item.children) {
+        @for (item of navItems(); track item.label) {
+        <ng-container *appHasPermission="item.permissions">
+
+          @if (!item.children) {
+          <li>
+            <a [routerLink]="item.link" routerLinkActive="active" [appTooltip]="!isOpen() ? item.label : ''"
+              (click)="onNavLinkClick()">
+              <i [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+            </a>
+          </li>
+          }
+
+          @if (item.children) {
+          <li [class.has-submenu]="true" [class.open]="item.isOpen" routerLinkActive="active-parent">
+            <button (click)="toggleSubmenu(item, $event)" [attr.aria-expanded]="item.isOpen" [appTooltip]="item.label"
+              [appFlyout]="submenuEl" [flyoutEnabled]="!isOpen()">
+              <i [class]="item.icon"></i>
+              <span>{{ item.label }}</span>
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </button>
+
+            <ul class="submenu" [class.open]="item.isOpen" #submenuEl>
+              @for (child of item.children; track child.label) {
+              <ng-container *appHasPermission="child.permissions">
                 <li>
-                  <a
-                    [routerLink]="item.link"
-                    routerLinkActive="active"
-                    [appTooltip]="!isOpen() ? item.label : ''"
-                    (click)="onNavLinkClick()"
-                  >
-                    <i [class]="item.icon"></i>
-                    <span>{{ item.label }}</span>
+                  <a [routerLink]="child.link" routerLinkActive="active" [appTooltip]="child.label"
+                    (click)="onNavLinkClick()">
+                    <i [class]="child.icon"></i>
+                    <span>{{ child.label }}</span>
                   </a>
                 </li>
+              </ng-container>
               }
-
-              @if (item.children) {
-                <li
-                  [class.has-submenu]="true"
-                  [class.open]="item.isOpen"
-                  routerLinkActive="active-parent"
-                >
-                  <button
-                    (click)="toggleSubmenu(item, $event)"
-                    [attr.aria-expanded]="item.isOpen"
-                    [appTooltip]="item.label"
-                    [appFlyout]="submenuEl"
-                    [flyoutEnabled]="!isOpen()"
-                  >
-                    <i [class]="item.icon"></i>
-                    <span>{{ item.label }}</span>
-                    <i class="fas fa-chevron-down toggle-icon"></i>
-                  </button>
-    
-                  <ul class="submenu" [class.open]="item.isOpen" #submenuEl>
-                    @for (child of item.children; track child.label) {
-                      <ng-container *appHasPermission="child.permissions">
-                        <li>
-                          <a
-                            [routerLink]="child.link"
-                            routerLinkActive="active"
-                            [appTooltip]="child.label"
-                            (click)="onNavLinkClick()"
-                          >
-                            <i [class]="child.icon"></i>
-                            <span>{{ child.label }}</span>
-                          </a>
-                        </li>
-                      </ng-container>
-                    }
-                  </ul>
-                </li>
-              }
-            </ng-container>
+            </ul>
+          </li>
           }
+        </ng-container>
+        }
         } @placeholder {
-           <div class="nav-skeleton"></div>
+        <div class="nav-skeleton"></div>
         }
       </ul>
     </nav>

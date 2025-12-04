@@ -62,8 +62,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
 
   private palette!: ThemePalette;
 
-  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
-
   constructor() {
     effect(() => {
       this.palette = this.themeService.currentPalette();
@@ -147,58 +145,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     const totalCC = sorted.map(d => d.LUOT_CC || 0);
     const bhytCC = sorted.map(d => d.BHYT || 0);
 
-    // --- DataZoom Logic ---
-    const totalItems = dates.length;
-    const needsDataZoom = totalItems > 10;
-    const itemsToFocus = 15;
-    let startPercent = 0;
-
-    if (needsDataZoom && totalItems > itemsToFocus) {
-      startPercent = Math.floor(100 - ((itemsToFocus / totalItems) * 100));
-    }
-
-    // Configure DataZoom
-    const dataZoomConfig = needsDataZoom ? [
-      {
-        type: 'slider' as const,
-        show: true,
-        xAxisIndex: [0],
-        start: startPercent,
-        end: 100,
-        bottom: 0, // FIX: Pin to absolute bottom
-        height: 20,
-        borderColor: this.palette.gray200,
-        fillerColor: `${this.palette.primary}33`,
-        textStyle: { color: this.palette.textSecondary, fontSize: 10 },
-        handleStyle: {
-          color: this.palette.primary,
-          borderColor: this.palette.primary,
-        },
-        moveHandleStyle: { color: this.palette.primary },
-      },
-      {
-        type: 'inside' as const,
-        xAxisIndex: [0],
-        start: startPercent,
-        end: 100,
-      },
-    ] : [
-      {
-        type: 'slider' as const,
-        show: false,
-        xAxisIndex: [0],
-        start: 0,
-        end: 100
-      },
-      {
-        type: 'inside' as const,
-        disabled: true,
-        xAxisIndex: [0],
-        start: 0,
-        end: 100
-      }
-    ];
-
     // ECharts Colors
     const colors = {
       admissions: this.palette.chart2,
@@ -207,14 +153,13 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     };
 
     // FIX: Layout Configuration
-    // Move Legend to TOP, DataZoom at BOTTOM
+    // Move Legend to TOP
     const commonGrid = {
       left: '3%',
       right: '4%',
       // Top padding for Legend
       top: 40,
-      // Bottom padding: if Zoom exists, give space (e.g., 30px), else standard space
-      bottom: needsDataZoom ? 30 : '3%',
+      bottom: '3%',
       containLabel: true
     };
 
@@ -249,7 +194,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         }
       },
       grid: commonGrid,
-      dataZoom: dataZoomConfig,
       legend: {
         data: ['Số ca nhập viện từ cấp cứu', 'Tổng số lượt cấp cứu', 'Tổng số lượt cấp cứu có BHYT'],
         // FIX: Move legend to Top to avoid collision with slider
@@ -262,8 +206,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         data: dates,
         axisLabel: {
           color: this.palette.textPrimary,
-          rotate: needsDataZoom ? 45 : 0,
-          interval: needsDataZoom ? 0 : 'auto',
           margin: 10
         },
         axisLine: { lineStyle: { color: this.palette.gray200 } }

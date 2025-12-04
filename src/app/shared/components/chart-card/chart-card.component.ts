@@ -75,6 +75,10 @@ export class ChartCardComponent implements AfterViewInit {
   private resizeTimer?: ReturnType<typeof setTimeout>;
   private readonly RESIZE_DEBOUNCE_MS = 200;
 
+  // This threshold now determines when to enable the Zoom Slider, 
+  // rather than when to hide labels.
+  private readonly LARGE_DATA_THRESHOLD = 35;
+
   private lastWidth = 0;
   private lastHeight = 0;
   private isDestroyed = false;
@@ -156,7 +160,8 @@ export class ChartCardComponent implements AfterViewInit {
       this.lastHeight = el.clientHeight;
 
       this.applyAutoFormatting(options);
-      const responsiveOptions = this.makeOptionsResponsive(options);
+      let responsiveOptions = this.makeOptionsResponsive(options);
+      responsiveOptions = this.optimizeForLargeData(responsiveOptions);
 
       this.chartInstance?.setOption(responsiveOptions);
 
@@ -175,7 +180,8 @@ export class ChartCardComponent implements AfterViewInit {
 
     this.ngZone.runOutsideAngular(() => {
       this.applyAutoFormatting(options);
-      const responsiveOptions = this.makeOptionsResponsive(options);
+      let responsiveOptions = this.makeOptionsResponsive(options);
+      responsiveOptions = this.optimizeForLargeData(responsiveOptions);
 
       this.chartInstance?.setOption(responsiveOptions, {
         notMerge: false,
@@ -353,6 +359,87 @@ export class ChartCardComponent implements AfterViewInit {
       this.lastWidth = 0;
       this.lastHeight = 0;
     }
+  }
+
+  private optimizeForLargeData(option: any): any {
+    if (!option || !option.series) return option;
+
+    // 1. Detect Data Length
+    let dataLength = 0;
+    if (option.xAxis && Array.isArray(option.xAxis.data)) {
+      dataLength = option.xAxis.data.length;
+    } else if (Array.isArray(option.series)) {
+      dataLength = option.series[0]?.data?.length || 0;
+    }
+
+    // 2. If data is small, return original options
+    if (dataLength <= this.LARGE_DATA_THRESHOLD) {
+      return option;
+    }
+
+    // 3. Apply "Large Data" Modifications
+    const newOption = { ...option };
+
+    // A. Calculate Zoom Percentage
+    // Calculate how much we need to zoom to show approx 'LARGE_DATA_THRESHOLD' items at a time
+    // This ensures bars remain wide enough to display labels comfortably.
+    const zoomStart = 100 - Math.floor((this.LARGE_DATA_THRESHOLD / dataLength) * 100);
+
+    // B. Enable DataZoom Slider
+    newOption.dataZoom = [
+      {
+        type: 'slider',
+        show: true,
+        xAxisIndex: [0],
+        start: zoomStart, // Default to showing the most recent data (end of the list)
+        end: 100,
+        bottom: 10,
+        height: 20,
+        handleSize: '100%',
+        // Styles to match system theme slightly
+        borderColor: 'transparent',
+        fillerColor: 'rgba(0,0,0,0.1)'
+      },
+      {
+        type: 'inside',
+        xAxisIndex: [0],
+        start: zoomStart,
+        end: 100,
+        zoomOnMouseWheel: false, // Prevent accidental zooming while scrolling page
+        moveOnMouseWheel: true   // Allow panning
+      }
+    ];
+
+    // C. Adjust Grid to prevent Slider from overlapping X-Axis labels
+    if (!newOption.grid) {
+      newOption.grid = {};
+    }
+    // Ensure there is enough bottom padding for the slider
+    // Typical grid.bottom is '3%' or 30. We push it up to ~45px or 15%
+    if (newOption.grid.bottom === undefined ||
+      (typeof newOption.grid.bottom === 'number' && newOption.grid.bottom < 45) ||
+      (typeof newOption.grid.bottom === 'string' && parseFloat(newOption.grid.bottom) < 15)) {
+      newOption.grid.bottom = 45;
+    }
+
+    // D. Optimize X-Axis (Keep auto interval so ECharts hides labels if they overlap)
+    if (newOption.xAxis) {
+      const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
+      newOption.xAxis = xAxes.map((axis: any) => ({
+        ...axis,
+        axisLabel: {
+          ...axis.axisLabel,
+          interval: 'auto', // Crucial: Let ECharts hide labels if zoom makes them tight
+          hideOverlap: true,
+          width: 100 // Prevent extremely long labels
+        }
+      }));
+    }
+
+    // NOTE: We removed the logic that hid series labels (show: false).
+    // Now labels remain visible, but because we zoom in, they should fit.
+
+    return newOption;
   }
 
   private cleanup(): void {

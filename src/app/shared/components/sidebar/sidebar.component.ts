@@ -11,7 +11,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,6 +30,7 @@ import { FlyoutDirective } from '../../directives/flyout.directive';
     HasPermissionDirective,
     TooltipDirective,
     FlyoutDirective,
+    NgOptimizedImage,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',

@@ -99,7 +99,6 @@ export class ClsLevel6ReportComponent implements OnInit {
     { key: 'TYPE_LABEL', label: 'Loại', sortable: true, width: '120px' },
   ];
   private palette!: ThemePalette;
-  // REMOVED: private readonly vnNumberFormatter = new Intl.NumberFormat('vi-VN');
 
   constructor() {
     effect(() => {
@@ -419,17 +418,12 @@ export class ClsLevel6ReportComponent implements OnInit {
     };
 
     const roomData = Array.from(roomMap.entries()).sort((a, b) => a[1] - b[1]);
-    const BARS_TO_SHOW = 8;
-    const totalBars = roomData.length;
-    const enableZoom = totalBars > BARS_TO_SHOW;
-    const startValue = enableZoom ? totalBars - BARS_TO_SHOW : 0;
-    const endValue = totalBars - 1;
 
     this.roomChartOptions = {
       ...commonOptions,
       grid: {
         left: '3%',
-        right: enableZoom ? '12%' : '8%',
+        right: '8%',
         bottom: '3%',
         top: '5%',
         containLabel: true,
@@ -451,33 +445,6 @@ export class ClsLevel6ReportComponent implements OnInit {
           color: this.palette.textPrimary,
         },
       },
-      dataZoom: enableZoom
-        ? [
-          {
-            type: 'slider',
-            yAxisIndex: 0,
-            width: 12,
-            right: '2%',
-            top: '5%',
-            bottom: '5%',
-            startValue: startValue,
-            endValue: endValue,
-            fillerColor: this.palette.secondary + '40',
-            borderColor: 'transparent',
-            handleSize: '0%',
-            showDetail: false,
-            brushSelect: false,
-          },
-          {
-            type: 'inside',
-            yAxisIndex: 0,
-            startValue: startValue,
-            endValue: endValue,
-            zoomOnMouseWheel: false,
-            moveOnMouseWheel: true,
-          },
-        ]
-        : undefined,
       series: [
         {
           name: 'Số Lượng',

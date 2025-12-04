@@ -248,7 +248,7 @@ export const routes: Routes = [
             .then(m => m.IcdReportComponent),
         canActivate: [permissionGuard],
         data: {
-          permission: 'BaoCao.ThongKeICD', // Ensure you have this permission key
+          permission: 'BaoCao.TQMoHinhBenhTat',
           title: 'Thống kê mô hình bệnh tật (ICD)',
           keywords: ['icd', 'benh tat', 'top benh', 'ngoai tru', 'noi tru']
         }
