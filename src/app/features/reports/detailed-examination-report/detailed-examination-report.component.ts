@@ -295,7 +295,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         id: 'total-visits',
         icon: 'fas fa-clipboard-check',
         title: 'Tổng Lượt Khám',
-        value: this.formatNumber(totalVisits),
+        value: NumberUtils.format(totalVisits),
         caption: 'Total Visits',
         accentColor: this.palette.chart3,
       },
@@ -303,7 +303,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         id: 'total-patients',
         icon: 'fas fa-user-injured',
         title: 'Tổng Người Bệnh',
-        value: this.formatNumber(totalPatientsDirect),
+        value: NumberUtils.format(totalPatientsDirect),
         caption: 'Total Patients',
         accentColor: this.palette.chart2,
       },
@@ -320,7 +320,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         icon: 'fas fa-sync-alt',
         title: 'Tỷ Lệ Tái Khám',
         value: `${reExamRate}%`,
-        caption: `(${this.formatNumber(totalOld)} lượt)`,
+        caption: `(${NumberUtils.format(totalOld)} lượt)`,
         accentColor: this.palette.success,
       },
     ];
@@ -422,7 +422,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         formatter: (params: any) => {
-          return `${params.name}: ${this.formatNumber(params.value)} (${params.percent}%)`;
+          return `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)`;
         }
       },
       legend: {

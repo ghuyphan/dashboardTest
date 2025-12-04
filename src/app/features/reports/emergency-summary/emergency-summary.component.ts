@@ -285,7 +285,7 @@ export class EmergencySummaryComponent implements OnInit {
         id: 'total',
         icon: 'fas fa-ambulance',
         title: 'Tổng Lượt CC',
-        value: this.formatNumber(totalCC),
+        value: NumberUtils.format(totalCC),
         caption: 'Cấp cứu',
         accentColor: this.palette.primary,
       },
@@ -293,7 +293,7 @@ export class EmergencySummaryComponent implements OnInit {
         id: 'admission',
         icon: 'fas fa-procedures',
         title: 'Nhập Viện',
-        value: this.formatNumber(totalNhapVien),
+        value: NumberUtils.format(totalNhapVien),
         caption: `Chiếm ${totalCC > 0 ? ((totalNhapVien / totalCC) * 100).toFixed(1) : 0
           }%`,
         accentColor: this.palette.chart6,
@@ -302,7 +302,7 @@ export class EmergencySummaryComponent implements OnInit {
         id: 'transfer',
         icon: 'fas fa-exchange-alt',
         title: 'Chuyển Viện',
-        value: this.formatNumber(totalChuyenVien),
+        value: NumberUtils.format(totalChuyenVien),
         caption: 'Chuyển tuyến',
         accentColor: this.palette.pastelCoral,
       },
@@ -311,7 +311,7 @@ export class EmergencySummaryComponent implements OnInit {
         icon: 'fas fa-id-card',
         title: 'Tỷ lệ BHYT',
         value: `${insuranceRate.toFixed(1)}%`,
-        caption: `Có BHYT (${this.formatNumber(totalBHYT)})`,
+        caption: `Có BHYT (${NumberUtils.format(totalBHYT)})`,
         accentColor: this.palette.deepSapphire,
       },
     ];
@@ -492,7 +492,7 @@ export class EmergencySummaryComponent implements OnInit {
           const admitted =
             params.find((p: any) => p.seriesName === 'Nhập viện')?.value || 0;
           params.forEach((p: any) => {
-            result += `${p.marker} ${p.seriesName}: <b>${this.formatNumber(p.value)}</b>`;
+            result += `${p.marker} ${p.seriesName}: <b>${NumberUtils.format(p.value)}</b>`;
             if (p.seriesName === 'Nhập viện' && total > 0)
               result += ` (${((admitted / total) * 100).toFixed(1)}%)`;
             result += '<br/>';
@@ -560,7 +560,7 @@ export class EmergencySummaryComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         formatter: (params: any) => {
-          return `${params.name}: ${this.formatNumber(params.value)} (${params.percent}%)`;
+          return `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)`;
         },
       },
       legend: {
@@ -601,9 +601,6 @@ export class EmergencySummaryComponent implements OnInit {
     };
   }
 
-  private formatNumber(num: number): string {
-    return NumberUtils.format(num);
-  }
 
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;

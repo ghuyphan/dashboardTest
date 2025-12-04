@@ -743,7 +743,10 @@ body>ul.submenu.open {
       border-radius: 0.375rem;
       color: var(--text-secondary);
       font-weight: var(--font-weight-normal);
-      transition: background-color 0.2s ease, color 0.2s ease;
+
+      /* [UPDATED] Add generic transform transition so :active scaling animates smoothly */
+      transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+
       overflow: hidden;
       width: 100%;
 
@@ -769,6 +772,11 @@ body>ul.submenu.open {
         i {
           transform: scale(1.15);
         }
+      }
+
+      /* [NEW] Add Active State (Click Effect) for Flyout Items */
+      &:active {
+        transform: scale(0.98);
       }
 
       &.active {
