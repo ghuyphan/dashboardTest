@@ -75,9 +75,11 @@ export class ChartCardComponent implements AfterViewInit {
   private resizeTimer?: ReturnType<typeof setTimeout>;
   private readonly RESIZE_DEBOUNCE_MS = 200;
 
-  // This threshold now determines when to enable the Zoom Slider, 
-  // rather than when to hide labels.
+  // Threshold 1: Enable Data Zoom (e.g., > 35 points)
   private readonly LARGE_DATA_THRESHOLD = 35;
+
+  // Threshold 2: Hide Labels (e.g., > 100 points) to prevent clutter
+  private readonly VERY_LARGE_DATA_THRESHOLD = 100;
 
   private lastWidth = 0;
   private lastHeight = 0;
@@ -377,12 +379,11 @@ export class ChartCardComponent implements AfterViewInit {
       return option;
     }
 
-    // 3. Apply "Large Data" Modifications
+    // 3. Apply "Large Data" Modifications (Enable Zoom)
     const newOption = { ...option };
 
     // A. Calculate Zoom Percentage
     // Calculate how much we need to zoom to show approx 'LARGE_DATA_THRESHOLD' items at a time
-    // This ensures bars remain wide enough to display labels comfortably.
     const zoomStart = 100 - Math.floor((this.LARGE_DATA_THRESHOLD / dataLength) * 100);
 
     // B. Enable DataZoom Slider
@@ -391,12 +392,11 @@ export class ChartCardComponent implements AfterViewInit {
         type: 'slider',
         show: true,
         xAxisIndex: [0],
-        start: zoomStart, // Default to showing the most recent data (end of the list)
+        start: zoomStart,
         end: 100,
         bottom: 10,
         height: 20,
         handleSize: '100%',
-        // Styles to match system theme slightly
         borderColor: 'transparent',
         fillerColor: 'rgba(0,0,0,0.1)'
       },
@@ -405,39 +405,50 @@ export class ChartCardComponent implements AfterViewInit {
         xAxisIndex: [0],
         start: zoomStart,
         end: 100,
-        zoomOnMouseWheel: false, // Prevent accidental zooming while scrolling page
-        moveOnMouseWheel: true   // Allow panning
+        zoomOnMouseWheel: false,
+        moveOnMouseWheel: true
       }
     ];
 
-    // C. Adjust Grid to prevent Slider from overlapping X-Axis labels
+    // C. Adjust Grid for Slider
     if (!newOption.grid) {
       newOption.grid = {};
     }
-    // Ensure there is enough bottom padding for the slider
-    // Typical grid.bottom is '3%' or 30. We push it up to ~45px or 15%
     if (newOption.grid.bottom === undefined ||
       (typeof newOption.grid.bottom === 'number' && newOption.grid.bottom < 45) ||
       (typeof newOption.grid.bottom === 'string' && parseFloat(newOption.grid.bottom) < 15)) {
       newOption.grid.bottom = 45;
     }
 
-    // D. Optimize X-Axis (Keep auto interval so ECharts hides labels if they overlap)
+    // D. Optimize X-Axis
     if (newOption.xAxis) {
       const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
       newOption.xAxis = xAxes.map((axis: any) => ({
         ...axis,
         axisLabel: {
           ...axis.axisLabel,
-          interval: 'auto', // Crucial: Let ECharts hide labels if zoom makes them tight
+          interval: 'auto', // Let ECharts hide overlapping labels
           hideOverlap: true,
-          width: 100 // Prevent extremely long labels
+          width: 100
         }
       }));
     }
 
-    // NOTE: We removed the logic that hid series labels (show: false).
-    // Now labels remain visible, but because we zoom in, they should fit.
+    // E. Hide Series Labels ONLY for Very Large Data
+    // If data is "Very Large" (e.g. > 100), force hide value labels to reduce clutter.
+    // For "Large" (35-100), labels might still be useful when zoomed in.
+    if (dataLength > this.VERY_LARGE_DATA_THRESHOLD) {
+      if (newOption.series) {
+        const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
+        newOption.series = seriesList.map((s: any) => ({
+          ...s,
+          label: {
+            ...(s.label || {}),
+            show: false
+          }
+        }));
+      }
+    }
 
     return newOption;
   }
