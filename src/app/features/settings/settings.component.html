@@ -109,11 +109,14 @@
 
         <div class="form-group">
           <label for="newPass">Mật khẩu mới <span class="req">*</span></label>
-          <div class="input-group">
+          <div class="input-group" [class.disabled]="!isOldPasswordFilled()">
             <input [type]="showNew() ? 'text' : 'password'" id="newPass" formControlName="NewPassword"
-              class="form-control" placeholder="Nhập mật khẩu mới"
+              class="form-control"
+              [placeholder]="isOldPasswordFilled() ? 'Nhập mật khẩu mới' : 'Vui lòng nhập mật khẩu cũ trước'"
+              [disabled]="!isOldPasswordFilled()"
               [class.is-invalid]="form.get('NewPassword')?.touched && form.get('NewPassword')?.invalid">
-            <button type="button" class="toggle-btn" (click)="toggleVisibility('new')" tabindex="-1">
+            <button type="button" class="toggle-btn" (click)="toggleVisibility('new')" tabindex="-1"
+              [disabled]="!isOldPasswordFilled()">
               <i class="fas" [class]="showNew() ? 'fa-eye-slash' : 'fa-eye'"></i>
             </button>
           </div>
@@ -121,11 +124,14 @@
 
         <div class="form-group">
           <label for="confirmPass">Xác nhận mật khẩu mới <span class="req">*</span></label>
-          <div class="input-group">
+          <div class="input-group" [class.disabled]="!isNewPasswordFilled()">
             <input [type]="showConfirm() ? 'text' : 'password'" id="confirmPass" formControlName="ConfirmPassword"
-              class="form-control" placeholder="Nhập lại mật khẩu mới"
+              class="form-control"
+              [placeholder]="isNewPasswordFilled() ? 'Nhập lại mật khẩu mới' : 'Vui lòng nhập mật khẩu mới trước'"
+              [disabled]="!isNewPasswordFilled()"
               [class.is-invalid]="form.hasError('mismatch') && form.get('ConfirmPassword')?.touched">
-            <button type="button" class="toggle-btn" (click)="toggleVisibility('confirm')" tabindex="-1">
+            <button type="button" class="toggle-btn" (click)="toggleVisibility('confirm')" tabindex="-1"
+              [disabled]="!isNewPasswordFilled()">
               <i class="fas" [class]="showConfirm() ? 'fa-eye-slash' : 'fa-eye'"></i>
             </button>
           </div>

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect, DestroyRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -59,16 +59,51 @@ export class SettingsComponent implements OnInit {
     hasSpecial: false
   });
 
+  // Sequential field validation - signals to track if previous fields are filled
+  public isOldPasswordFilled = signal(false);
+  public isNewPasswordFilled = signal(false);
+
   constructor() {
     this.form = this.fb.group<ChangePasswordForm>({
       OldPassword: new FormControl('', Validators.required),
-      NewPassword: new FormControl('', [Validators.required]),
-      ConfirmPassword: new FormControl('', Validators.required)
+      // Initialize as disabled
+      NewPassword: new FormControl({ value: '', disabled: true }, [Validators.required]),
+      ConfirmPassword: new FormControl({ value: '', disabled: true }, Validators.required)
     }, { validators: this.passwordMatchValidator });
 
+    // Track OldPassword changes to enable/disable NewPassword
+    this.form.controls.OldPassword.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(val => {
+        const hasValue = !!val && val.length > 0;
+        this.isOldPasswordFilled.set(hasValue);
+
+        if (hasValue) {
+          this.form.controls.NewPassword.enable({ emitEvent: false });
+        } else {
+          this.form.controls.NewPassword.disable({ emitEvent: false });
+          this.form.controls.NewPassword.reset('', { emitEvent: false });
+          // Also disable confirm password if new password is disabled
+          this.form.controls.ConfirmPassword.disable({ emitEvent: false });
+          this.form.controls.ConfirmPassword.reset('', { emitEvent: false });
+        }
+      });
+
+    // Track NewPassword changes to enable/disable ConfirmPassword and update criteria
     this.form.controls.NewPassword.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(val => this.updatePasswordCriteria(val || ''));
+      .subscribe(val => {
+        const hasValue = !!val && val.length > 0;
+        this.isNewPasswordFilled.set(hasValue);
+        this.updatePasswordCriteria(val || '');
+
+        if (hasValue) {
+          this.form.controls.ConfirmPassword.enable({ emitEvent: false });
+        } else {
+          this.form.controls.ConfirmPassword.disable({ emitEvent: false });
+          this.form.controls.ConfirmPassword.reset('', { emitEvent: false });
+        }
+      });
 
     effect(() => {
       this.currentUser.set(this.authService.currentUser());

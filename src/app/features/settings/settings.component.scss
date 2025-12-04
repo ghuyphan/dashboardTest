@@ -193,12 +193,32 @@
     display: block; // Ensure block display
   }
 
-  .input-group {
+    .input-group {
     // Mixin handles relative positioning
 
     // Add specific padding for toggle button if needed
     .form-control {
       padding-right: 40px; // Space for toggle button
+    }
+
+    // Disabled state styling for sequential validation
+    &.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+
+      .form-control {
+        cursor: not-allowed;
+        background-color: var(--gray-100);
+
+        [data-theme='dark'] & {
+          background-color: var(--gray-200);
+        }
+      }
+
+      .toggle-btn {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
     }
   }
 

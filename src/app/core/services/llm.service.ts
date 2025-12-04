@@ -796,23 +796,37 @@ export class LlmService {
 
   private getToolErr(tool: string): string {
     if (tool === 'nav') return 'Xin lỗi, tôi không tìm thấy trang bạn yêu cầu.';
-    return 'Xin lỗi, tôi không thể thực hiện yêu cầu này. 😅';
+    if (tool === 'theme') return 'Xin lỗi, tôi không thể đổi giao diện lúc này.';
+    return 'Đã có lỗi xảy ra.';
   }
 
-  private generateSessionId(): string {
-    return Math.random().toString(36).substring(2, 15);
+  private handleErr(e: unknown): void {
+    console.error('[LLM] Error:', e);
+    this.messages.update((m) => {
+      if (!m.length) return m;
+      const last = { ...m[m.length - 1] };
+      last.content = 'Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau. 😓';
+      last.isError = true;
+      last.isStreaming = false;
+      return [...m.slice(0, -1), last];
+    });
   }
 
-  private async retry<T>(fn: () => Promise<T>, retries = 1): Promise<T> {
-    try {
-      return await fn();
-    } catch (e) {
-      if (retries > 0) {
-        await this.delay(1000);
-        return this.retry(fn, retries - 1);
-      }
-      throw e;
-    }
+  private retry(fn: () => Promise<void>, retries = 3, delay = 1000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const attempt = (n: number) => {
+        fn()
+          .then(resolve)
+          .catch((err) => {
+            if (n === 0) {
+              reject(err);
+            } else {
+              setTimeout(() => attempt(n - 1), delay);
+            }
+          });
+      };
+      attempt(retries);
+    });
   }
 
   private delay(ms: number): Promise<void> {
@@ -824,54 +838,44 @@ export class LlmService {
   }
 
   private sanitizeOut(str: string): string {
-    // Remove JSON_ACTION artifacts from output
+    // Remove JSON_ACTION blocks from output
     return str.replace(/JSON_ACTION:\s*\{.*?\}/g, '').trim();
   }
 
-  private handleErr(e: unknown): void {
-    console.error('[LLM] Error:', e);
-    const msg =
-      e instanceof Error && e.message.includes('Rate limit')
-        ? 'Hệ thống đang bận, vui lòng thử lại sau giây lát.'
-        : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
-
-    this.messages.update((m) => {
-      const last = m[m.length - 1];
-      if (last?.role === 'assistant') {
-        return [
-          ...m.slice(0, -1),
-          { ...last, content: msg, isError: true, isStreaming: false },
-        ];
-      }
-      return [...m, { role: 'assistant', content: msg, timestamp: Date.now(), isError: true, id: Math.random().toString(36).substring(2, 9) }];
-    });
+  private generateSessionId(): string {
+    return Math.random().toString(36).substring(2, 15);
   }
 
-  private abort(): void {
-    if (this.abortCtrl) {
-      this.abortCtrl.abort();
-      this.abortCtrl = null;
-    }
-  }
-
-  private cleanup(): void {
-    this.abort();
-    this.clearSessionTimer();
-  }
-
+  // ==== EDGE CASE: Session Timeout ====
   private resetSessionTimer(): void {
     this.clearSessionTimer();
-    this.sessionTimer = setTimeout(() => {
-      if (this.messages().length > 0) {
-        this.resetChat();
-      }
-    }, 1000 * 60 * 15); // 15 min inactivity
+    if (this.isOpen()) {
+      this.sessionTimer = setTimeout(() => {
+        this.ngZone.run(() => {
+          if (this.DEBUG) console.log('[LLM] Session timeout');
+          this.isOpen.set(false);
+        });
+      }, 5 * 60 * 1000); // 5 minutes
+    }
   }
 
   private clearSessionTimer(): void {
     if (this.sessionTimer) {
       clearTimeout(this.sessionTimer);
       this.sessionTimer = undefined;
+    }
+  }
+
+  private cleanup(): void {
+    this.abort();
+    this.clearSessionTimer();
+    this.isOpen.set(false);
+  }
+
+  private abort(): void {
+    if (this.abortCtrl) {
+      this.abortCtrl.abort();
+      this.abortCtrl = null;
     }
   }
 }
