@@ -68,6 +68,9 @@ export class LlmService {
   private readonly UI_DEBOUNCE = 16; // ~60fps
   private readonly THEME_COOLDOWN = 2000;
   private readonly DEBUG = !environment.production;
+  private readonly MAX_INPUT_LENGTH = 500;
+  private readonly TOGGLE_DEBOUNCE = 300;
+  private readonly MESSAGE_DEBOUNCE = 500;
 
   // Signals
   public readonly isOpen = signal(false);
@@ -80,6 +83,8 @@ export class LlmService {
   public readonly isNavigating = signal(false);
   public readonly contextUsage = signal(0);
   public readonly itHotline = signal('**1108** hoặc **1109**');
+  public readonly isOffline = signal(false);
+  public readonly inputTruncated = signal(false);
 
   // State
   private sessionTimer?: ReturnType<typeof setTimeout>;
@@ -91,6 +96,12 @@ export class LlmService {
   // Cache
   private routeCache: RouteInfo[] | null = null;
   private routeMap: Map<string, RouteInfo> | null = null;
+
+  // Edge case tracking
+  private lastToggleTime = 0;
+  private lastMessageTime = 0;
+  private streamErrorCount = 0;
+  private readonly MAX_STREAM_ERRORS = 10;
 
   private readonly streamUpdate$ = new Subject<StreamUpdate>();
 
@@ -106,6 +117,25 @@ export class LlmService {
       .subscribe((u) => this.ngZone.run(() => this.applyUpdate(u)));
 
     this.destroyRef.onDestroy(() => this.cleanup());
+
+    // ==== EDGE CASE: Network State Monitoring ====
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        this.ngZone.run(() => {
+          this.isOffline.set(false);
+          if (this.DEBUG) console.log('[LLM] Network: Online');
+        });
+      });
+      window.addEventListener('offline', () => {
+        this.ngZone.run(() => {
+          this.isOffline.set(true);
+          this.abort(); // Abort any ongoing requests
+          if (this.DEBUG) console.log('[LLM] Network: Offline');
+        });
+      });
+      // Initial state
+      this.isOffline.set(!navigator.onLine);
+    }
   }
 
   // ============================================================================
@@ -113,6 +143,14 @@ export class LlmService {
   // ============================================================================
 
   public toggleChat(): void {
+    // ==== EDGE CASE: Toggle Debounce ====
+    const now = Date.now();
+    if (now - this.lastToggleTime < this.TOGGLE_DEBOUNCE) {
+      if (this.DEBUG) console.log('[LLM] Toggle debounced');
+      return;
+    }
+    this.lastToggleTime = now;
+
     const willOpen = !this.isOpen();
     this.isOpen.set(willOpen);
 
@@ -121,6 +159,7 @@ export class LlmService {
       // Clear cache on open to ensure we have fresh permissions/routes
       this.routeCache = null;
       this.routeMap = null;
+      this.inputTruncated.set(false); // Reset truncation warning
 
       if (!this.modelLoaded() && !this.isModelLoading()) this.loadModel();
     } else {
@@ -129,13 +168,46 @@ export class LlmService {
   }
 
   public async sendMessage(content: string): Promise<void> {
-    const input = this.sanitize(content);
+    // ==== EDGE CASE: Network Check ====
+    if (this.isOffline()) {
+      this.messages.update((m) => [
+        ...m,
+        this.createMsg('assistant', 'Bạn đang offline. Vui lòng kiểm tra kết nối mạng. 📶', Date.now()),
+      ]);
+      return;
+    }
+
+    // ==== EDGE CASE: Block during navigation ====
+    if (this.isNavigating()) {
+      if (this.DEBUG) console.log('[LLM] Message blocked: navigation in progress');
+      return;
+    }
+
+    // ==== EDGE CASE: Message Debounce ====
+    const now = Date.now();
+    if (now - this.lastMessageTime < this.MESSAGE_DEBOUNCE) {
+      if (this.DEBUG) console.log('[LLM] Message debounced');
+      return;
+    }
+    this.lastMessageTime = now;
+
+    // ==== EDGE CASE: Input Length Validation ====
+    let input = this.sanitize(content);
     if (!input) return;
+
+    if (input.length > this.MAX_INPUT_LENGTH) {
+      input = input.substring(0, this.MAX_INPUT_LENGTH);
+      this.inputTruncated.set(true);
+      if (this.DEBUG) console.log('[LLM] Input truncated to', this.MAX_INPUT_LENGTH, 'chars');
+    } else {
+      this.inputTruncated.set(false);
+    }
 
     // UI Updates
     this.messages.update((m) => [...m, this.createMsg('user', input)]);
     this.resetSessionTimer();
     this.abort();
+    this.streamErrorCount = 0; // Reset error count for new message
 
     // Prepare assistant placeholder
     this.messages.update((m) => [...m, this.createMsg('assistant', '', 0)]);
@@ -234,6 +306,7 @@ export class LlmService {
         sessionId: this.sessionId,
         routes: clientRoutes,
         currentTheme: this.themeService.isDarkTheme() ? 'dark' : 'light',
+        currentUrl: this.router.url.split('?')[0], // Send current URL for "already on page" detection
       }
     };
 
@@ -326,6 +399,11 @@ export class LlmService {
 
               if (json.done) break;
             } catch {
+              // ==== EDGE CASE: Stream Error Counting ====
+              this.streamErrorCount++;
+              if (this.streamErrorCount >= this.MAX_STREAM_ERRORS && this.DEBUG) {
+                console.warn('[LLM] High stream error count:', this.streamErrorCount);
+              }
               continue;
             }
           }
@@ -571,13 +649,15 @@ export class LlmService {
 
   private doNav(key: string): ToolResult {
     const currentPath = this.router.url.split('?')[0];
-    if (this.isNavigating()) return { success: true, data: 'SAME' };
+    if (this.isNavigating()) return { success: true, data: { type: 'SAME', title: '' } };
 
     const route = this.resolveRoute(key);
     if (!route) return { success: false, error: 'Không tìm thấy trang này.' };
 
     const targetPath = route.fullUrl;
-    if (currentPath === targetPath) return { success: true, data: 'SAME' };
+    if (currentPath === targetPath) {
+      return { success: true, data: { type: 'SAME', title: route.title } };
+    }
 
     this.isNavigating.set(true);
     setTimeout(() => {
@@ -692,13 +772,20 @@ export class LlmService {
 
   private getConfirmation(tool: string, result: ToolResult): string | null {
     if (!result.success) return null;
-    if (result.data === 'SAME') return null;
 
     if (tool === 'nav') {
-      if (result.data === 'Cài đặt tài khoản') {
-        return `Đang mở trang **${result.data}**... Bạn có thể đổi mật khẩu ở phần **Đổi mật khẩu** phía dưới nhé. 👇`;
+      // Handle 'SAME' case - user already on requested page
+      const data = result.data as { type?: string; title?: string } | string;
+      if (typeof data === 'object' && data?.type === 'SAME') {
+        const title = data.title || 'này';
+        return `Bạn đang ở trang **${title}** rồi nhé. 😊`;
       }
-      return `Đang mở trang **${result.data}**...`;
+
+      // Handle navigation with password guidance
+      if (data === 'Cài đặt tài khoản') {
+        return `Đang mở trang **${data}**... Bạn có thể đổi mật khẩu ở phần **Đổi mật khẩu** phía dưới nhé. 👇`;
+      }
+      return `Đang mở trang **${data}**...`;
     }
     if (tool === 'theme') {
       const mode = result.data === 'dark' ? 'Tối' : 'Sáng';

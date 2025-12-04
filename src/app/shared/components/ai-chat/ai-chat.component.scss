@@ -1380,3 +1380,71 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     transition-duration: 0.01ms !important;
   }
 }
+/* ==========================================================================
+   EDGE CASE UI ELEMENTS
+   ========================================================================== */
+
+/* Offline Badge in Header */
+.offline-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  animation: offlinePulse 2s ease-in-out infinite;
+
+  [data-theme='dark'] & {
+    background-color: rgba(239, 68, 68, 0.2);
+  }
+}
+
+@keyframes offlinePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Input Warning Banner */
+.input-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  color: var(--color-warning);
+  background-color: rgba(251, 191, 36, 0.1);
+  border-radius: 6px;
+  font-weight: 500;
+
+  i {
+    font-size: 0.7rem;
+  }
+
+  [data-theme='dark'] & {
+    background-color: rgba(251, 191, 36, 0.15);
+  }
+}
+
+/* Offline State for Input Container */
+.input-container.offline {
+  border-color: var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.05);
+
+  .chat-input {
+    &::placeholder {
+      color: var(--color-danger);
+    }
+  }
+
+  [data-theme='dark'] & {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+}

@@ -46,6 +46,14 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     return this.llmService.messages().some(m => m.role === 'user');
   });
 
+  // Edge case: Check if input is disabled
+  public isInputDisabled = computed(() => {
+    return this.llmService.isGenerating() ||
+      this.llmService.isNavigating() ||
+      this.llmService.isOffline() ||
+      (!this.llmService.modelLoaded() && !this.hasUserMessages());
+  });
+
   constructor() {
     // 1. Auto-scroll effect
     effect(() => {
@@ -92,7 +100,22 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     if (!content) return '';
     return content
       .replace(/<think>[\s\S]*?<\/think>/g, '') // Hide thinking process in UI for cleanliness
+      .replace(/JSON_ACTION:\s*\{[^}]*\}/g, '') // Remove any leaked JSON_ACTION
       .trim();
+  }
+
+  // Edge case: Get placeholder text based on state
+  getPlaceholderText(): string {
+    if (this.llmService.isOffline()) {
+      return 'Đang offline - Kiểm tra kết nối mạng';
+    }
+    if (this.llmService.isNavigating()) {
+      return 'Đang chuyển trang...';
+    }
+    if (this.llmService.inputTruncated()) {
+      return 'Tin nhắn đã được rút gọn (tối đa 500 ký tự)';
+    }
+    return 'Bạn muốn tôi giúp gì hôm nay?';
   }
 
   shouldShowLoadingIndicator(): boolean {
@@ -111,14 +134,31 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   // ========================================================================
 
   async onSend(): Promise<void> {
+    // Edge case: Block if offline
+    if (this.llmService.isOffline()) {
+      return;
+    }
+
+    // Edge case: Block if navigating
+    if (this.llmService.isNavigating()) {
+      return;
+    }
+
     const text = this.userInput.trim();
     if (!text) return;
+
+    // Edge case: Sanitize special characters that could cause issues
+    const sanitizedText = text
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars
+      .substring(0, 500); // Enforce max length on client side too
+
+    if (!sanitizedText) return;
 
     this.userInput = '';
     this.isNearBottom = true; // Force scroll to bottom on new message
     this.scrollToBottom();
 
-    await this.llmService.sendMessage(text);
+    await this.llmService.sendMessage(sanitizedText);
   }
 
   handleMainButton(): void {

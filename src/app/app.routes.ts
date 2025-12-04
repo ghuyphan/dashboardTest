@@ -153,7 +153,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.KhamCLST3',
           title: 'Tầng 3 Khám và CLS',
-          keywords: ['cls 3', 'tang 3', 'xet nghiem tang 3', 'can lam sang 3'],
+          keywords: ['cls', 'cls 3', 'tang 3', 'xet nghiem tang 3', 'can lam sang', 'can lam sang 3', 't3'],
           showSearchBar: false,
         },
       },
@@ -167,7 +167,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.KhamCLST6',
           title: 'Tầng 6 Khám và CLS',
-          keywords: ['cls 6', 'tang 6', 'xet nghiem tang 6', 'can lam sang 6'],
+          keywords: ['cls', 'cls 6', 'tang 6', 'xet nghiem tang 6', 'can lam sang', 'can lam sang 6', 't6'],
           showSearchBar: false,
         },
       },
@@ -181,7 +181,7 @@ export const routes: Routes = [
         data: {
           permission: 'BaoCao.KhamCLSTheoCK',
           title: 'Khám CLS theo chuyên khoa',
-          keywords: ['cls chuyen khoa', 'specialty', 'ck', 'can lam sang chuyen khoa'],
+          keywords: ['cls', 'cls chuyen khoa', 'specialty', 'ck', 'can lam sang', 'can lam sang chuyen khoa'],
           showSearchBar: false,
         },
       },
@@ -223,7 +223,7 @@ export const routes: Routes = [
         data: {
           permission: 'PTTT.PhauThuat',
           title: 'Thống kê Phẫu thuật',
-          keywords: ['phau thuat', 'pttt', 'mo', 'surgery'],
+          keywords: ['phau thuat', 'pttt', 'surgery', 'mổ'],
           showSearchBar: false,
         },
       },
@@ -249,7 +249,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'BaoCao.TQMoHinhBenhTat',
-          title: 'Thống kê mô hình bệnh tật (ICD)',
+          title: 'Mô hình bệnh tật',
           keywords: ['icd', 'benh tat', 'top benh', 'ngoai tru', 'noi tru']
         }
       },

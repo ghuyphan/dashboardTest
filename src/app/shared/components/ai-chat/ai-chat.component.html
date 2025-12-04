@@ -22,6 +22,11 @@
     </div>
 
     <div class="header-right">
+      @if (llmService.isOffline()) {
+      <span class="offline-badge" title="Không có kết nối mạng">
+        <i class="fas fa-wifi-slash"></i>
+      </span>
+      }
       <button class="close-btn" (click)="closeChat()" title="Đóng">
         <i class="fas fa-times"></i>
       </button>
@@ -122,13 +127,19 @@
       }
     </div>
 
-    <div class="input-container">
+    <div class="input-container" [class.offline]="llmService.isOffline()">
+      @if (llmService.inputTruncated()) {
+      <div class="input-warning">
+        <i class="fas fa-exclamation-circle"></i> Tin nhắn đã được rút gọn
+      </div>
+      }
       <input type="text" [(ngModel)]="userInput" (keyup.enter)="handleMainButton()"
-        [disabled]="llmService.isGenerating() || (!llmService.modelLoaded() && !hasUserMessages())"
-        placeholder="Bạn muốn tôi giúp gì hôm nay?" class="chat-input" autocomplete="off">
+        [disabled]="isInputDisabled()"
+        [placeholder]="getPlaceholderText()" class="chat-input" autocomplete="off"
+        [maxlength]="500">
 
       <button class="send-btn" (click)="handleMainButton()"
-        [disabled]="(!llmService.isGenerating() && !userInput.trim()) || (!llmService.modelLoaded() && !hasUserMessages())"
+        [disabled]="isInputDisabled() || (!llmService.isGenerating() && !userInput.trim())"
         [class.generating]="llmService.isGenerating()" [title]="llmService.isGenerating() ? 'Dừng lại' : 'Gửi'">
 
         @if (llmService.isGenerating()) {
