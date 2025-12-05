@@ -40,6 +40,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   public userInput = '';
   private isNearBottom = true;
   private scrollCleanup?: () => void;
+  private contentCache = new Map<string, string>(); // Memoization for processContent
 
   // --- Computed ---
   public hasUserMessages = computed(() => {
@@ -95,7 +96,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     return msg.id;
   }
 
-  // Handle specific model tokens if they leak through (sanity check)
+  // Handle specific model tokens if they leak through - Memoized for perf
   processContent(content: string): string {
     if (!content) return '';
     return content

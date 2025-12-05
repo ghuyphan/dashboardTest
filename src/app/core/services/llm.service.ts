@@ -66,11 +66,11 @@ export class LlmService {
   private readonly TIMEOUT = 30000;
   private readonly MAX_HISTORY = 10;
   private readonly UI_DEBOUNCE = 16; // ~60fps
-  private readonly THEME_COOLDOWN = 2000;
+  private readonly THEME_COOLDOWN = 1000; // Reduced from 2000ms
   private readonly DEBUG = !environment.production;
   private readonly MAX_INPUT_LENGTH = 500;
   private readonly TOGGLE_DEBOUNCE = 300;
-  private readonly MESSAGE_DEBOUNCE = 500;
+  private readonly MESSAGE_DEBOUNCE = 300; // Reduced from 500ms
 
   // Signals
   public readonly isOpen = signal(false);
@@ -214,7 +214,8 @@ export class LlmService {
     this.isGenerating.set(true);
 
     try {
-      await this.retry(() => this.streamToServer(input));
+      const startTime = Date.now();
+      await this.retry(() => this.streamToServer(input, startTime));
     } catch (e) {
       this.handleErr(e);
     } finally {
@@ -286,7 +287,7 @@ export class LlmService {
   // SERVER STREAMING LOGIC
   // ============================================================================
 
-  private async streamToServer(input: string): Promise<void> {
+  private async streamToServer(input: string, startTime: number): Promise<void> {
     this.abortCtrl = new AbortController();
     const signal = this.abortCtrl.signal;
 
@@ -329,7 +330,7 @@ export class LlmService {
       if (!res.ok) throw new Error(`API ${res.status}`);
       if (!res.body) throw new Error('No body');
 
-      await this.processStream(res.body, signal);
+      await this.processStream(res.body, signal, startTime);
     } finally {
       clearTimeout(timeout);
     }
@@ -337,7 +338,8 @@ export class LlmService {
 
   private async processStream(
     body: ReadableStream<Uint8Array>,
-    signal: AbortSignal
+    signal: AbortSignal,
+    startTime: number
   ): Promise<void> {
     return this.ngZone.runOutsideAngular(async () => {
       const reader = body.getReader();
@@ -345,11 +347,17 @@ export class LlmService {
       let content = '';
       let toolCalls: ToolCall[] = [];
       let buffer = '';
+      let hasReceivedFirstByte = false;
 
       try {
         while (!signal.aborted) {
           const { done, value } = await reader.read();
           if (done) break;
+
+          if (!hasReceivedFirstByte) {
+            console.log(`[LLM] ⚡ TTFB: ${Date.now() - startTime}ms`);
+            hasReceivedFirstByte = true;
+          }
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
@@ -662,9 +670,9 @@ export class LlmService {
     this.isNavigating.set(true);
     setTimeout(() => {
       this.router.navigateByUrl(targetPath).finally(() => {
-        setTimeout(() => this.isNavigating.set(false), 500);
+        setTimeout(() => this.isNavigating.set(false), 200); // Reduced from 500ms
       });
-    }, 600);
+    }, 200); // Reduced from 600ms for snappier navigation
 
     return { success: true, data: route.title };
   }
@@ -765,6 +773,17 @@ export class LlmService {
   }
 
   private addGreeting(): void {
+    const greetings = [
+      'Xin chào! 👋 Tôi là trợ lý ảo IT. Tôi có thể giúp gì cho bạn hôm nay? ✨',
+      'Chào bạn! 🤖 Tôi là trợ lý IT. Bạn cần hỗ trợ gì không? 🚀',
+      'Dạ, chào bạn! 🌟 Tôi có thể giúp bạn điều hướng hoặc trả lời các câu hỏi IT ạ! 💻',
+      'Hello! 👋 Trợ lý IT đây ạ. Bạn cần tìm trang nào hay hỗ trợ gì không? 😊'
+    ];
+    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+    this.messages.set([this.createMsg('assistant', randomGreeting)]);
+  }
+
+  private _old_addGreeting(): void {
     const greeting =
       'Xin chào! 👋 Tôi là trợ lý ảo IT. Tôi có thể giúp gì cho bạn hôm nay? ✨';
     this.messages.set([this.createMsg('assistant', greeting)]);
@@ -800,33 +819,16 @@ export class LlmService {
     return 'Đã có lỗi xảy ra.';
   }
 
-  private handleErr(e: unknown): void {
-    console.error('[LLM] Error:', e);
-    this.messages.update((m) => {
-      if (!m.length) return m;
-      const last = { ...m[m.length - 1] };
-      last.content = 'Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau. 😓';
-      last.isError = true;
-      last.isStreaming = false;
-      return [...m.slice(0, -1), last];
-    });
+  private cleanup(): void {
+    this.clearSessionTimer();
+    if (this.abortCtrl) this.abortCtrl.abort();
   }
 
-  private retry(fn: () => Promise<void>, retries = 3, delay = 1000): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const attempt = (n: number) => {
-        fn()
-          .then(resolve)
-          .catch((err) => {
-            if (n === 0) {
-              reject(err);
-            } else {
-              setTimeout(() => attempt(n - 1), delay);
-            }
-          });
-      };
-      attempt(retries);
-    });
+  private abort(): void {
+    if (this.abortCtrl) {
+      this.abortCtrl.abort();
+      this.abortCtrl = null;
+    }
   }
 
   private delay(ms: number): Promise<void> {
@@ -838,25 +840,18 @@ export class LlmService {
   }
 
   private sanitizeOut(str: string): string {
-    // Remove JSON_ACTION blocks from output
-    return str.replace(/JSON_ACTION:\s*\{.*?\}/g, '').trim();
+    return str.replace(/<[^>]*>/g, '');
   }
 
   private generateSessionId(): string {
     return Math.random().toString(36).substring(2, 15);
   }
 
-  // ==== EDGE CASE: Session Timeout ====
   private resetSessionTimer(): void {
     this.clearSessionTimer();
-    if (this.isOpen()) {
-      this.sessionTimer = setTimeout(() => {
-        this.ngZone.run(() => {
-          if (this.DEBUG) console.log('[LLM] Session timeout');
-          this.isOpen.set(false);
-        });
-      }, 5 * 60 * 1000); // 5 minutes
-    }
+    this.sessionTimer = setTimeout(() => {
+      this.resetChat();
+    }, 30 * 60 * 1000); // 30 mins
   }
 
   private clearSessionTimer(): void {
@@ -866,16 +861,31 @@ export class LlmService {
     }
   }
 
-  private cleanup(): void {
-    this.abort();
-    this.clearSessionTimer();
-    this.isOpen.set(false);
+  private handleErr(e: unknown): void {
+    console.error('[LLM] Error:', e);
+    this.messages.update((m) => {
+      const last = m[m.length - 1];
+      if (last.role === 'assistant') {
+        return [
+          ...m.slice(0, -1),
+          { ...last, content: 'Đã có lỗi xảy ra. Vui lòng thử lại.', isError: true, isStreaming: false },
+        ];
+      }
+      return m;
+    });
   }
 
-  private abort(): void {
-    if (this.abortCtrl) {
-      this.abortCtrl.abort();
-      this.abortCtrl = null;
+  private async retry(fn: () => Promise<void>, retries = 3): Promise<void> {
+    let lastErr;
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        lastErr = e;
+        if (this.DEBUG) console.warn(`[LLM] Retry ${i + 1}/${retries} failed:`, e);
+        await this.delay(1000 * (i + 1));
+      }
     }
+    throw lastErr;
   }
 }

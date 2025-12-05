@@ -75,10 +75,10 @@ export class ChartCardComponent implements AfterViewInit {
   private resizeTimer?: ReturnType<typeof setTimeout>;
   private readonly RESIZE_DEBOUNCE_MS = 200;
 
-  // Threshold 1: Enable Data Zoom (e.g., > 35 points)
+  // Threshold 1: Enable Data Zoom (e.g., > 35 points - monthly view)
   private readonly LARGE_DATA_THRESHOLD = 35;
 
-  // Threshold 2: Hide Labels (e.g., > 100 points) to prevent clutter
+  // Threshold 2: Hide Labels (e.g., > 100 points - quarterly/yearly view)
   private readonly VERY_LARGE_DATA_THRESHOLD = 100;
 
   private lastWidth = 0;
@@ -195,15 +195,12 @@ export class ChartCardComponent implements AfterViewInit {
   /**
    * High-Performance Responsive Strategy
    * Wraps the standard options in ECharts' native media query structure.
-   * The TimelineComponent is required for this 'baseOption' + 'media' syntax to work.
    */
   private makeOptionsResponsive(options: any): any {
-    // 1. Avoid double-wrapping if user already provided media queries
     if (options.baseOption || options.media) {
       return options;
     }
 
-    // 2. Check if this is a Pie/Doughnut chart
     const series = Array.isArray(options.series) ? options.series : [options.series];
     const hasPie = series.some((s: any) => s.type === 'pie');
 
@@ -211,23 +208,20 @@ export class ChartCardComponent implements AfterViewInit {
       return options;
     }
 
-    // 3. Construct Media Query Wrapper
     return {
-      baseOption: options, // The original desktop options
+      baseOption: options,
       media: [
         {
-          query: { maxWidth: 500 }, // Trigger when width < 500px
+          query: { maxWidth: 500 },
           option: {
             series: series.map((s: any) => {
               if (s.type === 'pie' && s.radius) {
                 return {
-                  // Reduce radius by ~20% for mobile to prevent label clipping
                   radius: this.scaleRadius(s.radius, 0.8),
-                  // Optionally reduce label font size
                   label: { fontSize: 10 }
                 };
               }
-              return {}; // Leave other series types alone
+              return {};
             })
           }
         }
@@ -235,9 +229,6 @@ export class ChartCardComponent implements AfterViewInit {
     };
   }
 
-  /**
-   * Helper to scale radius values (strings like '50%' or numbers)
-   */
   private scaleRadius(radius: any, factor: number): any {
     if (Array.isArray(radius)) {
       return radius.map(r => this.scaleSingleRadius(r, factor));
@@ -379,12 +370,17 @@ export class ChartCardComponent implements AfterViewInit {
       return option;
     }
 
-    // 3. Apply "Large Data" Modifications (Enable Zoom)
+    // 3. Apply "Large Data" Modifications
     const newOption = { ...option };
 
-    // A. Calculate Zoom Percentage
-    // Calculate how much we need to zoom to show approx 'LARGE_DATA_THRESHOLD' items at a time
-    const zoomStart = 100 - Math.floor((this.LARGE_DATA_THRESHOLD / dataLength) * 100);
+    // A. Calculate Zoom Percentage (Smart Zooming)
+    // - If data > 100 (Yearly): Show 100 points initially (Labels Hidden by step E)
+    // - If data > 35 (Monthly): Show 35 points initially (Labels Visible)
+    const targetItems = dataLength > this.VERY_LARGE_DATA_THRESHOLD
+      ? this.VERY_LARGE_DATA_THRESHOLD
+      : this.LARGE_DATA_THRESHOLD;
+
+    const zoomStart = 100 - Math.floor((targetItems / dataLength) * 100);
 
     // B. Enable DataZoom Slider
     newOption.dataZoom = [
@@ -427,7 +423,7 @@ export class ChartCardComponent implements AfterViewInit {
         ...axis,
         axisLabel: {
           ...axis.axisLabel,
-          interval: 'auto', // Let ECharts hide overlapping labels
+          interval: 'auto',
           hideOverlap: true,
           width: 100
         }
@@ -435,8 +431,7 @@ export class ChartCardComponent implements AfterViewInit {
     }
 
     // E. Hide Series Labels ONLY for Very Large Data
-    // If data is "Very Large" (e.g. > 100), force hide value labels to reduce clutter.
-    // For "Large" (35-100), labels might still be useful when zoomed in.
+    // If data > 100 points, force labels OFF to prevent visual noise.
     if (dataLength > this.VERY_LARGE_DATA_THRESHOLD) {
       if (newOption.series) {
         const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
