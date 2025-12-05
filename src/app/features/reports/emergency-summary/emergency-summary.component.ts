@@ -76,6 +76,9 @@ export class EmergencySummaryComponent implements OnInit {
   public fromDate: string = '';
   public toDate: string = '';
 
+  // Store previous year data for chart rebuilding on theme change
+  private previousYearData: EmergencyStat[] = [];
+
   public widgetData: WidgetData[] = [];
 
   // Charts
@@ -110,6 +113,8 @@ export class EmergencySummaryComponent implements OnInit {
       this.palette = this.themeService.currentPalette();
       if (!this.isLoading && this.rawData.length > 0) {
         this.updateWidgetColors();
+        // Rebuild charts with new palette colors
+        this.rebuildChartsWithCurrentData();
       }
       this.cd.markForCheck();
     });
@@ -182,6 +187,57 @@ export class EmergencySummaryComponent implements OnInit {
       setC('transfer', this.palette.pastelCoral);
       setC('insurance', this.palette.deepSapphire);
     }
+  }
+
+  /**
+   * Rebuild charts with current data when theme changes.
+   * This ensures chart colors are updated to match the new palette.
+   */
+  private rebuildChartsWithCurrentData(): void {
+    if (this.rawData.length === 0) return;
+
+    // Re-process data with the new palette colors
+    const sortedCurrent = [...this.rawData].sort(
+      (a, b) =>
+        new Date(a.NGAY_TIEP_NHAN).getTime() -
+        new Date(b.NGAY_TIEP_NHAN).getTime()
+    );
+    const sortedPrevious = [...this.previousYearData].sort(
+      (a, b) =>
+        new Date(a.NGAY_TIEP_NHAN).getTime() -
+        new Date(b.NGAY_TIEP_NHAN).getTime()
+    );
+
+    const dates = sortedCurrent.map((d) => {
+      const dateObj = new Date(d.NGAY_TIEP_NHAN);
+      return this.datePipe.transform(dateObj, 'dd/MM') || '';
+    });
+
+    const ccDataCurrent = sortedCurrent.map((d) => d.LUOT_CC);
+    const ccDataPrevious = dates.map((_, index) => {
+      return sortedPrevious[index] ? sortedPrevious[index].LUOT_CC : null;
+    });
+
+    const nhapVienData = sortedCurrent.map((d) => d.NHAP_VIEN);
+    const chuyenVienData = sortedCurrent.map((d) => d.CHUYEN_VIEN);
+
+    // Calculate totals for pie chart
+    let totalBHYT = 0;
+    let totalVienPhi = 0;
+    this.rawData.forEach((item) => {
+      totalBHYT += item.BHYT || 0;
+      totalVienPhi += item.VIEN_PHI || 0;
+    });
+
+    this.buildCharts(
+      dates,
+      ccDataCurrent,
+      ccDataPrevious,
+      nhapVienData,
+      chuyenVienData,
+      totalBHYT,
+      totalVienPhi
+    );
   }
 
   public onDateFilter(range: DateRange): void {
@@ -257,6 +313,9 @@ export class EmergencySummaryComponent implements OnInit {
     currentData: EmergencyStat[],
     previousData: EmergencyStat[]
   ): void {
+    // Store previous data for theme change rebuilds
+    this.previousYearData = previousData;
+
     if (!currentData || currentData.length === 0) {
       this.initializeWidgets();
       return;

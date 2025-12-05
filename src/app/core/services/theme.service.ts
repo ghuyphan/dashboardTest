@@ -45,6 +45,9 @@ export interface ThemePalette {
   chart7: string;
   chart8: string;
   chart9: string;
+
+  // Chart axis/grid lines
+  chartAxisLine: string;
 }
 
 @Injectable({
@@ -144,6 +147,8 @@ export class ThemeService {
       chart7: c('--chart-7', '#4a4a4a'),
       chart8: c('--chart-8', '#52c3d7'),
       chart9: c('--chart-9', '#f9b88a'),
+
+      chartAxisLine: c('--chart-axis-line', '#cbd5e1'),
     };
   }
 }

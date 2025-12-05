@@ -199,16 +199,13 @@ export class DetailedExaminationReportComponent implements OnInit {
       this.reportService
         .getDetailedExaminationReport(this.fromDate, this.toDate)
         .pipe(
-          finalize(() => {
-            this.isLoading = false;
-            this.cd.markForCheck();
-          }),
+          // NOTE: Removed finalize here because processData is now async and handles the loading state
           takeUntilDestroyed(this.destroyRef)
         )
         .subscribe({
           next: (response: any) => {
             this.dailyStats = response as DailyExaminationStat[];
-            this.processData(); // Process once
+            this.processData(); // Start async processing
           },
           error: (err) => {
             console.error(err);
@@ -216,6 +213,8 @@ export class DetailedExaminationReportComponent implements OnInit {
             this.rawData = [];
             this.dailyStats = [];
             this.initializeWidgets();
+            this.isLoading = false; // Stop loading on error
+            this.cd.markForCheck();
           },
         });
     }, 0);
@@ -228,10 +227,13 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.doctorChartOptions = null;
   }
 
-  private processData(): void {
+  // [OPTIMIZATION] Converted to async with chunking to prevent UI freeze
+  private async processData(): Promise<void> {
     if (!this.dailyStats || this.dailyStats.length === 0) {
       this.initializeWidgets();
       this.rawData = [];
+      this.isLoading = false;
+      this.cd.markForCheck();
       return;
     }
 
@@ -245,47 +247,61 @@ export class DetailedExaminationReportComponent implements OnInit {
     const specialtyMap = new Map<string, number>();
     const doctorMap = new Map<string, number>();
 
-    this.rawData = []; // Reset raw data
+    // Use local array for faster pushing
+    const tempRawData: DetailedExaminationStat[] = [];
 
-    for (const day of this.dailyStats) {
-      // 1. Daily Stats
-      const v = day.SO_LUOT_KHAM_TONG || 0;
-      const p = day.SO_NGUOI_KHAM_TONG || 0;
-      totalVisits += v;
-      totalPatientsDirect += p;
+    // --- CHUNKING LOGIC ---
+    const CHUNK_SIZE = 5; // Process 5 days per "tick"
 
-      const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
-      dateMap.set(dateKey, { visits: v, patients: p });
+    for (let i = 0; i < this.dailyStats.length; i += CHUNK_SIZE) {
+      const chunk = this.dailyStats.slice(i, i + CHUNK_SIZE);
 
-      // 2. Detailed Stats (Flattening + Aggregation)
-      const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
-      const details = day.CHUYEN_KHOA_KHAM || [];
+      for (const day of chunk) {
+        // 1. Daily Stats
+        const v = day.SO_LUOT_KHAM_TONG || 0;
+        const p = day.SO_NGUOI_KHAM_TONG || 0;
+        totalVisits += v;
+        totalPatientsDirect += p;
 
-      for (const detail of details) {
-        // Flatten for Table
-        this.rawData.push({
-          NGAYKHAM: day.NGAY_KHAM,
-          NGAY_KHAM_DISPLAY: dateDisplay,
-          TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
-          BAC_SI: detail.BAC_SI || 'Chưa xác định',
-          SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
-          SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
-          BENH_MOI: detail.BENH_MOI || 0,
-          BENH_CU: detail.BENH_CU || 0,
-        } as DetailedExaminationStat);
+        const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
+        dateMap.set(dateKey, { visits: v, patients: p });
 
-        // Aggregate for Charts
-        const spec = detail.TEN_CHUYEN_KHOA || 'Khác';
-        const doc = detail.BAC_SI || 'Chưa xác định';
-        const visits = detail.SO_LUOT_KHAM || 0;
+        // 2. Detailed Stats (Flattening + Aggregation)
+        const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
+        const details = day.CHUYEN_KHOA_KHAM || [];
 
-        totalNew += detail.BENH_MOI || 0;
-        totalOld += detail.BENH_CU || 0;
+        for (const detail of details) {
+          // Flatten for Table
+          tempRawData.push({
+            NGAYKHAM: day.NGAY_KHAM,
+            NGAY_KHAM_DISPLAY: dateDisplay,
+            TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
+            BAC_SI: detail.BAC_SI || 'Chưa xác định',
+            SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
+            SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
+            BENH_MOI: detail.BENH_MOI || 0,
+            BENH_CU: detail.BENH_CU || 0,
+          } as DetailedExaminationStat);
 
-        specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
-        doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+          // Aggregate for Charts
+          const spec = detail.TEN_CHUYEN_KHOA || 'Khác';
+          const doc = detail.BAC_SI || 'Chưa xác định';
+          const visits = detail.SO_LUOT_KHAM || 0;
+
+          totalNew += detail.BENH_MOI || 0;
+          totalOld += detail.BENH_CU || 0;
+
+          specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
+          doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+        }
       }
+
+      // [OPTIMIZATION] Yield to main thread to let UI render spinner
+      await new Promise(resolve => setTimeout(resolve, 0));
     }
+
+    // Assign processed data
+    this.rawData = tempRawData;
 
     const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
     const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
@@ -329,10 +345,16 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.buildPatientTypeChart(totalNew, totalOld);
     this.buildSpecialtyChart(specialtyMap);
     this.buildDoctorChart(doctorMap);
+
+    // [OPTIMIZATION] Stop loading only after all processing is done
+    this.isLoading = false;
+    this.cd.markForCheck();
   }
 
   private updateChartColors(): void {
     if (this.trendChartOptions) {
+      // Re-trigger processData to rebuild charts with new colors (fast since data is ready)
+      // In a real scenario, you might want a lighter weight function just to update chart options
       this.processData();
     }
   }

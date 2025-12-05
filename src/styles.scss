@@ -79,7 +79,10 @@ $light-tokens: (
   "chart-6": #f89c5b,
   "chart-7": #4a4a4a,
   "chart-8": map.get($base-palette, "teal-midtone"),
-  "chart-9": map.get($base-palette, "beige-midtone")
+  "chart-9": map.get($base-palette, "beige-midtone"),
+
+  // Chart Axis/Grid Lines (subtle but visible)
+  "chart-axis-line": map.get($base-palette, "slate-300")
 );
 
 // --- Semantic Tokens (Dark Theme - Refined) ---
@@ -143,7 +146,11 @@ $dark-tokens: (
   // Slate 400 (Grey)
   "chart-8": #67e8f9,
   // Cyan 300 (Bright Cyan - matches Teal Midtone)
-  "chart-9": #fdba74 // Orange 300 (Soft Peach/Gold - matches Beige)
+  "chart-9": #fdba74,
+  // Orange 300 (Soft Peach/Gold - matches Beige)
+
+  // Chart Axis/Grid Lines (visible in dark mode)
+  "chart-axis-line": #4b5563 // Gray 600 - visible against dark bg
 );
 
 
