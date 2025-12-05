@@ -2,11 +2,21 @@
    SHARED MIXINS FOR CONSISTENT STYLING
    ========================================================================== */
 
+@mixin hover {
+    @media (hover: hover) {
+        &:hover {
+            @content;
+        }
+    }
+}
+
 // Standard button hover effect
 @mixin btn-hover-effect {
-    &:not(:disabled):hover {
-        transform: translateY(-2px);
-        box-shadow: var(--box-shadow-md);
+    &:not(:disabled) {
+        @include hover {
+            transform: translateY(-2px);
+            box-shadow: var(--box-shadow-md);
+        }
     }
 
     &:not(:disabled):active {
@@ -17,12 +27,14 @@
 
 // Standard icon button hover effect
 @mixin icon-btn-hover {
-    &:hover:not(:disabled) {
-        background-color: var(--gray-100);
-        color: var(--teal-blue);
+    &:not(:disabled) {
+        @include hover {
+            background-color: var(--gray-100);
+            color: var(--teal-blue);
 
-        [data-theme='dark'] & {
-            background-color: var(--gray-200);
+            [data-theme='dark'] & {
+                background-color: var(--gray-200);
+            }
         }
     }
 }
@@ -113,8 +125,10 @@
             color: var(--text-disabled);
         }
 
-        &:hover:not(:disabled):not([readonly]) {
-            border-color: var(--gray-400);
+        &:not(:disabled):not([readonly]) {
+            @include hover {
+                border-color: var(--gray-400);
+            }
         }
 
         &:focus {

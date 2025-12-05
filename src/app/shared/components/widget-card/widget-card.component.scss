@@ -30,15 +30,12 @@
   grid-template-rows: 100%;
 
   /* UPDATED: Only apply hover effect if NOT loading */
-  &:not(.is-loading):hover {
-    transform: translateY(-2px);
-    box-shadow: var(--box-shadow-lg);
-  }
-
-  @media (hover: none) and (pointer: coarse) {
-    &:hover {
-      transform: none;
-      box-shadow: var(--box-shadow-md);
+  &:not(.is-loading) {
+    @media (hover: hover) {
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow-lg);
+      }
     }
   }
 }

@@ -282,8 +282,10 @@ $dark-tokens: (
     opacity: 0.6;
     transition: opacity 0.2s ease;
 
-    &:hover {
-      opacity: 1;
+    @media (hover: hover) {
+      &:hover {
+        opacity: 1;
+      }
     }
   }
 }
@@ -400,9 +402,11 @@ a {
   text-decoration: none;
   transition: color 0.2s;
 
-  &:hover {
-    text-decoration: underline;
-    color: var(--secondary);
+  @media (hover: hover) {
+    &:hover {
+      text-decoration: underline;
+      color: var(--secondary);
+    }
   }
 }
 
@@ -427,8 +431,10 @@ a {
 [data-theme="dark"] *::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.2);
 
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+  @media (hover: hover) {
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
   }
 }
 
@@ -477,9 +483,11 @@ select:-webkit-autofill {
     border-radius: inherit;
   }
 
-  &:not(:disabled):hover {
-    transform: translateY(-2px);
-    /* box-shadow: var(--box-shadow-lg); Removed as per user request */
+  @media (hover: hover) {
+    &:not(:disabled):hover {
+      transform: translateY(-2px);
+      /* box-shadow: var(--box-shadow-lg); Removed as per user request */
+    }
   }
 
 
@@ -500,15 +508,19 @@ select:-webkit-autofill {
   [data-theme="dark"] & {
     color: #020617;
 
-    &:hover:not(:disabled) {
-      background-color: var(--secondary);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background-color: var(--secondary);
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+      }
     }
   }
 
-  &:hover:not(:disabled) {
-    background-color: var(--secondary);
-    color: #ffffff;
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background-color: var(--secondary);
+      color: #ffffff;
+    }
   }
 }
 
@@ -522,15 +534,19 @@ select:-webkit-autofill {
     color: var(--text-primary);
     border-color: rgba(255, 255, 255, 0.1);
 
-    &:hover:not(:disabled) {
-      background-color: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.2);
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
     }
   }
 
-  &:hover:not(:disabled) {
-    background-color: var(--gray-300);
-    color: var(--gray-900);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background-color: var(--gray-300);
+      color: var(--gray-900);
+    }
   }
 }
 
@@ -540,11 +556,13 @@ select:-webkit-autofill {
   border-color: transparent;
   box-shadow: none !important;
 
-  &:hover:not(:disabled) {
-    background-color: rgba(0, 131, 155, 0.1);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background-color: rgba(0, 131, 155, 0.1);
 
-    [data-theme="dark"] & {
-      background-color: rgba(45, 212, 191, 0.1);
+      [data-theme="dark"] & {
+        background-color: rgba(45, 212, 191, 0.1);
+      }
     }
   }
 }
@@ -765,12 +783,14 @@ body>ul.submenu.open {
         text-overflow: ellipsis;
       }
 
-      &:hover {
-        background-color: var(--gray-200);
-        color: var(--text-primary);
+      @media (hover: hover) {
+        &:hover {
+          background-color: var(--gray-200);
+          color: var(--text-primary);
 
-        i {
-          transform: scale(1.15);
+          i {
+            transform: scale(1.15);
+          }
         }
       }
 
@@ -826,8 +846,10 @@ body>ul.submenu.open {
   transition: background-color 0.2s ease;
 
   // Default Light Theme Hover/Active
-  &:hover:not(.mdc-list-item--disabled) {
-    background-color: var(--gray-100) !important;
+  @media (hover: hover) {
+    &:hover:not(.mdc-list-item--disabled) {
+      background-color: var(--gray-100) !important;
+    }
   }
 
   &.mdc-list-item--selected {
@@ -838,8 +860,10 @@ body>ul.submenu.open {
 
   // Dark Mode Overrides for Options
   [data-theme="dark"] & {
-    &:hover:not(.mdc-list-item--disabled) {
-      background-color: rgba(255, 255, 255, 0.05) !important;
+    @media (hover: hover) {
+      &:hover:not(.mdc-list-item--disabled) {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+      }
     }
 
     &.mdc-list-item--selected {
@@ -869,11 +893,13 @@ body>ul.submenu.open {
     color: var(--text-primary) !important;
     border-radius: 50%;
 
-    &:hover {
-      background-color: var(--gray-100) !important;
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--gray-100) !important;
 
-      [data-theme="dark"] & {
-        background-color: rgba(255, 255, 255, 0.1) !important;
+        [data-theme="dark"] & {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+        }
       }
     }
   }

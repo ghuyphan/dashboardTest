@@ -1,155 +1,179 @@
 <div class="chart-card">
   @if (title() || subtitle() || icon()) {
-    <div class="card-header">
-      <div class="card-title-wrapper">
-        <h3 class="card-title">
-          @if (icon()) {
-            <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
-          }
-          {{ title() }}
-        </h3>
-        
-        @if (subtitle()) {
-          <span class="card-subtitle">{{ subtitle() }}</span>
+  <div class="card-header">
+    <div class="card-title-wrapper">
+      <h3 class="card-title">
+        @if (icon()) {
+        <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
         }
-      </div>
-      
-      <div class="header-controls">
-        <ng-content select="[header-actions]"></ng-content>
-      </div>
+        {{ title() }}
+      </h3>
+
+      @if (subtitle()) {
+      <span class="card-subtitle">{{ subtitle() }}</span>
+      }
     </div>
+
+    <div class="header-controls">
+      <!-- Reset Zoom Button (only when large data) -->
+      @if (hasLargeData() && !isLoading()) {
+      <button type="button" class="reset-zoom-btn" (click)="resetZoom()" title="Đặt lại zoom" aria-label="Đặt lại zoom">
+        <i class="fas fa-expand" aria-hidden="true"></i>
+      </button>
+      }
+
+      <ng-content select="[header-actions]"></ng-content>
+    </div>
+  </div>
   }
 
   <div class="card-body">
-    <div class="skeleton-overlay" 
-         [class.hidden]="!isLoading()" 
-         aria-hidden="true">
-      
+    <!-- Skeleton Overlay -->
+    <div class="skeleton-overlay" [class.hidden]="!isLoading()" aria-hidden="true">
+
       <div class="sk-legend">
         <div class="sk-legend-item skeleton"></div>
         <div class="sk-legend-item skeleton"></div>
         <div class="sk-legend-item skeleton" style="width: 40px"></div>
       </div>
-      
+
       @switch (skeletonType()) {
-        @case ('pie') {
-          <div class="sk-chart-area sk-pie-area">
-            <div class="sk-pie skeleton"></div>
-          </div>
-        }
-        @case ('doughnut') {
-          <div class="sk-chart-area sk-pie-area">
-            <div class="sk-pie sk-doughnut skeleton"></div>
-          </div>
-        }
+      @case ('pie') {
+      <div class="sk-chart-area sk-pie-area">
+        <div class="sk-pie skeleton"></div>
+      </div>
+      }
+      @case ('doughnut') {
+      <div class="sk-chart-area sk-pie-area">
+        <div class="sk-pie sk-doughnut skeleton"></div>
+      </div>
+      }
 
-        @case ('line') {
-          <div class="sk-chart-area">
-            <div class="sk-y-axis">
-              <div class="sk-y-label skeleton"></div><div class="sk-y-label skeleton"></div>
-              <div class="sk-y-label skeleton"></div><div class="sk-y-label skeleton"></div>
-            </div>
-            <div class="sk-plot-area line-mode">
-              <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-line-svg">
-                <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25" fill="none" stroke="var(--gray-200)" stroke-width="2" vector-effect="non-scaling-stroke" class="skeleton-stroke" />
-              </svg>
-            </div>
-          </div>
-        }
-        @case ('area') {
-          <div class="sk-chart-area">
-            <div class="sk-y-axis">
-              <div class="sk-y-label skeleton"></div><div class="sk-y-label skeleton"></div>
-              <div class="sk-y-label skeleton"></div><div class="sk-y-label skeleton"></div>
-            </div>
-            <div class="sk-plot-area line-mode">
-              <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-line-svg">
-                <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25 V50 H0 Z" fill="var(--gray-100)" class="skeleton-pulse-fast" />
-                <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25" fill="none" stroke="var(--gray-200)" stroke-width="2" vector-effect="non-scaling-stroke" />
-              </svg>
-            </div>
-          </div>
-        }
+      @case ('line') {
+      <div class="sk-chart-area">
+        <div class="sk-y-axis">
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+        </div>
+        <div class="sk-plot-area line-mode">
+          <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-line-svg">
+            <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25" fill="none" stroke="var(--gray-200)" stroke-width="2"
+              vector-effect="non-scaling-stroke" class="skeleton-stroke" />
+          </svg>
+        </div>
+      </div>
+      }
+      @case ('area') {
+      <div class="sk-chart-area">
+        <div class="sk-y-axis">
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+        </div>
+        <div class="sk-plot-area line-mode">
+          <svg viewBox="0 0 100 50" preserveAspectRatio="none" class="sk-line-svg">
+            <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25 V50 H0 Z" fill="var(--gray-100)"
+              class="skeleton-pulse-fast" />
+            <path d="M0,40 Q15,35 25,20 T50,30 T75,10 T100,25" fill="none" stroke="var(--gray-200)" stroke-width="2"
+              vector-effect="non-scaling-stroke" />
+          </svg>
+        </div>
+      </div>
+      }
 
-        @case ('scatter') {
-          <div class="sk-chart-area">
-             <div class="sk-y-axis">
-               <div class="sk-y-label skeleton"></div><div class="sk-y-label skeleton"></div>
-               <div class="sk-y-label skeleton"></div><div class="sk-y-label skeleton"></div>
-             </div>
-             <div class="sk-plot-area scatter-mode">
-                <div class="sk-dot skeleton" style="top: 20%; left: 10%; width: 10px; height: 10px"></div>
-                <div class="sk-dot skeleton" style="top: 50%; left: 30%; width: 15px; height: 15px"></div>
-                <div class="sk-dot skeleton" style="top: 30%; left: 50%; width: 8px; height: 8px"></div>
-                <div class="sk-dot skeleton" style="top: 70%; left: 70%; width: 20px; height: 20px"></div>
-                <div class="sk-dot skeleton" style="top: 40%; left: 90%; width: 12px; height: 12px"></div>
-             </div>
-          </div>
-        }
+      @case ('scatter') {
+      <div class="sk-chart-area">
+        <div class="sk-y-axis">
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+        </div>
+        <div class="sk-plot-area scatter-mode">
+          <div class="sk-dot skeleton" style="top: 20%; left: 10%; width: 10px; height: 10px"></div>
+          <div class="sk-dot skeleton" style="top: 50%; left: 30%; width: 15px; height: 15px"></div>
+          <div class="sk-dot skeleton" style="top: 30%; left: 50%; width: 8px; height: 8px"></div>
+          <div class="sk-dot skeleton" style="top: 70%; left: 70%; width: 20px; height: 20px"></div>
+          <div class="sk-dot skeleton" style="top: 40%; left: 90%; width: 12px; height: 12px"></div>
+        </div>
+      </div>
+      }
 
-        @case ('horizontal-bar') {
-           <div class="sk-chart-area horizontal-mode">
-             <div class="sk-h-group">
-               <div class="sk-h-label skeleton"></div>
-               <div class="sk-h-bar skeleton" style="width: 60%"></div>
-             </div>
-             <div class="sk-h-group">
-               <div class="sk-h-label skeleton"></div>
-               <div class="sk-h-bar skeleton" style="width: 40%"></div>
-             </div>
-             <div class="sk-h-group">
-               <div class="sk-h-label skeleton"></div>
-               <div class="sk-h-bar skeleton" style="width: 85%"></div>
-             </div>
-             <div class="sk-h-group">
-               <div class="sk-h-label skeleton"></div>
-               <div class="sk-h-bar skeleton" style="width: 30%"></div>
-             </div>
-             <div class="sk-h-group">
-               <div class="sk-h-label skeleton"></div>
-               <div class="sk-h-bar skeleton" style="width: 55%"></div>
-             </div>
-           </div>
-        }
+      @case ('horizontal-bar') {
+      <div class="sk-chart-area horizontal-mode">
+        <div class="sk-h-group">
+          <div class="sk-h-label skeleton"></div>
+          <div class="sk-h-bar skeleton" style="width: 60%"></div>
+        </div>
+        <div class="sk-h-group">
+          <div class="sk-h-label skeleton"></div>
+          <div class="sk-h-bar skeleton" style="width: 40%"></div>
+        </div>
+        <div class="sk-h-group">
+          <div class="sk-h-label skeleton"></div>
+          <div class="sk-h-bar skeleton" style="width: 85%"></div>
+        </div>
+        <div class="sk-h-group">
+          <div class="sk-h-label skeleton"></div>
+          <div class="sk-h-bar skeleton" style="width: 30%"></div>
+        </div>
+        <div class="sk-h-group">
+          <div class="sk-h-label skeleton"></div>
+          <div class="sk-h-bar skeleton" style="width: 55%"></div>
+        </div>
+      </div>
+      }
 
-        @default {
-          <div class="sk-chart-area">
-            <div class="sk-y-axis">
-              <div class="sk-y-label skeleton"></div>
-              <div class="sk-y-label skeleton"></div>
-              <div class="sk-y-label skeleton"></div>
-              <div class="sk-y-label skeleton"></div>
-            </div>
-  
-            <div class="sk-plot-area bar-mode">
-              <div class="sk-bar skeleton" style="--h: 60%"></div>
-              <div class="sk-bar skeleton" style="--h: 40%"></div>
-              <div class="sk-bar skeleton" style="--h: 75%"></div>
-              <div class="sk-bar skeleton" style="--h: 50%"></div>
-              <div class="sk-bar skeleton" style="--h: 85%"></div>
-              <div class="sk-bar skeleton" style="--h: 30%"></div>
-              <div class="sk-bar skeleton" style="--h: 55%"></div>
-            </div>
-          </div>
-        }
+      @default {
+      <div class="sk-chart-area">
+        <div class="sk-y-axis">
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+          <div class="sk-y-label skeleton"></div>
+        </div>
+
+        <div class="sk-plot-area bar-mode">
+          <div class="sk-bar skeleton" style="--h: 60%"></div>
+          <div class="sk-bar skeleton" style="--h: 40%"></div>
+          <div class="sk-bar skeleton" style="--h: 75%"></div>
+          <div class="sk-bar skeleton" style="--h: 50%"></div>
+          <div class="sk-bar skeleton" style="--h: 85%"></div>
+          <div class="sk-bar skeleton" style="--h: 30%"></div>
+          <div class="sk-bar skeleton" style="--h: 55%"></div>
+        </div>
+      </div>
+      }
       }
     </div>
 
-    <div 
-      #chartContainer 
-      class="chart-container"
-      [class.invisible]="!showChart()"
-      role="img" 
+    <!-- Chart Container -->
+    <div #chartContainer class="chart-container" [class.invisible]="!showChart()" role="img"
       [attr.aria-label]="title() ? 'Chart showing ' + title() : 'Data visualization'">
     </div>
-    
+
+    <!-- Data Point Indicator (for large datasets) -->
+    @if (hasLargeData() && showChart()) {
+    <div class="data-indicator">
+      <i class="fas fa-info-circle" aria-hidden="true"></i>
+      <span>
+        Hiển thị {{ visibleDataPoints() }}/{{ totalDataPoints() }} điểm
+        <span class="hint-text">• Kéo thanh trượt để xem thêm</span>
+      </span>
+    </div>
+    }
+
+    <!-- Empty State -->
     @if (showEmptyState()) {
-      <div class="no-data-container">
-        <div class="no-data-icon-wrapper">
-          <i [class]="emptyIcon()" aria-hidden="true"></i>
-        </div>
-        <span class="no-data-text">{{ emptyText() }}</span>
+    <div class="no-data-container">
+      <div class="no-data-icon-wrapper">
+        <i [class]="emptyIcon()" aria-hidden="true"></i>
       </div>
+      <span class="no-data-text">{{ emptyText() }}</span>
+    </div>
     }
   </div>
 </div>
