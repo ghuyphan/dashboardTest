@@ -62,10 +62,8 @@ app-reusable-table {
   position: relative;
   background-color: var(--surface-card, #ffffff);
 
-  /* Performance */
-  contain: layout style;
-  will-change: scroll-position;
-  scroll-behavior: smooth;
+  /* Mobile smooth scrolling */
+  -webkit-overflow-scrolling: touch;
 
   /* Custom Scrollbar Styling */
   scrollbar-width: thin;
@@ -127,6 +125,12 @@ table.mat-table {
   position: sticky;
   top: 0;
   z-index: 100;
+
+  /* GPU acceleration to fix sticky jitter on mobile */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .mat-mdc-header-cell {

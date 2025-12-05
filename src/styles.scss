@@ -305,7 +305,7 @@ html {
   height: 100dvh;
   margin: 0;
   -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
+
   @include mat.all-component-themes($mat-light-theme);
 }
 

@@ -26,6 +26,15 @@
   [data-theme='dark'] & {
     border-color: var(--border-color);
   }
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+  }
+
+  @media (max-width: 480px) {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
 }
 
 .card-header {
