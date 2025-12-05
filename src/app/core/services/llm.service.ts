@@ -32,6 +32,11 @@ export interface RouteInfo {
   keywords?: string[];
 }
 
+export interface AnchorPosition {
+  top: number;
+  right: number;
+}
+
 interface ToolCall {
   name: string;
   arguments: Record<string, unknown>;
@@ -85,6 +90,10 @@ export class LlmService {
   public readonly itHotline = signal('**1108** hoặc **1109**');
   public readonly isOffline = signal(false);
   public readonly inputTruncated = signal(false);
+
+  // ==== NEW: Anchor Position for AI Chat Window ====
+  private readonly _anchorPosition = signal<AnchorPosition | null>(null);
+  public readonly anchorPosition = this._anchorPosition.asReadonly();
 
   // State
   private sessionTimer?: ReturnType<typeof setTimeout>;
@@ -141,6 +150,15 @@ export class LlmService {
   // ============================================================================
   // PUBLIC API
   // ============================================================================
+
+  /**
+   * Sets the anchor position for the AI chat window.
+   * Called by the header component to position the chat relative to the avatar button.
+   * @param position - The position object containing top and right coordinates
+   */
+  public setAnchorPosition(position: AnchorPosition): void {
+    this._anchorPosition.set(position);
+  }
 
   public toggleChat(): void {
     // ==== EDGE CASE: Toggle Debounce ====

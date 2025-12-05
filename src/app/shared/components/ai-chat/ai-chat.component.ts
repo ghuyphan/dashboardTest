@@ -33,21 +33,20 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   private readonly elementRef = inject(ElementRef);
 
   // --- View Queries ---
-  // The scroll container is now always present (no loading screen), so we can require it
   private scrollContainer = viewChild.required<ElementRef<HTMLDivElement>>('scrollContainer');
+  private chatWindow = viewChild.required<ElementRef<HTMLDivElement>>('chatWindow');
 
   // --- State ---
   public userInput = '';
   private isNearBottom = true;
   private scrollCleanup?: () => void;
-  private contentCache = new Map<string, string>(); // Memoization for processContent
+  private contentCache = new Map<string, string>();
 
   // --- Computed ---
   public hasUserMessages = computed(() => {
     return this.llmService.messages().some(m => m.role === 'user');
   });
 
-  // Edge case: Check if input is disabled
   public isInputDisabled = computed(() => {
     return this.llmService.isGenerating() ||
       this.llmService.isNavigating() ||
@@ -55,13 +54,22 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
       (!this.llmService.modelLoaded() && !this.hasUserMessages());
   });
 
+  // Get dynamic styles for positioning
+  public getChatWindowStyle = computed(() => {
+    const pos = this.llmService.anchorPosition();
+    if (!pos) return {};
+
+    return {
+      top: `${pos.top}px`,
+      right: `${pos.right}px`,
+    };
+  });
+
   constructor() {
     // 1. Auto-scroll effect
     effect(() => {
       const msgs = this.llmService.messages();
-      // Dependency on msgs.length ensures this runs when chat updates
       if (msgs.length > 0 && this.isNearBottom) {
-        // Double RAF to ensure DOM paint is complete before scrolling
         requestAnimationFrame(() => {
           requestAnimationFrame(() => this.scrollToBottom());
         });
@@ -78,7 +86,6 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Scroll to bottom on initial open
     if (this.llmService.isOpen()) {
       this.scrollToBottom();
     }
@@ -96,16 +103,14 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     return msg.id;
   }
 
-  // Handle specific model tokens if they leak through - Memoized for perf
   processContent(content: string): string {
     if (!content) return '';
     return content
-      .replace(/<think>[\s\S]*?<\/think>/g, '') // Hide thinking process in UI for cleanliness
-      .replace(/JSON_ACTION:\s*\{[^}]*\}/g, '') // Remove any leaked JSON_ACTION
+      .replace(/<think>[\s\S]*?<\/think>/g, '')
+      .replace(/JSON_ACTION:\s*\{[^}]*\}/g, '')
       .trim();
   }
 
-  // Edge case: Get placeholder text based on state
   getPlaceholderText(): string {
     if (this.llmService.isOffline()) {
       return 'Đang offline - Kiểm tra kết nối mạng';
@@ -126,7 +131,6 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     if (msgs.length === 0) return true;
 
     const lastMsg = msgs[msgs.length - 1];
-    // Show dots if assistant is generating but hasn't received text chunk yet
     return lastMsg.role === 'assistant' && !lastMsg.content;
   }
 
@@ -135,28 +139,20 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   // ========================================================================
 
   async onSend(): Promise<void> {
-    // Edge case: Block if offline
-    if (this.llmService.isOffline()) {
-      return;
-    }
-
-    // Edge case: Block if navigating
-    if (this.llmService.isNavigating()) {
-      return;
-    }
+    if (this.llmService.isOffline()) return;
+    if (this.llmService.isNavigating()) return;
 
     const text = this.userInput.trim();
     if (!text) return;
 
-    // Edge case: Sanitize special characters that could cause issues
     const sanitizedText = text
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control chars
-      .substring(0, 500); // Enforce max length on client side too
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .substring(0, 500);
 
     if (!sanitizedText) return;
 
     this.userInput = '';
-    this.isNearBottom = true; // Force scroll to bottom on new message
+    this.isNearBottom = true;
     this.scrollToBottom();
 
     await this.llmService.sendMessage(sanitizedText);
@@ -181,7 +177,6 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    // Check if click is inside chat or on a trigger button
     const isTrigger = target.closest('.ai-fab') || target.closest('.ai-trigger-btn');
     const isInside = this.elementRef.nativeElement.contains(target);
 
@@ -190,14 +185,12 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  // Intercept links in markdown to handle internal Angular routing
   @HostListener('click', ['$event'])
   onChatClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const anchor = target.closest('a');
     if (anchor) {
       const href = anchor.getAttribute('href');
-      // If it's an internal link (starts with /), use Angular Router
       if (href?.startsWith('/')) {
         event.preventDefault();
         this.router.navigateByUrl(href);
@@ -210,10 +203,9 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
 
     this.ngZone.runOutsideAngular(() => {
       const handler = () => {
-        const threshold = 50; // px tolerance
+        const threshold = 50;
         const position = el.scrollTop + el.clientHeight;
         const height = el.scrollHeight;
-        // Update local flag without triggering Change Detection
         this.isNearBottom = position >= height - threshold;
       };
 

@@ -45,7 +45,7 @@
     @if (currentUser()) {
     <div class="user-menu">
 
-      <button type="button" class="user-menu-toggle" [matMenuTriggerFor]="userMenu">
+      <button type="button" class="user-menu-toggle" [matMenuTriggerFor]="userMenu" #avatarButton>
         <div class="avatar-wrapper">
           <div class="header-avatar-initials">{{ userInitials() }}</div>
           <div class="avatar-chevron-badge">

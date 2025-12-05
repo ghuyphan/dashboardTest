@@ -1,4 +1,5 @@
-<div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()">
+<div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()"
+  [ngStyle]="getChatWindowStyle()">
 
   <div class="ai-header">
     <div class="header-left">

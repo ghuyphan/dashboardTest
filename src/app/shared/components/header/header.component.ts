@@ -4,6 +4,9 @@ import {
   input,
   output,
   viewChild,
+  ElementRef,
+  effect,
+  HostListener,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -50,11 +53,24 @@ export class HeaderComponent {
 
   // --- View Queries ---
   private menuTrigger = viewChild(MatMenuTrigger);
+  private avatarButton = viewChild<ElementRef<HTMLButtonElement>>('avatarButton');
 
   // --- Outputs ---
   public sidebarToggled = output<void>();
   public logoutClicked = output<void>();
   public backClicked = output<void>();
+
+  constructor() {
+    // Update AI chat anchor position when avatar button is available or when chat opens
+    effect(() => {
+      const button = this.avatarButton()?.nativeElement;
+      const isOpen = this.llmService.isOpen();
+
+      if (button && isOpen) {
+        this.updateAiChatAnchor();
+      }
+    });
+  }
 
   get searchTerm(): string {
     return this.searchService.searchTerm();
@@ -87,7 +103,12 @@ export class HeaderComponent {
   onAiMenuClick(event: Event): void {
     // Stop propagation to prevent document click handler from immediately closing the chat
     event.stopPropagation();
+
+    // Update anchor position before opening
+    this.updateAiChatAnchor();
+
     this.llmService.toggleChat();
+
     // Manually close the menu
     this.menuTrigger()?.closeMenu();
   }
@@ -99,5 +120,25 @@ export class HeaderComponent {
 
   onClearSearch(): void {
     this.searchService.setSearchTerm('');
+  }
+
+  // Update anchor position on window resize
+  @HostListener('window:resize')
+  onResize(): void {
+    if (this.llmService.isOpen()) {
+      this.updateAiChatAnchor();
+    }
+  }
+
+  private updateAiChatAnchor(): void {
+    const button = this.avatarButton()?.nativeElement;
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+
+    this.llmService.setAnchorPosition({
+      top: rect.bottom + 8, // 8px gap below avatar
+      right: window.innerWidth - rect.right, // Distance from right edge
+    });
   }
 }
