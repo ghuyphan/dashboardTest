@@ -78,6 +78,7 @@ export class ChartCardComponent implements AfterViewInit {
   private chartInstance?: EChartsType;
   private resizeObserver?: ResizeObserver;
   private windowResizeListener?: () => void;
+  private orientationListener?: () => void;
   private resizeTimer?: ReturnType<typeof setTimeout>;
 
   // Mobile detection signal (reactive)
@@ -732,10 +733,11 @@ export class ChartCardComponent implements AfterViewInit {
     // Also listen for orientation changes on mobile
     if (this.isBrowser && 'onorientationchange' in window) {
       this.ngZone.runOutsideAngular(() => {
-        window.addEventListener('orientationchange', () => {
+        this.orientationListener = () => {
           this.updateDeviceType();
           setTimeout(() => this.triggerResize(), 100);
-        });
+        };
+        window.addEventListener('orientationchange', this.orientationListener);
       });
     }
   }
@@ -805,6 +807,11 @@ export class ChartCardComponent implements AfterViewInit {
     if (this.windowResizeListener) {
       window.removeEventListener('resize', this.windowResizeListener);
       this.windowResizeListener = undefined;
+    }
+
+    if (this.orientationListener) {
+      window.removeEventListener('orientationchange', this.orientationListener);
+      this.orientationListener = undefined;
     }
 
     this.disposeChart();

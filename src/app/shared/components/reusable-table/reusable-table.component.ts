@@ -13,7 +13,9 @@ import {
   output,
   viewChild,
   effect,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
@@ -127,6 +129,7 @@ export class VietnamesePaginatorIntl extends MatPaginatorIntl {
 export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   private cdr = inject(ChangeDetectorRef);
   private elementRef = inject(ElementRef);
+  private destroyRef = inject(DestroyRef);
   private scrollTimer: any = null;
 
   public data = input<T[]>([]);
@@ -215,7 +218,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   }
 
   private initializeSelectionListener(): void {
-    this.selection.changed.subscribe(() => {
+    this.selection.changed.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.selectionChanged.emit(this.selection.selected);
     });
   }

@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideAppInitializer, inject, LOCALE_ID } from '@angular/core';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
   provideRouter,
   RouteReuseStrategy,
@@ -42,6 +42,6 @@ export const appConfig: ApplicationConfig = {
       const authService = inject(AuthService);
       return authService.init();
     }),
-    provideAnimations(),
+    provideAnimationsAsync(),
   ],
 };

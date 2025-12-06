@@ -1,5 +1,5 @@
 import { Injectable, Type, Injector } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 
@@ -52,7 +52,7 @@ export class ModalService {
 
     // Handle backdrop click to close
     if (!modalOptions.disableBackdropClose) {
-      overlayRef.backdropClick().subscribe(() => {
+      overlayRef.backdropClick().pipe(take(1)).subscribe(() => {
         modalRef.close();
       });
     }
