@@ -17,10 +17,10 @@
   }
 
   .form-group {
-    @include m.input-group-styles;
     flex-basis: 200px;
     flex-shrink: 1;
     flex-grow: 1;
+    @include m.input-group-styles;
 
     // Override specific to this component if needed
     &.field-highlight .form-control {

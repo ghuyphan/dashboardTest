@@ -35,6 +35,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   // --- View Queries ---
   private scrollContainer = viewChild.required<ElementRef<HTMLDivElement>>('scrollContainer');
   private chatWindow = viewChild.required<ElementRef<HTMLDivElement>>('chatWindow');
+  private chatInput = viewChild.required<ElementRef<HTMLInputElement>>('chatInput');
 
   // --- State ---
   public userInput = '';
@@ -81,6 +82,18 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
       const el = this.scrollContainer()?.nativeElement;
       if (el) {
         this.setupEfficientScrollListener(el);
+      }
+    });
+
+    // 3. Auto-focus input when chat opens
+    effect(() => {
+      // Focus when chat is open AND input is ready (not disabled)
+      if (this.llmService.isOpen() && !this.isInputDisabled()) {
+        const inputEl = this.chatInput()?.nativeElement;
+        if (inputEl) {
+          // Small delay to ensure DOM is ready and transitions are handling
+          setTimeout(() => inputEl.focus(), 100);
+        }
       }
     });
   }

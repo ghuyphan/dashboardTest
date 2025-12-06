@@ -4,8 +4,11 @@ import {
   DetachedRouteHandle,
 } from '@angular/router';
 
+// Maximum number of routes to cache to prevent memory leaks in long sessions
+const MAX_CACHED_ROUTES = 5;
+
 export class CustomRouteReuseStrategy implements RouteReuseStrategy {
-  
+
   // Static map to store handles
   public static storedHandles = new Map<string, DetachedRouteHandle | null>();
 
@@ -16,11 +19,10 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     this.storedHandles.delete(path);
   }
 
-  // --- NEW METHOD: Used by AuthService on Logout ---
+  // Used by AuthService on Logout
   public static clearAllHandles(): void {
     this.storedHandles.clear();
   }
-  // ------------------------------------------------
 
   shouldReuseRoute(
     future: ActivatedRouteSnapshot,
@@ -36,10 +38,16 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
 
   store(route: ActivatedRouteSnapshot, handle: DetachedRouteHandle | null): void {
     const path = route.routeConfig?.path || '';
-    
+
     if (path) {
-      // If handle is null, it means we should CLEAR the cache for this path
       if (handle) {
+        // [FIX] LRU eviction: remove oldest entry if at max capacity
+        if (CustomRouteReuseStrategy.storedHandles.size >= MAX_CACHED_ROUTES) {
+          const oldestKey = CustomRouteReuseStrategy.storedHandles.keys().next().value;
+          if (oldestKey) {
+            CustomRouteReuseStrategy.storedHandles.delete(oldestKey);
+          }
+        }
         CustomRouteReuseStrategy.storedHandles.set(path, handle);
       } else {
         CustomRouteReuseStrategy.storedHandles.delete(path);

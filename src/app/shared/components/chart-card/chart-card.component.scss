@@ -617,6 +617,13 @@
       font-size: 0.8125rem;
     }
   }
+
+  // Error state variant
+  &.error-state {
+    .no-data-icon-wrapper i {
+      color: var(--color-warning);
+    }
+  }
 }
 
 /* --- DARK THEME ADJUSTMENTS --- */

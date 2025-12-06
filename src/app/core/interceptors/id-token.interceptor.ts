@@ -1,7 +1,7 @@
 import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
 export const idTokenInterceptor: HttpInterceptorFn = (
@@ -10,10 +10,11 @@ export const idTokenInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
   const loginUrl = environment.authUrl;
+  const llmUrl = environment.llmUrl;
 
-  // 1. SKIP the Proxy/LLM entirely in this interceptor
+  // Skip the Proxy/LLM entirely in this interceptor
   // This interceptor only deals with "id_token" custom headers which the Proxy doesn't need.
-  if (req.url.includes('3000') || req.url.includes('/api/llm')) { 
+  if (llmUrl && req.url.startsWith(llmUrl.replace('/api/llm', ''))) {
     return next(req);
   }
 

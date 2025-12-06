@@ -67,8 +67,9 @@ export class ChartCardComponent implements AfterViewInit {
   private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
 
   // === COMPUTED STATE ===
-  public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions());
-  public showChart = computed(() => !!this.chartOptions());
+  public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions() && !this.chartError());
+  public showChart = computed(() => !!this.chartOptions() && !this.chartError());
+  public showErrorState = computed(() => !!this.chartError());
 
   private effectiveTheme = computed(() => {
     return this.theme() || (this.themeService.isDarkTheme() ? 'dark' : 'light');
@@ -89,6 +90,7 @@ export class ChartCardComponent implements AfterViewInit {
   public hasLargeData = signal(false);
   public totalDataPoints = signal(0);
   public visibleDataPoints = signal(0);
+  public chartError = signal<string | null>(null);
 
   // === CONFIGURATION ===
   private readonly RESIZE_DEBOUNCE_MS = 200;
@@ -201,45 +203,55 @@ export class ChartCardComponent implements AfterViewInit {
       return;
     }
 
-    // Dynamic Import for tree-shaking
-    const [
-      echarts,
-      { BarChart, LineChart, PieChart, ScatterChart },
-      { TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent, TimelineComponent },
-      { CanvasRenderer }
-    ] = await Promise.all([
-      import('echarts/core'),
-      import('echarts/charts'),
-      import('echarts/components'),
-      import('echarts/renderers')
-    ]);
+    // Clear any previous error
+    this.chartError.set(null);
 
-    echarts.use([
-      BarChart, LineChart, PieChart, ScatterChart,
-      TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
-      TimelineComponent,
-      CanvasRenderer
-    ]);
+    try {
+      // Dynamic Import for tree-shaking
+      const [
+        echarts,
+        { BarChart, LineChart, PieChart, ScatterChart },
+        { TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent, TimelineComponent },
+        { CanvasRenderer }
+      ] = await Promise.all([
+        import('echarts/core'),
+        import('echarts/charts'),
+        import('echarts/components'),
+        import('echarts/renderers')
+      ]);
 
-    this.ngZone.runOutsideAngular(() => {
-      const rendererConfig = this.getRendererConfig();
+      echarts.use([
+        BarChart, LineChart, PieChart, ScatterChart,
+        TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
+        TimelineComponent,
+        CanvasRenderer
+      ]);
 
-      this.chartInstance = echarts.init(el, this.effectiveTheme(), rendererConfig);
+      this.ngZone.runOutsideAngular(() => {
+        const rendererConfig = this.getRendererConfig();
 
-      this.lastWidth = el.clientWidth;
-      this.lastHeight = el.clientHeight;
+        this.chartInstance = echarts.init(el, this.effectiveTheme(), rendererConfig);
 
-      // Apply all optimizations
-      let processedOptions = this.applyAutoFormatting({ ...options });
-      processedOptions = this.applyMobileOptimizations(processedOptions);
-      processedOptions = this.optimizeForLargeData(processedOptions);
-      processedOptions = this.makeOptionsResponsive(processedOptions);
+        this.lastWidth = el.clientWidth;
+        this.lastHeight = el.clientHeight;
 
-      this.chartInstance?.setOption(processedOptions);
+        // Apply all optimizations
+        let processedOptions = this.applyAutoFormatting({ ...options });
+        processedOptions = this.applyMobileOptimizations(processedOptions);
+        processedOptions = this.optimizeForLargeData(processedOptions);
+        processedOptions = this.makeOptionsResponsive(processedOptions);
 
-      // Setup event handlers
-      this.setupEventHandlers();
-    });
+        this.chartInstance?.setOption(processedOptions);
+
+        // Setup event handlers
+        this.setupEventHandlers();
+      });
+    } catch (error) {
+      console.error('[ChartCard] Failed to initialize chart:', error);
+      this.ngZone.run(() => {
+        this.chartError.set('Không thể tải biểu đồ');
+      });
+    }
   }
 
   private updateChart(options: EChartsCoreOption): void {

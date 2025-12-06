@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ToastService } from '../services/toast.service';
 
 export const permissionGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot,
@@ -8,6 +9,7 @@ export const permissionGuard: CanActivateFn = (
 ) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const toastService = inject(ToastService);
 
   const requiredPermission = route.data['permission'] as string;
 
@@ -31,6 +33,7 @@ export const permissionGuard: CanActivateFn = (
   if (hasPermission) {
     return true;
   } else {
+    toastService.showWarning('Bạn không có quyền truy cập trang này');
     router.navigate(['/app/home']);
     return false;
   }

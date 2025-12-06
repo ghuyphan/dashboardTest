@@ -175,5 +175,15 @@
       <span class="no-data-text">{{ emptyText() }}</span>
     </div>
     }
+
+    <!-- Error State -->
+    @if (showErrorState()) {
+    <div class="no-data-container error-state">
+      <div class="no-data-icon-wrapper">
+        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+      </div>
+      <span class="no-data-text">{{ chartError() }}</span>
+    </div>
+    }
   </div>
 </div>

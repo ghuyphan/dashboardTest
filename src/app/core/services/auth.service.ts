@@ -238,9 +238,10 @@ export class AuthService {
       return;
     }
 
-    // [SECURITY] Verify Checksum
+    // [SECURITY] Verify Checksum (sync in constructor context)
     const storedChecksum = this.getStoredItem(CHECKSUM_STORAGE_KEY);
-    const calculatedChecksum = this.generateChecksum(storedToken, storedUsername, roles, permissions);
+    const data = `${storedToken}|${storedUsername}|${JSON.stringify(roles)}|${JSON.stringify(permissions)}`;
+    const calculatedChecksum = this.simpleHash(data);
 
     if (storedToken && storedUsername && isDataValid) {
       if (storedChecksum !== calculatedChecksum) {
@@ -300,9 +301,14 @@ export class AuthService {
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
           storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree));
 
-          // [SECURITY] Save Checksum
-          const checksum = this.generateChecksum(this.accessToken, user.username, user.roles, user.permissions);
-          storage.setItem(CHECKSUM_STORAGE_KEY, checksum);
+          // [SECURITY] Save Checksum (async SHA-256)
+          this.generateChecksum(this.accessToken, user.username, user.roles, user.permissions)
+            .then(checksum => storage.setItem(CHECKSUM_STORAGE_KEY, checksum))
+            .catch(() => {
+              // Fallback: save sync hash if async fails
+              const data = `${this.accessToken}|${user.username}|${JSON.stringify(user.roles)}|${JSON.stringify(user.permissions)}`;
+              storage.setItem(CHECKSUM_STORAGE_KEY, this.simpleHash(data));
+            });
         } catch (e) {
           console.error('Failed to save permissions/nav data to web storage', e);
         }
@@ -390,14 +396,43 @@ export class AuthService {
     } catch (e) { }
   }
 
-  private generateChecksum(token: string | null, username: string | null, roles: string[], permissions: string[]): string {
+  /**
+   * Generate SHA-256 checksum for tamper detection.
+   * Uses SubtleCrypto for secure hashing.
+   */
+  private async generateChecksum(
+    token: string | null,
+    username: string | null,
+    roles: string[],
+    permissions: string[]
+  ): Promise<string> {
     const data = `${token}|${username}|${JSON.stringify(roles)}|${JSON.stringify(permissions)}`;
-    // Simple hash for tamper detection (not cryptographic security)
+
+    // Use SHA-256 for secure tamper detection
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      try {
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(data);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch {
+        // Fallback to simple hash if SubtleCrypto fails
+        return this.simpleHash(data);
+      }
+    }
+
+    // Fallback for environments without SubtleCrypto
+    return this.simpleHash(data);
+  }
+
+  /** Fallback hash for SSR or unsupported environments */
+  private simpleHash(data: string): string {
     let hash = 0;
     for (let i = 0; i < data.length; i++) {
       const char = data.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
+      hash = hash & hash;
     }
     return hash.toString(16);
   }
