@@ -182,10 +182,10 @@ export class EmergencySummaryComponent implements OnInit {
         const item = this.widgetData.find((x) => x.id === id);
         if (item) item.accentColor = color;
       };
-      setC('total', this.palette.primary);
-      setC('admission', this.palette.chart6);
-      setC('transfer', this.palette.pastelCoral);
-      setC('insurance', this.palette.deepSapphire);
+      setC('total', this.palette.widgetAccent);
+      setC('admission', this.palette.widgetAccent);
+      setC('transfer', this.palette.widgetAccent);
+      setC('insurance', this.palette.widgetAccent);
     }
   }
 

@@ -1,3 +1,4 @@
+// [file name]: ghuyphan/dashboardtest/dashboardTest-b072c46ca3f3caf2752f70d6fb29b9fb407de393/src/app/shared/components/chart-card/chart-card.component.ts
 import {
   Component,
   ElementRef,
@@ -650,10 +651,17 @@ export class ChartCardComponent implements AfterViewInit {
       }
     ];
 
-    // B. Adjust grid for slider
-    const currentBottom = newOption.grid?.bottom || 30;
+    // B. Adjust grid for slider [FIXED: Now forces overwrite for strings like '5%']
+    const currentBottom = newOption.grid?.bottom;
     const minBottom = mobile ? 65 : 50;
-    if (typeof currentBottom === 'number' && currentBottom < minBottom) {
+
+    // If bottom is undefined, or if it's a small number, or a string (percentage),
+    // we assume we need to enforce the minimum safe space for the slider.
+    if (
+      currentBottom === undefined ||
+      (typeof currentBottom === 'number' && currentBottom < minBottom) ||
+      typeof currentBottom === 'string' // Assume string/percentage needs override
+    ) {
       newOption.grid = { ...newOption.grid, bottom: minBottom };
     }
 

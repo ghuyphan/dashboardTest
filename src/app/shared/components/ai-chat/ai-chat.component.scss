@@ -635,7 +635,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     .bubble {
       background-color: $color-bg-user;
       color: $color-text-user;
-      border-radius: var(--bubble-radius) 4px var(--bubble-radius) var(--bubble-radius);
+      border-radius: var(--bubble-radius);
       box-shadow: 0 2px 8px rgba(0, 131, 155, 0.2);
       border: none;
       margin-left: 30px;
@@ -673,7 +673,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
       background-color: var(--surface-card);
       color: var(--text-primary);
       border: 1px solid var(--border-color);
-      border-radius: 4px var(--bubble-radius) var(--bubble-radius) var(--bubble-radius);
+      border-radius: var(--bubble-radius);
       box-shadow: var(--box-shadow-sm);
       margin-right: 16px;
     }
@@ -778,7 +778,7 @@ $ai-glow-dark-soft: rgba(45, 212, 191, 0.2);
     min-width: 140px;
     position: relative;
     overflow: hidden;
-    border-radius: 4px var(--bubble-radius) var(--bubble-radius) var(--bubble-radius);
+    border-radius: var(--bubble-radius);
     background: var(--surface-card);
     border: 1px solid var(--border-color) !important;
     box-shadow: var(--box-shadow-sm);

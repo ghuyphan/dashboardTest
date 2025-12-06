@@ -136,9 +136,9 @@ export class SurgeryReportComponent implements OnInit {
         const item = this.widgetData.find((x) => x.id === id);
         if (item) item.accentColor = color;
       };
-      setC('total', this.palette.primary);
-      setC('top-specialty', this.palette.chart6);
-      setC('top-surgeon', this.palette.tealMidtone);
+      setC('total', this.palette.widgetAccent);
+      setC('top-specialty', this.palette.widgetAccent);
+      setC('top-surgeon', this.palette.widgetAccent);
     }
   }
 

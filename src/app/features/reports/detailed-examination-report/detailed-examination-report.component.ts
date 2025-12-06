@@ -107,7 +107,13 @@ export class DetailedExaminationReportComponent implements OnInit {
 
   private palette!: ThemePalette;
 
+  private filterTimeout: any;
+
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.filterTimeout) clearTimeout(this.filterTimeout);
+    });
+
     effect(() => {
       this.palette = this.themeService.currentPalette();
       // [OPTIMIZATION] Only update colors, do NOT re-process data
@@ -134,7 +140,12 @@ export class DetailedExaminationReportComponent implements OnInit {
   public onDateFilter(range: DateRange): void {
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
-    this.loadData();
+
+    // [OPTIMIZATION] Delay loading to allow UI animation (Date Filter active state) to complete smoothly
+    if (this.filterTimeout) clearTimeout(this.filterTimeout);
+    this.filterTimeout = setTimeout(() => {
+      this.loadData();
+    }, 300);
   }
 
   private initializeWidgets(): void {
@@ -180,10 +191,10 @@ export class DetailedExaminationReportComponent implements OnInit {
         const item = this.widgetData.find((x) => x.id === id);
         if (item) item.accentColor = color;
       };
-      setC('total-visits', this.palette.chart3);
-      setC('total-patients', this.palette.chart2);
-      setC('avg-metric', this.palette.chart9);
-      setC('re-exam-rate', this.palette.success);
+      setC('total-visits', this.palette.widgetAccent);
+      setC('total-patients', this.palette.widgetAccent);
+      setC('avg-metric', this.palette.widgetAccent);
+      setC('re-exam-rate', this.palette.widgetAccent);
     }
   }
 
@@ -251,54 +262,67 @@ export class DetailedExaminationReportComponent implements OnInit {
     const tempRawData: DetailedExaminationStat[] = [];
 
     // --- CHUNKING LOGIC ---
-    const CHUNK_SIZE = 5; // Process 5 days per "tick"
+    // Increased from 5 to 200 for better performance
+    const CHUNK_SIZE = 200;
 
-    for (let i = 0; i < this.dailyStats.length; i += CHUNK_SIZE) {
-      const chunk = this.dailyStats.slice(i, i + CHUNK_SIZE);
+    // Helper to check if component is destroyed to stop processing
+    let isDestroyed = false;
+    const cleanupFn = this.destroyRef.onDestroy(() => { isDestroyed = true; });
 
-      for (const day of chunk) {
-        // 1. Daily Stats
-        const v = day.SO_LUOT_KHAM_TONG || 0;
-        const p = day.SO_NGUOI_KHAM_TONG || 0;
-        totalVisits += v;
-        totalPatientsDirect += p;
+    try {
+      for (let i = 0; i < this.dailyStats.length; i += CHUNK_SIZE) {
+        if (isDestroyed) break;
 
-        const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
-        dateMap.set(dateKey, { visits: v, patients: p });
+        const chunk = this.dailyStats.slice(i, i + CHUNK_SIZE);
 
-        // 2. Detailed Stats (Flattening + Aggregation)
-        const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
-        const details = day.CHUYEN_KHOA_KHAM || [];
+        for (const day of chunk) {
+          // 1. Daily Stats
+          const v = day.SO_LUOT_KHAM_TONG || 0;
+          const p = day.SO_NGUOI_KHAM_TONG || 0;
+          totalVisits += v;
+          totalPatientsDirect += p;
 
-        for (const detail of details) {
-          // Flatten for Table
-          tempRawData.push({
-            NGAYKHAM: day.NGAY_KHAM,
-            NGAY_KHAM_DISPLAY: dateDisplay,
-            TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
-            BAC_SI: detail.BAC_SI || 'Chưa xác định',
-            SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
-            SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
-            BENH_MOI: detail.BENH_MOI || 0,
-            BENH_CU: detail.BENH_CU || 0,
-          } as DetailedExaminationStat);
+          const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
+          dateMap.set(dateKey, { visits: v, patients: p });
 
-          // Aggregate for Charts
-          const spec = detail.TEN_CHUYEN_KHOA || 'Khác';
-          const doc = detail.BAC_SI || 'Chưa xác định';
-          const visits = detail.SO_LUOT_KHAM || 0;
+          // 2. Detailed Stats (Flattening + Aggregation)
+          const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
+          const details = day.CHUYEN_KHOA_KHAM || [];
 
-          totalNew += detail.BENH_MOI || 0;
-          totalOld += detail.BENH_CU || 0;
+          for (const detail of details) {
+            // Flatten for Table
+            tempRawData.push({
+              NGAYKHAM: day.NGAY_KHAM,
+              NGAY_KHAM_DISPLAY: dateDisplay,
+              TEN_CHUYEN_KHOA: detail.TEN_CHUYEN_KHOA || 'Khác',
+              BAC_SI: detail.BAC_SI || 'Chưa xác định',
+              SO_LUOT_KHAM: detail.SO_LUOT_KHAM || 0,
+              SO_NGUOI_KHAM: (detail.BENH_MOI || 0) + (detail.BENH_CU || 0),
+              BENH_MOI: detail.BENH_MOI || 0,
+              BENH_CU: detail.BENH_CU || 0,
+            } as DetailedExaminationStat);
 
-          specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
-          doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+            // Aggregate for Charts
+            const spec = detail.TEN_CHUYEN_KHOA || 'Khác';
+            const doc = detail.BAC_SI || 'Chưa xác định';
+            const visits = detail.SO_LUOT_KHAM || 0;
+
+            totalNew += detail.BENH_MOI || 0;
+            totalOld += detail.BENH_CU || 0;
+
+            specialtyMap.set(spec, (specialtyMap.get(spec) || 0) + visits);
+            doctorMap.set(doc, (doctorMap.get(doc) || 0) + visits);
+          }
         }
-      }
 
-      // [OPTIMIZATION] Yield to main thread to let UI render spinner
-      await new Promise(resolve => setTimeout(resolve, 0));
+        // [OPTIMIZATION] Yield to main thread to let UI render spinner
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    } finally {
+      // No-op
     }
+
+    if (isDestroyed) return;
 
     // Assign processed data
     this.rawData = tempRawData;

@@ -65,6 +65,7 @@ $light-tokens: (
   "teal-midtone": map.get($base-palette, "teal-midtone"),
   "pastel-coral": map.get($base-palette, "pastel-coral"),
   "peacock-light": #66a9c5,
+  "widget-accent": map.get($base-palette, "teal-blue"),
 
   // Status
   "color-danger": map.get($base-palette, "danger"),
@@ -122,6 +123,8 @@ $dark-tokens: (
   // Rose 400 - Matches Light mode Coral
   "peacock-light": #7dd3fc,
   // Sky 300 - Light Blue
+  "widget-accent": #2dd4bf,
+  // Teal 400
 
   // Status Colors
   "color-danger": #f87171,

@@ -308,6 +308,8 @@
   color: var(--teal-blue);
   font-weight: 600;
   box-shadow: none;
+  transition: none;
+  /* Instant highlight update */
 }
 
 .sidebar-nav ul li a.active::before,

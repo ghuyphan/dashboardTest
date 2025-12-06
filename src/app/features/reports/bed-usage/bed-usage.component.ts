@@ -206,14 +206,14 @@ export class BedUsageComponent implements OnInit {
     const format = (val: number) => NumberUtils.format(val);
 
     return [
-      { id: 'occupancyRate', title: 'Công Suất', value: occupancyRate, caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: palette.chart1 },
-      { id: 'totalBeds', title: 'Tổng Số', value: format(totals.totalBeds), caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: palette.chart2 },
-      { id: 'giuongTrong', title: 'Giường Trống', value: format(totals.giuongTrong), caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: palette.chart3 },
-      { id: 'dangDieuTri', title: 'Đang Điều Trị', value: format(totals.dangDieuTri), caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: palette.chart1 },
-      { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: format(totals.choXuatVien), caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: palette.chart8 },
-      { id: 'daBook', title: 'Đã Book', value: format(totals.daBook), caption: 'Booked Beds', icon: 'fas fa-bookmark', accentColor: palette.chart6 },
-      { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: format(totals.chuaSanSang), caption: 'Not Ready', icon: 'fas fa-tools', accentColor: palette.chart7 },
-      { id: 'choMuonGiuong', title: 'Cho Mượn Giường', value: format(totals.choMuonGiuong), caption: 'On Loan', icon: 'fas fa-hand-holding-medical', accentColor: palette.chart9 },
+      { id: 'occupancyRate', title: 'Công Suất', value: occupancyRate, caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: palette.widgetAccent },
+      { id: 'totalBeds', title: 'Tổng Số', value: format(totals.totalBeds), caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: palette.widgetAccent },
+      { id: 'giuongTrong', title: 'Giường Trống', value: format(totals.giuongTrong), caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: palette.widgetAccent },
+      { id: 'dangDieuTri', title: 'Đang Điều Trị', value: format(totals.dangDieuTri), caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: palette.widgetAccent },
+      { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: format(totals.choXuatVien), caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: palette.widgetAccent },
+      { id: 'daBook', title: 'Đã Book', value: format(totals.daBook), caption: 'Booked Beds', icon: 'fas fa-bookmark', accentColor: palette.widgetAccent },
+      { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: format(totals.chuaSanSang), caption: 'Not Ready', icon: 'fas fa-tools', accentColor: palette.widgetAccent },
+      { id: 'choMuonGiuong', title: 'Cho Mượn Giường', value: format(totals.choMuonGiuong), caption: 'On Loan', icon: 'fas fa-hand-holding-medical', accentColor: palette.widgetAccent },
     ];
   }
 

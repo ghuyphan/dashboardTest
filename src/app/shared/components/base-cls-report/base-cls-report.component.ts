@@ -111,10 +111,10 @@ export abstract class BaseClsReportComponent {
                 const item = this.widgetData.find((x) => x.id === id);
                 if (item) item.accentColor = color;
             };
-            setC('total-exam', this.palette.primary);
-            setC('total-cls', this.palette.chart6);
-            setC('admission', this.palette.pastelCoral);
-            setC('top-room', this.palette.deepSapphire);
+            setC('total-exam', this.palette.widgetAccent);
+            setC('total-cls', this.palette.widgetAccent);
+            setC('admission', this.palette.widgetAccent);
+            setC('top-room', this.palette.widgetAccent);
         }
     }
 

@@ -156,9 +156,9 @@ export class SpecialtyClsReportComponent implements OnInit {
         const item = this.widgetData.find((x) => x.id === id);
         if (item) item.accentColor = color;
       };
-      setC('total-kham', this.palette.primary);
-      setC('total-cls', this.palette.chart6);
-      setC('top-specialty', this.palette.deepSapphire);
+      setC('total-kham', this.palette.widgetAccent);
+      setC('total-cls', this.palette.widgetAccent);
+      setC('top-specialty', this.palette.widgetAccent);
     }
   }
 

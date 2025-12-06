@@ -34,6 +34,7 @@ export interface ThemePalette {
   tealMidtone: string;
   pastelCoral: string;
   peacockLight: string;
+  widgetAccent: string;
 
   // Indexed Chart Colors (from styles)
   chart1: string;
@@ -137,6 +138,7 @@ export class ThemeService {
       tealMidtone: c('--teal-midtone', '#52c3d7'),
       pastelCoral: c('--pastel-coral', '#ffb3ba'),
       peacockLight: c('--peacock-light', '#66a9c5'),
+      widgetAccent: c('--widget-accent', '#00839b'),
 
       chart1: c('--chart-1', '#00839b'),
       chart2: c('--chart-2', '#006e96'),
