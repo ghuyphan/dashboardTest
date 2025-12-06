@@ -10,6 +10,7 @@ import {
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -38,9 +39,10 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'vi' },
     { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
 
+    // [FIX] Convert Observable to Promise so Angular properly waits for auth init
     provideAppInitializer(() => {
       const authService = inject(AuthService);
-      return authService.init();
+      return firstValueFrom(authService.init());
     }),
     provideAnimationsAsync(),
   ],

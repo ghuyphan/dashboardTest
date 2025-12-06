@@ -9,7 +9,7 @@ import { NavItem } from '../models/nav-item.model';
 import { CustomRouteReuseStrategy } from '../strategies/custom-route-reuse-strategy';
 
 // ============================================================================
-// INTERFACES (Ensure these match your models)
+// INTERFACES
 // ============================================================================
 interface LoginResponse {
   MaKetQua: number;
@@ -17,7 +17,7 @@ interface LoginResponse {
   ErrorMessage?: string;
   APIKey: {
     access_token: string;
-    id_token?: string; // Optional
+    id_token?: string;
     date_token?: string;
     expires_in?: string;
     token_type?: string;
@@ -42,7 +42,7 @@ interface ApiPermissionNode {
 }
 
 // ============================================================================
-// CONSTANTS
+// STORAGE KEYS
 // ============================================================================
 const TOKEN_STORAGE_KEY = 'authToken';
 const ID_TOKEN_STORAGE_KEY = 'idToken';
@@ -52,7 +52,6 @@ const PERMISSIONS_STORAGE_KEY = 'userPermissions';
 const FULLNAME_STORAGE_KEY = 'userFullName';
 const NAV_ITEMS_STORAGE_KEY = 'userNavItems';
 const USER_ID_STORAGE_KEY = 'userId';
-const CHECKSUM_STORAGE_KEY = 'authChecksum';
 
 @Injectable({
   providedIn: 'root'
@@ -64,12 +63,12 @@ export class AuthService {
   private accessToken: string | null = null;
   private idToken: string | null = null;
 
-  // 1. Signals
+  // Signals for reactive state
   private _isLoggedIn = signal<boolean>(false);
   private _currentUser = signal<User | null>(null);
   private _navItems = signal<NavItem[]>([]);
 
-  // 2. Public Read-only Signals
+  // Public read-only signals
   public readonly isLoggedIn = this._isLoggedIn.asReadonly();
   public readonly currentUser = this._currentUser.asReadonly();
   public readonly navItems = this._navItems.asReadonly();
@@ -78,7 +77,8 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    this.initializeAuthState();
+    // Restore auth state synchronously from storage
+    this.restoreAuthState();
   }
 
   // ============================================================================
@@ -96,17 +96,19 @@ export class AuthService {
     return this.http.put(url, body);
   }
 
+  /**
+   * Initialize auth state. Called by APP_INITIALIZER.
+   * Fetches fresh permissions if user is logged in.
+   */
   init(): Observable<any> {
     if (this._isLoggedIn()) {
       const userId = this.getUserId();
       if (userId) {
         return this.fetchAndSetPermissions(userId).pipe(
           catchError((err) => {
-            // Only logout if strictly unauthorized (Session expired)
             if (err.status === 401) {
               console.warn("Session expired during init, logging out.");
               this.logout();
-            } else {
             }
             return of(null);
           })
@@ -170,7 +172,7 @@ export class AuthService {
   }
 
   // ============================================================================
-  // ACCESSORS (Used by Interceptors & Components)
+  // ACCESSORS
   // ============================================================================
 
   getAccessToken(): string | null {
@@ -210,17 +212,21 @@ export class AuthService {
   // INTERNAL LOGIC
   // ============================================================================
 
-  private initializeAuthState(): void {
+  /**
+   * Restore auth state from storage.
+   * JWT validation is handled server-side - we just restore the cached state.
+   */
+  private restoreAuthState(): void {
     const storedToken = this.getStoredToken();
-    const storedIdToken = this.getStoredIdToken();
     const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY);
-    const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY);
-    const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY);
+
+    if (!storedToken || !storedUsername) {
+      return; // No stored session
+    }
 
     let roles: string[] = [];
     let permissions: string[] = [];
     let navItems: NavItem[] = [];
-    let isDataValid = false;
 
     try {
       const r = this.getStoredItem(ROLES_STORAGE_KEY);
@@ -230,41 +236,27 @@ export class AuthService {
       if (r) roles = JSON.parse(r);
       if (p) permissions = JSON.parse(p);
       if (n) navItems = JSON.parse(n);
-
-      isDataValid = true;
     } catch (e) {
       console.error('Auth data corrupted, clearing session.', e);
       this.clearLocalAuthData(false);
       return;
     }
 
-    // [SECURITY] Verify Checksum (sync in constructor context)
-    const storedChecksum = this.getStoredItem(CHECKSUM_STORAGE_KEY);
-    const data = `${storedToken}|${storedUsername}|${JSON.stringify(roles)}|${JSON.stringify(permissions)}`;
-    const calculatedChecksum = this.simpleHash(data);
+    // Restore auth state - server will validate JWT on API calls
+    this.accessToken = storedToken;
+    this.idToken = this.getStoredIdToken();
 
-    if (storedToken && storedUsername && isDataValid) {
-      if (storedChecksum !== calculatedChecksum) {
-        console.warn('[Security] Auth data tampering detected! Clearing session.');
-        this.clearLocalAuthData(false);
-        return;
-      }
+    const user: User = {
+      id: this.getStoredItem(USER_ID_STORAGE_KEY) || '',
+      username: storedUsername,
+      roles: roles,
+      permissions: permissions,
+      fullName: this.getStoredItem(FULLNAME_STORAGE_KEY) || ''
+    };
 
-      this.accessToken = storedToken;
-      this.idToken = storedIdToken;
-
-      const user: User = {
-        id: storedUserId || '',
-        username: storedUsername,
-        roles: roles,
-        permissions: permissions,
-        fullName: storedFullName || ''
-      };
-
-      this._currentUser.set(user);
-      this._navItems.set(navItems);
-      this._isLoggedIn.set(true);
-    }
+    this._currentUser.set(user);
+    this._navItems.set(navItems);
+    this._isLoggedIn.set(true);
   }
 
   private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
@@ -277,7 +269,6 @@ export class AuthService {
 
     return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
       tap(permissionNodeArray => {
-        // Re-read from storage/cache to ensure consistency
         const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY) || 'Unknown';
         const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY) || '';
         const storedRoles = JSON.parse(this.getStoredItem(ROLES_STORAGE_KEY) || '[]');
@@ -300,15 +291,6 @@ export class AuthService {
         try {
           storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
           storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree));
-
-          // [SECURITY] Save Checksum (async SHA-256)
-          this.generateChecksum(this.accessToken, user.username, user.roles, user.permissions)
-            .then(checksum => storage.setItem(CHECKSUM_STORAGE_KEY, checksum))
-            .catch(() => {
-              // Fallback: save sync hash if async fails
-              const data = `${this.accessToken}|${user.username}|${JSON.stringify(user.roles)}|${JSON.stringify(user.permissions)}`;
-              storage.setItem(CHECKSUM_STORAGE_KEY, this.simpleHash(data));
-            });
         } catch (e) {
           console.error('Failed to save permissions/nav data to web storage', e);
         }
@@ -329,7 +311,7 @@ export class AuthService {
       const keys = [
         TOKEN_STORAGE_KEY, ID_TOKEN_STORAGE_KEY, ROLES_STORAGE_KEY,
         USERNAME_STORAGE_KEY, PERMISSIONS_STORAGE_KEY, FULLNAME_STORAGE_KEY,
-        NAV_ITEMS_STORAGE_KEY, USER_ID_STORAGE_KEY, CHECKSUM_STORAGE_KEY
+        NAV_ITEMS_STORAGE_KEY, USER_ID_STORAGE_KEY
       ];
 
       [localStorage, sessionStorage].forEach(s => {
@@ -394,46 +376,5 @@ export class AuthService {
     try {
       if (typeof other !== 'undefined') other.clear();
     } catch (e) { }
-  }
-
-  /**
-   * Generate SHA-256 checksum for tamper detection.
-   * Uses SubtleCrypto for secure hashing.
-   */
-  private async generateChecksum(
-    token: string | null,
-    username: string | null,
-    roles: string[],
-    permissions: string[]
-  ): Promise<string> {
-    const data = `${token}|${username}|${JSON.stringify(roles)}|${JSON.stringify(permissions)}`;
-
-    // Use SHA-256 for secure tamper detection
-    if (typeof crypto !== 'undefined' && crypto.subtle) {
-      try {
-        const encoder = new TextEncoder();
-        const dataBuffer = encoder.encode(data);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      } catch {
-        // Fallback to simple hash if SubtleCrypto fails
-        return this.simpleHash(data);
-      }
-    }
-
-    // Fallback for environments without SubtleCrypto
-    return this.simpleHash(data);
-  }
-
-  /** Fallback hash for SSR or unsupported environments */
-  private simpleHash(data: string): string {
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      const char = data.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return hash.toString(16);
   }
 }

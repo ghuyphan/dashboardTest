@@ -493,7 +493,11 @@ export class EmergencySummaryComponent implements OnInit {
           symbolSize: 6,
           data: ccPrevious,
           itemStyle: { color: this.palette.gray400 },
-          lineStyle: { width: 2, type: 'dashed' },
+          lineStyle: {
+            width: 2,
+            type: [5, 5],  // Cleaner dash pattern: [dash length, gap length]
+            dashOffset: 0
+          },
         },
       ],
     };

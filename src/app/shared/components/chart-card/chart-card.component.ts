@@ -283,6 +283,17 @@ export class ChartCardComponent implements AfterViewInit {
       this.ngZone.run(() => this.chartLegendSelectChanged.emit(params));
     });
 
+    // DataZoom handler - update visible points indicator
+    this.chartInstance.on('datazoom', (params: any) => {
+      const total = this.totalDataPoints();
+      if (total > 0) {
+        const start = params.start ?? params.batch?.[0]?.start ?? 0;
+        const end = params.end ?? params.batch?.[0]?.end ?? 100;
+        const visible = Math.round((end - start) / 100 * total);
+        this.ngZone.run(() => this.visibleDataPoints.set(visible));
+      }
+    });
+
     // Touch-specific: close tooltip on outside tap (mobile)
     if (this.isMobile()) {
       this.chartInstance.getZr().on('click', (params: any) => {
