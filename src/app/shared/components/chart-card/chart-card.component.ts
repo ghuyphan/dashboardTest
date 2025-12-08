@@ -401,12 +401,37 @@ export class ChartCardComponent implements AfterViewInit {
       const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
       newOption.series = seriesList.map((s: any) => {
         if (s.type === 'pie') {
+          // Mobile-specific adjustments to prevent legend overlap
+          const baseCenter = mobile ? ['50%', '58%'] : ['50%', '55%'];
+          const defaultRadius: [string, string] = mobile ? ['30%', '55%'] : ['40%', '70%'];
+
+          // Get the series radius or use default
+          let finalRadius = s.radius || defaultRadius;
+
+          // On mobile, enforce maximum outer radius to prevent overlap
+          if (mobile && Array.isArray(finalRadius) && finalRadius.length >= 2) {
+            const outerRadius = finalRadius[1];
+            // Cap outer radius at 55% on mobile
+            if (typeof outerRadius === 'string' && outerRadius.endsWith('%')) {
+              const outerVal = parseFloat(outerRadius);
+              if (outerVal > 55) {
+                // Scale both inner and outer proportionally
+                const innerRadius = finalRadius[0];
+                const innerVal = typeof innerRadius === 'string' && innerRadius.endsWith('%')
+                  ? parseFloat(innerRadius)
+                  : 30;
+                const scaleFactor = 55 / outerVal;
+                finalRadius = [`${Math.round(innerVal * scaleFactor)}%`, '55%'];
+              }
+            }
+          }
+
           return {
             ...s,
-            // Push down to avoid legend overlap (60% instead of 55%)
-            center: s.center || ['50%', '60%'],
-            // Ensure radius fits
-            radius: s.radius || ['40%', '70%']
+            // Push down to avoid legend overlap
+            center: s.center || baseCenter,
+            // Apply capped radius
+            radius: finalRadius
           };
         }
         return s;

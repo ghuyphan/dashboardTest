@@ -80,6 +80,10 @@ app-table-card {
   font-size: 0.75rem;
   color: var(--text-secondary);
   white-space: nowrap;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 }
 
 .btn-icon-action {
