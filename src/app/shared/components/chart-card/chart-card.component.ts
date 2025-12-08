@@ -364,74 +364,148 @@ export class ChartCardComponent implements AfterViewInit {
 
     const chartType = this.detectChartType(option);
     const mobile = this.isMobile();
+    const tablet = this.isTablet();
 
-    // 1. Enforce Legend Position
+    // 1. Enforce Legend Position - different for pie vs other charts
     if (newOption.legend !== false) {
-      newOption.legend = {
-        ...(newOption.legend || {}),
-        top: 0,
-        bottom: undefined, // Remove bottom if set
-        left: 'center',
-        right: undefined, // Remove right if set
-        orient: 'horizontal',
-        type: 'scroll', // Allow scrolling if too many items
-        pageButtonPosition: 'end',
-      };
+      if (chartType === 'pie') {
+        // PIE CHART: Vertical legend on the right side (best practice)
+        newOption.legend = {
+          ...(newOption.legend || {}),
+          type: 'scroll',
+          orient: mobile ? 'horizontal' : 'vertical',
+          // Position: right side for desktop, bottom for mobile
+          top: mobile ? 'auto' : 'middle',
+          bottom: mobile ? 10 : undefined,
+          left: mobile ? 'center' : undefined,
+          right: mobile ? undefined : 20,
+          itemGap: mobile ? 10 : 14,
+          padding: mobile ? [5, 10] : [10, 0],
+          textStyle: {
+            ...(newOption.legend?.textStyle || {}),
+            fontSize: mobile ? 10 : 12,
+          },
+          itemWidth: mobile ? 12 : 16,
+          itemHeight: mobile ? 10 : 12,
+          pageButtonPosition: 'end',
+        };
+      } else {
+        // OTHER CHARTS: Horizontal legend at top (current behavior)
+        newOption.legend = {
+          ...(newOption.legend || {}),
+          top: 0,
+          bottom: undefined,
+          left: 'center',
+          right: undefined,
+          orient: 'horizontal',
+          type: 'scroll',
+          pageButtonPosition: 'end',
+          itemGap: mobile ? 12 : 20,
+          padding: [5, 10],
+          textStyle: {
+            ...(newOption.legend?.textStyle || {}),
+            fontSize: mobile ? 10 : 12,
+          },
+          itemWidth: mobile ? 14 : 20,
+          itemHeight: mobile ? 10 : 14,
+        };
+      }
     }
 
-    // 2. Enforce Grid Layout
-    // Calculate required top margin based on legend existence
+    // 2. Enforce Grid Layout - balanced centering (non-pie charts only)
     const hasLegend = newOption.legend !== false;
-    // Increased baseTop to prevent overlap with legend (polished spacing)
-    const baseTop = hasLegend ? (mobile ? 55 : 45) : 15;
+    const baseTop = hasLegend ? (mobile ? 50 : tablet ? 45 : 40) : 15;
 
     if (chartType !== 'pie') {
       newOption.grid = {
         ...(newOption.grid || {}),
         top: baseTop,
-        bottom: 25, // Consistent bottom
-        left: mobile ? 10 : 20,
-        right: mobile ? 15 : 20,
+        bottom: mobile ? 30 : 25,
+        left: mobile ? 8 : 15,
+        right: mobile ? 12 : 15,
         containLabel: true
       };
     }
 
-    // 3. For Pie charts, adjust center to avoid legend
+    // 3. Optimize axis labels for better layout
+    if (chartType === 'cartesian' || chartType === 'horizontal-bar') {
+      // X-Axis optimization
+      if (newOption.xAxis) {
+        const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
+        newOption.xAxis = xAxes.map((axis: any) => {
+          if (axis.type === 'category') {
+            return {
+              ...axis,
+              axisLabel: {
+                ...axis.axisLabel,
+                fontSize: mobile ? 9 : 11,
+                rotate: mobile ? 30 : (axis.axisLabel?.rotate || 0),
+                hideOverlap: true,
+                interval: 'auto',
+                overflow: 'truncate',
+                width: mobile ? 50 : 80,
+                margin: mobile ? 8 : 10,
+              },
+              axisTick: {
+                alignWithLabel: true,
+                ...(axis.axisTick || {})
+              }
+            };
+          }
+          return axis;
+        });
+      }
+
+      // Y-Axis optimization  
+      if (newOption.yAxis) {
+        const yAxes = Array.isArray(newOption.yAxis) ? newOption.yAxis : [newOption.yAxis];
+        newOption.yAxis = yAxes.map((axis: any) => ({
+          ...axis,
+          axisLabel: {
+            ...axis.axisLabel,
+            fontSize: mobile ? 9 : 11,
+            margin: mobile ? 6 : 8,
+          }
+        }));
+      }
+    }
+
+    // 4. For Pie charts: position left with legend on right
     if (chartType === 'pie' && newOption.series) {
       const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
       newOption.series = seriesList.map((s: any) => {
         if (s.type === 'pie') {
-          // Mobile-specific adjustments to prevent legend overlap
-          const baseCenter = mobile ? ['50%', '58%'] : ['50%', '55%'];
-          const defaultRadius: [string, string] = mobile ? ['30%', '55%'] : ['40%', '70%'];
+          // Desktop: Pie on left (35%), leaving room for legend on right
+          // Mobile: Pie centered at top, legend at bottom
+          const baseCenter = mobile ? ['50%', '45%'] : ['35%', '50%'];
+          const defaultRadius: [string, string] = mobile ? ['25%', '50%'] : ['35%', '60%'];
 
-          // Get the series radius or use default
           let finalRadius = s.radius || defaultRadius;
 
-          // On mobile, enforce maximum outer radius to prevent overlap
+          // Cap radius on mobile
           if (mobile && Array.isArray(finalRadius) && finalRadius.length >= 2) {
             const outerRadius = finalRadius[1];
-            // Cap outer radius at 55% on mobile
             if (typeof outerRadius === 'string' && outerRadius.endsWith('%')) {
               const outerVal = parseFloat(outerRadius);
-              if (outerVal > 55) {
-                // Scale both inner and outer proportionally
+              if (outerVal > 50) {
                 const innerRadius = finalRadius[0];
                 const innerVal = typeof innerRadius === 'string' && innerRadius.endsWith('%')
                   ? parseFloat(innerRadius)
-                  : 30;
-                const scaleFactor = 55 / outerVal;
-                finalRadius = [`${Math.round(innerVal * scaleFactor)}%`, '55%'];
+                  : 25;
+                const scaleFactor = 50 / outerVal;
+                finalRadius = [`${Math.round(innerVal * scaleFactor)}%`, '50%'];
               }
             }
           }
 
           return {
             ...s,
-            // Push down to avoid legend overlap
             center: s.center || baseCenter,
-            // Apply capped radius
-            radius: finalRadius
+            radius: finalRadius,
+            label: {
+              ...s.label,
+              fontSize: mobile ? 10 : 12,
+            }
           };
         }
         return s;
@@ -454,7 +528,7 @@ export class ChartCardComponent implements AfterViewInit {
 
     const newOption = { ...option };
 
-    // 1. Optimize tooltip for touch
+    // 1. Optimize tooltip for touch - centered and contained
     newOption.tooltip = {
       ...newOption.tooltip,
       trigger: newOption.tooltip?.trigger || 'axis',
@@ -464,35 +538,16 @@ export class ChartCardComponent implements AfterViewInit {
       position: mobile ? this.getMobileTooltipPosition.bind(this) : undefined,
       textStyle: {
         ...newOption.tooltip?.textStyle,
-        fontSize: mobile ? 11 : 12
+        fontSize: mobile ? 10 : 12
       },
-      extraCssText: mobile ? 'max-width: 85vw; white-space: normal;' : ''
+      extraCssText: mobile ? 'max-width: 80vw; white-space: normal; padding: 8px 10px;' : ''
     };
 
-    // 2. Legend tweaks for mobile (smaller font)
-    if (newOption.legend) {
-      newOption.legend.textStyle = {
-        ...newOption.legend.textStyle,
-        fontSize: 10
-      };
-      newOption.legend.itemWidth = 15;
-      newOption.legend.itemHeight = 10;
-    }
+    // 2. Legend already handled in applyStrictLayout, just ensure consistency
+    // Skip redundant legend tweaks as applyStrictLayout handles it
 
-    // 3. Axis Label Tweaks
-    if (newOption.xAxis) {
-      const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
-      newOption.xAxis = xAxes.map((axis: any) => ({
-        ...axis,
-        axisLabel: {
-          ...axis.axisLabel,
-          fontSize: mobile ? 9 : 10,
-          rotate: mobile ? 45 : axis.axisLabel?.rotate || 0,
-          hideOverlap: true,
-          interval: 'auto'
-        }
-      }));
-    }
+    // 3. Additional mobile-only axis tweaks (rotation handled in applyStrictLayout)
+    // This method now focuses on touch/interaction optimizations only
 
     return newOption;
   }
@@ -509,12 +564,13 @@ export class ChartCardComponent implements AfterViewInit {
     _rect: any,
     size: { contentSize: number[]; viewSize: number[] }
   ): number[] {
-    const [contentWidth, contentHeight] = size.contentSize;
-    const [viewWidth, viewHeight] = size.viewSize;
+    const [contentWidth] = size.contentSize;
+    const [viewWidth] = size.viewSize;
 
-    // Position tooltip in the center-top area on mobile
-    const x = Math.max(10, Math.min(viewWidth - contentWidth - 10, (viewWidth - contentWidth) / 2));
-    const y = Math.max(10, Math.min(point[1] - contentHeight - 20, viewHeight * 0.1));
+    // Position tooltip at the TOP of the chart, horizontally centered
+    // This keeps the chart content visible while showing tooltip info
+    const x = Math.max(5, Math.min(viewWidth - contentWidth - 5, (viewWidth - contentWidth) / 2));
+    const y = 5; // Fixed at top with small margin
 
     return [x, y];
   }
