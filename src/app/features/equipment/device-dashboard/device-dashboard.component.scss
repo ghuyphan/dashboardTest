@@ -10,8 +10,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: auto;
-  @include hidden-scrollbar;
+  /* Scrolling handled by .page-content with its padding */
+  overflow: hidden;
 }
 
 

@@ -7,7 +7,7 @@
     <div class="dashboard-grid">
 
       @defer (on immediate) {
-      <app-chart-card class="grid-item span-full" title="Thống kê bác sĩ chưa tạo bệnh án" icon="fas fa-chart-bar"
+      <app-chart-card class="span-full" title="Thống kê bác sĩ chưa tạo bệnh án" icon="fas fa-chart-bar"
         iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="doctorChartOptions" skeletonType="bar"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
         emptyText="Không có dữ liệu trong khoảng thời gian này.">
@@ -28,7 +28,7 @@
 
       </app-chart-card>
       } @placeholder {
-      <div class="grid-item span-full">
+      <div class="span-full">
         <div class="chart-placeholder"></div>
       </div>
       }

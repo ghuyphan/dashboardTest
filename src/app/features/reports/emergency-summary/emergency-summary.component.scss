@@ -10,20 +10,15 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* Scrolling handled by .page-content */
   overflow: hidden;
 }
 
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-
+/* NO local .page-container definition - uses global from styles.scss */
 
 /* --- Widget Section --- */
 .widget-section {
+  padding-bottom: var(--spacing-md);
   flex-shrink: 0;
 }
 
@@ -39,42 +34,23 @@
   }
 }
 
-/* --- Dashboard Grid --- */
+/* --- MAIN GRID LAYOUT (matching device-dashboard structure) --- */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
-  /* padding managed by global .page-content */
-  flex: 1;
-  min-height: 0;
 
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: var(--spacing-md);
-  }
-
-  .grid-item {
-    min-height: 400px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .grid-item.tall-chart {
-    min-height: 550px;
-    /* Increase this value as needed */
-
-    @media (max-width: 768px) {
-      min-height: 400px;
-      /* Keep it reasonable on mobile */
-    }
   }
 }
 
-/* Spanning Helpers */
+/* --- Grid Spanning Helpers --- */
 .span-4 {
   grid-column: span 4;
 
@@ -96,5 +72,43 @@
 
   @media (max-width: 992px) {
     grid-column: 1 / -1;
+  }
+}
+
+/* --- Component Sizing (matching device-dashboard) --- */
+.grid-item {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+
+  &.tall-chart {
+    min-height: 550px;
+
+    @media (max-width: 768px) {
+      min-height: 400px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    min-height: 350px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 300px;
+  }
+}
+
+app-chart-card,
+app-table-card {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    min-height: 350px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 300px;
   }
 }

@@ -1001,23 +1001,22 @@ body>ul.submenu.open {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  min-height: 0;
+  /* No overflow - allow child .page-content to handle scrolling */
 }
 
 /* Standard Page Content with Automatic Padding */
 .page-content {
-  flex-grow: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-height: 0;
   box-sizing: border-box;
   overflow-y: auto;
 
   /* Default Desktop Spacing */
   padding: var(--spacing-md);
-  // padding-bottom: var(--spacing-xl);
-  /* Increased bottom padding */
+  padding-bottom: var(--spacing-xl);
   gap: var(--spacing-lg);
 
   /* Hide Scrollbar */
@@ -1030,14 +1029,12 @@ body>ul.submenu.open {
   /* Responsive Spacing */
   @media (max-width: 992px) {
     padding: var(--spacing-sm) var(--spacing-md);
-    // padding-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
     gap: var(--spacing-md);
   }
 
   @media (max-width: 480px) {
     padding: var(--spacing-xs) var(--spacing-sm);
-    // padding-bottom: var(--spacing-lg);
-    /* Adequate breathing room for mobile */
-    /* Extra space for mobile bottom nav */
+    padding-bottom: var(--spacing-lg);
   }
 }

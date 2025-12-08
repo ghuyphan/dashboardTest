@@ -14,40 +14,39 @@
 
     <div class="dashboard-grid">
       @defer (on immediate) {
-      <app-chart-card class="grid-item span-4 tall-chart" title="Thống kê theo chuyên khoa" icon="fas fa-chart-bar"
-        iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="specialtyChartOptions" skeletonType="bar"
+      <app-chart-card class="span-4" title="Thống kê theo chuyên khoa" icon="fas fa-chart-bar" iconClass="icon-info"
+        [isLoading]="isLoading" [chartOptions]="specialtyChartOptions" skeletonType="bar"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Không có dữ liệu.">
       </app-chart-card>
       } @placeholder {
-      <div class="grid-item span-4 tall-chart">
+      <div class="span-4">
         <div class="chart-placeholder"></div>
       </div>
       }
 
       @defer (on immediate) {
-      <app-chart-card class="grid-item span-2" title="Tỷ lệ nhóm dịch vụ" icon="fas fa-pie-chart"
-        iconClass="icon-warning" [isLoading]="isLoading" [chartOptions]="groupPieChartOptions" skeletonType="doughnut"
+      <app-chart-card class="span-2" title="Tỷ lệ nhóm dịch vụ" icon="fas fa-pie-chart" iconClass="icon-warning"
+        [isLoading]="isLoading" [chartOptions]="groupPieChartOptions" skeletonType="doughnut"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Không có dữ liệu.">
       </app-chart-card>
       } @placeholder {
-      <div class="grid-item span-2">
+      <div class="span-2">
         <div class="chart-placeholder"></div>
       </div>
       }
 
       @defer (on immediate) {
-      <app-chart-card class="grid-item span-2" title="Top 10 chuyên khoa đông nhất" icon="fas fa-trophy"
-        iconClass="icon-success" [isLoading]="isLoading" [chartOptions]="topSpecialtyChartOptions"
-        skeletonType="horizontal-bar" [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        emptyText="Không có dữ liệu.">
+      <app-chart-card class="span-2" title="Top 10 chuyên khoa đông nhất" icon="fas fa-trophy" iconClass="icon-success"
+        [isLoading]="isLoading" [chartOptions]="topSpecialtyChartOptions" skeletonType="horizontal-bar"
+        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Không có dữ liệu.">
       </app-chart-card>
       } @placeholder {
-      <div class="grid-item span-2">
+      <div class="span-2">
         <div class="chart-placeholder"></div>
       </div>
       }
 
-      <app-table-card class="grid-item span-full" title="Chi tiết dữ liệu" icon="fas fa-table" iconClass="icon-success"
+      <app-table-card class="span-full" title="Chi tiết dữ liệu" icon="fas fa-table" iconClass="icon-success"
         [isLoading]="isLoading" [data]="rawData" [columns]="tableColumns" [showPaginator]="true" [pageSize]="10"
         [pageSizeOptions]="[10, 25, 50, 100]" [clientSideSort]="true" emptyStateText="Không tìm thấy dữ liệu phù hợp."
         [enableExport]="true" [isExporting]="isExporting" (exportClicked)="onExport()">

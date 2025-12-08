@@ -7,7 +7,7 @@
     <div class="dashboard-grid">
 
       @defer (on immediate) {
-      <app-chart-card class="grid-item span-full" title="Biểu đồ Cấp cứu lượt nhập viện" icon="fas fa-chart-bar"
+      <app-chart-card class="span-full" title="Biểu đồ Cấp cứu lượt nhập viện" icon="fas fa-chart-bar"
         iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="comparisonChartOptions" skeletonType="bar"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu cấp cứu.">
         <div header-actions>
@@ -27,7 +27,7 @@
 
       </app-chart-card>
       } @placeholder {
-      <div class="grid-item span-full">
+      <div class="span-full">
         <div class="chart-placeholder"></div>
       </div>
       }

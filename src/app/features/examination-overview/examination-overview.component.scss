@@ -10,15 +10,11 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* Scrolling handled by .page-content */
   overflow: hidden;
 }
 
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
+/* .page-container uses global styles from styles.scss */
 
 
 

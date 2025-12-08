@@ -1,21 +1,24 @@
+@mixin hidden-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :host {
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* Scrolling handled by .page-content */
   overflow: hidden;
 }
 
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-
+/* .page-container uses global styles from styles.scss */
 
 /* --- Widget Section --- */
 .widget-section {
+  padding-bottom: var(--spacing-md);
   flex-shrink: 0;
 }
 
@@ -34,27 +37,16 @@
 /* --- Dashboard Grid --- */
 .dashboard-grid {
   display: grid;
-  /* This was already correct (minmax(0, 1fr)), but ensures consistency */
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
-  /* padding managed by global .page-content */
-  flex: 1;
-  min-height: 0;
 
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (max-width: 768px) {
-    /* FIX: Changed from 1fr to minmax(0, 1fr) to prevent overflow on mobile */
     grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
-  }
-
-  .grid-item {
-    min-height: 400px;
-    display: flex;
-    flex-direction: column;
   }
 }
 
@@ -73,6 +65,22 @@
 
 .span-full {
   grid-column: 1 / -1;
+}
+
+/* --- Component Sizing (matching device-dashboard) --- */
+app-chart-card,
+app-table-card {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    min-height: 350px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 300px;
+  }
 }
 
 /* Helper Classes */

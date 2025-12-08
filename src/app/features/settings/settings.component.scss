@@ -1,28 +1,25 @@
 @use '../../../styles/mixins' as m;
 
-/* src/app/features/settings/settings.component.scss */
-:host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.settings-container {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xs);
-  width: 100%;
-  box-sizing: border-box;
-
+@mixin hidden-scrollbar {
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* src/app/features/settings/settings.component.scss */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* Scrolling handled by .page-content */
+  overflow: hidden;
+}
+
+/* Settings-container extends page-content - just add any settings-specific styles here */
+.settings-container {
+  /* Uses global .page-content styles for layout, scrolling, and padding */
 }
 
 /* --- UPDATED SETTINGS CARD --- */
@@ -193,7 +190,7 @@
     display: block; // Ensure block display
   }
 
-    .input-group {
+  .input-group {
     // Mixin handles relative positioning
 
     // Add specific padding for toggle button if needed

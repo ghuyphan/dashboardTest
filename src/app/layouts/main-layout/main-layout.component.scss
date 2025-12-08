@@ -81,6 +81,7 @@
 .dashboard-content {
   flex: 1;
   min-height: 0;
+  /* Container only - scrolling happens in .page-content */
   overflow: hidden;
 
   /* Removed global padding to support full-width pages. Each page manages its own padding. */

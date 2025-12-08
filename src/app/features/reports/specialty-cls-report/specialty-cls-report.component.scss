@@ -13,98 +13,41 @@
   overflow: hidden;
 }
 
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-
-
 /* --- Widget Section --- */
 .widget-section {
+  padding-bottom: var(--spacing-md);
   flex-shrink: 0;
 }
 
 .widget-grid {
   display: grid;
-  /* Desktop: Comfortable auto-fit */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacing-md);
   max-width: 100%;
 
-  /* Tablet: Allow slightly smaller widgets to fit more in a row */
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-
-  /* Mobile: Force 2 columns (Fixes the "1 column" issue) */
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-sm);
-  }
-
-  /* Very small screens: Fallback to stack */
-  @media (max-width: 360px) {
-    grid-template-columns: 1fr;
   }
 }
 
 /* --- Dashboard Grid --- */
 .dashboard-grid {
   display: grid;
-  /* Base: 4 columns */
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
-  /* padding managed by global .page-content */
-  flex: 1;
-  min-height: 0;
 
-  /* Laptop: 2 columns */
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Tablet/Mobile: 1 column stack */
-  @media (max-width: 992px) {
+  @media (max-width: 768px) {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
-  }
-
-  .grid-item {
-    min-height: 450px;
-    display: flex;
-    flex-direction: column;
-
-    @media (max-width: 768px) {
-      min-height: 350px;
-    }
-  }
-
-  /* Tall Chart for Full Width view */
-  .grid-item.tall-chart {
-    min-height: 550px;
-
-    @media (max-width: 768px) {
-      min-height: 400px;
-    }
   }
 }
 
 /* Spanning Helpers */
-.span-2 {
-  grid-column: span 2;
-
-  @media (max-width: 1400px) {
-    grid-column: span 1;
-  }
-
-  @media (max-width: 992px) {
-    grid-column: 1 / -1;
-  }
-}
-
 .span-4 {
   grid-column: span 4;
 
@@ -112,11 +55,52 @@
     grid-column: span 2;
   }
 
-  @media (max-width: 992px) {
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+  }
+}
+
+.span-2 {
+  grid-column: span 2;
+
+  @media (max-width: 1400px) {
+    grid-column: span 1;
+  }
+
+  @media (max-width: 768px) {
     grid-column: 1 / -1;
   }
 }
 
 .span-full {
   grid-column: 1 / -1;
+}
+
+/* Component Sizing */
+app-chart-card,
+app-table-card {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    min-height: 350px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 300px;
+  }
+}
+
+/* Helper Classes */
+.icon-info {
+  color: var(--color-info);
+}
+
+.icon-success {
+  color: var(--color-success);
+}
+
+.icon-warning {
+  color: var(--color-warning);
 }

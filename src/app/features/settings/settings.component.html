@@ -1,192 +1,195 @@
-<div class="settings-container">
+<div class="page-container">
+  <div class="page-content settings-container">
 
-  <div class="settings-card profile-card">
-    <div class="card-header">
-      <div class="card-title-wrapper">
-        <h3><i class="fas fa-id-card-clip"></i> Thông tin tài khoản</h3>
+    <div class="settings-card profile-card">
+      <div class="card-header">
+        <div class="card-title-wrapper">
+          <h3><i class="fas fa-id-card-clip"></i> Thông tin tài khoản</h3>
+        </div>
       </div>
-    </div>
-    <div class="card-body">
-      <div class="info-grid">
-        <div class="info-item">
-          <label>Họ và tên</label>
-          <div class="read-only-value">{{ currentUser()?.fullName || 'N/A' }}</div>
-        </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Họ và tên</label>
+            <div class="read-only-value">{{ currentUser()?.fullName || 'N/A' }}</div>
+          </div>
 
-        <div class="info-item">
-          <label>Tên đăng nhập</label>
-          <div class="read-only-value username">{{ currentUser()?.username || 'N/A' }}</div>
-        </div>
+          <div class="info-item">
+            <label>Tên đăng nhập</label>
+            <div class="read-only-value username">{{ currentUser()?.username || 'N/A' }}</div>
+          </div>
 
-        <div class="info-item full-width">
-          <label>Vai trò / Nhóm quyền</label>
-          <div class="roles-list">
-            @for (role of currentUser()?.roles; track role) {
-            <span class="role-badge">{{ role }}</span>
-            } @empty {
-            <span class="read-only-value">Không có vai trò</span>
-            }
+          <div class="info-item full-width">
+            <label>Vai trò / Nhóm quyền</label>
+            <div class="roles-list">
+              @for (role of currentUser()?.roles; track role) {
+              <span class="role-badge">{{ role }}</span>
+              } @empty {
+              <span class="read-only-value">Không có vai trò</span>
+              }
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="settings-card appearance-card">
-    <div class="card-header">
-      <div class="card-title-wrapper">
-        <h3><i class="fas fa-palette"></i> Giao diện</h3>
-        <span class="card-subtitle">Tùy chỉnh giao diện hiển thị của ứng dụng.</span>
+    <div class="settings-card appearance-card">
+      <div class="card-header">
+        <div class="card-title-wrapper">
+          <h3><i class="fas fa-palette"></i> Giao diện</h3>
+          <span class="card-subtitle">Tùy chỉnh giao diện hiển thị của ứng dụng.</span>
+        </div>
       </div>
-    </div>
-    <div class="card-body">
-      <div class="theme-selector-grid">
+      <div class="card-body">
+        <div class="theme-selector-grid">
 
-        <button type="button" class="theme-option light" [class.active]="!themeService.isDarkTheme()"
-          (click)="setTheme(false)">
-          <div class="theme-preview">
-            <div class="preview-header"></div>
-            <div class="preview-body">
-              <div class="preview-sidebar"></div>
-              <div class="preview-content">
-                <div class="preview-row"></div>
-                <div class="preview-row short"></div>
-                <div class="preview-card"></div>
+          <button type="button" class="theme-option light" [class.active]="!themeService.isDarkTheme()"
+            (click)="setTheme(false)">
+            <div class="theme-preview">
+              <div class="preview-header"></div>
+              <div class="preview-body">
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                  <div class="preview-row"></div>
+                  <div class="preview-row short"></div>
+                  <div class="preview-card"></div>
+                </div>
+              </div>
+              <div class="check-icon">
+                <i class="fas fa-check-circle"></i>
               </div>
             </div>
-            <div class="check-icon">
-              <i class="fas fa-check-circle"></i>
-            </div>
-          </div>
-          <span class="theme-label">Chế độ Sáng</span>
-        </button>
-
-        <button type="button" class="theme-option dark" [class.active]="themeService.isDarkTheme()"
-          (click)="setTheme(true)">
-          <div class="theme-preview">
-            <div class="preview-header"></div>
-            <div class="preview-body">
-              <div class="preview-sidebar"></div>
-              <div class="preview-content">
-                <div class="preview-row"></div>
-                <div class="preview-row short"></div>
-                <div class="preview-card"></div>
-              </div>
-            </div>
-            <div class="check-icon">
-              <i class="fas fa-check-circle"></i>
-            </div>
-          </div>
-          <span class="theme-label">Chế độ Tối</span>
-        </button>
-
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-card password-card">
-    <div class="card-header">
-      <div class="card-title-wrapper">
-        <h3><i class="fas fa-shield-alt"></i> Đổi mật khẩu</h3>
-        <span class="card-subtitle">Cập nhật mật khẩu định kỳ để bảo vệ tài khoản.</span>
-      </div>
-    </div>
-
-    <div class="card-body">
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
-        <div class="form-group">
-          <label for="oldPass">Mật khẩu hiện tại <span class="req">*</span></label>
-          <div class="input-group">
-            <input [type]="showOld() ? 'text' : 'password'" id="oldPass" formControlName="OldPassword"
-              class="form-control" placeholder="Nhập mật khẩu cũ"
-              [class.is-invalid]="form.get('OldPassword')?.invalid && form.get('OldPassword')?.touched">
-            <button type="button" class="toggle-btn" (click)="toggleVisibility('old')" tabindex="-1">
-              <i class="fas" [class]="showOld() ? 'fa-eye-slash' : 'fa-eye'"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="newPass">Mật khẩu mới <span class="req">*</span></label>
-          <div class="input-group" [class.disabled]="!isOldPasswordFilled()">
-            <input [type]="showNew() ? 'text' : 'password'" id="newPass" formControlName="NewPassword"
-              class="form-control"
-              [placeholder]="isOldPasswordFilled() ? 'Nhập mật khẩu mới' : 'Vui lòng nhập mật khẩu cũ trước'"
-              [disabled]="!isOldPasswordFilled()"
-              [class.is-invalid]="form.get('NewPassword')?.touched && form.get('NewPassword')?.invalid">
-            <button type="button" class="toggle-btn" (click)="toggleVisibility('new')" tabindex="-1"
-              [disabled]="!isOldPasswordFilled()">
-              <i class="fas" [class]="showNew() ? 'fa-eye-slash' : 'fa-eye'"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="confirmPass">Xác nhận mật khẩu mới <span class="req">*</span></label>
-          <div class="input-group" [class.disabled]="!isNewPasswordFilled()">
-            <input [type]="showConfirm() ? 'text' : 'password'" id="confirmPass" formControlName="ConfirmPassword"
-              class="form-control"
-              [placeholder]="isNewPasswordFilled() ? 'Nhập lại mật khẩu mới' : 'Vui lòng nhập mật khẩu mới trước'"
-              [disabled]="!isNewPasswordFilled()"
-              [class.is-invalid]="form.hasError('mismatch') && form.get('ConfirmPassword')?.touched">
-            <button type="button" class="toggle-btn" (click)="toggleVisibility('confirm')" tabindex="-1"
-              [disabled]="!isNewPasswordFilled()">
-              <i class="fas" [class]="showConfirm() ? 'fa-eye-slash' : 'fa-eye'"></i>
-            </button>
-          </div>
-          @if (form.hasError('mismatch') && form.get('ConfirmPassword')?.touched) {
-          <div class="invalid-feedback">Mật khẩu xác nhận không khớp.</div>
-          }
-        </div>
-
-        <div class="requirements-list">
-          <p class="req-title">Yêu cầu mật khẩu:</p>
-          <ul>
-            <li [class.valid]="passwordCriteria().minLength">
-              <i class="fas" [class]="passwordCriteria().minLength ? 'fa-check-circle' : 'fa-circle'"></i>
-              Có tối thiểu 8 ký tự
-            </li>
-            <li [class.valid]="passwordCriteria().maxLength">
-              <i class="fas" [class]="passwordCriteria().maxLength ? 'fa-check-circle' : 'fa-circle'"></i>
-              Có tối đa 20 ký tự
-            </li>
-            <li [class.valid]="passwordCriteria().hasUpper">
-              <i class="fas" [class]="passwordCriteria().hasUpper ? 'fa-check-circle' : 'fa-circle'"></i>
-              Có ít nhất một chữ in hoa
-            </li>
-            <li [class.valid]="passwordCriteria().hasLower">
-              <i class="fas" [class]="passwordCriteria().hasLower ? 'fa-check-circle' : 'fa-circle'"></i>
-              Có ít nhất một chữ in thường
-            </li>
-            <li [class.valid]="passwordCriteria().hasSpecial">
-              <i class="fas" [class]="passwordCriteria().hasSpecial ? 'fa-check-circle' : 'fa-circle'"></i>
-              Có ít nhất một ký tự đặc biệt (~!&#64;#$%^&*<>?/-)
-            </li>
-            <li [class.valid]="passwordCriteria().hasNumber">
-              <i class="fas" [class]="passwordCriteria().hasNumber ? 'fa-check-circle' : 'fa-circle'"></i>
-              Có ít nhất một ký tự số
-            </li>
-          </ul>
-        </div>
-
-        <div class="login-warning">
-          <i class="fas fa-info-circle"></i>
-          <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để tiếp tục
-            sử dụng.</span>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading()">
-            @if (isLoading()) {
-            <i class="fas fa-spinner fa-spin"></i> Đang xử lý...
-            } @else {
-            <i class="fas fa-save"></i> Lưu thay đổi
-            }
+            <span class="theme-label">Chế độ Sáng</span>
           </button>
-        </div>
 
-      </form>
+          <button type="button" class="theme-option dark" [class.active]="themeService.isDarkTheme()"
+            (click)="setTheme(true)">
+            <div class="theme-preview">
+              <div class="preview-header"></div>
+              <div class="preview-body">
+                <div class="preview-sidebar"></div>
+                <div class="preview-content">
+                  <div class="preview-row"></div>
+                  <div class="preview-row short"></div>
+                  <div class="preview-card"></div>
+                </div>
+              </div>
+              <div class="check-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+            </div>
+            <span class="theme-label">Chế độ Tối</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card password-card">
+      <div class="card-header">
+        <div class="card-title-wrapper">
+          <h3><i class="fas fa-shield-alt"></i> Đổi mật khẩu</h3>
+          <span class="card-subtitle">Cập nhật mật khẩu định kỳ để bảo vệ tài khoản.</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+          <div class="form-group">
+            <label for="oldPass">Mật khẩu hiện tại <span class="req">*</span></label>
+            <div class="input-group">
+              <input [type]="showOld() ? 'text' : 'password'" id="oldPass" formControlName="OldPassword"
+                class="form-control" placeholder="Nhập mật khẩu cũ"
+                [class.is-invalid]="form.get('OldPassword')?.invalid && form.get('OldPassword')?.touched">
+              <button type="button" class="toggle-btn" (click)="toggleVisibility('old')" tabindex="-1">
+                <i class="fas" [class]="showOld() ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newPass">Mật khẩu mới <span class="req">*</span></label>
+            <div class="input-group" [class.disabled]="!isOldPasswordFilled()">
+              <input [type]="showNew() ? 'text' : 'password'" id="newPass" formControlName="NewPassword"
+                class="form-control"
+                [placeholder]="isOldPasswordFilled() ? 'Nhập mật khẩu mới' : 'Vui lòng nhập mật khẩu cũ trước'"
+                [disabled]="!isOldPasswordFilled()"
+                [class.is-invalid]="form.get('NewPassword')?.touched && form.get('NewPassword')?.invalid">
+              <button type="button" class="toggle-btn" (click)="toggleVisibility('new')" tabindex="-1"
+                [disabled]="!isOldPasswordFilled()">
+                <i class="fas" [class]="showNew() ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPass">Xác nhận mật khẩu mới <span class="req">*</span></label>
+            <div class="input-group" [class.disabled]="!isNewPasswordFilled()">
+              <input [type]="showConfirm() ? 'text' : 'password'" id="confirmPass" formControlName="ConfirmPassword"
+                class="form-control"
+                [placeholder]="isNewPasswordFilled() ? 'Nhập lại mật khẩu mới' : 'Vui lòng nhập mật khẩu mới trước'"
+                [disabled]="!isNewPasswordFilled()"
+                [class.is-invalid]="form.hasError('mismatch') && form.get('ConfirmPassword')?.touched">
+              <button type="button" class="toggle-btn" (click)="toggleVisibility('confirm')" tabindex="-1"
+                [disabled]="!isNewPasswordFilled()">
+                <i class="fas" [class]="showConfirm() ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+            @if (form.hasError('mismatch') && form.get('ConfirmPassword')?.touched) {
+            <div class="invalid-feedback">Mật khẩu xác nhận không khớp.</div>
+            }
+          </div>
+
+          <div class="requirements-list">
+            <p class="req-title">Yêu cầu mật khẩu:</p>
+            <ul>
+              <li [class.valid]="passwordCriteria().minLength">
+                <i class="fas" [class]="passwordCriteria().minLength ? 'fa-check-circle' : 'fa-circle'"></i>
+                Có tối thiểu 8 ký tự
+              </li>
+              <li [class.valid]="passwordCriteria().maxLength">
+                <i class="fas" [class]="passwordCriteria().maxLength ? 'fa-check-circle' : 'fa-circle'"></i>
+                Có tối đa 20 ký tự
+              </li>
+              <li [class.valid]="passwordCriteria().hasUpper">
+                <i class="fas" [class]="passwordCriteria().hasUpper ? 'fa-check-circle' : 'fa-circle'"></i>
+                Có ít nhất một chữ in hoa
+              </li>
+              <li [class.valid]="passwordCriteria().hasLower">
+                <i class="fas" [class]="passwordCriteria().hasLower ? 'fa-check-circle' : 'fa-circle'"></i>
+                Có ít nhất một chữ in thường
+              </li>
+              <li [class.valid]="passwordCriteria().hasSpecial">
+                <i class="fas" [class]="passwordCriteria().hasSpecial ? 'fa-check-circle' : 'fa-circle'"></i>
+                Có ít nhất một ký tự đặc biệt (~!&#64;#$%^&*<>?/-)
+              </li>
+              <li [class.valid]="passwordCriteria().hasNumber">
+                <i class="fas" [class]="passwordCriteria().hasNumber ? 'fa-check-circle' : 'fa-circle'"></i>
+                Có ít nhất một ký tự số
+              </li>
+            </ul>
+          </div>
+
+          <div class="login-warning">
+            <i class="fas fa-info-circle"></i>
+            <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để tiếp
+              tục
+              sử dụng.</span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading()">
+              @if (isLoading()) {
+              <i class="fas fa-spinner fa-spin"></i> Đang xử lý...
+              } @else {
+              <i class="fas fa-save"></i> Lưu thay đổi
+              }
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
   </div>
 </div>
