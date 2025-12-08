@@ -1038,3 +1038,20 @@ body>ul.submenu.open {
     padding-bottom: var(--spacing-lg);
   }
 }
+
+/* ==================================================
+   9. Z-INDEX MANAGEMENT
+   ================================================== */
+
+/* 
+ * Best Practice: Explicitly define the z-index for the angular cdk overlay container.
+ * This ensures strict layering:
+ * 1. Base Content (0)
+ * 2. Sticky Headers / Drawers (100-900)
+ * 3. Modals / Dialogs / Overlays (1050) - Explicitly set here
+ * 4. Toasts / Notifications (1100) - Set in toast.component.scss
+ * 5. Tooltips (1150+)
+ */
+.cdk-overlay-container {
+  z-index: 1050 !important;
+}

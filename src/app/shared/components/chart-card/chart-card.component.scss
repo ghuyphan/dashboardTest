@@ -13,6 +13,7 @@
 .chart-card {
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
+  // Standard padding consistent with other cards
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);
   flex: 1;

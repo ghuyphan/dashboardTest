@@ -237,8 +237,17 @@ export class ChartCardComponent implements AfterViewInit {
 
         // Apply all optimizations
         let processedOptions = this.applyAutoFormatting({ ...options });
+
+        // 1. Enforce strict layout (Legend Top-Center, Grid spacing)
+        processedOptions = this.applyStrictLayout(processedOptions);
+
+        // 2. Apply mobile specific tweaks if needed (overrides strict layout small details)
         processedOptions = this.applyMobileOptimizations(processedOptions);
+
+        // 3. Large data optimizations
         processedOptions = this.optimizeForLargeData(processedOptions);
+
+        // 4. Responsive media queries
         processedOptions = this.makeOptionsResponsive(processedOptions);
 
         this.chartInstance?.setOption(processedOptions);
@@ -259,8 +268,17 @@ export class ChartCardComponent implements AfterViewInit {
 
     this.ngZone.runOutsideAngular(() => {
       let processedOptions = this.applyAutoFormatting({ ...options });
+
+      // 1. Enforce strict layout
+      processedOptions = this.applyStrictLayout(processedOptions);
+
+      // 2. Mobile optimizations
       processedOptions = this.applyMobileOptimizations(processedOptions);
+
+      // 3. Large data
       processedOptions = this.optimizeForLargeData(processedOptions);
+
+      // 4. Responsive
       processedOptions = this.makeOptionsResponsive(processedOptions);
 
       this.chartInstance?.setOption(processedOptions, {
@@ -336,42 +354,66 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   /**
-   * Get standardized responsive grid based on chart type
-   * Optimized for tighter spacing to maximize chart area
+   * Apply stric layout rules:
+   * 1. Legend always Top-Center
+   * 2. Grid top margin sufficient to avoid overlap
    */
-  private getStandardGrid(chartType: 'cartesian' | 'horizontal-bar' | 'pie', hasLegendTop: boolean, hasLegendBottom: boolean): any {
-    const mobile = this.isMobile();
-    const tablet = this.isTablet();
+  private applyStrictLayout(option: any): any {
+    if (!option) return option;
+    const newOption = { ...option };
 
-    if (chartType === 'pie') {
-      return undefined; // Pie charts don't use grid
+    const chartType = this.detectChartType(option);
+    const mobile = this.isMobile();
+
+    // 1. Enforce Legend Position
+    if (newOption.legend !== false) {
+      newOption.legend = {
+        ...(newOption.legend || {}),
+        top: 0,
+        bottom: undefined, // Remove bottom if set
+        left: 'center',
+        right: undefined, // Remove right if set
+        orient: 'horizontal',
+        type: 'scroll', // Allow scrolling if too many items
+        pageButtonPosition: 'end',
+      };
     }
 
-    // Fixed margins to minimize wasted space and ensure consistency
-    // Mobile needs more top margin for legend
-    const topMargin = hasLegendTop ? (mobile ? 65 : 40) : 20;
-    const bottomMargin = hasLegendBottom ? 40 : 10;
+    // 2. Enforce Grid Layout
+    // Calculate required top margin based on legend existence
+    const hasLegend = newOption.legend !== false;
+    // Increased baseTop to prevent overlap with legend (polished spacing)
+    const baseTop = hasLegend ? (mobile ? 55 : 45) : 15;
 
-    const baseSideMargin = mobile ? 10 : 20;
-
-    if (chartType === 'horizontal-bar') {
-      return {
-        left: baseSideMargin,
-        right: baseSideMargin + 10, // Extra space for value labels
-        top: topMargin,
-        bottom: bottomMargin,
+    if (chartType !== 'pie') {
+      newOption.grid = {
+        ...(newOption.grid || {}),
+        top: baseTop,
+        bottom: 25, // Consistent bottom
+        left: mobile ? 10 : 20,
+        right: mobile ? 15 : 20,
         containLabel: true
       };
     }
 
-    // Default: cartesian (vertical bar/line)
-    return {
-      left: baseSideMargin,
-      right: baseSideMargin,
-      top: topMargin,
-      bottom: bottomMargin,
-      containLabel: true
-    };
+    // 3. For Pie charts, adjust center to avoid legend
+    if (chartType === 'pie' && newOption.series) {
+      const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
+      newOption.series = seriesList.map((s: any) => {
+        if (s.type === 'pie') {
+          return {
+            ...s,
+            // Push down to avoid legend overlap (60% instead of 55%)
+            center: s.center || ['50%', '60%'],
+            // Ensure radius fits
+            radius: s.radius || ['40%', '70%']
+          };
+        }
+        return s;
+      });
+    }
+
+    return newOption;
   }
 
   /**
@@ -386,11 +428,8 @@ export class ChartCardComponent implements AfterViewInit {
     if (!mobile && !tablet) return option;
 
     const newOption = { ...option };
-    const chartType = this.detectChartType(option);
-    const hasLegendTop = newOption.legend?.top !== undefined && newOption.legend?.bottom === undefined;
-    const hasLegendBottom = newOption.legend?.bottom !== undefined;
 
-    // 1. Optimize tooltip for touch - with better readable font size
+    // 1. Optimize tooltip for touch
     newOption.tooltip = {
       ...newOption.tooltip,
       trigger: newOption.tooltip?.trigger || 'axis',
@@ -400,125 +439,42 @@ export class ChartCardComponent implements AfterViewInit {
       position: mobile ? this.getMobileTooltipPosition.bind(this) : undefined,
       textStyle: {
         ...newOption.tooltip?.textStyle,
-        fontSize: mobile ? 12 : tablet ? 12 : 13
+        fontSize: mobile ? 11 : 12
       },
       extraCssText: mobile ? 'max-width: 85vw; white-space: normal;' : ''
     };
 
-    // 2. Optimize legend for touch - compact but readable
-    if (newOption.legend !== false && newOption.legend !== undefined) {
-      newOption.legend = {
-        ...newOption.legend,
-        type: 'scroll',
-        itemWidth: mobile ? 25 : 25, // Increased for dash visibility
-        itemHeight: mobile ? 12 : 14,
-        itemGap: mobile ? 10 : 12,
-        textStyle: {
-          ...newOption.legend?.textStyle,
-          fontSize: mobile ? 11 : tablet ? 11 : 12
-        },
-        pageButtonItemGap: 5,
-        pageIconSize: mobile ? 12 : 14,
-        pageTextStyle: {
-          fontSize: mobile ? 11 : 12
-        }
+    // 2. Legend tweaks for mobile (smaller font)
+    if (newOption.legend) {
+      newOption.legend.textStyle = {
+        ...newOption.legend.textStyle,
+        fontSize: 10
       };
+      newOption.legend.itemWidth = 15;
+      newOption.legend.itemHeight = 10;
     }
 
-    // 3. Apply standardized grid (skip for pie charts)
-    if (chartType !== 'pie') {
-      const standardGrid = this.getStandardGrid(chartType, hasLegendTop, hasLegendBottom);
-      newOption.grid = standardGrid;
-    }
-
-    // 4. Optimize axis labels
+    // 3. Axis Label Tweaks
     if (newOption.xAxis) {
       const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
       newOption.xAxis = xAxes.map((axis: any) => ({
         ...axis,
         axisLabel: {
           ...axis.axisLabel,
-          fontSize: mobile ? 9 : 11,
+          fontSize: mobile ? 9 : 10,
           rotate: mobile ? 45 : axis.axisLabel?.rotate || 0,
-          interval: 'auto',
-          hideOverlap: true
-        },
-        axisTick: {
-          ...axis.axisTick,
-          alignWithLabel: true
+          hideOverlap: true,
+          interval: 'auto'
         }
       }));
-    }
-
-    if (newOption.yAxis) {
-      const yAxes = Array.isArray(newOption.yAxis) ? newOption.yAxis : [newOption.yAxis];
-      newOption.yAxis = yAxes.map((axis: any) => ({
-        ...axis,
-        axisLabel: {
-          ...axis.axisLabel,
-          fontSize: mobile ? 9 : 11
-        }
-      }));
-    }
-
-    // 5. Optimize series for mobile
-    if (newOption.series) {
-      const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
-      newOption.series = seriesList.map((s: any) => this.optimizeSeriesForMobile(s, mobile));
     }
 
     return newOption;
   }
 
   private optimizeSeriesForMobile(series: any, mobile: boolean): any {
-    const optimized = { ...series };
-
-    // Hide labels on mobile for most chart types
-    if (mobile && series.type !== 'pie') {
-      optimized.label = {
-        ...optimized.label,
-        show: false
-      };
-    }
-
-    // Pie chart specific
-    if (series.type === 'pie') {
-      if (mobile) {
-        optimized.radius = series.radius || ['35%', '60%'];
-        optimized.center = ['50%', '45%'];
-        optimized.label = {
-          ...optimized.label,
-          fontSize: 10,
-          position: 'outside',
-          formatter: '{b}: {d}%'
-        };
-        optimized.labelLine = {
-          ...optimized.labelLine,
-          length: 8,
-          length2: 5
-        };
-      }
-    }
-
-    // Bar chart specific
-    if (series.type === 'bar' && mobile) {
-      optimized.barMaxWidth = 20;
-      optimized.itemStyle = {
-        ...optimized.itemStyle,
-        borderRadius: [2, 2, 0, 0]
-      };
-    }
-
-    // Line chart specific
-    if (series.type === 'line' && mobile) {
-      optimized.symbolSize = 4;
-      optimized.lineStyle = {
-        ...optimized.lineStyle,
-        width: 2
-      };
-    }
-
-    return optimized;
+    // Legacy support wrapper if needed, otherwise logic moved to applyMobileOptimizations or handled generally
+    return series;
   }
 
   private getMobileTooltipPosition(
@@ -543,72 +499,10 @@ export class ChartCardComponent implements AfterViewInit {
    */
   private makeOptionsResponsive(options: any): any {
     if (options.baseOption || options.media) {
-      return options;
+      return options; // Avoid nesting if already formatted
     }
 
-    const series = Array.isArray(options.series) ? options.series : [options.series];
-    const hasPie = series.some((s: any) => s?.type === 'pie');
-    const hasBar = series.some((s: any) => s?.type === 'bar');
-
-    const chartType = this.detectChartType(options);
-    const hasLegendTop = options.legend?.top !== undefined && options.legend?.bottom === undefined;
-    const hasLegendBottom = options.legend?.bottom !== undefined;
-
-    return {
-      baseOption: options,
-      media: [
-        // Mobile portrait (<480px)
-        {
-          query: { maxWidth: this.MOBILE_BREAKPOINT },
-          option: {
-            ...(chartType !== 'pie' && {
-              grid: {
-                left: chartType === 'horizontal-bar' ? 10 : 10,
-                right: chartType === 'horizontal-bar' ? 20 : 10,
-                top: hasLegendTop ? 45 : 20,
-                bottom: this.hasLargeData() ? 70 : (hasLegendBottom ? 45 : 15),
-                containLabel: true
-              }
-            }),
-            ...(hasPie && {
-              series: series.map((s: any) => {
-                if (s?.type === 'pie') {
-                  return {
-                    radius: this.scaleRadius(s.radius || ['40%', '70%'], 0.8),
-                    center: ['50%', '48%'],
-                    label: { fontSize: 11 }
-                  };
-                }
-                return {};
-              })
-            }),
-            ...(hasBar && {
-              series: series.map((s: any) => {
-                if (s?.type === 'bar') {
-                  return { barMaxWidth: 24 };
-                }
-                return {};
-              })
-            })
-          }
-        },
-        // Tablet (480px - 768px)
-        {
-          query: { minWidth: this.MOBILE_BREAKPOINT + 1, maxWidth: this.TABLET_BREAKPOINT },
-          option: {
-            ...(chartType !== 'pie' && {
-              grid: {
-                left: 15,
-                right: 15,
-                top: hasLegendTop ? 40 : 20,
-                bottom: this.hasLargeData() ? 60 : (hasLegendBottom ? 40 : 15),
-                containLabel: true
-              }
-            })
-          }
-        }
-      ]
-    };
+    return options; // Rely on our strict layout + resize logic instead of complex media queries for now to ensure consistency
   }
 
   private scaleRadius(radius: any, factor: number): any {
