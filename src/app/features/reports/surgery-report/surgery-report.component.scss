@@ -20,7 +20,21 @@
   overflow: hidden;
 }
 
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  /* padding managed by global .page-content */
+  /* padding: var(--spacing-xs); */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
 
+  @include hidden-scrollbar;
+
+  @media (max-width: 768px) {
+    gap: var(--spacing-sm);
+  }
+}
 
 /* --- Widget Section --- */
 .widget-section {
@@ -44,7 +58,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
-  padding-bottom: 0;
+  padding-bottom: var(--spacing-md);
   flex: 1;
   min-height: 0;
 

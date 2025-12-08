@@ -5,7 +5,20 @@
   overflow: hidden;
 }
 
+.page-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  /* padding managed by global .page-content */
+  /* padding: var(--spacing-xs); */
 
+  @media (max-width: 768px) {
+    /* padding: 0; */
+  }
+}
 
 .grid-container {
   display: flex;
