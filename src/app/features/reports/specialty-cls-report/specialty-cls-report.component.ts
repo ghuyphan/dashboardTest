@@ -129,7 +129,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         title: 'Tổng Lượt Khám',
         value: '0',
         caption: 'Khám bệnh',
-        accentColor: '',
+        accentColor: this.palette?.primary || '#00839b',
       },
       {
         id: 'total-cls',
@@ -137,7 +137,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         title: 'Tổng Chỉ Định CLS',
         value: '0',
         caption: 'Cận lâm sàng',
-        accentColor: '',
+        accentColor: this.palette?.chart6 || '#f89c5b',
       },
       {
         id: 'top-specialty',
@@ -145,7 +145,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         title: 'CK Đông Nhất',
         value: '...',
         caption: 'Hoạt động cao nhất',
-        accentColor: '',
+        accentColor: this.palette?.deepSapphire || '#082567',
       },
     ];
   }

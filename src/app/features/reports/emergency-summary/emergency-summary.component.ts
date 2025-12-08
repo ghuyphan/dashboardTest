@@ -147,7 +147,7 @@ export class EmergencySummaryComponent implements OnInit {
         title: 'Tổng Lượt CC',
         value: '0',
         caption: 'Cấp cứu',
-        accentColor: '#00839b',
+        accentColor: this.palette?.primary || '#00839b',
       },
       {
         id: 'admission',
@@ -155,7 +155,7 @@ export class EmergencySummaryComponent implements OnInit {
         title: 'Nhập Viện',
         value: '0',
         caption: 'Từ Cấp cứu',
-        accentColor: '#f89c5b',
+        accentColor: this.palette?.chart6 || '#f89c5b',
       },
       {
         id: 'transfer',
@@ -163,7 +163,7 @@ export class EmergencySummaryComponent implements OnInit {
         title: 'Chuyển Viện',
         value: '0',
         caption: 'Chuyển tuyến',
-        accentColor: '#ffb3ba',
+        accentColor: this.palette?.pastelCoral || '#ffb3ba',
       },
       {
         id: 'insurance',
@@ -171,7 +171,7 @@ export class EmergencySummaryComponent implements OnInit {
         title: 'Tỷ lệ BHYT',
         value: '0%',
         caption: 'Có BHYT',
-        accentColor: '#082567',
+        accentColor: this.palette?.deepSapphire || '#082567',
       },
     ];
   }

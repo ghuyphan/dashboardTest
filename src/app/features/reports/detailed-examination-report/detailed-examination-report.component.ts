@@ -159,7 +159,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tổng Lượt Khám',
         value: '0',
         caption: 'Total Visits',
-        accentColor: 'var(--chart-3)',
+        accentColor: this.palette?.chart3 || '#9bdad9',
       },
       {
         id: 'total-patients',
@@ -167,7 +167,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Số Người Bệnh',
         value: '0',
         caption: 'Unique Patients',
-        accentColor: 'var(--chart-2)',
+        accentColor: this.palette?.chart2 || '#006e96',
       },
       {
         id: 'avg-metric',
@@ -175,7 +175,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'TB Lượt (Hệ số 6.5)',
         value: '0',
         caption: 'Visits / 6.5',
-        accentColor: 'var(--chart-4)',
+        accentColor: this.palette?.chart9 || '#f9b88a',
       },
       {
         id: 're-exam-rate',
@@ -183,7 +183,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         title: 'Tỷ Lệ Tái Khám',
         value: '0%',
         caption: 'Re-examination Rate',
-        accentColor: 'var(--success)',
+        accentColor: this.palette?.success || '#16a34a',
       },
     ];
   }

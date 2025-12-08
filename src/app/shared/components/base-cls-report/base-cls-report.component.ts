@@ -98,10 +98,10 @@ export abstract class BaseClsReportComponent {
 
     protected initializeWidgets(): void {
         this.widgetData = [
-            { id: 'total-exam', icon: 'fas fa-stethoscope', title: 'Tổng Lượt Khám', value: '0', caption: 'Thực hiện khám', accentColor: '#00839b' },
-            { id: 'total-cls', icon: 'fas fa-microscope', title: 'Tổng Cận Lâm Sàng', value: '0', caption: 'Thực hiện CLS', accentColor: '#f89c5b' },
-            { id: 'admission', icon: 'fas fa-procedures', title: 'Tổng Nhập Viện', value: '0', caption: 'Số ca nhập viện', accentColor: '#ffb3ba' },
-            { id: 'top-room', icon: 'fas fa-door-open', title: 'Phòng Đông Nhất', value: '0', caption: 'Đang tải...', accentColor: '#082567' },
+            { id: 'total-exam', icon: 'fas fa-stethoscope', title: 'Tổng Lượt Khám', value: '0', caption: 'Thực hiện khám', accentColor: this.palette?.primary || '#00839b' },
+            { id: 'total-cls', icon: 'fas fa-microscope', title: 'Tổng Cận Lâm Sàng', value: '0', caption: 'Thực hiện CLS', accentColor: this.palette?.chart6 || '#f89c5b' },
+            { id: 'admission', icon: 'fas fa-procedures', title: 'Tổng Nhập Viện', value: '0', caption: 'Số ca nhập viện', accentColor: this.palette?.pastelCoral || '#ffb3ba' },
+            { id: 'top-room', icon: 'fas fa-door-open', title: 'Phòng Đông Nhất', value: '0', caption: 'Đang tải...', accentColor: this.palette?.deepSapphire || '#082567' },
         ];
     }
 

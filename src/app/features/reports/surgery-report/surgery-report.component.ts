@@ -109,7 +109,7 @@ export class SurgeryReportComponent implements OnInit {
         title: 'Tổng Ca Phẫu Thuật',
         value: '0',
         caption: 'Thực hiện',
-        accentColor: '#00839b',
+        accentColor: this.palette?.primary || '#00839b',
       },
       {
         id: 'top-specialty',
@@ -117,7 +117,7 @@ export class SurgeryReportComponent implements OnInit {
         title: 'Khoa Nhiều Nhất',
         value: '...',
         caption: 'Hoạt động cao nhất',
-        accentColor: '#f89c5b',
+        accentColor: this.palette?.chart6 || '#f89c5b',
       },
       {
         id: 'top-surgeon',
@@ -125,7 +125,7 @@ export class SurgeryReportComponent implements OnInit {
         title: 'PTV Tích Cực',
         value: '...',
         caption: 'Số ca nhiều nhất',
-        accentColor: '#52c3d7',
+        accentColor: this.palette?.tealMidtone || '#52c3d7',
       }
     ];
   }
