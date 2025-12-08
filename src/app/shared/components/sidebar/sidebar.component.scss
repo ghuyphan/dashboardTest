@@ -603,6 +603,7 @@
 
   .sidebar-nav {
     padding: 0 var(--sidebar-padding);
+    padding-bottom: max(var(--spacing-lg), var(--safe-area-bottom));
   }
 
   .sidebar.collapsed .sidebar-nav ul li .submenu {

@@ -160,8 +160,8 @@ export class IcdReportComponent implements OnInit {
       },
       grid: {
         left: '3%',
-        right: '4%',
-        bottom: '3%',
+        right: '8%',
+        bottom: '5%',
         top: '5%',
         containLabel: true
       }
@@ -172,7 +172,7 @@ export class IcdReportComponent implements OnInit {
       ...commonOptions,
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textSecondary }
       },
       yAxis: {
@@ -200,7 +200,7 @@ export class IcdReportComponent implements OnInit {
       ...commonOptions,
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textSecondary }
       },
       yAxis: {

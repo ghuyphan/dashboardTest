@@ -423,9 +423,15 @@ export class EmergencySummaryComponent implements OnInit {
     const commonGrid = {
       left: '3%',
       right: '4%',
-      bottom: '10%',
-      top: '15%',
+      bottom: '12%',
+      top: '12%',
       containLabel: true,
+    };
+    const commonLegend = {
+      show: true,
+      top: 0,
+      itemWidth: 25, // Ensure dashes are visible
+      textStyle: { color: this.palette.textSecondary },
     };
     const commonTooltip = {
       trigger: 'axis',
@@ -440,11 +446,7 @@ export class EmergencySummaryComponent implements OnInit {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
       grid: commonGrid,
-      legend: {
-        show: true,
-        top: 0,
-        textStyle: { color: this.palette.textSecondary },
-      },
+      legend: commonLegend,
       xAxis: {
         type: 'category',
         data: dates,
@@ -456,7 +458,7 @@ export class EmergencySummaryComponent implements OnInit {
       yAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
         axisLabel: { color: this.palette.textSecondary },
       },
@@ -518,7 +520,7 @@ export class EmergencySummaryComponent implements OnInit {
       yAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
         axisLabel: { color: this.palette.textSecondary },
       },
@@ -564,11 +566,7 @@ export class EmergencySummaryComponent implements OnInit {
         },
       },
       grid: commonGrid,
-      legend: {
-        show: true,
-        top: 0,
-        textStyle: { color: this.palette.textSecondary },
-      },
+      legend: commonLegend,
       xAxis: {
         type: 'category',
         data: dates,
@@ -582,7 +580,7 @@ export class EmergencySummaryComponent implements OnInit {
           type: 'value',
           name: 'Số lượng',
           splitLine: {
-            lineStyle: { type: 'dashed', color: this.palette.gray200 },
+            lineStyle: { type: 'solid', color: this.palette.gray200 },
           },
           axisLabel: { color: this.palette.textSecondary },
         },

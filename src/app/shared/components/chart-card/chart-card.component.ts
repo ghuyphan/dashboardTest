@@ -314,6 +314,67 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   /**
+   * Detect chart type from options
+   */
+  private detectChartType(option: any): 'cartesian' | 'horizontal-bar' | 'pie' {
+    if (!option?.series) return 'cartesian';
+
+    const series = Array.isArray(option.series) ? option.series : [option.series];
+
+    // Check for pie/doughnut
+    if (series.some((s: any) => s?.type === 'pie')) {
+      return 'pie';
+    }
+
+    // Check for horizontal bar (yAxis is category)
+    const yAxis = Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis;
+    if (yAxis?.type === 'category' && series.some((s: any) => s?.type === 'bar')) {
+      return 'horizontal-bar';
+    }
+
+    return 'cartesian';
+  }
+
+  /**
+   * Get standardized responsive grid based on chart type
+   * Optimized for tighter spacing to maximize chart area
+   */
+  private getStandardGrid(chartType: 'cartesian' | 'horizontal-bar' | 'pie', hasLegendTop: boolean, hasLegendBottom: boolean): any {
+    const mobile = this.isMobile();
+    const tablet = this.isTablet();
+
+    if (chartType === 'pie') {
+      return undefined; // Pie charts don't use grid
+    }
+
+    // Fixed margins to minimize wasted space and ensure consistency
+    // Mobile needs more top margin for legend
+    const topMargin = hasLegendTop ? (mobile ? 65 : 40) : 20;
+    const bottomMargin = hasLegendBottom ? 40 : 10;
+
+    const baseSideMargin = mobile ? 10 : 20;
+
+    if (chartType === 'horizontal-bar') {
+      return {
+        left: baseSideMargin,
+        right: baseSideMargin + 10, // Extra space for value labels
+        top: topMargin,
+        bottom: bottomMargin,
+        containLabel: true
+      };
+    }
+
+    // Default: cartesian (vertical bar/line)
+    return {
+      left: baseSideMargin,
+      right: baseSideMargin,
+      top: topMargin,
+      bottom: bottomMargin,
+      containLabel: true
+    };
+  }
+
+  /**
    * Apply mobile-specific optimizations
    */
   private applyMobileOptimizations(option: any): any {
@@ -325,8 +386,11 @@ export class ChartCardComponent implements AfterViewInit {
     if (!mobile && !tablet) return option;
 
     const newOption = { ...option };
+    const chartType = this.detectChartType(option);
+    const hasLegendTop = newOption.legend?.top !== undefined && newOption.legend?.bottom === undefined;
+    const hasLegendBottom = newOption.legend?.bottom !== undefined;
 
-    // 1. Optimize tooltip for touch
+    // 1. Optimize tooltip for touch - with better readable font size
     newOption.tooltip = {
       ...newOption.tooltip,
       trigger: newOption.tooltip?.trigger || 'axis',
@@ -336,42 +400,36 @@ export class ChartCardComponent implements AfterViewInit {
       position: mobile ? this.getMobileTooltipPosition.bind(this) : undefined,
       textStyle: {
         ...newOption.tooltip?.textStyle,
-        fontSize: mobile ? 11 : 12
+        fontSize: mobile ? 12 : tablet ? 12 : 13
       },
       extraCssText: mobile ? 'max-width: 85vw; white-space: normal;' : ''
     };
 
-    // 2. Optimize legend for touch
-    if (newOption.legend !== false) {
+    // 2. Optimize legend for touch - compact but readable
+    if (newOption.legend !== false && newOption.legend !== undefined) {
       newOption.legend = {
         ...newOption.legend,
         type: 'scroll',
-        orient: 'horizontal',
-        bottom: mobile ? 0 : newOption.legend?.bottom,
-        itemWidth: mobile ? 10 : 14,
-        itemHeight: mobile ? 10 : 14,
-        itemGap: mobile ? 8 : 10,
+        itemWidth: mobile ? 25 : 25, // Increased for dash visibility
+        itemHeight: mobile ? 12 : 14,
+        itemGap: mobile ? 10 : 12,
         textStyle: {
           ...newOption.legend?.textStyle,
-          fontSize: mobile ? 10 : 12
+          fontSize: mobile ? 11 : tablet ? 11 : 12
         },
         pageButtonItemGap: 5,
-        pageIconSize: mobile ? 10 : 12,
+        pageIconSize: mobile ? 12 : 14,
         pageTextStyle: {
-          fontSize: mobile ? 10 : 12
+          fontSize: mobile ? 11 : 12
         }
       };
     }
 
-    // 3. Optimize grid spacing
-    newOption.grid = {
-      ...newOption.grid,
-      left: mobile ? 35 : tablet ? 45 : newOption.grid?.left,
-      right: mobile ? 10 : tablet ? 15 : newOption.grid?.right,
-      top: mobile ? 25 : newOption.grid?.top,
-      bottom: mobile ? 50 : newOption.grid?.bottom,
-      containLabel: true
-    };
+    // 3. Apply standardized grid (skip for pie charts)
+    if (chartType !== 'pie') {
+      const standardGrid = this.getStandardGrid(chartType, hasLegendTop, hasLegendBottom);
+      newOption.grid = standardGrid;
+    }
 
     // 4. Optimize axis labels
     if (newOption.xAxis) {
@@ -492,26 +550,33 @@ export class ChartCardComponent implements AfterViewInit {
     const hasPie = series.some((s: any) => s?.type === 'pie');
     const hasBar = series.some((s: any) => s?.type === 'bar');
 
+    const chartType = this.detectChartType(options);
+    const hasLegendTop = options.legend?.top !== undefined && options.legend?.bottom === undefined;
+    const hasLegendBottom = options.legend?.bottom !== undefined;
+
     return {
       baseOption: options,
       media: [
-        // Mobile portrait (< 480px)
+        // Mobile portrait (<480px)
         {
           query: { maxWidth: this.MOBILE_BREAKPOINT },
           option: {
-            grid: {
-              left: 35,
-              right: 10,
-              top: 25,
-              bottom: this.hasLargeData() ? 70 : 45
-            },
+            ...(chartType !== 'pie' && {
+              grid: {
+                left: chartType === 'horizontal-bar' ? 10 : 10,
+                right: chartType === 'horizontal-bar' ? 20 : 10,
+                top: hasLegendTop ? 45 : 20,
+                bottom: this.hasLargeData() ? 70 : (hasLegendBottom ? 45 : 15),
+                containLabel: true
+              }
+            }),
             ...(hasPie && {
               series: series.map((s: any) => {
                 if (s?.type === 'pie') {
                   return {
-                    radius: this.scaleRadius(s.radius || ['40%', '70%'], 0.75),
-                    center: ['50%', '45%'],
-                    label: { fontSize: 9 }
+                    radius: this.scaleRadius(s.radius || ['40%', '70%'], 0.8),
+                    center: ['50%', '48%'],
+                    label: { fontSize: 11 }
                   };
                 }
                 return {};
@@ -520,7 +585,7 @@ export class ChartCardComponent implements AfterViewInit {
             ...(hasBar && {
               series: series.map((s: any) => {
                 if (s?.type === 'bar') {
-                  return { barMaxWidth: 18 };
+                  return { barMaxWidth: 24 };
                 }
                 return {};
               })
@@ -531,11 +596,15 @@ export class ChartCardComponent implements AfterViewInit {
         {
           query: { minWidth: this.MOBILE_BREAKPOINT + 1, maxWidth: this.TABLET_BREAKPOINT },
           option: {
-            grid: {
-              left: 45,
-              right: 15,
-              bottom: this.hasLargeData() ? 60 : 40
-            }
+            ...(chartType !== 'pie' && {
+              grid: {
+                left: 15,
+                right: 15,
+                top: hasLegendTop ? 40 : 20,
+                bottom: this.hasLargeData() ? 60 : (hasLegendBottom ? 40 : 15),
+                containLabel: true
+              }
+            })
           }
         }
       ]
@@ -675,18 +744,17 @@ export class ChartCardComponent implements AfterViewInit {
       }
     ];
 
-    // B. Adjust grid for slider [FIXED: Now forces overwrite for strings like '5%']
-    const currentBottom = newOption.grid?.bottom;
-    const minBottom = mobile ? 65 : 50;
+    // B. Adjust grid for slider - use percentage values for better scaling
+    const chartType = this.detectChartType(newOption);
+    const hasLegendBottom = newOption.legend?.bottom !== undefined;
 
-    // If bottom is undefined, or if it's a small number, or a string (percentage),
-    // we assume we need to enforce the minimum safe space for the slider.
-    if (
-      currentBottom === undefined ||
-      (typeof currentBottom === 'number' && currentBottom < minBottom) ||
-      typeof currentBottom === 'string' // Assume string/percentage needs override
-    ) {
-      newOption.grid = { ...newOption.grid, bottom: minBottom };
+    // Apply consistent percentage-based bottom spacing for DataZoom (optimized tighter)
+    if (chartType !== 'pie') {
+      newOption.grid = {
+        ...newOption.grid,
+        bottom: mobile ? 70 : 60, // Fixed space for slider
+        containLabel: true
+      };
     }
 
     // C. Optimize X-Axis

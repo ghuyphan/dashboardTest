@@ -157,9 +157,8 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     const commonGrid = {
       left: '3%',
       right: '4%',
-      // Top padding for Legend
-      top: 40,
-      bottom: '3%',
+      top: '12%',
+      bottom: '10%',
       containLabel: true
     };
 
@@ -199,7 +198,8 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
         // FIX: Move legend to Top to avoid collision with slider
         top: 0,
         left: 'center',
-        textStyle: { color: this.palette.textSecondary }
+        textStyle: { color: this.palette.textSecondary },
+        itemWidth: 25
       },
       xAxis: {
         type: 'category',
@@ -215,7 +215,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           type: 'value',
           name: 'Số Lượng',
           nameTextStyle: { color: this.palette.textSecondary },
-          splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+          splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
           axisLabel: { color: this.palette.textSecondary }
         }
       ],

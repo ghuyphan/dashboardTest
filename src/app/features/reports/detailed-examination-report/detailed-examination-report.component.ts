@@ -405,7 +405,8 @@ export class DetailedExaminationReportComponent implements OnInit {
       ...this.getCommonChartOptions(),
       legend: {
         top: 0,
-        textStyle: { color: this.palette.textSecondary }
+        textStyle: { color: this.palette.textSecondary },
+        itemWidth: 25
       },
       tooltip: {
         trigger: 'axis',
@@ -424,7 +425,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         type: 'value',
         name: 'Số lượng',
         position: 'left',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textSecondary },
       },
       series: [
@@ -451,7 +452,7 @@ export class DetailedExaminationReportComponent implements OnInit {
           data: workloadData,
           smooth: true,
           itemStyle: { color: this.palette.chart9 },
-          lineStyle: { width: 3, type: 'dashed' },
+          lineStyle: { width: 3, type: [5, 5] },
           symbolSize: 8,
           symbol: 'circle'
         }
@@ -475,6 +476,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         bottom: 0,
         left: 'center',
         textStyle: { color: this.palette.textSecondary },
+        itemWidth: 25
       },
       series: [
         {
@@ -508,11 +510,11 @@ export class DetailedExaminationReportComponent implements OnInit {
 
     this.specialtyChartOptions = {
       ...this.getCommonChartOptions(),
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
       tooltip: { ...this.getCommonChartOptions().tooltip, axisPointer: { type: 'shadow' } },
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textSecondary },
       },
       yAxis: {
@@ -544,11 +546,11 @@ export class DetailedExaminationReportComponent implements OnInit {
 
     this.doctorChartOptions = {
       ...this.getCommonChartOptions(),
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
       tooltip: { ...this.getCommonChartOptions().tooltip, axisPointer: { type: 'shadow' } },
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textSecondary },
       },
       yAxis: {
@@ -590,8 +592,8 @@ export class DetailedExaminationReportComponent implements OnInit {
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '5%',
-        top: '15%',
+        bottom: '12%',
+        top: '12%',
         containLabel: true,
       },
     };

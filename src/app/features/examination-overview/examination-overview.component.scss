@@ -1,5 +1,6 @@
 @mixin hidden-scrollbar {
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -19,24 +20,7 @@
   overflow: hidden;
 }
 
-.page-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  padding: var(--spacing-xs);
-  height: 100%;
-  min-height: 0;
-  box-sizing: border-box;
-  overflow-y: auto;
-  gap: var(--spacing-lg);
-  @include hidden-scrollbar;
 
-  /* Optimize spacing for smaller screens */
-  @media (max-width: 992px) {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-md);
-  }
-}
 
 /* --- Widget Section --- */
 .widget-section {
@@ -69,7 +53,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: min-content;
   gap: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
+  padding-bottom: 0;
   flex: 1;
   min-height: 0;
 
@@ -88,7 +72,7 @@
   .grid-item {
     display: flex;
     flex-direction: column;
-    
+
     /* Dynamic Heights for responsiveness */
     min-height: 450px;
 
@@ -97,37 +81,46 @@
     }
 
     @media (max-width: 768px) {
-      min-height: 350px; /* Compact height for tablets */
+      min-height: 350px;
+      /* Compact height for tablets */
     }
 
     @media (max-width: 480px) {
-      min-height: 300px; /* Even more compact for phones */
+      min-height: 300px;
+      /* Even more compact for phones */
     }
   }
 }
 
 /* --- Spanning Classes --- */
-.span-4 { 
-  grid-column: span 4; 
-  
+.span-4 {
+  grid-column: span 4;
+
   @media (max-width: 1400px) {
-    grid-column: span 2; 
+    grid-column: span 2;
   }
-  @media (max-width: 992px) { 
-    grid-column: 1 / -1; 
+
+  @media (max-width: 992px) {
+    grid-column: 1 / -1;
   }
 }
 
 .span-2 {
   grid-column: span 2;
-  
-  @media (max-width: 1400px) { 
-    grid-column: span 1; 
+
+  @media (max-width: 1400px) {
+    grid-column: span 1;
   }
-  @media (max-width: 992px) { 
-    grid-column: 1 / -1; 
+
+  @media (max-width: 992px) {
+    grid-column: 1 / -1;
   }
 }
 
-.text-teal { color: var(--teal-blue); }
-.text-success { color: var(--color-success); }
+.text-teal {
+  color: var(--teal-blue);
+}
+
+.text-success {
+  color: var(--color-success);
+}

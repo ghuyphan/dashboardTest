@@ -266,7 +266,10 @@ export class SurgeryReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true,
       },
-      grid: { left: '3%', right: '4%', bottom: '5%', top: '12%', containLabel: true },
+      legend: {
+        itemWidth: 25
+      },
+      grid: { left: '3%', right: '4%', bottom: '12%', top: '12%', containLabel: true },
     };
 
     // 1. Daily Trend Chart (Line + Trend Line)
@@ -305,7 +308,8 @@ export class SurgeryReportComponent implements OnInit {
         show: true,
         textStyle: { color: this.palette.textSecondary },
         top: 0,
-        left: 'center'
+        left: 'center',
+        itemWidth: 25
       },
       xAxis: {
         type: 'category',
@@ -316,7 +320,7 @@ export class SurgeryReportComponent implements OnInit {
       },
       yAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } },
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
         axisLabel: { color: this.palette.textSecondary }
       },
       series: [
@@ -344,7 +348,7 @@ export class SurgeryReportComponent implements OnInit {
           // Markline for Average
           markLine: {
             data: [{ type: 'average', name: 'TB' }],
-            lineStyle: { color: this.palette.secondary, type: 'dashed', opacity: 0.7 },
+            lineStyle: { color: this.palette.secondary, type: [5, 5], opacity: 0.7 },
             label: { position: 'insideEndTop', formatter: 'TB: {c}' },
             symbol: 'none'
           }
@@ -357,7 +361,7 @@ export class SurgeryReportComponent implements OnInit {
           symbol: 'none',
           smooth: false,
           lineStyle: {
-            type: 'dashed',
+            type: [5, 5],
             color: this.palette.warning,
             width: 2
           },
@@ -385,7 +389,7 @@ export class SurgeryReportComponent implements OnInit {
       },
       yAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } }
       },
       series: [{
         name: 'Số ca',
@@ -411,7 +415,7 @@ export class SurgeryReportComponent implements OnInit {
       tooltip: { ...commonOptions.tooltip, axisPointer: { type: 'shadow' } },
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } }
+        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } }
       },
       yAxis: {
         type: 'category',

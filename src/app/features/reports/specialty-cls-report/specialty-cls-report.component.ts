@@ -371,16 +371,17 @@ export class SpecialtyClsReportComponent implements OnInit {
         confine: true, // Added to prevent cropping
       },
       grid: {
-        left: '2%',
-        right: '2%',
+        left: '3%',
+        right: '4%',
         bottom: '15%',
         top: '12%',
         containLabel: true,
       },
       legend: {
-        type: 'scroll', // Added to prevent overlap
+        type: 'scroll',
         top: 0,
         textStyle: { color: this.palette.textSecondary },
+        itemWidth: 25 // Ensure dashes are visible
       },
       xAxis: {
         type: 'category',
@@ -398,7 +399,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       yAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
         axisLabel: { color: this.palette.textSecondary },
       },
@@ -433,6 +434,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         bottom: 0,
         left: 'center',
         textStyle: { color: this.palette.textSecondary },
+        itemWidth: 25
       },
       series: [
         {
@@ -471,14 +473,14 @@ export class SpecialtyClsReportComponent implements OnInit {
       grid: {
         left: '3%',
         right: '8%',
-        bottom: '3%',
+        bottom: '5%',
         top: '5%',
         containLabel: true,
       },
       xAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
       },
       yAxis: {

@@ -83,7 +83,8 @@
   min-height: 0;
   overflow: hidden;
 
-  padding: 0 var(--spacing-sm) var(--spacing-mds) var(--spacing-sm);
+  /* Removed global padding to support full-width pages. Each page manages its own padding. */
+  padding: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -110,16 +111,24 @@
   }
 }
 
-/* Responsive Padding */
+/* Responsive Padding with Safe Area Support */
 @media (max-width: 992px) {
   .dashboard-content {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: 0;
+    // padding: var(--spacing-sm) var(--spacing-md);
+    // padding-left: max(var(--spacing-md), var(--safe-area-left));
+    // padding-right: max(var(--spacing-md), var(--safe-area-right));
+    // padding-bottom: max(var(--spacing-md), var(--safe-area-bottom));
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-content {
-    padding: var(--spacing-sm);
+    padding: 0;
+    // padding: var(--spacing-sm) var(--spacing-md);
+    // padding-left: max(var(--spacing-md), var(--safe-area-left));
+    // padding-right: max(var(--spacing-md), var(--safe-area-right));
+    // padding-bottom: max(var(--spacing-md), var(--safe-area-bottom));
   }
 }
 

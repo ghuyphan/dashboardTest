@@ -1,3 +1,6 @@
+/* Import the global mixins */
+@use '../../../../styles/mixins' as m;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -19,6 +22,13 @@
   overflow: hidden;
   min-width: 0;
 
+  /* Subtle border for dark mode definition */
+  border: 1px solid transparent;
+
+  [data-theme='dark'] & {
+    border-color: var(--border-color);
+  }
+
   @media (max-width: 768px) {
     padding: var(--spacing-sm);
     border-radius: var(--border-radius-md);
@@ -32,7 +42,7 @@
 /* --- HEADER LAYOUT --- */
 .card-header {
   flex-shrink: 0;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -147,22 +157,9 @@
   background-color: var(--surface-card);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
 
-  &:hover {
-    background-color: var(--surface-hover);
-    color: var(--text-primary);
-    border-color: var(--primary-color);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
+  /* Use global mixin for consistent hover/focus states */
+  @include m.icon-btn-interactions;
 
   i {
     font-size: 0.875rem;
@@ -184,12 +181,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
+  min-height: 180px;
   overflow: hidden;
   min-width: 0;
 
   @media (max-width: 480px) {
-    min-height: 180px;
+    min-height: 160px;
   }
 }
 

@@ -255,9 +255,9 @@ export class ExaminationOverviewComponent implements OnInit {
         confine: true, // Prevent tooltip cropping
       },
       grid: {
-        left: '2%',
-        right: '3%',
-        bottom: '10%',
+        left: '3%',
+        right: '4%',
+        bottom: '12%',
         top: '10%',
         containLabel: true,
       },
@@ -269,6 +269,7 @@ export class ExaminationOverviewComponent implements OnInit {
         bottom: 0,
         textStyle: { color: this.palette.textSecondary },
         type: 'scroll', // Scrollable Legend
+        itemWidth: 25,
       },
       xAxis: {
         type: 'category',
@@ -280,7 +281,7 @@ export class ExaminationOverviewComponent implements OnInit {
       yAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
       },
       series: [
@@ -369,6 +370,7 @@ export class ExaminationOverviewComponent implements OnInit {
         bottom: 0,
         textStyle: { color: this.palette.textSecondary },
         type: 'scroll', // Scrollable Legend
+        itemWidth: 25,
       },
       series: [
         {

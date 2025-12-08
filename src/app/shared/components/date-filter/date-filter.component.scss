@@ -197,19 +197,11 @@
   // Include global interaction styles (Transition, Focus, Disabled state)
   @include m.btn-interactions;
 
-  /* [FIX] Invisible Hit Area Extension to prevent flickering on hover lift */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    bottom: -6px; // Extends hit area downwards to catch the cursor during translateY
-    z-index: 1;
-    background: transparent;
-    border-radius: inherit;
-  }
+
 
   // Specific hover colors for this component (overrides mixin default shadows if needed)
   &:hover:not(:disabled) {
+    transform: none; // Disable hover lift
     background-color: var(--gray-200);
     color: var(--text-primary);
 

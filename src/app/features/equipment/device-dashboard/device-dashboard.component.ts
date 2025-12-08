@@ -491,7 +491,7 @@ export class DeviceDashboardComponent implements OnInit {
         fontFamily: GLOBAL_FONT_FAMILY,
         color: this.palette.textSecondary,
       },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
       tooltip: {
         trigger: 'axis',
         backgroundColor: this.palette.bgCard,
@@ -502,7 +502,7 @@ export class DeviceDashboardComponent implements OnInit {
       xAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { color: this.palette.gray200, type: 'dotted' },
+          lineStyle: { color: this.palette.gray200, type: 'solid' },
         },
       },
       yAxis: {
@@ -545,12 +545,12 @@ export class DeviceDashboardComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Avoid tooltip cut-off
       },
-      grid: { left: '3%', right: '4%', containLabel: true },
+      grid: { left: '3%', right: '4%', bottom: '12%', top: '8%', containLabel: true },
       xAxis: { type: 'category', data: x, boundaryGap: false },
       yAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { color: this.palette.gray200, type: 'dotted' },
+          lineStyle: { color: this.palette.gray200, type: 'solid' },
         },
       },
       series: [

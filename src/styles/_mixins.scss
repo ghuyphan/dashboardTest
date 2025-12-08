@@ -183,3 +183,94 @@
         z-index: 2;
     }
 }
+
+/* ==========================================================================
+   MOBILE-FOCUSED MIXINS
+   ========================================================================== */
+
+// Ensure minimum touch target size (44x44px for accessibility)
+@mixin touch-target($size: 44px) {
+    min-width: $size;
+    min-height: $size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Safe area padding for notched devices (iPhone X+)
+@mixin safe-area-padding($property: padding, $sides: all) {
+    @if $sides ==all {
+        #{$property}-top: env(safe-area-inset-top);
+        #{$property}-right: env(safe-area-inset-right);
+        #{$property}-bottom: env(safe-area-inset-bottom);
+        #{$property}-left: env(safe-area-inset-left);
+    }
+
+    @else if $sides ==horizontal {
+        #{$property}-left: env(safe-area-inset-left);
+        #{$property}-right: env(safe-area-inset-right);
+    }
+
+    @else if $sides ==vertical {
+        #{$property}-top: env(safe-area-inset-top);
+        #{$property}-bottom: env(safe-area-inset-bottom);
+    }
+
+    @else if $sides ==top {
+        #{$property}-top: env(safe-area-inset-top);
+    }
+
+    @else if $sides ==bottom {
+        #{$property}-bottom: env(safe-area-inset-bottom);
+    }
+
+    @else if $sides ==left {
+        #{$property}-left: env(safe-area-inset-left);
+    }
+
+    @else if $sides ==right {
+        #{$property}-right: env(safe-area-inset-right);
+    }
+}
+
+// Responsive padding that combines base + safe-area
+@mixin mobile-padding($base-x: var(--spacing-sm), $base-y: var(--spacing-sm)) {
+    padding: $base-y $base-x;
+    padding-left: max(#{$base-x}, env(safe-area-inset-left));
+    padding-right: max(#{$base-x}, env(safe-area-inset-right));
+}
+
+// Hide scrollbar utility
+@mixin hidden-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+// Mobile breakpoint shortcuts
+@mixin mobile {
+    @media (max-width: 768px) {
+        @content;
+    }
+}
+
+@mixin mobile-small {
+    @media (max-width: 480px) {
+        @content;
+    }
+}
+
+@mixin mobile-tiny {
+    @media (max-width: 360px) {
+        @content;
+    }
+}
+
+@mixin tablet-down {
+    @media (max-width: 992px) {
+        @content;
+    }
+}

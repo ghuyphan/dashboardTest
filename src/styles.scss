@@ -201,6 +201,15 @@ $dark-tokens: (
   --spacing-xl: 2rem;
   --spacing-xxl: 3rem;
 
+  /* --- MOBILE-SPECIFIC SETTINGS --- */
+  --touch-target-min: 44px;
+  --mobile-padding-x: var(--spacing-sm);
+  --mobile-padding-y: var(--spacing-sm);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
   --border-radius-sm: 0.375rem;
   --border-radius-md: 0.5rem;
   --border-radius-lg: 0.75rem;
@@ -247,6 +256,26 @@ $dark-tokens: (
   --gray-800: var(--slate-800);
   --gray-900: var(--slate-900);
   --white: #ffffff;
+
+  /* 4. Mobile Overrides */
+  @media (max-width: 768px) {
+    --header-height: 56px;
+    --spacing-lg: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    --font-size-base: 0.875rem;
+    --header-height: 52px;
+
+    /* [FIX] Ensure scrollable area has enough bottom padding to clear the footer */
+    .page-content {
+      padding-bottom: 80px !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    --font-size-base: 0.8125rem;
+  }
 }
 
 /* --- Dark Theme Overrides --- */
@@ -458,6 +487,48 @@ select:-webkit-autofill {
 }
 
 /* --- Components --- */
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-md);
+  /* REFACTOR: padding-bottom on scroll container is unreliable in some browsers.
+     Use padding-bottom: 0 and a pseudo-element spacer instead. */
+  padding-bottom: 0;
+  gap: var(--spacing-lg);
+
+  /* Hide scrollbar for cleaner look */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Robust Bottom Spacing Spacer */
+  &::after {
+    content: "";
+    display: block;
+    min-height: var(--spacing-xxl);
+    /* Generous bottom padding equivalent */
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
+    padding-bottom: 0;
+
+    /* Ensure clearance for footer on mobile */
+    &::after {
+      min-height: 80px;
+    }
+
+    gap: var(--spacing-md);
+  }
+}
+
 .chart-container {
   background-color: var(--surface-card);
   border-radius: var(--border-radius-md);
@@ -768,12 +839,15 @@ body>ul.submenu.open {
       padding: 0.75rem 0.75rem;
       margin: 0 0 var(--spacing-xs) 0;
       font-size: 0.875rem;
-      border-radius: 0.375rem;
+
+
       color: var(--text-secondary);
       font-weight: var(--font-weight-normal);
 
       /* [UPDATED] Add generic transform transition so :active scaling animates smoothly */
-      transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+      transition: background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.1s ease;
 
       overflow: hidden;
       width: 100%;
@@ -961,5 +1035,49 @@ body>ul.submenu.open {
 
   [data-theme='dark'] & {
     background-color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ==================================================
+   8. GLOBAL PAGE LAYOUT UTILITIES
+   ================================================== */
+
+/* Standard Page Container to be used in every screen */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Standard Page Content with Automatic Padding */
+.page-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+
+  /* Default Desktop Spacing */
+  padding: var(--spacing-md);
+  gap: var(--spacing-lg);
+
+  /* Hide Scrollbar */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Responsive Spacing */
+  @media (max-width: 992px) {
+    padding: var(--spacing-sm) var(--spacing-md);
+    gap: var(--spacing-md);
+  }
+
+  @media (max-width: 480px) {
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
 }

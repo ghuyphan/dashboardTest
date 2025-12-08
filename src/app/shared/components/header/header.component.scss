@@ -27,7 +27,9 @@
   line-height: 1.5;
 
   @media (max-width: 768px) {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem var(--spacing-md);
+    padding-left: max(var(--spacing-md), var(--safe-area-left));
+    padding-right: max(var(--spacing-md), var(--safe-area-right));
     gap: 0.5rem;
   }
 }

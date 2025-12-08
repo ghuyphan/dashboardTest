@@ -12,52 +12,41 @@
   overflow: hidden;
 }
 
-.page-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-xs);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
 
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  @media (max-width: 480px) {
-    padding: var(--spacing-sm);
-  }
-}
 
 /* --- Dashboard Grid --- */
 .dashboard-grid {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  
+  padding-bottom: 0;
+
   /* UPDATED: Grow to fill remaining page height */
   flex: 1;
-  min-height: 0; 
+  min-height: 0;
 
   .grid-item {
     /* UPDATED: Grow to fill grid container */
     flex: 1;
     display: flex;
     flex-direction: column;
-    
+
     /* Keep reasonable min-height for smaller screens */
-    min-height: 400px; 
-    
+    min-height: 400px;
+
     /* Ensure it takes available height */
-    height: 100%; 
+    height: 100%;
   }
 }
 
 /* Helper Classes */
-.text-primary { color: var(--teal-blue); }
-.text-success { color: var(--color-success); }
+.text-primary {
+  color: var(--teal-blue);
+}
+
+.text-success {
+  color: var(--color-success);
+}
 
 /* Header Button Style */
 .btn-icon-text {

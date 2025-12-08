@@ -149,7 +149,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
         axisPointer: { type: 'shadow' },
         confine: true, // Added to prevent cropping
       },
-      grid: { left: '3%', right: '4%', top: '10%', containLabel: true },
+      grid: { left: '3%', right: '4%', top: '10%', bottom: '15%', containLabel: true },
       xAxis: {
         type: 'category',
         data: names,
@@ -165,7 +165,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
       yAxis: {
         type: 'value',
         splitLine: {
-          lineStyle: { type: 'dashed', color: this.palette.gray200 },
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
         axisLabel: { color: this.palette.textSecondary },
       },

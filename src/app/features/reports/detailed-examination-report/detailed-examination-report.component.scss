@@ -12,24 +12,7 @@
   overflow: hidden;
 }
 
-.page-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-xs);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
 
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  @media (max-width: 480px) {
-    padding: var(--spacing-sm);
-  }
-}
 
 /* --- Widget Section --- */
 .widget-section {
@@ -53,7 +36,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
+
   flex: 1;
   min-height: 0;
 
@@ -64,7 +47,10 @@
   @media (max-width: 992px) {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
+    padding-bottom: var(--spacing-lg);
   }
+
+  @media (max-width: 480px) {}
 
   .grid-item {
     min-height: 450px;

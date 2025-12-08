@@ -222,7 +222,7 @@ export abstract class BaseClsReportComponent {
                 textStyle: { color: this.palette.textPrimary },
                 confine: true,
             },
-            grid: { left: '3%', right: '4%', bottom: '5%', top: '12%', containLabel: true },
+            grid: { left: '3%', right: '4%', bottom: '12%', top: '12%', containLabel: true },
         };
 
         const sortedDates = Array.from(dateMap.keys()).sort();
@@ -234,7 +234,7 @@ export abstract class BaseClsReportComponent {
             ...commonOptions,
             legend: { show: false },
             xAxis: { type: 'category', boundaryGap: false, data: dateLabels, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: this.palette.textPrimary } },
-            yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } },
+            yAxis: { type: 'value', splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } } },
             series: [{
                 name: 'Thực hiện Khám', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, data: examSeriesData,
                 itemStyle: { color: this.palette.primary },
@@ -246,7 +246,7 @@ export abstract class BaseClsReportComponent {
             ...commonOptions,
             legend: { show: false },
             xAxis: { type: 'category', boundaryGap: false, data: dateLabels, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: this.palette.textPrimary } },
-            yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } },
+            yAxis: { type: 'value', splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } } },
             series: [{
                 name: 'Thực hiện CLS', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, data: clsSeriesData,
                 itemStyle: { color: this.palette.chart6 }, lineStyle: { width: 3 },
@@ -257,8 +257,8 @@ export abstract class BaseClsReportComponent {
         const roomData = Array.from(roomMap.entries()).sort((a, b) => a[1] - b[1]);
         this.roomChartOptions = {
             ...commonOptions,
-            grid: { left: '3%', right: '8%', bottom: '3%', top: '5%', containLabel: true },
-            xAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed', color: this.palette.gray200 } } },
+            grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
+            xAxis: { type: 'value', splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } } },
             yAxis: { type: 'category', data: roomData.map((d) => d[0]), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { width: 140, overflow: 'truncate', color: this.palette.textPrimary } },
             series: [{ name: 'Số Lượng', type: 'bar', barWidth: '60%', data: roomData.map((d) => d[1]), itemStyle: { color: this.palette.secondary, borderRadius: [0, 4, 4, 0] }, label: { show: true, position: 'right', color: this.palette.textSecondary } }],
         };
@@ -270,7 +270,7 @@ export abstract class BaseClsReportComponent {
             backgroundColor: 'transparent',
             color: donutColors,
             tooltip: { trigger: 'item', backgroundColor: this.palette.bgCard, borderColor: this.palette.gray200, textStyle: { color: this.palette.textPrimary }, confine: true },
-            legend: { type: 'scroll', orient: 'horizontal', bottom: 0, left: 'center', textStyle: { color: this.palette.textSecondary } },
+            legend: { type: 'scroll', orient: 'horizontal', bottom: 0, left: 'center', textStyle: { color: this.palette.textSecondary }, itemWidth: 25 },
             series: [{
                 name: 'Nhóm Dịch Vụ', type: 'pie', radius: ['45%', '75%'], center: ['50%', '45%'], avoidLabelOverlap: true,
                 itemStyle: { borderRadius: 5, borderColor: this.palette.bgCard, borderWidth: 2 },

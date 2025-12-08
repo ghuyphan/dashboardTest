@@ -36,8 +36,8 @@
 
   /* Mobile Optimization - Matching Header Padding */
   @media (max-width: 768px) {
-    /* Exact match to Header's: padding: 0.5rem 0.75rem */
-    padding: 0.5rem 0.75rem;
+    /* Exact match to Header's: padding: 0.5rem 1rem */
+    padding: 0.5rem var(--spacing-md);
     gap: 0.5rem;
   }
 }
