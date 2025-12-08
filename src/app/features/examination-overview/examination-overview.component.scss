@@ -10,16 +10,12 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* Scrolling handled by .page-content */
   overflow: hidden;
 }
 
-/* .page-container uses global styles from styles.scss */
-
-
-
 /* --- Widget Section --- */
 .widget-section {
+  padding-bottom: var(--spacing-md);
   flex-shrink: 0;
 }
 
@@ -45,46 +41,16 @@
 /* --- Dashboard Grid (4 Columns Base) --- */
 .dashboard-grid {
   display: grid;
-  /* FIX: Use minmax(0, 1fr) to allow charts to shrink */
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: min-content;
   gap: var(--spacing-lg);
-  /* padding managed by global .page-content */
-  flex: 1;
-  min-height: 0;
 
   @media (max-width: 1400px) {
-    /* FIX: Use minmax(0, 1fr) here too */
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Tablets Portrait / Mobile: Switch to 1 column stack */
   @media (max-width: 992px) {
-    /* FIX: Use minmax(0, 1fr) for single column to prevent blowout */
     grid-template-columns: minmax(0, 1fr);
     gap: var(--spacing-md);
-  }
-
-  .grid-item {
-    display: flex;
-    flex-direction: column;
-
-    /* Dynamic Heights for responsiveness */
-    min-height: 450px;
-
-    @media (max-width: 1400px) {
-      min-height: 400px;
-    }
-
-    @media (max-width: 768px) {
-      min-height: 350px;
-      /* Compact height for tablets */
-    }
-
-    @media (max-width: 480px) {
-      min-height: 300px;
-      /* Even more compact for phones */
-    }
   }
 }
 
@@ -113,10 +79,43 @@
   }
 }
 
+/* Component Sizing */
+app-chart-card,
+app-table-card {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    min-height: 350px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 300px;
+  }
+}
+
+/* Helper Classes */
 .text-teal {
   color: var(--teal-blue);
 }
 
 .text-success {
+  color: var(--color-success);
+}
+
+.icon-info {
+  color: var(--color-info);
+}
+
+.icon-danger {
+  color: var(--color-danger);
+}
+
+.icon-warning {
+  color: var(--color-warning);
+}
+
+.icon-success {
   color: var(--color-success);
 }

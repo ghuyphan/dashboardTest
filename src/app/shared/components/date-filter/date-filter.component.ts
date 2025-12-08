@@ -21,6 +21,7 @@ import { DateUtils } from '../../utils/date.utils';
 export interface DateRange {
   fromDate: string;
   toDate: string;
+  rangeType?: QuickRange;
 }
 
 export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear' | 'custom';
@@ -187,7 +188,11 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   }
 
   applyFilter() {
-    this.filterSubmit.emit({ fromDate: this.fromDate(), toDate: this.toDate() });
+    this.filterSubmit.emit({
+      fromDate: this.fromDate(),
+      toDate: this.toDate(),
+      rangeType: this.activeRange()
+    });
   }
 
   private formatDate(date: Date): string {

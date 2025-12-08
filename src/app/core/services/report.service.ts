@@ -118,10 +118,11 @@ export class ReportService {
     return this.http.get<SurgeryStat[]>(this.surgeryUrl, { params });
   }
 
-  getDetailedExaminationReport(fromDate: string, toDate: string): Observable<DetailedExaminationStat[]> {
+  getDetailedExaminationReport(fromDate: string, toDate: string, filter: 'DD' | 'MM' = 'DD'): Observable<DetailedExaminationStat[]> {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
-      .set('DenNgay', toDate);
+      .set('DenNgay', toDate)
+      .set('Filter', filter);
 
     return this.http.get<DetailedExaminationStat[]>(this.detailedExamUrl, { params });
   }

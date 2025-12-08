@@ -21,7 +21,7 @@ import { DateUtils } from '../../../shared/utils/date.utils';
 import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
+import { DateFilterComponent, DateRange, QuickRange } from '../../../shared/components/date-filter/date-filter.component';
 import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
 import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
 import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
@@ -85,7 +85,9 @@ export class DetailedExaminationReportComponent implements OnInit {
   private dailyStats: DailyExaminationStat[] = [];
 
   public fromDate: string = '';
+
   public toDate: string = '';
+  public currentRangeType: QuickRange = 'thisWeek';
 
   public widgetData: WidgetData[] = [];
 
@@ -140,6 +142,7 @@ export class DetailedExaminationReportComponent implements OnInit {
   public onDateFilter(range: DateRange): void {
     this.fromDate = range.fromDate;
     this.toDate = range.toDate;
+    this.currentRangeType = range.rangeType || 'custom';
 
     // [OPTIMIZATION] Delay loading to allow UI animation (Date Filter active state) to complete smoothly
     if (this.filterTimeout) clearTimeout(this.filterTimeout);
@@ -206,9 +209,10 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.cd.markForCheck();
 
     // [OPTIMIZATION] Ensure UI renders loading state before fetching
+    const filterType = (this.currentRangeType === 'thisQuarter' || this.currentRangeType === 'thisYear') ? 'MM' : 'DD';
     setTimeout(() => {
       this.reportService
-        .getDetailedExaminationReport(this.fromDate, this.toDate)
+        .getDetailedExaminationReport(this.fromDate, this.toDate, filterType)
         .pipe(
           // NOTE: Removed finalize here because processData is now async and handles the loading state
           takeUntilDestroyed(this.destroyRef)
@@ -240,6 +244,8 @@ export class DetailedExaminationReportComponent implements OnInit {
 
   // [OPTIMIZATION] Converted to async with chunking to prevent UI freeze
   private async processData(): Promise<void> {
+    const filterType = (this.currentRangeType === 'thisQuarter' || this.currentRangeType === 'thisYear') ? 'MM' : 'DD';
+
     if (!this.dailyStats || this.dailyStats.length === 0) {
       this.initializeWidgets();
       this.rawData = [];
@@ -283,10 +289,24 @@ export class DetailedExaminationReportComponent implements OnInit {
           totalPatientsDirect += p;
 
           const dateKey = day.NGAY_KHAM ? day.NGAY_KHAM.split('T')[0] : 'N/A';
+          // If filtering by Month (MM), the API might return NGAY_KHAM as a date in that month.
+          // We want to group by what we see in the chart/table.
+          // For 'MM' mode, we might want to ensure 'dateKey' represents the month.
+          // However, if the API returns distinct rows for months, dateKey logic might need adjustment if multiple rows fall in same bucket.
+          // Assuming API returns one row per unit (day or month).
           dateMap.set(dateKey, { visits: v, patients: p });
 
-          // 2. Detailed Stats (Flattening + Aggregation)
-          const dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
+          // 2. Detailed Stats (Flattening + Aggregation) 
+          let dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
+
+          // [CUSTOM LOGIC] For Month view, show MM/yyyy
+          if (filterType === 'MM' && day.NGAY_KHAM) {
+            const d = new Date(day.NGAY_KHAM);
+            if (!isNaN(d.getTime())) {
+              dateDisplay = `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+            }
+          }
+
           const details = day.CHUYEN_KHOA_KHAM || [];
 
           for (const detail of details) {
@@ -392,13 +412,24 @@ export class DetailedExaminationReportComponent implements OnInit {
     const workloadData = new Array(sortedDates.length);
 
     sortedDates.forEach((d, index) => {
-      const dateObj = new Date(d);
-      dateLabels[index] = this.datePipe.transform(dateObj, 'dd/MM') || d;
-
       const data = dateMap.get(d)!;
       visitsData[index] = data.visits;
       patientsData[index] = data.patients; // Uses SO_NGUOI_KHAM_TONG
       workloadData[index] = parseFloat((data.visits / STANDARD_DIVISOR).toFixed(2));
+
+      // Label formatting
+      if (this.currentRangeType === 'thisQuarter' || this.currentRangeType === 'thisYear') {
+        // Expect d to be identifiable as month
+        const dateObj = new Date(d);
+        if (!isNaN(dateObj.getTime())) {
+          dateLabels[index] = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+        } else {
+          dateLabels[index] = d;
+        }
+      } else {
+        const dateObj = new Date(d);
+        dateLabels[index] = this.datePipe.transform(dateObj, 'dd/MM') || d;
+      }
     });
 
     this.trendChartOptions = {

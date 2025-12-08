@@ -1,3 +1,5 @@
+@use '../../../../styles/mixins' as m;
+
 @mixin hidden-scrollbar {
   scrollbar-width: none;
 
@@ -67,38 +69,42 @@ app-table-card {
 }
 
 /* Refresh Control */
-.refresh-control {
+/* Header Actions */
+.header-actions-container {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius-md);
+}
+
+.refresh-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.btn-icon-action {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  color: var(--text-secondary);
   transition: all 0.2s ease;
 
-  &:hover {
-    background: var(--surface-ground);
+  /* Use global mixin for consistent hover/focus/disabled states */
+  @include m.icon-btn-interactions;
+
+  i {
+    font-size: 0.875rem;
   }
 
   &.loading {
-    pointer-events: none;
+    cursor: wait;
     opacity: 0.7;
-  }
-
-  .refresh-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-
-    i {
-      font-size: 0.875rem;
-    }
-  }
-
-  .refresh-text {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
   }
 }
 

@@ -23,18 +23,17 @@
         iconClass="icon-widget-accent" [isLoading]="isLoading()" [chartOptions]="chartOptions()"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" (chartLegendSelectChanged)="onLegendChange($event)">
 
-        <div header-actions class="refresh-control" (click)="loadData()" [class.loading]="isLoading()"
-          title="Cập nhật dữ liệu mới nhất">
-
-          <div class="refresh-icon">
-            <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
-          </div>
-
+        <div header-actions class="header-actions-container">
           @if (currentDateTime()) {
           <span class="refresh-text">
             {{ currentDateTime() }}
           </span>
           }
+
+          <button class="btn-icon-action" (click)="loadData()" [disabled]="isLoading()" [class.loading]="isLoading()"
+            title="Cập nhật dữ liệu mới nhất">
+            <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
+          </button>
         </div>
 
       </app-chart-card>
