@@ -12,32 +12,14 @@
     overflow: hidden;
 }
 
-.page-content {
-    flex: 1;
-    overflow-y: auto;
-    /* padding managed by global .page-content */
-    /* padding: var(--spacing-xs); */
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
 
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-        display: none;
-    }
-
-    @media (max-width: 768px) {
-        /* padding: var(--spacing-md); */
-    }
-}
 
 /* --- Dashboard Grid --- */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
+    /* padding managed by global .page-content */
     flex: 1;
     min-height: 0;
 

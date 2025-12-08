@@ -35,7 +35,7 @@
   }
 
   @media (max-width: 480px) {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm);
   }
 }
 
@@ -51,8 +51,8 @@
   gap: var(--spacing-sm);
 
   @media (max-width: 480px) {
-    margin-bottom: var(--spacing-xs);
-    padding-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
   }
 }
 

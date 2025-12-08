@@ -572,8 +572,50 @@ table.mat-table {
 
     .mat-mdc-header-cell,
     .mat-mdc-cell {
-      padding: 0 var(--spacing-sm, 8px) !important;
-      font-size: 0.8125rem !important;
+      padding: 0 4px !important;
+      font-size: 0.75rem !important;
+    }
+
+    /* Un-sticky columns on mobile */
+    .mat-column-select,
+    .mat-column-actions {
+      position: static !important;
+      background-color: transparent !important;
+      border-right: none !important;
+      border-left: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Aggressive Header Optimization */
+    .mat-mdc-header-row {
+      height: 32px !important;
+      min-height: 32px !important;
+    }
+
+    .mat-mdc-header-cell {
+      padding: 0 4px !important;
+      font-size: 0.7rem !important;
+      /* ~11px */
+      line-height: normal;
+
+      /* Ensure sort arrow doesn't balloon the height */
+      ::ng-deep .mat-sort-header-container {
+        padding: 0 !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        justify-content: center;
+        /* Center content vertically/horizontally */
+      }
+
+      ::ng-deep .mat-sort-header-arrow {
+        margin: 0 0 0 2px !important;
+        transform: scale(0.8);
+      }
+    }
+
+    .mat-mdc-cell {
+      padding: 0 4px !important;
+      font-size: 0.75rem !important;
     }
 
     .mat-column-select {
@@ -581,9 +623,10 @@ table.mat-table {
       max-width: 40px !important;
     }
 
-    /* REMOVED ON MOBILE */
     .mat-column-actions {
-      display: none !important;
+      display: table-cell !important;
+      width: 48px !important;
+      max-width: 48px !important;
     }
   }
 }

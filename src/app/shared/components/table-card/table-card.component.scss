@@ -33,7 +33,7 @@
   }
 
   @media (max-width: 480px) {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm);
   }
 
   &.has-pagination {
@@ -46,25 +46,40 @@
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
   border-bottom: 1px solid var(--border-color);
-  /* Semantic Variable */
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-sm);
+
+  @media (max-width: 480px) {
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+  }
+}
+
+.card-title-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: var(--spacing-sm);
 }
 
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
-  /* Semantic Variable */
   margin: 0;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   i {
     font-size: 1rem;
+    flex-shrink: 0;
 
     &.icon-info {
       color: var(--color-info);
@@ -86,12 +101,32 @@
       color: var(--teal-blue);
     }
   }
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.9375rem;
+    gap: var(--spacing-xs);
+
+    i {
+      font-size: 0.875rem;
+    }
+  }
 }
 
 .header-controls {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-shrink: 0;
+  margin-left: var(--spacing-sm);
+
+  @media (max-width: 480px) {
+    margin-left: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
 }
 
 .btn-icon-action {
@@ -105,7 +140,7 @@
   justify-content: center;
   cursor: pointer;
 
-  /* [UPDATED] Use global mixin for consistent hover/focus/disabled states */
+  /* Use global mixin for consistent hover/focus/disabled states */
   @include m.icon-btn-interactions;
 
   i {
@@ -131,12 +166,48 @@
   /* Override reusable table host to fit perfectly inside the card body */
   ::ng-deep app-reusable-table {
     height: 100%;
+    display: flex;
+    flex-direction: column;
 
     .reusable-table-wrapper {
       border: none;
       box-shadow: none;
       border-radius: 0;
       background: transparent;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-container {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Force table to take full height to push empty state to center if needed, 
+       but normally we just want the container to fill. 
+       If we want vertical centering of 'empty state', we need the table to fill 
+       and the no-data-row to fill. */
+    table.mat-table {
+      flex: 1;
+      min-height: 100%;
+    }
+
+    /* Ensure empty state centering */
+    .mat-no-data-row td {
+      height: 100%;
+      vertical-align: middle;
+      border-bottom: none;
+    }
+
+    .no-data-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
   }
 }

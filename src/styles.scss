@@ -266,11 +266,7 @@ $dark-tokens: (
   @media (max-width: 480px) {
     --font-size-base: 0.875rem;
     --header-height: 52px;
-
-    /* [FIX] Ensure scrollable area has enough bottom padding to clear the footer */
-    .page-content {
-      padding-bottom: 80px !important;
-    }
+    /* padding-bottom for .page-content is now handled globally */
   }
 
   @media (max-width: 360px) {
@@ -1020,6 +1016,8 @@ body>ul.submenu.open {
 
   /* Default Desktop Spacing */
   padding: var(--spacing-md);
+  // padding-bottom: var(--spacing-xl);
+  /* Increased bottom padding */
   gap: var(--spacing-lg);
 
   /* Hide Scrollbar */
@@ -1032,10 +1030,14 @@ body>ul.submenu.open {
   /* Responsive Spacing */
   @media (max-width: 992px) {
     padding: var(--spacing-sm) var(--spacing-md);
+    // padding-bottom: var(--spacing-lg);
     gap: var(--spacing-md);
   }
 
   @media (max-width: 480px) {
     padding: var(--spacing-xs) var(--spacing-sm);
+    // padding-bottom: var(--spacing-lg);
+    /* Adequate breathing room for mobile */
+    /* Extra space for mobile bottom nav */
   }
 }
