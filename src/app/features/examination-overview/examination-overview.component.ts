@@ -365,6 +365,7 @@ export class ExaminationOverviewComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Prevent tooltip cropping
+        formatter: (params: any) => `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`,
       },
       legend: {
         bottom: 0,
@@ -394,7 +395,6 @@ export class ExaminationOverviewComponent implements OnInit {
           emphasis: {
             label: {
               show: true,
-              fontWeight: 'bold',
             }
           },
           data: data,

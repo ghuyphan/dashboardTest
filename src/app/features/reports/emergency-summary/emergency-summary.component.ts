@@ -621,7 +621,7 @@ export class EmergencySummaryComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         formatter: (params: any) => {
-          return `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)`;
+          return `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`;
         },
       },
       legend: {

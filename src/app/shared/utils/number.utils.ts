@@ -19,6 +19,19 @@ export class NumberUtils {
     }
 
     /**
+     * Formats a number with decimal places to Vietnamese format (e.g. 1.160,09)
+     */
+    public static formatDecimal(value: number, decimals: number = 2): string {
+        if (value === null || value === undefined || isNaN(value)) {
+            return '0';
+        }
+        return new Intl.NumberFormat(this.LOCALE, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+        }).format(value);
+    }
+
+    /**
      * Formats a number as a percentage (e.g. 50.5%)
      */
     public static formatPercent(value: number): string {

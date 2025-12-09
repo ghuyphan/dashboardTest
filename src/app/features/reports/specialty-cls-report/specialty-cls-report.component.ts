@@ -424,7 +424,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Added to prevent cropping
         formatter: (params: any) =>
-          `${params.name}: <b>${NumberUtils.format(
+          `${params.marker} ${params.name}: <b>${NumberUtils.format(
             params.value
           )}</b> (${params.percent}%)`,
       },

@@ -269,13 +269,13 @@ export abstract class BaseClsReportComponent {
         this.groupChartOptions = {
             backgroundColor: 'transparent',
             color: donutColors,
-            tooltip: { trigger: 'item', backgroundColor: this.palette.bgCard, borderColor: this.palette.gray200, textStyle: { color: this.palette.textPrimary }, confine: true },
+            tooltip: { trigger: 'item', backgroundColor: this.palette.bgCard, borderColor: this.palette.gray200, textStyle: { color: this.palette.textPrimary }, confine: true, formatter: (params: any) => `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)` },
             legend: { type: 'scroll', orient: 'horizontal', bottom: 0, left: 'center', textStyle: { color: this.palette.textSecondary }, itemWidth: 25 },
             series: [{
                 name: 'Nhóm Dịch Vụ', type: 'pie', radius: ['45%', '75%'], center: ['50%', '45%'], avoidLabelOverlap: true,
                 itemStyle: { borderRadius: 5, borderColor: this.palette.bgCard, borderWidth: 2 },
                 label: { show: true, position: 'outer', color: this.palette.textPrimary, formatter: (params: any) => `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)` },
-                emphasis: { label: { show: true, fontWeight: 'bold' } },
+                emphasis: { label: { show: true } },
                 data: groupData,
             }],
         };

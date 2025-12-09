@@ -294,7 +294,13 @@ export class DetailedExaminationReportComponent implements OnInit {
           // For 'MM' mode, we might want to ensure 'dateKey' represents the month.
           // However, if the API returns distinct rows for months, dateKey logic might need adjustment if multiple rows fall in same bucket.
           // Assuming API returns one row per unit (day or month).
-          dateMap.set(dateKey, { visits: v, patients: p });
+          const existing = dateMap.get(dateKey);
+          if (existing) {
+            existing.visits += v;
+            existing.patients += p;
+          } else {
+            dateMap.set(dateKey, { visits: v, patients: p });
+          }
 
           // 2. Detailed Stats (Flattening + Aggregation) 
           let dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
@@ -347,7 +353,7 @@ export class DetailedExaminationReportComponent implements OnInit {
     // Assign processed data
     this.rawData = tempRawData;
 
-    const avgMetricValue = (totalVisits / STANDARD_DIVISOR).toFixed(2);
+    const avgMetricValue = NumberUtils.formatDecimal(totalVisits / STANDARD_DIVISOR, 2);
     const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
 
     this.widgetData = [
@@ -500,7 +506,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         formatter: (params: any) => {
-          return `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)`;
+          return `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`;
         }
       },
       legend: {

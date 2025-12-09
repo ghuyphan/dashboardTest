@@ -611,6 +611,30 @@ export class ChartCardComponent implements AfterViewInit {
 
     const formatFn = (val: number) => NumberUtils.format(val);
 
+    // Detect if this is a pie chart
+    const isPieChart = this.detectChartType(option) === 'pie';
+
+    // For pie charts, apply a consistent tooltip formatter at the top level
+    if (isPieChart) {
+      option.tooltip = option.tooltip || {};
+      // Only apply if no custom formatter is already set
+      if (!option.tooltip.formatter) {
+        option.tooltip.formatter = (params: any) => {
+          // Handle both single item and array (for series with multiple data points)
+          const item = Array.isArray(params) ? params[0] : params;
+          if (!item) return '';
+
+          // params.marker gives us the colored circle/marker
+          const marker = item.marker || '';
+          const name = item.name || '';
+          const value = typeof item.value === 'number' ? formatFn(item.value) : item.value;
+          const percent = item.percent !== undefined ? item.percent.toFixed(1) : '0';
+
+          return `${marker} ${name}: <b>${value}</b> (${percent}%)`;
+        };
+      }
+    }
+
     if (option.yAxis) {
       const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis];
       yAxes.forEach((axis: any) => {
@@ -628,9 +652,12 @@ export class ChartCardComponent implements AfterViewInit {
       seriesList.forEach((series: any) => {
         if (!series) return;
 
-        series.tooltip = series.tooltip || {};
-        if (!series.tooltip.valueFormatter) {
-          series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
+        // For non-pie charts, apply valueFormatter as before
+        if (!isPieChart) {
+          series.tooltip = series.tooltip || {};
+          if (!series.tooltip.valueFormatter) {
+            series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
+          }
         }
 
         if (series.label?.show && !series.label.formatter) {

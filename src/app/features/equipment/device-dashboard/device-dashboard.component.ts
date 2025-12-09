@@ -447,6 +447,7 @@ export class DeviceDashboardComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         borderColor: this.palette.gray200,
         confine: true, // Avoid tooltip cut-off
+        formatter: (params: any) => `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`,
       },
       legend: {
         type: 'scroll', // Prevent overlap
