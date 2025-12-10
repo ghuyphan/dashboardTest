@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ChangeDetectionStrategy, effect, DestroyRef, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, ChangeDetectionStrategy, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -34,24 +34,21 @@ interface ChangePasswordForm {
   styleUrl: './settings.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private modalService = inject(ModalService);
-  public themeService = inject(ThemeService); // [UPDATED] Public for template access
+  public themeService = inject(ThemeService);
   public versionService = inject(VersionService);
   private destroyRef = inject(DestroyRef);
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);
 
-  public appVersion = this.versionService.appVersion;
-  public isDevMode = this.versionService.isDevMode;
-
   // Easter Egg State
   private clickCount = 0;
-  private clickTimer: any = null;
+  private clickTimer: ReturnType<typeof setTimeout> | null = null;
 
   public form: FormGroup<ChangePasswordForm>;
 
@@ -127,7 +124,7 @@ export class SettingsComponent implements OnInit {
     }
   }
 
-  // [NEW] Theme Switcher Logic
+  // Theme Switcher Logic
   setTheme(isDark: boolean): void {
     const current = this.themeService.isDarkTheme();
     if (current !== isDark) {
@@ -156,10 +153,9 @@ export class SettingsComponent implements OnInit {
 
   private triggerEasterEgg(): void {
     // Toggle the global state via signal
-    // The Service effect will handle LocalStorage and Body Class updates
     this.versionService.isDevMode.update((v: boolean) => !v);
 
-    if (this.isDevMode()) {
+    if (this.versionService.isDevMode()) {
       this.toastService.showSuccess('Đã bật tùy chọn nhà phát triển');
     } else {
       this.toastService.showInfo('Đã tắt tùy chọn nhà phát triển');
@@ -274,46 +270,5 @@ export class SettingsComponent implements OnInit {
           this.toastService.showError(msg);
         }
       });
-
-  }
-
-  // Easter Egg State
-  private clickCount = 0;
-  private clickTimer: any = null;
-
-  onVersionClick(): void {
-    this.clickCount++;
-
-    if (this.clickTimer) {
-      clearTimeout(this.clickTimer);
-      this.clickTimer = null;
-    }
-
-    if (this.clickCount >= 5) {
-      this.triggerEasterEgg();
-      this.clickCount = 0;
-    } else {
-      this.clickTimer = setTimeout(() => {
-        this.clickCount = 0;
-        this.clickTimer = null;
-      }, 2000);
-    }
-  }
-
-  private triggerEasterEgg(): void {
-    // Toggle the global state via signal
-    this.versionService.isDevMode.update((v: boolean) => !v);
-
-    if (this.versionService.isDevMode()) {
-      this.toastService.showSuccess('Đã bật tùy chọn nhà phát triển');
-    } else {
-      this.toastService.showInfo('Đã tắt tùy chọn nhà phát triển');
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (this.clickTimer) {
-      clearTimeout(this.clickTimer);
-    }
   }
 }

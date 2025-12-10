@@ -51,16 +51,7 @@
 
   @media (max-width: 768px) {
     flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE/Edge */
-
-    &::-webkit-scrollbar {
-      display: none;
-      /* Chrome/Safari/Webkit */
-    }
+    gap: 0.5rem;
   }
 }
 
