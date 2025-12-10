@@ -45,17 +45,16 @@
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
-
-  @media (max-width: 768px) {
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-md);
-  }
-
   box-shadow: var(--box-shadow-md);
   display: flex;
   flex-direction: column;
   position: relative;
   border: 1px solid transparent;
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+  }
 
   /* Specific card adjustments for grid */
   &.general-card {

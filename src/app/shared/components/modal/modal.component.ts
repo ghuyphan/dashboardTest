@@ -62,10 +62,10 @@ export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
     // [NEW] Cleanup: Remove popstate listener
     if (this.historyStatePushed) {
       window.removeEventListener('popstate', this.popstateHandler);
-      // If modal was closed by other means (not back button), pop the history state we added
-      // Check if the current state is our modal state
+      // If modal was closed by other means (not back button), clean up the history state
+      // Use replaceState instead of history.back() to avoid interfering with router navigation
       if (history.state?.modal) {
-        history.back();
+        history.replaceState(null, '');
       }
     }
   }

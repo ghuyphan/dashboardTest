@@ -8,7 +8,8 @@ import {
   computed,
   ChangeDetectionStrategy,
   ViewChild,
-  ElementRef
+  ElementRef,
+  DestroyRef
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
@@ -64,6 +65,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private location = inject(Location);
   private footerService = inject(FooterActionService);
   private modalService = inject(ModalService);
+  private destroyRef = inject(DestroyRef);
 
   // --- State Signals ---
   public sidebarOpen = signal(false);
@@ -208,7 +210,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         confirmText: 'Đăng xuất',
         cancelText: 'Hủy bỏ'
       }
-    }).subscribe((confirmed) => {
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((confirmed) => {
       if (confirmed) {
         this.authService.logout();
       }

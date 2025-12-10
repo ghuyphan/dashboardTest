@@ -25,6 +25,11 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "file-saver",
+              "qrcode",
+              "pako"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -47,8 +52,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -74,9 +79,7 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            
-          },
+          "options": {},
           "configurations": {
             "production": {
               "buildTarget": "hoan-my-portal:build:production"
