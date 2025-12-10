@@ -20,7 +20,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
-import type { EChartsType, EChartsCoreOption } from 'echarts/core';
+import type { EChartsType, EChartsCoreOption, ECElementEvent } from 'echarts/core';
 import { ThemeService } from '../../../core/services/theme.service';
 import { NumberUtils } from '../../utils/number.utils';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
@@ -145,9 +145,13 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly VERY_LARGE_DATA_THRESHOLD = 100;
   private readonly EXTREME_DATA_THRESHOLD = 500;
 
+  // Layout thresholds
+  private readonly COMPACT_BREAKPOINT = 768;
+
   private lastWidth = 0;
   private lastHeight = 0;
   private isDestroyed = false;
+  private isCompact = false; // Tracks if container is in compact mode
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -342,21 +346,23 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.chartInstance) return;
 
     // Click handler
-    this.chartInstance.on('click', (params: any) => {
-      this.ngZone.run(() => this.chartClick.emit(params));
+    this.chartInstance.on('click', (params: unknown) => {
+      this.ngZone.run(() => this.chartClick.emit(params as ECElementEvent));
     });
 
     // Legend selection handler
-    this.chartInstance.on('legendselectchanged', (params: any) => {
-      this.ngZone.run(() => this.chartLegendSelectChanged.emit(params));
+    this.chartInstance.on('legendselectchanged', (params: unknown) => {
+      this.ngZone.run(() => this.chartLegendSelectChanged.emit(params as ECElementEvent));
     });
 
     // DataZoom handler - update visible points indicator
-    this.chartInstance.on('datazoom', (params: any) => {
+    this.chartInstance.on('datazoom', (params: unknown) => {
+      // DataZoom event params are not exactly ECElementEvent, so we cast to a custom shape or keep generic access safely
+      const p = params as { start?: number; end?: number; batch?: Array<{ start: number; end: number }> };
       const total = this.totalDataPoints();
       if (total > 0) {
-        const start = params.start ?? params.batch?.[0]?.start ?? 0;
-        const end = params.end ?? params.batch?.[0]?.end ?? 100;
+        const start = p.start ?? p.batch?.[0]?.start ?? 0;
+        const end = p.end ?? p.batch?.[0]?.end ?? 100;
         const visible = Math.round((end - start) / 100 * total);
         this.ngZone.run(() => this.visibleDataPoints.set(visible));
       }
@@ -364,8 +370,9 @@ export class ChartCardComponent implements AfterViewInit {
 
     // Touch-specific: close tooltip on outside tap (mobile)
     if (this.isMobile()) {
-      this.chartInstance.getZr().on('click', (params: any) => {
-        if (!params.target) {
+      this.chartInstance.getZr().on('click', (params: unknown) => {
+        const p = params as { target?: unknown };
+        if (!p.target) {
           this.chartInstance?.dispatchAction({ type: 'hideTip' });
         }
       });
@@ -384,10 +391,11 @@ export class ChartCardComponent implements AfterViewInit {
   /**
    * Detect chart type from options
    */
-  private detectChartType(option: any): 'cartesian' | 'horizontal-bar' | 'pie' {
-    if (!option?.series) return 'cartesian';
+  private detectChartType(option: EChartsCoreOption): 'cartesian' | 'horizontal-bar' | 'pie' {
+    const opt = option as any; // Cast for easier property access since EChartsCoreOption is strict
+    if (!opt?.series) return 'cartesian';
 
-    const series = Array.isArray(option.series) ? option.series : [option.series];
+    const series = Array.isArray(opt.series) ? opt.series : [opt.series];
 
     // Check for pie/doughnut
     if (series.some((s: any) => s?.type === 'pie')) {
@@ -395,7 +403,7 @@ export class ChartCardComponent implements AfterViewInit {
     }
 
     // Check for horizontal bar (yAxis is category)
-    const yAxis = Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis;
+    const yAxis = Array.isArray(opt.yAxis) ? opt.yAxis[0] : opt.yAxis;
     if (yAxis?.type === 'category' && series.some((s: any) => s?.type === 'bar')) {
       return 'horizontal-bar';
     }
@@ -408,9 +416,9 @@ export class ChartCardComponent implements AfterViewInit {
    * 1. Legend always Top-Center
    * 2. Grid top margin sufficient to avoid overlap
    */
-  private applyStrictLayout(option: any): any {
+  private applyStrictLayout(option: EChartsCoreOption): EChartsCoreOption {
     if (!option) return option;
-    const newOption = { ...option };
+    const newOption = { ...option } as any; // Working with a clone, cast to any for layout manipulation logic
 
     const chartType = this.detectChartType(option);
     const mobile = this.isMobile();
@@ -419,18 +427,19 @@ export class ChartCardComponent implements AfterViewInit {
     // 1. Enforce Legend Position - different for pie vs other charts
     if (newOption.legend !== false) {
       if (chartType === 'pie') {
-        // PIE CHART: Vertical legend on the right side (best practice)
+        const isCompact = mobile || this.isCompact;
+        // PIE CHART: Vertical legend on the right side if space allows, otherwise bottom
         newOption.legend = {
           ...(newOption.legend || {}),
           type: 'scroll',
-          orient: mobile ? 'horizontal' : 'vertical',
-          // Position: right side for desktop, bottom for mobile
-          top: mobile ? 'auto' : 'middle',
-          bottom: mobile ? 10 : undefined,
-          left: mobile ? 'center' : undefined,
-          right: mobile ? undefined : 20,
-          itemGap: mobile ? 10 : 14,
-          padding: mobile ? [5, 10] : [10, 0],
+          orient: isCompact ? 'horizontal' : 'vertical',
+          // Position: right side for desktop/wide, bottom for mobile/compact
+          top: isCompact ? 'auto' : 'middle',
+          bottom: isCompact ? 10 : undefined,
+          left: isCompact ? 'center' : undefined,
+          right: isCompact ? undefined : 20,
+          itemGap: isCompact ? 10 : 14,
+          padding: isCompact ? [5, 10] : [10, 0],
           textStyle: {
             ...(newOption.legend?.textStyle || {}),
             fontSize: mobile ? 10 : 12,
@@ -522,13 +531,14 @@ export class ChartCardComponent implements AfterViewInit {
 
     // 4. For Pie charts: position left with legend on right
     if (chartType === 'pie' && newOption.series) {
+      const isCompact = mobile || this.isCompact;
       const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
       newOption.series = seriesList.map((s: any) => {
         if (s.type === 'pie') {
-          // Desktop: Pie on left (35%), leaving room for legend on right
-          // Mobile: Pie centered at top, legend at bottom
-          const baseCenter = mobile ? ['50%', '45%'] : ['35%', '50%'];
-          const defaultRadius: [string, string] = mobile ? ['25%', '50%'] : ['35%', '60%'];
+          // Desktop/Wide: Pie on left (35%), leaving room for legend on right
+          // Mobile/Compact: Pie centered at top, legend at bottom
+          const baseCenter = isCompact ? ['50%', '45%'] : ['35%', '50%'];
+          const defaultRadius: [string, string] = isCompact ? (mobile ? ['25%', '50%'] : ['35%', '60%']) : ['35%', '60%'];
 
           let finalRadius = s.radius || defaultRadius;
 
@@ -568,7 +578,7 @@ export class ChartCardComponent implements AfterViewInit {
   /**
    * Apply mobile-specific optimizations
    */
-  private applyMobileOptimizations(option: any): any {
+  private applyMobileOptimizations(option: EChartsCoreOption): EChartsCoreOption {
     if (!option) return option;
 
     const mobile = this.isMobile();
@@ -576,7 +586,7 @@ export class ChartCardComponent implements AfterViewInit {
 
     if (!mobile && !tablet) return option;
 
-    const newOption = { ...option };
+    const newOption = { ...option } as any;
 
     // 1. Optimize tooltip for touch - centered and contained
     newOption.tooltip = {
@@ -609,9 +619,9 @@ export class ChartCardComponent implements AfterViewInit {
 
   private getMobileTooltipPosition(
     point: number[],
-    _params: any,
+    _params: unknown,
     _dom: HTMLElement,
-    _rect: any,
+    _rect: unknown,
     size: { contentSize: number[]; viewSize: number[] }
   ): number[] {
     const [contentWidth] = size.contentSize;
@@ -628,8 +638,9 @@ export class ChartCardComponent implements AfterViewInit {
   /**
    * Make options responsive using ECharts media query system
    */
-  private makeOptionsResponsive(options: any): any {
-    if (options.baseOption || options.media) {
+  private makeOptionsResponsive(options: EChartsCoreOption): EChartsCoreOption {
+    const opt = options as any;
+    if (opt.baseOption || opt.media) {
       return options; // Avoid nesting if already formatted
     }
 
@@ -656,9 +667,10 @@ export class ChartCardComponent implements AfterViewInit {
     return val;
   }
 
-  private applyAutoFormatting(option: any): any {
+  private applyAutoFormatting(option: EChartsCoreOption): EChartsCoreOption {
     if (!option) return option;
 
+    const opt = option as any;
     const formatFn = (val: number) => NumberUtils.format(val);
 
     // Detect if this is a pie chart
@@ -666,10 +678,10 @@ export class ChartCardComponent implements AfterViewInit {
 
     // For pie charts, apply a consistent tooltip formatter at the top level
     if (isPieChart) {
-      option.tooltip = option.tooltip || {};
+      opt.tooltip = opt.tooltip || {};
       // Only apply if no custom formatter is already set
-      if (!option.tooltip.formatter) {
-        option.tooltip.formatter = (params: any) => {
+      if (!opt.tooltip.formatter) {
+        opt.tooltip.formatter = (params: any) => {
           // Handle both single item and array (for series with multiple data points)
           const item = Array.isArray(params) ? params[0] : params;
           if (!item) return '';
@@ -685,8 +697,8 @@ export class ChartCardComponent implements AfterViewInit {
       }
     }
 
-    if (option.yAxis) {
-      const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis];
+    if (opt.yAxis) {
+      const yAxes = Array.isArray(opt.yAxis) ? opt.yAxis : [opt.yAxis];
       yAxes.forEach((axis: any) => {
         if (axis.type === 'value') {
           axis.axisLabel = axis.axisLabel || {};
@@ -697,8 +709,8 @@ export class ChartCardComponent implements AfterViewInit {
       });
     }
 
-    if (option.series) {
-      const seriesList = Array.isArray(option.series) ? option.series : [option.series];
+    if (opt.series) {
+      const seriesList = Array.isArray(opt.series) ? opt.series : [opt.series];
       seriesList.forEach((series: any) => {
         if (!series) return;
 
@@ -722,17 +734,20 @@ export class ChartCardComponent implements AfterViewInit {
     return option;
   }
 
-  private optimizeForLargeData(option: any): any {
-    if (!option || !option.series) return option;
+  private optimizeForLargeData(option: EChartsCoreOption): EChartsCoreOption {
+    if (!option) return option;
+    const opt = option as any; // Cast for internal access
+
+    if (!opt.series) return option;
 
     // 1. Detect data length
     let dataLength = 0;
-    if (option.xAxis && Array.isArray(option.xAxis.data)) {
-      dataLength = option.xAxis.data.length;
-    } else if (Array.isArray(option.xAxis)) {
-      dataLength = option.xAxis[0]?.data?.length || 0;
-    } else if (Array.isArray(option.series)) {
-      dataLength = option.series[0]?.data?.length || 0;
+    if (opt.xAxis && Array.isArray(opt.xAxis.data)) {
+      dataLength = opt.xAxis.data.length;
+    } else if (Array.isArray(opt.xAxis)) {
+      dataLength = opt.xAxis[0]?.data?.length || 0;
+    } else if (Array.isArray(opt.series)) {
+      dataLength = opt.series[0]?.data?.length || 0;
     }
 
     // Update signals for UI
@@ -746,7 +761,7 @@ export class ChartCardComponent implements AfterViewInit {
     }
 
     // 3. Apply large data modifications
-    const newOption = { ...option };
+    const newOption = { ...option } as any;
     const mobile = this.isMobile();
     const tablet = this.isTablet();
 
@@ -761,7 +776,7 @@ export class ChartCardComponent implements AfterViewInit {
     this.visibleDataPoints.set(Math.round((zoomEnd - zoomStart) / 100 * dataLength));
 
     // A. DataZoom configuration
-    newOption.dataZoom = [
+    const zoomConfig = [
       {
         type: 'slider',
         show: true,
@@ -788,53 +803,66 @@ export class ChartCardComponent implements AfterViewInit {
         xAxisIndex: [0],
         start: zoomStart,
         end: zoomEnd,
-        zoomOnMouseWheel: !mobile && !tablet,
-        moveOnMouseWheel: !mobile && !tablet,
+        zoomOnMouseWheel: true,
+        moveOnMouseWheel: true,
         moveOnMouseMove: false,
         preventDefaultMouseMove: mobile,
         zoomLock: mobile // Prevent pinch conflicts on mobile
       }
     ];
 
-    // B. Adjust grid for slider - use percentage values for better scaling
-    const chartType = this.detectChartType(newOption);
-    const hasLegendBottom = newOption.legend?.bottom !== undefined;
+    (newOption as any).dataZoom = zoomConfig;
 
-    // Apply consistent percentage-based bottom spacing for DataZoom (optimized tighter)
-    if (chartType !== 'pie') {
-      newOption.grid = {
-        ...newOption.grid,
-        bottom: mobile ? 70 : 60, // Fixed space for slider
-        containLabel: true
+    // B. Grid adjustment to make room for dataZoom
+    if ((newOption as any).grid) {
+      // safer access
+      const grid = (newOption as any).grid;
+      (newOption as any).grid = {
+        ...grid,
+        bottom: mobile ? 60 : 40 // More space at bottom
       };
+    } else {
+      (newOption as any).grid = {
+        bottom: mobile ? 60 : 40
+      }
     }
 
-    // C. Optimize X-Axis
-    if (newOption.xAxis) {
-      const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
-      newOption.xAxis = xAxes.map((axis: any) => ({
+    // C. X-Axis specific tweaks for large data (if cartesian)
+    if ((newOption as any).xAxis) {
+      const xAxes = Array.isArray((newOption as any).xAxis) ? (newOption as any).xAxis : [(newOption as any).xAxis];
+      (newOption as any).xAxis = xAxes.map((axis: any) => ({
         ...axis,
         axisLabel: {
           ...axis.axisLabel,
-          interval: 'auto',
-          hideOverlap: true,
-          width: mobile ? 60 : 100
+          interval: 'auto', // Force auto-hide to prevent overlap
+          hideOverlap: true
         }
       }));
     }
 
-    // D. Hide labels for very large data
+    // D. Hide labels for very large data (original D)
     if (dataLength > this.VERY_LARGE_DATA_THRESHOLD) {
-      const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
+      const seriesList = Array.isArray((newOption as any).series) ? (newOption as any).series : [(newOption as any).series];
       newOption.series = seriesList.map((s: any) => ({
         ...s,
         label: { ...(s?.label || {}), show: false }
       }));
     }
 
-    // E. Extreme data optimizations (500+ points)
+    // D. Series optimization (downsampling if extremely large) (new D)
+    if ((newOption as any).series && dataLength > 5000) {
+      const seriesList = Array.isArray((newOption as any).series) ? (newOption as any).series : [(newOption as any).series];
+      (newOption as any).series = seriesList.map((s: any) => ({
+        ...s,
+        sampling: 'lttb', // Largest-Triangle-Three-Buckets downsampling
+        showSymbol: false, // Hide symbols for performance
+        showAllSymbol: false
+      }));
+    }
+
+    // E. Extreme data optimizations (500+ points) (original E, modified)
     if (dataLength > this.EXTREME_DATA_THRESHOLD) {
-      const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
+      const seriesList = Array.isArray((newOption as any).series) ? (newOption as any).series : [(newOption as any).series];
       newOption.series = seriesList.map((s: any) => {
         if (s?.type === 'line' || s?.type === 'bar') {
           return {
@@ -920,6 +948,20 @@ export class ChartCardComponent implements AfterViewInit {
       this.lastWidth = currentWidth;
       this.lastHeight = currentHeight;
 
+      // Check for compact mode transition
+      const newIsCompact = currentWidth < this.COMPACT_BREAKPOINT;
+
+      if (this.isCompact !== newIsCompact) {
+        // Layout mode changed - full update required (re-apply options with new layout)
+        this.isCompact = newIsCompact;
+        const options = this.chartOptions();
+        if (options) {
+          this.updateChart(options);
+          return; // updateChart handles setOption, so we don't need resize
+        }
+      }
+
+      // Normal resize (layout mode didn't change)
       this.ngZone.runOutsideAngular(() => {
         this.chartInstance?.resize({
           width: 'auto',

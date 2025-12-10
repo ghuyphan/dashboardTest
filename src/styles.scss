@@ -1,4 +1,3 @@
-/* src/styles.scss */
 @use "@angular/material" as mat;
 @use "sass:map";
 
@@ -266,7 +265,6 @@ $dark-tokens: (
   @media (max-width: 480px) {
     --font-size-base: 0.875rem;
     --header-height: 52px;
-    /* padding-bottom for .page-content is now handled globally */
   }
 
   @media (max-width: 360px) {
@@ -308,9 +306,6 @@ $dark-tokens: (
   --aqua-island-light: rgba(45, 212, 191, 0.15); // Transparent Teal
   --teal-blue-light: rgba(45, 212, 191, 0.2);
 
-  /* ---------------------------------------------------------- */
-  /* FIX: INVERT DATE PICKER ICONS IN DARK MODE                 */
-  /* ---------------------------------------------------------- */
   ::-webkit-calendar-picker-indicator {
     filter: invert(1);
     cursor: pointer;
@@ -336,7 +331,6 @@ $mat-dark-theme: mat.define-theme((color: (theme-type: dark, primary: mat.$azure
 
 html {
   height: 100%;
-  /* [FIX] Use dvh for mobile browsers to account for address bar */
   height: 100dvh;
   margin: 0;
   -webkit-text-size-adjust: 100%;
@@ -346,12 +340,6 @@ html {
 
 [data-theme="dark"] {
   @include mat.all-component-colors($mat-dark-theme);
-
-  // Fix Material Overlays/Panels in Dark Mode
-  /* NOTE: General panel overrides have been moved to Global Section (6)
-      to support consistent styling in both Light and Dark modes. 
-      Specific color overrides for Dark Mode remain here if needed.
-  */
 
   /* Fix Material Form Fields colors in Dark Mode */
   .mdc-text-field--outlined {

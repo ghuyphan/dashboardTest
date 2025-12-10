@@ -38,13 +38,16 @@ export class DateUtils {
     }
   }
 
+  // Cache the formatter
+  private static readonly dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
   /**
    * Returns date in dd/MM/yyyy format
    */
   static formatToDisplay(dateString: string | null | undefined): string {
     const d = this.parse(dateString);
     if (!d) return 'N/A';
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(d);
+    return this.dateFormatter.format(d);
   }
 
 

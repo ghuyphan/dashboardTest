@@ -7,7 +7,8 @@
         <input id="fromDate" class="form-control-date" [matDatepicker]="pickerFrom" [value]="fromDateObj()"
           (dateChange)="onDateChange('from', $event.value)" [max]="fromMaxDate()" [disabled]="isLoading()"
           placeholder="dd/mm/yyyy" readonly (click)="pickerFrom.open()" />
-        <mat-datepicker-toggle [for]="pickerFrom" class="custom-toggle"></mat-datepicker-toggle>
+        <mat-datepicker-toggle [for]="pickerFrom" class="custom-toggle"
+          [disabled]="isLoading()"></mat-datepicker-toggle>
         <mat-datepicker #pickerFrom [touchUi]="isMobile()"></mat-datepicker>
       </div>
     </div>
@@ -18,7 +19,7 @@
         <input id="toDate" class="form-control-date" [matDatepicker]="pickerTo" [value]="toDateObj()"
           (dateChange)="onDateChange('to', $event.value)" [min]="toMinDate()" [max]="toMaxDate()"
           [disabled]="isLoading()" placeholder="dd/mm/yyyy" readonly (click)="pickerTo.open()" />
-        <mat-datepicker-toggle [for]="pickerTo" class="custom-toggle"></mat-datepicker-toggle>
+        <mat-datepicker-toggle [for]="pickerTo" class="custom-toggle" [disabled]="isLoading()"></mat-datepicker-toggle>
         <mat-datepicker #pickerTo [touchUi]="isMobile()"></mat-datepicker>
       </div>
     </div>

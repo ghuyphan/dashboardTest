@@ -24,6 +24,15 @@
     padding: var(--spacing-sm);
     gap: var(--spacing-sm);
     border-radius: var(--border-radius-md);
+
+    // [NEW] Mobile Blur Effect (consistent with Modal)
+    background-color: rgba(255, 255, 255, 0.85); // Semi-transparent for blur
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
+    [data-theme='dark'] & {
+      background-color: rgba(24, 24, 27, 0.85); // Dark mode equivalent
+    }
   }
 
   @media (max-width: 480px) {
@@ -78,6 +87,12 @@
       transform: translateY(-50%) scale(0.9);
       color: var(--text-secondary);
       z-index: 2;
+
+      &[disabled],
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
   }
 
@@ -118,7 +133,8 @@
       background-color: var(--gray-100);
       color: var(--text-secondary);
       border-color: var(--gray-200);
-      opacity: 1;
+      border-color: var(--gray-200);
+      // opacity: 1; <-- [REMOVED] Allow native disabled opacity
 
       [data-theme='dark'] & {
         background-color: rgba(255, 255, 255, 0.05);

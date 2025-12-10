@@ -51,7 +51,7 @@ export interface GridColumn {
   statusClassFn?: (value: string) => string;
 }
 
-export interface TableAction<T = any> {
+export interface TableAction<T = unknown> {
   action: string;
   label: string;
   icon: string;
@@ -66,7 +66,7 @@ export interface SortChangedEvent {
   direction: SortDirection;
 }
 
-export interface RowActionEvent<T = any> {
+export interface RowActionEvent<T = unknown> {
   action: string;
   data: T;
 }
@@ -130,7 +130,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   private cdr = inject(ChangeDetectorRef);
   private elementRef = inject(ElementRef);
   private destroyRef = inject(DestroyRef);
-  private scrollTimer: any = null;
+  private scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   public data = input<T[]>([]);
   public columns = input<GridColumn[]>([]);
@@ -209,11 +209,11 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     if (this.scrollTimer) clearTimeout(this.scrollTimer);
   }
 
-  public isDateValue(value: any): boolean {
+  public isDateValue(value: unknown): boolean {
     if (value === null || value === undefined || value === '') return false;
     if (typeof value === 'string' && (value === 'N/A' || value.toLowerCase() === 'na')) return false;
 
-    const date = new Date(value);
+    const date = new Date(value as string | number | Date);
     return !isNaN(date.getTime());
   }
 
@@ -370,8 +370,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
       : this.emptyStateText();
   }
 
-  public trackByFn = (index: number, item: any): any => {
-    return item[this.trackByField()] ?? index;
+  public trackByFn = (index: number, item: T): unknown => {
+    return (item as any)[this.trackByField()] ?? index;
   };
 
   public onActionClick(action: string, element: T, event: MouseEvent): void {
@@ -406,11 +406,11 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     }
   }
 
-  public checkboxLabel(row?: any): string {
+  public checkboxLabel(row?: T): string {
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    const rowId = row[this.trackByField()] || '';
+    const rowId = (row as any)[this.trackByField()] || '';
     const action = this.selection.isSelected(row) ? 'deselect' : 'select';
     return `${action} row ${rowId}`;
   }

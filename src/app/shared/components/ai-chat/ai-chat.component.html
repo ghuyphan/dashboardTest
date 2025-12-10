@@ -1,5 +1,5 @@
-<div class="ai-window" [class.open]="llmService.isOpen()" [class.navigating-mode]="llmService.isNavigating()"
-  [ngStyle]="getChatWindowStyle()">
+<div class="ai-window" #chatWindow [class.open]="llmService.isOpen()"
+  [class.navigating-mode]="llmService.isNavigating()" [ngStyle]="getChatWindowStyle()">
 
   <div class="ai-header">
     <div class="header-left">
@@ -134,8 +134,9 @@
         <i class="fas fa-exclamation-circle"></i> Tin nhắn đã được rút gọn
       </div>
       }
-      <input type="text" #chatInput [(ngModel)]="userInput" (keyup.enter)="handleMainButton()" [disabled]="isInputDisabled()"
-        [placeholder]="getPlaceholderText()" class="chat-input" autocomplete="off" [maxlength]="500">
+      <input type="text" #chatInput [(ngModel)]="userInput" (keyup.enter)="handleMainButton()"
+        [disabled]="isInputDisabled()" [placeholder]="getPlaceholderText()" class="chat-input" autocomplete="off"
+        [maxlength]="500">
 
       <button class="send-btn" (click)="handleMainButton()"
         [disabled]="isInputDisabled() || (!llmService.isGenerating() && !userInput.trim())"

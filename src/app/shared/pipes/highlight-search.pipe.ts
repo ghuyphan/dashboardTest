@@ -6,31 +6,37 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   standalone: true,
 })
 export class HighlightSearchPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
+  private cache: { term: string; regex: RegExp } | null = null;
+
+  constructor(private sanitizer: DomSanitizer) { }
 
   transform(value: string | null | undefined, searchTerm: string): string | SafeHtml {
     // [FIX] Handle null/undefined gracefully ensuring it's always a string
     const stringValue = String(value ?? '');
-    
+
     // 1. ESCAPE HTML FIRST (Critical Security Fix)
     const safeValue = this.escapeHtml(stringValue);
 
     if (!searchTerm) {
-      return safeValue; 
+      return safeValue;
     }
 
-    // 2. Escape the search term for Regex safety
-    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    
-    // 3. Create the RegExp
-    const re = new RegExp(`(${escapedSearchTerm})`, 'gi');
+    // 2. Get or Create Regex (Memoized)
+    let re: RegExp;
+    if (this.cache && this.cache.term === searchTerm) {
+      re = this.cache.regex;
+    } else {
+      const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      re = new RegExp(`(${escapedSearchTerm})`, 'gi');
+      this.cache = { term: searchTerm, regex: re };
+    }
 
-    // 4. Replace matches
+    // 3. Replace matches
     const highlightedValue = safeValue.replace(re, (match) => {
       return `<mark class="highlight">${match}</mark>`;
     });
 
-    // 5. Bypass security
+    // 4. Bypass security
     return this.sanitizer.bypassSecurityTrustHtml(highlightedValue);
   }
 
