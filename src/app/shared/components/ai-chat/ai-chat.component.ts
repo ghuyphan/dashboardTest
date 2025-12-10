@@ -42,6 +42,7 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   private isNearBottom = true;
   private scrollCleanup?: () => void;
   private contentCache = new Map<string, string>();
+  private pushedState = false; // Track if we pushed a history state
 
   // --- Computed ---
   public hasUserMessages = computed(() => {
@@ -93,6 +94,23 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
         if (inputEl) {
           // Small delay to ensure DOM is ready and transitions are handling
           setTimeout(() => inputEl.focus(), 100);
+        }
+      }
+    });
+
+    // 4. Handle Browser Back Button (Mobile Support)
+    effect(() => {
+      const isOpen = this.llmService.isOpen();
+
+      if (isOpen) {
+        // Chat Opened: Push state so 'Back' closes it
+        history.pushState({ chatOpen: true }, '', location.href);
+        this.pushedState = true;
+      } else {
+        // Chat Closed: If we pushed state, go back to remove it
+        if (this.pushedState) {
+          history.back();
+          this.pushedState = false;
         }
       }
     });
@@ -186,6 +204,23 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   // ========================================================================
   // EVENTS & UTILS
   // ========================================================================
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: KeyboardEvent): void {
+    if (this.llmService.isOpen()) {
+      this.closeChat();
+    }
+  }
+
+  @HostListener('window:popstate', ['$event'])
+  onPopState(event: PopStateEvent): void {
+    if (this.llmService.isOpen()) {
+      // The browser already went back, so we just need to update our internal state
+      // preventing the effect from triggering another back()
+      this.pushedState = false;
+      this.closeChat();
+    }
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {

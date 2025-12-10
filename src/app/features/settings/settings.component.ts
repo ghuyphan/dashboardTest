@@ -17,6 +17,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
 import { ThemeService } from '../../core/services/theme.service';
+import { VersionService } from '../../core/services/version.service';
 import { User } from '../../core/models/user.model';
 
 interface ChangePasswordForm {
@@ -39,10 +40,18 @@ export class SettingsComponent implements OnInit {
   private toastService = inject(ToastService);
   private modalService = inject(ModalService);
   public themeService = inject(ThemeService); // [UPDATED] Public for template access
+  public versionService = inject(VersionService);
   private destroyRef = inject(DestroyRef);
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);
+
+  public appVersion = this.versionService.appVersion;
+  public isDevMode = this.versionService.isDevMode;
+
+  // Easter Egg State
+  private clickCount = 0;
+  private clickTimer: any = null;
 
   public form: FormGroup<ChangePasswordForm>;
 
@@ -112,11 +121,48 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit(): void { }
 
+  ngOnDestroy(): void {
+    if (this.clickTimer) {
+      clearTimeout(this.clickTimer);
+    }
+  }
+
   // [NEW] Theme Switcher Logic
   setTheme(isDark: boolean): void {
     const current = this.themeService.isDarkTheme();
     if (current !== isDark) {
       this.themeService.toggleTheme();
+    }
+  }
+
+  onVersionClick(): void {
+    this.clickCount++;
+
+    if (this.clickTimer) {
+      clearTimeout(this.clickTimer);
+      this.clickTimer = null;
+    }
+
+    if (this.clickCount >= 5) {
+      this.triggerEasterEgg();
+      this.clickCount = 0;
+    } else {
+      this.clickTimer = setTimeout(() => {
+        this.clickCount = 0;
+        this.clickTimer = null;
+      }, 2000);
+    }
+  }
+
+  private triggerEasterEgg(): void {
+    // Toggle the global state via signal
+    // The Service effect will handle LocalStorage and Body Class updates
+    this.versionService.isDevMode.update((v: boolean) => !v);
+
+    if (this.isDevMode()) {
+      this.toastService.showSuccess('Đã bật tùy chọn nhà phát triển');
+    } else {
+      this.toastService.showInfo('Đã tắt tùy chọn nhà phát triển');
     }
   }
 

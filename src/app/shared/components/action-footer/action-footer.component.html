@@ -13,12 +13,5 @@
     </ng-container>
     }
   </div>
-
-  <div class="version-wrapper" (click)="onVersionClick()" [class.dev-active]="isDevMode()" title="System Version">
-    <span class="version-text">v{{ appVersion() }}</span>
-    @if (isDevMode()) {
-    <i class="fas fa-code text-success dev-icon"></i>
-    }
-  </div>
 </div>
 }

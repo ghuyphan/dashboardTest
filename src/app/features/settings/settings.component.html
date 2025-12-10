@@ -36,11 +36,12 @@
     <div class="settings-card appearance-card">
       <div class="card-header">
         <div class="card-title-wrapper">
-          <h3><i class="fas fa-palette"></i> Giao diện</h3>
-          <span class="card-subtitle">Tùy chỉnh giao diện hiển thị của ứng dụng.</span>
+          <h3><i class="fas fa-cogs"></i> Cài đặt ứng dụng</h3>
+          <span class="card-subtitle">Tùy chỉnh giao diện và xem thông tin hệ thống.</span>
         </div>
       </div>
       <div class="card-body">
+        <label class="section-label">Giao diện</label>
         <div class="theme-selector-grid">
 
           <button type="button" class="theme-option light" [class.active]="!themeService.isDarkTheme()"
@@ -80,7 +81,20 @@
             </div>
             <span class="theme-label">Chế độ Tối</span>
           </button>
+        </div>
 
+        <div class="separator"></div>
+
+        <div class="info-grid">
+          <div class="info-item" (click)="onVersionClick()" style="cursor: pointer; user-select: none;">
+            <label>Phiên bản ứng dụng</label>
+            <div class="read-only-value">
+              v{{ appVersion() }}
+              @if (isDevMode()) {
+              <span class="badge bg-success ms-2"><i class="fas fa-code"></i> Dev Mode</span>
+              }
+            </div>
+          </div>
         </div>
       </div>
     </div>
