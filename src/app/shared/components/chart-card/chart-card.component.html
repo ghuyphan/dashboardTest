@@ -2,6 +2,10 @@
   @if (title() || subtitle() || icon()) {
   <div class="card-header">
     <div class="card-title-wrapper">
+      @if (isLoading()) {
+      <!-- Skeleton for title -->
+      <div class="skeleton-title skeleton"></div>
+      } @else {
       <h3 class="card-title">
         @if (icon()) {
         <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
@@ -11,6 +15,7 @@
 
       @if (subtitle()) {
       <span class="card-subtitle">{{ subtitle() }}</span>
+      }
       }
     </div>
 
@@ -23,6 +28,19 @@
       }
 
       <ng-content select="[header-actions]"></ng-content>
+
+      <!-- Export Button -->
+      @if (enableExport()) {
+      <button class="btn-icon-action" *appHasPermission="fullExportPermission()" (click)="onExport()"
+        [disabled]="isLoading() || isExporting()" title="Xuất Excel">
+
+        @if (isExporting()) {
+        <i class="fas fa-spinner fa-spin text-teal"></i>
+        } @else {
+        <i class="fas fa-file-excel text-success"></i>
+        }
+      </button>
+      }
     </div>
   </div>
   }

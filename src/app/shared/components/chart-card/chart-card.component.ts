@@ -18,17 +18,19 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 
 import type { EChartsType, EChartsCoreOption } from 'echarts/core';
 import { ThemeService } from '../../../core/services/theme.service';
 import { NumberUtils } from '../../utils/number.utils';
+import { HasPermissionDirective } from '../../directives/has-permission.directive';
 
 export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
 
 @Component({
   selector: 'app-chart-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HasPermissionDirective],
   templateUrl: './chart-card.component.html',
   styleUrls: ['./chart-card.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
@@ -42,6 +44,7 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly themeService = inject(ThemeService);
+  private readonly route = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // === INPUTS ===
@@ -59,10 +62,50 @@ export class ChartCardComponent implements AfterViewInit {
 
   public theme = input<string | object | null>(null);
 
+  // --- Export Inputs ---
+  public enableExport = input<boolean>(false);
+  public isExporting = input<boolean>(false);
+
+  /**
+   * [Optional] Manually specify the permission key for the export button.
+   * If provided, this overrides the auto-detected route permission.
+   */
+  public exportPermission = input<string | undefined>(undefined);
+
+  /**
+   * Computes the final permission string required to see the Export button.
+   * Priority:
+   * 1. `exportPermission` input (Manual override).
+   * 2. Auto-derived from the current Route's `data.permission` + `.REXPORT`.
+   * 3. `undefined` (If no permission found, button is visible to all).
+   */
+  public fullExportPermission = computed(() => {
+    // 1. Check for manual override input
+    const manualOverride = this.exportPermission();
+    if (manualOverride) {
+      return manualOverride;
+    }
+
+    // 2. Traverse to find the deepest active route (where the data usually lives)
+    let currentRoute = this.route.snapshot;
+    while (currentRoute.firstChild) {
+      currentRoute = currentRoute.firstChild;
+    }
+
+    // 3. Derive from Route Data
+    const basePermission = currentRoute.data['permission'] as string | undefined;
+    if (basePermission) {
+      return `${basePermission}.REXPORT`;
+    }
+
+    return undefined;
+  });
+
   // === OUTPUTS ===
   public chartClick = output<any>();
   public chartLegendSelectChanged = output<any>();
   public zoomReset = output<void>();
+  public exportClicked = output<void>();
 
   private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
 
@@ -164,6 +207,13 @@ export class ChartCardComponent implements AfterViewInit {
     });
 
     this.zoomReset.emit();
+  }
+
+  /**
+   * Handle export button click
+   */
+  public onExport(): void {
+    this.exportClicked.emit();
   }
 
   /**

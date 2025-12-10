@@ -1,11 +1,3 @@
-@mixin hidden-scrollbar {
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
 :host {
   display: flex;
   flex-direction: column;
@@ -48,30 +40,4 @@ app-table-card {
 /* Helper Classes */
 .icon-info {
   color: var(--color-info);
-}
-
-.btn-icon-text {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  background: var(--surface-card);
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: var(--surface-ground);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.text-success {
-  color: var(--color-success);
 }

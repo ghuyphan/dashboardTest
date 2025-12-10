@@ -29,7 +29,6 @@ import {
   DateFilterComponent,
   DateRange,
 } from '../../../shared/components/date-filter/date-filter.component';
-import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
@@ -41,7 +40,6 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
     CommonModule,
     ChartCardComponent,
     DateFilterComponent,
-    HasPermissionDirective,
   ],
   providers: [DatePipe],
   templateUrl: './medical-records-status.component.html',

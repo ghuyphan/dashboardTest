@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
 import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
 import { NumberUtils } from '../../utils/number.utils';
 
-type ValueFormat = 'number' | 'currency' | 'string' | 'percent';
+type ValueFormat = 'number' | 'decimal' | 'currency' | 'string' | 'percent';
 type CurrencyCode = 'VND' | 'USD' | 'EUR';
 
 @Component({
@@ -72,6 +72,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   private hasViewInitialized = false;
   private valueFormat: ValueFormat = 'number';
   private currencyCode: CurrencyCode = 'VND';
+  private decimalPlaces: number = 0;
   private animationFrameId?: number;
   private readonly ANIMATION_DURATION_MS = 1000;
 
@@ -154,14 +155,27 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     } else if (/€/.test(value)) {
       this.valueFormat = 'currency';
       this.currencyCode = 'EUR';
+    } else if (/,\d+$/.test(value)) {
+      // Detect decimal values in Vietnamese format (e.g., "1.379,38")
+      this.valueFormat = 'decimal';
+      // Extract decimal places from the value (digits after the comma)
+      const match = value.match(/,(\d+)$/);
+      this.decimalPlaces = match ? match[1].length : 2;
     } else {
       this.valueFormat = 'number';
+      this.decimalPlaces = 0;
     }
   }
 
   private parseNumericValue(value: string): number {
-    const cleaned = (value?.replace(/[^0-9,.-]/g, '') || '0').replace(/[.,]/g, '').trim();
-    if (/[^0-9-]/.test(cleaned)) return NaN;
+    // Handle Vietnamese locale: period is thousand separator, comma is decimal separator
+    // Example: "1.379,38" should parse to 1379.38
+    let cleaned = value?.replace(/[^0-9,.-]/g, '') || '0';
+
+    // Remove thousand separators (periods) and convert decimal separator (comma) to period
+    cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.').trim();
+
+    if (/[^0-9.-]/.test(cleaned)) return NaN;
     return parseFloat(cleaned);
   }
 
@@ -189,7 +203,8 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
         let interpolatedValue = start + (end - start) * easedProgress;
 
-        if (this.valueFormat !== 'percent') {
+        // Only round if not a decimal or percent value
+        if (this.valueFormat !== 'percent' && this.valueFormat !== 'decimal') {
           interpolatedValue = Math.round(interpolatedValue);
         }
 
@@ -219,6 +234,8 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
         return NumberUtils.formatCurrency(value, this.currencyCode);
       case 'percent':
         return NumberUtils.formatPercent(value);
+      case 'decimal':
+        return NumberUtils.formatDecimal(value, this.decimalPlaces);
       default:
         return NumberUtils.format(value);
     }

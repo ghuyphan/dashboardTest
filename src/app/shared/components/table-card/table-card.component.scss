@@ -114,6 +114,33 @@
   }
 }
 
+/* Skeleton Title for Loading State */
+.skeleton-title {
+  width: 150px;
+  height: 1.6875rem;
+  /* Matches line-height of .card-title (1.125rem * 1.5) */
+  border-radius: 4px;
+  background-color: var(--gray-100);
+  animation: pulse 1.5s infinite ease-in-out;
+
+  @media (max-width: 768px) {
+    height: 1.5rem;
+    /* Matches 1rem * 1.5 */
+    width: 120px;
+  }
+
+  @media (max-width: 480px) {
+    height: 1.40625rem;
+    /* Matches 0.9375rem * 1.5 */
+    width: 100px;
+  }
+}
+
+.skeleton {
+  background-color: var(--gray-100);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
 .header-controls {
   display: flex;
   align-items: center;
