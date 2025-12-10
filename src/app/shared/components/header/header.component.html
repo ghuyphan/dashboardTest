@@ -54,7 +54,8 @@
         </div>
       </button>
 
-      <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before">
+      <mat-menu #userMenu="matMenu" class="header-user-menu-panel" xPosition="before"
+        backdropClass="mobile-menu-backdrop">
 
         <div class="menu-section-wrapper" (click)="$event.stopPropagation()">
           <div class="dropdown-profile-header">

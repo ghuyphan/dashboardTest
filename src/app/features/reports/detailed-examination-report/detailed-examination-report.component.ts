@@ -547,7 +547,7 @@ export class DetailedExaminationReportComponent implements OnInit {
 
     this.specialtyChartOptions = {
       ...this.getCommonChartOptions(),
-      grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
+
       tooltip: { ...this.getCommonChartOptions().tooltip, axisPointer: { type: 'shadow' } },
       xAxis: {
         type: 'value',
@@ -626,13 +626,7 @@ export class DetailedExaminationReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true,
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '12%',
-        top: '12%',
-        containLabel: true,
-      },
+
     };
   }
 

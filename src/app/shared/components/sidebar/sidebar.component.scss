@@ -25,7 +25,7 @@
 
   transition: transform var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
-  z-index: 1000;
+  z-index: 1050;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
   display: flex;
   flex-direction: column;
@@ -35,6 +35,24 @@
 
   * {
     white-space: nowrap;
+  }
+}
+
+/* --- Mobile Backdrop --- */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1049;
+  /* Below sidebar (1050) */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-smooth);
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
@@ -581,6 +599,8 @@
     overflow-y: auto;
     padding: 0;
     contain: none;
+    width: min(85vw, 320px);
+    /* Wider on mobile for better usability */
   }
 
   .sidebar.open {
@@ -590,7 +610,8 @@
 
   .sidebar.collapsed {
     transform: translateX(-100%);
-    width: var(--sidebar-width);
+    width: min(85vw, 320px);
+    /* Match open state width */
     padding-left: 0.625rem;
     padding-right: 0.625rem;
     overflow-x: hidden;
@@ -703,7 +724,8 @@
 
 @media (max-width: 480px) {
   .sidebar {
-    width: var(--sidebar-width);
+    width: min(90vw, 300px);
+    /* Slightly narrower max on very small phones */
   }
 }
 

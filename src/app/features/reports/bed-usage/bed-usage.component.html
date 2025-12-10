@@ -20,7 +20,7 @@
     <div class="dashboard-grid">
       @defer (on immediate) {
       <app-chart-card class="span-full" title="Tình hình sử dụng giường bệnh" icon="fas fa-bed-pulse"
-        iconClass="icon-widget-accent" [isLoading]="isLoading()" [chartOptions]="chartOptions()"
+        iconClass="icon-info" [isLoading]="isLoading()" [chartOptions]="chartOptions()"
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" (chartLegendSelectChanged)="onLegendChange($event)">
 
         <div header-actions class="header-actions-container">

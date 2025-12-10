@@ -267,8 +267,8 @@
 /* --- DATA INDICATOR --- */
 .data-indicator {
   position: absolute;
-  top: var(--spacing-xs);
-  right: var(--spacing-xs);
+  top: var(--spacing-md);
+  right: var(--spacing-sm);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -281,6 +281,10 @@
   z-index: 5;
   backdrop-filter: blur(4px);
   box-shadow: var(--box-shadow-sm);
+  max-width: calc(100% - 2 * var(--spacing-xs));
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
   i {
     font-size: 0.75rem;

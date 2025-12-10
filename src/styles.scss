@@ -1014,9 +1014,7 @@ body>ul.submenu.open {
   box-sizing: border-box;
   overflow-y: auto;
 
-  /* Default Desktop Spacing */
-  padding: var(--spacing-md);
-  padding-bottom: var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-lg);
   gap: var(--spacing-lg);
 
   /* Hide Scrollbar */
@@ -1028,13 +1026,13 @@ body>ul.submenu.open {
 
   /* Responsive Spacing */
   @media (max-width: 992px) {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-mds) var(--spacing-md);
     padding-bottom: var(--spacing-lg);
     gap: var(--spacing-md);
   }
 
   @media (max-width: 480px) {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-mds) var(--spacing-md);
     padding-bottom: var(--spacing-lg);
   }
 }

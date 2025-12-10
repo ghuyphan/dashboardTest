@@ -420,13 +420,7 @@ export class EmergencySummaryComponent implements OnInit {
     totalBHYT: number,
     totalVienPhi: number
   ): void {
-    const commonGrid = {
-      left: '3%',
-      right: '4%',
-      bottom: '12%',
-      top: '12%',
-      containLabel: true,
-    };
+
     const commonLegend = {
       show: true,
       top: 0,
@@ -445,7 +439,7 @@ export class EmergencySummaryComponent implements OnInit {
     this.trendChartOptions = {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
-      grid: commonGrid,
+
       legend: commonLegend,
       xAxis: {
         type: 'category',
@@ -508,7 +502,7 @@ export class EmergencySummaryComponent implements OnInit {
     this.transferChartOptions = {
       backgroundColor: 'transparent',
       tooltip: commonTooltip,
-      grid: commonGrid,
+
       xAxis: {
         type: 'category',
         data: dates,
@@ -565,7 +559,7 @@ export class EmergencySummaryComponent implements OnInit {
           return result;
         },
       },
-      grid: commonGrid,
+
       legend: commonLegend,
       xAxis: {
         type: 'category',

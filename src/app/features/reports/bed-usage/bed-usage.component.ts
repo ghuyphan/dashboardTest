@@ -306,13 +306,7 @@ export class BedUsageComponent implements OnInit {
         itemWidth: 25,
         padding: [0, 0, 10, 0]
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '15%',
-        top: '12%',
-        containLabel: true,
-      },
+
       xAxis: {
         type: 'category',
         data: xAxisData,

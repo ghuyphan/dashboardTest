@@ -370,13 +370,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         axisPointer: { type: 'shadow' },
         confine: true, // Added to prevent cropping
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '15%',
-        top: '12%',
-        containLabel: true,
-      },
+
       legend: {
         type: 'scroll',
         top: 0,
@@ -470,13 +464,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Added to prevent cropping
       },
-      grid: {
-        left: '3%',
-        right: '8%',
-        bottom: '5%',
-        top: '5%',
-        containLabel: true,
-      },
+
       xAxis: {
         type: 'value',
         splitLine: {

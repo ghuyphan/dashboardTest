@@ -152,16 +152,6 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
       bhytCC: this.palette.primary
     };
 
-    // FIX: Layout Configuration
-    // Move Legend to TOP
-    const commonGrid = {
-      left: '3%',
-      right: '4%',
-      top: '12%',
-      bottom: '10%',
-      containLabel: true
-    };
-
     const commonTooltip = {
       trigger: 'axis',
       backgroundColor: this.palette.bgCard,
@@ -192,7 +182,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           return result;
         }
       },
-      grid: commonGrid,
+
       legend: {
         data: ['Số ca nhập viện từ cấp cứu', 'Tổng số lượt cấp cứu', 'Tổng số lượt cấp cứu có BHYT'],
         // FIX: Move legend to Top to avoid collision with slider

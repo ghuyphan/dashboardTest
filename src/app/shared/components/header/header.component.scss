@@ -118,10 +118,9 @@
   border-radius: 99px;
   border: 1px solid var(--border-color);
 
-  flex: 2;
-  max-width: 400px;
-  height: 40px;
-  /* Match button height */
+  flex: 1;
+  max-width: 280px;
+  height: 36px;
 
   padding: 0 0.75rem;
   transition: all 0.2s;
@@ -505,5 +504,148 @@
 
   .header-title {
     display: block;
+  }
+}
+
+/* --- MOBILE BOTTOM SHEET MENU overrides --- */
+@media (max-width: 992px) {
+  ::ng-deep .header-user-menu-panel.mat-mdc-menu-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    /* Override Material's top positioning */
+
+    /* [FIX] Use transform-origin to ensure any residual scaling usually grows from bottom */
+    transform-origin: center bottom !important;
+
+    /* [FIX] Restore transition for smooth CLOSE animation.
+       Use !important to override Material's default timing.
+       When closing, Material sets opacity: 0 and transform: scale(0.8).
+       We want to animate that smoothly. */
+    transition: transform 0.25s ease-in, opacity 0.25s ease-in !important;
+
+    will-change: transform, opacity;
+
+    min-width: 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    border: none !important;
+    border-top: 1px solid rgba(var(--border-color-rgb), 0.2) !important;
+
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2) !important;
+    padding: 24px 16px 40px 16px !important;
+
+    /* --- GLASSMORPHISM --- */
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+
+    /* Animation Enhancement for Bottom Sheet feel */
+    /* [IMPORTANT] Do NOT use !important here, or it will block the CLOSE transition */
+    animation: bottomSheetSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Dark Mode Glass */
+    .menu-section-wrapper {
+      background-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .dropdown-profile-header {
+      padding: 0 0 16px 0;
+      border-bottom: 1px solid var(--border-color);
+
+      .dropdown-avatar-initials {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+      }
+
+      .dropdown-profile-text {
+        gap: 4px;
+
+        .username {
+          font-size: 1.125rem;
+        }
+
+        .user-role {
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .menu-items-wrapper {
+      gap: 8px;
+    }
+
+    .custom-menu-item {
+      min-height: 56px;
+      padding: 0 12px;
+
+      .menu-icon-bg {
+        width: 42px;
+        height: 42px;
+
+        i {
+          font-size: 1.1rem;
+        }
+      }
+
+      .mat-mdc-menu-item-text {
+        font-size: 1rem;
+      }
+    }
+  }
+
+  /* Dark Mode specific override for glass background */
+  ::ng-deep [data-theme='dark'] .header-user-menu-panel.mat-mdc-menu-panel {
+    background-color: rgba(24, 24, 27, 0.85) !important;
+    /* Zinc-900 with opacity */
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+@keyframes bottomSheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --- BACKDROP STYLING --- */
+::ng-deep .mobile-menu-backdrop {
+  /* Default (Desktop): Transparent, handled by Material */
+  background-color: transparent;
+
+  /* Mobile: Blur and Darken with explicit CSS transitions */
+  @media (max-width: 992px) {
+    /* Initial state (hidden) */
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    background-color: rgba(0, 0, 0, 0);
+
+    transition:
+      opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+      backdrop-filter 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+      -webkit-backdrop-filter 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+      background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    /* Active state (showing) */
+    &.cdk-overlay-backdrop-showing {
+      opacity: 1;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      background-color: rgba(0, 0, 0, 0.5) !important;
+    }
   }
 }

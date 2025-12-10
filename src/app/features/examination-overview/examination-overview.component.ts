@@ -254,13 +254,7 @@ export class ExaminationOverviewComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Prevent tooltip cropping
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '12%',
-        top: '10%',
-        containLabel: true,
-      },
+
     };
 
     this.trendChartOptions = {

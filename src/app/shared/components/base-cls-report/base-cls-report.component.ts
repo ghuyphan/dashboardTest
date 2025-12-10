@@ -222,7 +222,7 @@ export abstract class BaseClsReportComponent {
                 textStyle: { color: this.palette.textPrimary },
                 confine: true,
             },
-            grid: { left: '3%', right: '4%', bottom: '12%', top: '12%', containLabel: true },
+
         };
 
         const sortedDates = Array.from(dateMap.keys()).sort();
@@ -257,7 +257,7 @@ export abstract class BaseClsReportComponent {
         const roomData = Array.from(roomMap.entries()).sort((a, b) => a[1] - b[1]);
         this.roomChartOptions = {
             ...commonOptions,
-            grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
+
             xAxis: { type: 'value', splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } } },
             yAxis: { type: 'category', data: roomData.map((d) => d[0]), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { width: 140, overflow: 'truncate', color: this.palette.textPrimary } },
             series: [{ name: 'Số Lượng', type: 'bar', barWidth: '60%', data: roomData.map((d) => d[1]), itemStyle: { color: this.palette.secondary, borderRadius: [0, 4, 4, 0] }, label: { show: true, position: 'right', color: this.palette.textSecondary } }],

@@ -269,7 +269,7 @@ export class SurgeryReportComponent implements OnInit {
       legend: {
         itemWidth: 25
       },
-      grid: { left: '3%', right: '4%', bottom: '12%', top: '12%', containLabel: true },
+
     };
 
     // 1. Daily Trend Chart (Line + Trend Line)

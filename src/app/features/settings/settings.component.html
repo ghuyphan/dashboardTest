@@ -1,13 +1,19 @@
 <div class="page-container">
   <div class="page-content settings-container">
 
-    <div class="settings-card profile-card">
+    <div class="settings-card general-card">
       <div class="card-header">
         <div class="card-title-wrapper">
-          <h3><i class="fas fa-id-card-clip"></i> Thông tin tài khoản</h3>
+          <h3><i class="fas fa-sliders-h"></i> Cài đặt chung</h3>
+          <span class="card-subtitle">Thông tin tài khoản và tùy chỉnh giao diện ứng dụng.</span>
         </div>
       </div>
       <div class="card-body">
+
+        <!-- Profile Section -->
+        <h4 class="section-header">
+          <i class="fas fa-id-card-clip"></i> Thông tin tài khoản
+        </h4>
         <div class="info-grid">
           <div class="info-item">
             <label>Họ và tên</label>
@@ -30,17 +36,13 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="settings-card appearance-card">
-      <div class="card-header">
-        <div class="card-title-wrapper">
-          <h3><i class="fas fa-palette"></i> Giao diện</h3>
-          <span class="card-subtitle">Tùy chỉnh giao diện hiển thị của ứng dụng.</span>
-        </div>
-      </div>
-      <div class="card-body">
+        <div class="section-divider"></div>
+
+        <!-- Appearance Section -->
+        <h4 class="section-header">
+          <i class="fas fa-palette"></i> Giao diện
+        </h4>
         <div class="theme-selector-grid">
 
           <button type="button" class="theme-option light" [class.active]="!themeService.isDarkTheme()"
@@ -80,7 +82,14 @@
             </div>
             <span class="theme-label">Chế độ Tối</span>
           </button>
+        </div>
 
+        <div class="version-info" (click)="onVersionClick()" [class.dev-active]="versionService.isDevMode()"
+          title="Nhấn 5 lần để bật chế độ nhà phát triển">
+          <span>Version: {{ versionService.appVersion() }}</span>
+          @if (versionService.isDevMode()) {
+          <i class="fas fa-code"></i>
+          }
         </div>
       </div>
     </div>

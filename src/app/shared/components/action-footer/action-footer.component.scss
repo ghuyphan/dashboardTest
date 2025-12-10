@@ -102,47 +102,7 @@
   }
 }
 
-/* --- Version Display Styles --- */
-.version-wrapper {
-  font-size: 0.75rem;
-  color: var(--text-disabled);
-  font-family: monospace;
-  cursor: pointer;
-  user-select: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 
-  /* Mobile adjustments */
-  /* Easter Egg State */
-  &.dev-active {
-    color: var(--teal-blue);
-    font-weight: 700;
-    background-color: rgba(0, 131, 155, 0.1);
-
-    .dev-icon {
-      animation: pulse 1s infinite;
-    }
-  }
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.5;
-  }
-
-  50% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.5;
-  }
-}
 
 /* Override Danger Button specific to Footer */
 :host .btn-danger {

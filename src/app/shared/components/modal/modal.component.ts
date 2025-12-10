@@ -5,7 +5,9 @@ import {
   viewChild,
   ViewContainerRef,
   ChangeDetectionStrategy,
-  ElementRef
+  OnInit,
+  OnDestroy,
+  HostListener
 } from '@angular/core';
 import { ModalOptions } from '../../../core/models/modal-options.model';
 import { ModalRef, MODAL_OPTIONS } from '../../../core/models/modal-ref.model';
@@ -18,7 +20,7 @@ import { ModalRef, MODAL_OPTIONS } from '../../../core/models/modal-ref.model';
   styleUrl: './modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush // [1] Performance optimization
 })
-export class ModalComponent implements AfterViewInit {
+export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // [2] Use Signal-based viewChild
   // We use { read: ViewContainerRef } to get the container specifically
@@ -28,10 +30,52 @@ export class ModalComponent implements AfterViewInit {
   private modalRef = inject(ModalRef);
   public options = inject<ModalOptions>(MODAL_OPTIONS);
 
+  // Track if we pushed a history state (to avoid double-pop issues)
+  private historyStatePushed = false;
+  private popstateHandler = this.onPopState.bind(this);
+
   constructor() { }
+
+  // [NEW] ESC key listener to close modal
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent): void {
+    if (!this.options.disableClose) {
+      event.preventDefault();
+      this.closeModal();
+    }
+  }
+
+  ngOnInit(): void {
+    // [NEW] Push a history state so the back button can close the modal
+    if (!this.options.disableClose) {
+      history.pushState({ modal: true }, '');
+      this.historyStatePushed = true;
+      window.addEventListener('popstate', this.popstateHandler);
+    }
+  }
 
   ngAfterViewInit(): void {
     this.loadModalContent();
+  }
+
+  ngOnDestroy(): void {
+    // [NEW] Cleanup: Remove popstate listener
+    if (this.historyStatePushed) {
+      window.removeEventListener('popstate', this.popstateHandler);
+      // If modal was closed by other means (not back button), pop the history state we added
+      // Check if the current state is our modal state
+      if (history.state?.modal) {
+        history.back();
+      }
+    }
+  }
+
+  // [NEW] Handle browser back button
+  private onPopState(event: PopStateEvent): void {
+    // When user presses back, close the modal
+    this.historyStatePushed = false; // Already popped by browser
+    window.removeEventListener('popstate', this.popstateHandler);
+    this.modalRef.close();
   }
 
   private loadModalContent(): void {

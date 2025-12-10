@@ -462,17 +462,17 @@ export class ChartCardComponent implements AfterViewInit {
       }
     }
 
-    // 2. Enforce Grid Layout - balanced centering (non-pie charts only)
+    // 2. Enforce Grid Layout - optimized for space efficiency (non-pie charts only)
     const hasLegend = newOption.legend !== false;
-    const baseTop = hasLegend ? (mobile ? 50 : tablet ? 45 : 40) : 15;
+    const baseTop = hasLegend ? (mobile ? 45 : tablet ? 38 : 35) : 10;
 
     if (chartType !== 'pie') {
       newOption.grid = {
         ...(newOption.grid || {}),
         top: baseTop,
-        bottom: mobile ? 30 : 25,
-        left: mobile ? 8 : 15,
-        right: mobile ? 12 : 15,
+        bottom: mobile ? 22 : 18,
+        left: mobile ? 5 : 8,
+        right: mobile ? 8 : 8,
         containLabel: true
       };
     }

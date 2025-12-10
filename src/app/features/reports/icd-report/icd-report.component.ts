@@ -158,13 +158,7 @@ export class IcdReportComponent implements OnInit {
         confine: true,
         axisPointer: { type: 'shadow' }
       },
-      grid: {
-        left: '3%',
-        right: '8%',
-        bottom: '5%',
-        top: '5%',
-        containLabel: true
-      }
+
     };
 
     // --- Outpatient Chart ---

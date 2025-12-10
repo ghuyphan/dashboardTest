@@ -11,7 +11,7 @@ app-reusable-table {
 
   /* --- CSS Variables Scope --- */
   --row-height: 48px;
-  --header-height: 52px;
+  --header-height: 42px;
 
   /* Local Scoped Colors - Defaults (Light Mode) */
   --border-color-local: var(--border-color, #e2e8f0);
@@ -65,9 +65,9 @@ app-reusable-table {
   /* Mobile smooth scrolling */
   -webkit-overflow-scrolling: touch;
 
-  /* Custom Scrollbar Styling */
+  /* Custom Scrollbar Styling - Hidden by default, show on hover */
   scrollbar-width: thin;
-  scrollbar-color: var(--gray-300, #cbd5e1) transparent;
+  scrollbar-color: transparent transparent;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -79,22 +79,34 @@ app-reusable-table {
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--gray-300, #cbd5e1);
+    background-color: transparent;
     border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
 
-    &:hover {
-      background-color: var(--gray-400, #94a3b8);
+  /* Show scrollbar on hover */
+  &:hover {
+    scrollbar-color: var(--gray-300, #cbd5e1) transparent;
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--gray-300, #cbd5e1);
+
+      &:hover {
+        background-color: var(--gray-400, #94a3b8);
+      }
     }
   }
 
   [data-theme="dark"] & {
-    scrollbar-color: var(--gray-600, #475569) transparent;
+    &:hover {
+      scrollbar-color: var(--gray-600, #475569) transparent;
 
-    &::-webkit-scrollbar-thumb {
-      background-color: var(--gray-600, #475569);
+      &::-webkit-scrollbar-thumb {
+        background-color: var(--gray-600, #475569);
 
-      &:hover {
-        background-color: var(--gray-500, #64748b);
+        &:hover {
+          background-color: var(--gray-500, #64748b);
+        }
       }
     }
   }
@@ -588,8 +600,8 @@ table.mat-table {
 
     /* Aggressive Header Optimization */
     .mat-mdc-header-row {
-      height: 32px !important;
-      min-height: 32px !important;
+      height: 42px !important;
+      min-height: 42px !important;
     }
 
     .mat-mdc-header-cell {

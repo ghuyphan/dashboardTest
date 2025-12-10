@@ -98,54 +98,12 @@
     }
   }
 
-  /* --- UPDATED BUTTON STYLES --- */
+  /* Button styles inherit from global .btn, .btn-primary, .btn-secondary in styles.scss */
+  /* Only override layout-specific properties here */
   .btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.9375rem;
-
-    /* Standard Transition */
-    transition: all 0.2s var(--transition-spring);
-
-    /* Standard Hover: Lift */
-    &:not(:disabled):hover {
-      transform: translateY(-2px);
-      /* box-shadow: var(--box-shadow-md); Removed */
-    }
-
-    /* Standard Active: Press */
-    &:not(:disabled):active {
-      transform: translateY(0);
-      box-shadow: var(--box-shadow-sm);
-    }
-  }
-
-  .btn-secondary {
-    background-color: var(--gray-200);
-    color: var(--gray-800);
-
-    &:hover:not(:disabled) {
-      background-color: var(--gray-300);
-    }
-  }
-
-  .btn-primary {
-    background-color: var(--teal-blue);
-    color: white;
-
-    &:hover:not(:disabled) {
-      background-color: var(--peacock-blue);
-    }
-  }
-
-  .btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+    /* Match date-filter button height for consistency */
+    min-height: 42px;
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   .btn-content-wrapper {
@@ -176,9 +134,11 @@
     width: 100%;
   }
 
+  /* Match regular input height (42px) for consistency */
   .dense-form-field .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
     padding: 0 0.75rem !important;
-    height: 38px !important;
+    height: 42px !important;
+    min-height: 42px !important;
     display: flex;
     align-items: center;
     background-color: var(--input-bg) !important;
@@ -186,7 +146,7 @@
 
     .mat-mdc-form-field-infix {
       padding: 0 !important;
-      min-height: 38px !important;
+      min-height: 42px !important;
       border: none !important;
       display: flex;
       align-items: center;
@@ -223,11 +183,14 @@
       border-left: none;
     }
 
-    /* Hover */
-    &:hover .mdc-notched-outline__leading,
-    &:hover .mdc-notched-outline__notch,
-    &:hover .mdc-notched-outline__trailing {
-      border-color: var(--gray-400) !important;
+    /* Hover - only on devices with hover */
+    @media (hover: hover) {
+
+      &:hover .mdc-notched-outline__leading,
+      &:hover .mdc-notched-outline__notch,
+      &:hover .mdc-notched-outline__trailing {
+        border-color: var(--gray-400) !important;
+      }
     }
 
     /* Focus */
@@ -298,8 +261,10 @@
     /* Semantic Variable */
     min-height: 40px !important;
 
-    &:hover:not(.mdc-list-item--disabled) {
-      background-color: var(--gray-100) !important;
+    @media (hover: hover) {
+      &:hover:not(.mdc-list-item--disabled) {
+        background-color: var(--gray-100) !important;
+      }
     }
 
     &.mdc-list-item--selected {
