@@ -264,6 +264,13 @@ export class DetailedExaminationReportComponent implements OnInit {
     const specialtyMap = new Map<string, number>();
     const doctorMap = new Map<string, number>();
 
+    // Store maps for view updates
+    this.cachedDateMap = dateMap;
+    this.cachedSpecialtyMap = specialtyMap;
+    this.cachedDoctorMap = doctorMap;
+    this.cachedNewCount = 0;
+    this.cachedOldCount = 0;
+
     // Use local array for faster pushing
     const tempRawData: DetailedExaminationStat[] = [];
 
@@ -341,6 +348,10 @@ export class DetailedExaminationReportComponent implements OnInit {
           }
         }
 
+        // Update cached totals
+        this.cachedNewCount = totalNew;
+        this.cachedOldCount = totalOld;
+
         // [OPTIMIZATION] Yield to main thread to let UI render spinner
         await new Promise(resolve => setTimeout(resolve, 0));
       }
@@ -391,21 +402,31 @@ export class DetailedExaminationReportComponent implements OnInit {
       },
     ];
 
-    this.buildTrendChart(dateMap);
-    this.buildPatientTypeChart(totalNew, totalOld);
-    this.buildSpecialtyChart(specialtyMap);
-    this.buildDoctorChart(doctorMap);
+    this.updateCharts();
 
     // [OPTIMIZATION] Stop loading only after all processing is done
     this.isLoading = false;
     this.cd.markForCheck();
   }
 
+  // Cached data structures for fast view updates
+  private cachedDateMap = new Map<string, { visits: number; patients: number }>();
+  private cachedSpecialtyMap = new Map<string, number>();
+  private cachedDoctorMap = new Map<string, number>();
+  private cachedNewCount = 0;
+  private cachedOldCount = 0;
+
+  private updateCharts(): void {
+    this.buildTrendChart(this.cachedDateMap);
+    this.buildPatientTypeChart(this.cachedNewCount, this.cachedOldCount);
+    this.buildSpecialtyChart(this.cachedSpecialtyMap);
+    this.buildDoctorChart(this.cachedDoctorMap);
+  }
+
   private updateChartColors(): void {
     if (this.trendChartOptions) {
-      // Re-trigger processData to rebuild charts with new colors (fast since data is ready)
-      // In a real scenario, you might want a lighter weight function just to update chart options
-      this.processData();
+      // Re-build charts using cached data instead of full reprocessing
+      this.updateCharts();
     }
   }
 

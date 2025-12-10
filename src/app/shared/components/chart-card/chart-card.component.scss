@@ -81,6 +81,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
+  &.skeleton-loading {
+    color: transparent !important;
+    pointer-events: none;
+    user-select: none;
+    position: relative;
+
+    // Hide native icons when loading
+    i {
+      display: none;
+    }
+
+    // Create the skeleton overlay
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 1em; // Match text height relatively
+      background-color: var(--gray-100);
+      border-radius: 4px;
+      transform: translateY(-50%);
+      animation: skeleton-pulse 1.5s infinite ease-in-out;
+    }
+  }
+
   i {
     font-size: 1rem;
     flex-shrink: 0;
@@ -124,34 +150,32 @@
   padding-left: var(--spacing-sm);
   white-space: nowrap;
 
+  &.skeleton-loading {
+    color: transparent !important;
+    pointer-events: none;
+    user-select: none;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: var(--spacing-sm); // Match padding-left
+      width: calc(100% - var(--spacing-sm));
+      height: 0.8em;
+      background-color: var(--gray-100);
+      border-radius: 4px;
+      transform: translateY(-50%);
+      animation: skeleton-pulse 1.5s infinite ease-in-out;
+    }
+  }
+
   @media (max-width: 768px) {
     font-size: 0.8125rem;
   }
 
   @media (max-width: 480px) {
     display: none;
-  }
-}
-
-/* Skeleton Title for Loading State */
-.skeleton-title {
-  width: 150px;
-  height: 1.6875rem;
-  /* Matches line-height of .card-title (1.125rem * 1.5) */
-  border-radius: 4px;
-  background-color: var(--gray-100);
-  animation: skeleton-pulse 1.5s infinite ease-in-out;
-
-  @media (max-width: 768px) {
-    height: 1.5rem;
-    /* Matches 1rem * 1.5 */
-    width: 120px;
-  }
-
-  @media (max-width: 480px) {
-    height: 1.40625rem;
-    /* Matches 0.9375rem * 1.5 */
-    width: 100px;
   }
 }
 

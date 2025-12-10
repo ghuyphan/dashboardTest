@@ -34,16 +34,21 @@ import { Subject, takeUntil } from 'rxjs';
 
 const DEFAULT_VALIDATION_MESSAGE = 'Trường này không hợp lệ.';
 
+export interface DynamicFormOption {
+  key?: string | number;
+  value: string;
+}
+
 export interface FormControlConfig {
   controlName: string;
   controlType: string;
   label?: string;
-  value?: any;
+  value?: unknown;
   disabled?: boolean;
   validators?: ValidatorsConfig;
   validationMessages?: Record<string, string>;
   placeholder?: string;
-  options?: any[];
+  options?: DynamicFormOption[];
   layout_flexGrow?: number;
 }
 
@@ -65,7 +70,7 @@ export interface ValidatorsConfig {
   max?: number;
 }
 
-export type DynamicFormValue = Record<string, any>;
+export type DynamicFormValue = Record<string, unknown>;
 
 @Component({
   selector: 'app-dynamic-form',
@@ -142,8 +147,8 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     this.formReady.emit(this.dynamicForm);
   }
 
-  private createFormControls(config: FormConfig): Record<string, FormControl<any>> {
-    const formGroup: Record<string, FormControl<any>> = {};
+  private createFormControls(config: FormConfig): Record<string, FormControl<unknown>> {
+    const formGroup: Record<string, FormControl<unknown>> = {};
 
     for (const row of config.formRows) {
       for (const control of row.controls) {
@@ -153,13 +158,13 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     return formGroup;
   }
 
-  private createFormControl(config: FormControlConfig): FormControl<any> {
+  private createFormControl(config: FormControlConfig): FormControl<unknown> {
     const value = this.prepareControlValue(config);
     const validators = this.buildValidators(config.validators);
-    return new FormControl<any>({ value, disabled: config.disabled ?? false }, validators);
+    return new FormControl<unknown>({ value, disabled: config.disabled ?? false }, validators);
   }
 
-  private prepareControlValue(config: FormControlConfig): any {
+  private prepareControlValue(config: FormControlConfig): unknown {
     const value = config.value ?? null;
 
     if (config.controlType === 'currency') {
@@ -221,8 +226,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
 
     for (const row of config.formRows) {
       for (const control of row.controls) {
-        if (control.controlType === 'date' && newValue[control.controlName] instanceof Date) {
-          newValue[control.controlName] = this.datePipe.transform(newValue[control.controlName], 'yyyy-MM-dd');
+        const val = newValue[control.controlName];
+        if (control.controlType === 'date' && val instanceof Date) {
+          newValue[control.controlName] = this.datePipe.transform(val, 'yyyy-MM-dd');
         }
       }
     }
@@ -263,11 +269,11 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     return DEFAULT_VALIDATION_MESSAGE;
   }
 
-  private getControl(controlName: string): FormControl<any> | null {
-    return this.dynamicForm.get(controlName) as FormControl<any> | null;
+  private getControl(controlName: string): FormControl<unknown> | null {
+    return this.dynamicForm.get(controlName) as FormControl<unknown> | null;
   }
 
-  private cleanCurrency(value: any): number | null {
+  private cleanCurrency(value: unknown): number | null {
     if (value === null || value === undefined || value === '') {
       return null;
     }
@@ -281,7 +287,7 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     return isNaN(numberValue) ? null : numberValue;
   }
 
-  public formatCurrency(value: any): string {
+  public formatCurrency(value: unknown): string {
     const numberValue = this.cleanCurrency(value);
     if (numberValue === null) return '';
     return NumberUtils.format(numberValue);

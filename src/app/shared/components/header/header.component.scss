@@ -119,8 +119,8 @@
   border: 1px solid var(--border-color);
 
   flex: 2;
-  max-width: 400px;
-  height: 40px;
+  max-width: 320px;
+  height: 36px;
   /* Match button height */
 
   padding: 0 0.75rem;
@@ -142,7 +142,9 @@
   }
 
   input {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    width: auto;
     border: none;
     background: none;
     padding: 0 0.5rem;
@@ -150,7 +152,7 @@
     font-size: 0.875rem;
     color: var(--text-primary);
     caret-color: var(--teal-blue);
-    line-height: 1.5;
+    line-height: normal;
     height: 100%;
 
     &::placeholder {

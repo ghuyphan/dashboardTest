@@ -56,8 +56,9 @@ export class ModalComponent implements AfterViewInit {
 
       // [5] Legacy Support: Handle Output Emitters automatically
       // Ideally, the child should call modalRef.close(), but if you support @Output() close:
-      if ('closeModal' in componentRef.instance && (componentRef.instance as any).closeModal?.subscribe) {
-        (componentRef.instance as any).closeModal.subscribe((data: any) => {
+      const instance = componentRef.instance as { closeModal?: { subscribe: (fn: (d?: unknown) => void) => void } };
+      if (instance.closeModal && typeof instance.closeModal.subscribe === 'function') {
+        instance.closeModal.subscribe((data?: unknown) => {
           this.closeModal(data);
         });
       }
@@ -71,7 +72,7 @@ export class ModalComponent implements AfterViewInit {
     return this.options.size ? `modal-size-${this.options.size}` : 'modal-size-md';
   }
 
-  closeModal(data?: any): void {
+  closeModal(data?: unknown): void {
     this.modalRef.close(data);
   }
 

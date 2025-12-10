@@ -2,20 +2,15 @@
   @if (title() || subtitle() || icon()) {
   <div class="card-header">
     <div class="card-title-wrapper">
-      @if (isLoading()) {
-      <!-- Skeleton for title -->
-      <div class="skeleton-title skeleton"></div>
-      } @else {
-      <h3 class="card-title">
-        @if (icon()) {
+      <h3 class="card-title" [class.skeleton-loading]="isLoading()">
+        @if (icon() && !isLoading()) {
         <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
         }
         {{ title() }}
       </h3>
 
       @if (subtitle()) {
-      <span class="card-subtitle">{{ subtitle() }}</span>
-      }
+      <span class="card-subtitle" [class.skeleton-loading]="isLoading()">{{ subtitle() }}</span>
       }
     </div>
 
