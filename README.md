@@ -279,37 +279,42 @@ The AI assistant connects to the [LLM Proxy Server](https://github.com/ghuyphan/
 
 ## ⌨️ Keyboard Shortcuts
 
-The portal supports extensive keyboard shortcuts for power users:
+The portal supports keyboard shortcuts for power users (defined in `src/app/core/config/keyboard-shortcuts.config.ts`):
 
 ### Global
 | Shortcut | Action |
 |----------|--------|
-| `Alt + A` | Open AI Chat |
-| `Alt + T` | Toggle Theme |
+| `Ctrl + /` | Open AI Chat |
 | `Ctrl + .` | Toggle Sidebar |
 | `Ctrl + K` | Focus Search |
+| `Alt + S` | Go to Settings |
+| `Ctrl + Alt + L` | Logout |
 | `Escape` | Close Modal/Chat |
 
-### Navigation
+### Device List
 | Shortcut | Action |
 |----------|--------|
-| `Alt + H` | Go to Home |
-| `Alt + E` | Go to Equipment |
-| `Alt + S` | Go to Settings |
-
-### Data Tables
-| Shortcut | Action |
-|----------|--------|
-| `Alt + N` | New Item |
-| `Alt + ←` | Previous Page |
-| `Alt + →` | Next Page |
+| `Alt + C` | Create New Device |
+| `Alt + E` | Edit Selected |
 | `Alt + V` | View Details |
+| `Delete` | Delete Selected |
 
 ### Date Filters
 | Shortcut | Action |
 |----------|--------|
-| `Alt + F` | Apply Filter |
-| `Alt + 1-5` | Quick Date Presets |
+| `Alt + F` | Open Date Picker |
+| `Alt + Enter` | Apply Filter |
+| `Alt + 1` | Today |
+| `Alt + 2` | This Week |
+| `Alt + 3` | This Month |
+| `Alt + 4` | This Quarter |
+| `Alt + 5` | This Year |
+
+### Action Footer (Modals)
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + Enter` | Primary Action (Save/Submit) |
+| `Ctrl + S` | Save |
 
 View all shortcuts in **Settings > Keyboard Shortcuts**.
 
