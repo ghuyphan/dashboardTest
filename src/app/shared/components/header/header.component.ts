@@ -54,11 +54,20 @@ export class HeaderComponent {
   // --- View Queries ---
   private menuTrigger = viewChild(MatMenuTrigger);
   private avatarButton = viewChild<ElementRef<HTMLButtonElement>>('avatarButton');
+  private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   // --- Outputs ---
   public sidebarToggled = output<void>();
   public logoutClicked = output<void>();
   public backClicked = output<void>();
+
+  // --- Public Methods ---
+  public focusSearch(): void {
+    const input = this.searchInput()?.nativeElement;
+    if (input) {
+      input.focus();
+    }
+  }
 
   constructor() {
     // Update AI chat anchor position when avatar button is available or when chat opens

@@ -7,16 +7,18 @@ import {
   ViewEncapsulation,
   computed,
   OnInit,
-  OnDestroy
+  OnDestroy,
+  ViewChild
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepickerModule, MatDatepicker } from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout'; // [IMPORT]
-import { Subject, takeUntil } from 'rxjs'; // [IMPORT]
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '../../../core/services/toast.service';
 import { DateUtils } from '../../utils/date.utils';
+import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
 
 export interface DateRange {
   fromDate: string;
@@ -47,7 +49,8 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
 export class DateFilterComponent implements OnInit, OnDestroy {
   private datePipe = inject(DatePipe);
   private toastService = inject(ToastService);
-  private breakpointObserver = inject(BreakpointObserver); // [INJECT]
+  private breakpointObserver = inject(BreakpointObserver);
+  private shortcutService = inject(KeyboardShortcutService);
   private destroy$ = new Subject<void>();
 
   // INPUTS
@@ -65,8 +68,11 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   public toDate = signal<string>('');
   public activeRange = signal<QuickRange>('thisWeek');
 
-  // [NEW] Signal to track if we are on mobile
+  // Signal to track if we are on mobile
   public isMobile = signal<boolean>(false);
+
+  // ViewChild for Datepicker
+  @ViewChild('picker') private picker!: MatDatepicker<Date>;
 
   public quickRanges: { key: QuickRange, label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
@@ -114,6 +120,14 @@ export class DateFilterComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setRange(this.defaultRange(), false);
+
+    // [SHORTCUT] Alt + F to focus/open date picker
+    this.shortcutService.listen({ key: 'f', altKey: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((e) => {
+        e.event.preventDefault();
+        this.picker.open();
+      });
   }
 
   ngOnDestroy(): void {

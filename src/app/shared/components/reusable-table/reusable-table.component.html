@@ -21,7 +21,7 @@
 
   <div class="table-container" #tableContainer>
     <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onMatSortChange($event)" class="compact-table"
-      [trackBy]="trackByFn">
+      [trackBy]="trackByFn" [matSortActive]="sortActive()" [matSortDirection]="sortDirection()">
       <ng-container matColumnDef="select">
         <th mat-header-cell *matHeaderCellDef class="compact-header mat-column-select">
           <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
@@ -124,8 +124,9 @@
   </div>
 
   @if (showPaginator()) {
-  <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="pageSizeOptions()" [length]="totalDataLength()"
-    (page)="onPageChange($event)" showFirstLastButtons aria-label="Select page of results" class="compact-paginator">
+  <mat-paginator [pageIndex]="pageIndex()" [pageSize]="pageSize()" [pageSizeOptions]="pageSizeOptions()"
+    [length]="totalDataLength()" (page)="onPageChange($event)" showFirstLastButtons aria-label="Select page of results"
+    class="compact-paginator">
   </mat-paginator>
   }
   } <!-- End of @else block -->

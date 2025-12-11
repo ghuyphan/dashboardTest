@@ -84,6 +84,44 @@
           </button>
         </div>
 
+
+
+        <div class="shortcuts-section">
+          <div class="section-divider"></div>
+
+          <!-- Shortcuts Section (Moved here) -->
+          <h4 class="section-header">
+            <i class="fas fa-keyboard"></i> Phím tắt hệ thống
+          </h4>
+          <div class="shortcuts-grid">
+            <div class="shortcut-item">
+              <span class="keys"><kbd>Ctrl</kbd> + <kbd>K</kbd></span>
+              <span class="desc">Tìm kiếm nhanh</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="keys"><kbd>Ctrl</kbd> + <kbd>B</kbd></span>
+              <span class="desc">Ẩn/Hiện Menu</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="keys"><kbd>Ctrl</kbd> + <kbd>/</kbd></span>
+              <span class="desc">Trợ lý ảo (AI Chat)</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="keys"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+              <span class="desc">Lưu / Hành động chính</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="keys"><kbd>Alt</kbd> + <kbd>S</kbd></span>
+              <span class="desc">Mở Cài đặt</span>
+            </div>
+
+            <div class="shortcut-item">
+              <span class="keys"><kbd>Alt</kbd> + <kbd>F</kbd></span>
+              <span class="desc">Mở bộ lọc ngày</span>
+            </div>
+          </div>
+        </div>
+
         <div class="version-info" (click)="onVersionClick()" [class.dev-active]="versionService.isDevMode()"
           [appTooltip]="'Nhấn 5 lần để bật chế độ nhà phát triển'">
           <span>Version: {{ versionService.appVersion() }}</span>
@@ -182,7 +220,8 @@
 
           <div class="login-warning">
             <i class="fas fa-info-circle"></i>
-            <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để tiếp
+            <span>Lưu ý: Sau khi đổi mật khẩu thành công, hệ thống sẽ tự động đăng xuất. Bạn cần đăng nhập lại để
+              tiếp
               tục
               sử dụng.</span>
           </div>

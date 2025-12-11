@@ -10,8 +10,8 @@ app-reusable-table {
   overflow: hidden;
 
   /* --- CSS Variables Scope --- */
-  --row-height: 36px;
-  --header-height: 36px;
+  --row-height: 40px;
+  --header-height: 40px;
 
   /* Local Scoped Colors - Defaults (Light Mode) */
   --border-color-local: var(--border-color, #e2e8f0);
@@ -21,7 +21,7 @@ app-reusable-table {
 
   /* Row Backgrounds */
   --row-bg-odd: var(--surface-card, #ffffff);
-  --row-bg-even: var(--surface-card, #ffffff);
+  --row-bg-even: var(--gray-50, #f8fafc);
   --row-bg-hover: var(--gray-50, #f8fafc);
   --row-bg-selected: rgba(var(--primary-rgb, 37, 99, 235), 0.08);
 
@@ -35,7 +35,7 @@ app-reusable-table {
     --header-bg-local: #1e293b;
     --header-text-local: #94a3b8;
     --row-bg-odd: var(--surface-card, #0f172a);
-    --row-bg-even: var(--surface-card, #0f172a);
+    --row-bg-even: rgba(255, 255, 255, 0.05);
     --row-bg-hover: rgba(255, 255, 255, 0.04);
     --row-bg-selected: rgba(45, 212, 191, 0.15);
     --sticky-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
@@ -50,7 +50,7 @@ app-reusable-table {
   display: flex;
   flex-direction: column;
   background-color: var(--surface-card, #ffffff);
-  border-radius: var(--border-radius-md, 8px);
+  border-radius: var(--border-radius-lg, 12px);
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border-color-local);
@@ -181,7 +181,7 @@ table.mat-table {
   height: var(--row-height) !important;
   min-height: var(--row-height) !important;
   transition: background-color 0.1s ease;
-  border-bottom: 1px solid var(--border-color-local);
+  border-bottom: none;
 
   &:nth-child(odd) {
     background-color: var(--row-bg-odd) !important;
@@ -214,7 +214,7 @@ table.mat-table {
   font-size: 0.875rem !important;
   color: var(--text-color-local) !important;
   padding: 0 var(--spacing-md, 16px) !important;
-  border-bottom: 1px solid var(--border-color-local) !important;
+  border-bottom: none !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -338,8 +338,8 @@ table.mat-table {
 
   .mat-mdc-paginator-container {
     padding: 0 8px !important;
-    min-height: 36px !important;
-    height: 36px !important;
+    min-height: 40px !important;
+    height: 40px !important;
 
     @media (max-width: 600px) {
       padding: 0 4px !important;
@@ -615,8 +615,8 @@ table.mat-table {
 /* --- Mobile Adjustments --- */
 @media (max-width: 768px) {
   .reusable-table-wrapper {
-    border: none;
-    border-radius: 0;
+    /* Keep border and radius consistent with table-card, just adjustment padding/size if needed */
+    border-radius: var(--border-radius-md, 8px);
 
     .mat-mdc-header-cell,
     .mat-mdc-cell {
@@ -636,8 +636,8 @@ table.mat-table {
 
     /* Aggressive Header Optimization */
     .mat-mdc-header-row {
-      height: 36px !important;
-      min-height: 36px !important;
+      height: 40px !important;
+      min-height: 40px !important;
     }
 
     .mat-mdc-header-cell {

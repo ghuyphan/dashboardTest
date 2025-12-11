@@ -14,17 +14,7 @@
   overflow: hidden;
 }
 
-.page-container {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: var(--spacing-xs);
-  box-sizing: border-box;
-
-  @media (max-width: 768px) {
-    padding: var(--spacing-xs);
-  }
-}
+/* .page-container styles removed to use global defaults */
 
 .detail-card-wrapper {
   height: auto;
@@ -57,7 +47,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
+  /* Reduced from lg to md for consistency */
+  padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
   /* Semantic */
 
@@ -138,7 +129,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-lg) var(--spacing-md);
-  padding: var(--spacing-lg);
+  /* Reduced from lg to md for consistency */
+  padding: var(--spacing-md);
   min-width: 0;
 
   @media (max-width: 1200px) {
@@ -200,7 +192,8 @@
     /* Slightly distinct from card bg */
   }
 
-  padding: var(--spacing-lg);
+  /* Reduced from lg to md for consistency */
+  padding: var(--spacing-md);
   border-left: 1px solid var(--border-color);
 
   @media (max-width: 992px) {

@@ -149,6 +149,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public showPaginator = input(true);
   public clientSideSort = input(false);
   public headerColor = input<string | null>(null);
+  public pageIndex = input(0);
+  public sortActive = input('');
+  public sortDirection = input<SortDirection>('');
 
   // NEW: Option to toggle action column visibility on PC
   public showActionColumn = input(true);

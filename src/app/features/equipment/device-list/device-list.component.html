@@ -3,9 +3,11 @@
     <div class="grid-container">
       <app-reusable-table [data]="pagedDeviceData()" [columns]="deviceColumns" [rowActions]="tableActions"
         [searchTerm]="currentSearchTerm()" [isLoading]="isLoading()" [totalDataLength]="totalDeviceCount()"
-        [pageSize]="currentPageSize()" [pageSizeOptions]="[10, 25, 50, 100]" (rowClick)="onDeviceSelected($event)"
-        (sortChanged)="onSortChanged($event)" (pageChanged)="onPageChanged($event)"
-        (rowAction)="handleRowAction($event)" (searchCleared)="onSearchCleared()"></app-reusable-table>
+        [pageSize]="currentPageSize()" [pageSizeOptions]="[10, 25, 50, 100]" [pageIndex]="currentPageIndex()"
+        [sortActive]="currentSortColumn()" [sortDirection]="currentSortDirection()"
+        (rowClick)="onDeviceSelected($event)" (sortChanged)="onSortChanged($event)"
+        (pageChanged)="onPageChanged($event)" (rowAction)="handleRowAction($event)"
+        (searchCleared)="onSearchCleared()"></app-reusable-table>
     </div>
   </div>
 </div>

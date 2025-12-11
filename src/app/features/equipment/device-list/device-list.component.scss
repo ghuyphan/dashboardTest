@@ -21,25 +21,42 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: var(--spacing-md);
 
+  /* Match table-card styling */
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
-  /* Refined shadow for depth */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid var(--border-color);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-md);
+
+  /* Subtle border for dark mode definition - matching table-card */
+  border: 1px solid transparent;
   overflow: hidden;
 
   /* PERFORMANCE FIX: Helps browser optimize rendering */
   contain: content;
 
   [data-theme="dark"] & {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     border-color: var(--border-color);
+    /* table-card doesn't strictly need a shadow change in dark mode if using var(--box-shadow-md) 
+       but table-card overrides border-color, so we match that. 
+       The original device-list had a specific dark mode shadow, 
+       but we want consistency with table-card which relies on the variable or default. 
+       If table-card has no specific dark mode shadow override in the reviewed file, we stick to the variable. */
   }
 
+  /* Responsive padding matching table-card */
   @media (max-width: 768px) {
     padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+  }
+
+  @media (max-width: 480px) {
+    padding: var(--spacing-sm);
+  }
+
+  @media (max-width: 360px) {
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
   }
 }
 

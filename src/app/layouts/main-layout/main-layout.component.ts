@@ -31,8 +31,10 @@ import { HeaderComponent } from '../../shared/components/header/header.component
 import { SearchService } from '../../core/services/search.service';
 import { FooterActionService } from '../../core/services/footer-action.service';
 import { AiChatComponent } from '../../shared/components/ai-chat/ai-chat.component';
+import { LlmService } from '../../core/services/llm.service'; // [NEW]
 import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
+import { KeyboardShortcutService } from '../../core/services/keyboard-shortcut.service';
 
 interface RouteData {
   title?: string;
@@ -66,6 +68,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private footerService = inject(FooterActionService);
   private modalService = inject(ModalService);
   private destroyRef = inject(DestroyRef);
+  private shortcutService = inject(KeyboardShortcutService);
+  private llmService = inject(LlmService); // [NEW]
 
   // --- State Signals ---
   public sidebarOpen = signal(false);
@@ -92,6 +96,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   // [FIX] Access the scroll container
   @ViewChild('mainContent') private mainContent!: ElementRef<HTMLElement>;
+  @ViewChild(HeaderComponent) private headerComponent!: HeaderComponent;
 
   // Store resize listener to remove it later
   private resizeListener = this.checkWindowSize.bind(this);
@@ -113,6 +118,53 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
     window.addEventListener('resize', this.resizeListener);
     this.contentLoaded.set(true);
+
+    // [DEMO] Register a global shortcut: Ctrl + Alt + L to Logout
+    this.shortcutService.listen({ key: 'l', ctrlKey: true, altKey: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('Shortcut triggered: Ctrl+Alt+L');
+        this.logout();
+      });
+
+    // [DEMO] Search shortcut: Ctrl + K
+    this.shortcutService.listen({ key: 'k', ctrlKey: true }, true) // allow in inputs so you can re-focus if lost? actually maybe not if typing? 
+      // Common pattern: Ctrl+K works even if focused in other inputs usually, or at least from body.
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        e.event.preventDefault(); // Prevent browser search if conflict, though usually Ctrl+F is browser search. Ctrl+K is often browser address bar focus.
+        this.headerComponent.focusSearch();
+      });
+
+    // Toggle Sidebar: Ctrl + B
+    this.shortcutService.listen({ key: 'b', ctrlKey: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        e.event.preventDefault();
+        this.toggleSidebar();
+      });
+
+    // Toggle AI Chat: Ctrl + / (slash) or Ctrl + ?
+    this.shortcutService.listen({ key: '/', ctrlKey: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        e.event.preventDefault();
+        // We need to access the LlmService. Since it is injected in Header, maybe we can access it there or inject it here.
+        // It's cleaner to inject it here as well.
+        this.toggleAiChat();
+      });
+
+    // Navigate to Settings: Alt + S
+    this.shortcutService.listen({ key: 's', altKey: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        e.event.preventDefault();
+        this.router.navigate(['/app/settings']);
+      });
+
+
+
+
   }
 
   ngOnDestroy(): void {
@@ -195,6 +247,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   closeSidebar(): void {
     this.sidebarOpen.set(false);
+  }
+
+  toggleAiChat(): void {
+    this.llmService.toggleChat();
   }
 
   logout(): void {

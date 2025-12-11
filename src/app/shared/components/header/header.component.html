@@ -30,8 +30,8 @@
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
     </div>
-    <input type="text" class="header-search-input" placeholder="Tìm kiếm..." [value]="searchTerm"
-      (input)="onSearchChange($event)" aria-label="Search" />
+    <input type="text" class="header-search-input" placeholder="Tìm kiếm (Ctrl + K)..." [value]="searchTerm"
+      (input)="onSearchChange($event)" aria-label="Search" #searchInput />
     @if (searchTerm) {
     <button type="button" class="search-clear-btn" (click)="onClearSearch()" aria-label="Clear search">
       <i class="fas fa-times"></i>
