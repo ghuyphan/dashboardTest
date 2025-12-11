@@ -30,6 +30,19 @@
     border-color: var(--border-color);
   }
 
+  // Responsive class-based styles (JS-driven)
+  &.is-mobile {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+  }
+
+  &.is-compact {
+    .card-subtitle {
+      display: none;
+    }
+  }
+
+  // Fallback media queries
   @media (max-width: 768px) {
     padding: var(--spacing-sm);
     border-radius: var(--border-radius-md);
@@ -37,6 +50,19 @@
 
   @media (max-width: 480px) {
     padding: var(--spacing-sm);
+  }
+
+  // Very small screens
+  @media (max-width: 360px) {
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+  }
+
+  // Landscape mobile - optimize height
+  @media (max-width: 768px) and (orientation: landscape) {
+    .card-body {
+      min-height: 140px;
+    }
   }
 }
 
@@ -191,8 +217,8 @@
   }
 }
 
-/* --- RESET ZOOM BUTTON --- */
-.reset-zoom-btn {
+/* --- ZOOM TOGGLE BUTTON --- */
+.zoom-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,11 +231,15 @@
   color: var(--text-secondary);
   cursor: pointer;
 
-  /* Use global mixin for consistent hover/focus states */
   @include m.icon-btn-interactions;
 
   i {
     font-size: 0.875rem;
+    transition: transform 0.2s ease;
+  }
+
+  &:active i {
+    transform: scale(0.9);
   }
 
   @media (max-width: 480px) {
@@ -288,52 +318,55 @@
   }
 }
 
-/* --- DATA INDICATOR --- */
+/* --- DATA INDICATOR (in header) --- */
 .data-indicator {
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-sm);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 4px 10px;
-  background-color: var(--surface-overlay, rgba(255, 255, 255, 0.95));
-  border: 1px solid var(--border-color);
+  background-color: var(--gray-100);
   border-radius: var(--border-radius-sm);
   font-size: 0.75rem;
   color: var(--text-secondary);
-  z-index: 5;
-  backdrop-filter: blur(4px);
-  box-shadow: var(--box-shadow-sm);
-  max-width: calc(100% - 2 * var(--spacing-xs));
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
+  cursor: help;
+
+  [data-theme='dark'] & {
+    background-color: var(--gray-800);
+  }
 
   i {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     color: var(--color-info);
   }
 
-  .hint-text {
-    color: var(--text-disabled);
+  .indicator-main {
+    font-weight: 500;
+    color: var(--text-primary);
+    display: inline-block;
+    min-width: 3.5em;
+    text-align: center;
+    transition: transform 0.15s ease-out, color 0.2s ease;
+
+    // Animation class added by JS when value changes
+    &.updating {
+      animation: indicator-pulse 0.3s ease-out;
+    }
   }
 
   @media (max-width: 768px) {
     padding: 3px 8px;
     font-size: 0.6875rem;
-
-    .hint-text {
-      display: none;
-    }
+    gap: 4px;
   }
 
   @media (max-width: 480px) {
-    top: auto;
-    bottom: var(--spacing-xs);
-    right: var(--spacing-xs);
     padding: 2px 6px;
     font-size: 0.625rem;
+  }
+
+  @media (max-width: 360px) {
+    display: none; // Hide on very small screens
   }
 }
 
@@ -641,6 +674,24 @@
   100% {
     opacity: 0.5;
     background-color: var(--gray-100);
+  }
+}
+
+// Subtle pulse for data indicator number updates
+@keyframes indicator-pulse {
+  0% {
+    transform: scale(1);
+    color: var(--text-primary);
+  }
+
+  50% {
+    transform: scale(1.1);
+    color: var(--color-info);
+  }
+
+  100% {
+    transform: scale(1);
+    color: var(--text-primary);
   }
 }
 

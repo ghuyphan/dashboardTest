@@ -934,6 +934,49 @@ body>ul.submenu.open {
   .mat-calendar-previous-button,
   .mat-calendar-next-button {
     color: var(--text-secondary) !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 50%;
+    /* Ensure circular hover highlight */
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--gray-100) !important;
+        color: var(--primary) !important;
+
+        [data-theme="dark"] & {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+    }
+  }
+
+  /* Month/Year Dropdown Arrow */
+  .mat-calendar-arrow {
+    fill: var(--text-secondary) !important;
+    border-top-color: var(--text-secondary) !important;
+  }
+
+  /* Period Button (Text + Arrow) */
+  .mat-calendar-period-button {
+    color: var(--text-secondary) !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: var(--border-radius-md);
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--gray-100) !important;
+        color: var(--primary) !important;
+
+        .mat-calendar-arrow {
+          fill: var(--primary) !important;
+          border-top-color: var(--primary) !important;
+        }
+
+        [data-theme="dark"] & {
+          background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+    }
   }
 
   /* Selected Date (Circle) - Use Primary/Teal */

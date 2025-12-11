@@ -24,13 +24,14 @@ import type { EChartsType, EChartsCoreOption, ECElementEvent } from 'echarts/cor
 import { ThemeService } from '../../../core/services/theme.service';
 import { NumberUtils } from '../../utils/number.utils';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
 
 @Component({
   selector: 'app-chart-card',
   standalone: true,
-  imports: [CommonModule, HasPermissionDirective],
+  imports: [CommonModule, HasPermissionDirective, TooltipDirective],
   templateUrl: './chart-card.component.html',
   styleUrls: ['./chart-card.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
@@ -61,6 +62,8 @@ export class ChartCardComponent implements AfterViewInit {
   public skeletonType = input<ChartSkeletonType>('bar');
 
   public theme = input<string | object | null>(null);
+  public legendSelectedMode = input<'multiple' | 'single'>('multiple');
+  public isolateLegend = input<boolean>(true);
 
   // --- Export Inputs ---
   public enableExport = input<boolean>(false);
@@ -108,6 +111,7 @@ export class ChartCardComponent implements AfterViewInit {
   public exportClicked = output<void>();
 
   private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
+  private indicatorDisplayRef = viewChild<ElementRef<HTMLSpanElement>>('indicatorDisplay');
 
   // === COMPUTED STATE ===
   public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions() && !this.chartError());
@@ -125,9 +129,18 @@ export class ChartCardComponent implements AfterViewInit {
   private orientationListener?: () => void;
   private resizeTimer?: ReturnType<typeof setTimeout>;
 
-  // Mobile detection signal (reactive)
+  // Logic for smart isolation
+  private currentSoloName: string | null = null;
+  private isProgrammaticLegendChange = false;
+
+  // Mobile detection signals (reactive)
   private isMobile = signal(false);
   private isTablet = signal(false);
+
+  // Public computed for template bindings
+  public isMobileView = computed(() => this.isMobile());
+  public isTabletView = computed(() => this.isTablet());
+  public isCompactView = computed(() => this.isMobile() || this.isCompact);
 
   // Data info for UI display
   public hasLargeData = signal(false);
@@ -135,8 +148,12 @@ export class ChartCardComponent implements AfterViewInit {
   public visibleDataPoints = signal(0);
   public chartError = signal<string | null>(null);
 
+  // Indicator animation state
+  private displayedVisiblePoints = 0;
+  private indicatorAnimationId?: number;
+
   // === CONFIGURATION ===
-  private readonly RESIZE_DEBOUNCE_MS = 200;
+  private readonly RESIZE_DEBOUNCE_MS = 100; // Reduced for snappier response
   private readonly MOBILE_BREAKPOINT = 480;
   private readonly TABLET_BREAKPOINT = 768;
 
@@ -197,21 +214,128 @@ export class ChartCardComponent implements AfterViewInit {
   // === PUBLIC METHODS ===
 
   /**
-   * Reset zoom to show all data
+   * Toggle between zoomed-in view and full view.
+   * - If currently zoomed in: save state and zoom all the way out (with spread labels)
+   * - If currently zoomed out (showing all): restore previous zoom state (with auto labels)
    */
-  public resetZoom(): void {
+  public toggleZoom(): void {
     if (!this.chartInstance) return;
 
+    const option = this.chartInstance.getOption() as any;
+    const dataZoom = option?.dataZoom?.[0];
+    if (!dataZoom) return;
+
+    const currentStart = dataZoom.start ?? 0;
+    const currentEnd = dataZoom.end ?? 100;
+    const isFullView = currentStart === 0 && currentEnd === 100;
+    const totalPoints = this.totalDataPoints();
+
     this.ngZone.runOutsideAngular(() => {
-      this.chartInstance?.dispatchAction({
-        type: 'dataZoom',
-        start: 0,
-        end: 100
-      });
+      if (isFullView && this.savedZoomState) {
+        // Restore previous zoom state with auto interval
+        this.chartInstance?.dispatchAction({
+          type: 'dataZoom',
+          start: this.savedZoomState.start,
+          end: this.savedZoomState.end
+        });
+
+        // Restore auto interval for zoomed view
+        this.updateAxisInterval('auto');
+        this.isZoomedOut.set(false);
+      } else {
+        // Save current state and zoom all the way out
+        if (!isFullView) {
+          this.savedZoomState = { start: currentStart, end: currentEnd };
+        }
+        this.chartInstance?.dispatchAction({
+          type: 'dataZoom',
+          start: 0,
+          end: 100
+        });
+
+        // Spread out labels for full view of large data
+        if (totalPoints > this.LARGE_DATA_THRESHOLD) {
+          const interval = Math.ceil(totalPoints / 15); // Show ~15 labels max
+          this.updateAxisInterval(interval);
+        }
+        this.isZoomedOut.set(true);
+      }
     });
 
     this.zoomReset.emit();
   }
+
+  /**
+   * Update x-axis label interval
+   */
+  private updateAxisInterval(interval: number | 'auto'): void {
+    if (!this.chartInstance) return;
+
+    const option = this.chartInstance.getOption() as any;
+    if (option.xAxis) {
+      const xAxes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
+      const updatedXAxis = xAxes.map((axis: any) => ({
+        ...axis,
+        axisLabel: {
+          ...axis.axisLabel,
+          interval: interval
+        }
+      }));
+
+      this.chartInstance.setOption({ xAxis: updatedXAxis }, { notMerge: false });
+    }
+  }
+
+  /**
+   * Animate the indicator display with counting effect (similar to widget-card)
+   */
+  private animateIndicator(start: number, end: number, total: number): void {
+    if (this.indicatorAnimationId) cancelAnimationFrame(this.indicatorAnimationId);
+
+    const el = this.indicatorDisplayRef()?.nativeElement;
+    if (!el) {
+      // Fallback: just set text directly
+      this.displayedVisiblePoints = end;
+      return;
+    }
+
+    // Check for reduced motion preference
+    const prefersReducedMotion = typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (start === end || prefersReducedMotion) {
+      this.displayedVisiblePoints = end;
+      el.textContent = `${end}/${total}`;
+      return;
+    }
+
+    const duration = 200; // Quick 200ms animation
+    const startTime = performance.now();
+
+    this.ngZone.runOutsideAngular(() => {
+      const step = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
+
+        const interpolated = Math.round(start + (end - start) * easedProgress);
+        el.textContent = `${interpolated}/${total}`;
+
+        if (progress < 1) {
+          this.indicatorAnimationId = requestAnimationFrame(step);
+        } else {
+          this.displayedVisiblePoints = end;
+          el.textContent = `${end}/${total}`;
+          this.indicatorAnimationId = undefined;
+        }
+      };
+      this.indicatorAnimationId = requestAnimationFrame(step);
+    });
+  }
+
+  // State for zoom toggle
+  private savedZoomState: { start: number; end: number } | null = null;
+  public isZoomedOut = signal(true); // Track if showing full view
 
   /**
    * Handle export button click
@@ -351,7 +475,76 @@ export class ChartCardComponent implements AfterViewInit {
     });
 
     // Legend selection handler
-    this.chartInstance.on('legendselectchanged', (params: unknown) => {
+    this.chartInstance.on('legendselectchanged', (params: any) => {
+      // Smart Isolation Logic
+      if (this.isolateLegend() && this.chartInstance) {
+        if (this.isProgrammaticLegendChange) {
+          // If this event was triggered by our own logic, ignore it but reset flag if needed
+          // Actually, ECharts emits event synchronously usually, but we should be careful.
+          return;
+        }
+
+        const name = params.name;
+        // Check current state before this change? 
+        // We know what happened: User clicked `name`. ECharts toggled it.
+        // If we are in 'isolate' mode:
+
+        this.isProgrammaticLegendChange = true;
+
+        try {
+          if (this.currentSoloName === name) {
+            // Was already solo on this. Toggle back to ALL.
+            this.chartInstance.dispatchAction({
+              type: 'legendAllSelect'
+            });
+            this.currentSoloName = null;
+          } else {
+            // Was not solo on this (could be All On, or Solo on something else).
+            // Isolate this one.
+
+            // OPTIMIZATION: Use batch commands to avoid looping through all series
+            // 1. Select All (Reset state)
+            this.chartInstance.dispatchAction({
+              type: 'legendAllSelect'
+            });
+
+            // 2. Inverse (Turns All ON -> All OFF)
+            this.chartInstance.dispatchAction({
+              type: 'legendInverseSelect'
+            });
+
+            // 3. Select Target (Turns Target OFF -> Target ON)
+            this.chartInstance.dispatchAction({
+              type: 'legendSelect',
+              name: name
+            });
+
+            this.currentSoloName = name;
+          }
+
+          // Emit the NEW state so parent components (like BedUsage) render correctly
+          // We need to construct the selected map manually or fetch it
+          const newSelected: Record<string, boolean> = {};
+          const option = this.chartInstance.getOption() as any;
+          if (option.series) {
+            option.series.forEach((s: any) => {
+              newSelected[s.name] = (this.currentSoloName === null) ? true : (s.name === this.currentSoloName);
+            });
+          }
+
+          this.ngZone.run(() => this.chartLegendSelectChanged.emit({
+            name: name,
+            selected: newSelected,
+            type: 'legendselectchanged'
+          }));
+
+          return; // Stop processing to avoid double emit with stale data
+        } finally {
+          // Reset flag after all dispatches
+          this.isProgrammaticLegendChange = false;
+        }
+      }
+
       this.ngZone.run(() => this.chartLegendSelectChanged.emit(params as ECElementEvent));
     });
 
@@ -364,7 +557,12 @@ export class ChartCardComponent implements AfterViewInit {
         const start = p.start ?? p.batch?.[0]?.start ?? 0;
         const end = p.end ?? p.batch?.[0]?.end ?? 100;
         const visible = Math.round((end - start) / 100 * total);
-        this.ngZone.run(() => this.visibleDataPoints.set(visible));
+
+        // Only animate if value actually changed
+        if (visible !== this.visibleDataPoints()) {
+          this.visibleDataPoints.set(visible);
+          this.animateIndicator(this.displayedVisiblePoints, visible, total);
+        }
       }
     });
 
@@ -440,6 +638,7 @@ export class ChartCardComponent implements AfterViewInit {
           right: isCompact ? undefined : 20,
           itemGap: isCompact ? 10 : 14,
           padding: isCompact ? [5, 10] : [10, 0],
+          selectedMode: this.legendSelectedMode(),
           textStyle: {
             ...(newOption.legend?.textStyle || {}),
             fontSize: mobile ? 10 : 12,
@@ -459,6 +658,7 @@ export class ChartCardComponent implements AfterViewInit {
           orient: 'horizontal',
           type: 'scroll',
           pageButtonPosition: 'end',
+          selectedMode: this.legendSelectedMode(),
           itemGap: mobile ? 12 : 20,
           padding: [5, 10],
           textStyle: {
@@ -612,10 +812,7 @@ export class ChartCardComponent implements AfterViewInit {
     return newOption;
   }
 
-  private optimizeSeriesForMobile(series: any, mobile: boolean): any {
-    // Legacy support wrapper if needed, otherwise logic moved to applyMobileOptimizations or handled generally
-    return series;
-  }
+
 
   private getMobileTooltipPosition(
     point: number[],
@@ -773,7 +970,15 @@ export class ChartCardComponent implements AfterViewInit {
     const zoomEnd = 100;
     const zoomStart = Math.max(0, 100 - Math.floor((targetItems / dataLength) * 100));
 
-    this.visibleDataPoints.set(Math.round((zoomEnd - zoomStart) / 100 * dataLength));
+    const initialVisible = Math.round((zoomEnd - zoomStart) / 100 * dataLength);
+    this.visibleDataPoints.set(initialVisible);
+    this.displayedVisiblePoints = initialVisible;
+
+    // Initialize display text after a tick (element may not be ready yet)
+    setTimeout(() => {
+      const el = this.indicatorDisplayRef()?.nativeElement;
+      if (el) el.textContent = `${initialVisible}/${dataLength}`;
+    }, 0);
 
     // A. DataZoom configuration
     const zoomConfig = [
@@ -889,24 +1094,29 @@ export class ChartCardComponent implements AfterViewInit {
   private setupResizeStrategy(): void {
     const el = this.chartContainerRef().nativeElement;
 
+    // Use ResizeObserver for container-level changes (parent flex, sidebar toggle, etc.)
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => {
         this.triggerResize();
       });
       this.resizeObserver.observe(el);
-    } else {
-      this.ngZone.runOutsideAngular(() => {
-        this.windowResizeListener = () => this.triggerResize();
-        window.addEventListener('resize', this.windowResizeListener);
-      });
     }
+
+    // ALWAYS listen for window resize as well (not just as fallback)
+    // This ensures charts respond to window size changes even if container
+    // dimensions don't change immediately (e.g., CSS transitions)
+    this.ngZone.runOutsideAngular(() => {
+      this.windowResizeListener = () => this.triggerResize();
+      window.addEventListener('resize', this.windowResizeListener, { passive: true });
+    });
 
     // Also listen for orientation changes on mobile
     if (this.isBrowser && 'onorientationchange' in window) {
       this.ngZone.runOutsideAngular(() => {
         this.orientationListener = () => {
           this.updateDeviceType();
-          setTimeout(() => this.triggerResize(), 100);
+          // Delay resize on orientation change to wait for layout to stabilize
+          setTimeout(() => this.triggerResize(), 150);
         };
         window.addEventListener('orientationchange', this.orientationListener);
       });
@@ -914,13 +1124,14 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private triggerResize(): void {
-    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+    if (this.resizeTimer) cancelAnimationFrame(this.resizeTimer as unknown as number);
 
+    // Use requestAnimationFrame for smooth visual updates
     this.ngZone.runOutsideAngular(() => {
-      this.resizeTimer = setTimeout(() => {
+      this.resizeTimer = requestAnimationFrame(() => {
         this.updateDeviceType();
         this.performResize();
-      }, this.RESIZE_DEBOUNCE_MS);
+      }) as unknown as ReturnType<typeof setTimeout>;
     });
   }
 
@@ -940,6 +1151,7 @@ export class ChartCardComponent implements AfterViewInit {
     const currentWidth = el.clientWidth;
     const currentHeight = el.clientHeight;
 
+    // Skip resize only if dimensions are exactly the same AND both are valid
     if (currentWidth === this.lastWidth && currentHeight === this.lastHeight) {
       return;
     }
@@ -957,7 +1169,13 @@ export class ChartCardComponent implements AfterViewInit {
         const options = this.chartOptions();
         if (options) {
           this.updateChart(options);
-          return; // updateChart handles setOption, so we don't need resize
+          // Still call resize after updateChart to ensure dimensions are correct
+          this.ngZone.runOutsideAngular(() => {
+            setTimeout(() => {
+              this.chartInstance?.resize({ width: 'auto', height: 'auto' });
+            }, 50);
+          });
+          return;
         }
       }
 
@@ -966,7 +1184,7 @@ export class ChartCardComponent implements AfterViewInit {
         this.chartInstance?.resize({
           width: 'auto',
           height: 'auto',
-          animation: { duration: this.isMobile() ? 0 : 300 }
+          animation: { duration: 150, easing: 'cubicOut' }
         });
       });
     }
@@ -982,7 +1200,8 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private cleanup(): void {
-    if (this.resizeTimer) clearTimeout(this.resizeTimer);
+    if (this.resizeTimer) cancelAnimationFrame(this.resizeTimer as unknown as number);
+    if (this.indicatorAnimationId) cancelAnimationFrame(this.indicatorAnimationId);
 
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

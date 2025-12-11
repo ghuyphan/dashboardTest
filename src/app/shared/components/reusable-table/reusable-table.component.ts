@@ -36,7 +36,7 @@ import { HighlightSearchPipe } from '../../pipes/highlight-search.pipe';
 
 const ROW_NAVIGATION_DELAY_MS = 50;
 const DEFAULT_PAGE_SIZE = 10;
-const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const DEFAULT_TRACK_BY_FIELD = 'id';
 
 export type ColumnType = 'text' | 'currency' | 'date' | 'status' | 'actions';
@@ -140,6 +140,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   public pageSize = input(DEFAULT_PAGE_SIZE);
   public pageSizeOptions = input(DEFAULT_PAGE_SIZE_OPTIONS);
   public showLoadingText = input(true);
+  public showSkeletonLoading = input(true);
   public emptyStateText = input('Không có dữ liệu');
   public noResultsText = input('Không tìm thấy kết quả phù hợp');
   public trackByField = input(DEFAULT_TRACK_BY_FIELD);
@@ -151,6 +152,10 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   // NEW: Option to toggle action column visibility on PC
   public showActionColumn = input(true);
+
+  // Skeleton loading row count (configurable)
+  public skeletonRowCount = input(20);
+  public readonly skeletonRows = Array.from({ length: 20 });
 
   public rowClick = output<T | undefined>();
   public sortChanged = output<SortChangedEvent>();

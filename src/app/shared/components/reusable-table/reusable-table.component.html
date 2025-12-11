@@ -1,5 +1,15 @@
 <div class="reusable-table-wrapper">
 
+  @if (showSkeletonLoading() && isLoading()) {
+  <!-- Skeleton Loading Mode -->
+  <div class="skeleton-container">
+    <div class="skeleton-header"></div>
+    @for (row of skeletonRows; track $index) {
+    <div class="skeleton-row" [style.animation-delay.ms]="$index * 50"></div>
+    }
+  </div>
+  } @else {
+  <!-- Spinner Overlay Mode (default) -->
   <div class="loading-shade" [class.hidden]="!isLoading()" aria-hidden="true">
     <div class="app-loading-container">
       <div class="app-loading-spinner"></div>
@@ -118,4 +128,5 @@
     (page)="onPageChange($event)" showFirstLastButtons aria-label="Select page of results" class="compact-paginator">
   </mat-paginator>
   }
+  } <!-- End of @else block -->
 </div>

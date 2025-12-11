@@ -1,4 +1,5 @@
-<div class="chart-card">
+<div class="chart-card" [class.is-mobile]="isMobileView()" [class.is-tablet]="isTabletView()"
+  [class.is-compact]="isCompactView()">
   @if (title() || subtitle() || icon()) {
   <div class="card-header">
     <div class="card-title-wrapper">
@@ -15,10 +16,22 @@
     </div>
 
     <div class="header-controls">
-      <!-- Reset Zoom Button (only when large data) -->
+      <!-- Data Point Indicator (for large datasets) -->
       @if (hasLargeData() && !isLoading()) {
-      <button type="button" class="reset-zoom-btn" (click)="resetZoom()" title="Đặt lại zoom" aria-label="Đặt lại zoom">
-        <i class="fas fa-expand" aria-hidden="true"></i>
+      <span class="data-indicator"
+        [appTooltip]="'Hiển thị ' + visibleDataPoints() + '/' + totalDataPoints() + ' điểm • Kéo thanh trượt để xem thêm'">
+        <i class="fas fa-database" aria-hidden="true"></i>
+        <span class="indicator-main" #indicatorDisplay></span>
+      </span>
+      }
+
+      <!-- Zoom Toggle Button (only when large data) -->
+      @if (hasLargeData() && !isLoading()) {
+      <button type="button" class="zoom-toggle-btn" (click)="toggleZoom()"
+        [appTooltip]="isZoomedOut() ? 'Quay lại vị trí zoom trước' : 'Hiển thị toàn bộ dữ liệu'"
+        [attr.aria-label]="isZoomedOut() ? 'Quay lại vị trí zoom trước' : 'Hiển thị toàn bộ dữ liệu'">
+        <i class="fas" [ngClass]="isZoomedOut() ? 'fa-magnifying-glass-plus' : 'fa-magnifying-glass-minus'"
+          aria-hidden="true"></i>
       </button>
       }
 
@@ -167,17 +180,6 @@
     <div #chartContainer class="chart-container" [class.invisible]="!showChart()" role="img"
       [attr.aria-label]="title() ? 'Chart showing ' + title() : 'Data visualization'">
     </div>
-
-    <!-- Data Point Indicator (for large datasets) -->
-    @if (hasLargeData() && showChart()) {
-    <div class="data-indicator">
-      <i class="fas fa-info-circle" aria-hidden="true"></i>
-      <span>
-        Hiển thị {{ visibleDataPoints() }}/{{ totalDataPoints() }} điểm
-        <span class="hint-text">• Kéo thanh trượt để xem thêm</span>
-      </span>
-    </div>
-    }
 
     <!-- Empty State -->
     @if (showEmptyState()) {

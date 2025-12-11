@@ -131,6 +131,21 @@
             }
         }
 
+        /* [FIX] Autofill background override */
+        &:-webkit-autofill {
+            -webkit-text-fill-color: var(--text-primary) !important;
+            -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+
+            &:focus {
+                -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset, 0 0 0 3px rgba(0, 131, 155, 0.15) !important;
+
+                [data-theme='dark'] & {
+                    -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset, 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+                }
+            }
+        }
+
         &:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);

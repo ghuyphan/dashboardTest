@@ -510,6 +510,34 @@ table.mat-table {
   }
 }
 
+/* =========================================================
+   SKELETON LOADING STYLES
+   ========================================================= */
+.skeleton-container {
+  padding: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  height: 100%;
+
+  .skeleton-header {
+    height: 40px;
+    background-color: var(--gray-100);
+    /* Adaptive Gray */
+    border-radius: 4px;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  .skeleton-row {
+    height: 30px;
+    background-color: var(--gray-50);
+    /* Adaptive Gray */
+    border-radius: 4px;
+    animation: pulse 1.5s infinite ease-in-out;
+    /* Animation delay is set inline via [style.animation-delay.ms] */
+  }
+}
+
 .no-data-container {
   display: flex;
   flex-direction: column;
