@@ -1,6 +1,6 @@
 {
   "name": "hoan-my-portal",
-  "version": "0.7.9",
+  "version": "0.7.10",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -29,6 +29,8 @@
     "@angular/platform-browser-dynamic": "^19.2.16",
     "@angular/router": "^19.2.16",
     "@e965/xlsx": "^0.20.3",
+    "@pdfme/common": "^5.5.7",
+    "@pdfme/generator": "^5.5.7",
     "@types/dompurify": "^3.0.5",
     "angularx-qrcode": "^19.0.0",
     "d3": "^7.9.0",

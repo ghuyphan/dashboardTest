@@ -147,32 +147,34 @@ export class DeviceDetailComponent implements OnInit {
 
   async onPrintReport(device: Device): Promise<void> {
     if (!device) return;
+
+    // Map device data to schema inputs
+    // Ensure these keys match what is defined in your 'device-report.json' schema
     const reportData = {
-      device_name: device.Ten || '',
-      device_code: device.Ma || '',
+      deviceName: device.Ten || '',
+      deviceId: device.Ma || '',
       model: device.Model || '',
       serial: device.SerialNumber || '',
       department: device.ViTri || '',
       status: device.TrangThai_Ten || '',
       description: device.MoTa || '',
       price: NumberUtils.formatCurrency(device.GiaMua || 0),
-      created_date: new Date().toLocaleDateString('vi-VN')
+      createdDate: new Date().toLocaleDateString('vi-VN')
     };
 
     try {
-      this.toastService.showInfo('Đang chuẩn bị bản in...');
+      this.toastService.showInfo('Đang tạo báo cáo PDF...');
 
-      await this.pdfService.generatePdf(
-        'assets/templates/device_template.pdf',
+      await this.pdfService.generateReport(
+        'assets/schemas/device-report.json',
         reportData,
-        `Bien_Ban_${device.Ma}.pdf`,
-        'print'
+        `Bien_Ban_${device.Ma}.pdf`
       );
 
-      this.toastService.showSuccess('Đã mở hộp thoại in');
+      this.toastService.showSuccess('Đã tải xuống báo cáo thành công');
     } catch (error) {
       console.error(error);
-      this.toastService.showError('Lỗi khi in. Kiểm tra file mẫu PDF trong assets.');
+      this.toastService.showError('Lỗi khi tạo PDF. Vui lòng kiểm tra lại.');
     }
   }
 
