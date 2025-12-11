@@ -86,6 +86,7 @@ export class EmergencySummaryComponent implements OnInit {
   public admissionChartOptions: EChartsCoreOption | null = null;
   public transferChartOptions: EChartsCoreOption | null = null;
   public insuranceChartOptions: EChartsCoreOption | null = null;
+  public outcomeChartOptions: EChartsCoreOption | null = null;
 
   public tableColumns: GridColumn[] = [
     {
@@ -236,7 +237,10 @@ export class EmergencySummaryComponent implements OnInit {
       nhapVienData,
       chuyenVienData,
       totalBHYT,
-      totalVienPhi
+      totalVienPhi,
+      this.rawData.reduce((sum, d) => sum + d.LUOT_CC, 0),
+      this.rawData.reduce((sum, d) => sum + d.NHAP_VIEN, 0),
+      this.rawData.reduce((sum, d) => sum + d.CHUYEN_VIEN, 0)
     );
   }
 
@@ -254,6 +258,7 @@ export class EmergencySummaryComponent implements OnInit {
     this.admissionChartOptions = null;
     this.transferChartOptions = null;
     this.insuranceChartOptions = null;
+    this.outcomeChartOptions = null;
     this.cd.markForCheck();
 
     // Calculate Last Year's Range
@@ -407,7 +412,10 @@ export class EmergencySummaryComponent implements OnInit {
       nhapVienData,
       chuyenVienData,
       totalBHYT,
-      totalVienPhi
+      totalVienPhi,
+      totalCC,
+      totalNhapVien,
+      totalChuyenVien
     );
   }
 
@@ -418,7 +426,10 @@ export class EmergencySummaryComponent implements OnInit {
     nhapVienData: number[],
     chuyenVienData: number[],
     totalBHYT: number,
-    totalVienPhi: number
+    totalVienPhi: number,
+    totalCC: number,
+    totalNhapVien: number,
+    totalChuyenVien: number
   ): void {
 
     const commonLegend = {
@@ -606,7 +617,62 @@ export class EmergencySummaryComponent implements OnInit {
       ],
     };
 
-    // 4. Insurance Chart (No DataZoom needed)
+    // 4. Outcome Distribution Chart
+    const totalDischarged = Math.max(0, totalCC - totalNhapVien - totalChuyenVien);
+    this.outcomeChartOptions = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: this.palette.bgCard,
+        borderColor: this.palette.gray200,
+        textStyle: { color: this.palette.textPrimary },
+        formatter: (params: any) => {
+          return `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`;
+        },
+      },
+      legend: {
+        bottom: 0,
+        left: 'center',
+        textStyle: { color: this.palette.textSecondary },
+      },
+      series: [
+        {
+          name: 'Kết quả điều trị',
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['50%', '45%'],
+          itemStyle: {
+            borderRadius: 5,
+            borderColor: this.palette.bgCard,
+            borderWidth: 2,
+          },
+          label: {
+            show: true,
+            formatter: '{b}: {d}%',
+            color: this.palette.textPrimary,
+          },
+          data: [
+            {
+              value: totalDischarged,
+              name: 'Xuất viện/Về',
+              itemStyle: { color: this.palette.chart2 },
+            },
+            {
+              value: totalNhapVien,
+              name: 'Nhập viện',
+              itemStyle: { color: this.palette.chart6 },
+            },
+            {
+              value: totalChuyenVien,
+              name: 'Chuyển viện',
+              itemStyle: { color: this.palette.pastelCoral },
+            },
+          ],
+        },
+      ],
+    };
+
+    // 5. Insurance Chart (No DataZoom needed)
     this.insuranceChartOptions = {
       backgroundColor: 'transparent',
       tooltip: {

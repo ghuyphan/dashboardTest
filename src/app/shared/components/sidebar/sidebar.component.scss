@@ -619,7 +619,7 @@
   }
 
   .sidebar-header {
-    padding: 0 var(--spacing-xs);
+    padding: 0 var(--sidebar-padding);
   }
 
   .sidebar-nav {
@@ -657,7 +657,7 @@
 
   .sidebar.collapsed .sidebar-header {
     justify-content: flex-start;
-    padding: 0 var(--spacing-xs);
+    padding: 0 var(--sidebar-padding);
   }
 
   .sidebar.collapsed .sidebar-header h2 {

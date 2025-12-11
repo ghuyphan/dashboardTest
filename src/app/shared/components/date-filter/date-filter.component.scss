@@ -39,6 +39,11 @@
     padding: var(--spacing-sm);
   }
 
+  @media (max-width: 360px) {
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+  }
+
   @media (min-width: 992px) {
     flex-direction: row;
     align-items: flex-end;

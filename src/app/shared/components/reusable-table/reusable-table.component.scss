@@ -10,8 +10,8 @@ app-reusable-table {
   overflow: hidden;
 
   /* --- CSS Variables Scope --- */
-  --row-height: 48px;
-  --header-height: 42px;
+  --row-height: 36px;
+  --header-height: 36px;
 
   /* Local Scoped Colors - Defaults (Light Mode) */
   --border-color-local: var(--border-color, #e2e8f0);
@@ -332,8 +332,8 @@ table.mat-table {
 
   .mat-mdc-paginator-container {
     padding: 0 8px !important;
-    min-height: 42px !important;
-    height: 42px !important;
+    min-height: 36px !important;
+    height: 36px !important;
 
     @media (max-width: 600px) {
       padding: 0 4px !important;
@@ -437,10 +437,10 @@ table.mat-table {
 
   /* Navigation Buttons */
   .mat-mdc-icon-button {
-    width: 32px !important;
-    height: 32px !important;
-    padding: 6px !important;
-    margin-left: 4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 4px !important;
+    margin-left: 2px !important;
 
     mat-icon {
       font-size: 18px;
@@ -628,8 +628,8 @@ table.mat-table {
 
     /* Aggressive Header Optimization */
     .mat-mdc-header-row {
-      height: 42px !important;
-      min-height: 42px !important;
+      height: 36px !important;
+      min-height: 36px !important;
     }
 
     .mat-mdc-header-cell {

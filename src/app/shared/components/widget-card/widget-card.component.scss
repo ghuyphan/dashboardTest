@@ -10,6 +10,8 @@
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
+  // Standard padding consistent with other cards
+  padding: var(--spacing-md);
 
   transition: transform 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out,
@@ -37,6 +39,17 @@
         box-shadow: var(--box-shadow-lg);
       }
     }
+  }
+
+  // Responsive padding - consistent with other card components
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+  }
+
+  @media (max-width: 360px) {
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
   }
 }
 

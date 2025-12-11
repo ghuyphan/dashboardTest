@@ -21,6 +21,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding: var(--spacing-md);
 
   background-color: var(--surface-card);
   border-radius: var(--border-radius-lg);
@@ -35,6 +36,10 @@
   [data-theme="dark"] & {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     border-color: var(--border-color);
+  }
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
   }
 }
 

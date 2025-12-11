@@ -77,6 +77,11 @@
   }
 }
 
+/* Table spans full width on desktop, stacks normally on mobile */
+.table-full-row {
+  grid-column: 1 / -1;
+}
+
 /* --- Component Sizing (matching device-dashboard) --- */
 .grid-item {
   min-height: 400px;
