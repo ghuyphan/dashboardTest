@@ -2,7 +2,7 @@
   <div class="header-left-controls">
 
     <button type="button" class="header-icon-btn mobile-sidebar-toggle" (click)="onMobileToggleClick()"
-      aria-label="Toggle sidebar">
+      aria-label="Toggle sidebar" [appTooltip]="'Menu (Ctrl + .)'">
       <svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display: block">
         <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />
         <rect x="10" y="25" width="25" height="10" rx="5" ry="5" style="fill: var(--surface-card, #fff)" />

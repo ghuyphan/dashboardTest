@@ -664,6 +664,8 @@ select:-webkit-autofill {
   background: var(--gray-800);
   color: var(--gray-100);
   border-color: var(--gray-600);
+  display: flex;
+  align-items: center;
 
   [data-theme="dark"] & {
     background: var(--gray-100);
@@ -689,6 +691,24 @@ select:-webkit-autofill {
   &.show {
     opacity: 1;
     transform: scale(1);
+  }
+
+  .tooltip-shortcut {
+    display: inline-block;
+    margin-left: var(--spacing-sm);
+    padding: 2px 6px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85em;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    [data-theme="dark"] & {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: var(--text-primary);
+    }
   }
 }
 

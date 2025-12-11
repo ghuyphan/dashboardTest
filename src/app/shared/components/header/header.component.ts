@@ -18,6 +18,7 @@ import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 import { User } from '../../../core/models/user.model';
 import { SearchService } from '../../../core/services/search.service';
@@ -35,6 +36,7 @@ import { VersionService } from '../../../core/services/version.service';
     MatButtonModule,
     MatDividerModule,
     MatIconModule,
+    TooltipDirective
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'

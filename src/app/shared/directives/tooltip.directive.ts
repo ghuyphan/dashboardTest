@@ -26,7 +26,7 @@ export class TooltipDirective implements OnDestroy {
     private el: ElementRef<HTMLElement>,
     private renderer: Renderer2,
     private zone: NgZone
-  ) {}
+  ) { }
 
   @HostListener('mouseenter')
   onMouseEnter(): void {
@@ -64,14 +64,33 @@ export class TooltipDirective implements OnDestroy {
 
     this.tooltipElement = this.renderer.createElement('div');
     // Use signal value
-    const textNode = this.renderer.createText(this.tooltipText());
-    this.renderer.appendChild(this.tooltipElement, textNode);
+    const text = this.tooltipText() || '';
+    const shortcutRegex = /(.*?)\s*\(([^)]+)\)$/;
+    const match = text.match(shortcutRegex);
+
+    if (match) {
+      const description = match[1];
+      const shortcut = match[2];
+
+      const textNode = this.renderer.createText(description);
+      this.renderer.appendChild(this.tooltipElement, textNode);
+
+      const shortcutSpan = this.renderer.createElement('span');
+      const shortcutText = this.renderer.createText(shortcut);
+      this.renderer.appendChild(shortcutSpan, shortcutText);
+      this.renderer.addClass(shortcutSpan, 'tooltip-shortcut');
+      this.renderer.appendChild(this.tooltipElement, shortcutSpan);
+    } else {
+      const textNode = this.renderer.createText(text);
+      this.renderer.appendChild(this.tooltipElement, textNode);
+    }
+
     this.renderer.addClass(this.tooltipElement, 'app-tooltip-container');
 
     this.renderer.appendChild(document.body, this.tooltipElement);
 
     this.updatePosition();
-    
+
     requestAnimationFrame(() => {
       if (this.tooltipElement) {
         this.renderer.addClass(this.tooltipElement, 'show');

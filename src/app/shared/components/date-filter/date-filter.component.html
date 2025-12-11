@@ -29,7 +29,8 @@
     <div class="quick-actions-scroll">
       @for (range of quickRanges; track range.key; let i = $index) {
       <button type="button" class="btn-pill" [class.active]="activeRange() === range.key"
-        (click)="setRange(range.key, true)" [disabled]="isLoading()" [appTooltip]="'Alt + ' + (i + 1)">
+        (click)="setRange(range.key, true)" [disabled]="isLoading()"
+        [appTooltip]="range.label + ' (Alt + ' + (i + 1) + ')'">
         {{ range.label }}
       </button>
       }

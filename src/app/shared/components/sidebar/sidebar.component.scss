@@ -182,14 +182,14 @@
     transition: background-color 0.3s;
   }
 
+  content-visibility: auto;
+  contain-intrinsic-size: 100px 500px;
+
   @media (hover: hover) {
     &:hover::-webkit-scrollbar-thumb {
       background-color: var(--gray-300);
     }
   }
-
-  content-visibility: auto;
-  contain-intrinsic-size: 100px 500px;
 }
 
 .sidebar-nav-content::after {
