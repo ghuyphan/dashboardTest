@@ -7,10 +7,14 @@ import {
   ChangeDetectionStrategy,
   OnInit,
   OnDestroy,
-  HostListener
+  HostListener,
+  DestroyRef
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ModalOptions } from '../../../core/models/modal-options.model';
 import { ModalRef, MODAL_OPTIONS } from '../../../core/models/modal-ref.model';
+import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
 
 @Component({
   selector: 'app-modal',
@@ -28,6 +32,8 @@ export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Inject services/tokens
   private modalRef = inject(ModalRef);
+  private shortcutService = inject(KeyboardShortcutService);
+  private destroyRef = inject(DestroyRef);
   public options = inject<ModalOptions>(MODAL_OPTIONS);
 
   // Track if we pushed a history state (to avoid double-pop issues)
@@ -36,18 +42,18 @@ export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() { }
 
-  // [NEW] ESC key listener to close modal
-  @HostListener('document:keydown.escape', ['$event'])
-  onEscapeKey(event: KeyboardEvent): void {
-    if (!this.options.disableClose) {
-      event.preventDefault();
-      this.closeModal();
-    }
-  }
-
   ngOnInit(): void {
-    // [NEW] Push a history state so the back button can close the modal
+    // [NEW] Use central shortcut service for ESC key
     if (!this.options.disableClose) {
+      // listen(shortcut, allowInInputs=false, ignoreModalCheck=true)
+      this.shortcutService.listen(GLOBAL_SHORTCUTS.ESCAPE, false, true)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((e) => {
+          e.event.preventDefault();
+          this.closeModal();
+        });
+
+      // Push a history state so the back button can close the modal
       history.pushState({ modal: true }, '');
       this.historyStatePushed = true;
       window.addEventListener('popstate', this.popstateHandler);

@@ -35,6 +35,7 @@ import { LlmService } from '../../core/services/llm.service'; // [NEW]
 import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
 import { KeyboardShortcutService } from '../../core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '../../core/config/keyboard-shortcuts.config';
 
 interface RouteData {
   title?: string;
@@ -119,43 +120,39 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     window.addEventListener('resize', this.resizeListener);
     this.contentLoaded.set(true);
 
-    // [DEMO] Register a global shortcut: Ctrl + Alt + L to Logout
-    this.shortcutService.listen({ key: 'l', ctrlKey: true, altKey: true })
+    // [GLOBAL] Logout: Ctrl + Alt + L
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.LOGOUT)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        console.log('Shortcut triggered: Ctrl+Alt+L');
         this.logout();
       });
 
-    // [DEMO] Search shortcut: Ctrl + K
-    this.shortcutService.listen({ key: 'k', ctrlKey: true }, true) // allow in inputs so you can re-focus if lost? actually maybe not if typing? 
-      // Common pattern: Ctrl+K works even if focused in other inputs usually, or at least from body.
+    // [GLOBAL] Search: Ctrl + K
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.SEARCH, true)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((e) => {
-        e.event.preventDefault(); // Prevent browser search if conflict, though usually Ctrl+F is browser search. Ctrl+K is often browser address bar focus.
+        e.event.preventDefault();
         this.headerComponent.focusSearch();
       });
 
-    // Toggle Sidebar: Ctrl + B
-    this.shortcutService.listen({ key: 'b', ctrlKey: true })
+    // [GLOBAL] Toggle Sidebar: Ctrl + .
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.TOGGLE_SIDEBAR)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((e) => {
         e.event.preventDefault();
         this.toggleSidebar();
       });
 
-    // Toggle AI Chat: Ctrl + / (slash) or Ctrl + ?
-    this.shortcutService.listen({ key: '/', ctrlKey: true })
+    // [GLOBAL] Toggle AI Chat: Ctrl + /
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.AI_CHAT)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((e) => {
         e.event.preventDefault();
-        // We need to access the LlmService. Since it is injected in Header, maybe we can access it there or inject it here.
-        // It's cleaner to inject it here as well.
         this.toggleAiChat();
       });
 
-    // Navigate to Settings: Alt + S
-    this.shortcutService.listen({ key: 's', altKey: true })
+    // [GLOBAL] Navigate to Settings: Alt + S
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.SETTINGS)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((e) => {
         e.event.preventDefault();

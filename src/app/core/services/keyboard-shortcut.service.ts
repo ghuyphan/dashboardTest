@@ -47,9 +47,19 @@ export class KeyboardShortcutService implements OnDestroy {
      * @param input Definition of the shortcut keys
      * @param allowInInputs If true, triggers even when user is typing in an input/textarea
      */
-    listen(input: ShortcutInput, allowInInputs: boolean = false): Observable<ShortcutEvent> {
+    listen(input: ShortcutInput, allowInInputs: boolean = false, ignoreModalCheck: boolean = false): Observable<ShortcutEvent> {
         return this.keyDown$.pipe(
             filter(event => {
+                // IMPORTANT: Ignore key repeat events to prevent infinite triggering
+                if (event.repeat) {
+                    return false;
+                }
+
+                // Block shortcuts when a modal is open (check for CDK overlay), unless explicitly ignored
+                if (!ignoreModalCheck && this.isModalOpen()) {
+                    return false;
+                }
+
                 // 1. Check if we should ignore input fields
                 if (!allowInInputs && this.isInputActive(event)) {
                     return false;
@@ -66,16 +76,32 @@ export class KeyboardShortcutService implements OnDestroy {
                 if (event.shiftKey !== shift) return false;
                 if (event.metaKey !== meta) return false;
 
-                // 3. Check key
-                // event.key is case sensitive ('a' vs 'A'). 
-                // We usually standardise to lowercase for comparison if we don't care about Shift,
-                // but if Shift is involved, event.key changes.
-                // Let's use case-insensitive compare for the key character itself if strict match fails.
-                if (event.key.toLowerCase() !== input.key.toLowerCase()) {
-                    return false;
+                // 3. Check key - use both event.key and event.code for better compatibility
+                // On Windows, Alt+letter may not report the letter in event.key
+                // event.code gives the physical key (e.g., "KeyN" for N key)
+                const inputKeyLower = input.key.toLowerCase();
+                const eventKeyLower = event.key.toLowerCase();
+
+                // Direct key match
+                if (eventKeyLower === inputKeyLower) {
+                    return true;
                 }
 
-                return true;
+                // Fallback: Check event.code for single letter keys (e.g., "KeyN" -> "n")
+                // This handles cases where Alt+key doesn't report the letter in event.key
+                if (input.key.length === 1 && event.code) {
+                    const codeKeyMatch = event.code.toLowerCase();
+                    // event.code for letters is like "KeyA", "KeyN", etc.
+                    if (codeKeyMatch === `key${inputKeyLower}`) {
+                        return true;
+                    }
+                    // event.code for digits is like "Digit1", "Digit2", etc.
+                    if (codeKeyMatch === `digit${inputKeyLower}`) {
+                        return true;
+                    }
+                }
+
+                return false;
             }),
             map(event => ({
                 event,
@@ -116,6 +142,16 @@ export class KeyboardShortcutService implements OnDestroy {
             tagName === 'select' ||
             isEditable
         );
+    }
+
+    /**
+     * Check if a modal overlay is currently open.
+     * This prevents shortcuts from triggering when modals are displayed.
+     */
+    private isModalOpen(): boolean {
+        // Check for CDK overlay backdrop (used by Angular Material and our modal service)
+        const modalBackdrop = document.querySelector('.app-modal-backdrop, .cdk-overlay-backdrop');
+        return !!modalBackdrop;
     }
 
     private getComboString(event: KeyboardEvent): string {

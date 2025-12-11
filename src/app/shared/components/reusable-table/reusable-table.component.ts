@@ -383,7 +383,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   };
 
   public onActionClick(action: string, element: T, event: MouseEvent): void {
-    event.stopPropagation();
+    // [FIX] Do not stop propagation so the MatMenu can close automatically upon selection
+    // event.stopPropagation();
     this.rowAction.emit({ action, data: element });
   }
 

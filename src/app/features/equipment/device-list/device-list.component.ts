@@ -42,6 +42,7 @@ import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
 import { DeviceService, DeviceQueryParams } from '../../../core/services/device.service';
+import { DEVICE_LIST_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
 
 const DEFAULT_PAGE_SIZE = 25;
 const DEFAULT_SORT_COLUMN = 'Id';
@@ -407,6 +408,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         action: () => this.onCreate(),
         permission: 'QLThietBi.DMThietBi.RCREATE',
         className: 'btn-primary',
+        shortcut: DEVICE_LIST_SHORTCUTS.CREATE
       },
       {
         label: 'Sửa',
@@ -415,6 +417,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
+        shortcut: DEVICE_LIST_SHORTCUTS.EDIT
       },
       {
         label: 'Xóa',
@@ -423,6 +426,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE',
         className: 'btn-danger',
         disabled: !isRowSelected,
+        shortcut: DEVICE_LIST_SHORTCUTS.DELETE
       },
       {
         label: 'Xem',
@@ -431,6 +435,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         permission: 'QLThietBi.DMThietBi.RVIEW',
         className: 'btn-ghost',
         disabled: !isRowSelected,
+        shortcut: DEVICE_LIST_SHORTCUTS.VIEW
       },
     ];
     this.footerService.setActions(actions);

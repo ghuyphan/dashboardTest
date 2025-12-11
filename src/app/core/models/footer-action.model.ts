@@ -1,3 +1,5 @@
+import { ShortcutInput } from '../services/keyboard-shortcut.service';
+
 export interface FooterAction {
   label: string;
   icon?: string;
@@ -5,4 +7,5 @@ export interface FooterAction {
   permission?: string;
   disabled?: boolean;
   className?: string;
+  shortcut?: ShortcutInput;
 }

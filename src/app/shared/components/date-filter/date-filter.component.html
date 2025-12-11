@@ -27,9 +27,9 @@
 
   <div class="quick-actions-container">
     <div class="quick-actions-scroll">
-      @for (range of quickRanges; track range.key) {
+      @for (range of quickRanges; track range.key; let i = $index) {
       <button type="button" class="btn-pill" [class.active]="activeRange() === range.key"
-        (click)="setRange(range.key, true)" [disabled]="isLoading()">
+        (click)="setRange(range.key, true)" [disabled]="isLoading()" [appTooltip]="'Alt + ' + (i + 1)">
         {{ range.label }}
       </button>
       }
@@ -37,7 +37,8 @@
   </div>
 
   <div class="action-buttons">
-    <button type="button" class="btn btn-primary" (click)="applyFilter()" [disabled]="isLoading()">
+    <button type="button" class="btn btn-primary" (click)="applyFilter()" [disabled]="isLoading()"
+      [appTooltip]="'Áp dụng bộ lọc (Alt + Enter)'">
       @if (isLoading()) {
       <i class="fas fa-spinner fa-spin"></i>
       } @else {

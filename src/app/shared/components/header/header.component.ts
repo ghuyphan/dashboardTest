@@ -1,16 +1,20 @@
 import {
   Component,
-  inject,
   input,
   output,
   viewChild,
   ElementRef,
   effect,
   HostListener,
+  DestroyRef,
+  inject
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
+import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -50,6 +54,8 @@ export class HeaderComponent {
   public themeService = inject(ThemeService);
   public llmService = inject(LlmService);
   public versionService = inject(VersionService);
+  private shortcutService = inject(KeyboardShortcutService);
+  private destroyRef = inject(DestroyRef);
 
   // --- View Queries ---
   private menuTrigger = viewChild(MatMenuTrigger);
@@ -70,6 +76,22 @@ export class HeaderComponent {
   }
 
   constructor() {
+    // 1. Listen for Escape to clear/blur search
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.ESCAPE, true) // allowInInputs=true
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        const input = this.searchInput()?.nativeElement;
+        if (input && document.activeElement === input) {
+          e.event.preventDefault();
+          if (input.value) {
+            this.searchService.setSearchTerm('');
+            input.value = ''; // Update view
+          } else {
+            input.blur();
+          }
+        }
+      });
+
     // Update AI chat anchor position when avatar button is available or when chat opens
     effect(() => {
       const button = this.avatarButton()?.nativeElement;

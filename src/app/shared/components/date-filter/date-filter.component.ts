@@ -18,7 +18,9 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subject, takeUntil } from 'rxjs';
 import { ToastService } from '../../../core/services/toast.service';
 import { DateUtils } from '../../utils/date.utils';
-import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
+import { KeyboardShortcutService, ShortcutInput } from '../../../core/services/keyboard-shortcut.service';
+import { TooltipDirective } from '../../directives/tooltip.directive';
+import { DATE_FILTER_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
 
 export interface DateRange {
   fromDate: string;
@@ -35,7 +37,8 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
     CommonModule,
     FormsModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    TooltipDirective
   ],
   providers: [
     DatePipe,
@@ -121,13 +124,43 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.setRange(this.defaultRange(), false);
 
-    // [SHORTCUT] Alt + F to focus/open date picker
-    this.shortcutService.listen({ key: 'f', altKey: true })
+    // [SHORTCUT] Alt + F to focus/open date picker (From Date)
+    this.shortcutService.listen(DATE_FILTER_SHORTCUTS.OPEN_PICKER)
       .pipe(takeUntil(this.destroy$))
       .subscribe((e) => {
         e.event.preventDefault();
         this.picker.open();
       });
+
+    // [SHORTCUT] Alt + Enter to apply filter
+    this.shortcutService.listen(DATE_FILTER_SHORTCUTS.APPLY)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((e) => {
+        e.event.preventDefault();
+        if (!this.isLoading()) {
+          this.applyFilter();
+        }
+      });
+
+    // [SHORTCUTS] Alt + 1-5 for quick ranges
+    const quickRangeShortcuts: { shortcut: ShortcutInput, range: QuickRange }[] = [
+      { shortcut: DATE_FILTER_SHORTCUTS.QUICK_TODAY, range: 'today' },
+      { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_WEEK, range: 'thisWeek' },
+      { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_MONTH, range: 'thisMonth' },
+      { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_QUARTER, range: 'thisQuarter' },
+      { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_YEAR, range: 'thisYear' },
+    ];
+
+    quickRangeShortcuts.forEach(qr => {
+      this.shortcutService.listen(qr.shortcut)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((e) => {
+          e.event.preventDefault();
+          if (!this.isLoading()) {
+            this.setRange(qr.range, true);
+          }
+        });
+    });
   }
 
   ngOnDestroy(): void {

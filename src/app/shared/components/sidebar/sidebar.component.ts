@@ -20,6 +20,7 @@ import { NavItem } from '../../../core/models/nav-item.model';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 import { FlyoutDirective } from '../../directives/flyout.directive';
+import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -55,6 +56,7 @@ export class SidebarComponent implements AfterViewInit {
 
   private breakpointObserver = inject(BreakpointObserver);
   private router = inject(Router);
+  private shortcutService = inject(KeyboardShortcutService);
 
   constructor() {
     this.breakpointObserver

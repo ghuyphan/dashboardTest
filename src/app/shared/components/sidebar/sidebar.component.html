@@ -9,7 +9,8 @@
   <div class="sidebar-header">
     <div class="sidebar-logo-wrapper">
       <img ngSrc="HMSG.ico" width="36" height="36" priority alt="Logo Hoan My Saigon" class="sidebar-logo" />
-      <button class="sidebar-toggle-btn" (click)="onToggleSidebarClick()" aria-label="Toggle sidebar">
+      <button class="sidebar-toggle-btn" (click)="onToggleSidebarClick()" aria-label="Toggle sidebar"
+        [appTooltip]="'Mở thanh bên (Ctrl + .)'">
         <svg width="1.2em" height="1.2em" viewBox="0 0 105 105" xmlns="http://www.w3.org/2000/svg"
           style="display: block">
           <rect y="10" width="100" height="80" rx="15" ry="15" fill="currentColor" />

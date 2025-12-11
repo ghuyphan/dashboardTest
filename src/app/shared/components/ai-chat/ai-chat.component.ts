@@ -9,12 +9,17 @@ import {
   AfterViewInit,
   OnDestroy,
   computed,
-  viewChild
+  viewChild,
+  DestroyRef,
+  OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LlmService, ChatMessage } from '../../../core/services/llm.service';
+import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
 import { MarkdownPipe } from '../../pipes/markdown.pipe';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 
@@ -32,6 +37,8 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   private readonly ngZone = inject(NgZone);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
+  private readonly shortcutService = inject(KeyboardShortcutService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // --- View Queries ---
   private scrollContainer = viewChild.required<ElementRef<HTMLDivElement>>('scrollContainer');
@@ -115,6 +122,22 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
         }
       }
     });
+
+    // 5. [NEW] Listen for ESC key to close chat
+    // Allow in inputs so we can close chat even if typing in chat input
+    this.shortcutService.listen(GLOBAL_SHORTCUTS.ESCAPE, true)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((e) => {
+        // If event was already handled (e.g. by Header search clear), don't close chat
+        if (e.event.defaultPrevented) {
+          return;
+        }
+
+        if (this.llmService.isOpen()) {
+          e.event.preventDefault();
+          this.closeChat();
+        }
+      });
   }
 
   ngAfterViewInit(): void {
@@ -206,15 +229,13 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   // EVENTS & UTILS
   // ========================================================================
 
-  @HostListener('document:keydown.escape', ['$event'])
-  onEscape(event: KeyboardEvent): void {
-    if (this.llmService.isOpen()) {
-      this.closeChat();
-    }
-  }
+  // ========================================================================
+  // EVENTS & UTILS
+  // ========================================================================
 
   @HostListener('window:popstate', ['$event'])
   onPopState(event: PopStateEvent): void {
+
     if (this.llmService.isOpen()) {
       // The browser already went back, so we just need to update our internal state
       // preventing the effect from triggering another back()
