@@ -12,7 +12,7 @@
         [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Chưa có dữ liệu cấp cứu.">
         <div header-actions>
           <ng-container *appHasPermission="'KHTH.CapCuuNhapVien.REXPORT'">
-            <button class="btn-icon-text" (click)="onExport()" title="Xuất dữ liệu Excel"
+            <button class="btn-icon-text" (click)="onExport()" [appTooltip]="'Xuất dữ liệu Excel'"
               [disabled]="isLoading || isExporting || !rawData.length">
 
               @if (isExporting) {

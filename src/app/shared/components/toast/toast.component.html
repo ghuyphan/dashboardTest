@@ -26,7 +26,7 @@
           <i class="fas fa-times"></i>
         </button>
 
-        <button class="icon-btn copy-btn" (click)="copyToClipboard(toast, $event)" title="Sao chép">
+        <button class="icon-btn copy-btn" (click)="copyToClipboard(toast, $event)" [appTooltip]="'Sao chép'">
           @if (copiedId() === toast.id) {
           <i class="fas fa-check text-success"></i>
           } @else {

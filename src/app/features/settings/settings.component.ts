@@ -19,6 +19,7 @@ import { ConfirmationModalComponent } from '../../shared/components/confirmation
 import { ThemeService } from '../../core/services/theme.service';
 import { VersionService } from '../../core/services/version.service';
 import { User } from '../../core/models/user.model';
+import { TooltipDirective } from '../../shared/directives/tooltip.directive';
 
 interface ChangePasswordForm {
   OldPassword: FormControl<string | null>;
@@ -29,7 +30,7 @@ interface ChangePasswordForm {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TooltipDirective],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

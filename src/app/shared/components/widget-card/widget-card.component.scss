@@ -59,7 +59,6 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  padding: var(--spacing-sm);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -192,7 +191,6 @@
   .widget-layer {
     flex-direction: row;
     text-align: left;
-    padding: var(--spacing-md);
     justify-content: flex-start;
     gap: var(--spacing-md);
   }

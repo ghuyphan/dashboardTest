@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ToastMessage, ToastType } from '../../../core/models/toast-message.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 interface ToastTimerState {
   timerId: any;
@@ -20,7 +21,7 @@ interface ToastTimerState {
 @Component({
   selector: 'app-toast',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TooltipDirective],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

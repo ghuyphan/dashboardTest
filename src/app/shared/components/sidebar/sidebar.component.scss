@@ -142,10 +142,14 @@
   margin-left: auto;
 }
 
-.sidebar-toggle-btn:hover {
-  background-color: var(--gray-200);
-  color: var(--teal-blue);
-  transform: scale(1.1);
+.sidebar-toggle-btn {
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--gray-200);
+      color: var(--teal-blue);
+      transform: scale(1.1);
+    }
+  }
 }
 
 .sidebar-toggle-btn:active {
@@ -178,8 +182,10 @@
     transition: background-color 0.3s;
   }
 
-  &:hover::-webkit-scrollbar-thumb {
-    background-color: var(--gray-300);
+  @media (hover: hover) {
+    &:hover::-webkit-scrollbar-thumb {
+      background-color: var(--gray-300);
+    }
   }
 
   content-visibility: auto;
@@ -218,8 +224,10 @@
   overflow: visible;
 }
 
-.sidebar:not(.collapsed) .sidebar-nav ul li:hover {
-  z-index: 10;
+@media (hover: hover) {
+  .sidebar:not(.collapsed) .sidebar-nav ul li:hover {
+    z-index: 10;
+  }
 }
 
 /* --- Loading Skeleton --- */
@@ -303,15 +311,18 @@
 }
 
 /* Hover States */
-.sidebar-nav ul li a:hover,
-.sidebar-nav ul li button:hover {
-  background-color: var(--gray-200);
-  color: var(--text-primary);
-}
+@media (hover: hover) {
 
-.sidebar-nav ul li a:hover i:not(.toggle-icon),
-.sidebar-nav ul li button:hover i:not(.toggle-icon) {
-  transform: scale(1.15);
+  .sidebar-nav ul li a:hover,
+  .sidebar-nav ul li button:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
+
+  .sidebar-nav ul li a:hover i:not(.toggle-icon),
+  .sidebar-nav ul li button:hover i:not(.toggle-icon) {
+    transform: scale(1.15);
+  }
 }
 
 .sidebar-nav ul li a:active,
@@ -342,14 +353,17 @@
   border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
 }
 
-.sidebar-nav ul li a.active:hover,
-.sidebar-nav ul li button.active:hover {
-  background-color: var(--gray-200);
-}
+@media (hover: hover) {
 
-.sidebar-nav ul li a.active:hover i:not(.toggle-icon),
-.sidebar-nav ul li button.active:hover i:not(.toggle-icon) {
-  transform: scale(1.15);
+  .sidebar-nav ul li a.active:hover,
+  .sidebar-nav ul li button.active:hover {
+    background-color: var(--gray-200);
+  }
+
+  .sidebar-nav ul li a.active:hover i:not(.toggle-icon),
+  .sidebar-nav ul li button.active:hover i:not(.toggle-icon) {
+    transform: scale(1.15);
+  }
 }
 
 /* --- Submenu Styling --- */
@@ -359,9 +373,11 @@
   font-weight: var(--font-weight-normal);
 }
 
-.sidebar-nav ul li.has-submenu button[aria-expanded='true']:hover {
-  background-color: var(--gray-200);
-  color: var(--text-primary);
+@media (hover: hover) {
+  .sidebar-nav ul li.has-submenu button[aria-expanded='true']:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
 }
 
 .sidebar-nav ul li.has-submenu button.active {
@@ -445,13 +461,15 @@
   display: none;
 }
 
-.submenu li a:hover {
-  background-color: var(--gray-200);
-  color: var(--text-primary);
-}
+@media (hover: hover) {
+  .submenu li a:hover {
+    background-color: var(--gray-200);
+    color: var(--text-primary);
+  }
 
-.submenu li a:hover i {
-  transform: scale(1.15);
+  .submenu li a:hover i {
+    transform: scale(1.15);
+  }
 }
 
 .submenu li a.active {
@@ -511,14 +529,16 @@
   justify-content: center;
 }
 
-.sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
-  opacity: 0.3;
-}
+@media (hover: hover) {
+  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-logo {
+    opacity: 0.3;
+  }
 
-.sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
-  opacity: 1;
-  pointer-events: auto;
-  background-color: var(--gray-100);
+  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
+    opacity: 1;
+    pointer-events: auto;
+    background-color: var(--gray-100);
+  }
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-logo {
@@ -537,10 +557,13 @@
   justify-content: center;
 }
 
-.sidebar.collapsed .sidebar-nav>ul>li>a:hover,
-.sidebar.collapsed .sidebar-nav>ul>li>button:hover {
-  transform: scale(1.05);
-  background-color: var(--gray-200);
+@media (hover: hover) {
+
+  .sidebar.collapsed .sidebar-nav>ul>li>a:hover,
+  .sidebar.collapsed .sidebar-nav>ul>li>button:hover {
+    transform: scale(1.05);
+    background-color: var(--gray-200);
+  }
 }
 
 /* [NEW] ADDED ACTIVE STATE FOR COLLAPSED MODE */

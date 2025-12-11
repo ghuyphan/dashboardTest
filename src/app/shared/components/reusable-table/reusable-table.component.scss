@@ -164,12 +164,14 @@ table.mat-table {
     opacity: 0.5;
   }
 
-  &:hover {
-    color: var(--header-text-local) !important;
-    opacity: 0.9;
+  @media (hover: hover) {
+    &:hover {
+      color: var(--header-text-local) !important;
+      opacity: 0.9;
 
-    .mat-sort-header-arrow {
-      opacity: 1;
+      .mat-sort-header-arrow {
+        opacity: 1;
+      }
     }
   }
 }
@@ -189,10 +191,12 @@ table.mat-table {
     background-color: var(--row-bg-even) !important;
   }
 
-  &.clickable-row:hover {
-    background-color: var(--row-bg-hover) !important;
-    cursor: pointer;
-    z-index: 1;
+  @media (hover: hover) {
+    &.clickable-row:hover {
+      background-color: var(--row-bg-hover) !important;
+      cursor: pointer;
+      z-index: 1;
+    }
   }
 
   &.selected,
@@ -278,12 +282,14 @@ table.mat-table {
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover {
-    background-color: var(--gray-100, #f1f5f9);
-    color: var(--primary, #2563eb);
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--gray-100, #f1f5f9);
+      color: var(--primary, #2563eb);
 
-    [data-theme="dark"] & {
-      background-color: rgba(255, 255, 255, 0.1);
+      [data-theme="dark"] & {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
     }
   }
 
@@ -578,9 +584,11 @@ table.mat-table {
     font-size: 0.85rem;
     transition: all 0.2s;
 
-    &:hover {
-      background-color: var(--gray-100);
-      transform: translateY(-1px);
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--gray-100);
+        transform: translateY(-1px);
+      }
     }
   }
 }

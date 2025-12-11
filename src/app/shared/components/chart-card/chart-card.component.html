@@ -40,7 +40,7 @@
       <!-- Export Button -->
       @if (enableExport()) {
       <button class="btn-icon-action" *appHasPermission="fullExportPermission()" (click)="onExport()"
-        [disabled]="isLoading() || isExporting()" title="Xuất Excel">
+        [disabled]="isLoading() || isExporting()" [appTooltip]="'Xuất Excel'">
 
         @if (isExporting()) {
         <i class="fas fa-spinner fa-spin text-teal"></i>

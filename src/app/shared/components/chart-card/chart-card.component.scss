@@ -385,12 +385,13 @@
   visibility: visible;
   transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
   will-change: opacity;
+  // Ensure skeleton doesn't block scrolling
+  pointer-events: none;
 
   &.hidden {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
-    pointer-events: none;
   }
 
   @media (max-width: 480px) {

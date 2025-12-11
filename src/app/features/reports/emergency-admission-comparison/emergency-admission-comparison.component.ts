@@ -24,6 +24,7 @@ import { ChartCardComponent } from '../../../shared/components/chart-card/chart-
 import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
+import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
@@ -35,6 +36,7 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
     ChartCardComponent,
     DateFilterComponent,
     HasPermissionDirective,
+    TooltipDirective,
   ],
   providers: [DatePipe, DecimalPipe],
   templateUrl: './emergency-admission-comparison.component.html',

@@ -15,6 +15,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ReusableTableComponent, GridColumn, RowActionEvent } from '../reusable-table/reusable-table.component';
 import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 export interface ExportConfig {
   fileName: string;
@@ -29,7 +30,8 @@ export interface ExportConfig {
     ReusableTableComponent,
     MatMenuModule,
     MatIconModule,
-    HasPermissionDirective
+    HasPermissionDirective,
+    TooltipDirective
   ],
   templateUrl: './table-card.component.html',
   styleUrls: ['./table-card.component.scss'],

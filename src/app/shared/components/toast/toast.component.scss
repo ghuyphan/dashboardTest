@@ -41,12 +41,14 @@
       pointer-events: none;
     }
 
-    &.is-front:hover {
-      transform: translate3d(0, -4px, 0) scale(1.02);
+    @media (hover: hover) {
+      &.is-front:hover {
+        transform: translate3d(0, -4px, 0) scale(1.02);
 
-      .stack-indicator {
-        opacity: 1;
-        transform: translateY(0);
+        .stack-indicator {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
     }
   }
@@ -216,26 +218,30 @@
     font-size: 1rem;
   }
 
-  &:hover {
-    background: var(--gray-100);
-    color: var(--gray-800);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--gray-100);
+      color: var(--gray-800);
+    }
+
+    &.copy-btn {
+      &:hover {
+        color: var(--teal-blue);
+        background: rgba(0, 131, 155, 0.1);
+      }
+    }
+
+    &.dismiss-btn {
+      &:hover {
+        color: var(--color-danger);
+        background: rgba(220, 53, 69, 0.1);
+      }
+    }
   }
 
   &.copy-btn {
-    &:hover {
-      color: var(--teal-blue);
-      background: rgba(0, 131, 155, 0.1);
-    }
-
     .text-success {
       color: var(--color-success);
-    }
-  }
-
-  &.dismiss-btn {
-    &:hover {
-      color: var(--color-danger);
-      background: rgba(220, 53, 69, 0.1);
     }
   }
 }
@@ -292,18 +298,20 @@
     transition: all 0.2s;
     box-shadow: var(--box-shadow-sm);
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--box-shadow-md);
-      background: var(--gray-100);
-    }
+    @media (hover: hover) {
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow-md);
+        background: var(--gray-100);
+      }
 
-    &.clear-btn:hover {
-      color: var(--color-danger);
-    }
+      &.clear-btn:hover {
+        color: var(--color-danger);
+      }
 
-    &.collapse-btn:hover {
-      color: var(--teal-blue);
+      &.collapse-btn:hover {
+        color: var(--teal-blue);
+      }
     }
   }
 }

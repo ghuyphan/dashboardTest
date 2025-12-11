@@ -85,7 +85,7 @@
         </div>
 
         <div class="version-info" (click)="onVersionClick()" [class.dev-active]="versionService.isDevMode()"
-          title="Nhấn 5 lần để bật chế độ nhà phát triển">
+          [appTooltip]="'Nhấn 5 lần để bật chế độ nhà phát triển'">
           <span>Version: {{ versionService.appVersion() }}</span>
           @if (versionService.isDevMode()) {
           <i class="fas fa-code"></i>

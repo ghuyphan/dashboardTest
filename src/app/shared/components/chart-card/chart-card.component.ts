@@ -168,6 +168,7 @@ export class ChartCardComponent implements AfterViewInit {
   private lastWidth = 0;
   private lastHeight = 0;
   private isDestroyed = false;
+  private isInitializing = false; // Track if init is in progress to prevent race condition
   private isCompact = false; // Tracks if container is in compact mode
 
   constructor() {
@@ -373,7 +374,9 @@ export class ChartCardComponent implements AfterViewInit {
 
   private async initChart(options: EChartsCoreOption | null): Promise<void> {
     if (this.isDestroyed || !this.isBrowser || !this.chartContainerRef() || !options) return;
-    if (this.chartInstance) return;
+    if (this.chartInstance || this.isInitializing) return;
+
+    this.isInitializing = true;
 
     const el = this.chartContainerRef().nativeElement;
 
@@ -438,6 +441,8 @@ export class ChartCardComponent implements AfterViewInit {
       this.ngZone.run(() => {
         this.chartError.set('Không thể tải biểu đồ');
       });
+    } finally {
+      this.isInitializing = false;
     }
   }
 

@@ -16,11 +16,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LlmService, ChatMessage } from '../../../core/services/llm.service';
 import { MarkdownPipe } from '../../pipes/markdown.pipe';
+import { TooltipDirective } from '../../directives/tooltip.directive';
 
 @Component({
   selector: 'app-ai-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, MarkdownPipe],
+  imports: [CommonModule, FormsModule, MarkdownPipe, TooltipDirective],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush

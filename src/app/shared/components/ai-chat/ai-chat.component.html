@@ -24,11 +24,11 @@
 
     <div class="header-right">
       @if (llmService.isOffline()) {
-      <span class="offline-badge" title="Không có kết nối mạng">
+      <span class="offline-badge" [appTooltip]="'Không có kết nối mạng'">
         <i class="fas fa-wifi-slash"></i>
       </span>
       }
-      <button class="close-btn" (click)="closeChat()" title="Đóng">
+      <button class="close-btn" (click)="closeChat()" [appTooltip]="'Đóng'">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -121,8 +121,8 @@
   <div class="ai-footer">
     <div class="toolbar">
       @if (hasUserMessages()) {
-      <button class="clear-chat-btn" (click)="llmService.resetChat(); $event.stopPropagation()" title="Xóa lịch sử chat"
-        [disabled]="llmService.isGenerating()">
+      <button class="clear-chat-btn" (click)="llmService.resetChat(); $event.stopPropagation()"
+        [appTooltip]="'Xóa lịch sử chat'" [disabled]="llmService.isGenerating()">
         <i class="fas fa-trash-alt"></i> Xóa lịch sử
       </button>
       }
