@@ -1,84 +1,333 @@
-# 🏥 Hoàn Mỹ Portal
+<p align="center">
+  <h1 align="center">🏥 Hoan My Portal</h1>
+  <p align="center">
+    <strong>Healthcare Management Dashboard</strong>
+  </p>
+  <p align="center">
+    A modern Angular-based portal for hospital operations & analytics
+  </p>
+</p>
 
-This project serves as the central administrative dashboard for the Hoàn Mỹ Portal.
-
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 19.2.18.
+<p align="center">
+  <img src="https://img.shields.io/badge/Angular-19-DD0031?logo=angular" alt="Angular 19">
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/ECharts-6.0-AA344D?logo=apacheecharts" alt="ECharts">
+  <img src="https://img.shields.io/badge/Material-19-757575?logo=material-design" alt="Material">
+  <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
+</p>
 
 ---
 
-## 🛠️ Tech Stack
+## 📋 Table of Contents
 
-* **Framework:** Angular 19.2.x
-* **Language:** TypeScript 5.7.x
-* **Styling:** SCSS
-* **Testing:** Karma & Jasmine
+- [Overview](#-overview)
+- [Features](#-features)
+- [Screenshots](#-screenshots)
+- [Tech Stack](#-tech-stack)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+- [Project Structure](#-project-structure)
+- [Reports](#-reports)
+- [AI Assistant](#-ai-assistant)
+- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [License](#-license)
 
 ---
 
-## 🚀 Getting Started
+## 🎯 Overview
+
+**Hoan My Portal** is a comprehensive healthcare management dashboard built for **Hoan My Healthcare Group**. It provides real-time analytics, equipment management, and operational reports for hospital staff and administrators.
+
+### Key Capabilities
+
+- 📊 **Real-time Analytics** - Live dashboards with ECharts visualizations
+- 🛏️ **Bed Management** - Track bed occupancy and usage across departments
+- 🔬 **Clinical Services** - Monitor examination and diagnostic services
+- 🏥 **Equipment Tracking** - Manage medical devices and maintenance schedules
+- 🚨 **Emergency Metrics** - Track emergency admissions and response times
+- 🤖 **AI Assistant** - Natural language navigation and help via LLM integration
+
+---
+
+## ✨ Features
+
+### 🔐 Authentication & Security
+- JWT-based authentication with automatic token refresh
+- Role-based access control (RBAC) with permission guards
+- Password change with security requirements
+- Session management with auto-logout
+
+### 📈 Data Visualization
+- Interactive charts powered by **ECharts 6.0**
+- Smart legend toggling (solo view mode)
+- Responsive charts that adapt to screen size
+- Export to Excel and PDF
+
+### 🎨 User Experience
+- **Dark/Light theme** with system preference detection
+- **Keyboard shortcuts** for power users
+- **AI Chat Assistant** for natural language navigation
+- **Responsive design** - works on desktop, tablet, and mobile
+- **Skeleton loading** for smooth perceived performance
+
+### 📱 Progressive Features
+- Offline-capable with service worker
+- QR code generation for equipment tracking
+- PDF report generation with pdfme
+
+---
+
+## 🛠 Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Framework** | Angular 19 (Standalone Components) |
+| **UI Library** | Angular Material 19 |
+| **Charts** | ECharts 6.0 |
+| **State** | RxJS Signals |
+| **Styling** | SCSS with CSS Variables |
+| **PDF** | pdfme, pdf-lib |
+| **Excel** | @e965/xlsx |
+| **QR Codes** | angularx-qrcode |
+| **Markdown** | marked + DOMPurify |
+| **Testing** | Jasmine + Karma |
+| **Linting** | ESLint with Angular rules |
+
+---
+
+## 📦 Installation
 
 ### Prerequisites
 
-Before you begin, ensure you have the [Node.js](https://nodejs.org/) (which includes npm) and the [Angular CLI](https://angular.dev/tools/cli) installed globally.
+| Requirement | Version |
+|-------------|---------|
+| Node.js | ≥ 18.0.0 |
+| npm | ≥ 8.0.0 |
+| Angular CLI | ≥ 19.0.0 |
+
+### Setup
 
 ```bash
-# Install the Angular CLI globally (if you don't have it)
-npm install -g @angular/cli
-````
+# Clone the repository
+git clone https://github.com/ghuyphan/hoan-my-portal.git
+cd hoan-my-portal
 
-### Installation
+# Install dependencies
+npm install
 
-1.  Clone the repository:
-    ```bash
-    git clone [YOUR_REPOSITORY_URL]
-    ```
-2.  Navigate to the project directory:
-    ```bash
-    cd [PROJECT_DIRECTORY]
-    ```
-3.  Install NPM packages:
-    ```bash
-    npm install
-    ```
-
------
-
-## 🖥️ Development Server
-
-Run `ng serve` to start the development server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
-
-```bash
-ng serve
+# Start development server
+npm start
 ```
 
-## 🏗️ Building the Project
+The app will be available at `http://localhost:4200`
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/hoan-my-portal/` directory.
+---
 
-```bash
-# For a development build
-ng build
+## ⚙️ Configuration
 
-# For a production build
-ng build --configuration production
+### Environment Variables
+
+Configure your API endpoints in `src/environments/`:
+
+```typescript
+// environment.ts (development)
+export const environment = {
+  production: false,
+  apiUrl: 'https://your-api-server.com/api',
+  llmProxyUrl: 'http://localhost:3000'
+};
+
+// environment.prod.ts (production)
+export const environment = {
+  production: true,
+  apiUrl: 'https://production-api.hoanmy.com/api',
+  llmProxyUrl: 'https://llm-proxy.hoanmy.com'
+};
 ```
 
-## 🧪 Running Unit Tests
+---
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## 🚀 Usage
+
+### NPM Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start development server |
+| `npm run build` | Build for production |
+| `npm run build:prod:patch` | Build with patch version bump |
+| `npm run build:prod:minor` | Build with minor version bump |
+| `npm run build:prod:major` | Build with major version bump |
+| `npm test` | Run unit tests |
+| `npm run lint` | Run ESLint |
+
+### Version Management
 
 ```bash
-ng test
+# Bump patch version (0.7.10 → 0.7.11)
+npm run version:patch
+
+# Bump minor version (0.7.10 → 0.8.0)
+npm run version:minor
+
+# Bump major version (0.7.10 → 1.0.0)
+npm run version:major
 ```
 
-## 🧩 Code Scaffolding
+---
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate` for other file types:
+## 🏗 Project Structure
 
-```bash
-ng generate directive|pipe|service|class|guard|interface|enum|module
+```
+src/app/
+├── core/                     # Core functionality
+│   ├── guards/               # Route guards (auth, permission)
+│   ├── interceptors/         # HTTP interceptors
+│   ├── models/               # TypeScript interfaces
+│   └── services/             # Singleton services
+│       ├── api.service.ts    # HTTP client wrapper
+│       ├── auth.service.ts   # Authentication
+│       ├── pdf.service.ts    # PDF generation
+│       └── theme.service.ts  # Theme management
+│
+├── features/                 # Feature modules
+│   ├── auth/                 # Login, forgot password
+│   ├── dashboard/            # Home dashboard
+│   ├── equipment/            # Device management
+│   │   ├── device-list/      # Equipment catalog
+│   │   ├── device-detail/    # Equipment details
+│   │   └── device-dashboard/ # Equipment analytics
+│   ├── reports/              # All report modules
+│   └── settings/             # User settings
+│
+├── layouts/                  # Page layouts
+│   ├── auth-layout/          # Login page layout
+│   └── main-layout/          # Dashboard layout
+│
+└── shared/                   # Shared components
+    ├── components/           # Reusable UI components
+    │   ├── ai-chat/          # AI assistant
+    │   ├── chart-card/       # Chart wrapper
+    │   ├── date-filter/      # Date range picker
+    │   ├── modal/            # Modal dialogs
+    │   ├── reusable-table/   # Data table
+    │   ├── sidebar/          # Navigation sidebar
+    │   └── widget-card/      # Dashboard widgets
+    └── directives/           # Custom directives
+        ├── skeleton/         # Skeleton loading
+        └── tooltip/          # Custom tooltips
 ```
 
-## ℹ️ Further Help
+---
 
-To get more help on the Angular CLI, use `ng help` or check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## 📊 Reports
+
+The portal includes comprehensive healthcare reports:
+
+### Equipment Management
+| Report | Description | Permission |
+|--------|-------------|------------|
+| Device Catalog | Browse and search all medical equipment | `QLThietBi.DMThietBi` |
+| Device Dashboard | Equipment analytics and maintenance tracking | `QLThietBi.TQThietBi` |
+
+### Clinical Reports
+| Report | Description | Permission |
+|--------|-------------|------------|
+| Bed Usage | Hospital bed occupancy rates | `BaoCao.CongSuatGiuongBenh` |
+| Examination Overview | Patient visit statistics | `BaoCao.TongQuanKCB` |
+| Detailed Examination | Granular examination data | `KhamBenh.ChiTiet` |
+| ICD Frequency | Disease pattern analysis (ICD-10) | `BaoCao.TQMoHinhBenhTat` |
+
+### Diagnostic Services (CLS)
+| Report | Description | Permission |
+|--------|-------------|------------|
+| CLS Level 3 | Floor 3 examination stats | `BaoCao.KhamCLST3` |
+| CLS Level 6 | Floor 6 examination stats | `BaoCao.KhamCLST6` |
+| Specialty CLS | By specialty breakdown | `BaoCao.KhamCLSTheoCK` |
+
+### Emergency & Surgery
+| Report | Description | Permission |
+|--------|-------------|------------|
+| Emergency Ratio | Emergency visit statistics | `CapCuu.CapCuu01` |
+| Emergency Admissions | ER to admission tracking | `CapCuu.CapCuu02` |
+| Surgery Statistics | Surgical procedure tracking | `PTTT.PhauThuat` |
+
+### Administrative
+| Report | Description | Permission |
+|--------|-------------|------------|
+| Missing Medical Records | Outpatient records not created | `KHTH.ChuaTaoHSBANgoaiTru` |
+
+---
+
+## 🤖 AI Assistant
+
+The portal includes an AI-powered assistant that can:
+
+- **Navigate** - "Mở trang cài đặt" → Opens settings
+- **Switch themes** - "Chuyển sang chế độ tối" → Enables dark mode
+- **Answer questions** - Context-aware help about the dashboard
+- **Multi-language** - Supports Vietnamese and English
+
+### Activation
+- Click the chat icon in the bottom-right corner
+- Or press `Alt + A` to open the AI chat
+
+The AI assistant connects to the [LLM Proxy Server](https://github.com/ghuyphan/llmproxy) for processing.
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+The portal supports extensive keyboard shortcuts for power users:
+
+### Global
+| Shortcut | Action |
+|----------|--------|
+| `Alt + A` | Open AI Chat |
+| `Alt + T` | Toggle Theme |
+| `Ctrl + .` | Toggle Sidebar |
+| `Ctrl + K` | Focus Search |
+| `Escape` | Close Modal/Chat |
+
+### Navigation
+| Shortcut | Action |
+|----------|--------|
+| `Alt + H` | Go to Home |
+| `Alt + E` | Go to Equipment |
+| `Alt + S` | Go to Settings |
+
+### Data Tables
+| Shortcut | Action |
+|----------|--------|
+| `Alt + N` | New Item |
+| `Alt + ←` | Previous Page |
+| `Alt + →` | Next Page |
+| `Alt + V` | View Details |
+
+### Date Filters
+| Shortcut | Action |
+|----------|--------|
+| `Alt + F` | Apply Filter |
+| `Alt + 1-5` | Quick Date Presets |
+
+View all shortcuts in **Settings > Keyboard Shortcuts**.
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Author
+
+**Phan Gia Huy**  
+Hoan My IT Department
+
+---
+
+<p align="center">
+  Made with ❤️ for Hoan My Healthcare Group
+</p>
