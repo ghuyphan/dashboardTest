@@ -1,5 +1,7 @@
-<div class="modal-content" [class]="getSizeClass()" (click)="onModalContentClick($event)">
-
+<div
+  class="modal-content"
+  [class]="getSizeClass()"
+  (click)="onModalContentClick($event)">
   @if (!options.hideHeader) {
     <div class="modal-header">
       <h2 class="modal-title">{{ options.title || 'Modal' }}</h2>
@@ -10,5 +12,4 @@
   <div class="modal-body">
     <ng-template #modalContentHost></ng-template>
   </div>
-
 </div>

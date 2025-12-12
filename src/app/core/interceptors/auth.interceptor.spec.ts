@@ -1,6 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient, withInterceptors, HttpErrorResponse, HttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import {
+  provideHttpClient,
+  withInterceptors,
+  HttpErrorResponse,
+  HttpClient,
+} from '@angular/common/http';
 import { Router } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor';
@@ -39,8 +47,8 @@ describe('authInterceptor', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: AuthService, useClass: MockAuthService },
-        { provide: Router, useClass: MockRouter }
-      ]
+        { provide: Router, useClass: MockRouter },
+      ],
     });
 
     httpMock = TestBed.inject(HttpTestingController);
@@ -66,7 +74,9 @@ describe('authInterceptor', () => {
     const httpRequest = httpMock.expectOne('/api/data');
 
     expect(httpRequest.request.headers.has('Authorization')).toBeTrue();
-    expect(httpRequest.request.headers.get('Authorization')).toBe(`Bearer ${testToken}`);
+    expect(httpRequest.request.headers.get('Authorization')).toBe(
+      `Bearer ${testToken}`
+    );
 
     httpRequest.flush({});
   });
@@ -90,13 +100,18 @@ describe('authInterceptor', () => {
       next: () => fail('should have failed with 401 error'),
       error: (error: HttpErrorResponse) => {
         expect(error.status).toBe(401);
-      }
+      },
     });
 
     const httpRequest = httpMock.expectOne('/api/protected/resource');
-    expect(httpRequest.request.headers.get('Authorization')).toBe('Bearer existing-but-expired-token');
+    expect(httpRequest.request.headers.get('Authorization')).toBe(
+      'Bearer existing-but-expired-token'
+    );
 
-    httpRequest.flush('Unauthorized access', { status: 401, statusText: 'Unauthorized' });
+    httpRequest.flush('Unauthorized access', {
+      status: 401,
+      statusText: 'Unauthorized',
+    });
 
     expect(authService.logoutCalled).toBeTrue();
   });
@@ -109,13 +124,16 @@ describe('authInterceptor', () => {
       next: () => fail('should have failed with 401 error'),
       error: (error: HttpErrorResponse) => {
         expect(error.status).toBe(401);
-      }
+      },
     });
 
     const httpRequest = httpMock.expectOne(loginUrl);
     expect(httpRequest.request.headers.has('Authorization')).toBeFalse();
 
-    httpRequest.flush('Invalid Credentials', { status: 401, statusText: 'Unauthorized' });
+    httpRequest.flush('Invalid Credentials', {
+      status: 401,
+      statusText: 'Unauthorized',
+    });
 
     expect(authService.logoutCalled).toBeFalse();
   });
@@ -127,13 +145,18 @@ describe('authInterceptor', () => {
       next: () => fail('should have failed with 500 error'),
       error: (error: HttpErrorResponse) => {
         expect(error.status).toBe(500);
-      }
+      },
     });
 
     const httpRequest = httpMock.expectOne('/api/resource-error');
-    expect(httpRequest.request.headers.get('Authorization')).toBe('Bearer valid-token');
+    expect(httpRequest.request.headers.get('Authorization')).toBe(
+      'Bearer valid-token'
+    );
 
-    httpRequest.flush('Internal Server Error', { status: 500, statusText: 'Internal Server Error' });
+    httpRequest.flush('Internal Server Error', {
+      status: 500,
+      statusText: 'Internal Server Error',
+    });
 
     expect(authService.logoutCalled).toBeFalse();
   });

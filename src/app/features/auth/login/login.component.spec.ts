@@ -13,16 +13,16 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
 
   const authServiceMock = {
-    login: jasmine.createSpy('login').and.returnValue(of({}))
+    login: jasmine.createSpy('login').and.returnValue(of({})),
   };
 
   const toastServiceMock = {
     showSuccess: jasmine.createSpy('showSuccess'),
-    showError: jasmine.createSpy('showError')
+    showError: jasmine.createSpy('showError'),
   };
 
   const modalServiceMock = {
-    open: jasmine.createSpy('open')
+    open: jasmine.createSpy('open'),
   };
 
   beforeEach(async () => {
@@ -34,10 +34,9 @@ describe('LoginComponent', () => {
         provideRouter([]),
         { provide: AuthService, useValue: authServiceMock },
         { provide: ToastService, useValue: toastServiceMock },
-        { provide: ModalService, useValue: modalServiceMock }
-      ]
-    })
-      .compileComponents();
+        { provide: ModalService, useValue: modalServiceMock },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;

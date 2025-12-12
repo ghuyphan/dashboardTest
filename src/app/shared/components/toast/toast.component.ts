@@ -4,10 +4,13 @@ import {
   ChangeDetectionStrategy,
   inject,
   effect,
-  signal
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ToastMessage, ToastType } from '../../../core/models/toast-message.model';
+import {
+  ToastMessage,
+  ToastType,
+} from '../../../core/models/toast-message.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TooltipDirective } from '../../directives/tooltip.directive';
@@ -74,7 +77,7 @@ export class ToastComponent implements OnDestroy {
           this.timerState.set(toast.id, {
             timerId: null,
             startTime: Date.now(),
-            remaining: duration
+            remaining: duration,
           });
 
           if (!this.isHovering()) {
@@ -102,12 +105,15 @@ export class ToastComponent implements OnDestroy {
 
     // Try modern Clipboard API first (requires secure context)
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        this.showCopySuccess(toast.id);
-      }).catch(err => {
-        console.warn('Clipboard API failed, trying fallback:', err);
-        this.fallbackCopyToClipboard(textToCopy, toast.id);
-      });
+      navigator.clipboard
+        .writeText(textToCopy)
+        .then(() => {
+          this.showCopySuccess(toast.id);
+        })
+        .catch(err => {
+          console.warn('Clipboard API failed, trying fallback:', err);
+          this.fallbackCopyToClipboard(textToCopy, toast.id);
+        });
     } else {
       // Fallback for HTTP or older browsers
       this.fallbackCopyToClipboard(textToCopy, toast.id);
@@ -166,7 +172,7 @@ export class ToastComponent implements OnDestroy {
 
   pauseAllTimers(): void {
     this.isHovering.set(true);
-    this.timerState.forEach((state) => {
+    this.timerState.forEach(state => {
       if (state.timerId) {
         clearTimeout(state.timerId);
         state.timerId = null;
@@ -253,7 +259,9 @@ export class ToastComponent implements OnDestroy {
       info: 'fas fa-info',
     };
     const iconClass = icons[type] || 'fas fa-circle';
-    return this.sanitizer.bypassSecurityTrustHtml(`<i class="${iconClass}"></i>`);
+    return this.sanitizer.bypassSecurityTrustHtml(
+      `<i class="${iconClass}"></i>`
+    );
   }
 
   // --- Touch Handling ---
@@ -282,7 +290,7 @@ export class ToastComponent implements OnDestroy {
     if (deltaX > 0) {
       event.preventDefault();
       this.swipedElement.style.transform = `translateX(${deltaX}px)`;
-      this.swipedElement.style.opacity = `${1 - (deltaX / 300)}`;
+      this.swipedElement.style.opacity = `${1 - deltaX / 300}`;
     }
   }
 

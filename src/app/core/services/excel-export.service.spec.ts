@@ -13,8 +13,8 @@ describe('ExcelExportService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
     service = TestBed.inject(ExcelExportService);
   });

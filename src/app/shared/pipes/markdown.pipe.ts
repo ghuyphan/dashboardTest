@@ -5,14 +5,13 @@ import DOMPurify from 'dompurify';
 
 @Pipe({
   name: 'markdown',
-  standalone: true
+  standalone: true,
 })
 export class MarkdownPipe implements PipeTransform {
-
   constructor(private sanitizer: DomSanitizer) {
     marked.setOptions({
       gfm: true,
-      breaks: true
+      breaks: true,
     });
   }
 

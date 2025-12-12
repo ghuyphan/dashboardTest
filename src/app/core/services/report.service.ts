@@ -3,7 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { ExaminationStat } from '../../shared/models/examination-stat.model';
-import { ClsLevel6Stat, ClsLevel3Stat } from '../../shared/models/cls-stat.model';
+import {
+  ClsLevel6Stat,
+  ClsLevel3Stat,
+} from '../../shared/models/cls-stat.model';
 import { SpecialtyClsStat } from '../../shared/models/specialty-cls-stat.model';
 import { EmergencyStat } from '../../shared/models/emergency-stat';
 import { SurgeryStat } from '../models/surgery-stat.model';
@@ -30,7 +33,7 @@ export class ReportService {
   private detailedExamUrl = environment.detailedExaminationUrl;
   private icdUrl = environment.icdUrl;
 
-  constructor() { }
+  constructor() {}
 
   getExaminationOverview(
     fromDate: string,
@@ -102,7 +105,10 @@ export class ReportService {
   /**
    * Get Emergency Summary Report
    */
-  getEmergencySummary(fromDate: string, toDate: string): Observable<EmergencyStat[]> {
+  getEmergencySummary(
+    fromDate: string,
+    toDate: string
+  ): Observable<EmergencyStat[]> {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate);
@@ -110,7 +116,10 @@ export class ReportService {
     return this.http.get<EmergencyStat[]>(this.emergencyUrl, { params });
   }
 
-  getSurgeryReport(fromDate: string, toDate: string): Observable<SurgeryStat[]> {
+  getSurgeryReport(
+    fromDate: string,
+    toDate: string
+  ): Observable<SurgeryStat[]> {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate);
@@ -118,13 +127,19 @@ export class ReportService {
     return this.http.get<SurgeryStat[]>(this.surgeryUrl, { params });
   }
 
-  getDetailedExaminationReport(fromDate: string, toDate: string, filter: 'DD' | 'MM' = 'DD'): Observable<DetailedExaminationStat[]> {
+  getDetailedExaminationReport(
+    fromDate: string,
+    toDate: string,
+    filter: 'DD' | 'MM' = 'DD'
+  ): Observable<DetailedExaminationStat[]> {
     const params = new HttpParams()
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate)
       .set('Filter', filter);
 
-    return this.http.get<DetailedExaminationStat[]>(this.detailedExamUrl, { params });
+    return this.http.get<DetailedExaminationStat[]>(this.detailedExamUrl, {
+      params,
+    });
   }
 
   getTopIcdReport(fromDate: string, toDate: string): Observable<IcdStat[]> {
@@ -134,4 +149,3 @@ export class ReportService {
     return this.http.get<IcdStat[]>(this.icdUrl, { params });
   }
 }
-

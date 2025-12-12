@@ -15,10 +15,9 @@ describe('DeviceListComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DeviceListComponent);
     component = fixture.componentInstance;

@@ -15,10 +15,9 @@ describe('DateFilterComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DateFilterComponent);
     component = fixture.componentInstance;

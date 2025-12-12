@@ -6,7 +6,10 @@ import { ActivatedRoute } from '@angular/router';
 import { TableCardComponent } from './table-card.component';
 
 describe('TableCardComponent', () => {
-  interface TestItem { id: number; name: string; }
+  interface TestItem {
+    id: number;
+    name: string;
+  }
   let component: TableCardComponent<TestItem>;
   let fixture: ComponentFixture<TableCardComponent<TestItem>>;
 
@@ -17,12 +20,15 @@ describe('TableCardComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
-      ]
-    })
-      .compileComponents();
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => '1' } } },
+        },
+      ],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent<TableCardComponent<TestItem>>(TableCardComponent);
+    fixture =
+      TestBed.createComponent<TableCardComponent<TestItem>>(TableCardComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('title', 'Test Title');
     fixture.detectChanges();

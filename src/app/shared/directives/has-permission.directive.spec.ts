@@ -9,21 +9,35 @@ import { provideRouter } from '@angular/router';
 
 describe('HasPermissionDirective', () => {
   it('should create an instance', () => {
-    const templateRef = jasmine.createSpyObj('TemplateRef', ['elementRef', 'createEmbeddedView']);
-    const viewContainer = jasmine.createSpyObj('ViewContainerRef', ['createEmbeddedView', 'clear']);
-    const authService = jasmine.createSpyObj('AuthService', ['getUserPermissions'], {
-      currentUser$: of(null)
-    });
+    const templateRef = jasmine.createSpyObj('TemplateRef', [
+      'elementRef',
+      'createEmbeddedView',
+    ]);
+    const viewContainer = jasmine.createSpyObj('ViewContainerRef', [
+      'createEmbeddedView',
+      'clear',
+    ]);
+    const authService = jasmine.createSpyObj(
+      'AuthService',
+      ['getUserPermissions'],
+      {
+        currentUser$: of(null),
+      }
+    );
 
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
 
-    const directive = new HasPermissionDirective(templateRef, viewContainer, authService);
+    const directive = new HasPermissionDirective(
+      templateRef,
+      viewContainer,
+      authService
+    );
 
     expect(directive).toBeTruthy();
   });

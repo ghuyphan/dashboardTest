@@ -15,10 +15,9 @@ describe('ClsLevel3ReportComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ClsLevel3ReportComponent);
     component = fixture.componentInstance;

@@ -121,7 +121,10 @@ export class LlmService {
 
   // Computed
   public readonly contextUsage = computed(() =>
-    this.messages().reduce((acc, m) => acc + Math.ceil(m.content.length / 3.5), 0)
+    this.messages().reduce(
+      (acc, m) => acc + Math.ceil(m.content.length / 3.5),
+      0
+    )
   );
 
   // ========================================
@@ -169,8 +172,11 @@ export class LlmService {
 
     // Debounced stream updates
     this.streamUpdate$
-      .pipe(debounceTime(CONFIG.UI_DEBOUNCE), takeUntilDestroyed(this.destroyRef))
-      .subscribe((content) =>
+      .pipe(
+        debounceTime(CONFIG.UI_DEBOUNCE),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(content =>
         this.ngZone.run(() => this.updateLastMessage(content, true))
       );
 
@@ -228,7 +234,10 @@ export class LlmService {
   public async sendMessage(content: string): Promise<void> {
     // Early guards
     if (this.isOffline()) {
-      this.addMessage('assistant', 'Bạn đang offline. Vui lòng kiểm tra kết nối mạng. 📶');
+      this.addMessage(
+        'assistant',
+        'Bạn đang offline. Vui lòng kiểm tra kết nối mạng. 📶'
+      );
       return;
     }
 
@@ -327,7 +336,7 @@ export class LlmService {
       messages: this.prepareContext(),
       metadata: {
         sessionId: this.sessionId,
-        routes: this.getRoutes().map((r) => ({
+        routes: this.getRoutes().map(r => ({
           key: r.key,
           title: r.title,
           keywords: r.keywords || [],
@@ -428,7 +437,9 @@ export class LlmService {
         if (toolCalls.length > 0) {
           await this.ngZone.run(() => this.executeTools(toolCalls));
         } else {
-          const finalContent = content.trim() || 'Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?';
+          const finalContent =
+            content.trim() ||
+            'Xin lỗi, tôi không hiểu. Bạn có thể nói rõ hơn không?';
           this.ngZone.run(() => this.updateLastMessage(finalContent, false));
         }
       }
@@ -452,7 +463,10 @@ export class LlmService {
           const data = result.data as string | { type?: string };
           if (typeof data === 'string' && data.includes('Cài đặt')) {
             await this.delay(500);
-            this.addMessage('assistant', '🔐 Bạn kéo xuống phần **Đổi mật khẩu** để đổi nhé. Yêu cầu: 8-20 ký tự, có chữ hoa, chữ thường, số, và ký tự đặc biệt. Sau khi đổi xong, hệ thống sẽ tự động đăng xuất ạ.');
+            this.addMessage(
+              'assistant',
+              '🔐 Bạn kéo xuống phần **Đổi mật khẩu** để đổi nhé. Yêu cầu: 8-20 ký tự, có chữ hoa, chữ thường, số, và ký tự đặc biệt. Sau khi đổi xong, hệ thống sẽ tự động đăng xuất ạ.'
+            );
           }
         }
       } catch (e) {
@@ -475,7 +489,10 @@ export class LlmService {
     }
   }
 
-  private executeNav(args: Record<string, unknown>): { success: boolean; data?: unknown } {
+  private executeNav(args: Record<string, unknown>): {
+    success: boolean;
+    data?: unknown;
+  } {
     const key = (args['k'] || args['key'] || args['path']) as string;
     if (!key) return { success: false };
 
@@ -501,7 +518,10 @@ export class LlmService {
     return { success: true, data: route.title };
   }
 
-  private executeTheme(args: Record<string, unknown>): { success: boolean; data?: string } {
+  private executeTheme(args: Record<string, unknown>): {
+    success: boolean;
+    data?: string;
+  } {
     const now = Date.now();
     const isDark = this.themeService.isDarkTheme();
 
@@ -510,7 +530,9 @@ export class LlmService {
     }
     this.lastThemeChange = now;
 
-    const mode = ((args['m'] || args['mode'] || 'toggle') as string).toLowerCase();
+    const mode = (
+      (args['m'] || args['mode'] || 'toggle') as string
+    ).toLowerCase();
     let newMode: 'dark' | 'light';
 
     if (mode === 'dark' || mode === 'tối') {
@@ -617,7 +639,7 @@ export class LlmService {
       return whitelist.includes(route.path ?? '');
     }
     const user = this.authService.currentUser();
-    return user?.permissions?.some((p) => p.startsWith(perm)) ?? false;
+    return user?.permissions?.some(p => p.startsWith(perm)) ?? false;
   }
 
   private resolveRoute(key: string): RouteInfo | null {
@@ -640,11 +662,11 @@ export class LlmService {
     const lower = key.toLowerCase();
     return (
       this.getRoutes().find(
-        (r) =>
+        r =>
           r.key.toLowerCase().includes(lower) ||
           r.fullUrl.toLowerCase().includes(lower) ||
           r.title.toLowerCase().includes(lower) ||
-          r.keywords?.some((kw) => kw.toLowerCase().includes(lower))
+          r.keywords?.some(kw => kw.toLowerCase().includes(lower))
       ) || null
     );
   }
@@ -653,10 +675,14 @@ export class LlmService {
   // HEALTH CHECK
   // ========================================
 
-  private async checkHealth(): Promise<{ config?: { hotline?: string } } | null> {
+  private async checkHealth(): Promise<{
+    config?: { hotline?: string };
+  } | null> {
     const healthUrl = this.apiUrl.replace('/api/llm', '/health');
     try {
-      return await firstValueFrom(this.http.get<{ config?: { hotline?: string } }>(healthUrl));
+      return await firstValueFrom(
+        this.http.get<{ config?: { hotline?: string } }>(healthUrl)
+      );
     } catch {
       throw new Error('Server unreachable');
     }
@@ -669,12 +695,12 @@ export class LlmService {
   private prepareContext(): Array<{ role: string; content: string }> {
     return this.messages()
       .slice(-CONFIG.MAX_HISTORY)
-      .filter((m) => !m.isError && m.content.trim())
-      .map((m) => ({ role: m.role, content: m.content }));
+      .filter(m => !m.isError && m.content.trim())
+      .map(m => ({ role: m.role, content: m.content }));
   }
 
   private addMessage(role: 'user' | 'assistant', content: string): void {
-    this.messages.update((m) => [
+    this.messages.update(m => [
       ...m,
       {
         id: this.generateId(),
@@ -687,22 +713,22 @@ export class LlmService {
   }
 
   private updateLastMessage(content: string, isStreaming: boolean): void {
-    this.messages.update((m) => {
+    this.messages.update(m => {
       if (!m.length) return m;
       return [...m.slice(0, -1), { ...m[m.length - 1], content, isStreaming }];
     });
   }
 
   private finalize(): void {
-    this.messages.update((m) => {
+    this.messages.update(m => {
       if (!m.length) return m;
       return [...m.slice(0, -1), { ...m[m.length - 1], isStreaming: false }];
     });
   }
 
   private cleanupEmptyMessages(): void {
-    this.messages.update((m) =>
-      m.filter((msg) => msg.content.trim() || msg.role !== 'assistant')
+    this.messages.update(m =>
+      m.filter(msg => msg.content.trim() || msg.role !== 'assistant')
     );
   }
 
@@ -732,7 +758,7 @@ export class LlmService {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private log(...args: unknown[]): void {
@@ -751,7 +777,10 @@ export class LlmService {
 
   private resetSessionTimer(): void {
     this.clearSessionTimer();
-    this.sessionTimer = setTimeout(() => this.resetChat(), CONFIG.SESSION_TIMEOUT);
+    this.sessionTimer = setTimeout(
+      () => this.resetChat(),
+      CONFIG.SESSION_TIMEOUT
+    );
   }
 
   private clearSessionTimer(): void {
@@ -763,12 +792,17 @@ export class LlmService {
 
   private handleError(e: unknown): void {
     console.error('[LLM] Error:', e);
-    this.messages.update((m) => {
+    this.messages.update(m => {
       const last = m[m.length - 1];
       if (last?.role === 'assistant') {
         return [
           ...m.slice(0, -1),
-          { ...last, content: 'Đã có lỗi xảy ra. Vui lòng thử lại.', isError: true, isStreaming: false },
+          {
+            ...last,
+            content: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+            isError: true,
+            isStreaming: false,
+          },
         ];
       }
       return m;

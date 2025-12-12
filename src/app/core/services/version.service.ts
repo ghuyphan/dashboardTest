@@ -3,11 +3,11 @@ import { isPlatformBrowser } from '@angular/common';
 import { APP_VERSION, GIT_HASH } from '../../../environments/version';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VersionService {
   private platformId = inject(PLATFORM_ID);
-  
+
   // Combine Semantic Version and Git Hash
   public appVersion = signal<string>(
     GIT_HASH ? `${APP_VERSION} (${GIT_HASH})` : APP_VERSION
@@ -15,7 +15,7 @@ export class VersionService {
 
   public isDevMode = signal<boolean>(false);
 
-  constructor() { 
+  constructor() {
     // 1. Initialize state from LocalStorage (Browser only)
     if (isPlatformBrowser(this.platformId)) {
       const storedState = localStorage.getItem('dev_mode');
@@ -27,11 +27,11 @@ export class VersionService {
     // 2. Reactively persist state and update DOM body class
     effect(() => {
       const devMode = this.isDevMode();
-      
+
       if (isPlatformBrowser(this.platformId)) {
         // Persist
         localStorage.setItem('dev_mode', String(devMode));
-        
+
         // Update Body Class for global styling hooks
         if (devMode) {
           document.body.classList.add('dev-mode-active');

@@ -8,7 +8,6 @@ import {
 const MAX_CACHED_ROUTES = 5;
 
 export class CustomRouteReuseStrategy implements RouteReuseStrategy {
-
   // Static map to store handles
   public static storedHandles = new Map<string, DetachedRouteHandle | null>();
 
@@ -36,14 +35,19 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
     return this.routesToCache.includes(path);
   }
 
-  store(route: ActivatedRouteSnapshot, handle: DetachedRouteHandle | null): void {
+  store(
+    route: ActivatedRouteSnapshot,
+    handle: DetachedRouteHandle | null
+  ): void {
     const path = route.routeConfig?.path || '';
 
     if (path) {
       if (handle) {
         // [FIX] LRU eviction: remove oldest entry if at max capacity
         if (CustomRouteReuseStrategy.storedHandles.size >= MAX_CACHED_ROUTES) {
-          const oldestKey = CustomRouteReuseStrategy.storedHandles.keys().next().value;
+          const oldestKey = CustomRouteReuseStrategy.storedHandles
+            .keys()
+            .next().value;
           if (oldestKey) {
             CustomRouteReuseStrategy.storedHandles.delete(oldestKey);
           }

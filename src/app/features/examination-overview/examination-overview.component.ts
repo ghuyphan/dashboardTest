@@ -5,27 +5,32 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   effect,
-  DestroyRef
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import type { EChartsCoreOption } from 'echarts/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { ExaminationStat } from '../../shared/models/examination-stat.model';
-import { ReportService } from '../../core/services/report.service';
-import { ToastService } from '../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../core/services/theme.service';
-import { ExcelExportService, ExportColumn } from '../../core/services/excel-export.service';
-import { DateUtils } from '../../shared/utils/date.utils';
-import { NumberUtils } from '../../shared/utils/number.utils';
+import { ExaminationStat } from '@shared/models/examination-stat.model';
+import { ReportService } from '@core/services/report.service';
+import { ToastService } from '@core/services/toast.service';
+import { ThemeService, ThemePalette } from '@core/services/theme.service';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '@core/services/excel-export.service';
+import { DateUtils } from '@shared/utils/date.utils';
+import { NumberUtils } from '@shared/utils/number.utils';
 
-import { WidgetCardComponent } from '../../shared/components/widget-card/widget-card.component';
-import { ChartCardComponent } from '../../shared/components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../shared/components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../shared/components/table-card/table-card.component';
-import { GridColumn } from '../../shared/components/reusable-table/reusable-table.component';
-
+import { WidgetCardComponent } from '@shared/components/widget-card/widget-card.component';
+import { ChartCardComponent } from '@shared/components/chart-card/chart-card.component';
+import {
+  DateFilterComponent,
+  DateRange,
+} from '@shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '@shared/components/table-card/table-card.component';
+import { GridColumn } from '@shared/components/reusable-table/reusable-table.component';
 
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -47,7 +52,7 @@ interface WidgetData {
     WidgetCardComponent,
     ChartCardComponent,
     TableCardComponent,
-    DateFilterComponent
+    DateFilterComponent,
   ],
   providers: [DatePipe],
   templateUrl: './examination-overview.component.html',
@@ -132,10 +137,38 @@ export class ExaminationOverviewComponent implements OnInit {
   private initializeWidgetsStructure(): void {
     this.widgetData = [
       // { id: 'total', icon: 'fas fa-users', title: 'Tổng Tiếp Nhận', value: '0', caption: 'Total', accentColor: this.palette?.deepSapphire || '#082567' },
-      { id: 'ck', icon: 'fas fa-stethoscope', title: 'Khám Bệnh (CK)', value: '0', caption: 'Clinic', accentColor: this.palette?.primary || '#00839b' },
-      { id: 'emergency', icon: 'fas fa-ambulance', title: 'Cấp Cứu', value: '0', caption: 'Emergency', accentColor: this.palette?.pastelCoral || '#ffb3ba' },
-      { id: 'inpatient', icon: 'fas fa-procedures', title: 'Nội Trú', value: '0', caption: 'Inpatient', accentColor: this.palette?.warning || '#f59e0b' },
-      { id: 'daycare', icon: 'fas fa-clinic-medical', title: 'ĐT Ngoại Trú', value: '0', caption: 'Daycares', accentColor: this.palette?.tealMidtone || '#52c3d7' },
+      {
+        id: 'ck',
+        icon: 'fas fa-stethoscope',
+        title: 'Khám Bệnh (CK)',
+        value: '0',
+        caption: 'Clinic',
+        accentColor: this.palette?.primary || '#00839b',
+      },
+      {
+        id: 'emergency',
+        icon: 'fas fa-ambulance',
+        title: 'Cấp Cứu',
+        value: '0',
+        caption: 'Emergency',
+        accentColor: this.palette?.pastelCoral || '#ffb3ba',
+      },
+      {
+        id: 'inpatient',
+        icon: 'fas fa-procedures',
+        title: 'Nội Trú',
+        value: '0',
+        caption: 'Inpatient',
+        accentColor: this.palette?.warning || '#f59e0b',
+      },
+      {
+        id: 'daycare',
+        icon: 'fas fa-clinic-medical',
+        title: 'ĐT Ngoại Trú',
+        value: '0',
+        caption: 'Daycares',
+        accentColor: this.palette?.tealMidtone || '#52c3d7',
+      },
     ];
   }
 
@@ -175,8 +208,8 @@ export class ExaminationOverviewComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (data) => {
-          this.rawData = data.map((i) => ({
+        next: data => {
+          this.rawData = data.map(i => ({
             ...i,
             NGAY_TIEP_NHAN: DateUtils.formatToDisplay(i.NGAY_TIEP_NHAN),
           }));
@@ -205,11 +238,21 @@ export class ExaminationOverviewComponent implements OnInit {
     this.widgetData = this.widgetData.map(w => {
       let val = 0;
       switch (w.id) {
-        case 'total': val = t.total; break;
-        case 'ck': val = t.ck; break;
-        case 'emergency': val = t.cc; break;
-        case 'inpatient': val = t.nt; break;
-        case 'daycare': val = t.dnt; break;
+        case 'total':
+          val = t.total;
+          break;
+        case 'ck':
+          val = t.ck;
+          break;
+        case 'emergency':
+          val = t.cc;
+          break;
+        case 'inpatient':
+          val = t.nt;
+          break;
+        case 'daycare':
+          val = t.dnt;
+          break;
       }
       return { ...w, value: val.toString() };
     });
@@ -222,7 +265,7 @@ export class ExaminationOverviewComponent implements OnInit {
       return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
     });
 
-    const dates = sorted.map((d) => {
+    const dates = sorted.map(d => {
       const dateObj = DateUtils.parse(d.NGAY_TIEP_NHAN);
       return dateObj ? this.datePipe.transform(dateObj, 'dd/MM') : '';
     });
@@ -254,7 +297,6 @@ export class ExaminationOverviewComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Prevent tooltip cropping
       },
-
     };
 
     this.trendChartOptions = {
@@ -293,7 +335,7 @@ export class ExaminationOverviewComponent implements OnInit {
           type: 'line',
           smooth: true,
           showSymbol: showPoints,
-          data: sorted.map((d) => d.LUOT_KHAM_CK),
+          data: sorted.map(d => d.LUOT_KHAM_CK),
           itemStyle: { color: c.ck },
         },
         {
@@ -301,7 +343,7 @@ export class ExaminationOverviewComponent implements OnInit {
           type: 'line',
           smooth: true,
           showSymbol: showPoints,
-          data: sorted.map((d) => d.LUOT_CC),
+          data: sorted.map(d => d.LUOT_CC),
           itemStyle: { color: c.cc },
         },
         {
@@ -309,7 +351,7 @@ export class ExaminationOverviewComponent implements OnInit {
           type: 'line',
           smooth: true,
           showSymbol: showPoints,
-          data: sorted.map((d) => d.LUOT_NT),
+          data: sorted.map(d => d.LUOT_NT),
           itemStyle: { color: c.nt },
         },
         {
@@ -317,7 +359,7 @@ export class ExaminationOverviewComponent implements OnInit {
           type: 'line',
           smooth: true,
           showSymbol: showPoints,
-          data: sorted.map((d) => d.LUOT_DNT),
+          data: sorted.map(d => d.LUOT_DNT),
           itemStyle: { color: c.dnt },
         },
       ],
@@ -359,7 +401,8 @@ export class ExaminationOverviewComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         confine: true, // Prevent tooltip cropping
-        formatter: (params: any) => `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`,
+        formatter: (params: any) =>
+          `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`,
       },
       legend: {
         bottom: 0,
@@ -384,12 +427,12 @@ export class ExaminationOverviewComponent implements OnInit {
             formatter: (params: any) => {
               return `${params.name}: ${NumberUtils.format(params.value)} (${params.percent}%)`;
             },
-            color: this.palette.textPrimary
+            color: this.palette.textPrimary,
           },
           emphasis: {
             label: {
               show: true,
-            }
+            },
           },
           data: data,
         },

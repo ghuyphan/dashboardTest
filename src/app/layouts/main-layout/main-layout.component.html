@@ -3,28 +3,24 @@
     [navItems]="navItems()"
     [isOpen]="sidebarOpen()"
     (toggleSidebar)="toggleSidebar()"
-    (closeSidebar)="closeSidebar()"
-  ></app-sidebar>
+    (closeSidebar)="closeSidebar()"></app-sidebar>
 
   <div
     class="sidebar-backdrop"
     [class.show]="sidebarOpen()"
-    (click)="toggleSidebar()"
-  ></div>
+    (click)="toggleSidebar()"></div>
 
-  <div class="main-panel" [ngClass]="{ 'collapsed': !sidebarOpen() }">
-    
+  <div class="main-panel" [ngClass]="{ collapsed: !sidebarOpen() }">
     <app-header
       [currentUser]="currentUser()"
       [userInitials]="userInitials()"
       [rolesDisplay]="rolesDisplay()"
       [currentScreenName]="screenTitle()"
-      [showSearchBar]="searchVisible()" 
-      [showBackButton]="backButtonVisible()" 
+      [showSearchBar]="searchVisible()"
+      [showBackButton]="backButtonVisible()"
       (sidebarToggled)="toggleSidebar()"
       (logoutClicked)="logout()"
-      (backClicked)="onBackClicked()" 
-    ></app-header>
+      (backClicked)="onBackClicked()"></app-header>
 
     <main class="dashboard-content" #mainContent>
       @if (contentLoaded()) {
@@ -34,11 +30,11 @@
       } @else {
         <div class="app-loading-container">
           <div class="app-loading-spinner"></div>
-          <p>Đang tải hệ thống...</p> 
+          <p>Đang tải hệ thống...</p>
         </div>
       }
     </main>
-    
+
     <app-action-footer></app-action-footer>
   </div>
 </div>

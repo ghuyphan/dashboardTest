@@ -7,7 +7,7 @@ import {
   effect,
   HostListener,
   DestroyRef,
-  inject
+  inject,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -36,10 +36,10 @@ import { VersionService } from '../../../core/services/version.service';
     MatButtonModule,
     MatDividerModule,
     MatIconModule,
-    TooltipDirective
+    TooltipDirective,
   ],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
   // --- Inputs ---
@@ -61,7 +61,8 @@ export class HeaderComponent {
 
   // --- View Queries ---
   private menuTrigger = viewChild(MatMenuTrigger);
-  private avatarButton = viewChild<ElementRef<HTMLButtonElement>>('avatarButton');
+  private avatarButton =
+    viewChild<ElementRef<HTMLButtonElement>>('avatarButton');
   private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   // --- Outputs ---
@@ -79,9 +80,10 @@ export class HeaderComponent {
 
   constructor() {
     // 1. Listen for Escape to clear/blur search
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.ESCAPE, true) // allowInInputs=true
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.ESCAPE, true) // allowInInputs=true
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e) => {
+      .subscribe(e => {
         const input = this.searchInput()?.nativeElement;
         if (input && document.activeElement === input) {
           e.event.preventDefault();

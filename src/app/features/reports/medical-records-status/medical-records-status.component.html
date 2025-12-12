@@ -1,25 +1,32 @@
 <div class="page-container">
   <div class="page-content">
-
-    <app-date-filter (filterSubmit)="onDateFilter($event)" [isLoading]="isLoading"
+    <app-date-filter
+      (filterSubmit)="onDateFilter($event)"
+      [isLoading]="isLoading"
       buttonLabel="Xem báo cáo"></app-date-filter>
 
     <div class="dashboard-grid">
-
       @defer (on immediate) {
-      <app-chart-card class="span-full" title="Thống kê bác sĩ chưa tạo bệnh án" icon="fas fa-chart-bar"
-        iconClass="icon-info" [isLoading]="isLoading" [chartOptions]="doctorChartOptions" skeletonType="bar"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" emptyText="Không có dữ liệu trong khoảng thời gian này."
-        [enableExport]="summaryData.length > 0" [isExporting]="isExporting"
-        exportPermission="KHTH.ChuaTaoHSBANgoaiTru.REXPORT" (exportClicked)="onExport()">
-
-      </app-chart-card>
+        <app-chart-card
+          class="span-full"
+          title="Thống kê bác sĩ chưa tạo bệnh án"
+          icon="fas fa-chart-bar"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="doctorChartOptions"
+          skeletonType="bar"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Không có dữ liệu trong khoảng thời gian này."
+          [enableExport]="summaryData.length > 0"
+          [isExporting]="isExporting"
+          exportPermission="KHTH.ChuaTaoHSBANgoaiTru.REXPORT"
+          (exportClicked)="onExport()">
+        </app-chart-card>
       } @placeholder {
-      <div class="span-full">
-        <div class="chart-placeholder"></div>
-      </div>
+        <div class="span-full">
+          <div class="chart-placeholder"></div>
+        </div>
       }
-
     </div>
   </div>
 </div>

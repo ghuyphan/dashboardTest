@@ -11,8 +11,8 @@ describe('AppComponent', () => {
       providers: [
         provideRouter([]),
         provideHttpClient(),
-        provideHttpClientTesting()
-      ]
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
   });
 
@@ -32,6 +32,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, hoan-my-portal');
+    expect(compiled.querySelector('h1')?.textContent).toContain(
+      'Hello, hoan-my-portal'
+    );
   });
 });

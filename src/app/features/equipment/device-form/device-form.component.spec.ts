@@ -15,10 +15,9 @@ describe('DeviceFormComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DeviceFormComponent);
     component = fixture.componentInstance;

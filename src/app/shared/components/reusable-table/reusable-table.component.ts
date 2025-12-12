@@ -219,18 +219,22 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
 
   public isDateValue(value: unknown): boolean {
     if (value === null || value === undefined || value === '') return false;
-    if (typeof value === 'string' && (value === 'N/A' || value.toLowerCase() === 'na')) return false;
+    if (
+      typeof value === 'string' &&
+      (value === 'N/A' || value.toLowerCase() === 'na')
+    )
+      return false;
 
     const date = new Date(value as string | number | Date);
     return !isNaN(date.getTime());
   }
 
   private initializeSelectionListener(): void {
-    this.selection.changed.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.selectionChanged.emit(this.selection.selected);
-    });
+    this.selection.changed
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.selectionChanged.emit(this.selection.selected);
+      });
   }
 
   private initializeSortState(): void {
@@ -253,7 +257,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
       ? cols
       : cols.filter(col => col.type !== 'actions');
 
-    const baseColumns = visibleCols.map((col) => col.key);
+    const baseColumns = visibleCols.map(col => col.key);
     this.displayedColumns = enableMultiSelect
       ? ['select', ...baseColumns]
       : baseColumns;
@@ -353,7 +357,7 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   }
 
   private calculateNewRowIndex(rows: T[], down: boolean): number {
-    const currentIndex = rows.findIndex((row) => row === this.selectedRow);
+    const currentIndex = rows.findIndex(row => row === this.selectedRow);
     let newIndex = down ? currentIndex + 1 : currentIndex - 1;
     if (newIndex < 0) newIndex = rows.length - 1;
     if (newIndex >= rows.length) newIndex = 0;
@@ -364,7 +368,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
     if (this.scrollTimer) clearTimeout(this.scrollTimer);
 
     this.scrollTimer = setTimeout(() => {
-      const rowElements = this.elementRef.nativeElement.querySelectorAll('.clickable-row');
+      const rowElements =
+        this.elementRef.nativeElement.querySelectorAll('.clickable-row');
       const rowElement = rowElements[index];
       if (rowElement) {
         rowElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

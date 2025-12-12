@@ -8,9 +8,9 @@ import { provideRouter } from '@angular/router';
 @Component({
   template: `<div [appTooltip]="'Test Tooltip'"></div>`,
   standalone: true,
-  imports: [TooltipDirective]
+  imports: [TooltipDirective],
 })
-class TestHostComponent { }
+class TestHostComponent {}
 
 describe('TooltipDirective', () => {
   let fixture: ComponentFixture<TestHostComponent>;
@@ -21,8 +21,8 @@ describe('TooltipDirective', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);

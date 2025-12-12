@@ -7,13 +7,10 @@ import { fadeSlideAnimation } from './shared/animations/route-animations';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    RouterOutlet,
-    ToastComponent
-  ],
+  imports: [RouterOutlet, ToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
-  animations: [fadeSlideAnimation]
+  animations: [fadeSlideAnimation],
 })
 export class AppComponent {
   title = 'hoan-my-portal';
@@ -22,6 +19,8 @@ export class AppComponent {
   private contexts = inject(ChildrenOutletContexts);
 
   getRouteAnimationData() {
-    return this.contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];
+    return this.contexts.getContext('primary')?.route?.snapshot?.data?.[
+      'animation'
+    ];
   }
 }

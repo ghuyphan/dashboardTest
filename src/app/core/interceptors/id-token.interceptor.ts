@@ -1,4 +1,9 @@
-import { HttpEvent, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import {
+  HttpEvent,
+  HttpHandlerFn,
+  HttpInterceptorFn,
+  HttpRequest,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -20,7 +25,10 @@ export const idTokenInterceptor: HttpInterceptorFn = (
 
   const targetMethods = ['POST', 'PUT', 'DELETE'];
 
-  if (!targetMethods.includes(req.method.toUpperCase()) || req.url.includes(loginUrl)) {
+  if (
+    !targetMethods.includes(req.method.toUpperCase()) ||
+    req.url.includes(loginUrl)
+  ) {
     return next(req);
   }
 
@@ -34,9 +42,9 @@ export const idTokenInterceptor: HttpInterceptorFn = (
 
   const clonedRequest = req.clone({
     setHeaders: {
-      'id_token': idToken,
-      'id_user': userId
-    }
+      id_token: idToken,
+      id_user: userId,
+    },
   });
 
   return next(clonedRequest);

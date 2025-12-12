@@ -15,10 +15,9 @@ describe('BedUsageComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(BedUsageComponent);
     component = fixture.componentInstance;

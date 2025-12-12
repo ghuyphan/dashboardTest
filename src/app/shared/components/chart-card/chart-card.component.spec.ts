@@ -15,10 +15,9 @@ describe('ChartCardComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ChartCardComponent);
     component = fixture.componentInstance;

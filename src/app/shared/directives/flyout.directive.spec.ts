@@ -6,11 +6,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 
 @Component({
-  template: `<button [appFlyout]="menu" [flyoutEnabled]="true">Open</button><div #menu>Menu Content</div>`,
+  template: `<button [appFlyout]="menu" [flyoutEnabled]="true">Open</button>
+    <div #menu>Menu Content</div>`,
   standalone: true,
-  imports: [FlyoutDirective]
+  imports: [FlyoutDirective],
 })
-class TestHostComponent { }
+class TestHostComponent {}
 
 describe('FlyoutDirective', () => {
   let fixture: ComponentFixture<TestHostComponent>;
@@ -21,8 +22,8 @@ describe('FlyoutDirective', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);

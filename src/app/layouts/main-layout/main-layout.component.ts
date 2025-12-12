@@ -9,7 +9,7 @@ import {
   ChangeDetectionStrategy,
   ViewChild,
   ElementRef,
-  DestroyRef
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import {
@@ -19,23 +19,23 @@ import {
   NavigationEnd,
   NavigationStart,
   ActivatedRoute,
-} from '@angular/router'
+} from '@angular/router';
 import { filter, map, mergeMap, startWith, tap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { AuthService } from '../../core/services/auth.service';
-import { NavItem } from '../../core/models/nav-item.model';
-import { ActionFooterComponent } from '../../shared/components/action-footer/action-footer.component';
-import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
-import { HeaderComponent } from '../../shared/components/header/header.component';
-import { SearchService } from '../../core/services/search.service';
-import { FooterActionService } from '../../core/services/footer-action.service';
-import { AiChatComponent } from '../../shared/components/ai-chat/ai-chat.component';
-import { LlmService } from '../../core/services/llm.service'; // [NEW]
-import { ModalService } from '../../core/services/modal.service';
-import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
-import { KeyboardShortcutService } from '../../core/services/keyboard-shortcut.service';
-import { GLOBAL_SHORTCUTS } from '../../core/config/keyboard-shortcuts.config';
+import { AuthService } from '@core/services/auth.service';
+import { NavItem } from '@core/models/nav-item.model';
+import { ActionFooterComponent } from '@shared/components/action-footer/action-footer.component';
+import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
+import { HeaderComponent } from '@shared/components/header/header.component';
+import { SearchService } from '@core/services/search.service';
+import { FooterActionService } from '@core/services/footer-action.service';
+import { AiChatComponent } from '@shared/components/ai-chat/ai-chat.component';
+import { LlmService } from '@core/services/llm.service'; // [NEW]
+import { ModalService } from '@core/services/modal.service';
+import { ConfirmationModalComponent } from '@shared/components/confirmation-modal/confirmation-modal.component';
+import { KeyboardShortcutService } from '@core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '@core/config/keyboard-shortcuts.config';
 
 interface RouteData {
   title?: string;
@@ -54,11 +54,11 @@ interface RouteData {
     ActionFooterComponent,
     SidebarComponent,
     HeaderComponent,
-    AiChatComponent
+    AiChatComponent,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
@@ -121,47 +121,48 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.contentLoaded.set(true);
 
     // [GLOBAL] Logout: Ctrl + Alt + L
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.LOGOUT)
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.LOGOUT)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.logout();
       });
 
     // [GLOBAL] Search: Ctrl + K
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.SEARCH, true)
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.SEARCH, true)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e) => {
+      .subscribe(e => {
         e.event.preventDefault();
         this.headerComponent.focusSearch();
       });
 
     // [GLOBAL] Toggle Sidebar: Ctrl + .
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.TOGGLE_SIDEBAR)
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.TOGGLE_SIDEBAR)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e) => {
+      .subscribe(e => {
         e.event.preventDefault();
         this.toggleSidebar();
       });
 
     // [GLOBAL] Toggle AI Chat: Ctrl + /
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.AI_CHAT)
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.AI_CHAT)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e) => {
+      .subscribe(e => {
         e.event.preventDefault();
         this.toggleAiChat();
       });
 
     // [GLOBAL] Navigate to Settings: Alt + S
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.SETTINGS)
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.SETTINGS)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e) => {
+      .subscribe(e => {
         e.event.preventDefault();
         this.router.navigate(['/app/settings']);
       });
-
-
-
-
   }
 
   ngOnDestroy(): void {
@@ -218,7 +219,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private deepCopyNavItems(items: NavItem[]): NavItem[] {
     return items.map(item => ({
       ...item,
-      children: item.children ? this.deepCopyNavItems(item.children) : undefined,
+      children: item.children
+        ? this.deepCopyNavItems(item.children)
+        : undefined,
     }));
   }
 
@@ -251,25 +254,26 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.modalService.open(ConfirmationModalComponent, {
-      title: 'Xác nhận',
-      size: 'sm',
-      context: {
-        layout: 'center',
-        icon: 'fas fa-sign-out-alt',
-        iconColor: 'var(--color-danger)',
-        title: 'Đăng xuất?',
-        message: 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?',
-        confirmText: 'Đăng xuất',
-        cancelText: 'Hủy bỏ'
-      }
-    }).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe((confirmed) => {
-      if (confirmed) {
-        this.authService.logout();
-      }
-    });
+    this.modalService
+      .open(ConfirmationModalComponent, {
+        title: 'Xác nhận',
+        size: 'sm',
+        context: {
+          layout: 'center',
+          icon: 'fas fa-sign-out-alt',
+          iconColor: 'var(--color-danger)',
+          title: 'Đăng xuất?',
+          message: 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?',
+          confirmText: 'Đăng xuất',
+          cancelText: 'Hủy bỏ',
+        },
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.authService.logout();
+        }
+      });
   }
 
   onBackClicked(): void {

@@ -1,115 +1,173 @@
 <div class="dynamic-form-container">
   <form [formGroup]="dynamicForm" (ngSubmit)="onSave()" novalidate>
     <div class="form-body">
-
       @if (formConfig()) {
-      <div class="dynamic-form-layout">
+        <div class="dynamic-form-layout">
+          @for (row of formConfig()?.formRows; track $index) {
+            <div class="form-row">
+              @for (control of row.controls; track control.controlName) {
+                <div
+                  class="form-group"
+                  [style.flex-grow]="control.layout_flexGrow || 1"
+                  [style.flex-basis]="'200px'">
+                  <label [for]="control.controlName">
+                    {{ control.label }}
+                    @if (control.validators?.required) {
+                      <span class="required-asterisk">*</span>
+                    }
+                  </label>
 
-        @for (row of formConfig()?.formRows; track $index) {
-        <div class="form-row">
+                  @switch (control.controlType) {
+                    @case ('text') {
+                      <input
+                        type="text"
+                        [id]="control.controlName"
+                        [formControlName]="control.controlName"
+                        [placeholder]="control.placeholder || ''"
+                        class="form-control"
+                        [class.is-invalid]="isInvalid(control.controlName)" />
+                    }
 
-          @for (control of row.controls; track control.controlName) {
-          <div class="form-group" [style.flex-grow]="control.layout_flexGrow || 1" [style.flex-basis]="'200px'">
+                    @case ('date') {
+                      <div
+                        class="input-wrapper"
+                        [class.is-invalid]="isInvalid(control.controlName)">
+                        <input
+                          [id]="control.controlName"
+                          class="form-control date-input"
+                          [formControlName]="control.controlName"
+                          [matDatepicker]="picker"
+                          [placeholder]="control.placeholder || 'dd/mm/yyyy'"
+                          [class.is-invalid]="isInvalid(control.controlName)"
+                          readonly
+                          (click)="picker.open()" />
 
-            <label [for]="control.controlName">
-              {{ control.label }}
-              @if (control.validators?.required) {
-              <span class="required-asterisk">*</span>
-              }
-            </label>
+                        <mat-datepicker-toggle
+                          [for]="picker"
+                          class="custom-toggle"></mat-datepicker-toggle>
+                        <mat-datepicker
+                          #picker
+                          [touchUi]="isMobile()"></mat-datepicker>
+                      </div>
+                    }
 
-            @switch (control.controlType) {
+                    @case ('currency') {
+                      <input
+                        type="text"
+                        [id]="control.controlName"
+                        [placeholder]="control.placeholder || '0'"
+                        class="form-control"
+                        [class.is-invalid]="isInvalid(control.controlName)"
+                        [value]="
+                          formatCurrency(
+                            dynamicForm.get(control.controlName)?.value
+                          )
+                        "
+                        (input)="onCurrencyInput($event, control.controlName)"
+                        (blur)="onCurrencyInput($event, control.controlName)"
+                        [disabled]="
+                          dynamicForm.get(control.controlName)?.disabled ||
+                          false
+                        " />
+                    }
 
-            @case ('text') {
-            <input type="text" [id]="control.controlName" [formControlName]="control.controlName"
-              [placeholder]="control.placeholder || ''" class="form-control"
-              [class.is-invalid]="isInvalid(control.controlName)" />
-            }
+                    @case ('dropdown') {
+                      <div
+                        class="custom-dropdown-wrapper"
+                        [class.is-invalid]="isInvalid(control.controlName)">
+                        <mat-form-field
+                          appearance="outline"
+                          class="full-width-field dense-form-field"
+                          subscriptSizing="dynamic">
+                          <mat-select
+                            [formControlName]="control.controlName"
+                            [id]="control.controlName"
+                            [placeholder]="
+                              control.placeholder ||
+                              'Chọn ' + (control.label || '...')
+                            "
+                            panelClass="dynamic-form-select-panel">
+                            <mat-option [value]="null">
+                              --
+                              {{
+                                control.placeholder
+                                  ? control.placeholder
+                                  : 'Chọn ' + (control.label || 'Vui lòng chọn')
+                              }}
+                              --
+                            </mat-option>
+                            @for (
+                              opt of control.options;
+                              track opt.key ?? opt.value
+                            ) {
+                              <mat-option [value]="opt.key ?? opt.value">
+                                {{ opt.value }}
+                              </mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                    }
 
-            @case ('date') {
-            <div class="input-wrapper" [class.is-invalid]="isInvalid(control.controlName)">
-              <input [id]="control.controlName" class="form-control date-input" [formControlName]="control.controlName"
-                [matDatepicker]="picker" [placeholder]="control.placeholder || 'dd/mm/yyyy'"
-                [class.is-invalid]="isInvalid(control.controlName)" readonly (click)="picker.open()" />
-
-              <mat-datepicker-toggle [for]="picker" class="custom-toggle"></mat-datepicker-toggle>
-              <mat-datepicker #picker [touchUi]="isMobile()"></mat-datepicker>
-            </div>
-            }
-
-            @case ('currency') {
-            <input type="text" [id]="control.controlName" [placeholder]="control.placeholder || '0'"
-              class="form-control" [class.is-invalid]="isInvalid(control.controlName)"
-              [value]="formatCurrency(dynamicForm.get(control.controlName)?.value)"
-              (input)="onCurrencyInput($event, control.controlName)"
-              (blur)="onCurrencyInput($event, control.controlName)"
-              [disabled]="dynamicForm.get(control.controlName)?.disabled || false" />
-            }
-
-            @case ('dropdown') {
-            <div class="custom-dropdown-wrapper" [class.is-invalid]="isInvalid(control.controlName)">
-              <mat-form-field appearance="outline" class="full-width-field dense-form-field" subscriptSizing="dynamic">
-                <mat-select [formControlName]="control.controlName" [id]="control.controlName"
-                  [placeholder]="control.placeholder || 'Chọn ' + (control.label || '...')"
-                  panelClass="dynamic-form-select-panel"> <mat-option [value]="null">
-                    -- {{ control.placeholder ? control.placeholder : 'Chọn ' + (control.label || 'Vui lòng chọn') }} --
-                  </mat-option>
-                  @for (opt of control.options; track opt.key ?? opt.value) {
-                  <mat-option [value]="opt.key ?? opt.value">
-                    {{ opt.value }}
-                  </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            </div>
-            }
-
-            @case ('textarea') {
-            <textarea [id]="control.controlName" [formControlName]="control.controlName"
-              [placeholder]="control.placeholder || ''" class="form-control" rows="3"
-              [class.is-invalid]="isInvalid(control.controlName)">
+                    @case ('textarea') {
+                      <textarea
+                        [id]="control.controlName"
+                        [formControlName]="control.controlName"
+                        [placeholder]="control.placeholder || ''"
+                        class="form-control"
+                        rows="3"
+                        [class.is-invalid]="isInvalid(control.controlName)">
                       </textarea>
-            }
+                    }
 
-            @case ('checkbox') {
-            <div class="checkbox-wrapper">
-              <input type="checkbox" [id]="control.controlName" [formControlName]="control.controlName"
-                class="form-check-input" />
+                    @case ('checkbox') {
+                      <div class="checkbox-wrapper">
+                        <input
+                          type="checkbox"
+                          [id]="control.controlName"
+                          [formControlName]="control.controlName"
+                          class="form-check-input" />
+                      </div>
+                    }
+                  }
+
+                  @if (isInvalid(control.controlName)) {
+                    <div class="invalid-feedback">
+                      {{ getErrorMessage(control) }}
+                    </div>
+                  }
+                </div>
+              }
             </div>
-            }
-            }
-
-            @if (isInvalid(control.controlName)) {
-            <div class="invalid-feedback">
-              {{ getErrorMessage(control) }}
-            </div>
-            }
-
-          </div>
           }
         </div>
-        }
-      </div>
       }
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isLoading()">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="onCancel()"
+        [disabled]="isLoading()">
         <span class="btn-content-wrapper">
           <i class="fas fa-times"></i> Hủy bỏ
         </span>
       </button>
 
-      <button type="submit" class="btn btn-primary" [disabled]="dynamicForm.invalid || isLoading()">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="dynamicForm.invalid || isLoading()">
         @if (!isLoading()) {
-        <span class="btn-content-wrapper">
-          <i class="fas fa-save"></i> Lưu
-        </span>
+          <span class="btn-content-wrapper">
+            <i class="fas fa-save"></i> Lưu
+          </span>
         }
         @if (isLoading()) {
-        <span class="btn-content-wrapper">
-          <i class="fas fa-spinner fa-spin"></i> Đang lưu...
-        </span>
+          <span class="btn-content-wrapper">
+            <i class="fas fa-spinner fa-spin"></i> Đang lưu...
+          </span>
         }
       </button>
     </div>

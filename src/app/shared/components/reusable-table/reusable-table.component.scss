@@ -30,8 +30,8 @@ app-reusable-table {
   --sticky-border-color: var(--border-color-local);
 
   /* Dark Mode Overrides */
-  &[data-theme="dark"],
-  [data-theme="dark"] & {
+  &[data-theme='dark'],
+  [data-theme='dark'] & {
     --header-bg-local: #1e293b;
     --header-text-local: #94a3b8;
     --row-bg-odd: var(--surface-card, #0f172a);
@@ -97,7 +97,7 @@ app-reusable-table {
     }
   }
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     &:hover {
       scrollbar-color: var(--gray-600, #475569) transparent;
 
@@ -287,7 +287,7 @@ table.mat-table {
       background-color: var(--gray-100, #f1f5f9);
       color: var(--primary, #2563eb);
 
-      [data-theme="dark"] & {
+      [data-theme='dark'] & {
         background-color: rgba(255, 255, 255, 0.1);
       }
     }
@@ -325,7 +325,6 @@ table.mat-table {
     color: var(--color-danger, #dc3545);
   }
 }
-
 
 /* =========================================================
    [MODIFIED] COMPACT PAGINATOR & FOOTER
@@ -370,7 +369,6 @@ table.mat-table {
 
   /* Custom styling for the Select Box to look "Contained" */
   .mat-mdc-form-field {
-
     /* Target the text input area */
     .mat-mdc-text-field-wrapper {
       padding: 0 !important;
@@ -386,7 +384,7 @@ table.mat-table {
       transition: all 0.2s;
 
       /* Dark mode override for the box */
-      [data-theme="dark"] & {
+      [data-theme='dark'] & {
         background-color: rgba(255, 255, 255, 0.05);
         border-color: rgba(255, 255, 255, 0.1);
       }
@@ -466,7 +464,7 @@ table.mat-table {
   inset: 0;
   background: rgba(255, 255, 255, 0.6);
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     background: rgba(15, 23, 42, 0.5);
   }
 
@@ -505,7 +503,6 @@ table.mat-table {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -559,7 +556,7 @@ table.mat-table {
     margin-bottom: 0.5rem;
     color: var(--gray-300);
 
-    [data-theme="dark"] & {
+    [data-theme='dark'] & {
       color: var(--gray-700);
     }
   }

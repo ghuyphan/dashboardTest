@@ -3,19 +3,22 @@ import { saveAs } from 'file-saver';
 import { DateUtils } from '../../shared/utils/date.utils';
 
 export interface ExportColumn {
-  key: string;       // Key in your data object
-  header: string;    // Column header text in Excel
+  key: string; // Key in your data object
+  header: string; // Column header text in Excel
   type?: 'text' | 'date' | 'number' | 'currency'; // Format type
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ExcelExportService {
+  constructor() {}
 
-  constructor() { }
-
-  public async exportToExcel<T>(data: T[], fileName: string, columns: ExportColumn[]): Promise<void> {
+  public async exportToExcel<T>(
+    data: T[],
+    fileName: string,
+    columns: ExportColumn[]
+  ): Promise<void> {
     if (!data || data.length === 0) {
       return;
     }
@@ -45,12 +48,15 @@ export class ExcelExportService {
 
     // 3. Create Workbook
     const workbook = {
-      Sheets: { 'data': worksheet },
-      SheetNames: ['data']
+      Sheets: { data: worksheet },
+      SheetNames: ['data'],
     };
 
     // 4. Write to Buffer
-    const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const excelBuffer: any = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
 
     // 5. Save File
     this.saveAsExcelFile(excelBuffer, fileName);
@@ -62,17 +68,21 @@ export class ExcelExportService {
     if (type === 'date') {
       return DateUtils.formatToDisplay(value);
     }
-    // You can add currency formatting here if needed, 
+    // You can add currency formatting here if needed,
     // though often it's better to send raw numbers to Excel and let Excel handle formatting.
     return value;
   }
 
   private saveAsExcelFile(buffer: any, fileName: string): void {
-    const EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+    const EXCEL_TYPE =
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
     const EXCEL_EXTENSION = '.xlsx';
 
     const data: Blob = new Blob([buffer], { type: EXCEL_TYPE });
-    saveAs(data, fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION);
+    saveAs(
+      data,
+      fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION
+    );
   }
 
   /**

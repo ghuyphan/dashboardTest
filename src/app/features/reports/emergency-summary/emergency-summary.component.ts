@@ -180,7 +180,7 @@ export class EmergencySummaryComponent implements OnInit {
   private updateWidgetColors(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const setC = (id: string, color: string) => {
-        const item = this.widgetData.find((x) => x.id === id);
+        const item = this.widgetData.find(x => x.id === id);
         if (item) item.accentColor = color;
       };
       setC('total', this.palette.widgetAccent);
@@ -209,23 +209,23 @@ export class EmergencySummaryComponent implements OnInit {
         new Date(b.NGAY_TIEP_NHAN).getTime()
     );
 
-    const dates = sortedCurrent.map((d) => {
+    const dates = sortedCurrent.map(d => {
       const dateObj = new Date(d.NGAY_TIEP_NHAN);
       return this.datePipe.transform(dateObj, 'dd/MM') || '';
     });
 
-    const ccDataCurrent = sortedCurrent.map((d) => d.LUOT_CC);
+    const ccDataCurrent = sortedCurrent.map(d => d.LUOT_CC);
     const ccDataPrevious = dates.map((_, index) => {
       return sortedPrevious[index] ? sortedPrevious[index].LUOT_CC : null;
     });
 
-    const nhapVienData = sortedCurrent.map((d) => d.NHAP_VIEN);
-    const chuyenVienData = sortedCurrent.map((d) => d.CHUYEN_VIEN);
+    const nhapVienData = sortedCurrent.map(d => d.NHAP_VIEN);
+    const chuyenVienData = sortedCurrent.map(d => d.CHUYEN_VIEN);
 
     // Calculate totals for pie chart
     let totalBHYT = 0;
     let totalVienPhi = 0;
-    this.rawData.forEach((item) => {
+    this.rawData.forEach(item => {
       totalBHYT += item.BHYT || 0;
       totalVienPhi += item.VIEN_PHI || 0;
     });
@@ -295,7 +295,7 @@ export class EmergencySummaryComponent implements OnInit {
         )
         .subscribe({
           next: ({ current, previous }) => {
-            this.rawData = current.map((item) => ({
+            this.rawData = current.map(item => ({
               ...item,
               NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(
                 item.NGAY_TIEP_NHAN
@@ -304,7 +304,7 @@ export class EmergencySummaryComponent implements OnInit {
 
             this.processData(current, previous);
           },
-          error: (err) => {
+          error: err => {
             console.error(err);
             this.toastService.showError('Không thể tải dữ liệu báo cáo.');
             this.rawData = [];
@@ -333,7 +333,7 @@ export class EmergencySummaryComponent implements OnInit {
     let totalBHYT = 0;
     let totalVienPhi = 0;
 
-    currentData.forEach((item) => {
+    currentData.forEach(item => {
       totalCC += item.LUOT_CC || 0;
       totalNhapVien += item.NHAP_VIEN || 0;
       totalChuyenVien += item.CHUYEN_VIEN || 0;
@@ -358,8 +358,9 @@ export class EmergencySummaryComponent implements OnInit {
         icon: 'fas fa-procedures',
         title: 'Nhập Viện',
         value: NumberUtils.format(totalNhapVien),
-        caption: `Chiếm ${totalCC > 0 ? ((totalNhapVien / totalCC) * 100).toFixed(1) : 0
-          }%`,
+        caption: `Chiếm ${
+          totalCC > 0 ? ((totalNhapVien / totalCC) * 100).toFixed(1) : 0
+        }%`,
         accentColor: this.palette.chart6,
       },
       {
@@ -392,18 +393,18 @@ export class EmergencySummaryComponent implements OnInit {
         new Date(b.NGAY_TIEP_NHAN).getTime()
     );
 
-    const dates = sortedCurrent.map((d) => {
+    const dates = sortedCurrent.map(d => {
       const dateObj = new Date(d.NGAY_TIEP_NHAN);
       return this.datePipe.transform(dateObj, 'dd/MM') || '';
     });
 
-    const ccDataCurrent = sortedCurrent.map((d) => d.LUOT_CC);
+    const ccDataCurrent = sortedCurrent.map(d => d.LUOT_CC);
     const ccDataPrevious = dates.map((_, index) => {
       return sortedPrevious[index] ? sortedPrevious[index].LUOT_CC : null;
     });
 
-    const nhapVienData = sortedCurrent.map((d) => d.NHAP_VIEN);
-    const chuyenVienData = sortedCurrent.map((d) => d.CHUYEN_VIEN);
+    const nhapVienData = sortedCurrent.map(d => d.NHAP_VIEN);
+    const chuyenVienData = sortedCurrent.map(d => d.CHUYEN_VIEN);
 
     this.buildCharts(
       dates,
@@ -431,7 +432,6 @@ export class EmergencySummaryComponent implements OnInit {
     totalNhapVien: number,
     totalChuyenVien: number
   ): void {
-
     const commonLegend = {
       show: true,
       top: 0,
@@ -502,8 +502,8 @@ export class EmergencySummaryComponent implements OnInit {
           itemStyle: { color: this.palette.gray400 },
           lineStyle: {
             width: 2,
-            type: [5, 5],  // Cleaner dash pattern: [dash length, gap length]
-            dashOffset: 0
+            type: [5, 5], // Cleaner dash pattern: [dash length, gap length]
+            dashOffset: 0,
           },
         },
       ],
@@ -618,7 +618,10 @@ export class EmergencySummaryComponent implements OnInit {
     };
 
     // 4. Outcome Distribution Chart
-    const totalDischarged = Math.max(0, totalCC - totalNhapVien - totalChuyenVien);
+    const totalDischarged = Math.max(
+      0,
+      totalCC - totalNhapVien - totalChuyenVien
+    );
     this.outcomeChartOptions = {
       backgroundColor: 'transparent',
       tooltip: {
@@ -721,7 +724,6 @@ export class EmergencySummaryComponent implements OnInit {
       ],
     };
   }
-
 
   public onExport(): void {
     if (this.isExporting || !this.rawData.length) return;

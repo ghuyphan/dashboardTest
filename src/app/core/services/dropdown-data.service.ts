@@ -20,10 +20,9 @@ interface ApiDeviceStatus {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DropdownDataService {
-  
   private readonly http = inject(HttpClient);
 
   private deviceTypes$: Observable<DropdownOption[]> | null = null;
@@ -37,10 +36,12 @@ export class DropdownDataService {
     const url = environment.deviceListUrl;
 
     this.deviceTypes$ = this.http.get<ApiDeviceType[]>(url).pipe(
-      map(items => items.map(item => ({
-        key: item.Id,
-        value: item.TenThietBi
-      }))),
+      map(items =>
+        items.map(item => ({
+          key: item.Id,
+          value: item.TenThietBi,
+        }))
+      ),
       shareReplay(1),
       catchError(err => {
         // Clear cache on error so retry is possible
@@ -60,10 +61,12 @@ export class DropdownDataService {
     const url = `${environment.statusListUrl}/${groupId}`;
 
     const statusObs$ = this.http.get<ApiDeviceStatus[]>(url).pipe(
-      map(items => items.map(item => ({
-        key: item.ID,
-        value: item.TEN
-      }))),
+      map(items =>
+        items.map(item => ({
+          key: item.ID,
+          value: item.TEN,
+        }))
+      ),
       shareReplay(1),
       catchError(err => {
         // CRITICAL FIX: Remove from cache map if error occurs
@@ -83,6 +86,6 @@ export class DropdownDataService {
 
   private handleError(context: string, error: HttpErrorResponse) {
     console.error(`Error fetching ${context}:`);
-    return of([]); 
+    return of([]);
   }
 }

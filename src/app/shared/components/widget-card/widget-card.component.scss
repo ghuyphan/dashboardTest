@@ -13,7 +13,8 @@
   // Standard padding consistent with other cards
   padding: var(--spacing-md);
 
-  transition: transform 0.2s ease-in-out,
+  transition:
+    transform 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out,
     border-color 0.2s ease;
 
@@ -76,14 +77,18 @@
 
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.4s ease-in-out, visibility 0s 0s;
+  transition:
+    opacity 0.4s ease-in-out,
+    visibility 0s 0s;
   will-change: opacity;
   pointer-events: none;
 
   &.hide {
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
+    transition:
+      opacity 0.4s ease-in-out,
+      visibility 0s 0.4s;
   }
 }
 

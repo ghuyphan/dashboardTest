@@ -16,7 +16,10 @@ import { ChartCardComponent } from '../../../shared/components/chart-card/chart-
 import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
 import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
 import { ToastService } from '../../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
 import { Device } from '../../../shared/models/device.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
 import { NumberUtils } from '../../../shared/utils/number.utils';
@@ -26,11 +29,31 @@ import type { EChartsCoreOption } from 'echarts/core';
 const GLOBAL_FONT_FAMILY =
   'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-interface WidgetData { id: string; icon: string; title: string; value: string; caption: string; accentColor: string; }
-interface DeviceStatsData { TenTrangThai: string; SoLuong: number; }
-interface ActionableDevice { Id: number; Ten: string; Ma: string; ViTri: string; TrangThai_Ten?: string | null; NgayHetHanBH?: string | null; }
+interface WidgetData {
+  id: string;
+  icon: string;
+  title: string;
+  value: string;
+  caption: string;
+  accentColor: string;
+}
+interface DeviceStatsData {
+  TenTrangThai: string;
+  SoLuong: number;
+}
+interface ActionableDevice {
+  Id: number;
+  Ten: string;
+  Ma: string;
+  ViTri: string;
+  TrangThai_Ten?: string | null;
+  NgayHetHanBH?: string | null;
+}
 type FilterType = 'status' | 'category' | 'location';
-interface ChartFilter { type: FilterType; name: string; }
+interface ChartFilter {
+  type: FilterType;
+  name: string;
+}
 
 interface DashboardStats {
   totalDevices: number;
@@ -97,7 +120,12 @@ export class DeviceDashboardComponent implements OnInit {
   public expiringTableColumns: GridColumn[] = [
     { key: 'Ten', label: 'Tên Thiết Bị (Mã)', sortable: true, width: '50%' },
     { key: 'ViTri', label: 'Vị Trí', sortable: true, width: '25%' },
-    { key: 'NgayHetHanBH', label: 'Ngày Hết Hạn', sortable: true, width: '25%', },
+    {
+      key: 'NgayHetHanBH',
+      label: 'Ngày Hết Hạn',
+      sortable: true,
+      width: '25%',
+    },
   ];
 
   private palette!: ThemePalette;
@@ -143,12 +171,14 @@ export class DeviceDashboardComponent implements OnInit {
 
     if (this.widgetData.length > 0) {
       const w = this.widgetData;
-      w.find((x) => x.id === 'totalDevices')!.accentColor = this.palette.primary;
-      w.find((x) => x.id === 'attentionValue')!.accentColor = this.palette.warning;
-      w.find((x) => x.id === 'inUse')!.accentColor = this.palette.info;
-      w.find((x) => x.id === 'ready')!.accentColor = this.palette.success;
-      w.find((x) => x.id === 'needsAttention')!.accentColor = this.palette.warning;
-      w.find((x) => x.id === 'expiring')!.accentColor = this.palette.danger;
+      w.find(x => x.id === 'totalDevices')!.accentColor = this.palette.primary;
+      w.find(x => x.id === 'attentionValue')!.accentColor =
+        this.palette.warning;
+      w.find(x => x.id === 'inUse')!.accentColor = this.palette.info;
+      w.find(x => x.id === 'ready')!.accentColor = this.palette.success;
+      w.find(x => x.id === 'needsAttention')!.accentColor =
+        this.palette.warning;
+      w.find(x => x.id === 'expiring')!.accentColor = this.palette.danger;
     }
   }
 
@@ -216,11 +246,11 @@ export class DeviceDashboardComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (data) => {
+        next: data => {
           this.allDevices = data;
           this.refilterAndRenderAll();
         },
-        error: (err) => {
+        error: err => {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu thiết bị.');
         },
@@ -233,14 +263,14 @@ export class DeviceDashboardComponent implements OnInit {
       const { type, name } = this.currentFilter;
       if (type === 'status')
         filteredDevices = this.allDevices.filter(
-          (d) => (d.TrangThai_Ten || 'Không xác định') === name
+          d => (d.TrangThai_Ten || 'Không xác định') === name
         );
       else if (type === 'category')
         filteredDevices = this.allDevices.filter(
-          (d) => (d.TenLoaiThietBi || 'Không xác định') === name
+          d => (d.TenLoaiThietBi || 'Không xác định') === name
         );
       else if (type === 'location') {
-        filteredDevices = this.allDevices.filter((d) => {
+        filteredDevices = this.allDevices.filter(d => {
           const st = (d.TrangThai_Ten || '').toLowerCase();
           return (
             (st.includes('bảo trì') ||
@@ -277,31 +307,31 @@ export class DeviceDashboardComponent implements OnInit {
 
     this.statusChartOptions = statusData.length
       ? this.buildDonutOption(
-        statusData,
-        this.currentFilter?.type === 'status' ? highlight : undefined
-      )
+          statusData,
+          this.currentFilter?.type === 'status' ? highlight : undefined
+        )
       : null;
     this.categoryChartOptions = categoryData.length
       ? this.buildBarOption(
-        categoryData.map((d) => d.name).reverse(),
-        categoryData.map((d) => d.value).reverse(),
-        this.palette.primary,
-        this.currentFilter?.type === 'category' ? highlight : undefined
-      )
+          categoryData.map(d => d.name).reverse(),
+          categoryData.map(d => d.value).reverse(),
+          this.palette.primary,
+          this.currentFilter?.type === 'category' ? highlight : undefined
+        )
       : null;
     this.locationChartOptions = locationData.length
       ? this.buildBarOption(
-        locationData.map((d) => d.name).reverse(),
-        locationData.map((d) => d.value).reverse(),
-        this.palette.secondary,
-        this.currentFilter?.type === 'location' ? highlight : undefined
-      )
+          locationData.map(d => d.name).reverse(),
+          locationData.map(d => d.value).reverse(),
+          this.palette.secondary,
+          this.currentFilter?.type === 'location' ? highlight : undefined
+        )
       : null;
     this.trendChartOptions = stats.trendData.length
       ? this.buildLineOption(
-        stats.trendData.map((d) => d.month),
-        stats.trendData.map((d) => d.value)
-      )
+          stats.trendData.map(d => d.month),
+          stats.trendData.map(d => d.value)
+        )
       : null;
 
     this.statusChartSubtext = `Tổng số: ${this.formatNumber(
@@ -315,7 +345,7 @@ export class DeviceDashboardComponent implements OnInit {
 
   private aggregateStatus(devices: Device[]) {
     const map = new Map<string, number>();
-    devices.forEach((d) => {
+    devices.forEach(d => {
       const k = d.TrangThai_Ten || 'N/A';
       map.set(k, (map.get(k) || 0) + 1);
     });
@@ -327,7 +357,7 @@ export class DeviceDashboardComponent implements OnInit {
 
   private aggregateCategory(devices: Device[]) {
     const map = new Map<string, number>();
-    devices.forEach((d) => {
+    devices.forEach(d => {
       const k = d.TenLoaiThietBi || 'N/A';
       map.set(k, (map.get(k) || 0) + 1);
     });
@@ -336,7 +366,7 @@ export class DeviceDashboardComponent implements OnInit {
 
   private aggregateLocation(devices: Device[]) {
     const map = new Map<string, number>();
-    devices.forEach((d) => {
+    devices.forEach(d => {
       const st = (d.TrangThai_Ten || '').toLowerCase();
       if (
         st.includes('bảo trì') ||
@@ -361,7 +391,7 @@ export class DeviceDashboardComponent implements OnInit {
     today.setHours(0, 0, 0, 0);
     const in30Days = new Date(today.getTime() + 30 * 86400000);
 
-    devices.forEach((d) => {
+    devices.forEach(d => {
       const st = (d.TrangThai_Ten || '').toLowerCase();
       if (st.includes('đang sử dụng')) inUse++;
       if (st.includes('sẵn sàng')) ready++;
@@ -423,21 +453,21 @@ export class DeviceDashboardComponent implements OnInit {
 
   private updateWidgets(data: DashboardStats): void {
     const update = (id: string, val: string) => {
-      const w = this.widgetData.find((x) => x.id === id);
+      const w = this.widgetData.find(x => x.id === id);
       if (w) w.value = val;
     };
     update('totalDevices', this.formatNumber(data.totalDevices));
-    update(
-      'attentionValue',
-      NumberUtils.formatCurrency(data.attentionValue)
-    );
+    update('attentionValue', NumberUtils.formatCurrency(data.attentionValue));
     update('inUse', this.formatNumber(data.inUse));
     update('ready', this.formatNumber(data.ready));
     update('needsAttention', this.formatNumber(data.needsAttention));
     update('expiring', this.formatNumber(data.expiring));
   }
 
-  private buildDonutOption(data: DeviceStatsData[], highlight?: string): EChartsCoreOption {
+  private buildDonutOption(
+    data: DeviceStatsData[],
+    highlight?: string
+  ): EChartsCoreOption {
     return {
       backgroundColor: 'transparent',
       textStyle: { fontFamily: GLOBAL_FONT_FAMILY },
@@ -447,7 +477,8 @@ export class DeviceDashboardComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         borderColor: this.palette.gray200,
         confine: true, // Avoid tooltip cut-off
-        formatter: (params: any) => `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`,
+        formatter: (params: any) =>
+          `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`,
       },
       legend: {
         type: 'scroll', // Prevent overlap
@@ -462,7 +493,7 @@ export class DeviceDashboardComponent implements OnInit {
           radius: ['50%', '75%'],
           center: ['65%', '50%'],
           avoidLabelOverlap: true, // Prevent label overlap
-          data: data.map((item) => ({
+          data: data.map(item => ({
             name: item.TenTrangThai,
             value: item.SoLuong,
             itemStyle: {
@@ -477,7 +508,8 @@ export class DeviceDashboardComponent implements OnInit {
             position: 'outer',
             color: this.palette.textPrimary,
             formatter: (param: any) =>
-              `${param.name}: ${NumberUtils.format(param.value)} (${param.percent
+              `${param.name}: ${NumberUtils.format(param.value)} (${
+                param.percent
               }%)`,
           },
         },
@@ -485,7 +517,12 @@ export class DeviceDashboardComponent implements OnInit {
     };
   }
 
-  private buildBarOption(y: string[], x: number[], color: string, highlight?: string): EChartsCoreOption {
+  private buildBarOption(
+    y: string[],
+    x: number[],
+    color: string,
+    highlight?: string
+  ): EChartsCoreOption {
     return {
       backgroundColor: 'transparent',
       textStyle: {

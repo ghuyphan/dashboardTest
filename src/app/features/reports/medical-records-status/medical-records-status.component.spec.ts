@@ -11,12 +11,8 @@ describe('MedicalRecordsStatusComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MedicalRecordsStatusComponent],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting()
-      ]
-    })
-      .compileComponents();
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(MedicalRecordsStatusComponent);
     component = fixture.componentInstance;

@@ -6,7 +6,10 @@ import { provideRouter } from '@angular/router';
 import { ReusableTableComponent } from './reusable-table.component';
 
 describe('ReusableTableComponent', () => {
-  interface TestItem { id: number; name: string; }
+  interface TestItem {
+    id: number;
+    name: string;
+  }
   let component: ReusableTableComponent<TestItem>;
   let fixture: ComponentFixture<ReusableTableComponent<TestItem>>;
 
@@ -16,12 +19,13 @@ describe('ReusableTableComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent<ReusableTableComponent<TestItem>>(ReusableTableComponent);
+    fixture = TestBed.createComponent<ReusableTableComponent<TestItem>>(
+      ReusableTableComponent
+    );
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

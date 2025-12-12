@@ -3,200 +3,204 @@
    ========================================================================== */
 
 @mixin hover {
-    @media (hover: hover) {
-        &:hover {
-            @content;
-        }
+  @media (hover: hover) {
+    &:hover {
+      @content;
     }
+  }
 }
 
 // Standard button hover effect
 @mixin btn-hover-effect {
-    &:not(:disabled) {
-        @include hover {
-            transform: translateY(-2px);
-            box-shadow: var(--box-shadow-md);
-        }
+  &:not(:disabled) {
+    @include hover {
+      transform: translateY(-2px);
+      box-shadow: var(--box-shadow-md);
     }
+  }
 
-    &:not(:disabled):active {
-        transform: translateY(0);
-        box-shadow: var(--box-shadow-sm);
-    }
+  &:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: var(--box-shadow-sm);
+  }
 }
 
 // Standard icon button hover effect
 @mixin icon-btn-hover {
-    &:not(:disabled) {
-        @include hover {
-            background-color: var(--gray-100);
-            color: var(--teal-blue);
+  &:not(:disabled) {
+    @include hover {
+      background-color: var(--gray-100);
+      color: var(--teal-blue);
 
-            [data-theme='dark'] & {
-                background-color: var(--gray-200);
-            }
-        }
+      [data-theme='dark'] & {
+        background-color: var(--gray-200);
+      }
     }
+  }
 }
 
 // Standard focus visible state
 @mixin focus-visible-outline {
-    &:focus-visible {
-        outline: 2px solid var(--aqua-island);
-        outline-offset: 2px;
-    }
+  &:focus-visible {
+    outline: 2px solid var(--aqua-island);
+    outline-offset: 2px;
+  }
 }
 
 // Standard disabled state
 @mixin disabled-state {
-
-    &:disabled,
-    &.disabled {
-        opacity: 0.65;
-        cursor: not-allowed;
-        transform: none !important;
-        box-shadow: none !important;
-    }
+  &:disabled,
+  &.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 // Combined button interaction (hover + focus + disabled)
 @mixin btn-interactions {
-    transition: transform 0.2s var(--transition-spring),
-        box-shadow 0.2s var(--transition-smooth),
-        background-color 0.2s var(--transition-smooth),
-        color 0.2s var(--transition-smooth),
-        border-color 0.2s var(--transition-smooth);
+  transition:
+    transform 0.2s var(--transition-spring),
+    box-shadow 0.2s var(--transition-smooth),
+    background-color 0.2s var(--transition-smooth),
+    color 0.2s var(--transition-smooth),
+    border-color 0.2s var(--transition-smooth);
 
-    @include btn-hover-effect;
-    @include focus-visible-outline;
-    @include disabled-state;
+  @include btn-hover-effect;
+  @include focus-visible-outline;
+  @include disabled-state;
 }
 
 // Icon button full interactions
 @mixin icon-btn-interactions {
-    transition: all 0.2s var(--transition-smooth);
+  transition: all 0.2s var(--transition-smooth);
 
-    @include icon-btn-hover;
-    @include focus-visible-outline;
-    @include disabled-state;
+  @include icon-btn-hover;
+  @include focus-visible-outline;
+  @include disabled-state;
 }
 
 // Standard Input Group Styles
 @mixin input-group-styles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0; // Gap handles spacing
+
+    .required-asterisk,
+    .req {
+      color: var(--color-danger);
+      margin-left: 2px;
+      font-weight: 700;
+    }
+  }
+
+  .form-control,
+  .form-control-date,
+  input[type='text'],
+  input[type='password'],
+  input[type='email'],
+  input[type='number'],
+  textarea,
+  select {
+    width: 100%;
+    min-height: 42px; // Standard height
+    padding: 8px 12px;
+    font-size: 0.9375rem;
+    font-family: var(--font-family-sans);
+    color: var(--text-primary);
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    transition: all 0.2s var(--transition-smooth);
+    outline: none;
+
+    &::placeholder {
+      color: var(--text-disabled);
+    }
+
+    &:not(:disabled):not([readonly]) {
+      @include hover {
+        border-color: var(--gray-400);
+      }
+    }
+
+    /* [FIX] Autofill background override */
+    &:-webkit-autofill {
+      -webkit-text-fill-color: var(--text-primary) !important;
+      -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
+      transition: background-color 5000s ease-in-out 0s;
+
+      &:focus {
+        -webkit-box-shadow:
+          0 0 0px 1000px var(--input-bg) inset,
+          0 0 0 3px rgba(0, 131, 155, 0.15) !important;
+
+        [data-theme='dark'] & {
+          -webkit-box-shadow:
+            0 0 0px 1000px var(--input-bg) inset,
+            0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+        }
+      }
+    }
+
+    &:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
+
+      [data-theme='dark'] & {
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+      }
+    }
+
+    &.is-invalid,
+    &:invalid.ng-touched {
+      border-color: var(--color-danger);
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+      }
+    }
+
+    &:disabled {
+      background-color: var(--gray-100);
+      color: var(--text-disabled);
+      cursor: not-allowed;
+      border-color: var(--gray-200);
+
+      [data-theme='dark'] & {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: var(--gray-700);
+      }
+    }
+  }
+
+  .input-wrapper,
+  .input-group {
+    position: relative;
+    width: 100%;
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    align-items: center;
+  }
 
-    label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0; // Gap handles spacing
-
-        .required-asterisk,
-        .req {
-            color: var(--color-danger);
-            margin-left: 2px;
-            font-weight: 700;
-        }
-    }
-
-    .form-control,
-    .form-control-date,
-    input[type="text"],
-    input[type="password"],
-    input[type="email"],
-    input[type="number"],
-    textarea,
-    select {
-        width: 100%;
-        min-height: 42px; // Standard height
-        padding: 8px 12px;
-        font-size: 0.9375rem;
-        font-family: var(--font-family-sans);
-        color: var(--text-primary);
-        background-color: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-md);
-        transition: all 0.2s var(--transition-smooth);
-        outline: none;
-
-        &::placeholder {
-            color: var(--text-disabled);
-        }
-
-        &:not(:disabled):not([readonly]) {
-            @include hover {
-                border-color: var(--gray-400);
-            }
-        }
-
-        /* [FIX] Autofill background override */
-        &:-webkit-autofill {
-            -webkit-text-fill-color: var(--text-primary) !important;
-            -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
-            transition: background-color 5000s ease-in-out 0s;
-
-            &:focus {
-                -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset, 0 0 0 3px rgba(0, 131, 155, 0.15) !important;
-
-                [data-theme='dark'] & {
-                    -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset, 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
-                }
-            }
-        }
-
-        &:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15);
-
-            [data-theme='dark'] & {
-                box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
-            }
-        }
-
-        &.is-invalid,
-        &:invalid.ng-touched {
-            border-color: var(--color-danger);
-
-            &:focus {
-                box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
-            }
-        }
-
-        &:disabled {
-            background-color: var(--gray-100);
-            color: var(--text-disabled);
-            cursor: not-allowed;
-            border-color: var(--gray-200);
-
-            [data-theme='dark'] & {
-                background-color: rgba(255, 255, 255, 0.05);
-                border-color: var(--gray-700);
-            }
-        }
-    }
-
-    .input-wrapper,
-    .input-group {
-        position: relative;
-        width: 100%;
-        display: flex;
-        align-items: center;
-    }
-
-    // For icons inside inputs
-    .input-icon,
-    .toggle-btn,
-    .custom-toggle {
-        position: absolute;
-        color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.2s;
-        z-index: 2;
-    }
+  // For icons inside inputs
+  .input-icon,
+  .toggle-btn,
+  .custom-toggle {
+    position: absolute;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 2;
+  }
 }
 
 /* ==========================================================================
@@ -205,87 +209,75 @@
 
 // Ensure minimum touch target size (44x44px for accessibility)
 @mixin touch-target($size: 44px) {
-    min-width: $size;
-    min-height: $size;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  min-width: $size;
+  min-height: $size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // Safe area padding for notched devices (iPhone X+)
 @mixin safe-area-padding($property: padding, $sides: all) {
-    @if $sides ==all {
-        #{$property}-top: env(safe-area-inset-top);
-        #{$property}-right: env(safe-area-inset-right);
-        #{$property}-bottom: env(safe-area-inset-bottom);
-        #{$property}-left: env(safe-area-inset-left);
-    }
-
-    @else if $sides ==horizontal {
-        #{$property}-left: env(safe-area-inset-left);
-        #{$property}-right: env(safe-area-inset-right);
-    }
-
-    @else if $sides ==vertical {
-        #{$property}-top: env(safe-area-inset-top);
-        #{$property}-bottom: env(safe-area-inset-bottom);
-    }
-
-    @else if $sides ==top {
-        #{$property}-top: env(safe-area-inset-top);
-    }
-
-    @else if $sides ==bottom {
-        #{$property}-bottom: env(safe-area-inset-bottom);
-    }
-
-    @else if $sides ==left {
-        #{$property}-left: env(safe-area-inset-left);
-    }
-
-    @else if $sides ==right {
-        #{$property}-right: env(safe-area-inset-right);
-    }
+  @if $sides ==all {
+    #{$property}-top: env(safe-area-inset-top);
+    #{$property}-right: env(safe-area-inset-right);
+    #{$property}-bottom: env(safe-area-inset-bottom);
+    #{$property}-left: env(safe-area-inset-left);
+  } @else if $sides ==horizontal {
+    #{$property}-left: env(safe-area-inset-left);
+    #{$property}-right: env(safe-area-inset-right);
+  } @else if $sides ==vertical {
+    #{$property}-top: env(safe-area-inset-top);
+    #{$property}-bottom: env(safe-area-inset-bottom);
+  } @else if $sides ==top {
+    #{$property}-top: env(safe-area-inset-top);
+  } @else if $sides ==bottom {
+    #{$property}-bottom: env(safe-area-inset-bottom);
+  } @else if $sides ==left {
+    #{$property}-left: env(safe-area-inset-left);
+  } @else if $sides ==right {
+    #{$property}-right: env(safe-area-inset-right);
+  }
 }
 
 // Responsive padding that combines base + safe-area
 @mixin mobile-padding($base-x: var(--spacing-sm), $base-y: var(--spacing-sm)) {
-    padding: $base-y $base-x;
-    padding-left: max(#{$base-x}, env(safe-area-inset-left));
-    padding-right: max(#{$base-x}, env(safe-area-inset-right));
+  padding: $base-y $base-x;
+  padding-left: max(#{$base-x}, env(safe-area-inset-left));
+  padding-right: max(#{$base-x}, env(safe-area-inset-right));
 }
 
 // Hide scrollbar utility
 @mixin hidden-scrollbar {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 
-    &::-webkit-scrollbar {
-        display: none;
-    }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 // Mobile breakpoint shortcuts
 @mixin mobile {
-    @media (max-width: 768px) {
-        @content;
-    }
+  @media (max-width: 768px) {
+    @content;
+  }
 }
 
 @mixin mobile-small {
-    @media (max-width: 480px) {
-        @content;
-    }
+  @media (max-width: 480px) {
+    @content;
+  }
 }
 
 @mixin mobile-tiny {
-    @media (max-width: 360px) {
-        @content;
-    }
+  @media (max-width: 360px) {
+    @content;
+  }
 }
 
 @mixin tablet-down {
-    @media (max-width: 992px) {
-        @content;
-    }
+  @media (max-width: 992px) {
+    @content;
+  }
 }

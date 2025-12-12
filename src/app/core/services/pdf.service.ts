@@ -6,11 +6,10 @@ import { firstValueFrom } from 'rxjs';
 import { saveAs } from 'file-saver';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PdfService {
-
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   /**
    * Generates a PDF using the provided schema.
@@ -35,19 +34,18 @@ export class PdfService {
       // Use BLANK_PDF as fallback if basePdf is not provided
       const template: Template = {
         basePdf: schemaJson.basePdf || BLANK_PDF,
-        schemas: schemaJson.schemas
+        schemas: schemaJson.schemas,
       };
 
       // 2. Generate PDF
       const pdfBytes = await generate({
         template,
-        inputs: [inputs]
+        inputs: [inputs],
       });
 
       // 3. Save
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       saveAs(blob, outputFilename);
-
     } catch (err) {
       console.error('PDF Generation Error:', err);
       throw err;
@@ -69,7 +67,7 @@ export class PdfService {
       width: '0',
       height: '0',
       border: 'none',
-      visibility: 'hidden'
+      visibility: 'hidden',
     });
 
     iframe.src = blobUrl;

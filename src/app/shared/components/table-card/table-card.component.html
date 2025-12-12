@@ -3,7 +3,7 @@
     <div class="card-title-wrapper">
       <h3 class="card-title" [class.skeleton-loading]="isLoading()">
         @if (icon() && !isLoading()) {
-        <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
+          <i [class]="icon()" [ngClass]="iconClass()" aria-hidden="true"></i>
         }
         {{ title() }}
       </h3>
@@ -13,33 +13,44 @@
       <ng-content select="[header-actions]"></ng-content>
 
       @if (enableExport()) {
-      <button class="btn-icon-action" *appHasPermission="fullExportPermission()" (click)="onExport()"
-        [disabled]="isLoading() || isExporting()" [appTooltip]="'Xuất Excel'">
-
-        @if (isExporting()) {
-        <i class="fas fa-spinner fa-spin text-teal"></i>
-        } @else {
-        <i class="fas fa-file-excel text-success"></i>
-        }
-      </button>
+        <button
+          class="btn-icon-action"
+          *appHasPermission="fullExportPermission()"
+          (click)="onExport()"
+          [disabled]="isLoading() || isExporting()"
+          [appTooltip]="'Xuất Excel'">
+          @if (isExporting()) {
+            <i class="fas fa-spinner fa-spin text-teal"></i>
+          } @else {
+            <i class="fas fa-file-excel text-success"></i>
+          }
+        </button>
       }
     </div>
   </div>
 
   <div class="card-body">
     @if (isLoading()) {
-    <div class="skeleton-container">
-      <div class="skeleton-header"></div>
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row"></div>
-      <div class="skeleton-row"></div>
-    </div>
+      <div class="skeleton-container">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+      </div>
     } @else {
-    <app-reusable-table [data]="data()" [columns]="columns()" [isLoading]="false" [showPaginator]="showPaginator()"
-      [pageSize]="pageSize()" [pageSizeOptions]="pageSizeOptions()" [clientSideSort]="clientSideSort()"
-      [emptyStateText]="emptyStateText()" (rowClick)="onRowClick($event)" (rowAction)="onRowAction($event)">
-    </app-reusable-table>
+      <app-reusable-table
+        [data]="data()"
+        [columns]="columns()"
+        [isLoading]="false"
+        [showPaginator]="showPaginator()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
+        [clientSideSort]="clientSideSort()"
+        [emptyStateText]="emptyStateText()"
+        (rowClick)="onRowClick($event)"
+        (rowAction)="onRowAction($event)">
+      </app-reusable-table>
     }
   </div>
 </div>

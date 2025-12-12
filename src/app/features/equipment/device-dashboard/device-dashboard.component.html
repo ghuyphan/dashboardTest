@@ -1,13 +1,12 @@
 <div class="page-container">
   <div class="page-content">
-    
     <div class="widget-section">
       <div class="widget-grid">
-        @if (isLoading && widgetData.length === 0) { 
+        @if (isLoading && widgetData.length === 0) {
           @for (i of [1, 2, 3, 4, 5, 6]; track i) {
             <app-widget-card [title]="'Loading'" [isLoading]="true" />
-          } 
-        } @else { 
+          }
+        } @else {
           @for (widget of widgetData; track trackByWidgetId($index, widget)) {
             <app-widget-card
               [icon]="widget.icon"
@@ -15,9 +14,8 @@
               [value]="widget.value"
               [caption]="widget.caption"
               [accentColor]="widget.accentColor"
-              [isLoading]="isLoading"
-            />
-          } 
+              [isLoading]="isLoading" />
+          }
         }
       </div>
     </div>
@@ -25,17 +23,16 @@
     <div class="dashboard-main-content">
       <div
         class="filter-bar-container"
-        [class.filter-bar-container--active]="currentFilter"
-      >
+        [class.filter-bar-container--active]="currentFilter">
         <div class="filter-bar">
           @if (visibleFilter) {
-          <span>
-            Đang lọc theo:
-            <strong>{{ visibleFilter.name }}</strong>
-          </span>
-          <button class="clear-filter-btn" (click)="clearFilter()">
-            <i class="fas fa-times"></i> Xóa bộ lọc
-          </button>
+            <span>
+              Đang lọc theo:
+              <strong>{{ visibleFilter.name }}</strong>
+            </span>
+            <button class="clear-filter-btn" (click)="clearFilter()">
+              <i class="fas fa-times"></i> Xóa bộ lọc
+            </button>
           }
         </div>
       </div>
@@ -51,33 +48,30 @@
           skeletonType="pie"
           [chartOptions]="statusChartOptions"
           (chartClick)="onChartClick('status', $event)"
-          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        >
-        </app-chart-card>
-        
-        <app-chart-card
-            class="span-1"
-            title="Số lượng theo loại (Top 10)"
-            icon="fas fa-tags"
-            iconClass="icon-info"
-            [isLoading]="isLoading"
-            skeletonType="bar"
-            [chartOptions]="categoryChartOptions"
-            (chartClick)="onChartClick('category', $event)"
-            [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        >
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
         </app-chart-card>
 
         <app-chart-card
-            class="span-1"
-            [title]="locationChartTitle"
-            icon="fas fa-map-marker-alt"
-            iconClass="icon-info"
-            [isLoading]="isLoading"
-            [chartOptions]="locationChartOptions"
-            (chartClick)="onChartClick('location', $event)"
-            [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        >
+          class="span-1"
+          title="Số lượng theo loại (Top 10)"
+          icon="fas fa-tags"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          skeletonType="bar"
+          [chartOptions]="categoryChartOptions"
+          (chartClick)="onChartClick('category', $event)"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
+        </app-chart-card>
+
+        <app-chart-card
+          class="span-1"
+          [title]="locationChartTitle"
+          icon="fas fa-map-marker-alt"
+          iconClass="icon-info"
+          [isLoading]="isLoading"
+          [chartOptions]="locationChartOptions"
+          (chartClick)="onChartClick('location', $event)"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
         </app-chart-card>
 
         <app-table-card
@@ -93,8 +87,7 @@
           [clientSideSort]="true"
           emptyStateText="Không có thiết bị nào cần bảo trì."
           (rowClick)="navigateToDetail($event)"
-          [enableExport]="false"
-        >
+          [enableExport]="false">
         </app-table-card>
 
         <app-chart-card
@@ -105,8 +98,7 @@
           [isLoading]="isLoading"
           skeletonType="line"
           [chartOptions]="trendChartOptions"
-          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
-        >
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'">
         </app-chart-card>
 
         <app-table-card
@@ -121,8 +113,7 @@
           [clientSideSort]="true"
           emptyStateText="Không có thiết bị nào sắp hết hạn."
           (rowClick)="navigateToDetail($event)"
-          [enableExport]="false"
-        >
+          [enableExport]="false">
         </app-table-card>
       </div>
     </div>

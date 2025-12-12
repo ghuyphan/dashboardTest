@@ -14,8 +14,6 @@
   overflow: hidden;
 }
 
-
-
 .grid-container {
   display: flex;
   flex-direction: column;
@@ -35,7 +33,7 @@
   /* PERFORMANCE FIX: Helps browser optimize rendering */
   contain: content;
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     border-color: var(--border-color);
     /* table-card doesn't strictly need a shadow change in dark mode if using var(--box-shadow-md) 
        but table-card overrides border-color, so we match that. 

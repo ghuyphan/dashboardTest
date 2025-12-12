@@ -1,138 +1,177 @@
 <div class="page-container">
   <div class="page-content">
     @if (isLoading) {
-    <div class="detail-card-wrapper">
-      <div class="detail-card">
-
-        <div class="detail-header">
-          <div class="skeleton-circle" style="width: 50px; height: 50px;"></div>
-          <div class="header-text" style="display: flex; flex-direction: column; gap: 8px; width: 100%">
-            <div class="skeleton" style="width: 40%; height: 28px;"></div>
-            <div class="skeleton" style="width: 20%; height: 18px;"></div>
-          </div>
-        </div>
-
-        <div class="detail-body">
-          <div class="info-grid">
-            @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="info-item">
-              <div class="skeleton" style="width: 30%; height: 14px; margin-bottom: 8px;"></div>
-              <div class="skeleton" style="width: 80%; height: 20px;"></div>
+      <div class="detail-card-wrapper">
+        <div class="detail-card">
+          <div class="detail-header">
+            <div
+              class="skeleton-circle"
+              style="width: 50px; height: 50px"></div>
+            <div
+              class="header-text"
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+              ">
+              <div class="skeleton" style="width: 40%; height: 28px"></div>
+              <div class="skeleton" style="width: 20%; height: 18px"></div>
             </div>
-            }
           </div>
 
-          <div class="meta-panel">
-            <div class="skeleton" style="width: 100%; height: 160px;"></div>
-            <div class="skeleton" style="width: 60%; height: 20px; margin-top: 20px;"></div>
-            <div class="skeleton" style="width: 80%; height: 20px; margin-top: 10px;"></div>
+          <div class="detail-body">
+            <div class="info-grid">
+              @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                <div class="info-item">
+                  <div
+                    class="skeleton"
+                    style="width: 30%; height: 14px; margin-bottom: 8px"></div>
+                  <div class="skeleton" style="width: 80%; height: 20px"></div>
+                </div>
+              }
+            </div>
+
+            <div class="meta-panel">
+              <div class="skeleton" style="width: 100%; height: 160px"></div>
+              <div
+                class="skeleton"
+                style="width: 60%; height: 20px; margin-top: 20px"></div>
+              <div
+                class="skeleton"
+                style="width: 80%; height: 20px; margin-top: 10px"></div>
+            </div>
           </div>
         </div>
-
       </div>
-    </div>
     }
 
     @if (!isLoading && device) {
-    <div class="detail-card-wrapper">
-      <div class="detail-card">
-        <div class="detail-header">
-          <div class="header-icon">
-            <i [ngClass]="getDeviceIconClass(device.TenLoaiThietBi)"></i>
-          </div>
-          <div class="header-text">
-            <h2 class="device-name">{{ device.Ten }}</h2>
-            <span class="device-code">{{ device.Ma }}</span>
-          </div>
-          <div class="header-status">
-            <span class="status-chip" [ngClass]="getStatusClass(device.TrangThai_Ten)">
-              {{ device.TrangThai_Ten || 'N/A' }}
-            </span>
-          </div>
-        </div>
-
-        <div class="detail-body">
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">Model</span>
-              <span class="info-value">{{ device.Model || 'N/A' }}</span>
+      <div class="detail-card-wrapper">
+        <div class="detail-card">
+          <div class="detail-header">
+            <div class="header-icon">
+              <i [ngClass]="getDeviceIconClass(device.TenLoaiThietBi)"></i>
             </div>
-            <div class="info-item">
-              <span class="info-label">Serial Number</span>
-              <span class="info-value">{{ device.SerialNumber || 'N/A' }}</span>
+            <div class="header-text">
+              <h2 class="device-name">{{ device.Ten }}</h2>
+              <span class="device-code">{{ device.Ma }}</span>
             </div>
-            <div class="info-item">
-              <span class="info-label">Loại thiết bị</span>
-              <span class="info-value">{{ device.TenLoaiThietBi || 'N/A' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Tên máy (Hostname)</span>
-              <span class="info-value">{{ device.DeviceName || 'N/A' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Vị trí</span>
-              <span class="info-value">{{ device.ViTri || 'N/A' }}</span>
-            </div>
-            <div class="info-item full-width">
-              <span class="info-label">Mô tả</span>
-              <span class="info-value description">{{ device.MoTa || 'Không có mô tả.' }}</span>
+            <div class="header-status">
+              <span
+                class="status-chip"
+                [ngClass]="getStatusClass(device.TrangThai_Ten)">
+                {{ device.TrangThai_Ten || 'N/A' }}
+              </span>
             </div>
           </div>
 
-          <div class="meta-panel">
-            <div class="qr-code-section">
-              <h4 class="meta-title">Mã QR (Liên kết)</h4>
-              <div class="qr-code-box">
-                <qrcode [qrdata]="qrCodeValue" [elementType]="'canvas'" [errorCorrectionLevel]="'M'" [width]="160"
-                  [alt]="'QR Code for device ' + device.Ten"></qrcode>
+          <div class="detail-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Model</span>
+                <span class="info-value">{{ device.Model || 'N/A' }}</span>
               </div>
-              <span class="qr-caption">Quét để mở trang chi tiết</span>
+              <div class="info-item">
+                <span class="info-label">Serial Number</span>
+                <span class="info-value">{{
+                  device.SerialNumber || 'N/A'
+                }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Loại thiết bị</span>
+                <span class="info-value">{{
+                  device.TenLoaiThietBi || 'N/A'
+                }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Tên máy (Hostname)</span>
+                <span class="info-value">{{ device.DeviceName || 'N/A' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Vị trí</span>
+                <span class="info-value">{{ device.ViTri || 'N/A' }}</span>
+              </div>
+              <div class="info-item full-width">
+                <span class="info-label">Mô tả</span>
+                <span class="info-value description">{{
+                  device.MoTa || 'Không có mô tả.'
+                }}</span>
+              </div>
             </div>
 
-            <div class="purchase-section">
-              <h4 class="meta-title">Thông tin mua hàng</h4>
-              <div class="info-item">
-                <span class="info-label">Giá mua</span>
-                <span class="info-value">{{ (device.GiaMua | currency:'VND':'symbol':'1.0-0':'vi') || 'N/A' }}</span>
+            <div class="meta-panel">
+              <div class="qr-code-section">
+                <h4 class="meta-title">Mã QR (Liên kết)</h4>
+                <div class="qr-code-box">
+                  <qrcode
+                    [qrdata]="qrCodeValue"
+                    [elementType]="'canvas'"
+                    [errorCorrectionLevel]="'M'"
+                    [width]="160"
+                    [alt]="'QR Code for device ' + device.Ten"></qrcode>
+                </div>
+                <span class="qr-caption">Quét để mở trang chi tiết</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Ngày mua</span>
-                <span class="info-value">{{ formatDate(device.NgayMua) }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Hết hạn bảo hành</span>
-                <span class="info-value" [class.expiring]="isWarrantyExpiring">
-                  @if (isWarrantyExpiring) {
-                  <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                  }
-                  {{ formatDate(device.NgayHetHanBH) }}
-                  @if (isWarrantyExpiring) {
-                  <span class="expiry-text">
-                    (Còn {{ warrantyExpiresInDays }} ngày)
+
+              <div class="purchase-section">
+                <h4 class="meta-title">Thông tin mua hàng</h4>
+                <div class="info-item">
+                  <span class="info-label">Giá mua</span>
+                  <span class="info-value">{{
+                    (device.GiaMua
+                      | currency: 'VND' : 'symbol' : '1.0-0' : 'vi') || 'N/A'
+                  }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Ngày mua</span>
+                  <span class="info-value">{{
+                    formatDate(device.NgayMua)
+                  }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Hết hạn bảo hành</span>
+                  <span
+                    class="info-value"
+                    [class.expiring]="isWarrantyExpiring">
+                    @if (isWarrantyExpiring) {
+                      <i
+                        class="fas fa-exclamation-triangle"
+                        aria-hidden="true"></i>
+                    }
+                    {{ formatDate(device.NgayHetHanBH) }}
+                    @if (isWarrantyExpiring) {
+                      <span class="expiry-text">
+                        (Còn {{ warrantyExpiresInDays }} ngày)
+                      </span>
+                    }
                   </span>
-                  }
-                </span>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
-    </div>
     }
 
     @if (device) {
-    <div id="qr-print-section">
-      <div class="qr-compact-label">
-        <qrcode [qrdata]="qrCodeValue" [elementType]="'canvas'" [errorCorrectionLevel]="'M'" [width]="150"
-          [alt]="'QR Code for device ' + device.Ten"></qrcode>
-        <div class="compact-info">
-          <div class="device-title">{{ device.Ten }}</div>
-          <div class="device-detail">{{ device.Ma }}</div>
-          <div class="device-detail">{{ device.DeviceName || device.SerialNumber }}</div>
+      <div id="qr-print-section">
+        <div class="qr-compact-label">
+          <qrcode
+            [qrdata]="qrCodeValue"
+            [elementType]="'canvas'"
+            [errorCorrectionLevel]="'M'"
+            [width]="150"
+            [alt]="'QR Code for device ' + device.Ten"></qrcode>
+          <div class="compact-info">
+            <div class="device-title">{{ device.Ten }}</div>
+            <div class="device-detail">{{ device.Ma }}</div>
+            <div class="device-detail">
+              {{ device.DeviceName || device.SerialNumber }}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
     }
   </div>
 </div>

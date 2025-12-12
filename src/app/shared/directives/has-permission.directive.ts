@@ -1,14 +1,22 @@
-import { Directive, TemplateRef, ViewContainerRef, effect, input } from '@angular/core';
+import {
+  Directive,
+  TemplateRef,
+  ViewContainerRef,
+  effect,
+  input,
+} from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 
 @Directive({
   selector: '[appHasPermission]',
-  standalone: true 
+  standalone: true,
 })
 export class HasPermissionDirective {
   private hasView = false;
 
-  public appHasPermission = input<string | string[] | undefined>(undefined, { alias: 'appHasPermission' });
+  public appHasPermission = input<string | string[] | undefined>(undefined, {
+    alias: 'appHasPermission',
+  });
 
   constructor(
     private templateRef: TemplateRef<unknown>,
@@ -19,17 +27,20 @@ export class HasPermissionDirective {
     effect(() => {
       const user = this.authService.currentUser();
       const permissionInput = this.appHasPermission();
-      
+
       // Normalize input to array
-      const required = permissionInput 
-        ? (Array.isArray(permissionInput) ? permissionInput : [permissionInput]) 
+      const required = permissionInput
+        ? Array.isArray(permissionInput)
+          ? permissionInput
+          : [permissionInput]
         : [];
 
       const userPermissions = user?.permissions || [];
 
       // If required array is empty, assume access is allowed
-      const hasPermission = required.length === 0 || 
-                            required.some(p => userPermissions.includes(p));
+      const hasPermission =
+        required.length === 0 ||
+        required.some(p => userPermissions.includes(p));
 
       this.updateView(hasPermission);
     });

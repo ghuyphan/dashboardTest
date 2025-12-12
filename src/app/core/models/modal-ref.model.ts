@@ -27,7 +27,8 @@ export class ModalRef {
    * If it returns false (or a Promise/Observable that emits false),
    * the modal will not close.
    */
-  public canClose: () => Observable<boolean> | Promise<boolean> | boolean = () => true;
+  public canClose: () => Observable<boolean> | Promise<boolean> | boolean =
+    () => true;
 
   constructor(private overlayRef: OverlayRef) {}
 
@@ -51,8 +52,9 @@ export class ModalRef {
     }
 
     // Subscribe to the guard result
-    canClose$.pipe(first()) // We only care about the first emission
-      .subscribe((canClose) => {
+    canClose$
+      .pipe(first()) // We only care about the first emission
+      .subscribe(canClose => {
         // Only close if the guard returned true
         if (canClose) {
           // Dispose the overlay

@@ -13,8 +13,8 @@ describe('ToastService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
     service = TestBed.inject(ToastService);
   });

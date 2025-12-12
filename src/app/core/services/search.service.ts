@@ -1,13 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SearchService {
   // Define a writable signal
   public searchTerm = signal<string>('');
 
-  constructor() { }
+  constructor() {}
 
   setSearchTerm(term: string): void {
     // Update the signal value

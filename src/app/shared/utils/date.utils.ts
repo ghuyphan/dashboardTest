@@ -9,7 +9,10 @@ export class DateUtils {
     const cleanStr = dateString.trim();
 
     // Handle empty/SQL default dates
-    if (cleanStr === '0001-01-01T00:00:00' || cleanStr === '1900-01-01T00:00:00') {
+    if (
+      cleanStr === '0001-01-01T00:00:00' ||
+      cleanStr === '1900-01-01T00:00:00'
+    ) {
       return null;
     }
 
@@ -24,7 +27,11 @@ export class DateUtils {
 
         const d = new Date(year, month, day);
         // Validate: Ensure numbers didn't rollover (e.g. 31/02 -> 03/03)
-        if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) {
+        if (
+          d.getFullYear() === year &&
+          d.getMonth() === month &&
+          d.getDate() === day
+        ) {
           return d;
         }
         return null;
@@ -39,7 +46,11 @@ export class DateUtils {
   }
 
   // Cache the formatter
-  private static readonly dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  private static readonly dateFormatter = new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
   /**
    * Returns date in dd/MM/yyyy format
@@ -49,7 +60,6 @@ export class DateUtils {
     if (!d) return 'N/A';
     return this.dateFormatter.format(d);
   }
-
 
   /**
    * Calculates the reporting week range: Previous Thursday -> This Wednesday
@@ -81,7 +91,7 @@ export class DateUtils {
 
     return {
       fromDate: format(start),
-      toDate: format(end)
+      toDate: format(end),
     };
   }
 }

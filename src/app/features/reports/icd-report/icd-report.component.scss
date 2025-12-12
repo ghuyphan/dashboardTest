@@ -1,76 +1,76 @@
 @mixin hidden-scrollbar {
-    scrollbar-width: none;
+  scrollbar-width: none;
 
-    &::-webkit-scrollbar {
-        display: none;
-    }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 :host {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* --- Dashboard Grid --- */
 .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-lg);
 
-    @media (max-width: 1400px) {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-    @media (max-width: 768px) {
-        grid-template-columns: minmax(0, 1fr);
-        gap: var(--spacing-md);
-    }
+  @media (max-width: 768px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spacing-md);
+  }
 }
 
 /* Spanning Helpers */
 .span-2 {
-    grid-column: span 2;
+  grid-column: span 2;
 
-    @media (max-width: 1400px) {
-        grid-column: span 1;
-    }
+  @media (max-width: 1400px) {
+    grid-column: span 1;
+  }
 
-    @media (max-width: 768px) {
-        grid-column: 1 / -1;
-    }
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+  }
 }
 
 .span-full {
-    grid-column: 1 / -1;
+  grid-column: 1 / -1;
 }
 
 /* Component Sizing */
 app-chart-card,
 app-table-card {
-    min-height: 400px;
-    display: flex;
-    flex-direction: column;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
 
-    @media (max-width: 768px) {
-        min-height: 350px;
-    }
+  @media (max-width: 768px) {
+    min-height: 350px;
+  }
 
-    @media (max-width: 480px) {
-        min-height: 300px;
-    }
+  @media (max-width: 480px) {
+    min-height: 300px;
+  }
 }
 
 /* Helper Classes */
 .icon-info {
-    color: var(--color-info);
+  color: var(--color-info);
 }
 
 .icon-success {
-    color: var(--color-success);
+  color: var(--color-success);
 }
 
 .icon-warning {
-    color: var(--color-warning);
+  color: var(--color-warning);
 }

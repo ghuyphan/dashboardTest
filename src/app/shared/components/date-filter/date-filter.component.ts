@@ -8,19 +8,29 @@ import {
   computed,
   OnInit,
   OnDestroy,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDatepickerModule, MatDatepicker } from '@angular/material/datepicker';
-import { MatNativeDateModule, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import {
+  MatDatepickerModule,
+  MatDatepicker,
+} from '@angular/material/datepicker';
+import {
+  MatNativeDateModule,
+  MAT_DATE_LOCALE,
+  provideNativeDateAdapter,
+} from '@angular/material/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subject, takeUntil } from 'rxjs';
-import { ToastService } from '../../../core/services/toast.service';
+import { ToastService } from '@core/services/toast.service';
 import { DateUtils } from '../../utils/date.utils';
-import { KeyboardShortcutService, ShortcutInput } from '../../../core/services/keyboard-shortcut.service';
+import {
+  KeyboardShortcutService,
+  ShortcutInput,
+} from '@core/services/keyboard-shortcut.service';
 import { TooltipDirective } from '../../directives/tooltip.directive';
-import { DATE_FILTER_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
+import { DATE_FILTER_SHORTCUTS } from '@core/config/keyboard-shortcuts.config';
 
 export interface DateRange {
   fromDate: string;
@@ -28,7 +38,13 @@ export interface DateRange {
   rangeType?: QuickRange;
 }
 
-export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 'thisYear' | 'custom';
+export type QuickRange =
+  | 'today'
+  | 'thisWeek'
+  | 'thisMonth'
+  | 'thisQuarter'
+  | 'thisYear'
+  | 'custom';
 
 @Component({
   selector: 'app-date-filter',
@@ -38,16 +54,16 @@ export type QuickRange = 'today' | 'thisWeek' | 'thisMonth' | 'thisQuarter' | 't
     FormsModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    TooltipDirective
+    TooltipDirective,
   ],
   providers: [
     DatePipe,
     provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' }
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
   ],
   templateUrl: './date-filter.component.html',
   styleUrl: './date-filter.component.scss',
-  encapsulation: ViewEncapsulation.Emulated
+  encapsulation: ViewEncapsulation.Emulated,
 })
 export class DateFilterComponent implements OnInit, OnDestroy {
   private datePipe = inject(DatePipe);
@@ -77,7 +93,7 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   // ViewChild for Datepicker
   @ViewChild('picker') private picker!: MatDatepicker<Date>;
 
-  public quickRanges: { key: QuickRange, label: string }[] = [
+  public quickRanges: { key: QuickRange; label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
     { key: 'thisWeek', label: 'Tuần này' },
     { key: 'thisMonth', label: 'Tháng này' },
@@ -87,18 +103,20 @@ export class DateFilterComponent implements OnInit, OnDestroy {
 
   private readonly todayStr = new Date().toISOString().split('T')[0];
 
-  public effectiveMax = computed(() => this.maxDate() ? this.maxDate() : this.todayStr);
+  public effectiveMax = computed(() =>
+    this.maxDate() ? this.maxDate() : this.todayStr
+  );
 
   public fromMax = computed(() => {
     const to = this.toDate();
     const max = this.effectiveMax();
-    return (to && to < max) ? to : max;
+    return to && to < max ? to : max;
   });
 
   public toMin = computed(() => {
     const from = this.fromDate();
     const min = this.minDate();
-    return (from && (!min || from > min)) ? from : (min || '');
+    return from && (!min || from > min) ? from : min || '';
   });
 
   public toMax = computed(() => this.effectiveMax());
@@ -112,10 +130,9 @@ export class DateFilterComponent implements OnInit, OnDestroy {
 
   constructor() {
     // [LOGIC] Detect Mobile Screen
-    this.breakpointObserver.observe([
-      Breakpoints.Handset,
-      Breakpoints.TabletPortrait
-    ]).pipe(takeUntil(this.destroy$))
+    this.breakpointObserver
+      .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])
+      .pipe(takeUntil(this.destroy$))
       .subscribe(result => {
         this.isMobile.set(result.matches);
       });
@@ -125,17 +142,19 @@ export class DateFilterComponent implements OnInit, OnDestroy {
     this.setRange(this.defaultRange(), false);
 
     // [SHORTCUT] Alt + F to focus/open date picker (From Date)
-    this.shortcutService.listen(DATE_FILTER_SHORTCUTS.OPEN_PICKER)
+    this.shortcutService
+      .listen(DATE_FILTER_SHORTCUTS.OPEN_PICKER)
       .pipe(takeUntil(this.destroy$))
-      .subscribe((e) => {
+      .subscribe(e => {
         e.event.preventDefault();
         this.picker.open();
       });
 
     // [SHORTCUT] Alt + Enter to apply filter
-    this.shortcutService.listen(DATE_FILTER_SHORTCUTS.APPLY)
+    this.shortcutService
+      .listen(DATE_FILTER_SHORTCUTS.APPLY)
       .pipe(takeUntil(this.destroy$))
-      .subscribe((e) => {
+      .subscribe(e => {
         e.event.preventDefault();
         if (!this.isLoading()) {
           this.applyFilter();
@@ -143,18 +162,25 @@ export class DateFilterComponent implements OnInit, OnDestroy {
       });
 
     // [SHORTCUTS] Alt + 1-5 for quick ranges
-    const quickRangeShortcuts: { shortcut: ShortcutInput, range: QuickRange }[] = [
+    const quickRangeShortcuts: {
+      shortcut: ShortcutInput;
+      range: QuickRange;
+    }[] = [
       { shortcut: DATE_FILTER_SHORTCUTS.QUICK_TODAY, range: 'today' },
       { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_WEEK, range: 'thisWeek' },
       { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_MONTH, range: 'thisMonth' },
-      { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_QUARTER, range: 'thisQuarter' },
+      {
+        shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_QUARTER,
+        range: 'thisQuarter',
+      },
       { shortcut: DATE_FILTER_SHORTCUTS.QUICK_THIS_YEAR, range: 'thisYear' },
     ];
 
     quickRangeShortcuts.forEach(qr => {
-      this.shortcutService.listen(qr.shortcut)
+      this.shortcutService
+        .listen(qr.shortcut)
         .pipe(takeUntil(this.destroy$))
-        .subscribe((e) => {
+        .subscribe(e => {
           e.event.preventDefault();
           if (!this.isLoading()) {
             this.setRange(qr.range, true);
@@ -202,7 +228,8 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   setRange(range: QuickRange, emit: boolean = false) {
     this.activeRange.set(range);
     const now = new Date();
-    let startStr = '', endStr = '';
+    let startStr = '',
+      endStr = '';
 
     switch (range) {
       case 'today':
@@ -214,8 +241,12 @@ export class DateFilterComponent implements OnInit, OnDestroy {
         endStr = weekRange.toDate;
         break;
       case 'thisMonth':
-        startStr = this.formatDate(new Date(now.getFullYear(), now.getMonth(), 1));
-        endStr = this.formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+        startStr = this.formatDate(
+          new Date(now.getFullYear(), now.getMonth(), 1)
+        );
+        endStr = this.formatDate(
+          new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        );
         break;
       case 'thisQuarter':
         const qMonth = Math.floor(now.getMonth() / 3) * 3;
@@ -238,7 +269,7 @@ export class DateFilterComponent implements OnInit, OnDestroy {
     this.filterSubmit.emit({
       fromDate: this.fromDate(),
       toDate: this.toDate(),
-      rangeType: this.activeRange()
+      rangeType: this.activeRange(),
     });
   }
 
@@ -248,7 +279,8 @@ export class DateFilterComponent implements OnInit, OnDestroy {
 
   private applyConstraints(dateStr: string): string {
     if (!dateStr) return dateStr;
-    const min = this.minDate(), max = this.effectiveMax();
+    const min = this.minDate(),
+      max = this.effectiveMax();
     if (min && dateStr < min) return min;
     if (max && dateStr > max) return max;
     return dateStr;

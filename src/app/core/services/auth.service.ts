@@ -54,7 +54,7 @@ const NAV_ITEMS_STORAGE_KEY = 'userNavItems';
 const USER_ID_STORAGE_KEY = 'userId';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private API_URL_LOGIN = environment.authUrl;
@@ -85,13 +85,17 @@ export class AuthService {
   // PUBLIC API
   // ============================================================================
 
-  changePassword(payload: { OldPassword: string, NewPassword: string, ConfirmPassword: string }): Observable<any> {
+  changePassword(payload: {
+    OldPassword: string;
+    NewPassword: string;
+    ConfirmPassword: string;
+  }): Observable<any> {
     const url = environment.changePassUrl;
     const body = {
       UserName: this.getUsername(),
       OldPassword: payload.OldPassword,
       NewPassword: payload.NewPassword,
-      ConfirmPassword: payload.ConfirmPassword
+      ConfirmPassword: payload.ConfirmPassword,
     };
     return this.http.put(url, body);
   }
@@ -105,9 +109,9 @@ export class AuthService {
       const userId = this.getUserId();
       if (userId) {
         return this.fetchAndSetPermissions(userId).pipe(
-          catchError((err) => {
+          catchError(err => {
             if (err.status === 401) {
-              console.warn("Session expired during init, logging out.");
+              console.warn('Session expired during init, logging out.');
               this.logout();
             }
             return of(null);
@@ -118,52 +122,67 @@ export class AuthService {
     return of(null);
   }
 
-  login(credentials: { username: string, password: string, remember: boolean }): Observable<any> {
+  login(credentials: {
+    username: string;
+    password: string;
+    remember: boolean;
+  }): Observable<any> {
     const payload = {
       usernamE_: credentials.username,
-      passworD_: credentials.password
+      passworD_: credentials.password,
     };
 
     const storage = credentials.remember ? localStorage : sessionStorage;
     this.clearOtherStorage(credentials.remember);
 
-    return this.http.post<LoginResponse>(this.API_URL_LOGIN, payload, {
-      headers: { 'Content-Type': 'application/json' },
-    }).pipe(
-      switchMap(loginResponse => {
-        if (loginResponse.MaKetQua !== 200) {
-          const errorMessage = loginResponse.TenKetQua || loginResponse.ErrorMessage || 'Đã xảy ra lỗi không xác định.';
-          return throwError(() => ({
-            message: errorMessage,
-            code: loginResponse.MaKetQua
-          }));
-        }
-
-        this.accessToken = loginResponse.APIKey.access_token;
-        this.idToken = loginResponse.APIKey.id_token || null;
-
-        try {
-          storage.setItem(TOKEN_STORAGE_KEY, this.accessToken);
-          if (this.idToken) {
-            storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken);
+    return this.http
+      .post<LoginResponse>(this.API_URL_LOGIN, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      .pipe(
+        switchMap(loginResponse => {
+          if (loginResponse.MaKetQua !== 200) {
+            const errorMessage =
+              loginResponse.TenKetQua ||
+              loginResponse.ErrorMessage ||
+              'Đã xảy ra lỗi không xác định.';
+            return throwError(() => ({
+              message: errorMessage,
+              code: loginResponse.MaKetQua,
+            }));
           }
 
-          const { UserInfo } = loginResponse;
-          storage.setItem(USER_ID_STORAGE_KEY, UserInfo.id_user);
-          storage.setItem(USERNAME_STORAGE_KEY, UserInfo.user_name);
-          storage.setItem(FULLNAME_STORAGE_KEY, UserInfo.ten_nhan_vien || '');
+          this.accessToken = loginResponse.APIKey.access_token;
+          this.idToken = loginResponse.APIKey.id_token || null;
 
-          const rolesFromApi = UserInfo.nhom_chuc_danh ? [UserInfo.nhom_chuc_danh] : [];
-          storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(rolesFromApi));
+          try {
+            storage.setItem(TOKEN_STORAGE_KEY, this.accessToken);
+            if (this.idToken) {
+              storage.setItem(ID_TOKEN_STORAGE_KEY, this.idToken);
+            }
 
-        } catch (e) {
-          return throwError(() => new Error('Failed to save auth token to web storage.'));
-        }
+            const { UserInfo } = loginResponse;
+            storage.setItem(USER_ID_STORAGE_KEY, UserInfo.id_user);
+            storage.setItem(USERNAME_STORAGE_KEY, UserInfo.user_name);
+            storage.setItem(FULLNAME_STORAGE_KEY, UserInfo.ten_nhan_vien || '');
 
-        return this.fetchAndSetPermissions(loginResponse.UserInfo.id_user, storage);
-      }),
-      catchError(error => this.handleError(error, true))
-    );
+            const rolesFromApi = UserInfo.nhom_chuc_danh
+              ? [UserInfo.nhom_chuc_danh]
+              : [];
+            storage.setItem(ROLES_STORAGE_KEY, JSON.stringify(rolesFromApi));
+          } catch (e) {
+            return throwError(
+              () => new Error('Failed to save auth token to web storage.')
+            );
+          }
+
+          return this.fetchAndSetPermissions(
+            loginResponse.UserInfo.id_user,
+            storage
+          );
+        }),
+        catchError(error => this.handleError(error, true))
+      );
   }
 
   logout(): void {
@@ -188,7 +207,9 @@ export class AuthService {
   }
 
   getUsername(): string | null {
-    return this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY);
+    return (
+      this._currentUser()?.username || this.getStoredItem(USERNAME_STORAGE_KEY)
+    );
   }
 
   hasRole(role: string): boolean {
@@ -251,7 +272,7 @@ export class AuthService {
       username: storedUsername,
       roles: roles,
       permissions: permissions,
-      fullName: this.getStoredItem(FULLNAME_STORAGE_KEY) || ''
+      fullName: this.getStoredItem(FULLNAME_STORAGE_KEY) || '',
     };
 
     this._currentUser.set(user);
@@ -259,9 +280,15 @@ export class AuthService {
     this._isLoggedIn.set(true);
   }
 
-  private fetchAndSetPermissions(userId: string, storage: Storage = localStorage): Observable<any> {
+  private fetchAndSetPermissions(
+    userId: string,
+    storage: Storage = localStorage
+  ): Observable<any> {
     // Determine storage type based on where token exists
-    if (!localStorage.getItem(TOKEN_STORAGE_KEY) && sessionStorage.getItem(TOKEN_STORAGE_KEY)) {
+    if (
+      !localStorage.getItem(TOKEN_STORAGE_KEY) &&
+      sessionStorage.getItem(TOKEN_STORAGE_KEY)
+    ) {
       storage = sessionStorage;
     }
 
@@ -269,12 +296,17 @@ export class AuthService {
 
     return this.http.get<ApiPermissionNode[]>(permissionsUrl).pipe(
       tap(permissionNodeArray => {
-        const storedUsername = this.getStoredItem(USERNAME_STORAGE_KEY) || 'Unknown';
+        const storedUsername =
+          this.getStoredItem(USERNAME_STORAGE_KEY) || 'Unknown';
         const storedFullName = this.getStoredItem(FULLNAME_STORAGE_KEY) || '';
-        const storedRoles = JSON.parse(this.getStoredItem(ROLES_STORAGE_KEY) || '[]');
+        const storedRoles = JSON.parse(
+          this.getStoredItem(ROLES_STORAGE_KEY) || '[]'
+        );
         const storedUserId = this.getStoredItem(USER_ID_STORAGE_KEY) || '0';
 
-        const allPermissionArrays = (permissionNodeArray || []).map(node => node.PERMISSIONS || []);
+        const allPermissionArrays = (permissionNodeArray || []).map(
+          node => node.PERMISSIONS || []
+        );
         const flatPermissions = allPermissionArrays.flat();
         const permissionsFromApi = [...new Set(flatPermissions)];
 
@@ -283,16 +315,22 @@ export class AuthService {
           username: storedUsername,
           fullName: storedFullName,
           roles: storedRoles,
-          permissions: permissionsFromApi
+          permissions: permissionsFromApi,
         };
 
         const navTree = this.buildNavTree(permissionNodeArray || []);
 
         try {
-          storage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(user.permissions));
+          storage.setItem(
+            PERMISSIONS_STORAGE_KEY,
+            JSON.stringify(user.permissions)
+          );
           storage.setItem(NAV_ITEMS_STORAGE_KEY, JSON.stringify(navTree));
         } catch (e) {
-          console.error('Failed to save permissions/nav data to web storage', e);
+          console.error(
+            'Failed to save permissions/nav data to web storage',
+            e
+          );
         }
 
         // Update signals
@@ -309,9 +347,14 @@ export class AuthService {
 
     try {
       const keys = [
-        TOKEN_STORAGE_KEY, ID_TOKEN_STORAGE_KEY, ROLES_STORAGE_KEY,
-        USERNAME_STORAGE_KEY, PERMISSIONS_STORAGE_KEY, FULLNAME_STORAGE_KEY,
-        NAV_ITEMS_STORAGE_KEY, USER_ID_STORAGE_KEY
+        TOKEN_STORAGE_KEY,
+        ID_TOKEN_STORAGE_KEY,
+        ROLES_STORAGE_KEY,
+        USERNAME_STORAGE_KEY,
+        PERMISSIONS_STORAGE_KEY,
+        FULLNAME_STORAGE_KEY,
+        NAV_ITEMS_STORAGE_KEY,
+        USER_ID_STORAGE_KEY,
       ];
 
       [localStorage, sessionStorage].forEach(s => {
@@ -330,7 +373,10 @@ export class AuthService {
     }
   }
 
-  private buildNavTree(nodes: ApiPermissionNode[], parentId: string = "0"): NavItem[] {
+  private buildNavTree(
+    nodes: ApiPermissionNode[],
+    parentId: string = '0'
+  ): NavItem[] {
     const tree: NavItem[] = [];
     const children = nodes
       .filter(node => node.PARENT_ID === parentId)
@@ -344,13 +390,16 @@ export class AuthService {
         link: node.LINK || null,
         permissions: node.PERMISSIONS || [],
         isOpen: false,
-        children: childrenOfNode.length > 0 ? childrenOfNode : undefined
+        children: childrenOfNode.length > 0 ? childrenOfNode : undefined,
       });
     }
     return tree;
   }
 
-  private handleError(error: any, isLoginError: boolean = false): Observable<never> {
+  private handleError(
+    error: any,
+    isLoginError: boolean = false
+  ): Observable<never> {
     if (isLoginError) this.clearLocalAuthData(false);
 
     let msg = error.message || 'Lỗi hệ thống.';
@@ -363,18 +412,24 @@ export class AuthService {
   }
 
   private getStoredItem(key: string): string | null {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(key)) return localStorage.getItem(key);
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key)) return sessionStorage.getItem(key);
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(key))
+      return localStorage.getItem(key);
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(key))
+      return sessionStorage.getItem(key);
     return null;
   }
 
-  private getStoredToken(): string | null { return this.getStoredItem(TOKEN_STORAGE_KEY); }
-  private getStoredIdToken(): string | null { return this.getStoredItem(ID_TOKEN_STORAGE_KEY); }
+  private getStoredToken(): string | null {
+    return this.getStoredItem(TOKEN_STORAGE_KEY);
+  }
+  private getStoredIdToken(): string | null {
+    return this.getStoredItem(ID_TOKEN_STORAGE_KEY);
+  }
 
   private clearOtherStorage(remember: boolean): void {
     const other = remember ? sessionStorage : localStorage;
     try {
       if (typeof other !== 'undefined') other.clear();
-    } catch (e) { }
+    } catch (e) {}
   }
 }

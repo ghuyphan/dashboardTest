@@ -16,10 +16,9 @@ describe('ModalComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: 'ModalRef', useValue: {} }
-      ]
-    })
-      .compileComponents();
+        { provide: 'ModalRef', useValue: {} },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ModalComponent);
     component = fixture.componentInstance;

@@ -20,13 +20,24 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
-import type { EChartsType, EChartsCoreOption, ECElementEvent } from 'echarts/core';
+import type {
+  EChartsType,
+  EChartsCoreOption,
+  ECElementEvent,
+} from 'echarts/core';
 import { ThemeService } from '../../../core/services/theme.service';
 import { NumberUtils } from '../../utils/number.utils';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 
-export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pie' | 'doughnut' | 'scatter';
+export type ChartSkeletonType =
+  | 'bar'
+  | 'horizontal-bar'
+  | 'line'
+  | 'area'
+  | 'pie'
+  | 'doughnut'
+  | 'scatter';
 
 @Component({
   selector: 'app-chart-card',
@@ -37,8 +48,8 @@ export type ChartSkeletonType = 'bar' | 'horizontal-bar' | 'line' | 'area' | 'pi
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    '[attr.title]': 'null'
-  }
+    '[attr.title]': 'null',
+  },
 })
 export class ChartCardComponent implements AfterViewInit {
   private readonly ngZone = inject(NgZone);
@@ -96,7 +107,9 @@ export class ChartCardComponent implements AfterViewInit {
     }
 
     // 3. Derive from Route Data
-    const basePermission = currentRoute.data['permission'] as string | undefined;
+    const basePermission = currentRoute.data['permission'] as
+      | string
+      | undefined;
     if (basePermission) {
       return `${basePermission}.REXPORT`;
     }
@@ -110,12 +123,18 @@ export class ChartCardComponent implements AfterViewInit {
   public zoomReset = output<void>();
   public exportClicked = output<void>();
 
-  private chartContainerRef = viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
-  private indicatorDisplayRef = viewChild<ElementRef<HTMLSpanElement>>('indicatorDisplay');
+  private chartContainerRef =
+    viewChild.required<ElementRef<HTMLDivElement>>('chartContainer');
+  private indicatorDisplayRef =
+    viewChild<ElementRef<HTMLSpanElement>>('indicatorDisplay');
 
   // === COMPUTED STATE ===
-  public showEmptyState = computed(() => !this.isLoading() && !this.chartOptions() && !this.chartError());
-  public showChart = computed(() => !!this.chartOptions() && !this.chartError());
+  public showEmptyState = computed(
+    () => !this.isLoading() && !this.chartOptions() && !this.chartError()
+  );
+  public showChart = computed(
+    () => !!this.chartOptions() && !this.chartError()
+  );
   public showErrorState = computed(() => !!this.chartError());
 
   private effectiveTheme = computed(() => {
@@ -237,7 +256,7 @@ export class ChartCardComponent implements AfterViewInit {
         this.chartInstance?.dispatchAction({
           type: 'dataZoom',
           start: this.savedZoomState.start,
-          end: this.savedZoomState.end
+          end: this.savedZoomState.end,
         });
 
         // Restore auto interval for zoomed view
@@ -251,7 +270,7 @@ export class ChartCardComponent implements AfterViewInit {
         this.chartInstance?.dispatchAction({
           type: 'dataZoom',
           start: 0,
-          end: 100
+          end: 100,
         });
 
         // Spread out labels for full view of large data
@@ -279,11 +298,14 @@ export class ChartCardComponent implements AfterViewInit {
         ...axis,
         axisLabel: {
           ...axis.axisLabel,
-          interval: interval
-        }
+          interval: interval,
+        },
       }));
 
-      this.chartInstance.setOption({ xAxis: updatedXAxis }, { notMerge: false });
+      this.chartInstance.setOption(
+        { xAxis: updatedXAxis },
+        { notMerge: false }
+      );
     }
   }
 
@@ -291,7 +313,8 @@ export class ChartCardComponent implements AfterViewInit {
    * Animate the indicator display with counting effect (similar to widget-card)
    */
   private animateIndicator(start: number, end: number, total: number): void {
-    if (this.indicatorAnimationId) cancelAnimationFrame(this.indicatorAnimationId);
+    if (this.indicatorAnimationId)
+      cancelAnimationFrame(this.indicatorAnimationId);
 
     const el = this.indicatorDisplayRef()?.nativeElement;
     if (!el) {
@@ -301,7 +324,8 @@ export class ChartCardComponent implements AfterViewInit {
     }
 
     // Check for reduced motion preference
-    const prefersReducedMotion = typeof window !== 'undefined' &&
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (start === end || prefersReducedMotion) {
@@ -354,7 +378,7 @@ export class ChartCardComponent implements AfterViewInit {
     const url = this.chartInstance.getDataURL({
       type: 'png',
       pixelRatio: 2,
-      backgroundColor: '#fff'
+      backgroundColor: '#fff',
     });
 
     const link = document.createElement('a');
@@ -369,11 +393,19 @@ export class ChartCardComponent implements AfterViewInit {
     if (!this.isBrowser) return;
     const width = window.innerWidth;
     this.isMobile.set(width < this.MOBILE_BREAKPOINT);
-    this.isTablet.set(width >= this.MOBILE_BREAKPOINT && width < this.TABLET_BREAKPOINT);
+    this.isTablet.set(
+      width >= this.MOBILE_BREAKPOINT && width < this.TABLET_BREAKPOINT
+    );
   }
 
   private async initChart(options: EChartsCoreOption | null): Promise<void> {
-    if (this.isDestroyed || !this.isBrowser || !this.chartContainerRef() || !options) return;
+    if (
+      this.isDestroyed ||
+      !this.isBrowser ||
+      !this.chartContainerRef() ||
+      !options
+    )
+      return;
     if (this.chartInstance || this.isInitializing) return;
 
     this.isInitializing = true;
@@ -392,26 +424,44 @@ export class ChartCardComponent implements AfterViewInit {
       const [
         echarts,
         { BarChart, LineChart, PieChart, ScatterChart },
-        { TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent, TimelineComponent },
-        { CanvasRenderer }
+        {
+          TitleComponent,
+          TooltipComponent,
+          GridComponent,
+          LegendComponent,
+          DataZoomComponent,
+          TimelineComponent,
+        },
+        { CanvasRenderer },
       ] = await Promise.all([
         import('echarts/core'),
         import('echarts/charts'),
         import('echarts/components'),
-        import('echarts/renderers')
+        import('echarts/renderers'),
       ]);
 
       echarts.use([
-        BarChart, LineChart, PieChart, ScatterChart,
-        TitleComponent, TooltipComponent, GridComponent, LegendComponent, DataZoomComponent,
+        BarChart,
+        LineChart,
+        PieChart,
+        ScatterChart,
+        TitleComponent,
+        TooltipComponent,
+        GridComponent,
+        LegendComponent,
+        DataZoomComponent,
         TimelineComponent,
-        CanvasRenderer
+        CanvasRenderer,
       ]);
 
       this.ngZone.runOutsideAngular(() => {
         const rendererConfig = this.getRendererConfig();
 
-        this.chartInstance = echarts.init(el, this.effectiveTheme(), rendererConfig);
+        this.chartInstance = echarts.init(
+          el,
+          this.effectiveTheme(),
+          rendererConfig
+        );
 
         this.lastWidth = el.clientWidth;
         this.lastHeight = el.clientHeight;
@@ -466,7 +516,7 @@ export class ChartCardComponent implements AfterViewInit {
 
       this.chartInstance?.setOption(processedOptions, {
         notMerge: false,
-        lazyUpdate: true
+        lazyUpdate: true,
       });
     });
   }
@@ -490,7 +540,7 @@ export class ChartCardComponent implements AfterViewInit {
         }
 
         const name = params.name;
-        // Check current state before this change? 
+        // Check current state before this change?
         // We know what happened: User clicked `name`. ECharts toggled it.
         // If we are in 'isolate' mode:
 
@@ -500,7 +550,7 @@ export class ChartCardComponent implements AfterViewInit {
           if (this.currentSoloName === name) {
             // Was already solo on this. Toggle back to ALL.
             this.chartInstance.dispatchAction({
-              type: 'legendAllSelect'
+              type: 'legendAllSelect',
             });
             this.currentSoloName = null;
           } else {
@@ -510,18 +560,18 @@ export class ChartCardComponent implements AfterViewInit {
             // OPTIMIZATION: Use batch commands to avoid looping through all series
             // 1. Select All (Reset state)
             this.chartInstance.dispatchAction({
-              type: 'legendAllSelect'
+              type: 'legendAllSelect',
             });
 
             // 2. Inverse (Turns All ON -> All OFF)
             this.chartInstance.dispatchAction({
-              type: 'legendInverseSelect'
+              type: 'legendInverseSelect',
             });
 
             // 3. Select Target (Turns Target OFF -> Target ON)
             this.chartInstance.dispatchAction({
               type: 'legendSelect',
-              name: name
+              name: name,
             });
 
             this.currentSoloName = name;
@@ -533,15 +583,20 @@ export class ChartCardComponent implements AfterViewInit {
           const option = this.chartInstance.getOption() as any;
           if (option.series) {
             option.series.forEach((s: any) => {
-              newSelected[s.name] = (this.currentSoloName === null) ? true : (s.name === this.currentSoloName);
+              newSelected[s.name] =
+                this.currentSoloName === null
+                  ? true
+                  : s.name === this.currentSoloName;
             });
           }
 
-          this.ngZone.run(() => this.chartLegendSelectChanged.emit({
-            name: name,
-            selected: newSelected,
-            type: 'legendselectchanged'
-          }));
+          this.ngZone.run(() =>
+            this.chartLegendSelectChanged.emit({
+              name: name,
+              selected: newSelected,
+              type: 'legendselectchanged',
+            })
+          );
 
           return; // Stop processing to avoid double emit with stale data
         } finally {
@@ -550,18 +605,24 @@ export class ChartCardComponent implements AfterViewInit {
         }
       }
 
-      this.ngZone.run(() => this.chartLegendSelectChanged.emit(params as ECElementEvent));
+      this.ngZone.run(() =>
+        this.chartLegendSelectChanged.emit(params as ECElementEvent)
+      );
     });
 
     // DataZoom handler - update visible points indicator
     this.chartInstance.on('datazoom', (params: unknown) => {
       // DataZoom event params are not exactly ECElementEvent, so we cast to a custom shape or keep generic access safely
-      const p = params as { start?: number; end?: number; batch?: Array<{ start: number; end: number }> };
+      const p = params as {
+        start?: number;
+        end?: number;
+        batch?: Array<{ start: number; end: number }>;
+      };
       const total = this.totalDataPoints();
       if (total > 0) {
         const start = p.start ?? p.batch?.[0]?.start ?? 0;
         const end = p.end ?? p.batch?.[0]?.end ?? 100;
-        const visible = Math.round((end - start) / 100 * total);
+        const visible = Math.round(((end - start) / 100) * total);
 
         // Only animate if value actually changed
         if (visible !== this.visibleDataPoints()) {
@@ -582,19 +643,24 @@ export class ChartCardComponent implements AfterViewInit {
     }
   }
 
-  private getRendererConfig(): { renderer: 'canvas' | 'svg'; useDirtyRect: boolean } {
+  private getRendererConfig(): {
+    renderer: 'canvas' | 'svg';
+    useDirtyRect: boolean;
+  } {
     const isMobileDevice = this.isMobile() || this.isTablet();
 
     return {
       renderer: 'canvas', // Canvas is faster on mobile
-      useDirtyRect: !isMobileDevice // Disable on mobile for stability
+      useDirtyRect: !isMobileDevice, // Disable on mobile for stability
     };
   }
 
   /**
    * Detect chart type from options
    */
-  private detectChartType(option: EChartsCoreOption): 'cartesian' | 'horizontal-bar' | 'pie' {
+  private detectChartType(
+    option: EChartsCoreOption
+  ): 'cartesian' | 'horizontal-bar' | 'pie' {
     const opt = option as any; // Cast for easier property access since EChartsCoreOption is strict
     if (!opt?.series) return 'cartesian';
 
@@ -607,7 +673,10 @@ export class ChartCardComponent implements AfterViewInit {
 
     // Check for horizontal bar (yAxis is category)
     const yAxis = Array.isArray(opt.yAxis) ? opt.yAxis[0] : opt.yAxis;
-    if (yAxis?.type === 'category' && series.some((s: any) => s?.type === 'bar')) {
+    if (
+      yAxis?.type === 'category' &&
+      series.some((s: any) => s?.type === 'bar')
+    ) {
       return 'horizontal-bar';
     }
 
@@ -687,7 +756,7 @@ export class ChartCardComponent implements AfterViewInit {
         bottom: mobile ? 22 : 18,
         left: mobile ? 5 : 8,
         right: mobile ? 8 : 8,
-        containLabel: true
+        containLabel: true,
       };
     }
 
@@ -695,7 +764,9 @@ export class ChartCardComponent implements AfterViewInit {
     if (chartType === 'cartesian' || chartType === 'horizontal-bar') {
       // X-Axis optimization
       if (newOption.xAxis) {
-        const xAxes = Array.isArray(newOption.xAxis) ? newOption.xAxis : [newOption.xAxis];
+        const xAxes = Array.isArray(newOption.xAxis)
+          ? newOption.xAxis
+          : [newOption.xAxis];
         newOption.xAxis = xAxes.map((axis: any) => {
           if (axis.type === 'category') {
             return {
@@ -703,7 +774,7 @@ export class ChartCardComponent implements AfterViewInit {
               axisLabel: {
                 ...axis.axisLabel,
                 fontSize: mobile ? 9 : 11,
-                rotate: mobile ? 30 : (axis.axisLabel?.rotate || 0),
+                rotate: mobile ? 30 : axis.axisLabel?.rotate || 0,
                 hideOverlap: true,
                 interval: 'auto',
                 overflow: 'truncate',
@@ -712,24 +783,26 @@ export class ChartCardComponent implements AfterViewInit {
               },
               axisTick: {
                 alignWithLabel: true,
-                ...(axis.axisTick || {})
-              }
+                ...(axis.axisTick || {}),
+              },
             };
           }
           return axis;
         });
       }
 
-      // Y-Axis optimization  
+      // Y-Axis optimization
       if (newOption.yAxis) {
-        const yAxes = Array.isArray(newOption.yAxis) ? newOption.yAxis : [newOption.yAxis];
+        const yAxes = Array.isArray(newOption.yAxis)
+          ? newOption.yAxis
+          : [newOption.yAxis];
         newOption.yAxis = yAxes.map((axis: any) => ({
           ...axis,
           axisLabel: {
             ...axis.axisLabel,
             fontSize: mobile ? 9 : 11,
             margin: mobile ? 6 : 8,
-          }
+          },
         }));
       }
     }
@@ -737,13 +810,19 @@ export class ChartCardComponent implements AfterViewInit {
     // 4. For Pie charts: position left with legend on right
     if (chartType === 'pie' && newOption.series) {
       const isCompact = mobile || this.isCompact;
-      const seriesList = Array.isArray(newOption.series) ? newOption.series : [newOption.series];
+      const seriesList = Array.isArray(newOption.series)
+        ? newOption.series
+        : [newOption.series];
       newOption.series = seriesList.map((s: any) => {
         if (s.type === 'pie') {
           // Desktop/Wide: Pie on left (35%), leaving room for legend on right
           // Mobile/Compact: Pie centered at top, legend at bottom
           const baseCenter = isCompact ? ['50%', '45%'] : ['35%', '50%'];
-          const defaultRadius: [string, string] = isCompact ? (mobile ? ['25%', '50%'] : ['35%', '60%']) : ['35%', '60%'];
+          const defaultRadius: [string, string] = isCompact
+            ? mobile
+              ? ['25%', '50%']
+              : ['35%', '60%']
+            : ['35%', '60%'];
 
           let finalRadius = s.radius || defaultRadius;
 
@@ -754,9 +833,10 @@ export class ChartCardComponent implements AfterViewInit {
               const outerVal = parseFloat(outerRadius);
               if (outerVal > 50) {
                 const innerRadius = finalRadius[0];
-                const innerVal = typeof innerRadius === 'string' && innerRadius.endsWith('%')
-                  ? parseFloat(innerRadius)
-                  : 25;
+                const innerVal =
+                  typeof innerRadius === 'string' && innerRadius.endsWith('%')
+                    ? parseFloat(innerRadius)
+                    : 25;
                 const scaleFactor = 50 / outerVal;
                 finalRadius = [`${Math.round(innerVal * scaleFactor)}%`, '50%'];
               }
@@ -770,7 +850,7 @@ export class ChartCardComponent implements AfterViewInit {
             label: {
               ...s.label,
               fontSize: mobile ? 10 : 12,
-            }
+            },
           };
         }
         return s;
@@ -783,7 +863,9 @@ export class ChartCardComponent implements AfterViewInit {
   /**
    * Apply mobile-specific optimizations
    */
-  private applyMobileOptimizations(option: EChartsCoreOption): EChartsCoreOption {
+  private applyMobileOptimizations(
+    option: EChartsCoreOption
+  ): EChartsCoreOption {
     if (!option) return option;
 
     const mobile = this.isMobile();
@@ -803,9 +885,11 @@ export class ChartCardComponent implements AfterViewInit {
       position: mobile ? this.getMobileTooltipPosition.bind(this) : undefined,
       textStyle: {
         ...newOption.tooltip?.textStyle,
-        fontSize: mobile ? 10 : 12
+        fontSize: mobile ? 10 : 12,
       },
-      extraCssText: mobile ? 'max-width: 80vw; white-space: normal; padding: 8px 10px;' : ''
+      extraCssText: mobile
+        ? 'max-width: 80vw; white-space: normal; padding: 8px 10px;'
+        : '',
     };
 
     // 2. Legend already handled in applyStrictLayout, just ensure consistency
@@ -816,8 +900,6 @@ export class ChartCardComponent implements AfterViewInit {
 
     return newOption;
   }
-
-
 
   private getMobileTooltipPosition(
     point: number[],
@@ -831,7 +913,10 @@ export class ChartCardComponent implements AfterViewInit {
 
     // Position tooltip at the TOP of the chart, horizontally centered
     // This keeps the chart content visible while showing tooltip info
-    const x = Math.max(5, Math.min(viewWidth - contentWidth - 5, (viewWidth - contentWidth) / 2));
+    const x = Math.max(
+      5,
+      Math.min(viewWidth - contentWidth - 5, (viewWidth - contentWidth) / 2)
+    );
     const y = 5; // Fixed at top with small margin
 
     return [x, y];
@@ -856,7 +941,10 @@ export class ChartCardComponent implements AfterViewInit {
     return this.scaleSingleRadius(radius, factor);
   }
 
-  private scaleSingleRadius(val: string | number, factor: number): string | number {
+  private scaleSingleRadius(
+    val: string | number,
+    factor: number
+  ): string | number {
     if (typeof val === 'number') {
       return Math.round(val * factor);
     }
@@ -891,8 +979,10 @@ export class ChartCardComponent implements AfterViewInit {
           // params.marker gives us the colored circle/marker
           const marker = item.marker || '';
           const name = item.name || '';
-          const value = typeof item.value === 'number' ? formatFn(item.value) : item.value;
-          const percent = item.percent !== undefined ? item.percent.toFixed(1) : '0';
+          const value =
+            typeof item.value === 'number' ? formatFn(item.value) : item.value;
+          const percent =
+            item.percent !== undefined ? item.percent.toFixed(1) : '0';
 
           return `${marker} ${name}: <b>${value}</b> (${percent}%)`;
         };
@@ -920,13 +1010,16 @@ export class ChartCardComponent implements AfterViewInit {
         if (!isPieChart) {
           series.tooltip = series.tooltip || {};
           if (!series.tooltip.valueFormatter) {
-            series.tooltip.valueFormatter = (val: any) => (typeof val === 'number' ? formatFn(val) : val);
+            series.tooltip.valueFormatter = (val: any) =>
+              typeof val === 'number' ? formatFn(val) : val;
           }
         }
 
         if (series.label?.show && !series.label.formatter) {
           series.label.formatter = (params: any) => {
-            const val = Array.isArray(params.value) ? params.value[1] : params.value;
+            const val = Array.isArray(params.value)
+              ? params.value[1]
+              : params.value;
             return typeof val === 'number' ? formatFn(val) : val;
           };
         }
@@ -968,14 +1061,20 @@ export class ChartCardComponent implements AfterViewInit {
     const tablet = this.isTablet();
 
     // Calculate zoom percentage
-    const targetItems = dataLength > this.VERY_LARGE_DATA_THRESHOLD
-      ? this.VERY_LARGE_DATA_THRESHOLD
-      : this.LARGE_DATA_THRESHOLD;
+    const targetItems =
+      dataLength > this.VERY_LARGE_DATA_THRESHOLD
+        ? this.VERY_LARGE_DATA_THRESHOLD
+        : this.LARGE_DATA_THRESHOLD;
 
     const zoomEnd = 100;
-    const zoomStart = Math.max(0, 100 - Math.floor((targetItems / dataLength) * 100));
+    const zoomStart = Math.max(
+      0,
+      100 - Math.floor((targetItems / dataLength) * 100)
+    );
 
-    const initialVisible = Math.round((zoomEnd - zoomStart) / 100 * dataLength);
+    const initialVisible = Math.round(
+      ((zoomEnd - zoomStart) / 100) * dataLength
+    );
     this.visibleDataPoints.set(initialVisible);
     this.displayedVisiblePoints = initialVisible;
 
@@ -997,16 +1096,16 @@ export class ChartCardComponent implements AfterViewInit {
         height: mobile ? 24 : 20,
         handleSize: mobile ? '120%' : '100%',
         handleStyle: {
-          borderRadius: 4
+          borderRadius: 4,
         },
         borderColor: 'transparent',
         fillerColor: 'rgba(0,0,0,0.1)',
         brushSelect: !mobile, // Disable brush on mobile
         emphasis: {
           handleStyle: {
-            borderWidth: 2
-          }
-        }
+            borderWidth: 2,
+          },
+        },
       },
       {
         type: 'inside',
@@ -1017,8 +1116,8 @@ export class ChartCardComponent implements AfterViewInit {
         moveOnMouseWheel: true,
         moveOnMouseMove: false,
         preventDefaultMouseMove: mobile,
-        zoomLock: mobile // Prevent pinch conflicts on mobile
-      }
+        zoomLock: mobile, // Prevent pinch conflicts on mobile
+      },
     ];
 
     (newOption as any).dataZoom = zoomConfig;
@@ -1029,50 +1128,58 @@ export class ChartCardComponent implements AfterViewInit {
       const grid = (newOption as any).grid;
       (newOption as any).grid = {
         ...grid,
-        bottom: mobile ? 60 : 40 // More space at bottom
+        bottom: mobile ? 60 : 40, // More space at bottom
       };
     } else {
       (newOption as any).grid = {
-        bottom: mobile ? 60 : 40
-      }
+        bottom: mobile ? 60 : 40,
+      };
     }
 
     // C. X-Axis specific tweaks for large data (if cartesian)
     if ((newOption as any).xAxis) {
-      const xAxes = Array.isArray((newOption as any).xAxis) ? (newOption as any).xAxis : [(newOption as any).xAxis];
+      const xAxes = Array.isArray((newOption as any).xAxis)
+        ? (newOption as any).xAxis
+        : [(newOption as any).xAxis];
       (newOption as any).xAxis = xAxes.map((axis: any) => ({
         ...axis,
         axisLabel: {
           ...axis.axisLabel,
           interval: 'auto', // Force auto-hide to prevent overlap
-          hideOverlap: true
-        }
+          hideOverlap: true,
+        },
       }));
     }
 
     // D. Hide labels for very large data (original D)
     if (dataLength > this.VERY_LARGE_DATA_THRESHOLD) {
-      const seriesList = Array.isArray((newOption as any).series) ? (newOption as any).series : [(newOption as any).series];
+      const seriesList = Array.isArray((newOption as any).series)
+        ? (newOption as any).series
+        : [(newOption as any).series];
       newOption.series = seriesList.map((s: any) => ({
         ...s,
-        label: { ...(s?.label || {}), show: false }
+        label: { ...(s?.label || {}), show: false },
       }));
     }
 
     // D. Series optimization (downsampling if extremely large) (new D)
     if ((newOption as any).series && dataLength > 5000) {
-      const seriesList = Array.isArray((newOption as any).series) ? (newOption as any).series : [(newOption as any).series];
+      const seriesList = Array.isArray((newOption as any).series)
+        ? (newOption as any).series
+        : [(newOption as any).series];
       (newOption as any).series = seriesList.map((s: any) => ({
         ...s,
         sampling: 'lttb', // Largest-Triangle-Three-Buckets downsampling
         showSymbol: false, // Hide symbols for performance
-        showAllSymbol: false
+        showAllSymbol: false,
       }));
     }
 
     // E. Extreme data optimizations (500+ points) (original E, modified)
     if (dataLength > this.EXTREME_DATA_THRESHOLD) {
-      const seriesList = Array.isArray((newOption as any).series) ? (newOption as any).series : [(newOption as any).series];
+      const seriesList = Array.isArray((newOption as any).series)
+        ? (newOption as any).series
+        : [(newOption as any).series];
       newOption.series = seriesList.map((s: any) => {
         if (s?.type === 'line' || s?.type === 'bar') {
           return {
@@ -1083,7 +1190,7 @@ export class ChartCardComponent implements AfterViewInit {
             progressive: 400,
             progressiveThreshold: 1000,
             large: true,
-            largeThreshold: 500
+            largeThreshold: 500,
           };
         }
         return s;
@@ -1112,7 +1219,9 @@ export class ChartCardComponent implements AfterViewInit {
     // dimensions don't change immediately (e.g., CSS transitions)
     this.ngZone.runOutsideAngular(() => {
       this.windowResizeListener = () => this.triggerResize();
-      window.addEventListener('resize', this.windowResizeListener, { passive: true });
+      window.addEventListener('resize', this.windowResizeListener, {
+        passive: true,
+      });
     });
 
     // Also listen for orientation changes on mobile
@@ -1129,7 +1238,8 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private triggerResize(): void {
-    if (this.resizeTimer) cancelAnimationFrame(this.resizeTimer as unknown as number);
+    if (this.resizeTimer)
+      cancelAnimationFrame(this.resizeTimer as unknown as number);
 
     // Use requestAnimationFrame for smooth visual updates
     this.ngZone.runOutsideAngular(() => {
@@ -1189,7 +1299,7 @@ export class ChartCardComponent implements AfterViewInit {
         this.chartInstance?.resize({
           width: 'auto',
           height: 'auto',
-          animation: { duration: 150, easing: 'cubicOut' }
+          animation: { duration: 150, easing: 'cubicOut' },
         });
       });
     }
@@ -1205,8 +1315,10 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private cleanup(): void {
-    if (this.resizeTimer) cancelAnimationFrame(this.resizeTimer as unknown as number);
-    if (this.indicatorAnimationId) cancelAnimationFrame(this.indicatorAnimationId);
+    if (this.resizeTimer)
+      cancelAnimationFrame(this.resizeTimer as unknown as number);
+    if (this.indicatorAnimationId)
+      cancelAnimationFrame(this.indicatorAnimationId);
 
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

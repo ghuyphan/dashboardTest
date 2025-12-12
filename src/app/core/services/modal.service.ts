@@ -11,9 +11,11 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
   providedIn: 'root',
 })
 export class ModalService {
-
   // Inject the CDK Overlay and Angular's Injector
-  constructor(private overlay: Overlay, private injector: Injector) { }
+  constructor(
+    private overlay: Overlay,
+    private injector: Injector
+  ) {}
 
   /**
    * Opens the modal with a specified component and configuration.
@@ -28,7 +30,6 @@ export class ModalService {
     component: Type<T>,
     options?: Omit<ModalOptions, 'component'>
   ): Observable<R | undefined> {
-
     // Combine component and options
     const modalOptions: ModalOptions = {
       component,
@@ -52,9 +53,12 @@ export class ModalService {
 
     // Handle backdrop click to close
     if (!modalOptions.disableBackdropClose) {
-      overlayRef.backdropClick().pipe(take(1)).subscribe(() => {
-        modalRef.close();
-      });
+      overlayRef
+        .backdropClick()
+        .pipe(take(1))
+        .subscribe(() => {
+          modalRef.close();
+        });
     }
 
     // Return the observable for the caller to subscribe to

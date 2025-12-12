@@ -14,13 +14,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '../../../core/services/excel-export.service';
 import { IcdStat } from '../../../shared/models/icd-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
+import {
+  DateFilterComponent,
+  DateRange,
+} from '../../../shared/components/date-filter/date-filter.component';
 import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
 import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
 
@@ -33,7 +42,7 @@ const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
     CommonModule,
     ChartCardComponent,
     TableCardComponent,
-    DateFilterComponent
+    DateFilterComponent,
   ],
   providers: [DecimalPipe],
   templateUrl: './icd-report.component.html',
@@ -63,11 +72,21 @@ export class IcdReportComponent implements OnInit {
     { key: 'STT', label: '#', sortable: true, width: '50px' },
     // Group: Ngoại trú
     { key: 'MAICD', label: 'Mã ICD (NgT)', sortable: true, width: '80px' },
-    { key: 'TENICD', label: 'Tên Bệnh (Ngoại Trú)', sortable: true, width: '250px' },
+    {
+      key: 'TENICD',
+      label: 'Tên Bệnh (Ngoại Trú)',
+      sortable: true,
+      width: '250px',
+    },
     { key: 'TONG_NGOAITRU', label: 'SL (NgT)', sortable: true, width: '100px' },
     // Group: Nội trú
     { key: 'NOITRU', label: 'Mã ICD (NT)', sortable: true, width: '80px' },
-    { key: 'TENICD1', label: 'Tên Bệnh (Nội Trú)', sortable: true, width: '250px' },
+    {
+      key: 'TENICD1',
+      label: 'Tên Bệnh (Nội Trú)',
+      sortable: true,
+      width: '250px',
+    },
     { key: 'TONG_NOITRU', label: 'SL (NT)', sortable: true, width: '100px' },
   ];
 
@@ -106,7 +125,8 @@ export class IcdReportComponent implements OnInit {
 
     // Simulate API call or use real service
     // Replace with: this.reportService.getTopIcdReport(...)
-    this.reportService.getTopIcdReport(this.fromDate, this.toDate)
+    this.reportService
+      .getTopIcdReport(this.fromDate, this.toDate)
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -115,15 +135,15 @@ export class IcdReportComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (data) => {
+        next: data => {
           this.rawData = data || [];
           this.buildCharts(this.rawData);
         },
-        error: (err) => {
+        error: err => {
           console.error(err);
           this.toastService.showError('Không thể tải dữ liệu thống kê bệnh.');
           this.rawData = [];
-        }
+        },
       });
   }
 
@@ -156,9 +176,8 @@ export class IcdReportComponent implements OnInit {
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
         confine: true,
-        axisPointer: { type: 'shadow' }
+        axisPointer: { type: 'shadow' },
       },
-
     };
 
     // --- Outpatient Chart ---
@@ -166,27 +185,38 @@ export class IcdReportComponent implements OnInit {
       ...commonOptions,
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
-        axisLabel: { color: this.palette.textSecondary }
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
+        axisLabel: { color: this.palette.textSecondary },
       },
       yAxis: {
         type: 'category',
         data: topOutpatient.map(i => i.MAICD),
         axisLabel: { color: this.palette.textPrimary, fontWeight: 'bold' },
         axisLine: { show: false },
-        axisTick: { show: false }
+        axisTick: { show: false },
       },
-      series: [{
-        name: 'Ngoại trú',
-        type: 'bar',
-        data: topOutpatient.map(i => ({
-          value: i.TONG_NGOAITRU,
-          name: i.TENICD // Tooltip will show full name
-        })),
-        itemStyle: { color: this.palette.primary, borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', color: this.palette.textPrimary },
-        barWidth: '60%'
-      }]
+      series: [
+        {
+          name: 'Ngoại trú',
+          type: 'bar',
+          data: topOutpatient.map(i => ({
+            value: i.TONG_NGOAITRU,
+            name: i.TENICD, // Tooltip will show full name
+          })),
+          itemStyle: {
+            color: this.palette.primary,
+            borderRadius: [0, 4, 4, 0],
+          },
+          label: {
+            show: true,
+            position: 'right',
+            color: this.palette.textPrimary,
+          },
+          barWidth: '60%',
+        },
+      ],
     };
 
     // --- Inpatient Chart ---
@@ -194,27 +224,35 @@ export class IcdReportComponent implements OnInit {
       ...commonOptions,
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
-        axisLabel: { color: this.palette.textSecondary }
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
+        axisLabel: { color: this.palette.textSecondary },
       },
       yAxis: {
         type: 'category',
         data: topInpatient.map(i => i.NOITRU),
         axisLabel: { color: this.palette.textPrimary, fontWeight: 'bold' },
         axisLine: { show: false },
-        axisTick: { show: false }
+        axisTick: { show: false },
       },
-      series: [{
-        name: 'Nội trú',
-        type: 'bar',
-        data: topInpatient.map(i => ({
-          value: i.TONG_NOITRU,
-          name: i.TENICD1 // Tooltip will show full name
-        })),
-        itemStyle: { color: this.palette.chart6, borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', color: this.palette.textPrimary },
-        barWidth: '60%'
-      }]
+      series: [
+        {
+          name: 'Nội trú',
+          type: 'bar',
+          data: topInpatient.map(i => ({
+            value: i.TONG_NOITRU,
+            name: i.TENICD1, // Tooltip will show full name
+          })),
+          itemStyle: { color: this.palette.chart6, borderRadius: [0, 4, 4, 0] },
+          label: {
+            show: true,
+            position: 'right',
+            color: this.palette.textPrimary,
+          },
+          barWidth: '60%',
+        },
+      ],
     };
   }
 

@@ -10,28 +10,25 @@ import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { ReportService } from '../../../core/services/report.service';
-import { ToastService } from '../../../core/services/toast.service';
-import {
-  ThemeService,
-  ThemePalette,
-} from '../../../core/services/theme.service';
+import { ReportService } from '@core/services/report.service';
+import { ToastService } from '@core/services/toast.service';
+import { ThemeService, ThemePalette } from '@core/services/theme.service';
 import {
   ExcelExportService,
   ExportColumn,
-} from '../../../core/services/excel-export.service';
-import { SpecialtyClsStat } from '../../../shared/models/specialty-cls-stat.model';
-import { DateUtils } from '../../../shared/utils/date.utils';
-import { NumberUtils } from '../../../shared/utils/number.utils';
+} from '@core/services/excel-export.service';
+import { SpecialtyClsStat } from '@shared/models/specialty-cls-stat.model';
+import { DateUtils } from '@shared/utils/date.utils';
+import { NumberUtils } from '@shared/utils/number.utils';
 
-import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { ChartCardComponent } from '@shared/components/chart-card/chart-card.component';
 import {
   DateFilterComponent,
   DateRange,
-} from '../../../shared/components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
-import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
+} from '@shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '@shared/components/table-card/table-card.component';
+import { GridColumn } from '@shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '@shared/components/widget-card/widget-card.component';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 const MAX_RANGE_DAYS = 92;
@@ -153,7 +150,7 @@ export class SpecialtyClsReportComponent implements OnInit {
   private updateWidgetColors(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const setC = (id: string, color: string) => {
-        const item = this.widgetData.find((x) => x.id === id);
+        const item = this.widgetData.find(x => x.id === id);
         if (item) item.accentColor = color;
       };
       setC('total-kham', this.palette.widgetAccent);
@@ -199,14 +196,14 @@ export class SpecialtyClsReportComponent implements OnInit {
           })
         )
         .subscribe({
-          next: (data) => {
-            this.rawData = (data || []).map((item) => ({
+          next: data => {
+            this.rawData = (data || []).map(item => ({
               ...item,
               NGAY_KHAM_DISPLAY: DateUtils.formatToDisplay(item.NGAY_KHAM),
             }));
             this.processData(this.rawData);
           },
-          error: (err) => {
+          error: err => {
             console.error(err);
             this.toastService.showError('Không thể tải dữ liệu báo cáo.');
             this.rawData = [];
@@ -229,7 +226,7 @@ export class SpecialtyClsReportComponent implements OnInit {
     const uniqueGroups = new Set<string>();
     const groupOrderMap = new Map<string, number>();
 
-    data.forEach((item) => {
+    data.forEach(item => {
       const qty = item.SO_LUONG || 0;
       const group = item.NHOM_CLS || 'Khác';
       const specialty = item.TEN_CHUYEN_KHOA || 'Chưa xác định';
@@ -290,7 +287,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     ];
 
-    const sortedSpecialtyNames = sortedSpecialties.map((s) => s[0]);
+    const sortedSpecialtyNames = sortedSpecialties.map(s => s[0]);
 
     const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
       const orderA = groupOrderMap.get(a) ?? 999;
@@ -346,15 +343,15 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
     };
 
-    const series = groups.map((group) => ({
+    const series = groups.map(group => ({
       name: group,
       type: 'bar',
       stack: 'total',
       barWidth: '60%',
       emphasis: { focus: 'series' },
-      data: specialties.map((spec) => {
+      data: specialties.map(spec => {
         const record = data.find(
-          (d) => d.TEN_CHUYEN_KHOA === spec && d.NHOM_CLS === group
+          d => d.TEN_CHUYEN_KHOA === spec && d.NHOM_CLS === group
         );
         return record ? record.SO_LUONG : 0;
       }),
@@ -375,7 +372,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         type: 'scroll',
         top: 0,
         textStyle: { color: this.palette.textSecondary },
-        itemWidth: 25 // Ensure dashes are visible
+        itemWidth: 25, // Ensure dashes are visible
       },
       xAxis: {
         type: 'category',
@@ -428,7 +425,7 @@ export class SpecialtyClsReportComponent implements OnInit {
         bottom: 0,
         left: 'center',
         textStyle: { color: this.palette.textSecondary },
-        itemWidth: 25
+        itemWidth: 25,
       },
       series: [
         {
@@ -473,7 +470,7 @@ export class SpecialtyClsReportComponent implements OnInit {
       },
       yAxis: {
         type: 'category',
-        data: top10Data.map((d) => d[0]),
+        data: top10Data.map(d => d[0]),
         axisLabel: {
           width: 130,
           overflow: 'truncate',
@@ -487,11 +484,11 @@ export class SpecialtyClsReportComponent implements OnInit {
           name: 'Tổng Lượt',
           type: 'bar',
           barWidth: '60%',
-          data: top10Data.map((d) => d[1]),
+          data: top10Data.map(d => d[1]),
           itemStyle: {
             color: (params: any) =>
               uniquePalette[
-              (top10Data.length - 1 - params.dataIndex) % uniquePalette.length
+                (top10Data.length - 1 - params.dataIndex) % uniquePalette.length
               ],
             borderRadius: [0, 4, 4, 0],
           },

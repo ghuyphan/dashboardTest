@@ -13,8 +13,8 @@ describe('AuthService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
     service = TestBed.inject(AuthService);
   });

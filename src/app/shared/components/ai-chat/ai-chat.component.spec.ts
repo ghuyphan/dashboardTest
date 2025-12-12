@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
@@ -22,10 +27,10 @@ class MockLlmService {
     this.isOpen.set(!this.isOpen());
   }
 
-  sendMessage() { }
-  stopGeneration() { }
-  loadModel() { } // Added
-  resetChat() { } // Added
+  sendMessage() {}
+  stopGeneration() {}
+  loadModel() {} // Added
+  resetChat() {} // Added
 }
 
 describe('AiChatComponent', () => {
@@ -40,10 +45,9 @@ describe('AiChatComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: LlmService, useClass: MockLlmService }
-      ]
-    })
-      .compileComponents();
+        { provide: LlmService, useClass: MockLlmService },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AiChatComponent);
     component = fixture.componentInstance;
@@ -105,7 +109,11 @@ describe('AiChatComponent', () => {
     fixture.detectChanges();
     tick(); // Allow effect to run
 
-    expect(pushStateSpy).toHaveBeenCalledWith({ chatOpen: true }, '', location.href);
+    expect(pushStateSpy).toHaveBeenCalledWith(
+      { chatOpen: true },
+      '',
+      location.href
+    );
 
     // 2. Close Chat -> Expect back
     llmService.isOpen.set(false);

@@ -15,10 +15,9 @@ describe('ExaminationOverviewComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ExaminationOverviewComponent);
     component = fixture.componentInstance;

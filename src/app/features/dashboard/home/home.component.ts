@@ -7,27 +7,23 @@ import { FooterAction } from '../../../core/models/footer-action.model';
   selector: 'app-home',
   standalone: true,
   imports: [
-    CommonModule
+    CommonModule,
     // No other imports needed
   ],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+  styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit, OnDestroy {
-
   // 1. Inject the new service
-  constructor(private footerService: FooterActionService) { }
+  constructor(private footerService: FooterActionService) {}
 
   // 2. Use ngOnInit to set the actions for this page
-  ngOnInit(): void {
-
-  }
+  ngOnInit(): void {}
 
   // 4. IMPORTANT: Clear the actions when you leave the page
   ngOnDestroy(): void {
     this.footerService.clearActions();
   }
-
 
   // --- Methods for your buttons to call ---
 

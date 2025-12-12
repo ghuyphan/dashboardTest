@@ -9,8 +9,8 @@ const envDir = path.join(__dirname, '../src/environments');
 
 // --- Setup ---
 // 1. Ensure environments dir exists
-if (!fs.existsSync(envDir)){
-    fs.mkdirSync(envDir, { recursive: true });
+if (!fs.existsSync(envDir)) {
+  fs.mkdirSync(envDir, { recursive: true });
 }
 
 // 2. Read package.json
@@ -23,19 +23,19 @@ let [major, minor, patch] = currentVersion.split('.').map(Number);
 
 // 3. Logic to increment
 switch (type) {
-    case 'major':
-        major++;
-        minor = 0;
-        patch = 0;
-        break;
-    case 'minor':
-        minor++;
-        patch = 0;
-        break;
-    case 'patch':
-    default:
-        patch++;
-        break;
+  case 'major':
+    major++;
+    minor = 0;
+    patch = 0;
+    break;
+  case 'minor':
+    minor++;
+    patch = 0;
+    break;
+  case 'patch':
+  default:
+    patch++;
+    break;
 }
 
 const newVersion = `${major}.${minor}.${patch}`;
@@ -43,9 +43,9 @@ const newVersion = `${major}.${minor}.${patch}`;
 // 4. Get Git Hash (New logic to fix the error)
 let gitHash = '';
 try {
-    gitHash = execSync('git rev-parse --short HEAD').toString().trim();
+  gitHash = execSync('git rev-parse --short HEAD').toString().trim();
 } catch (e) {
-    console.warn('Warning: Could not retrieve Git hash.');
+  console.warn('Warning: Could not retrieve Git hash.');
 }
 
 // 5. Update package.json
@@ -61,6 +61,8 @@ export const BUILD_DATE = '${new Date().toISOString()}';
 
 fs.writeFileSync(versionFilePath, versionFileContent);
 
-console.log(`✅ Version bumped from ${currentVersion} to ${newVersion} (${type})`);
+console.log(
+  `✅ Version bumped from ${currentVersion} to ${newVersion} (${type})`
+);
 console.log(`✅ Git Hash: ${gitHash || 'N/A'}`);
 console.log(`Generated ${versionFilePath}`);

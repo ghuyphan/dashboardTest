@@ -15,10 +15,9 @@ describe('AuthLayoutComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AuthLayoutComponent);
     component = fixture.componentInstance;

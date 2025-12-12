@@ -15,8 +15,8 @@ describe('permissionGuard', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
   });
 

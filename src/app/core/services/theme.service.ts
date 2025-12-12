@@ -1,4 +1,12 @@
-import { Injectable, signal, effect, inject, Renderer2, RendererFactory2, PLATFORM_ID } from '@angular/core';
+import {
+  Injectable,
+  signal,
+  effect,
+  inject,
+  Renderer2,
+  RendererFactory2,
+  PLATFORM_ID,
+} from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -54,7 +62,7 @@ export interface ThemePalette {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ThemeService {
   private renderer: Renderer2;
@@ -67,7 +75,9 @@ export class ThemeService {
   // User's theme preference: 'light', 'dark', or 'system'
   public themePreference = signal<ThemePreference>(this.getStoredPreference());
   // Actual dark/light state based on preference and system settings
-  public isDarkTheme = signal<boolean>(this.computeIsDark(this.getStoredPreference()));
+  public isDarkTheme = signal<boolean>(
+    this.computeIsDark(this.getStoredPreference())
+  );
   public currentPalette = signal<ThemePalette>(this.getColors());
 
   constructor() {
@@ -88,9 +98,17 @@ export class ThemeService {
       const isDark = this.isDarkTheme();
 
       if (isDark) {
-        this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'dark');
+        this.renderer.setAttribute(
+          this.document.documentElement,
+          'data-theme',
+          'dark'
+        );
       } else {
-        this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'light');
+        this.renderer.setAttribute(
+          this.document.documentElement,
+          'data-theme',
+          'light'
+        );
       }
 
       // Force recalculation of CSS variables
@@ -111,14 +129,18 @@ export class ThemeService {
 
   public toggleTheme(): void {
     // Toggle between light and dark (for backward compatibility)
-    const newPreference: ThemePreference = this.isDarkTheme() ? 'light' : 'dark';
+    const newPreference: ThemePreference = this.isDarkTheme()
+      ? 'light'
+      : 'dark';
     this.setThemePreference(newPreference);
   }
 
   private getStoredPreference(): ThemePreference {
     if (!isPlatformBrowser(this.platformId)) return 'light';
 
-    const stored = localStorage.getItem('themePreference') as ThemePreference | null;
+    const stored = localStorage.getItem(
+      'themePreference'
+    ) as ThemePreference | null;
 
     // Migrate from old 'theme' key if exists
     if (!stored) {
@@ -151,7 +173,11 @@ export class ThemeService {
 
   public getCssVar(name: string, fallback: string = ''): string {
     if (!isPlatformBrowser(this.platformId)) return fallback;
-    return getComputedStyle(this.document.documentElement).getPropertyValue(name).trim() || fallback;
+    return (
+      getComputedStyle(this.document.documentElement)
+        .getPropertyValue(name)
+        .trim() || fallback
+    );
   }
 
   public getColors(): ThemePalette {

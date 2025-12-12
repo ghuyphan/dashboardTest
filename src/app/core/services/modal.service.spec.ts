@@ -13,8 +13,8 @@ describe('ModalService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
     service = TestBed.inject(ModalService);
   });

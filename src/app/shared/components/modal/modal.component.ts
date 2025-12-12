@@ -8,13 +8,13 @@ import {
   OnInit,
   OnDestroy,
   HostListener,
-  DestroyRef
+  DestroyRef,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ModalOptions } from '../../../core/models/modal-options.model';
-import { ModalRef, MODAL_OPTIONS } from '../../../core/models/modal-ref.model';
-import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
-import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
+import { ModalOptions } from '@core/models/modal-options.model';
+import { ModalRef, MODAL_OPTIONS } from '@core/models/modal-ref.model';
+import { KeyboardShortcutService } from '@core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '@core/config/keyboard-shortcuts.config';
 
 @Component({
   selector: 'app-modal',
@@ -22,13 +22,14 @@ import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config
   imports: [], // CommonModule removed; use @if in template
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush // [1] Performance optimization
+  changeDetection: ChangeDetectionStrategy.OnPush, // [1] Performance optimization
 })
 export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
-
   // [2] Use Signal-based viewChild
   // We use { read: ViewContainerRef } to get the container specifically
-  private modalContentHost = viewChild.required('modalContentHost', { read: ViewContainerRef });
+  private modalContentHost = viewChild.required('modalContentHost', {
+    read: ViewContainerRef,
+  });
 
   // Inject services/tokens
   private modalRef = inject(ModalRef);
@@ -40,15 +41,16 @@ export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
   private historyStatePushed = false;
   private popstateHandler = this.onPopState.bind(this);
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit(): void {
     // [NEW] Use central shortcut service for ESC key
     if (!this.options.disableClose) {
       // listen(shortcut, allowInInputs=false, ignoreModalCheck=true)
-      this.shortcutService.listen(GLOBAL_SHORTCUTS.ESCAPE, false, true)
+      this.shortcutService
+        .listen(GLOBAL_SHORTCUTS.ESCAPE, false, true)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((e) => {
+        .subscribe(e => {
           e.event.preventDefault();
           this.closeModal();
         });
@@ -106,8 +108,13 @@ export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // [5] Legacy Support: Handle Output Emitters automatically
       // Ideally, the child should call modalRef.close(), but if you support @Output() close:
-      const instance = componentRef.instance as { closeModal?: { subscribe: (fn: (d?: unknown) => void) => void } };
-      if (instance.closeModal && typeof instance.closeModal.subscribe === 'function') {
+      const instance = componentRef.instance as {
+        closeModal?: { subscribe: (fn: (d?: unknown) => void) => void };
+      };
+      if (
+        instance.closeModal &&
+        typeof instance.closeModal.subscribe === 'function'
+      ) {
         instance.closeModal.subscribe((data?: unknown) => {
           this.closeModal(data);
         });
@@ -119,7 +126,9 @@ export class ModalComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public getSizeClass(): string {
-    return this.options.size ? `modal-size-${this.options.size}` : 'modal-size-md';
+    return this.options.size
+      ? `modal-size-${this.options.size}`
+      : 'modal-size-md';
   }
 
   closeModal(data?: unknown): void {

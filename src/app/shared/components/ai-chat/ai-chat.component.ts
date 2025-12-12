@@ -11,15 +11,15 @@ import {
   computed,
   viewChild,
   DestroyRef,
-  OnInit
+  OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LlmService, ChatMessage } from '../../../core/services/llm.service';
-import { KeyboardShortcutService } from '../../../core/services/keyboard-shortcut.service';
-import { GLOBAL_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
+import { LlmService, ChatMessage } from '@core/services/llm.service';
+import { KeyboardShortcutService } from '@core/services/keyboard-shortcut.service';
+import { GLOBAL_SHORTCUTS } from '@core/config/keyboard-shortcuts.config';
 import { MarkdownPipe } from '../../pipes/markdown.pipe';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 
@@ -29,7 +29,7 @@ import { TooltipDirective } from '../../directives/tooltip.directive';
   imports: [CommonModule, FormsModule, MarkdownPipe, TooltipDirective],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AiChatComponent implements AfterViewInit, OnDestroy {
   // --- Injections ---
@@ -41,9 +41,12 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   // --- View Queries ---
-  private scrollContainer = viewChild.required<ElementRef<HTMLDivElement>>('scrollContainer');
-  private chatWindow = viewChild.required<ElementRef<HTMLDivElement>>('chatWindow');
-  private chatInput = viewChild.required<ElementRef<HTMLInputElement>>('chatInput');
+  private scrollContainer =
+    viewChild.required<ElementRef<HTMLDivElement>>('scrollContainer');
+  private chatWindow =
+    viewChild.required<ElementRef<HTMLDivElement>>('chatWindow');
+  private chatInput =
+    viewChild.required<ElementRef<HTMLInputElement>>('chatInput');
 
   // --- State ---
   public userInput = '';
@@ -58,10 +61,12 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   });
 
   public isInputDisabled = computed(() => {
-    return this.llmService.isGenerating() ||
+    return (
+      this.llmService.isGenerating() ||
       this.llmService.isNavigating() ||
       this.llmService.isOffline() ||
-      (!this.llmService.modelLoaded() && !this.hasUserMessages());
+      (!this.llmService.modelLoaded() && !this.hasUserMessages())
+    );
   });
 
   // Get dynamic styles for positioning
@@ -125,9 +130,10 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
 
     // 5. [NEW] Listen for ESC key to close chat
     // Allow in inputs so we can close chat even if typing in chat input
-    this.shortcutService.listen(GLOBAL_SHORTCUTS.ESCAPE, true)
+    this.shortcutService
+      .listen(GLOBAL_SHORTCUTS.ESCAPE, true)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((e) => {
+      .subscribe(e => {
         // If event was already handled (e.g. by Header search clear), don't close chat
         if (e.event.defaultPrevented) {
           return;
@@ -235,7 +241,6 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('window:popstate', ['$event'])
   onPopState(event: PopStateEvent): void {
-
     if (this.llmService.isOpen()) {
       // The browser already went back, so we just need to update our internal state
       // preventing the effect from triggering another back()
@@ -247,7 +252,8 @@ export class AiChatComponent implements AfterViewInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    const isTrigger = target.closest('.ai-fab') || target.closest('.ai-trigger-btn');
+    const isTrigger =
+      target.closest('.ai-fab') || target.closest('.ai-trigger-btn');
     const isInside = this.elementRef.nativeElement.contains(target);
 
     if (this.llmService.isOpen() && !isInside && !isTrigger) {

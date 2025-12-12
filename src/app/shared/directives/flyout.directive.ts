@@ -19,7 +19,7 @@ import { DOCUMENT } from '@angular/common';
 export class FlyoutDirective implements OnInit, OnDestroy {
   public flyoutMenu = input<HTMLElement | null>(null, { alias: 'appFlyout' });
   public flyoutEnabled = input<boolean>(false);
-  
+
   public flyoutToggled = output<boolean>();
 
   private listeners: {
@@ -206,7 +206,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
 
     // CRITICAL FIX: Calculate available space to prevent overflow
     const availableHeight = viewportHeight - top - this.VIEWPORT_PADDING;
-    
+
     this.renderer.setStyle(menuEl, 'top', `${top}px`);
     this.renderer.setStyle(menuEl, 'left', `${left}px`);
     this.renderer.setStyle(menuEl, 'max-height', `${availableHeight}px`);
@@ -232,27 +232,37 @@ export class FlyoutDirective implements OnInit, OnDestroy {
         top = Math.max(this.VIEWPORT_PADDING, hostRect.top);
         // If that puts the top too low to see content, ensure we start at least somewhat high
         if (top + menuRect.height > viewportHeight) {
-            // Prioritize showing the menu within view, max-height logic will handle the scroll
-            top = Math.max(this.VIEWPORT_PADDING, Math.min(top, viewportHeight - 100));
+          // Prioritize showing the menu within view, max-height logic will handle the scroll
+          top = Math.max(
+            this.VIEWPORT_PADDING,
+            Math.min(top, viewportHeight - 100)
+          );
         }
       }
     }
     return top;
   }
 
-// In FlyoutDirective.calculateHorizontalPosition()
-private calculateHorizontalPosition(): number {
-  // Use the button's actual position + padding
-  const hostRect = this.el.nativeElement.getBoundingClientRect();
-  return hostRect.right + this.HORIZONTAL_OFFSET; 
-}
+  // In FlyoutDirective.calculateHorizontalPosition()
+  private calculateHorizontalPosition(): number {
+    // Use the button's actual position + padding
+    const hostRect = this.el.nativeElement.getBoundingClientRect();
+    return hostRect.right + this.HORIZONTAL_OFFSET;
+  }
 
   private removePositioningStyles(): void {
     const menuEl = this.flyoutMenu();
     if (menuEl) {
       // Clean up the new styles added
-      const stylesToRemove = ['position', 'top', 'left', 'visibility', 'max-height', 'overflow-y'];
-      stylesToRemove.forEach((style) => {
+      const stylesToRemove = [
+        'position',
+        'top',
+        'left',
+        'visibility',
+        'max-height',
+        'overflow-y',
+      ];
+      stylesToRemove.forEach(style => {
         this.renderer.removeStyle(menuEl, style);
       });
     }
@@ -297,7 +307,7 @@ private calculateHorizontalPosition(): number {
   }
 
   private cleanupListeners(): void {
-    Object.values(this.listeners).forEach((listener) => {
+    Object.values(this.listeners).forEach(listener => {
       if (listener) {
         listener();
       }

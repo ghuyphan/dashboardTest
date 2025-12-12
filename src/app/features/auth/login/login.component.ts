@@ -1,4 +1,10 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  inject,
+  DestroyRef,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, NgClass } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
@@ -12,15 +18,10 @@ import { ConfirmationModalComponent } from '../../../shared/components/confirmat
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule,
-    NgClass,
-    RouterLink
-  ],
+  imports: [FormsModule, CommonModule, NgClass, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
   private cd = inject(ChangeDetectorRef);
@@ -30,7 +31,7 @@ export class LoginComponent {
   public credentials = {
     username: '',
     password: '',
-    remember: false
+    remember: false,
   };
 
   public passwordVisible: boolean = false;
@@ -41,16 +42,17 @@ export class LoginComponent {
     private toastService: ToastService,
     private router: Router,
     private modalService: ModalService
-  ) { }
+  ) {}
 
   onSubmit() {
     if (this.isLoading) return;
     this.isLoading = true;
 
-    this.authService.login(this.credentials)
+    this.authService
+      .login(this.credentials)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => {
+        next: response => {
           this.isLoading = false;
           this.toastService.showSuccess('Đăng nhập thành công!');
           this.router.navigate(['/app']);
@@ -71,15 +73,16 @@ export class LoginComponent {
                 iconColor: 'var(--color-danger)',
                 message: `${err.message}\n\nVui lòng liên hệ bộ phận IT qua hotline:\n☎ 1108 / 1109 để mở khóa.`,
                 confirmText: 'Đã hiểu',
-                cancelText: ''
-              }
+                cancelText: '',
+              },
             });
           } else {
-            const errorMessage = err.message || 'Lỗi không xác định. Vui lòng thử lại.';
+            const errorMessage =
+              err.message || 'Lỗi không xác định. Vui lòng thử lại.';
             this.toastService.showError(errorMessage);
           }
           this.cd.markForCheck();
-        }
+        },
       });
   }
 

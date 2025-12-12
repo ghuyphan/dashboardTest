@@ -13,11 +13,10 @@ import {
   standalone: true,
 })
 export class TooltipDirective implements OnDestroy {
-
   public tooltipText = input<string>('', { alias: 'appTooltip' });
 
   private tooltipElement: HTMLDivElement | null = null;
-  private listeners: Array<(() => void)> = [];
+  private listeners: Array<() => void> = [];
   private readonly SHOW_DELAY = 300;
   private readonly HORIZONTAL_OFFSET = 8;
   private showTimer: ReturnType<typeof setTimeout> | null = null;
@@ -26,7 +25,7 @@ export class TooltipDirective implements OnDestroy {
     private el: ElementRef<HTMLElement>,
     private renderer: Renderer2,
     private zone: NgZone
-  ) { }
+  ) {}
 
   @HostListener('mouseenter')
   onMouseEnter(): void {
@@ -119,7 +118,10 @@ export class TooltipDirective implements OnDestroy {
 
     if (top < this.HORIZONTAL_OFFSET) {
       top = this.HORIZONTAL_OFFSET;
-    } else if (top + tooltipRect.height > viewportHeight - this.HORIZONTAL_OFFSET) {
+    } else if (
+      top + tooltipRect.height >
+      viewportHeight - this.HORIZONTAL_OFFSET
+    ) {
       top = viewportHeight - tooltipRect.height - this.HORIZONTAL_OFFSET;
     }
 
@@ -129,13 +131,23 @@ export class TooltipDirective implements OnDestroy {
 
   private registerGlobalListeners(): void {
     this.zone.runOutsideAngular(() => {
-      const scrollListener = this.renderer.listen('window', 'scroll', () => {
-        this.zone.run(() => this.destroyTooltip());
-      }, { capture: true, passive: true });
+      const scrollListener = this.renderer.listen(
+        'window',
+        'scroll',
+        () => {
+          this.zone.run(() => this.destroyTooltip());
+        },
+        { capture: true, passive: true }
+      );
 
-      const resizeListener = this.renderer.listen('window', 'resize', () => {
-        this.zone.run(() => this.destroyTooltip());
-      }, { passive: true });
+      const resizeListener = this.renderer.listen(
+        'window',
+        'resize',
+        () => {
+          this.zone.run(() => this.destroyTooltip());
+        },
+        { passive: true }
+      );
 
       this.listeners.push(scrollListener, resizeListener);
     });

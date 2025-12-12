@@ -24,13 +24,18 @@ import { WidgetCardComponent } from '../../../shared/components/widget-card/widg
   styleUrl: './cls-level6-report.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ClsLevel6ReportComponent extends BaseClsReportComponent implements OnInit {
-
+export class ClsLevel6ReportComponent
+  extends BaseClsReportComponent
+  implements OnInit
+{
   ngOnInit(): void {
     this.init();
   }
 
-  protected getReportData(fromDate: string, toDate: string): Observable<ClsStat[]> {
+  protected getReportData(
+    fromDate: string,
+    toDate: string
+  ): Observable<ClsStat[]> {
     return this.reportService.getClsLevel6Report(fromDate, toDate);
   }
 

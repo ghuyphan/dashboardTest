@@ -15,10 +15,9 @@ describe('WidgetCardComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(WidgetCardComponent);
     component = fixture.componentInstance;

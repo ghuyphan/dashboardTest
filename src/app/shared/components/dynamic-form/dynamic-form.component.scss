@@ -36,7 +36,6 @@
 
   /* --- INPUT WRAPPER FOR DATEPICKER --- */
   .input-wrapper {
-
     // Mixin handles basic structure, add specific overrides here
     .custom-toggle {
       right: 4px;
@@ -56,8 +55,8 @@
     }
   }
 
-  input[type="datetime-local"].form-control,
-  input[type="date"].form-control {
+  input[type='datetime-local'].form-control,
+  input[type='date'].form-control {
     height: 42px; // Match mixin
     min-height: 42px;
     line-height: 1.5;
@@ -160,7 +159,6 @@
   }
 
   .mat-mdc-form-field {
-
     /* Border Colors */
     .mdc-notched-outline__leading,
     .mdc-notched-outline__notch,
@@ -185,7 +183,6 @@
 
     /* Hover - only on devices with hover */
     @media (hover: hover) {
-
       &:hover .mdc-notched-outline__leading,
       &:hover .mdc-notched-outline__notch,
       &:hover .mdc-notched-outline__trailing {
@@ -195,7 +192,6 @@
 
     /* Focus */
     &.mat-focused {
-
       .mdc-notched-outline__leading,
       .mdc-notched-outline__notch,
       .mdc-notched-outline__trailing {

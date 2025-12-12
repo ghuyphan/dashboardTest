@@ -1,4 +1,13 @@
-import { Component, inject, OnInit, OnDestroy, signal, ChangeDetectionStrategy, effect, DestroyRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  signal,
+  ChangeDetectionStrategy,
+  effect,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -7,19 +16,19 @@ import {
   Validators,
   AbstractControl,
   ValidationErrors,
-  FormControl
+  FormControl,
 } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { AuthService } from '../../core/services/auth.service';
-import { ToastService } from '../../core/services/toast.service';
-import { ModalService } from '../../core/services/modal.service';
-import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
-import { ThemeService, ThemePreference } from '../../core/services/theme.service';
-import { VersionService } from '../../core/services/version.service';
-import { User } from '../../core/models/user.model';
-import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+import { AuthService } from '@core/services/auth.service';
+import { ToastService } from '@core/services/toast.service';
+import { ModalService } from '@core/services/modal.service';
+import { ConfirmationModalComponent } from '@shared/components/confirmation-modal/confirmation-modal.component';
+import { ThemeService, ThemePreference } from '@core/services/theme.service';
+import { VersionService } from '@core/services/version.service';
+import { User } from '@core/models/user.model';
+import { TooltipDirective } from '@shared/directives/tooltip.directive';
 
 interface ChangePasswordForm {
   OldPassword: FormControl<string | null>;
@@ -33,7 +42,7 @@ interface ChangePasswordForm {
   imports: [CommonModule, ReactiveFormsModule, TooltipDirective],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
@@ -63,7 +72,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     hasUpper: false,
     hasLower: false,
     hasNumber: false,
-    hasSpecial: false
+    hasSpecial: false,
   });
 
   // Sequential field validation - signals to track if previous fields are filled
@@ -71,12 +80,20 @@ export class SettingsComponent implements OnInit, OnDestroy {
   public isNewPasswordFilled = signal(false);
 
   constructor() {
-    this.form = this.fb.group<ChangePasswordForm>({
-      OldPassword: new FormControl('', Validators.required),
-      // Initialize as disabled
-      NewPassword: new FormControl({ value: '', disabled: true }, [Validators.required]),
-      ConfirmPassword: new FormControl({ value: '', disabled: true }, Validators.required)
-    }, { validators: this.passwordMatchValidator });
+    this.form = this.fb.group<ChangePasswordForm>(
+      {
+        OldPassword: new FormControl('', Validators.required),
+        // Initialize as disabled
+        NewPassword: new FormControl({ value: '', disabled: true }, [
+          Validators.required,
+        ]),
+        ConfirmPassword: new FormControl(
+          { value: '', disabled: true },
+          Validators.required
+        ),
+      },
+      { validators: this.passwordMatchValidator }
+    );
 
     // Track OldPassword changes to enable/disable NewPassword
     this.form.controls.OldPassword.valueChanges
@@ -117,7 +134,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {}
 
   ngOnDestroy(): void {
     if (this.clickTimer) {
@@ -163,8 +180,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private updatePasswordCriteria(value: string): void {
     if (!value) {
       this.passwordCriteria.set({
-        minLength: false, maxLength: false, hasUpper: false,
-        hasLower: false, hasNumber: false, hasSpecial: false
+        minLength: false,
+        maxLength: false,
+        hasUpper: false,
+        hasLower: false,
+        hasNumber: false,
+        hasSpecial: false,
       });
       return;
     }
@@ -175,11 +196,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
       hasUpper: /[A-Z]/.test(value),
       hasLower: /[a-z]/.test(value),
       hasNumber: /[0-9]/.test(value),
-      hasSpecial: /[~!@#$%^&*<>?/\-]/.test(value)
+      hasSpecial: /[~!@#$%^&*<>?/\-]/.test(value),
     });
   }
 
-  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  private passwordMatchValidator(
+    control: AbstractControl
+  ): ValidationErrors | null {
     const newPass = control.get('NewPassword')?.value;
     const confirmPass = control.get('ConfirmPassword')?.value;
     return newPass === confirmPass ? null : { mismatch: true };
@@ -198,31 +221,37 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const allCriteriaMet = Object.values(criteria).every(Boolean);
 
     if (!allCriteriaMet) {
-      this.toastService.showWarning('Mật khẩu mới chưa đáp ứng đủ điều kiện bảo mật.');
+      this.toastService.showWarning(
+        'Mật khẩu mới chưa đáp ứng đủ điều kiện bảo mật.'
+      );
       return;
     }
 
     const username = this.authService.getUsername();
     if (!username) {
-      this.toastService.showError('Lỗi phiên làm việc. Vui lòng đăng nhập lại.');
+      this.toastService.showError(
+        'Lỗi phiên làm việc. Vui lòng đăng nhập lại.'
+      );
       return;
     }
 
-    this.modalService.open(ConfirmationModalComponent, {
-      title: 'Xác nhận đổi mật khẩu',
-      size: 'sm',
-      context: {
-        layout: 'standard',
-        icon: 'fas fa-sign-out-alt',
-        iconColor: 'var(--color-warning)',
-        title: 'Đổi mật khẩu?',
-        message: 'Bạn có chắc chắn muốn đổi mật khẩu không? Để đảm bảo an toàn, bạn sẽ được đăng xuất và cần đăng nhập lại.',
-        confirmText: 'Đổi & Đăng xuất',
-        cancelText: 'Hủy bỏ'
-      }
-    })
+    this.modalService
+      .open(ConfirmationModalComponent, {
+        title: 'Xác nhận đổi mật khẩu',
+        size: 'sm',
+        context: {
+          layout: 'standard',
+          icon: 'fas fa-sign-out-alt',
+          iconColor: 'var(--color-warning)',
+          title: 'Đổi mật khẩu?',
+          message:
+            'Bạn có chắc chắn muốn đổi mật khẩu không? Để đảm bảo an toàn, bạn sẽ được đăng xuất và cần đăng nhập lại.',
+          confirmText: 'Đổi & Đăng xuất',
+          cancelText: 'Hủy bỏ',
+        },
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((confirmed) => {
+      .subscribe(confirmed => {
         if (confirmed) {
           this.performChangePassword();
         }
@@ -237,27 +266,31 @@ export class SettingsComponent implements OnInit, OnDestroy {
     const payload = {
       OldPassword: rawValue.OldPassword || '',
       NewPassword: rawValue.NewPassword || '',
-      ConfirmPassword: rawValue.ConfirmPassword || ''
+      ConfirmPassword: rawValue.ConfirmPassword || '',
     };
 
-    this.authService.changePassword(payload)
+    this.authService
+      .changePassword(payload)
       .pipe(
         finalize(() => this.isLoading.set(false)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (res) => {
+        next: res => {
           if (res && res.MaKetQua && Number(res.MaKetQua) !== 200) {
-            const msg = res.TenKetQua || res.ErrorMessage || 'Đổi mật khẩu thất bại.';
+            const msg =
+              res.TenKetQua || res.ErrorMessage || 'Đổi mật khẩu thất bại.';
             this.toastService.showError(msg);
             return;
           }
-          this.toastService.showSuccess('Đổi mật khẩu thành công. Đang chuyển hướng...');
+          this.toastService.showSuccess(
+            'Đổi mật khẩu thành công. Đang chuyển hướng...'
+          );
           setTimeout(() => {
             this.authService.logout();
           }, 1500);
         },
-        error: (err) => {
+        error: err => {
           console.error('Change Password Error:', err);
           let msg = 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.';
 
@@ -266,7 +299,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           else if (typeof err.error === 'string') msg = err.error;
 
           this.toastService.showError(msg);
-        }
+        },
       });
   }
 }

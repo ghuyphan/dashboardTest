@@ -1,4 +1,9 @@
-import { ApplicationConfig, provideAppInitializer, inject, LOCALE_ID } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideAppInitializer,
+  inject,
+  LOCALE_ID,
+} from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
   provideRouter,
@@ -32,9 +37,7 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ scrollPositionRestoration: 'top' })
     ),
 
-    provideHttpClient(
-      withInterceptors([authInterceptor, idTokenInterceptor])
-    ),
+    provideHttpClient(withInterceptors([authInterceptor, idTokenInterceptor])),
 
     { provide: LOCALE_ID, useValue: 'vi' },
     { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },

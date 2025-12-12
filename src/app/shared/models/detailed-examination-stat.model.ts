@@ -1,5 +1,5 @@
 export interface DetailedExaminationStat {
-  NGAYKHAM: string;   
+  NGAYKHAM: string;
   TEN_CHUYEN_KHOA: string;
   BAC_SI: string;
   BENH_CU: number;

@@ -98,7 +98,7 @@
     white-space: nowrap;
   }
 
-  input[type="checkbox"] {
+  input[type='checkbox'] {
     accent-color: var(--teal-blue);
     width: clamp(14px, 4vw, 1rem);
     height: clamp(14px, 4vw, 1rem);
@@ -138,7 +138,7 @@
 
   &::before,
   &::after {
-    content: "";
+    content: '';
     flex: 1;
     border-bottom: 1px solid var(--border-color);
   }
@@ -150,7 +150,7 @@
   color: var(--text-secondary);
   line-height: 1.6;
 
-  a+a {
+  a + a {
     margin-left: clamp(2px, 1vw, 0.25rem);
   }
 
@@ -176,17 +176,18 @@
   width: 100%;
   padding: clamp(14px, 4vw, 16px) 1rem;
   background: var(--teal-blue);
-  color: #FFFFFF;
+  color: #ffffff;
   /* Always white text on primary button */
   border: none;
   border-radius: clamp(8px, 2.5vw, 12px);
   font-size: clamp(0.9375rem, 4vw, 16px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:not(:disabled):hover {
     transform: translateY(-2px);
   }
-
 
   &:disabled {
     opacity: 0.7;

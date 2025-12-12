@@ -1,17 +1,21 @@
 @if (actions$ | async; as actions) {
-<div class="action-footer-container">
-  <div class="action-buttons">
-    @for (action of actions; track action.label) {
-    <ng-container *appHasPermission="action.permission">
-      <button type="button" class="btn {{ action.className || 'btn-secondary' }}" [disabled]="action.disabled"
-        (click)="executeAction(action)" [appTooltip]="getTooltip(action)">
-        @if (action.icon) {
-        <i class="{{ action.icon }}"></i>
-        }
-        <span class="btn-label">{{ action.label }}</span>
-      </button>
-    </ng-container>
-    }
+  <div class="action-footer-container">
+    <div class="action-buttons">
+      @for (action of actions; track action.label) {
+        <ng-container *appHasPermission="action.permission">
+          <button
+            type="button"
+            class="btn {{ action.className || 'btn-secondary' }}"
+            [disabled]="action.disabled"
+            (click)="executeAction(action)"
+            [appTooltip]="getTooltip(action)">
+            @if (action.icon) {
+              <i class="{{ action.icon }}"></i>
+            }
+            <span class="btn-label">{{ action.label }}</span>
+          </button>
+        </ng-container>
+      }
+    </div>
   </div>
-</div>
 }

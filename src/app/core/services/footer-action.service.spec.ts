@@ -13,8 +13,8 @@ describe('FooterActionService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
     service = TestBed.inject(FooterActionService);
   });

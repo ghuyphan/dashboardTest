@@ -134,15 +134,18 @@ export class BedUsageComponent implements OnInit {
           takeUntilDestroyed(this.destroyRef)
         )
         .subscribe({
-          next: (data) => {
+          next: data => {
             this.rawData.set(data);
           },
-          error: (error) => this.handleDataError(error),
+          error: error => this.handleDataError(error),
         });
     }, 0);
   }
 
-  public onLegendChange(params: { name: string; selected: Record<string, boolean> }): void {
+  public onLegendChange(params: {
+    name: string;
+    selected: Record<string, boolean>;
+  }): void {
     this.visibleSeriesMap.set(params.selected);
   }
 
@@ -206,20 +209,79 @@ export class BedUsageComponent implements OnInit {
     const format = (val: number) => NumberUtils.format(val);
 
     return [
-      { id: 'occupancyRate', title: 'Công Suất', value: occupancyRate, caption: 'Occupancy Rate', icon: 'fas fa-chart-pie', accentColor: palette.widgetAccent },
-      { id: 'totalBeds', title: 'Tổng Số', value: format(totals.totalBeds), caption: 'Total Beds', icon: 'fas fa-hospital', accentColor: palette.widgetAccent },
-      { id: 'giuongTrong', title: 'Giường Trống', value: format(totals.giuongTrong), caption: 'Vacant Beds', icon: 'fas fa-check-circle', accentColor: palette.chart3 },
-      { id: 'dangDieuTri', title: 'Đang Điều Trị', value: format(totals.dangDieuTri), caption: 'In Treatment', icon: 'fas fa-user-injured', accentColor: palette.chart1 },
-      { id: 'choXuatVien', title: 'Chờ Xuất Viện', value: format(totals.choXuatVien), caption: 'Awaiting Discharge', icon: 'fas fa-door-open', accentColor: palette.chart8 },
-      { id: 'daBook', title: 'Đã Book', value: format(totals.daBook), caption: 'Booked Beds', icon: 'fas fa-bookmark', accentColor: palette.chart6 },
-      { id: 'chuaSanSang', title: 'Chưa Sẵn Sàng', value: format(totals.chuaSanSang), caption: 'Not Ready', icon: 'fas fa-tools', accentColor: palette.chart7 },
-      { id: 'choMuonGiuong', title: 'Cho Mượn Giường', value: format(totals.choMuonGiuong), caption: 'On Loan', icon: 'fas fa-hand-holding-medical', accentColor: palette.chart9 },
+      {
+        id: 'occupancyRate',
+        title: 'Công Suất',
+        value: occupancyRate,
+        caption: 'Occupancy Rate',
+        icon: 'fas fa-chart-pie',
+        accentColor: palette.widgetAccent,
+      },
+      {
+        id: 'totalBeds',
+        title: 'Tổng Số',
+        value: format(totals.totalBeds),
+        caption: 'Total Beds',
+        icon: 'fas fa-hospital',
+        accentColor: palette.widgetAccent,
+      },
+      {
+        id: 'giuongTrong',
+        title: 'Giường Trống',
+        value: format(totals.giuongTrong),
+        caption: 'Vacant Beds',
+        icon: 'fas fa-check-circle',
+        accentColor: palette.chart3,
+      },
+      {
+        id: 'dangDieuTri',
+        title: 'Đang Điều Trị',
+        value: format(totals.dangDieuTri),
+        caption: 'In Treatment',
+        icon: 'fas fa-user-injured',
+        accentColor: palette.chart1,
+      },
+      {
+        id: 'choXuatVien',
+        title: 'Chờ Xuất Viện',
+        value: format(totals.choXuatVien),
+        caption: 'Awaiting Discharge',
+        icon: 'fas fa-door-open',
+        accentColor: palette.chart8,
+      },
+      {
+        id: 'daBook',
+        title: 'Đã Book',
+        value: format(totals.daBook),
+        caption: 'Booked Beds',
+        icon: 'fas fa-bookmark',
+        accentColor: palette.chart6,
+      },
+      {
+        id: 'chuaSanSang',
+        title: 'Chưa Sẵn Sàng',
+        value: format(totals.chuaSanSang),
+        caption: 'Not Ready',
+        icon: 'fas fa-tools',
+        accentColor: palette.chart7,
+      },
+      {
+        id: 'choMuonGiuong',
+        title: 'Cho Mượn Giường',
+        value: format(totals.choMuonGiuong),
+        caption: 'On Loan',
+        icon: 'fas fa-hand-holding-medical',
+        accentColor: palette.chart9,
+      },
     ];
   }
 
   private transformApiData(apiData: ApiResponseData[]): DepartmentChartData[] {
-    return apiData.map((item) => {
-      let cleanName = item.TenPhongBan.replace(/\s*-?\s*\(Σ:\s*\d+\)\s*$/, '').trim();
+    return apiData.map(item => {
+      let cleanName = item.TenPhongBan.replace(
+        /\s*-?\s*\(Σ:\s*\d+\)\s*$/,
+        ''
+      ).trim();
       let viName = cleanName;
       let enName = '';
 
@@ -254,25 +316,44 @@ export class BedUsageComponent implements OnInit {
     palette: ThemePalette,
     visibleMap: Record<string, boolean> | null
   ): EChartsCoreOption {
-
-    const xAxisData = data.map((item) =>
+    const xAxisData = data.map(item =>
       item.enName ? `${item.viName}\n(${item.enName})` : item.viName
     );
 
     const bedStatusSeries: BedStatusSeries[] = [
-      { name: 'Giường trống (Vacant)', dataKey: 'giuongTrong', color: palette.chart3 },
-      { name: 'Đang điều trị (In Treatment)', dataKey: 'dangDieuTri', color: palette.chart1 },
-      { name: 'Chờ xuất viện (Awaiting Discharge)', dataKey: 'choXuatVien', color: palette.chart8 },
+      {
+        name: 'Giường trống (Vacant)',
+        dataKey: 'giuongTrong',
+        color: palette.chart3,
+      },
+      {
+        name: 'Đang điều trị (In Treatment)',
+        dataKey: 'dangDieuTri',
+        color: palette.chart1,
+      },
+      {
+        name: 'Chờ xuất viện (Awaiting Discharge)',
+        dataKey: 'choXuatVien',
+        color: palette.chart8,
+      },
       { name: 'Đã book (Booked)', dataKey: 'daBook', color: palette.chart6 },
-      { name: 'Chưa sẵn sàng (Not Ready)', dataKey: 'chuaSanSang', color: palette.chart7 },
-      { name: 'Cho mượn giường (On Loan)', dataKey: 'choMuonGiuong', color: palette.chart9 },
+      {
+        name: 'Chưa sẵn sàng (Not Ready)',
+        dataKey: 'chuaSanSang',
+        color: palette.chart7,
+      },
+      {
+        name: 'Cho mượn giường (On Loan)',
+        dataKey: 'choMuonGiuong',
+        color: palette.chart9,
+      },
     ];
 
     const dynamicTotals = data.map(dept => {
       let sum = 0;
       bedStatusSeries.forEach(s => {
         if (visibleMap === null || visibleMap[s.name] !== false) {
-          sum += (dept[s.dataKey] as number);
+          sum += dept[s.dataKey] as number;
         }
       });
       return sum;
@@ -298,13 +379,13 @@ export class BedUsageComponent implements OnInit {
         formatter: this.createTooltipFormatter(data, palette),
       },
       legend: {
-        data: bedStatusSeries.map((s) => s.name),
+        data: bedStatusSeries.map(s => s.name),
         top: 0,
         left: 'center',
         type: 'scroll', // Added to prevent overlap
         textStyle: { fontSize: 11, color: palette.textSecondary },
         itemWidth: 25,
-        padding: [0, 0, 10, 0]
+        padding: [0, 0, 10, 0],
       },
 
       xAxis: {
@@ -322,7 +403,7 @@ export class BedUsageComponent implements OnInit {
         axisLine: {
           lineStyle: { color: palette.gray300 },
         },
-        axisTick: { alignWithLabel: true }
+        axisTick: { alignWithLabel: true },
       },
       yAxis: {
         type: 'value',
@@ -335,10 +416,10 @@ export class BedUsageComponent implements OnInit {
             type: 'solid',
           },
         },
-        axisLabel: { color: palette.textSecondary }
+        axisLabel: { color: palette.textSecondary },
       },
       series: [
-        ...bedStatusSeries.map((config) => ({
+        ...bedStatusSeries.map(config => ({
           name: config.name,
           type: 'bar',
           stack: 'beds',
@@ -349,13 +430,14 @@ export class BedUsageComponent implements OnInit {
             borderColor: palette.bgCard,
             borderWidth: 1,
           },
-          data: data.map((item) => item[config.dataKey]),
+          data: data.map(item => item[config.dataKey]),
           label: {
             show: true,
             position: 'inside',
             color: '#fff',
             fontSize: 9,
-            formatter: (p: any) => (p.value > 0 ? NumberUtils.format(p.value) : ''),
+            formatter: (p: any) =>
+              p.value > 0 ? NumberUtils.format(p.value) : '',
           },
         })),
 
@@ -382,7 +464,10 @@ export class BedUsageComponent implements OnInit {
     };
   }
 
-  private createTooltipFormatter(data: DepartmentChartData[], palette: ThemePalette) {
+  private createTooltipFormatter(
+    data: DepartmentChartData[],
+    palette: ThemePalette
+  ) {
     return (params: any): string => {
       if (!params?.length) return '';
       const idx = params[0].dataIndex;
@@ -403,7 +488,7 @@ export class BedUsageComponent implements OnInit {
                 <span style="font-weight:bold;">${NumberUtils.format(p.value)}</span>
               </div>`;
         }
-        visibleTotal += (typeof p.value === 'number' ? p.value : 0);
+        visibleTotal += typeof p.value === 'number' ? p.value : 0;
       });
 
       result += `

@@ -8,9 +8,8 @@ describe('IcdReportComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IcdReportComponent]
-    })
-    .compileComponents();
+      imports: [IcdReportComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(IcdReportComponent);
     component = fixture.componentInstance;

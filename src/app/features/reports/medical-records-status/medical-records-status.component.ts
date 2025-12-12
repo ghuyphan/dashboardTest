@@ -12,35 +12,28 @@ import { finalize } from 'rxjs';
 import type { EChartsCoreOption } from 'echarts/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { ReportService } from '../../../core/services/report.service';
-import { ToastService } from '../../../core/services/toast.service';
-import {
-  ThemeService,
-  ThemePalette,
-} from '../../../core/services/theme.service';
+import { ReportService } from '@core/services/report.service';
+import { ToastService } from '@core/services/toast.service';
+import { ThemeService, ThemePalette } from '@core/services/theme.service';
 import {
   ExcelExportService,
   ExportColumn,
-} from '../../../core/services/excel-export.service';
-import { MedicalRecordSummary } from '../../../shared/models/medical-record-stat.model';
+} from '@core/services/excel-export.service';
+import { MedicalRecordSummary } from '@shared/models/medical-record-stat.model';
 
-import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
+import { ChartCardComponent } from '@shared/components/chart-card/chart-card.component';
 import {
   DateFilterComponent,
   DateRange,
-} from '../../../shared/components/date-filter/date-filter.component';
-import { DateUtils } from '../../../shared/utils/date.utils';
+} from '@shared/components/date-filter/date-filter.component';
+import { DateUtils } from '@shared/utils/date.utils';
 
 const GLOBAL_FONT_FAMILY = 'Inter, sans-serif';
 
 @Component({
   selector: 'app-medical-records-status',
   standalone: true,
-  imports: [
-    CommonModule,
-    ChartCardComponent,
-    DateFilterComponent,
-  ],
+  imports: [CommonModule, ChartCardComponent, DateFilterComponent],
   providers: [DatePipe],
   templateUrl: './medical-records-status.component.html',
   styleUrl: './medical-records-status.component.scss',
@@ -109,11 +102,11 @@ export class MedicalRecordsStatusComponent implements OnInit {
           takeUntilDestroyed(this.destroyRef)
         )
         .subscribe({
-          next: (data) => {
+          next: data => {
             this.summaryData = data || [];
             this.buildCharts(this.summaryData);
           },
-          error: (err) => {
+          error: err => {
             console.error(err);
             this.toastService.showError('Không thể tải dữ liệu biểu đồ.');
             this.summaryData = [];
@@ -130,8 +123,8 @@ export class MedicalRecordsStatusComponent implements OnInit {
     }
     const sorted = [...data].sort((a, b) => b.SO_LUONG - a.SO_LUONG);
     const topList = sorted.slice(0, 15);
-    const names = topList.map((i) => i.TEN_BS || 'N/A');
-    const values = topList.map((i) => i.SO_LUONG);
+    const names = topList.map(i => i.TEN_BS || 'N/A');
+    const values = topList.map(i => i.SO_LUONG);
 
     this.doctorChartOptions = {
       backgroundColor: 'transparent',
@@ -201,7 +194,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (details) => {
+        next: details => {
           if (!details || details.length === 0) {
             this.toastService.showWarning('Không có dữ liệu chi tiết để xuất.');
             return;
@@ -228,7 +221,7 @@ export class MedicalRecordsStatusComponent implements OnInit {
             `Đã xuất ${details.length} dòng ra file Excel.`
           );
         },
-        error: (err) => {
+        error: err => {
           console.error(err);
           this.toastService.showError(
             'Lỗi khi tải dữ liệu chi tiết để xuất Excel.'

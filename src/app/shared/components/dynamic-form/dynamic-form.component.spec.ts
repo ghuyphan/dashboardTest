@@ -15,10 +15,9 @@ describe('DynamicFormComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DynamicFormComponent);
     component = fixture.componentInstance;

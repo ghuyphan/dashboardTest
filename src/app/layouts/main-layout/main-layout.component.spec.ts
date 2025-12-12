@@ -14,10 +14,9 @@ describe('MainLayoutComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(MainLayoutComponent);
     component = fixture.componentInstance;

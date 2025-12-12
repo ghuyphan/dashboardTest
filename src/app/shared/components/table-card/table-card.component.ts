@@ -5,15 +5,22 @@ import {
   output,
   ChangeDetectionStrategy,
   ViewEncapsulation,
-  computed
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute } from '@angular/router';
 
-import { ReusableTableComponent, GridColumn, RowActionEvent } from '../reusable-table/reusable-table.component';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
+import {
+  ReusableTableComponent,
+  GridColumn,
+  RowActionEvent,
+} from '../reusable-table/reusable-table.component';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '../../../core/services/excel-export.service';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 
@@ -31,7 +38,7 @@ export interface ExportConfig {
     MatMenuModule,
     MatIconModule,
     HasPermissionDirective,
-    TooltipDirective
+    TooltipDirective,
   ],
   templateUrl: './table-card.component.html',
   styleUrls: ['./table-card.component.scss'],
@@ -39,8 +46,8 @@ export interface ExportConfig {
   encapsulation: ViewEncapsulation.Emulated,
   // [FIX] Remove the native 'title' attribute from the host element to prevent the browser tooltip
   host: {
-    '[attr.title]': 'null'
-  }
+    '[attr.title]': 'null',
+  },
 })
 export class TableCardComponent<T> {
   private excelService = inject(ExcelExportService);
@@ -93,7 +100,9 @@ export class TableCardComponent<T> {
     }
 
     // 3. Derive from Route Data
-    const basePermission = currentRoute.data['permission'] as string | undefined;
+    const basePermission = currentRoute.data['permission'] as
+      | string
+      | undefined;
     if (basePermission) {
       return `${basePermission}.REXPORT`;
     }
@@ -112,7 +121,11 @@ export class TableCardComponent<T> {
 
     // 1. Automatic Export (if config is provided)
     if (config) {
-      await this.excelService.exportToExcel(this.data(), config.fileName, config.columns);
+      await this.excelService.exportToExcel(
+        this.data(),
+        config.fileName,
+        config.columns
+      );
     }
 
     // 2. Always emit event (Parent might want to handle custom logic)

@@ -1,5 +1,5 @@
-@use "@angular/material" as mat;
-@use "sass:map";
+@use '@angular/material' as mat;
+@use 'sass:map';
 
 /* ==================================================
    1. THEME CONFIGURATION & TOKENS
@@ -8,153 +8,140 @@
 // --- Primitives (Constant Colors) ---
 $base-palette: (
   // Brand Colors
-  "aqua-island": #9bdad9,
-  "teal-blue": #00839b,
-  "peacock-blue": #006e96,
-  "deep-sapphire": #082567,
-  "pastel-coral": #ffb3ba,
-  "teal-midtone": #52c3d7,
-  "beige-midtone": #f9b88a,
+  'aqua-island': #9bdad9,
+  'teal-blue': #00839b,
+  'peacock-blue': #006e96,
+  'deep-sapphire': #082567,
+  'pastel-coral': #ffb3ba,
+  'teal-midtone': #52c3d7,
+  'beige-midtone': #f9b88a,
 
   // Functional
-  "danger": #dc3545,
-  "success": #16a34a,
-  "warning": #f59e0b,
+  'danger': #dc3545,
+  'success': #16a34a,
+  'warning': #f59e0b,
 
   // Grays / Slates
-  "white": #ffffff,
-  "black": #000000,
-  "slate-50": #f8fafc,
-  "slate-100": #f1f5f9,
-  "slate-200": #e2e8f0,
-  "slate-300": #cbd5e1,
-  "slate-400": #94a3b8,
-  "slate-500": #64748b,
-  "slate-600": #475569,
-  "slate-700": #334155,
-  "slate-800": #1e293b,
-  "slate-900": #0f172a,
-  "slate-950": #020617
+  'white': #ffffff,
+  'black': #000000,
+  'slate-50': #f8fafc,
+  'slate-100': #f1f5f9,
+  'slate-200': #e2e8f0,
+  'slate-300': #cbd5e1,
+  'slate-400': #94a3b8,
+  'slate-500': #64748b,
+  'slate-600': #475569,
+  'slate-700': #334155,
+  'slate-800': #1e293b,
+  'slate-900': #0f172a,
+  'slate-950': #020617
 );
 
 // --- Semantic Tokens (Light Theme) ---
 $light-tokens: (
   // Backgrounds
-  "surface-background": map.get($base-palette, "slate-50"),
-  "surface-card": map.get($base-palette, "white"),
-  "surface-overlay": rgba(255, 255, 255, 0.95),
-  "surface-toast": map.get($base-palette, "white"),
-  "surface-ground": map.get($base-palette, "slate-50"),
-  "input-bg": map.get($base-palette, "slate-50"),
-
+  'surface-background': map.get($base-palette, 'slate-50'),
+  'surface-card': map.get($base-palette, 'white'),
+  'surface-overlay': rgba(255, 255, 255, 0.95),
+  'surface-toast': map.get($base-palette, 'white'),
+  'surface-ground': map.get($base-palette, 'slate-50'),
+  'input-bg': map.get($base-palette, 'slate-50'),
   // Text
-  "text-primary": map.get($base-palette, "slate-900"),
-  "text-secondary": map.get($base-palette, "slate-600"),
-  "text-disabled": map.get($base-palette, "slate-400"),
-
+  'text-primary': map.get($base-palette, 'slate-900'),
+  'text-secondary': map.get($base-palette, 'slate-600'),
+  'text-disabled': map.get($base-palette, 'slate-400'),
   // Borders
-  "border-color": map.get($base-palette, "slate-200"),
-
+  'border-color': map.get($base-palette, 'slate-200'),
   // Brand Mappings
-  "primary": map.get($base-palette, "teal-blue"),
-  "secondary": map.get($base-palette, "peacock-blue"),
-
+  'primary': map.get($base-palette, 'teal-blue'),
+  'secondary': map.get($base-palette, 'peacock-blue'),
   // Custom Brand Colors
-  "deep-sapphire": map.get($base-palette, "deep-sapphire"),
-  "teal-midtone": map.get($base-palette, "teal-midtone"),
-  "pastel-coral": map.get($base-palette, "pastel-coral"),
-  "peacock-light": #66a9c5,
-  "widget-accent": map.get($base-palette, "teal-blue"),
-
+  'deep-sapphire': map.get($base-palette, 'deep-sapphire'),
+  'teal-midtone': map.get($base-palette, 'teal-midtone'),
+  'pastel-coral': map.get($base-palette, 'pastel-coral'),
+  'peacock-light': #66a9c5,
+  'widget-accent': map.get($base-palette, 'teal-blue'),
   // Status
-  "color-danger": map.get($base-palette, "danger"),
-  "color-success": map.get($base-palette, "success"),
-  "color-warning": map.get($base-palette, "warning"),
-  "color-info": map.get($base-palette, "teal-blue"),
-
+  'color-danger': map.get($base-palette, 'danger'),
+  'color-success': map.get($base-palette, 'success'),
+  'color-warning': map.get($base-palette, 'warning'),
+  'color-info': map.get($base-palette, 'teal-blue'),
   // Charts
-  "chart-1": map.get($base-palette, "teal-blue"),
-  "chart-2": map.get($base-palette, "peacock-blue"),
-  "chart-3": map.get($base-palette, "aqua-island"),
-  "chart-6": #f89c5b,
-  "chart-7": #4a4a4a,
-  "chart-8": map.get($base-palette, "teal-midtone"),
-  "chart-9": map.get($base-palette, "beige-midtone"),
-
+  'chart-1': map.get($base-palette, 'teal-blue'),
+  'chart-2': map.get($base-palette, 'peacock-blue'),
+  'chart-3': map.get($base-palette, 'aqua-island'),
+  'chart-6': #f89c5b,
+  'chart-7': #4a4a4a,
+  'chart-8': map.get($base-palette, 'teal-midtone'),
+  'chart-9': map.get($base-palette, 'beige-midtone'),
   // Chart Axis/Grid Lines (subtle but visible)
-  "chart-axis-line": map.get($base-palette, "slate-300")
+  'chart-axis-line': map.get($base-palette, 'slate-300')
 );
 
 // --- Semantic Tokens (Dark Theme - Refined) ---
 $dark-tokens: (
   // Backgrounds
-  "surface-background": #000000,
-  "surface-card": #18181b,
+  'surface-background': #000000,
+  'surface-card': #18181b,
   // Zinc 900
-  "surface-overlay": rgba(9, 9, 11, 0.95),
-  "surface-toast": #27272a,
-  "surface-ground": #27272a,
+  'surface-overlay': rgba(9, 9, 11, 0.95),
+  'surface-toast': #27272a,
+  'surface-ground': #27272a,
 
   // Changed: Slightly lighter than card bg to denote interactivity
-  "input-bg": #27272a,
+  'input-bg': #27272a,
 
   // Text
-  "text-primary": #ffffff,
-  "text-secondary": #a1a1aa,
+  'text-primary': #ffffff,
+  'text-secondary': #a1a1aa,
   // Zinc 400 - Better readability than dark grey
-  "text-disabled": #52525b,
+  'text-disabled': #52525b,
   // Zinc 600
-
-  "border-color": #3f3f46,
+  'border-color': #3f3f46,
 
   // Brand Mappings (High Visibility)
-  "primary": #2dd4bf,
+  'primary': #2dd4bf,
   // Teal 400 (Bright Teal)
-  "secondary": #38bdf8,
+  'secondary': #38bdf8,
   // Sky 400 (Distinct Blue, less Green than Primary)
-
   // Custom Brand Colors - Adjusted to match Light Mode Hue Families
-  "deep-sapphire": #818cf8,
+  'deep-sapphire': #818cf8,
   // Indigo 400 - "Night Blue" instead of generic purple
-  "teal-midtone": #22d3ee,
+  'teal-midtone': #22d3ee,
   // Cyan 400 - Electric Cyan (Matches Light mode teal)
-  "pastel-coral": #fb7185,
+  'pastel-coral': #fb7185,
   // Rose 400 - Matches Light mode Coral
-  "peacock-light": #7dd3fc,
+  'peacock-light': #7dd3fc,
   // Sky 300 - Light Blue
-  "widget-accent": #2dd4bf,
+  'widget-accent': #2dd4bf,
   // Teal 400
-
   // Status Colors
-  "color-danger": #f87171,
+  'color-danger': #f87171,
   // Red 400
-  "color-success": #4ade80,
+  'color-success': #4ade80,
   // Green 400
-  "color-warning": #fbbf24,
+  'color-warning': #fbbf24,
   // Amber 400
-  "color-info": #38bdf8,
+  'color-info': #38bdf8,
   // Sky 400
-
   // Charts (Refined for Distinctness & Identity)
-  "chart-1": #2dd4bf,
+  'chart-1': #2dd4bf,
   // Matches Primary (Teal)
-  "chart-2": #60a5fa,
+  'chart-2': #60a5fa,
   // Blue 400 (Distinct from Teal, matches Peacock)
-  "chart-3": #a5f3fc,
+  'chart-3': #a5f3fc,
   // Cyan 200 (Very Light Aqua - matches Aqua Island)
-  "chart-6": #fb923c,
+  'chart-6': #fb923c,
   // Orange 400 (Vibrant Orange)
-  "chart-7": #94a3b8,
+  'chart-7': #94a3b8,
   // Slate 400 (Grey)
-  "chart-8": #67e8f9,
+  'chart-8': #67e8f9,
   // Cyan 300 (Bright Cyan - matches Teal Midtone)
-  "chart-9": #fdba74,
+  'chart-9': #fdba74,
   // Orange 300 (Soft Peach/Gold - matches Beige)
-
   // Chart Axis/Grid Lines (visible in dark mode)
-  "chart-axis-line": #4b5563 // Gray 600 - visible against dark bg
+  'chart-axis-line': #4b5563 // Gray 600 - visible against dark bg
 );
-
 
 // Mixin to generate CSS variables from maps
 @mixin create-theme-vars($tokens) {
@@ -167,21 +154,15 @@ $dark-tokens: (
    2. ROOT & THEME GENERATION
    ================================================== */
 :root {
-
   // 1. Generate Primitive Variables (available everywhere)
   @each $key, $value in $base-palette {
     --#{$key}: #{$value};
   }
 
   /* --- SHARED SETTINGS --- */
-  --font-family-sans: "Inter",
-  -apple-system,
-  BlinkMacSystemFont,
-  "Segoe UI",
-  Roboto,
-  "Helvetica Neue",
-  Arial,
-  sans-serif;
+  --font-family-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   --font-size-base: 0.9375rem;
   --line-height-base: 1.5;
   --font-weight-normal: 400;
@@ -222,10 +203,10 @@ $dark-tokens: (
 
   // Shadows (Light Mode Defaults)
   --box-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --box-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
-  0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --box-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
-  0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --box-shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --box-shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
   // Component Specific Defaults
   --table-header-bg: var(--teal-blue);
@@ -273,15 +254,15 @@ $dark-tokens: (
 }
 
 /* --- Dark Theme Overrides --- */
-[data-theme="dark"] {
+[data-theme='dark'] {
   @include create-theme-vars($dark-tokens);
 
   // Dark Mode Shadows: lighter, more subtle, relying on borders for depth
   --box-shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --box-shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --box-shadow-lg: 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --box-shadow-md:
+    0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --box-shadow-lg:
+    0 0 0 1px rgba(255, 255, 255, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 
   // Re-map Grays for Semantic correctness in Dark Mode (Inverted Scale)
   --gray-50: #020617; // Slate 950
@@ -323,11 +304,31 @@ $dark-tokens: (
 /* ==================================================
    3. ANGULAR MATERIAL THEMES
    ================================================== */
-$mat-light-theme: mat.define-theme((color: (theme-type: light, primary: mat.$azure-palette, tertiary: mat.$blue-palette),
-      density: (scale: 0)));
+$mat-light-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
 
-$mat-dark-theme: mat.define-theme((color: (theme-type: dark, primary: mat.$azure-palette, tertiary: mat.$blue-palette),
-      density: (scale: 0)));
+$mat-dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
 
 html {
   height: 100%;
@@ -338,7 +339,7 @@ html {
   @include mat.all-component-themes($mat-light-theme);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   @include mat.all-component-colors($mat-dark-theme);
 
   /* Fix Material Form Fields colors in Dark Mode */
@@ -373,7 +374,7 @@ main {
   overflow: hidden;
 }
 
-router-outlet+* {
+router-outlet + * {
   height: 100%;
 }
 
@@ -451,7 +452,7 @@ a {
   min-height: 40px;
 }
 
-[data-theme="dark"] *::-webkit-scrollbar-thumb {
+[data-theme='dark'] *::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.2);
 
   @media (hover: hover) {
@@ -492,12 +493,15 @@ select:-webkit-autofill {
   border: var(--border-width) solid transparent;
   border-radius: var(--border-radius-md);
   position: relative;
-  transition: transform 0.2s var(--transition-spring),
-    box-shadow 0.2s var(--transition-smooth), background-color 0.2s ease,
-    color 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s var(--transition-spring),
+    box-shadow 0.2s var(--transition-smooth),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 
   &::after {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     bottom: -8px;
@@ -513,7 +517,6 @@ select:-webkit-autofill {
     }
   }
 
-
   &:disabled,
   &.disabled {
     opacity: 0.65;
@@ -528,7 +531,7 @@ select:-webkit-autofill {
   color: #ffffff;
   border-color: var(--primary);
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     color: #020617;
 
     @media (hover: hover) {
@@ -552,7 +555,7 @@ select:-webkit-autofill {
   color: var(--gray-800);
   border-color: var(--gray-200);
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
     border-color: rgba(255, 255, 255, 0.1);
@@ -583,7 +586,7 @@ select:-webkit-autofill {
     &:hover:not(:disabled) {
       background-color: rgba(0, 131, 155, 0.1);
 
-      [data-theme="dark"] & {
+      [data-theme='dark'] & {
         background-color: rgba(45, 212, 191, 0.1);
       }
     }
@@ -650,10 +653,12 @@ select:-webkit-autofill {
 }
 
 .loading-shimmer {
-  background: linear-gradient(90deg,
-      var(--gray-200) 0%,
-      var(--gray-300) 50%,
-      var(--gray-200) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--gray-200) 0%,
+    var(--gray-300) 50%,
+    var(--gray-200) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -667,7 +672,7 @@ select:-webkit-autofill {
   display: flex;
   align-items: center;
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     background: var(--gray-100);
     color: var(--gray-700);
     border: none;
@@ -683,8 +688,9 @@ select:-webkit-autofill {
   border: var(--border-width) solid rgba(255, 255, 255, 0.4);
   z-index: 1052;
   opacity: 0;
-  transition: opacity 0.15s var(--transition-smooth),
-  transform 0.15s var(--transition-smooth);
+  transition:
+    opacity 0.15s var(--transition-smooth),
+    transform 0.15s var(--transition-smooth);
   transform: scale(0.95);
   transform-origin: left center;
 
@@ -704,7 +710,7 @@ select:-webkit-autofill {
     line-height: 1;
     border: 1px solid rgba(255, 255, 255, 0.3);
 
-    [data-theme="dark"] & {
+    [data-theme='dark'] & {
       background-color: rgba(255, 255, 255, 0.15);
       border-color: rgba(255, 255, 255, 0.2);
       color: var(--text-primary);
@@ -767,7 +773,7 @@ select:-webkit-autofill {
 }
 
 /* --- Legacy Component Overrides (Menus, Modals) --- */
-body>ul.submenu.open {
+body > ul.submenu.open {
   list-style: none;
   margin: 0;
   background-color: var(--surface-background);
@@ -775,7 +781,7 @@ body>ul.submenu.open {
   border-radius: var(--border-radius-md);
   box-shadow: var(--box-shadow-lg);
 
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-elevation);
   }
@@ -802,12 +808,12 @@ body>ul.submenu.open {
       margin: 0 0 var(--spacing-xs) 0;
       font-size: 0.875rem;
 
-
       color: var(--text-secondary);
       font-weight: var(--font-weight-normal);
 
       /* [UPDATED] Add generic transform transition so :active scaling animates smoothly */
-      transition: background-color 0.2s ease,
+      transition:
+        background-color 0.2s ease,
         color 0.2s ease,
         transform 0.1s ease;
 
@@ -905,7 +911,7 @@ body>ul.submenu.open {
   }
 
   // Dark Mode Overrides for Options
-  [data-theme="dark"] & {
+  [data-theme='dark'] & {
     @media (hover: hover) {
       &:hover:not(.mdc-list-item--disabled) {
         background-color: rgba(255, 255, 255, 0.05) !important;
@@ -943,7 +949,7 @@ body>ul.submenu.open {
       &:hover {
         background-color: var(--gray-100) !important;
 
-        [data-theme="dark"] & {
+        [data-theme='dark'] & {
           background-color: rgba(255, 255, 255, 0.1) !important;
         }
       }
@@ -954,7 +960,9 @@ body>ul.submenu.open {
   .mat-calendar-previous-button,
   .mat-calendar-next-button {
     color: var(--text-secondary) !important;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
     border-radius: 50%;
     /* Ensure circular hover highlight */
 
@@ -963,7 +971,7 @@ body>ul.submenu.open {
         background-color: var(--gray-100) !important;
         color: var(--primary) !important;
 
-        [data-theme="dark"] & {
+        [data-theme='dark'] & {
           background-color: rgba(255, 255, 255, 0.1) !important;
         }
       }
@@ -979,7 +987,9 @@ body>ul.submenu.open {
   /* Period Button (Text + Arrow) */
   .mat-calendar-period-button {
     color: var(--text-secondary) !important;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
     border-radius: var(--border-radius-md);
 
     @media (hover: hover) {
@@ -992,7 +1002,7 @@ body>ul.submenu.open {
           border-top-color: var(--primary) !important;
         }
 
-        [data-theme="dark"] & {
+        [data-theme='dark'] & {
           background-color: rgba(255, 255, 255, 0.1) !important;
         }
       }
@@ -1004,7 +1014,7 @@ body>ul.submenu.open {
     background-color: var(--primary) !important;
     color: #ffffff !important;
 
-    [data-theme="dark"] & {
+    [data-theme='dark'] & {
       color: #000 !important;
       /* Contrast text on bright teal */
     }
@@ -1015,7 +1025,8 @@ body>ul.submenu.open {
     border-color: var(--primary) !important;
   }
 
-  .mat-calendar-body-disabled>.mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+  .mat-calendar-body-disabled
+    > .mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
     color: var(--text-disabled) !important;
     opacity: 0.4 !important;
     background-color: transparent !important;
@@ -1023,7 +1034,7 @@ body>ul.submenu.open {
     /* Optional: Strikethrough for clearer indication */
     /* text-decoration: line-through; */
 
-    [data-theme="dark"] & {
+    [data-theme='dark'] & {
       color: var(--gray-600) !important;
       opacity: 0.3 !important;
     }

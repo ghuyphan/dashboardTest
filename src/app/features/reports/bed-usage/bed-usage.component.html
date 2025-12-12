@@ -1,48 +1,66 @@
 <div class="page-container">
   <div class="page-content">
-
     <div class="widget-section">
       <div class="widget-grid">
         @if (isLoading() && widgetData().length === 0) {
-        @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
-        <app-widget-card [isLoading]="true" title="Loading"></app-widget-card>
-        }
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <app-widget-card
+              [isLoading]="true"
+              title="Loading"></app-widget-card>
+          }
         } @else {
-        @for (widget of widgetData(); track trackByWidgetId($index, widget)) {
-        <app-widget-card [icon]="widget.icon" [title]="widget.title" [value]="widget.value" [caption]="widget.caption"
-          [accentColor]="widget.accentColor" [isLoading]="isLoading()">
-        </app-widget-card>
-        }
+          @for (widget of widgetData(); track trackByWidgetId($index, widget)) {
+            <app-widget-card
+              [icon]="widget.icon"
+              [title]="widget.title"
+              [value]="widget.value"
+              [caption]="widget.caption"
+              [accentColor]="widget.accentColor"
+              [isLoading]="isLoading()">
+            </app-widget-card>
+          }
         }
       </div>
     </div>
 
     <div class="dashboard-grid">
       @defer (on immediate) {
-      <app-chart-card class="span-full" title="Tình hình sử dụng giường bệnh" icon="fas fa-bed-pulse"
-        iconClass="icon-info" [isLoading]="isLoading()" [chartOptions]="chartOptions()"
-        [theme]="themeService.isDarkTheme() ? 'dark' : 'light'" (chartLegendSelectChanged)="onLegendChange($event)">
+        <app-chart-card
+          class="span-full"
+          title="Tình hình sử dụng giường bệnh"
+          icon="fas fa-bed-pulse"
+          iconClass="icon-info"
+          [isLoading]="isLoading()"
+          [chartOptions]="chartOptions()"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          (chartLegendSelectChanged)="onLegendChange($event)">
+          <div header-actions class="header-actions-container">
+            @if (currentDateTime()) {
+              <span class="refresh-text">
+                {{ currentDateTime() }}
+              </span>
+            }
 
-        <div header-actions class="header-actions-container">
-          @if (currentDateTime()) {
-          <span class="refresh-text">
-            {{ currentDateTime() }}
-          </span>
-          }
-
-          <button class="btn-icon-action" (click)="loadData()" [disabled]="isLoading()" [class.loading]="isLoading()"
-            title="Cập nhật dữ liệu mới nhất">
-            <i class="fas" [ngClass]="{'fa-sync': !isLoading(), 'fa-spinner fa-spin': isLoading()}"></i>
-          </button>
-        </div>
-
-      </app-chart-card>
+            <button
+              class="btn-icon-action"
+              (click)="loadData()"
+              [disabled]="isLoading()"
+              [class.loading]="isLoading()"
+              title="Cập nhật dữ liệu mới nhất">
+              <i
+                class="fas"
+                [ngClass]="{
+                  'fa-sync': !isLoading(),
+                  'fa-spinner fa-spin': isLoading(),
+                }"></i>
+            </button>
+          </div>
+        </app-chart-card>
       } @placeholder {
-      <div class="span-full">
-        <div class="chart-placeholder"></div>
-      </div>
+        <div class="span-full">
+          <div class="chart-placeholder"></div>
+        </div>
       }
     </div>
-
   </div>
 </div>

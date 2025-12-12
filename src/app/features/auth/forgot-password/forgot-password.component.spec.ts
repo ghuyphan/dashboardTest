@@ -15,10 +15,9 @@ describe('ForgotPasswordComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ForgotPasswordComponent);
     component = fixture.componentInstance;

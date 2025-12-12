@@ -16,10 +16,9 @@ describe('ConfirmationModalComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: 'ModalRef', useValue: {} }
-      ]
-    })
-      .compileComponents();
+        { provide: 'ModalRef', useValue: {} },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ConfirmationModalComponent);
     component = fixture.componentInstance;

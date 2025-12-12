@@ -1,21 +1,35 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, effect, DestroyRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  effect,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
-import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
-import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
-import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
-import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
+import { ChartCardComponent } from '@shared/components/chart-card/chart-card.component';
+import {
+  DateFilterComponent,
+  DateRange,
+} from '@shared/components/date-filter/date-filter.component';
+import { TableCardComponent } from '@shared/components/table-card/table-card.component';
+import { GridColumn } from '@shared/components/reusable-table/reusable-table.component';
+import { WidgetCardComponent } from '@shared/components/widget-card/widget-card.component';
 
-import { ReportService } from '../../../core/services/report.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { SurgeryStat } from '../../../core/models/surgery-stat.model';
-import { DateUtils } from '../../../shared/utils/date.utils';
-import { NumberUtils } from '../../../shared/utils/number.utils';
+import { ReportService } from '@core/services/report.service';
+import { ToastService } from '@core/services/toast.service';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '@core/services/excel-export.service';
+import { ThemeService, ThemePalette } from '@core/services/theme.service';
+import { SurgeryStat } from '@core/models/surgery-stat.model';
+import { DateUtils } from '@shared/utils/date.utils';
+import { NumberUtils } from '@shared/utils/number.utils';
 import type { EChartsCoreOption } from 'echarts/core';
 
 const GLOBAL_FONT_FAMILY =
@@ -38,7 +52,7 @@ interface WidgetData {
     ChartCardComponent,
     TableCardComponent,
     DateFilterComponent,
-    WidgetCardComponent
+    WidgetCardComponent,
   ],
   providers: [DatePipe, DecimalPipe],
   templateUrl: './surgery-report.component.html',
@@ -69,10 +83,20 @@ export class SurgeryReportComponent implements OnInit {
   public surgeonChartOptions: EChartsCoreOption | null = null;
 
   public tableColumns: GridColumn[] = [
-    { key: 'NGAY_PT_DISPLAY', label: 'Ngày Phẫu Thuật', sortable: true, width: '120px' },
+    {
+      key: 'NGAY_PT_DISPLAY',
+      label: 'Ngày Phẫu Thuật',
+      sortable: true,
+      width: '120px',
+    },
     { key: 'PTV_CHINH', label: 'PTV Chính', sortable: true, width: '250px' },
-    { key: 'CHUYEN_KHOA', label: 'Chuyên Khoa', sortable: true, width: '200px' },
-    { key: 'SO_LUONG', label: 'Số Lượng', sortable: true, width: '100px' }
+    {
+      key: 'CHUYEN_KHOA',
+      label: 'Chuyên Khoa',
+      sortable: true,
+      width: '200px',
+    },
+    { key: 'SO_LUONG', label: 'Số Lượng', sortable: true, width: '100px' },
   ];
 
   private palette!: ThemePalette;
@@ -126,14 +150,14 @@ export class SurgeryReportComponent implements OnInit {
         value: '...',
         caption: 'Số ca nhiều nhất',
         accentColor: this.palette?.tealMidtone || '#52c3d7',
-      }
+      },
     ];
   }
 
   private updateWidgetColors(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const setC = (id: string, color: string) => {
-        const item = this.widgetData.find((x) => x.id === id);
+        const item = this.widgetData.find(x => x.id === id);
         if (item) item.accentColor = color;
       };
       setC('total', this.palette.widgetAccent);
@@ -159,7 +183,8 @@ export class SurgeryReportComponent implements OnInit {
 
     // [OPTIMIZATION] Ensure UI renders loading state before fetching
     setTimeout(() => {
-      this.reportService.getSurgeryReport(this.fromDate, this.toDate)
+      this.reportService
+        .getSurgeryReport(this.fromDate, this.toDate)
         .pipe(
           finalize(() => {
             this.isLoading = false;
@@ -168,19 +193,21 @@ export class SurgeryReportComponent implements OnInit {
           takeUntilDestroyed(this.destroyRef)
         )
         .subscribe({
-          next: (data) => {
+          next: data => {
             this.rawData = data.map(item => ({
               ...item,
-              NGAY_PT_DISPLAY: DateUtils.formatToDisplay(item.NGAY_PT)
+              NGAY_PT_DISPLAY: DateUtils.formatToDisplay(item.NGAY_PT),
             }));
             this.processData(this.rawData);
           },
-          error: (err) => {
+          error: err => {
             console.error(err);
-            this.toastService.showError('Không thể tải dữ liệu báo cáo phẫu thuật.');
+            this.toastService.showError(
+              'Không thể tải dữ liệu báo cáo phẫu thuật.'
+            );
             this.rawData = [];
             this.initializeWidgets();
-          }
+          },
         });
     }, 0);
   }
@@ -214,7 +241,9 @@ export class SurgeryReportComponent implements OnInit {
     });
 
     // Top Stats
-    const topSpecialty = [...specialtyMap.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topSpecialty = [...specialtyMap.entries()].sort(
+      (a, b) => b[1] - a[1]
+    )[0];
     const topSurgeon = [...surgeonMap.entries()].sort((a, b) => b[1] - a[1])[0];
 
     // Update Widgets
@@ -242,7 +271,7 @@ export class SurgeryReportComponent implements OnInit {
         value: topSurgeon ? NumberUtils.format(topSurgeon[1]) : '0',
         caption: 'PTV tích cực nhất',
         accentColor: this.palette.tealMidtone,
-      }
+      },
     ];
 
     this.buildCharts(dateMap, specialtyMap, surgeonMap);
@@ -267,9 +296,8 @@ export class SurgeryReportComponent implements OnInit {
         confine: true,
       },
       legend: {
-        itemWidth: 25
+        itemWidth: 25,
       },
-
     };
 
     // 1. Daily Trend Chart (Line + Trend Line)
@@ -285,7 +313,10 @@ export class SurgeryReportComponent implements OnInit {
     const n = dateValues.length;
 
     if (n > 1) {
-      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      let sumX = 0,
+        sumY = 0,
+        sumXY = 0,
+        sumXX = 0;
       for (let i = 0; i < n; i++) {
         sumX += i;
         sumY += dateValues[i];
@@ -299,7 +330,9 @@ export class SurgeryReportComponent implements OnInit {
       const intercept = (sumY - slope * sumX) / n;
 
       // Generate trend points
-      trendData = Array.from({ length: n }, (_, i) => Number((slope * i + intercept).toFixed(2)));
+      trendData = Array.from({ length: n }, (_, i) =>
+        Number((slope * i + intercept).toFixed(2))
+      );
     }
 
     this.trendChartOptions = {
@@ -309,19 +342,21 @@ export class SurgeryReportComponent implements OnInit {
         textStyle: { color: this.palette.textSecondary },
         top: 0,
         left: 'center',
-        itemWidth: 25
+        itemWidth: 25,
       },
       xAxis: {
         type: 'category',
         boundaryGap: false,
         data: dateLabels,
         axisLine: { lineStyle: { color: this.palette.gray200 } },
-        axisLabel: { color: this.palette.textPrimary }
+        axisLabel: { color: this.palette.textPrimary },
       },
       yAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
-        axisLabel: { color: this.palette.textSecondary }
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
+        axisLabel: { color: this.palette.textSecondary },
       },
       series: [
         {
@@ -336,22 +371,33 @@ export class SurgeryReportComponent implements OnInit {
           areaStyle: {
             color: {
               type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
               colorStops: [
                 { offset: 0, color: this.palette.primary },
-                { offset: 1, color: this.palette.bgCard }
-              ]
+                { offset: 1, color: this.palette.bgCard },
+              ],
             },
-            opacity: 0.3
+            opacity: 0.3,
           },
-          label: { show: true, position: 'top', color: this.palette.textPrimary },
+          label: {
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+          },
           // Markline for Average
           markLine: {
             data: [{ type: 'average', name: 'TB' }],
-            lineStyle: { color: this.palette.secondary, type: [5, 5], opacity: 0.7 },
+            lineStyle: {
+              color: this.palette.secondary,
+              type: [5, 5],
+              opacity: 0.7,
+            },
             label: { position: 'insideEndTop', formatter: 'TB: {c}' },
-            symbol: 'none'
-          }
+            symbol: 'none',
+          },
         },
         // Trend Line
         {
@@ -363,12 +409,12 @@ export class SurgeryReportComponent implements OnInit {
           lineStyle: {
             type: [5, 5],
             color: this.palette.warning,
-            width: 2
+            width: 2,
           },
           tooltip: { show: false },
-          itemStyle: { opacity: 0 }
-        }
-      ]
+          itemStyle: { opacity: 0 },
+        },
+      ],
     };
 
     // 2. Specialty Chart (Vertical Bar)
@@ -384,24 +430,32 @@ export class SurgeryReportComponent implements OnInit {
           interval: 0,
           width: 100,
           overflow: 'truncate',
-          color: this.palette.textPrimary
-        }
+          color: this.palette.textPrimary,
+        },
       },
       yAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } }
-      },
-      series: [{
-        name: 'Số ca',
-        type: 'bar',
-        barWidth: '40%',
-        data: sortedSpecs.map(s => s[1]),
-        itemStyle: {
-          color: this.palette.chart6,
-          borderRadius: [4, 4, 0, 0]
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
         },
-        label: { show: true, position: 'top', color: this.palette.textPrimary }
-      }]
+      },
+      series: [
+        {
+          name: 'Số ca',
+          type: 'bar',
+          barWidth: '40%',
+          data: sortedSpecs.map(s => s[1]),
+          itemStyle: {
+            color: this.palette.chart6,
+            borderRadius: [4, 4, 0, 0],
+          },
+          label: {
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+          },
+        },
+      ],
     };
 
     // 3. Top Surgeons Chart (Horizontal Bar)
@@ -415,7 +469,9 @@ export class SurgeryReportComponent implements OnInit {
       tooltip: { ...commonOptions.tooltip, axisPointer: { type: 'shadow' } },
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } }
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
       },
       yAxis: {
         type: 'category',
@@ -423,22 +479,28 @@ export class SurgeryReportComponent implements OnInit {
         axisLabel: {
           width: 110,
           overflow: 'truncate',
-          color: this.palette.textPrimary
+          color: this.palette.textPrimary,
         },
         axisLine: { show: false },
-        axisTick: { show: false }
+        axisTick: { show: false },
       },
-      series: [{
-        name: 'Số ca',
-        type: 'bar',
-        barWidth: '60%',
-        data: sortedSurgeons.map(s => s[1]),
-        itemStyle: {
-          color: this.palette.tealMidtone,
-          borderRadius: [0, 4, 4, 0]
+      series: [
+        {
+          name: 'Số ca',
+          type: 'bar',
+          barWidth: '60%',
+          data: sortedSurgeons.map(s => s[1]),
+          itemStyle: {
+            color: this.palette.tealMidtone,
+            borderRadius: [0, 4, 4, 0],
+          },
+          label: {
+            show: true,
+            position: 'right',
+            color: this.palette.textPrimary,
+          },
         },
-        label: { show: true, position: 'right', color: this.palette.textPrimary }
-      }]
+      ],
     };
   }
 
@@ -456,7 +518,7 @@ export class SurgeryReportComponent implements OnInit {
         { key: 'NGAY_PT_DISPLAY', header: 'Ngày Phẫu Thuật', type: 'date' },
         { key: 'PTV_CHINH', header: 'Phẫu Thuật Viên Chính' },
         { key: 'CHUYEN_KHOA', header: 'Chuyên Khoa' },
-        { key: 'SO_LUONG', header: 'Số Lượng' }
+        { key: 'SO_LUONG', header: 'Số Lượng' },
       ];
 
       this.excelService.exportToExcel(

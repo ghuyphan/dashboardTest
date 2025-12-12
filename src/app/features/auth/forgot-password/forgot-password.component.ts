@@ -5,16 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [
-    CommonModule, 
-    RouterLink
-  ],
+  imports: [CommonModule, RouterLink],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush // <--- Added this
+  changeDetection: ChangeDetectionStrategy.OnPush, // <--- Added this
 })
 export class ForgotPasswordComponent {
-
   constructor(private router: Router) {}
 
   goBackToLogin() {

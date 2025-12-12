@@ -1,4 +1,13 @@
-import { Component, OnInit, ViewChild, inject, ChangeDetectorRef, ChangeDetectionStrategy, input, DestroyRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  inject,
+  ChangeDetectorRef,
+  ChangeDetectionStrategy,
+  input,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, forkJoin, map } from 'rxjs';
@@ -10,7 +19,10 @@ import { ModalRef } from '../../../core/models/modal-ref.model';
 import { ModalService } from '../../../core/services/modal.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { DropdownDataService, DropdownOption } from '../../../core/services/dropdown-data.service';
+import {
+  DropdownDataService,
+  DropdownOption,
+} from '../../../core/services/dropdown-data.service';
 import { environment } from '../../../../environments/environment.development';
 import { DateUtils } from '../../../shared/utils/date.utils';
 
@@ -23,7 +35,7 @@ import { ConfirmationModalComponent } from '../../../shared/components/confirmat
   imports: [CommonModule, DynamicFormComponent],
   templateUrl: './device-form.component.html',
   styleUrl: './device-form.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeviceFormComponent implements OnInit {
   public device = input<Device | null>(null);
@@ -70,7 +82,7 @@ export class DeviceFormComponent implements OnInit {
         next: ({ deviceTypes, deviceStatuses, deviceData }) => {
           this.buildFormConfig(deviceTypes, deviceStatuses, deviceData);
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to load form data', error);
           this.toastService.showError('Không thể tải dữ liệu cho biểu mẫu');
           this.modalRef.close();
@@ -82,9 +94,9 @@ export class DeviceFormComponent implements OnInit {
     const currentDevice = this.device();
     if (currentDevice?.Id) {
       const url = `${environment.equipmentCatUrl}/${currentDevice.Id}`;
-      return this.http.get<Device[]>(url).pipe(
-        map((dataArray) => (dataArray?.length ? dataArray[0] : null))
-      );
+      return this.http
+        .get<Device[]>(url)
+        .pipe(map(dataArray => (dataArray?.length ? dataArray[0] : null)));
     }
     return of(null);
   }
@@ -128,7 +140,7 @@ export class DeviceFormComponent implements OnInit {
               validationMessages: {
                 required: 'Tên là bắt buộc.',
                 maxLength: 'Tên không được vượt quá 100 ký tự.',
-                minLength: 'Tên phải ít nhất 3 ký tự'
+                minLength: 'Tên phải ít nhất 3 ký tự',
               },
               layout_flexGrow: 1,
             },
@@ -145,7 +157,7 @@ export class DeviceFormComponent implements OnInit {
               validationMessages: {
                 required: 'Model là bắt buộc.',
                 maxLength: 'Model không được vượt quá 50 ký tự.',
-                minLength: 'Model quá ngắn.'
+                minLength: 'Model quá ngắn.',
               },
               layout_flexGrow: 1,
             },
@@ -158,7 +170,7 @@ export class DeviceFormComponent implements OnInit {
               validationMessages: {
                 required: 'Số Serial là bắt buộc.',
                 maxLength: 'Số Serial không được vượt quá 50 ký tự.',
-                minLength: 'Serial quá ngắn.'
+                minLength: 'Serial quá ngắn.',
               },
               layout_flexGrow: 1,
             },
@@ -196,7 +208,9 @@ export class DeviceFormComponent implements OnInit {
               label: 'Tên máy (Host name)',
               value: data.DeviceName || '',
               validators: { maxLength: 50 },
-              validationMessages: { maxLength: 'Tên máy không được vượt quá 50 ký tự.' },
+              validationMessages: {
+                maxLength: 'Tên máy không được vượt quá 50 ký tự.',
+              },
               layout_flexGrow: 1,
             },
             {
@@ -205,7 +219,9 @@ export class DeviceFormComponent implements OnInit {
               label: 'Vị trí',
               value: data.ViTri || '',
               validators: { maxLength: 100 },
-              validationMessages: { maxLength: 'Vị trí không được vượt quá 100 ký tự.' },
+              validationMessages: {
+                maxLength: 'Vị trí không được vượt quá 100 ký tự.',
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -236,7 +252,7 @@ export class DeviceFormComponent implements OnInit {
               validators: { max: 10000000000, min: 0 },
               validationMessages: {
                 max: 'Giá mua không hợp lệ (tối đa 10 tỷ).',
-                min: 'Giá mua không được âm.'
+                min: 'Giá mua không được âm.',
               },
               layout_flexGrow: 1,
             },
@@ -250,7 +266,9 @@ export class DeviceFormComponent implements OnInit {
               label: 'Mô tả',
               value: data.MoTa || '',
               validators: { maxLength: 500 },
-              validationMessages: { maxLength: 'Mô tả không được vượt quá 500 ký tự.' },
+              validationMessages: {
+                maxLength: 'Mô tả không được vượt quá 500 ký tự.',
+              },
               layout_flexGrow: 1,
             },
           ],
@@ -280,22 +298,24 @@ export class DeviceFormComponent implements OnInit {
     const payload = this.createSavePayload(formData, currentUserId);
     const request$ = this.getSaveRequest(payload);
 
-    request$.pipe(
-      finalize(() => {
-        this.isSaving = false;
-        this.cdr.markForCheck();
-      }),
-      takeUntilDestroyed(this.destroyRef) // [3] Cancel save if destroyed
-    ).subscribe({
-      next: (response: any) => {
-        const msg = response.TenKetQua || 'Lưu thành công!';
-        this.toastService.showSuccess(msg);
+    request$
+      .pipe(
+        finalize(() => {
+          this.isSaving = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntilDestroyed(this.destroyRef) // [3] Cancel save if destroyed
+      )
+      .subscribe({
+        next: (response: any) => {
+          const msg = response.TenKetQua || 'Lưu thành công!';
+          this.toastService.showSuccess(msg);
 
-        this.modalRef.canClose = () => true;
-        this.modalRef.close(response);
-      },
-      error: (err: HttpErrorResponse) => this.handleSaveError(err)
-    });
+          this.modalRef.canClose = () => true;
+          this.modalRef.close(response);
+        },
+        error: (err: HttpErrorResponse) => this.handleSaveError(err),
+      });
   }
 
   public onCancel(): void {
@@ -322,18 +342,21 @@ export class DeviceFormComponent implements OnInit {
     const isDirty = this.dynamicForm?.dynamicForm?.dirty ?? false;
     if (!isDirty && !this.isSaving) return of(true);
     if (this.isSaving) return of(false);
-    return this.modalService.open(ConfirmationModalComponent, {
-      title: 'Thay đổi chưa lưu',
-      disableBackdropClose: true,
-      size: 'sm',
-      context: {
-        message: 'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
-        confirmText: 'Hủy bỏ thay đổi',
-        cancelText: 'Tiếp tục chỉnh sửa',
-        icon: 'fas fa-question-circle',
-        iconColor: 'var(--color-danger)',
-      },
-    }).pipe(switchMap((res) => of(!!res)));
+    return this.modalService
+      .open(ConfirmationModalComponent, {
+        title: 'Thay đổi chưa lưu',
+        disableBackdropClose: true,
+        size: 'sm',
+        context: {
+          message:
+            'Bạn có thay đổi chưa lưu. \nBạn có chắc chắn muốn hủy bỏ chúng không?',
+          confirmText: 'Hủy bỏ thay đổi',
+          cancelText: 'Tiếp tục chỉnh sửa',
+          icon: 'fas fa-question-circle',
+          iconColor: 'var(--color-danger)',
+        },
+      })
+      .pipe(switchMap(res => of(!!res)));
   }
 
   private createSavePayload(formData: any, userId: string): any {
@@ -361,7 +384,9 @@ export class DeviceFormComponent implements OnInit {
   private getSaveRequest(payload: any): Observable<any> {
     const apiUrl = this.formConfig.saveUrl;
     const id = this.formConfig.entityId;
-    return id ? this.http.put(`${apiUrl}/${id}`, payload) : this.http.post(apiUrl, payload);
+    return id
+      ? this.http.put(`${apiUrl}/${id}`, payload)
+      : this.http.post(apiUrl, payload);
   }
 
   private toHtmlDate(dateStr: string | null | undefined): string {
@@ -404,7 +429,8 @@ export class DeviceFormComponent implements OnInit {
         }
       }
     } else if (err.status === 409) {
-      errorMessage = 'Dữ liệu đã bị thay đổi bởi người khác. Vui lòng tải lại trang.';
+      errorMessage =
+        'Dữ liệu đã bị thay đổi bởi người khác. Vui lòng tải lại trang.';
     } else if (typeof err.error === 'string') {
       errorMessage = err.error;
     } else if (err.message) {

@@ -218,8 +218,6 @@
   // Include global interaction styles (Transition, Focus, Disabled state)
   @include m.btn-interactions;
 
-
-
   // Specific hover colors for this component (overrides mixin default shadows if needed)
   &:hover:not(:disabled) {
     transform: none; // Disable hover lift

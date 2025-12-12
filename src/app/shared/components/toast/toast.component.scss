@@ -31,12 +31,13 @@
   will-change: transform, opacity, top;
 
   &:not(.expanded) {
-    transform: translate3d(0, calc(var(--index) * 10px), 0) scale(calc(1 - var(--index) * 0.05));
+    transform: translate3d(0, calc(var(--index) * 10px), 0)
+      scale(calc(1 - var(--index) * 0.05));
     opacity: calc(1 - var(--index) * 0.15);
     z-index: calc(100 - var(--index));
 
-    &[style*="--index: 4"],
-    &[style*="--index: 5"] {
+    &[style*='--index: 4'],
+    &[style*='--index: 5'] {
       opacity: 0;
       pointer-events: none;
     }
@@ -369,6 +370,7 @@
   }
 
   .toast-wrapper:not(.expanded) {
-    transform: translate3d(0, calc(var(--index) * -10px), 0) scale(calc(1 - var(--index) * 0.05));
+    transform: translate3d(0, calc(var(--index) * -10px), 0)
+      scale(calc(1 - var(--index) * 0.05));
   }
 }

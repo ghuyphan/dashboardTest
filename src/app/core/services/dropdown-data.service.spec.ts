@@ -13,8 +13,8 @@ describe('DropdownDataService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
+        provideRouter([]),
+      ],
     });
     service = TestBed.inject(DropdownDataService);
   });

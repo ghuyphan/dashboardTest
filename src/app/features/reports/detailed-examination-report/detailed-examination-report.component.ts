@@ -14,14 +14,24 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '../../../core/services/excel-export.service';
 import { DetailedExaminationStat } from '../../../shared/models/detailed-examination-stat.model';
 import { DateUtils } from '../../../shared/utils/date.utils';
 import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange, QuickRange } from '../../../shared/components/date-filter/date-filter.component';
+import {
+  DateFilterComponent,
+  DateRange,
+  QuickRange,
+} from '../../../shared/components/date-filter/date-filter.component';
 import { TableCardComponent } from '../../../shared/components/table-card/table-card.component';
 import { GridColumn } from '../../../shared/components/reusable-table/reusable-table.component';
 import { WidgetCardComponent } from '../../../shared/components/widget-card/widget-card.component';
@@ -98,8 +108,18 @@ export class DetailedExaminationReportComponent implements OnInit {
   public doctorChartOptions: EChartsCoreOption | null = null;
 
   public tableColumns: GridColumn[] = [
-    { key: 'NGAY_KHAM_DISPLAY', label: 'Ngày Khám', sortable: true, width: '120px' },
-    { key: 'TEN_CHUYEN_KHOA', label: 'Chuyên Khoa', sortable: true, width: '200px' },
+    {
+      key: 'NGAY_KHAM_DISPLAY',
+      label: 'Ngày Khám',
+      sortable: true,
+      width: '120px',
+    },
+    {
+      key: 'TEN_CHUYEN_KHOA',
+      label: 'Chuyên Khoa',
+      sortable: true,
+      width: '200px',
+    },
     { key: 'BAC_SI', label: 'Bác Sĩ', sortable: true, width: '180px' },
     { key: 'SO_LUOT_KHAM', label: 'Tổng Lượt', sortable: true, width: '100px' },
     { key: 'SO_NGUOI_KHAM', label: 'Số Người', sortable: true, width: '100px' },
@@ -119,7 +139,10 @@ export class DetailedExaminationReportComponent implements OnInit {
     effect(() => {
       this.palette = this.themeService.currentPalette();
       // [OPTIMIZATION] Only update colors, do NOT re-process data
-      if (!this.isLoading && (this.rawData.length > 0 || this.dailyStats.length > 0)) {
+      if (
+        !this.isLoading &&
+        (this.rawData.length > 0 || this.dailyStats.length > 0)
+      ) {
         this.updateWidgetColors();
         this.updateChartColors();
       }
@@ -191,7 +214,7 @@ export class DetailedExaminationReportComponent implements OnInit {
   private updateWidgetColors(): void {
     if (this.widgetData.length > 0 && this.palette) {
       const setC = (id: string, color: string) => {
-        const item = this.widgetData.find((x) => x.id === id);
+        const item = this.widgetData.find(x => x.id === id);
         if (item) item.accentColor = color;
       };
       setC('total-visits', this.palette.widgetAccent);
@@ -209,7 +232,11 @@ export class DetailedExaminationReportComponent implements OnInit {
     this.cd.markForCheck();
 
     // [OPTIMIZATION] Ensure UI renders loading state before fetching
-    const filterType = (this.currentRangeType === 'thisQuarter' || this.currentRangeType === 'thisYear') ? 'MM' : 'DD';
+    const filterType =
+      this.currentRangeType === 'thisQuarter' ||
+      this.currentRangeType === 'thisYear'
+        ? 'MM'
+        : 'DD';
     setTimeout(() => {
       this.reportService
         .getDetailedExaminationReport(this.fromDate, this.toDate, filterType)
@@ -222,9 +249,11 @@ export class DetailedExaminationReportComponent implements OnInit {
             this.dailyStats = response as DailyExaminationStat[];
             this.processData(); // Start async processing
           },
-          error: (err) => {
+          error: err => {
             console.error(err);
-            this.toastService.showError('Không thể tải dữ liệu báo cáo chi tiết.');
+            this.toastService.showError(
+              'Không thể tải dữ liệu báo cáo chi tiết.'
+            );
             this.rawData = [];
             this.dailyStats = [];
             this.initializeWidgets();
@@ -244,7 +273,11 @@ export class DetailedExaminationReportComponent implements OnInit {
 
   // [OPTIMIZATION] Converted to async with chunking to prevent UI freeze
   private async processData(): Promise<void> {
-    const filterType = (this.currentRangeType === 'thisQuarter' || this.currentRangeType === 'thisYear') ? 'MM' : 'DD';
+    const filterType =
+      this.currentRangeType === 'thisQuarter' ||
+      this.currentRangeType === 'thisYear'
+        ? 'MM'
+        : 'DD';
 
     if (!this.dailyStats || this.dailyStats.length === 0) {
       this.initializeWidgets();
@@ -280,7 +313,9 @@ export class DetailedExaminationReportComponent implements OnInit {
 
     // Helper to check if component is destroyed to stop processing
     let isDestroyed = false;
-    const cleanupFn = this.destroyRef.onDestroy(() => { isDestroyed = true; });
+    const cleanupFn = this.destroyRef.onDestroy(() => {
+      isDestroyed = true;
+    });
 
     try {
       for (let i = 0; i < this.dailyStats.length; i += CHUNK_SIZE) {
@@ -309,7 +344,7 @@ export class DetailedExaminationReportComponent implements OnInit {
             dateMap.set(dateKey, { visits: v, patients: p });
           }
 
-          // 2. Detailed Stats (Flattening + Aggregation) 
+          // 2. Detailed Stats (Flattening + Aggregation)
           let dateDisplay = DateUtils.formatToDisplay(day.NGAY_KHAM);
 
           // [CUSTOM LOGIC] For Month view, show MM/yyyy
@@ -364,8 +399,12 @@ export class DetailedExaminationReportComponent implements OnInit {
     // Assign processed data
     this.rawData = tempRawData;
 
-    const avgMetricValue = NumberUtils.formatDecimal(totalVisits / STANDARD_DIVISOR, 2);
-    const reExamRate = totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
+    const avgMetricValue = NumberUtils.formatDecimal(
+      totalVisits / STANDARD_DIVISOR,
+      2
+    );
+    const reExamRate =
+      totalVisits > 0 ? ((totalOld / totalVisits) * 100).toFixed(1) : '0';
 
     this.widgetData = [
       {
@@ -410,7 +449,10 @@ export class DetailedExaminationReportComponent implements OnInit {
   }
 
   // Cached data structures for fast view updates
-  private cachedDateMap = new Map<string, { visits: number; patients: number }>();
+  private cachedDateMap = new Map<
+    string,
+    { visits: number; patients: number }
+  >();
   private cachedSpecialtyMap = new Map<string, number>();
   private cachedDoctorMap = new Map<string, number>();
   private cachedNewCount = 0;
@@ -430,7 +472,9 @@ export class DetailedExaminationReportComponent implements OnInit {
     }
   }
 
-  private buildTrendChart(dateMap: Map<string, { visits: number; patients: number }>): void {
+  private buildTrendChart(
+    dateMap: Map<string, { visits: number; patients: number }>
+  ): void {
     const sortedDates = Array.from(dateMap.keys()).sort();
 
     const dateLabels = new Array(sortedDates.length);
@@ -442,14 +486,20 @@ export class DetailedExaminationReportComponent implements OnInit {
       const data = dateMap.get(d)!;
       visitsData[index] = data.visits;
       patientsData[index] = data.patients; // Uses SO_NGUOI_KHAM_TONG
-      workloadData[index] = parseFloat((data.visits / STANDARD_DIVISOR).toFixed(2));
+      workloadData[index] = parseFloat(
+        (data.visits / STANDARD_DIVISOR).toFixed(2)
+      );
 
       // Label formatting
-      if (this.currentRangeType === 'thisQuarter' || this.currentRangeType === 'thisYear') {
+      if (
+        this.currentRangeType === 'thisQuarter' ||
+        this.currentRangeType === 'thisYear'
+      ) {
         // Expect d to be identifiable as month
         const dateObj = new Date(d);
         if (!isNaN(dateObj.getTime())) {
-          dateLabels[index] = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+          dateLabels[index] =
+            `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
         } else {
           dateLabels[index] = d;
         }
@@ -464,14 +514,14 @@ export class DetailedExaminationReportComponent implements OnInit {
       legend: {
         top: 0,
         textStyle: { color: this.palette.textSecondary },
-        itemWidth: 25
+        itemWidth: 25,
       },
       tooltip: {
         trigger: 'axis',
         backgroundColor: this.palette.bgCard,
         borderColor: this.palette.gray200,
         textStyle: { color: this.palette.textPrimary },
-        axisPointer: { type: 'shadow' }
+        axisPointer: { type: 'shadow' },
       },
       xAxis: {
         type: 'category',
@@ -483,7 +533,9 @@ export class DetailedExaminationReportComponent implements OnInit {
         type: 'value',
         name: 'Số lượng',
         position: 'left',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
         axisLabel: { color: this.palette.textSecondary },
       },
       series: [
@@ -494,7 +546,11 @@ export class DetailedExaminationReportComponent implements OnInit {
           itemStyle: { color: this.palette.chart3, borderRadius: [4, 4, 0, 0] },
           barGap: '10%',
           barWidth: '30%',
-          label: { show: true, position: 'top', color: this.palette.textPrimary }
+          label: {
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+          },
         },
         {
           name: 'Số người bệnh',
@@ -502,7 +558,11 @@ export class DetailedExaminationReportComponent implements OnInit {
           data: patientsData,
           itemStyle: { color: this.palette.chart2, borderRadius: [4, 4, 0, 0] },
           barWidth: '30%',
-          label: { show: true, position: 'top', color: this.palette.textPrimary }
+          label: {
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+          },
         },
         {
           name: 'TB Lượt/6.5',
@@ -512,9 +572,9 @@ export class DetailedExaminationReportComponent implements OnInit {
           itemStyle: { color: this.palette.chart9 },
           lineStyle: { width: 3, type: [5, 5] },
           symbolSize: 8,
-          symbol: 'circle'
-        }
-      ]
+          symbol: 'circle',
+        },
+      ],
     };
   }
 
@@ -528,13 +588,13 @@ export class DetailedExaminationReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         formatter: (params: any) => {
           return `${params.marker} ${params.name}: <b>${NumberUtils.format(params.value)}</b> (${params.percent}%)`;
-        }
+        },
       },
       legend: {
         bottom: 0,
         left: 'center',
         textStyle: { color: this.palette.textSecondary },
-        itemWidth: 25
+        itemWidth: 25,
       },
       series: [
         {
@@ -550,11 +610,19 @@ export class DetailedExaminationReportComponent implements OnInit {
           label: {
             show: true,
             formatter: '{b}: {d}%',
-            color: this.palette.textPrimary
+            color: this.palette.textPrimary,
           },
           data: [
-            { value: newCount, name: 'Khám Mới', itemStyle: { color: this.palette.chart6 } },
-            { value: oldCount, name: 'Tái Khám', itemStyle: { color: this.palette.primary } },
+            {
+              value: newCount,
+              name: 'Khám Mới',
+              itemStyle: { color: this.palette.chart6 },
+            },
+            {
+              value: oldCount,
+              name: 'Tái Khám',
+              itemStyle: { color: this.palette.primary },
+            },
           ],
         },
       ],
@@ -562,17 +630,24 @@ export class DetailedExaminationReportComponent implements OnInit {
   }
 
   private buildSpecialtyChart(map: Map<string, number>): void {
-    const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const sorted = Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
     const keys = sorted.map(s => s[0]).reverse();
     const values = sorted.map(s => s[1]).reverse();
 
     this.specialtyChartOptions = {
       ...this.getCommonChartOptions(),
 
-      tooltip: { ...this.getCommonChartOptions().tooltip, axisPointer: { type: 'shadow' } },
+      tooltip: {
+        ...this.getCommonChartOptions().tooltip,
+        axisPointer: { type: 'shadow' },
+      },
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
         axisLabel: { color: this.palette.textSecondary },
       },
       yAxis: {
@@ -581,34 +656,53 @@ export class DetailedExaminationReportComponent implements OnInit {
         axisLabel: {
           color: this.palette.textPrimary,
           width: 130,
-          overflow: 'truncate'
+          overflow: 'truncate',
         },
         axisLine: { show: false },
-        axisTick: { show: false }
+        axisTick: { show: false },
       },
-      series: [{
-        name: 'Lượt khám',
-        type: 'bar',
-        data: values,
-        barWidth: '60%',
-        itemStyle: { color: this.palette.chart8, borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', color: this.palette.textPrimary }
-      }]
+      series: [
+        {
+          name: 'Lượt khám',
+          type: 'bar',
+          data: values,
+          barWidth: '60%',
+          itemStyle: { color: this.palette.chart8, borderRadius: [0, 4, 4, 0] },
+          label: {
+            show: true,
+            position: 'right',
+            color: this.palette.textPrimary,
+          },
+        },
+      ],
     };
   }
 
   private buildDoctorChart(map: Map<string, number>): void {
-    const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const sorted = Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
     const keys = sorted.map(s => s[0]).reverse();
     const values = sorted.map(s => s[1]).reverse();
 
     this.doctorChartOptions = {
       ...this.getCommonChartOptions(),
-      grid: { left: '3%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
-      tooltip: { ...this.getCommonChartOptions().tooltip, axisPointer: { type: 'shadow' } },
+      grid: {
+        left: '3%',
+        right: '8%',
+        bottom: '5%',
+        top: '5%',
+        containLabel: true,
+      },
+      tooltip: {
+        ...this.getCommonChartOptions().tooltip,
+        axisPointer: { type: 'shadow' },
+      },
       xAxis: {
         type: 'value',
-        splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
+        splitLine: {
+          lineStyle: { type: 'solid', color: this.palette.gray200 },
+        },
         axisLabel: { color: this.palette.textSecondary },
       },
       yAxis: {
@@ -617,19 +711,28 @@ export class DetailedExaminationReportComponent implements OnInit {
         axisLabel: {
           color: this.palette.textPrimary,
           width: 130,
-          overflow: 'truncate'
+          overflow: 'truncate',
         },
         axisLine: { show: false },
-        axisTick: { show: false }
+        axisTick: { show: false },
       },
-      series: [{
-        name: 'Lượt khám',
-        type: 'bar',
-        data: values,
-        barWidth: '60%',
-        itemStyle: { color: this.palette.tealMidtone, borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', color: this.palette.textPrimary }
-      }]
+      series: [
+        {
+          name: 'Lượt khám',
+          type: 'bar',
+          data: values,
+          barWidth: '60%',
+          itemStyle: {
+            color: this.palette.tealMidtone,
+            borderRadius: [0, 4, 4, 0],
+          },
+          label: {
+            show: true,
+            position: 'right',
+            color: this.palette.textPrimary,
+          },
+        },
+      ],
     };
   }
 
@@ -647,7 +750,6 @@ export class DetailedExaminationReportComponent implements OnInit {
         textStyle: { color: this.palette.textPrimary },
         confine: true,
       },
-
     };
   }
 

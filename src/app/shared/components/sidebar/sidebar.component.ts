@@ -62,7 +62,7 @@ export class SidebarComponent implements AfterViewInit {
     this.breakpointObserver
       .observe(['(max-width: 992px)'])
       .pipe(takeUntilDestroyed())
-      .subscribe((state) => {
+      .subscribe(state => {
         this.isMobileView = state.matches;
       });
 
@@ -88,7 +88,7 @@ export class SidebarComponent implements AfterViewInit {
   }
 
   hideAllSubmenus(): void {
-    this.navItems().forEach((item) => {
+    this.navItems().forEach(item => {
       if (item.children) {
         item.isOpen = false;
       }
@@ -96,7 +96,7 @@ export class SidebarComponent implements AfterViewInit {
   }
 
   restoreAccordionState(): void {
-    this.navItems().forEach((item) => {
+    this.navItems().forEach(item => {
       if (item.children) {
         item.isOpen = this.openAccordionItems.has(item);
       }

@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { ToastMessage, ToastType } from '../models/toast-message.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ToastService {
   // Internal writable signal for state management
@@ -14,28 +14,34 @@ export class ToastService {
   private toastIdCounter = 0;
   private readonly defaultDuration = 5000;
   // INCREASED LIMIT to demonstrate optimized stacking
-  private readonly MAX_TOASTS = 8; 
+  private readonly MAX_TOASTS = 8;
 
-  constructor() { }
+  constructor() {}
 
-  private addToast(message: string, type: ToastType, duration?: number | null): void {
+  private addToast(
+    message: string,
+    type: ToastType,
+    duration?: number | null
+  ): void {
     const id = this.toastIdCounter++;
-    
-    const effectiveDuration = duration === undefined ? this.defaultDuration : duration;
+
+    const effectiveDuration =
+      duration === undefined ? this.defaultDuration : duration;
 
     const newToast: ToastMessage = {
       id,
       message,
       type,
-      duration: effectiveDuration
+      duration: effectiveDuration,
     };
 
     this._toasts.update(currentToasts => {
       // If we've reached the limit, remove the oldest (last one in the array)
       // We slice 0 to MAX - 1 to make room for the new one
-      const filtered = currentToasts.length >= this.MAX_TOASTS
-        ? currentToasts.slice(0, this.MAX_TOASTS - 1)
-        : currentToasts;
+      const filtered =
+        currentToasts.length >= this.MAX_TOASTS
+          ? currentToasts.slice(0, this.MAX_TOASTS - 1)
+          : currentToasts;
 
       // Add the new toast to the beginning
       return [newToast, ...filtered];

@@ -9,10 +9,13 @@ import {
   OnDestroy,
   inject,
   NgZone,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
 import { NumberUtils } from '../../utils/number.utils';
 
 type ValueFormat = 'number' | 'decimal' | 'currency' | 'string' | 'percent';
@@ -58,15 +61,16 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
 
   // Use the resolved color for styles
   public iconWrapperStyle = computed(() => ({
-    'background-color': this.resolvedAccentColor() + '33' // Add 20% opacity (hex alpha)
+    'background-color': this.resolvedAccentColor() + '33', // Add 20% opacity (hex alpha)
   }));
 
   public iconStyle = computed(() => ({
-    'color': this.resolvedAccentColor()
+    color: this.resolvedAccentColor(),
   }));
 
   // View Child with new signal API
-  public valueDisplay = viewChild.required<ElementRef<HTMLDivElement>>('valueDisplay');
+  public valueDisplay =
+    viewChild.required<ElementRef<HTMLDivElement>>('valueDisplay');
 
   private currentValue: number = 0;
   private hasViewInitialized = false;
@@ -110,7 +114,9 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     const parsedValue = parseFloat(cleanValue);
 
     if (!isNaN(parsedValue)) {
-      shouldAnimate ? this.animate(this.currentValue, parsedValue) : this.renderNumericValue(parsedValue);
+      shouldAnimate
+        ? this.animate(this.currentValue, parsedValue)
+        : this.renderNumericValue(parsedValue);
     } else {
       this.renderStringValue(value);
     }
@@ -131,7 +137,11 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     this.renderStringValue(value);
   }
 
-  private handleNumericValue(rawValue: string, parsedValue: number, shouldAnimate: boolean): void {
+  private handleNumericValue(
+    rawValue: string,
+    parsedValue: number,
+    shouldAnimate: boolean
+  ): void {
     this.detectValueFormat(rawValue);
     if (shouldAnimate) {
       this.animate(this.currentValue, parsedValue);
@@ -183,7 +193,8 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
 
     // [OPTIMIZATION] Check user preference for reduced motion
-    const prefersReducedMotion = typeof window !== 'undefined' &&
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // If start equals end, or animations disabled/unwanted, render immediately
@@ -247,7 +258,7 @@ export class WidgetCardComponent implements AfterViewInit, OnDestroy {
   }
 
   private isElementAvailable(): boolean {
-    return !!(this.valueDisplay()?.nativeElement);
+    return !!this.valueDisplay()?.nativeElement;
   }
 
   ngOnDestroy(): void {

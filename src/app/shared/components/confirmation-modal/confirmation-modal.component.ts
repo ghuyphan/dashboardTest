@@ -1,4 +1,9 @@
-import { Component, input, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  input,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalRef } from '../../../core/models/modal-ref.model';
 

@@ -78,7 +78,8 @@
   height: 40px;
 
   /* Match Sidebar transition */
-  transition: background-color 0.2s ease,
+  transition:
+    background-color 0.2s ease,
     color 0.2s ease,
     transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -290,10 +291,12 @@
   i {
     font-size: 9px;
     color: var(--text-secondary);
-    transition: color 0.2s, transform 0.2s ease;
+    transition:
+      color 0.2s,
+      transform 0.2s ease;
   }
 
-  .user-menu-toggle[aria-expanded="true"] & i {
+  .user-menu-toggle[aria-expanded='true'] & i {
     color: var(--teal-blue);
     transform: rotate(180deg);
   }
@@ -390,7 +393,7 @@
       font-size: 0.9rem;
       line-height: 1.5;
 
-      &>span {
+      & > span {
         flex-grow: 1;
       }
     }
@@ -456,7 +459,6 @@
    DARK MODE OVERRIDES (Explicitly targeted)
    --------------------------------------------------------------- */
 ::ng-deep [data-theme='dark'] .header-user-menu-panel.mat-mdc-menu-panel {
-
   background-color: #18181b !important;
   /* Ensure background is set for panel */
 
@@ -526,7 +528,9 @@
        Use !important to override Material's default timing.
        When closing, Material sets opacity: 0 and transform: scale(0.8).
        We want to animate that smoothly. */
-    transition: transform 0.25s ease-in, opacity 0.25s ease-in !important;
+    transition:
+      transform 0.25s ease-in,
+      opacity 0.25s ease-in !important;
 
     will-change: transform, opacity;
 

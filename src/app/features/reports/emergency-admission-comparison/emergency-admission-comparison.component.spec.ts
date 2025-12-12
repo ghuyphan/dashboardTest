@@ -15,10 +15,9 @@ describe('EmergencyAdmissionComparisonComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EmergencyAdmissionComparisonComponent);
     component = fixture.componentInstance;

@@ -18,12 +18,12 @@
 
     .confirm-icon-wrapper {
       margin-bottom: var(--spacing-md);
-      
+
       i {
-        font-size: 3rem; 
+        font-size: 3rem;
         line-height: 1;
         /* Semantic variable for disabled/muted icon color */
-        color: var(--text-disabled); 
+        color: var(--text-disabled);
       }
     }
 
@@ -41,38 +41,38 @@
      LAYOUT: STANDARD (For Questions/Confirmations)
      ========================================================================== */
   &.layout-standard {
-    align-items: stretch; 
+    align-items: stretch;
     text-align: left;
 
     .standard-header {
       display: flex;
-      align-items: flex-start; 
+      align-items: flex-start;
       gap: var(--spacing-md);
       margin-bottom: var(--spacing-sm);
-      
+
       .mini-icon {
         flex-shrink: 0;
-        padding-top: 2px; 
+        padding-top: 2px;
         i {
-          font-size: 1.25rem; 
+          font-size: 1.25rem;
         }
       }
 
       .confirm-title {
         margin: 0;
-        font-size: 1.125rem; 
+        font-size: 1.125rem;
         font-weight: 600;
         line-height: 1.4;
       }
     }
 
     .confirm-content {
-      margin-bottom: var(--spacing-lg); 
+      margin-bottom: var(--spacing-lg);
       padding-left: 0;
     }
 
     .confirm-footer {
-      justify-content: flex-end; 
+      justify-content: flex-end;
       padding-top: 0;
     }
   }
@@ -84,7 +84,7 @@
 
 .confirm-content {
   width: 100%;
-  margin-bottom: var(--spacing-md); 
+  margin-bottom: var(--spacing-md);
 }
 
 .confirm-title {
@@ -94,7 +94,7 @@
 }
 
 .confirm-message {
-  font-size: 0.9375rem; 
+  font-size: 0.9375rem;
   color: var(--text-secondary); /* Semantic variable */
   margin: 0;
   line-height: 1.5;
@@ -114,22 +114,22 @@
 */
 
 .btn {
-  min-width: 80px; 
+  min-width: 80px;
 }
 
 .btn-danger {
   background-color: var(--color-danger);
-  color: var(--white); 
+  color: var(--white);
   border-color: var(--color-danger);
-  
+
   &:hover:not(:disabled) {
     /* Darken for hover effect */
-    background-color: #c9302c; 
+    background-color: #c9302c;
     border-color: #b02a37;
 
     [data-theme='dark'] & {
-       background-color: #f87171; 
-       opacity: 0.9;
+      background-color: #f87171;
+      opacity: 0.9;
     }
   }
 }

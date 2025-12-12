@@ -8,7 +8,7 @@ import {
   effect,
   ViewEncapsulation,
   signal,
-  OnDestroy
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common'; // Added DatePipe
 import { NumberUtils } from '../../../shared/utils/number.utils';
@@ -28,7 +28,11 @@ import { MatInputModule } from '@angular/material/input';
 
 // [NEW] Datepicker Imports
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
+import {
+  MatNativeDateModule,
+  MAT_DATE_LOCALE,
+  provideNativeDateAdapter,
+} from '@angular/material/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -83,17 +87,17 @@ export type DynamicFormValue = Record<string, unknown>;
     MatInputModule,
     // [NEW]
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
   ],
   providers: [
     DatePipe,
     provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' }
+    { provide: MAT_DATE_LOCALE, useValue: 'vi-VN' },
   ],
   templateUrl: './dynamic-form.component.html',
   styleUrl: './dynamic-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class DynamicFormComponent implements OnInit, OnDestroy {
   public formConfig = input<FormConfig | undefined>();
@@ -118,10 +122,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     this.dynamicForm = this.fb.group<Record<string, FormControl<any>>>({});
 
     // [NEW] Mobile Logic
-    this.breakpointObserver.observe([
-      Breakpoints.Handset,
-      Breakpoints.TabletPortrait
-    ]).pipe(takeUntil(this.destroy$))
+    this.breakpointObserver
+      .observe([Breakpoints.Handset, Breakpoints.TabletPortrait])
+      .pipe(takeUntil(this.destroy$))
       .subscribe(result => {
         this.isMobile.set(result.matches);
       });
@@ -134,7 +137,7 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {}
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -147,7 +150,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     this.formReady.emit(this.dynamicForm);
   }
 
-  private createFormControls(config: FormConfig): Record<string, FormControl<unknown>> {
+  private createFormControls(
+    config: FormConfig
+  ): Record<string, FormControl<unknown>> {
     const formGroup: Record<string, FormControl<unknown>> = {};
 
     for (const row of config.formRows) {
@@ -161,7 +166,10 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
   private createFormControl(config: FormControlConfig): FormControl<unknown> {
     const value = this.prepareControlValue(config);
     const validators = this.buildValidators(config.validators);
-    return new FormControl<unknown>({ value, disabled: config.disabled ?? false }, validators);
+    return new FormControl<unknown>(
+      { value, disabled: config.disabled ?? false },
+      validators
+    );
   }
 
   private prepareControlValue(config: FormControlConfig): unknown {
@@ -184,14 +192,17 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     if (!validatorsConfig) return [];
 
     const validators: ValidatorFn[] = [];
-    const validatorMap: Record<keyof ValidatorsConfig, (value: any) => ValidatorFn | null> = {
+    const validatorMap: Record<
+      keyof ValidatorsConfig,
+      (value: any) => ValidatorFn | null
+    > = {
       required: () => Validators.required,
-      minLength: (val) => Validators.minLength(val),
-      maxLength: (val) => Validators.maxLength(val),
+      minLength: val => Validators.minLength(val),
+      maxLength: val => Validators.maxLength(val),
       email: () => Validators.email,
-      pattern: (val) => Validators.pattern(val),
-      min: (val) => Validators.min(val),
-      max: (val) => Validators.max(val),
+      pattern: val => Validators.pattern(val),
+      min: val => Validators.min(val),
+      max: val => Validators.max(val),
     };
 
     for (const [key, createValidator] of Object.entries(validatorMap)) {
@@ -218,7 +229,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
   }
 
   // [NEW] Helper to ensure consistency (BE usually expects strings)
-  private formatDatesInFormValue(formValue: DynamicFormValue): DynamicFormValue {
+  private formatDatesInFormValue(
+    formValue: DynamicFormValue
+  ): DynamicFormValue {
     const newValue = { ...formValue };
     const config = this.formConfig();
 
@@ -228,7 +241,10 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
       for (const control of row.controls) {
         const val = newValue[control.controlName];
         if (control.controlType === 'date' && val instanceof Date) {
-          newValue[control.controlName] = this.datePipe.transform(val, 'yyyy-MM-dd');
+          newValue[control.controlName] = this.datePipe.transform(
+            val,
+            'yyyy-MM-dd'
+          );
         }
       }
     }
@@ -245,7 +261,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
 
   public isInvalid(controlName: string): boolean {
     const control = this.getControl(controlName);
-    return control ? control.invalid && (control.dirty || control.touched) : false;
+    return control
+      ? control.invalid && (control.dirty || control.touched)
+      : false;
   }
 
   public getErrorMessage(controlConfig: FormControlConfig): string {
@@ -253,7 +271,10 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     if (!control?.errors || !controlConfig.validationMessages) {
       return '';
     }
-    return this.findFirstErrorMessage(control, controlConfig.validationMessages);
+    return this.findFirstErrorMessage(
+      control,
+      controlConfig.validationMessages
+    );
   }
 
   private findFirstErrorMessage(
@@ -330,7 +351,7 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
   public patchFormValues(values: Partial<DynamicFormValue>): void {
     // If patching dates as strings, we might need to convert them to Dates manually
     // However, MatDatepicker often handles parsing strings if standard format.
-    // For robustness, you could intercept here, but typically ReactiveForms 
+    // For robustness, you could intercept here, but typically ReactiveForms
     // patchValue is direct.
     this.dynamicForm.patchValue(values);
   }

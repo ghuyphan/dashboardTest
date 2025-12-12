@@ -1,5 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { LlmService } from './llm.service';
 import { AuthService } from './auth.service';
 import { ThemeService } from './theme.service';
@@ -13,18 +16,20 @@ describe('LlmService', () => {
   const mockAuthService = {
     isLoggedIn: () => true,
     getAccessToken: () => 'token',
-    currentUser: () => ({ permissions: [] })
+    currentUser: () => ({ permissions: [] }),
   };
 
   const mockThemeService = {
     isDarkTheme: () => false,
-    toggleTheme: () => { }
+    toggleTheme: () => {},
   };
 
   const mockRouter = {
     url: '/home',
-    navigateByUrl: jasmine.createSpy('navigateByUrl').and.returnValue(Promise.resolve(true)),
-    config: []
+    navigateByUrl: jasmine
+      .createSpy('navigateByUrl')
+      .and.returnValue(Promise.resolve(true)),
+    config: [],
   };
 
   beforeEach(() => {
@@ -34,8 +39,8 @@ describe('LlmService', () => {
         LlmService,
         { provide: AuthService, useValue: mockAuthService },
         { provide: ThemeService, useValue: mockThemeService },
-        { provide: Router, useValue: mockRouter }
-      ]
+        { provide: Router, useValue: mockRouter },
+      ],
     });
     service = TestBed.inject(LlmService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -53,8 +58,8 @@ describe('LlmService', () => {
     const mockConfig = {
       status: 'ok',
       config: {
-        hotline: '9999'
-      }
+        hotline: '9999',
+      },
     };
 
     // Trigger loadModel which calls checkHealth

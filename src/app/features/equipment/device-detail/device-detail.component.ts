@@ -1,4 +1,11 @@
-import { Component, OnInit, ViewEncapsulation, Inject, inject, DestroyRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewEncapsulation,
+  Inject,
+  inject,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule, CurrencyPipe, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, of } from 'rxjs';
@@ -23,14 +30,10 @@ import { DeviceService } from '../../../core/services/device.service';
 @Component({
   selector: 'app-device-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    QRCodeComponent,
-    CurrencyPipe
-  ],
+  imports: [CommonModule, QRCodeComponent, CurrencyPipe],
   templateUrl: './device-detail.component.html',
   styleUrl: './device-detail.component.scss',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class DeviceDetailComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
@@ -51,7 +54,7 @@ export class DeviceDetailComponent implements OnInit {
     private toastService: ToastService,
     private pdfService: PdfService,
     @Inject(DOCUMENT) private document: Document
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.route.params
@@ -70,13 +73,14 @@ export class DeviceDetailComponent implements OnInit {
   loadDevice(id: string): void {
     this.isLoading = true;
 
-    this.deviceService.getDeviceById(id)
+    this.deviceService
+      .getDeviceById(id)
       .pipe(
-        finalize(() => this.isLoading = false),
+        finalize(() => (this.isLoading = false)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (device) => {
+        next: device => {
           this.device = device;
           this.qrCodeValue = window.location.href;
 
@@ -85,9 +89,11 @@ export class DeviceDetailComponent implements OnInit {
         },
         error: (err: Error) => {
           console.error('Failed to load device details:', err);
-          this.toastService.showError(err.message || 'Không thể tải chi tiết thiết bị.');
+          this.toastService.showError(
+            err.message || 'Không thể tải chi tiết thiết bị.'
+          );
           this.goBack();
-        }
+        },
       });
   }
 
@@ -129,18 +135,24 @@ export class DeviceDetailComponent implements OnInit {
 
     if (lower.includes('đang sử dụng')) return 'status-in-use';
     if (lower.includes('sẵn sàng')) return 'status-ready';
-    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa')) return 'status-maintenance';
-    if (lower.includes('bảo trì') || lower.includes('sửa chữa')) return 'status-repair';
-    if (lower.includes('hỏng') || lower.includes('thanh lý')) return 'status-broken';
+    if (lower.includes('đang bảo trì') || lower.includes('đang sửa chữa'))
+      return 'status-maintenance';
+    if (lower.includes('bảo trì') || lower.includes('sửa chữa'))
+      return 'status-repair';
+    if (lower.includes('hỏng') || lower.includes('thanh lý'))
+      return 'status-broken';
     return 'status-default';
   }
 
   public getDeviceIconClass(deviceType: string | null | undefined): string {
     if (!deviceType) return 'fas fa-question-circle';
     const lower = deviceType.toLowerCase();
-    if (lower.includes('laptop') || lower.includes('máy tính')) return 'fas fa-laptop-medical';
-    if (lower.includes('printer') || lower.includes('máy in')) return 'fas fa-print';
-    if (lower.includes('server') || lower.includes('máy chủ')) return 'fas fa-server';
+    if (lower.includes('laptop') || lower.includes('máy tính'))
+      return 'fas fa-laptop-medical';
+    if (lower.includes('printer') || lower.includes('máy in'))
+      return 'fas fa-print';
+    if (lower.includes('server') || lower.includes('máy chủ'))
+      return 'fas fa-server';
     if (lower.includes('monitor')) return 'fas fa-desktop';
     return 'fas fa-hdd';
   }
@@ -159,7 +171,7 @@ export class DeviceDetailComponent implements OnInit {
       status: device.TrangThai_Ten || '',
       description: device.MoTa || '',
       price: NumberUtils.formatCurrency(device.GiaMua || 0),
-      createdDate: new Date().toLocaleDateString('vi-VN')
+      createdDate: new Date().toLocaleDateString('vi-VN'),
     };
 
     try {
@@ -225,51 +237,56 @@ export class DeviceDetailComponent implements OnInit {
   }
 
   onEdit(device: Device): void {
-    this.modalService.open(DeviceFormComponent, {
-      title: `Sửa thiết bị`,
-      context: { device: { ...device }, title: 'Sửa thiết bị' },
-    }).subscribe((result) => {
-      if (result) {
-        CustomRouteReuseStrategy.clearCache('equipment/catalog');
-        this.loadDevice(device.Id!.toString());
-      }
-    });
+    this.modalService
+      .open(DeviceFormComponent, {
+        title: `Sửa thiết bị`,
+        context: { device: { ...device }, title: 'Sửa thiết bị' },
+      })
+      .subscribe(result => {
+        if (result) {
+          CustomRouteReuseStrategy.clearCache('equipment/catalog');
+          this.loadDevice(device.Id!.toString());
+        }
+      });
   }
 
   onDelete(device: Device): void {
-    this.modalService.open(ConfirmationModalComponent, {
-      title: 'Xác nhận Xóa',
-      size: 'sm',
-      context: {
-        message: `Bạn có chắc chắn muốn xóa thiết bị "${device.Ten}" (Mã: ${device.Ma}) không?`,
-        confirmText: 'Xác nhận Xóa',
-        cancelText: 'Hủy bỏ'
-      }
-    }).pipe(
-      switchMap(confirmed => {
-        if (confirmed) {
-          this.isLoading = true;
-          return this.deviceService.deleteDevice(device.Id!);
-        }
-        return of(null);
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (response) => {
-        if (response) {
-          CustomRouteReuseStrategy.clearCache('equipment/catalog');
-          this.toastService.showSuccess('Xóa thiết bị thành công!');
-          this.goBack();
-        }
-      },
-      error: (err: any) => {
-        this.isLoading = false;
-        const msg = err.error?.TenKetQua || err.message || 'Xóa thất bại.';
-        this.toastService.showError(msg, 0);
-      },
-      complete: () => {
-        if (this.isLoading) this.isLoading = false;
-      }
-    });
+    this.modalService
+      .open(ConfirmationModalComponent, {
+        title: 'Xác nhận Xóa',
+        size: 'sm',
+        context: {
+          message: `Bạn có chắc chắn muốn xóa thiết bị "${device.Ten}" (Mã: ${device.Ma}) không?`,
+          confirmText: 'Xác nhận Xóa',
+          cancelText: 'Hủy bỏ',
+        },
+      })
+      .pipe(
+        switchMap(confirmed => {
+          if (confirmed) {
+            this.isLoading = true;
+            return this.deviceService.deleteDevice(device.Id!);
+          }
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: response => {
+          if (response) {
+            CustomRouteReuseStrategy.clearCache('equipment/catalog');
+            this.toastService.showSuccess('Xóa thiết bị thành công!');
+            this.goBack();
+          }
+        },
+        error: (err: any) => {
+          this.isLoading = false;
+          const msg = err.error?.TenKetQua || err.message || 'Xóa thất bại.';
+          this.toastService.showError(msg, 0);
+        },
+        complete: () => {
+          if (this.isLoading) this.isLoading = false;
+        },
+      });
   }
 }

@@ -14,15 +14,24 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReportService } from '../../../core/services/report.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ThemeService, ThemePalette } from '../../../core/services/theme.service';
+import {
+  ThemeService,
+  ThemePalette,
+} from '../../../core/services/theme.service';
 import { EmergencyStat } from '../../../shared/models/emergency-stat';
 
 import { DateUtils } from '../../../shared/utils/date.utils';
 import { NumberUtils } from '../../../shared/utils/number.utils';
 
 import { ChartCardComponent } from '../../../shared/components/chart-card/chart-card.component';
-import { DateFilterComponent, DateRange } from '../../../shared/components/date-filter/date-filter.component';
-import { ExcelExportService, ExportColumn } from '../../../core/services/excel-export.service';
+import {
+  DateFilterComponent,
+  DateRange,
+} from '../../../shared/components/date-filter/date-filter.component';
+import {
+  ExcelExportService,
+  ExportColumn,
+} from '../../../core/services/excel-export.service';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { TooltipDirective } from '../../../shared/directives/tooltip.directive';
 
@@ -110,17 +119,21 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           takeUntilDestroyed(this.destroyRef)
         )
         .subscribe({
-          next: (data) => {
-            this.rawData = data.map((item) => ({
+          next: data => {
+            this.rawData = data.map(item => ({
               ...item,
-              NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(item.NGAY_TIEP_NHAN)
+              NGAY_TIEP_NHAN_DISPLAY: DateUtils.formatToDisplay(
+                item.NGAY_TIEP_NHAN
+              ),
             }));
 
             this.buildChart(this.rawData);
           },
-          error: (err) => {
+          error: err => {
             console.error(err);
-            this.toastService.showError('Không thể tải dữ liệu báo cáo cấp cứu.');
+            this.toastService.showError(
+              'Không thể tải dữ liệu báo cáo cấp cứu.'
+            );
             this.rawData = [];
             this.comparisonChartOptions = null;
           },
@@ -134,7 +147,11 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
       return;
     }
 
-    const sorted = [...data].sort((a, b) => new Date(a.NGAY_TIEP_NHAN).getTime() - new Date(b.NGAY_TIEP_NHAN).getTime());
+    const sorted = [...data].sort(
+      (a, b) =>
+        new Date(a.NGAY_TIEP_NHAN).getTime() -
+        new Date(b.NGAY_TIEP_NHAN).getTime()
+    );
 
     // Prepare labels: Use Date (dd/MM)
     const dates = sorted.map(d => {
@@ -151,7 +168,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
     const colors = {
       admissions: this.palette.chart2,
       totalCC: this.palette.tealMidtone,
-      bhytCC: this.palette.primary
+      bhytCC: this.palette.primary,
     };
 
     const commonTooltip = {
@@ -160,7 +177,7 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
       borderColor: this.palette.gray200,
       textStyle: { color: this.palette.textPrimary },
       confine: true,
-      axisPointer: { type: 'shadow' }
+      axisPointer: { type: 'shadow' },
     };
 
     this.comparisonChartOptions = {
@@ -182,34 +199,40 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
             </div>`;
           });
           return result;
-        }
+        },
       },
 
       legend: {
-        data: ['Số ca nhập viện từ cấp cứu', 'Tổng số lượt cấp cứu', 'Tổng số lượt cấp cứu có BHYT'],
+        data: [
+          'Số ca nhập viện từ cấp cứu',
+          'Tổng số lượt cấp cứu',
+          'Tổng số lượt cấp cứu có BHYT',
+        ],
         // FIX: Move legend to Top to avoid collision with slider
         top: 0,
         left: 'center',
         textStyle: { color: this.palette.textSecondary },
-        itemWidth: 25
+        itemWidth: 25,
       },
       xAxis: {
         type: 'category',
         data: dates,
         axisLabel: {
           color: this.palette.textPrimary,
-          margin: 10
+          margin: 10,
         },
-        axisLine: { lineStyle: { color: this.palette.gray200 } }
+        axisLine: { lineStyle: { color: this.palette.gray200 } },
       },
       yAxis: [
         {
           type: 'value',
           name: 'Số Lượng',
           nameTextStyle: { color: this.palette.textSecondary },
-          splitLine: { lineStyle: { type: 'solid', color: this.palette.gray200 } },
-          axisLabel: { color: this.palette.textSecondary }
-        }
+          splitLine: {
+            lineStyle: { type: 'solid', color: this.palette.gray200 },
+          },
+          axisLabel: { color: this.palette.textSecondary },
+        },
       ],
       series: [
         {
@@ -219,8 +242,14 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           barWidth: '50%',
           data: admissions,
           itemStyle: { color: colors.admissions, borderRadius: [4, 4, 0, 0] },
-          label: { show: true, position: 'top', color: this.palette.textPrimary, fontSize: 10, distance: 5 },
-          z: 1
+          label: {
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+            fontSize: 10,
+            distance: 5,
+          },
+          z: 1,
         },
         {
           name: 'Tổng số lượt cấp cứu',
@@ -233,7 +262,12 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           itemStyle: { color: colors.totalCC },
           lineStyle: { width: 3 },
           z: 2,
-          label: { show: true, position: 'top', color: colors.totalCC, formatter: (p: any) => NumberUtils.format(p.value) }
+          label: {
+            show: true,
+            position: 'top',
+            color: colors.totalCC,
+            formatter: (p: any) => NumberUtils.format(p.value),
+          },
         },
         {
           name: 'Tổng số lượt cấp cứu có BHYT',
@@ -246,9 +280,14 @@ export class EmergencyAdmissionComparisonComponent implements OnInit {
           itemStyle: { color: colors.bhytCC },
           lineStyle: { width: 3 },
           z: 2,
-          label: { show: true, position: 'top', color: colors.bhytCC, formatter: (p: any) => NumberUtils.format(p.value) }
-        }
-      ]
+          label: {
+            show: true,
+            position: 'top',
+            color: colors.bhytCC,
+            formatter: (p: any) => NumberUtils.format(p.value),
+          },
+        },
+      ],
     };
   }
 

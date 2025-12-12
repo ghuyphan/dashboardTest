@@ -15,10 +15,9 @@ describe('EmergencySummaryComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EmergencySummaryComponent);
     component = fixture.componentInstance;

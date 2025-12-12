@@ -1,7 +1,5 @@
 <div class="confirm-container" [ngClass]="'layout-' + layout()">
-  
   @if (layout() === 'center') {
-    
     @if (icon()) {
       <div class="confirm-icon-wrapper">
         <i [class]="icon()" [style.color]="iconColor()"></i>
@@ -28,12 +26,11 @@
   }
 
   @if (layout() === 'standard') {
-    
     @if (title() || icon()) {
       <div class="standard-header">
         @if (icon()) {
           <div class="mini-icon">
-             <i [class]="icon()" [style.color]="iconColor()"></i>
+            <i [class]="icon()" [style.color]="iconColor()"></i>
           </div>
         }
         @if (title()) {
@@ -52,11 +49,10 @@
           {{ cancelText() }}
         </button>
       }
-      
+
       <button type="button" class="btn btn-primary" (click)="onConfirm()">
         {{ confirmText() }}
       </button>
     </div>
   }
-
 </div>

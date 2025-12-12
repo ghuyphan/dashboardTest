@@ -19,21 +19,24 @@ export interface DeviceQueryParams {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DeviceService {
   private http = inject(HttpClient);
   private baseUrl = environment.equipmentCatUrl;
 
-  constructor() { }
+  constructor() {}
 
   /**
    * Gets a paged list of devices, optionally searching by text.
    * Corresponds to logic in DeviceListComponent.
    */
-  getDevicesPaged(queryParams: DeviceQueryParams): Observable<PagedResult<Device>> {
-    const { pageNumber, pageSize, sortColumn, sortDirection, textSearch } = queryParams;
-    
+  getDevicesPaged(
+    queryParams: DeviceQueryParams
+  ): Observable<PagedResult<Device>> {
+    const { pageNumber, pageSize, sortColumn, sortDirection, textSearch } =
+      queryParams;
+
     let params = new HttpParams()
       .set('PageNumber', pageNumber.toString())
       .set('PageSize', pageSize.toString())
@@ -45,12 +48,14 @@ export class DeviceService {
     }
 
     // Determine URL based on whether search is present (matching existing logic)
-    const url = textSearch ? `${this.baseUrl}/page/search` : `${this.baseUrl}/page`;
+    const url = textSearch
+      ? `${this.baseUrl}/page/search`
+      : `${this.baseUrl}/page`;
 
     return this.http.get<PagedResult<Device>>(url, { params }).pipe(
       map(response => ({
         ...response,
-        Items: response.Items.map(d => this.formatDeviceDates(d))
+        Items: response.Items.map(d => this.formatDeviceDates(d)),
       }))
     );
   }

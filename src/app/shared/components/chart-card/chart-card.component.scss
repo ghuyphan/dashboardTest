@@ -346,7 +346,9 @@
     display: inline-block;
     min-width: 3.5em;
     text-align: center;
-    transition: transform 0.15s ease-out, color 0.2s ease;
+    transition:
+      transform 0.15s ease-out,
+      color 0.2s ease;
 
     // Animation class added by JS when value changes
     &.updating {
@@ -383,7 +385,9 @@
   box-sizing: border-box;
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
+  transition:
+    opacity 0.4s ease-in-out,
+    visibility 0s 0.4s;
   will-change: opacity;
   // Ensure skeleton doesn't block scrolling
   pointer-events: none;
@@ -391,7 +395,9 @@
   &.hidden {
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.4s ease-in-out, visibility 0s 0.4s;
+    transition:
+      opacity 0.4s ease-in-out,
+      visibility 0s 0.4s;
   }
 
   @media (max-width: 480px) {
@@ -697,9 +703,7 @@
 }
 
 // Reduce animation on mobile for performance
-@media (max-width: 480px),
-(prefers-reduced-motion: reduce) {
-
+@media (max-width: 480px), (prefers-reduced-motion: reduce) {
   .skeleton,
   .skeleton-stroke,
   .skeleton-pulse-fast {
@@ -756,7 +760,7 @@
 
 /* --- DARK THEME ADJUSTMENTS --- */
 :host-context(.dark-theme),
-:host-context([data-theme="dark"]) {
+:host-context([data-theme='dark']) {
   .data-indicator {
     background-color: rgba(30, 30, 30, 0.95);
   }
@@ -770,7 +774,6 @@
 
 /* --- PRINT STYLES --- */
 @media print {
-
   .skeleton-overlay,
   .reset-zoom-btn,
   .data-indicator {

@@ -15,10 +15,9 @@ describe('SpecialtyClsReportComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([])
-      ]
-    })
-      .compileComponents();
+        provideRouter([]),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SpecialtyClsReportComponent);
     component = fixture.componentInstance;

@@ -8,9 +8,12 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 export class HighlightSearchPipe implements PipeTransform {
   private cache: { term: string; regex: RegExp } | null = null;
 
-  constructor(private sanitizer: DomSanitizer) { }
+  constructor(private sanitizer: DomSanitizer) {}
 
-  transform(value: string | null | undefined, searchTerm: string): string | SafeHtml {
+  transform(
+    value: string | null | undefined,
+    searchTerm: string
+  ): string | SafeHtml {
     // [FIX] Handle null/undefined gracefully ensuring it's always a string
     const stringValue = String(value ?? '');
 
@@ -26,13 +29,16 @@ export class HighlightSearchPipe implements PipeTransform {
     if (this.cache && this.cache.term === searchTerm) {
       re = this.cache.regex;
     } else {
-      const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedSearchTerm = searchTerm.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&'
+      );
       re = new RegExp(`(${escapedSearchTerm})`, 'gi');
       this.cache = { term: searchTerm, regex: re };
     }
 
     // 3. Replace matches
-    const highlightedValue = safeValue.replace(re, (match) => {
+    const highlightedValue = safeValue.replace(re, match => {
       return `<mark class="highlight">${match}</mark>`;
     });
 

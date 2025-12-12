@@ -31,7 +31,7 @@ import {
   SortChangedEvent,
   SortDirection,
   RowActionEvent,
-  TableAction // Import this
+  TableAction, // Import this
 } from '../../../shared/components/reusable-table/reusable-table.component';
 import { FooterActionService } from '../../../core/services/footer-action.service';
 import { FooterAction } from '../../../core/models/footer-action.model';
@@ -41,7 +41,10 @@ import { ToastService } from '../../../core/services/toast.service';
 import { DeviceFormComponent } from '../device-form/device-form.component';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 import { Device } from '../../../shared/models/device.model';
-import { DeviceService, DeviceQueryParams } from '../../../core/services/device.service';
+import {
+  DeviceService,
+  DeviceQueryParams,
+} from '../../../core/services/device.service';
 import { DEVICE_LIST_SHORTCUTS } from '../../../core/config/keyboard-shortcuts.config';
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -74,20 +77,20 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       action: 'view',
       label: 'Xem chi tiết',
       icon: 'visibility',
-      color: 'primary'
+      color: 'primary',
     },
     {
       action: 'edit',
       label: 'Chỉnh sửa',
       icon: 'edit',
-      color: 'accent'
+      color: 'accent',
     },
     {
       action: 'delete',
       label: 'Xóa',
       icon: 'delete',
-      color: 'warn'
-    }
+      color: 'warn',
+    },
   ];
 
   public readonly deviceColumns: GridColumn[] = this.initializeColumns();
@@ -111,7 +114,11 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     // (Existing code hidden for brevity - no changes needed here)
     const devices = this.pagedDeviceData();
     const total = this.totalDeviceCount();
-    return { metadata: { totalDevices: total }, devices: devices, summary: this.generateDeviceSummary() };
+    return {
+      metadata: { totalDevices: total },
+      devices: devices,
+      summary: this.generateDeviceSummary(),
+    };
   });
 
   private generateDeviceSummary() {
@@ -142,8 +149,18 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
       { key: 'Ten', label: 'Tên Thiết Bị', sortable: true, width: '150px' },
       { key: 'DeviceName', label: 'Tên Máy', sortable: true, width: '120px' },
       { key: 'Model', label: 'Model', sortable: true, width: '120px' },
-      { key: 'SerialNumber', label: 'Số Serial', sortable: true, width: '120px' },
-      { key: 'TenLoaiThietBi', label: 'Loại Thiết Bị', sortable: true, width: '120px' },
+      {
+        key: 'SerialNumber',
+        label: 'Số Serial',
+        sortable: true,
+        width: '120px',
+      },
+      {
+        key: 'TenLoaiThietBi',
+        label: 'Loại Thiết Bị',
+        sortable: true,
+        width: '120px',
+      },
 
       // [UPDATED] Status Column
       {
@@ -152,24 +169,54 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         sortable: true,
         width: '120px',
         type: 'status',
-        statusClassFn: (value) => this.getStatusClass(value)
+        statusClassFn: value => this.getStatusClass(value),
       },
 
       { key: 'ViTri', label: 'Vị Trí', sortable: true, width: '80px' },
       { key: 'MoTa', label: 'Mô Tả', sortable: true, width: '180px' },
 
       // [UPDATED] Price as Currency
-      { key: 'GiaMua', label: 'Giá Mua', sortable: true, width: '120px', type: 'currency' },
+      {
+        key: 'GiaMua',
+        label: 'Giá Mua',
+        sortable: true,
+        width: '120px',
+        type: 'currency',
+      },
 
       // [UPDATED] Dates
-      { key: 'NgayMua', label: 'Ngày Mua', sortable: true, width: '100px', type: 'date' },
-      { key: 'NgayHetHanBH', label: 'Ngày Hết Hạn BH', sortable: true, width: '120px', type: 'date' },
+      {
+        key: 'NgayMua',
+        label: 'Ngày Mua',
+        sortable: true,
+        width: '100px',
+        type: 'date',
+      },
+      {
+        key: 'NgayHetHanBH',
+        label: 'Ngày Hết Hạn BH',
+        sortable: true,
+        width: '120px',
+        type: 'date',
+      },
 
       { key: 'NguoiTao', label: 'Người Tạo', sortable: true, width: '100px' },
-      { key: 'NgayTao', label: 'Ngày Tạo', sortable: true, width: '100px', type: 'date' },
+      {
+        key: 'NgayTao',
+        label: 'Ngày Tạo',
+        sortable: true,
+        width: '100px',
+        type: 'date',
+      },
 
       // [UPDATED] Actions Column
-      { key: 'actions', label: '', sortable: false, width: '60px', type: 'actions' },
+      {
+        key: 'actions',
+        label: '',
+        sortable: false,
+        width: '60px',
+        type: 'actions',
+      },
     ];
   }
 
@@ -179,15 +226,27 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const normalized = statusName.toLowerCase();
 
-    if (normalized.includes('mới') || normalized.includes('hoạt động') || normalized.includes('tốt')) {
+    if (
+      normalized.includes('mới') ||
+      normalized.includes('hoạt động') ||
+      normalized.includes('tốt')
+    ) {
       return 'status-success'; // Green
     }
 
-    if (normalized.includes('hỏng') || normalized.includes('lỗi') || normalized.includes('bảo trì')) {
+    if (
+      normalized.includes('hỏng') ||
+      normalized.includes('lỗi') ||
+      normalized.includes('bảo trì')
+    ) {
       return 'status-broken'; // Red/Danger
     }
 
-    if (normalized.includes('thanh lý') || normalized.includes('cũ') || normalized.includes('chờ')) {
+    if (
+      normalized.includes('thanh lý') ||
+      normalized.includes('cũ') ||
+      normalized.includes('chờ')
+    ) {
       return 'status-in-use'; // Blue/Info (or create a new status-warning class)
     }
 
@@ -201,7 +260,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         debounceTime(SEARCH_DEBOUNCE_TIME),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((term) => {
+      .subscribe(term => {
         if (term !== this.currentSearchTerm()) {
           this.currentSearchTerm.set(term);
           this.resetToFirstPage();
@@ -251,13 +310,13 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
     };
 
     return this.deviceService.getDevicesPaged(queryParams).pipe(
-      tap((response) => {
+      tap(response => {
         this.pagedDeviceData.set(response.Items);
         this.totalDeviceCount.set(response.TotalCount);
         this.handleLoadSuccess();
       }),
       map(() => undefined),
-      catchError((error) => this.handleLoadError(error))
+      catchError(error => this.handleLoadError(error))
     );
   }
 
@@ -296,9 +355,9 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
   // [UPDATED] Handle Row Actions
   public handleRowAction(event: RowActionEvent<Device>): void {
     const actionHandlers: Record<string, (device: Device) => void> = {
-      view: (device) => this.onViewDetail(device),
-      edit: (device) => this.onModify(device),
-      delete: (device) => this.onDelete(device),
+      view: device => this.onViewDetail(device),
+      edit: device => this.onModify(device),
+      delete: device => this.onDelete(device),
     };
 
     const handler = actionHandlers[event.action];
@@ -321,7 +380,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         context: { device: null, title: 'Tạo mới Thiết bị' },
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
+      .subscribe(result => {
         if (result) this.resetToFirstPage();
       });
   }
@@ -334,7 +393,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         context: { device: { ...device }, title: 'Sửa thiết bị' },
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
+      .subscribe(result => {
         if (result) this.triggerReload();
       });
   }
@@ -356,7 +415,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         },
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((confirmed) => {
+      .subscribe(confirmed => {
         if (confirmed) this.performDeviceDeletion(device);
       });
   }
@@ -379,16 +438,19 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (response) => {
+        next: response => {
           this.toastService.showSuccess(
             response?.TenKetQua || 'Xóa thiết bị thành công!'
           );
-          if (this.pagedDeviceData().length === 1 && this.currentPageIndex() > 0) {
+          if (
+            this.pagedDeviceData().length === 1 &&
+            this.currentPageIndex() > 0
+          ) {
             this.currentPageIndex.update(i => i - 1);
           }
           this.triggerReload();
         },
-        error: (error) => {
+        error: error => {
           const msg =
             error.error?.TenKetQua ||
             error.error?.ErrorMessage ||
@@ -408,7 +470,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         action: () => this.onCreate(),
         permission: 'QLThietBi.DMThietBi.RCREATE',
         className: 'btn-primary',
-        shortcut: DEVICE_LIST_SHORTCUTS.CREATE
+        shortcut: DEVICE_LIST_SHORTCUTS.CREATE,
       },
       {
         label: 'Sửa',
@@ -417,7 +479,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         permission: 'QLThietBi.DMThietBi.RMODIFY',
         className: 'btn-secondary',
         disabled: !isRowSelected,
-        shortcut: DEVICE_LIST_SHORTCUTS.EDIT
+        shortcut: DEVICE_LIST_SHORTCUTS.EDIT,
       },
       {
         label: 'Xóa',
@@ -426,7 +488,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         permission: 'QLThietBi.QLThietBiChiTiet.RDELETE',
         className: 'btn-danger',
         disabled: !isRowSelected,
-        shortcut: DEVICE_LIST_SHORTCUTS.DELETE
+        shortcut: DEVICE_LIST_SHORTCUTS.DELETE,
       },
       {
         label: 'Xem',
@@ -435,7 +497,7 @@ export class DeviceListComponent implements OnInit, OnDestroy, AfterViewInit {
         permission: 'QLThietBi.DMThietBi.RVIEW',
         className: 'btn-ghost',
         disabled: !isRowSelected,
-        shortcut: DEVICE_LIST_SHORTCUTS.VIEW
+        shortcut: DEVICE_LIST_SHORTCUTS.VIEW,
       },
     ];
     this.footerService.setActions(actions);

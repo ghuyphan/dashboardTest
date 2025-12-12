@@ -23,7 +23,8 @@
 
   padding: 0 0 var(--spacing-md) 0;
 
-  transition: transform var(--transition-duration) var(--transition-smooth),
+  transition:
+    transform var(--transition-duration) var(--transition-smooth),
     width var(--transition-duration) var(--transition-smooth);
   z-index: 1050;
   box-shadow: var(--border-width) 0 0 0 var(--border-color);
@@ -66,7 +67,8 @@
   position: relative;
   padding: 0 var(--sidebar-padding);
   flex-shrink: 0;
-  transition: padding var(--transition-duration) var(--transition-smooth),
+  transition:
+    padding var(--transition-duration) var(--transition-smooth),
     justify-content var(--transition-duration) var(--transition-smooth);
   justify-content: flex-start;
 }
@@ -78,7 +80,8 @@
   width: 100%;
   height: 100%;
   position: relative;
-  transition: justify-content var(--transition-duration) var(--transition-smooth),
+  transition:
+    justify-content var(--transition-duration) var(--transition-smooth),
     padding var(--transition-duration) var(--transition-smooth);
 }
 
@@ -90,7 +93,8 @@
   background-color: var(--surface-card);
   padding: var(--spacing-xs);
   border: var(--border-width) solid var(--border-color);
-  transition: opacity var(--transition-fast) var(--transition-smooth),
+  transition:
+    opacity var(--transition-fast) var(--transition-smooth),
     box-shadow var(--transition-fast) ease,
     margin-right var(--transition-duration) var(--transition-smooth);
   display: flex;
@@ -118,7 +122,8 @@
   white-space: nowrap;
   flex: 1;
   min-width: 0;
-  transition: opacity var(--transition-fast) var(--transition-smooth),
+  transition:
+    opacity var(--transition-fast) var(--transition-smooth),
     transform var(--transition-fast) var(--transition-smooth);
 }
 
@@ -131,7 +136,8 @@
   cursor: pointer;
   padding: var(--spacing-sm);
   border-radius: 50%;
-  transition: background-color var(--transition-fast) ease,
+  transition:
+    background-color var(--transition-fast) ease,
     color var(--transition-fast) ease,
     transform var(--transition-fast) var(--transition-spring);
   line-height: 1;
@@ -263,7 +269,8 @@
   display: flex;
   padding: 0.75rem var(--spacing-sm);
   border-radius: var(--border-radius-md);
-  transition: background-color var(--transition-fast) ease,
+  transition:
+    background-color var(--transition-fast) ease,
     color var(--transition-fast) ease,
     transform var(--transition-fast) ease;
   white-space: nowrap;
@@ -305,14 +312,14 @@
   /* [FIX] Increase line-height so descenders aren't clipped by overflow:hidden */
   line-height: 1.5;
 
-  transition: opacity var(--transition-fast) var(--transition-smooth),
+  transition:
+    opacity var(--transition-fast) var(--transition-smooth),
     transform var(--transition-fast) var(--transition-smooth);
   transform-origin: left center;
 }
 
 /* Hover States */
 @media (hover: hover) {
-
   .sidebar-nav ul li a:hover,
   .sidebar-nav ul li button:hover {
     background-color: var(--gray-200);
@@ -354,7 +361,6 @@
 }
 
 @media (hover: hover) {
-
   .sidebar-nav ul li a.active:hover,
   .sidebar-nav ul li button.active:hover {
     background-color: var(--gray-200);
@@ -386,7 +392,7 @@
   font-weight: 600;
 }
 
-.sidebar-nav ul li.active-parent>button {
+.sidebar-nav ul li.active-parent > button {
   background-color: var(--gray-200);
   color: var(--teal-blue);
   font-weight: 600;
@@ -404,12 +410,13 @@
   width: 1em !important;
   min-width: 1em !important;
   height: 1em;
-  transition: transform var(--transition-duration) var(--transition-smooth),
+  transition:
+    transform var(--transition-duration) var(--transition-smooth),
     opacity var(--transition-fast) var(--transition-smooth);
   flex-shrink: 0;
 }
 
-.sidebar-nav ul li.open>button .toggle-icon {
+.sidebar-nav ul li.open > button .toggle-icon {
   transform: rotate(180deg);
 }
 
@@ -420,7 +427,8 @@
   margin: 0;
   max-height: 0;
   overflow: hidden;
-  transition: max-height var(--transition-duration) var(--transition-smooth),
+  transition:
+    max-height var(--transition-duration) var(--transition-smooth),
     opacity var(--transition-duration) ease,
     margin var(--transition-duration) var(--transition-smooth);
   opacity: 0;
@@ -520,7 +528,8 @@
   transform: translateX(50%);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-fast) var(--transition-smooth),
+  transition:
+    opacity var(--transition-fast) var(--transition-smooth),
     transform var(--transition-fast) var(--transition-smooth);
 }
 
@@ -534,7 +543,10 @@
     opacity: 0.3;
   }
 
-  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
+  .sidebar.collapsed
+    .sidebar-header
+    .sidebar-logo-wrapper:hover
+    .sidebar-toggle-btn {
     opacity: 1;
     pointer-events: auto;
     background-color: var(--gray-100);
@@ -545,8 +557,8 @@
   margin-right: 0;
 }
 
-.sidebar.collapsed .sidebar-nav>ul>li>a,
-.sidebar.collapsed .sidebar-nav>ul>li>button {
+.sidebar.collapsed .sidebar-nav > ul > li > a,
+.sidebar.collapsed .sidebar-nav > ul > li > button {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
@@ -558,30 +570,29 @@
 }
 
 @media (hover: hover) {
-
-  .sidebar.collapsed .sidebar-nav>ul>li>a:hover,
-  .sidebar.collapsed .sidebar-nav>ul>li>button:hover {
+  .sidebar.collapsed .sidebar-nav > ul > li > a:hover,
+  .sidebar.collapsed .sidebar-nav > ul > li > button:hover {
     transform: scale(1.05);
     background-color: var(--gray-200);
   }
 }
 
 /* [NEW] ADDED ACTIVE STATE FOR COLLAPSED MODE */
-.sidebar.collapsed .sidebar-nav>ul>li>a:active,
-.sidebar.collapsed .sidebar-nav>ul>li>button:active {
+.sidebar.collapsed .sidebar-nav > ul > li > a:active,
+.sidebar.collapsed .sidebar-nav > ul > li > button:active {
   transform: scale(0.95);
   /* Ensures visual feedback even when hovered */
 }
 
-.sidebar.collapsed .sidebar-nav>ul>li>a i:not(.toggle-icon),
-.sidebar.collapsed .sidebar-nav>ul>li>button i:not(.toggle-icon) {
+.sidebar.collapsed .sidebar-nav > ul > li > a i:not(.toggle-icon),
+.sidebar.collapsed .sidebar-nav > ul > li > button i:not(.toggle-icon) {
   margin: 0;
   font-size: 1.1rem;
   transform: none;
 }
 
-.sidebar.collapsed .sidebar-nav>ul>li>a>span,
-.sidebar.collapsed .sidebar-nav>ul>li>button>span {
+.sidebar.collapsed .sidebar-nav > ul > li > a > span,
+.sidebar.collapsed .sidebar-nav > ul > li > button > span {
   opacity: 0;
   transform: scale(0.8);
   position: absolute;
@@ -599,7 +610,7 @@
   margin: 0 0 0.25rem 0 !important;
 }
 
-.sidebar.collapsed .sidebar-nav>ul>li.has-submenu>button {
+.sidebar.collapsed .sidebar-nav > ul > li.has-submenu > button {
   overflow: visible;
 }
 
@@ -665,7 +676,8 @@
     border-left: 2px solid var(--border-color) !important;
     opacity: 0;
     visibility: visible;
-    transition: max-height var(--transition-duration) var(--transition-smooth),
+    transition:
+      max-height var(--transition-duration) var(--transition-smooth),
       opacity var(--transition-duration) ease,
       margin var(--transition-duration) var(--transition-smooth);
   }
@@ -707,7 +719,10 @@
     opacity: 1;
   }
 
-  .sidebar.collapsed .sidebar-header .sidebar-logo-wrapper:hover .sidebar-toggle-btn {
+  .sidebar.collapsed
+    .sidebar-header
+    .sidebar-logo-wrapper:hover
+    .sidebar-toggle-btn {
     background-color: transparent;
   }
 
