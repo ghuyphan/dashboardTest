@@ -85,17 +85,28 @@ export const DATE_FILTER_SHORTCUTS = {
 // =============================================================================
 // HELPER: Get display string for a shortcut
 // =============================================================================
-export function getShortcutDisplayString(shortcut: ShortcutInput): string {
+export function getShortcutDisplayString(
+  shortcut: ShortcutInput,
+  isApplePlatform: boolean = false
+): string {
   const parts: string[] = [];
-  if (shortcut.ctrlKey) parts.push('Ctrl');
-  if (shortcut.altKey) parts.push('Alt');
+
+  // On Apple platforms, show ⌘ (Command) instead of Ctrl
+  if (shortcut.ctrlKey) {
+    parts.push(isApplePlatform ? '⌘' : 'Ctrl');
+  }
+  if (shortcut.altKey) {
+    // Alt is called Option (⌥) on Mac, but Alt is still commonly understood
+    parts.push(isApplePlatform ? '⌥' : 'Alt');
+  }
   if (shortcut.shiftKey) parts.push('Shift');
-  if (shortcut.metaKey) parts.push('Meta');
+  if (shortcut.metaKey) parts.push(isApplePlatform ? '⌘' : 'Meta');
 
   // Format key nicely
   let keyDisplay = shortcut.key;
   if (keyDisplay === 'Enter') keyDisplay = 'Enter';
   else if (keyDisplay === 'Delete') keyDisplay = 'Del';
+  else if (keyDisplay === 'Escape') keyDisplay = 'Esc';
   else if (keyDisplay === ' ') keyDisplay = 'Space';
   else keyDisplay = keyDisplay.toUpperCase();
 

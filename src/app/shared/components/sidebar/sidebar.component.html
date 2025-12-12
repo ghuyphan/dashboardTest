@@ -108,8 +108,10 @@
                     (click)="toggleSubmenu(item, $event)"
                     [attr.aria-expanded]="item.isOpen"
                     [appTooltip]="item.label"
+                    [tooltipDisabled]="!!item.flyoutOpen"
                     [appFlyout]="submenuEl"
-                    [flyoutEnabled]="!isOpen()">
+                    [flyoutEnabled]="!isOpen()"
+                    (flyoutToggled)="item.flyoutOpen = $event">
                     <i [class]="item.icon"></i>
                     <span>{{ item.label }}</span>
                     <i class="fas fa-chevron-down toggle-icon"></i>

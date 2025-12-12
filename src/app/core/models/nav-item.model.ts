@@ -5,4 +5,5 @@ export interface NavItem {
   permissions: string[];
   children?: NavItem[];
   isOpen?: boolean;
+  flyoutOpen?: boolean;
 }

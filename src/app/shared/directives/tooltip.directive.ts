@@ -14,6 +14,7 @@ import {
 })
 export class TooltipDirective implements OnDestroy {
   public tooltipText = input<string>('', { alias: 'appTooltip' });
+  public tooltipDisabled = input<boolean>(false);
 
   private tooltipElement: HTMLDivElement | null = null;
   private listeners: Array<() => void> = [];
@@ -29,8 +30,12 @@ export class TooltipDirective implements OnDestroy {
 
   @HostListener('mouseenter')
   onMouseEnter(): void {
-    // Check signal value
-    if (!this.tooltipText()?.trim() || this.tooltipElement) {
+    // Check signal value and disabled state
+    if (
+      !this.tooltipText()?.trim() ||
+      this.tooltipDisabled() ||
+      this.tooltipElement
+    ) {
       return;
     }
 

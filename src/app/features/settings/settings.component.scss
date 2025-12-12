@@ -24,11 +24,10 @@
   grid-template-rows: 1fr;
   /* Both columns stretch to full height */
   gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
+  /* Padding is handled by global .page-content class */
   align-items: start;
-  overflow-y: auto;
-
-  @include hidden-scrollbar;
+  /* No overflow - handled by .page-content */
+  flex: 1;
 
   /* Mobile: Single column stack */
   @media (max-width: 900px) {
@@ -36,7 +35,6 @@
     grid-template-rows: auto auto;
     /* Stacked */
     gap: var(--spacing-md);
-    padding: var(--spacing-md);
   }
 }
 
@@ -855,5 +853,10 @@
 
   .shortcuts-section {
     display: none;
+
+    // Show shortcuts when keyboard is connected
+    &.has-keyboard {
+      display: block;
+    }
   }
 }

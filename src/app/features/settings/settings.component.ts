@@ -24,6 +24,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@core/services/toast.service';
 import { ModalService } from '@core/services/modal.service';
+import { KeyboardShortcutService } from '@core/services/keyboard-shortcut.service';
 import { ConfirmationModalComponent } from '@shared/components/confirmation-modal/confirmation-modal.component';
 import { ThemeService, ThemePreference } from '@core/services/theme.service';
 import { VersionService } from '@core/services/version.service';
@@ -49,9 +50,22 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private modalService = inject(ModalService);
+  private keyboardService = inject(KeyboardShortcutService);
   public themeService = inject(ThemeService);
   public versionService = inject(VersionService);
   private destroyRef = inject(DestroyRef);
+
+  /**
+   * Returns true if running on Apple platform (macOS, iOS, iPadOS).
+   * Used to display ⌘ instead of Ctrl in the shortcuts panel.
+   */
+  public isApplePlatform = this.keyboardService.isApplePlatform;
+
+  /**
+   * Signal that indicates if a physical keyboard has been detected.
+   * Used to show keyboard shortcuts on mobile when user connects a keyboard.
+   */
+  public hasKeyboard = this.keyboardService.hasKeyboard;
 
   public currentUser = signal<User | null>(null);
   public isLoading = signal<boolean>(false);

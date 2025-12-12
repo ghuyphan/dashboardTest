@@ -1,4 +1,4 @@
-import { Injectable, NgZone, OnDestroy } from '@angular/core';
+import { Injectable, NgZone, OnDestroy, signal } from '@angular/core';
 import { fromEvent, Observable, Subject, Subscription } from 'rxjs';
 import { filter, map, share, takeUntil, tap } from 'rxjs/operators';
 
@@ -20,16 +20,42 @@ export interface ShortcutEvent {
 })
 export class KeyboardShortcutService implements OnDestroy {
   private _keyDown$ = new Subject<KeyboardEvent>();
+  private _isApplePlatform: boolean;
+  private _hasKeyboard = signal(false);
+
+  /**
+   * Returns true if running on macOS, iOS, or iPadOS.
+   * On Apple platforms, Cmd (⌘) is used instead of Ctrl.
+   */
+  get isApplePlatform(): boolean {
+    return this._isApplePlatform;
+  }
+
+  /**
+   * Signal that indicates if a physical keyboard has been detected.
+   * Updates when the user presses any key, useful for showing/hiding
+   * keyboard shortcuts UI on mobile devices.
+   */
+  readonly hasKeyboard = this._hasKeyboard.asReadonly();
+
   private _subscriptions: Subscription[] = [];
 
   // Observable for all keydown events, filtered to exclude inputs by default
   public keyDown$: Observable<KeyboardEvent>;
 
   constructor(private ngZone: NgZone) {
+    // Detect Apple platform (macOS, iOS, iPadOS)
+    this._isApplePlatform = this.detectApplePlatform();
+
     // Run outside Angular zone to avoid excessive change detection on every keypress
     this.ngZone.runOutsideAngular(() => {
       const sub = fromEvent<KeyboardEvent>(window, 'keydown').subscribe(
         event => {
+          // Detect keyboard connection on first keydown (for mobile devices)
+          if (!this._hasKeyboard()) {
+            this.ngZone.run(() => this._hasKeyboard.set(true));
+          }
+
           // We only want to re-enter the zone if we are actually handling a shortcut
           // But for generic emission, we might want to stay outside.
           // Consumers can decide to re-enter zone if they update UI.
@@ -75,10 +101,25 @@ export class KeyboardShortcutService implements OnDestroy {
         const shift = input.shiftKey ?? false;
         const meta = input.metaKey ?? false;
 
-        if (event.ctrlKey !== ctrl) return false;
+        // Cross-platform support: On Apple platforms, accept Cmd (metaKey)
+        // as an alternative to Ctrl for shortcuts that specify ctrlKey
+        if (ctrl && !meta) {
+          // Shortcut requires Ctrl (but not Meta)
+          // Accept either Ctrl OR Cmd on Apple platforms
+          const hasModifier = this._isApplePlatform
+            ? event.ctrlKey || event.metaKey
+            : event.ctrlKey;
+          if (!hasModifier) return false;
+          // Ensure the "other" meta modifier isn't unexpectedly pressed
+          if (!this._isApplePlatform && event.metaKey) return false;
+        } else {
+          // Standard exact matching for other cases
+          if (event.ctrlKey !== ctrl) return false;
+          if (event.metaKey !== meta) return false;
+        }
+
         if (event.altKey !== alt) return false;
         if (event.shiftKey !== shift) return false;
-        if (event.metaKey !== meta) return false;
 
         // 3. Check key - use both event.key and event.code for better compatibility
         // On Windows, Alt+letter may not report the letter in event.key
@@ -159,6 +200,46 @@ export class KeyboardShortcutService implements OnDestroy {
       '.app-modal-backdrop, .cdk-overlay-backdrop'
     );
     return !!modalBackdrop;
+  }
+
+  /**
+   * Detects if running on an Apple platform (macOS, iOS, iPadOS).
+   * Uses multiple detection methods for reliability.
+   */
+  private detectApplePlatform(): boolean {
+    if (typeof navigator === 'undefined') return false;
+
+    // Modern API (navigator.userAgentData) - preferred when available
+    const uaData = (navigator as any).userAgentData;
+    if (uaData?.platform) {
+      const platform = uaData.platform.toLowerCase();
+      return platform === 'macos' || platform === 'ios';
+    }
+
+    // Fallback: Check navigator.platform (deprecated but widely supported)
+    const platform = navigator.platform?.toLowerCase() || '';
+    if (
+      platform.includes('mac') ||
+      platform.includes('iphone') ||
+      platform.includes('ipad') ||
+      platform.includes('ipod')
+    ) {
+      return true;
+    }
+
+    // Additional fallback: Check userAgent for iOS (iPad in desktop mode)
+    const ua = navigator.userAgent?.toLowerCase() || '';
+    if (ua.includes('macintosh') && 'ontouchend' in document) {
+      // iPad in desktop mode reports as Macintosh but has touch
+      return true;
+    }
+
+    return (
+      ua.includes('mac os') ||
+      ua.includes('iphone') ||
+      ua.includes('ipad') ||
+      ua.includes('ipod')
+    );
   }
 
   private getComboString(event: KeyboardEvent): string {

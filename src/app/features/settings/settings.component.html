@@ -130,7 +130,7 @@
           </button>
         </div>
 
-        <div class="shortcuts-section">
+        <div class="shortcuts-section" [class.has-keyboard]="hasKeyboard()">
           <div class="section-divider"></div>
 
           <!-- Shortcuts Section (Moved here) -->
@@ -139,28 +139,42 @@
           </h4>
           <div class="shortcuts-grid">
             <div class="shortcut-item">
-              <span class="keys"><kbd>Ctrl</kbd> + <kbd>K</kbd></span>
+              <span class="keys"
+                ><kbd>{{ isApplePlatform ? '⌘' : 'Ctrl' }}</kbd> +
+                <kbd>K</kbd></span
+              >
               <span class="desc">Tìm kiếm nhanh</span>
             </div>
             <div class="shortcut-item">
-              <span class="keys"><kbd>Ctrl</kbd> + <kbd>.</kbd></span>
+              <span class="keys"
+                ><kbd>{{ isApplePlatform ? '⌘' : 'Ctrl' }}</kbd> +
+                <kbd>.</kbd></span
+              >
               <span class="desc">Ẩn/Hiện Menu</span>
             </div>
             <div class="shortcut-item">
-              <span class="keys"><kbd>Ctrl</kbd> + <kbd>/</kbd></span>
+              <span class="keys"
+                ><kbd>{{ isApplePlatform ? '⌘' : 'Ctrl' }}</kbd> +
+                <kbd>/</kbd></span
+              >
               <span class="desc">Trợ lý ảo (AI Chat)</span>
             </div>
             <div class="shortcut-item">
-              <span class="keys"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
-              <span class="desc">Lưu / Hành động chính</span>
+              <span class="keys"><kbd>Esc</kbd></span>
+              <span class="desc">Đóng / Hủy bỏ</span>
             </div>
             <div class="shortcut-item">
-              <span class="keys"><kbd>Alt</kbd> + <kbd>S</kbd></span>
+              <span class="keys"
+                ><kbd>{{ isApplePlatform ? '⌥' : 'Alt' }}</kbd> +
+                <kbd>S</kbd></span
+              >
               <span class="desc">Mở Cài đặt</span>
             </div>
             <div class="shortcut-item">
               <span class="keys"
-                ><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd></span
+                ><kbd>{{ isApplePlatform ? '⌘' : 'Ctrl' }}</kbd> +
+                <kbd>{{ isApplePlatform ? '⌥' : 'Alt' }}</kbd> +
+                <kbd>L</kbd></span
               >
               <span class="desc">Đăng xuất</span>
             </div>

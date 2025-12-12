@@ -385,14 +385,14 @@
 .sidebar-nav ul li a.active::before,
 .sidebar-nav ul li button.active::before {
   content: '';
-  position: absolute;
-  // Position at sidebar edge (offset by button padding)
-  left: calc(-1 * var(--spacing-sm) - var(--spacing-xs));
-  top: var(--spacing-xs);
-  bottom: var(--spacing-xs);
-  width: var(--spacing-xs);
-  background-color: var(--aqua-island);
-  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  // position: absolute;
+  // // Position at sidebar edge (offset by button padding)
+  // left: calc(-1 * var(--spacing-sm) - var(--spacing-xs));
+  // top: var(--spacing-xs);
+  // bottom: var(--spacing-xs);
+  // width: var(--spacing-xs);
+  // background-color: var(--aqua-island);
+  // border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
 }
 
 @media (hover: hover) {
@@ -511,8 +511,8 @@
   padding: 0.75rem 0.625rem 0.75rem 0.75rem;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  // Add margin-left to separate from thread line
-  margin: 0 0.5rem 0.25rem 0.5rem;
+  // Add margin-left to separate from thread line, no right margin to fit in sidebar
+  margin: 0 0 0.25rem 0.45rem;
   border-radius: 0.375rem;
   position: relative;
   font-weight: 500;
@@ -672,9 +672,29 @@
   display: none;
 }
 
-// Hide thread line when submenu is in flyout mode (moved to document.body)
-.submenu.flyout-mode::before {
-  display: none;
+// Hide thread line and remove margin when submenu is in flyout mode (moved to document.body)
+.submenu.flyout-mode {
+  // margin: var(--spacing-sm) !important;
+  padding: 6px;
+  z-index: 1060; // Above sidebar (1050)
+  background-color: var(--surface-background);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--box-shadow-md);
+  min-width: 180px;
+
+  &::before {
+    display: none;
+  }
+
+  li a {
+    margin: 0 0 4px 0;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--border-radius-sm);
+  }
+
+  li:last-child a {
+    margin-bottom: 0;
+  }
 }
 
 .sidebar.collapsed .sidebar-nav ul li .toggle-icon {
