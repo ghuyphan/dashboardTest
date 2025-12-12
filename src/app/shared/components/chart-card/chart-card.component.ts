@@ -16,6 +16,7 @@ import {
   PLATFORM_ID,
   untracked,
   signal,
+  Renderer2,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -57,6 +58,7 @@ export class ChartCardComponent implements AfterViewInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly themeService = inject(ThemeService);
   private readonly route = inject(ActivatedRoute);
+  private readonly renderer = inject(Renderer2);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // === INPUTS ===
@@ -147,6 +149,7 @@ export class ChartCardComponent implements AfterViewInit {
   private windowResizeListener?: () => void;
   private orientationListener?: () => void;
   private resizeTimer?: ReturnType<typeof setTimeout>;
+  private globalClickListener?: () => void; // Listener for outside clicks
 
   // Logic for smart isolation
   private currentSoloName: string | null = null;
@@ -170,6 +173,11 @@ export class ChartCardComponent implements AfterViewInit {
   // Indicator animation state
   private displayedVisiblePoints = 0;
   private indicatorAnimationId?: number;
+
+  // Mobile tooltip auto-dismiss
+  private tooltipDismissTimer?: ReturnType<typeof setTimeout>;
+  private readonly TOOLTIP_AUTO_DISMISS_MS = 4000; // Auto-hide after 4 seconds
+  private lastTapPoint: number[] = [0, 0]; // Track tap position for positioning
 
   // === CONFIGURATION ===
   private readonly RESIZE_DEBOUNCE_MS = 100; // Reduced for snappier response
@@ -634,12 +642,48 @@ export class ChartCardComponent implements AfterViewInit {
 
     // Touch-specific: close tooltip on outside tap (mobile)
     if (this.isMobile()) {
+      // 1. Internal blank space tap
       this.chartInstance.getZr().on('click', (params: unknown) => {
         const p = params as { target?: unknown };
         if (!p.target) {
           this.chartInstance?.dispatchAction({ type: 'hideTip' });
         }
       });
+
+      // 2. External tap (outside chart container)
+      this.setupOutsideTapListener();
+    }
+  }
+
+  /**
+   * Set up global listener to dismiss tooltip when tapping outside
+   */
+  private setupOutsideTapListener(): void {
+    if (this.globalClickListener) return;
+
+    this.ngZone.runOutsideAngular(() => {
+      this.globalClickListener = this.renderer.listen(
+        'document',
+        'click',
+        (event: Event) => {
+          if (!this.chartInstance || !this.isMobile()) return;
+
+          const chartEl = this.chartContainerRef()?.nativeElement;
+          const target = event.target as Node;
+
+          // If click is outside the chart container, dismiss tooltip
+          if (chartEl && !chartEl.contains(target)) {
+            this.chartInstance.dispatchAction({ type: 'hideTip' });
+          }
+        }
+      );
+    });
+  }
+
+  private removeOutsideTapListener(): void {
+    if (this.globalClickListener) {
+      this.globalClickListener();
+      this.globalClickListener = undefined;
     }
   }
 
@@ -875,7 +919,12 @@ export class ChartCardComponent implements AfterViewInit {
 
     const newOption = { ...option } as any;
 
-    // 1. Optimize tooltip for touch - centered and contained
+    // Calculate adaptive max-width based on viewport
+    const viewportWidth =
+      typeof window !== 'undefined' ? window.innerWidth : 375;
+    const maxTooltipWidth = Math.min(viewportWidth - 24, 320); // 12px margin each side, max 320px
+
+    // 1. Optimize tooltip for touch - smart positioning and contained
     newOption.tooltip = {
       ...newOption.tooltip,
       trigger: newOption.tooltip?.trigger || 'axis',
@@ -885,11 +934,14 @@ export class ChartCardComponent implements AfterViewInit {
       position: mobile ? this.getMobileTooltipPosition.bind(this) : undefined,
       textStyle: {
         ...newOption.tooltip?.textStyle,
-        fontSize: mobile ? 10 : 12,
+        fontSize: mobile ? 11 : 12,
+        lineHeight: mobile ? 16 : 18,
       },
       extraCssText: mobile
-        ? 'max-width: 80vw; white-space: normal; padding: 8px 10px;'
+        ? `max-width: ${maxTooltipWidth}px; white-space: normal; padding: 10px 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);`
         : '',
+      // Append dismiss hint for mobile tooltips
+      appendToBody: false,
     };
 
     // 2. Legend already handled in applyStrictLayout, just ensure consistency
@@ -901,6 +953,12 @@ export class ChartCardComponent implements AfterViewInit {
     return newOption;
   }
 
+  /**
+   * Smart mobile tooltip positioning:
+   * - Positions tooltip above or below the tap point based on available space
+   * - Horizontally centers the tooltip or aligns it to avoid edge clipping
+   * - Avoids obscuring the data point being viewed
+   */
   private getMobileTooltipPosition(
     point: number[],
     _params: unknown,
@@ -908,18 +966,70 @@ export class ChartCardComponent implements AfterViewInit {
     _rect: unknown,
     size: { contentSize: number[]; viewSize: number[] }
   ): number[] {
-    const [contentWidth] = size.contentSize;
-    const [viewWidth] = size.viewSize;
+    const [contentWidth, contentHeight] = size.contentSize;
+    const [viewWidth, viewHeight] = size.viewSize;
+    const [tapX, tapY] = point;
 
-    // Position tooltip at the TOP of the chart, horizontally centered
-    // This keeps the chart content visible while showing tooltip info
-    const x = Math.max(
-      5,
-      Math.min(viewWidth - contentWidth - 5, (viewWidth - contentWidth) / 2)
-    );
-    const y = 5; // Fixed at top with small margin
+    // Store tap point for potential use
+    this.lastTapPoint = point;
+
+    // Start auto-dismiss timer for mobile
+    this.startTooltipDismissTimer();
+
+    const margin = 8; // Margin from edges and tap point
+    const fingerOffset = 40; // Offset to avoid finger obstruction
+
+    // Horizontal positioning: try to center on tap point, but keep within bounds
+    let x = tapX - contentWidth / 2;
+    x = Math.max(margin, Math.min(viewWidth - contentWidth - margin, x));
+
+    // Vertical positioning: prefer below the tap point, but flip to above if not enough space
+    const spaceBelow = viewHeight - tapY - fingerOffset;
+    const spaceAbove = tapY - fingerOffset;
+
+    let y: number;
+    if (spaceBelow >= contentHeight + margin) {
+      // Enough space below - position below tap point
+      y = tapY + fingerOffset;
+    } else if (spaceAbove >= contentHeight + margin) {
+      // Not enough below, but enough above - position above tap point
+      y = tapY - contentHeight - fingerOffset;
+    } else {
+      // Not enough space either way - position at top with margin
+      y = margin;
+    }
+
+    // Ensure tooltip stays within vertical bounds
+    y = Math.max(margin, Math.min(viewHeight - contentHeight - margin, y));
 
     return [x, y];
+  }
+
+  /**
+   * Start or restart the tooltip auto-dismiss timer
+   */
+  private startTooltipDismissTimer(): void {
+    // Clear any existing timer
+    if (this.tooltipDismissTimer) {
+      clearTimeout(this.tooltipDismissTimer);
+    }
+
+    // Set new timer to auto-hide tooltip
+    this.tooltipDismissTimer = setTimeout(() => {
+      if (this.chartInstance && !this.isDestroyed) {
+        this.chartInstance.dispatchAction({ type: 'hideTip' });
+      }
+    }, this.TOOLTIP_AUTO_DISMISS_MS);
+  }
+
+  /**
+   * Clear the tooltip dismiss timer (called on cleanup)
+   */
+  private clearTooltipDismissTimer(): void {
+    if (this.tooltipDismissTimer) {
+      clearTimeout(this.tooltipDismissTimer);
+      this.tooltipDismissTimer = undefined;
+    }
   }
 
   /**
@@ -1206,30 +1316,55 @@ export class ChartCardComponent implements AfterViewInit {
   private setupResizeStrategy(): void {
     const el = this.chartContainerRef().nativeElement;
 
-    // Use ResizeObserver for container-level changes (parent flex, sidebar toggle, etc.)
+    // Use ResizeObserver for container-level changes
     if (typeof ResizeObserver !== 'undefined') {
-      this.resizeObserver = new ResizeObserver(() => {
+      this.resizeObserver = new ResizeObserver(entries => {
+        // 1. Immediate Visual Update (Cheap Resize)
+        // Scale the existing canvas to fit the new container size immediately.
+        // This prevents white flashes and makes resizing feel instant/smooth.
+        if (this.chartInstance && this.lastWidth > 0 && this.lastHeight > 0) {
+          const entry = entries[0];
+          // Use contentRect or client dimensions
+          const newWidth = entry.contentRect.width;
+          const newHeight = entry.contentRect.height;
+
+          if (newWidth > 0 && newHeight > 0) {
+            const scaleX = newWidth / this.lastWidth;
+            const scaleY = newHeight / this.lastHeight;
+
+            const dom = this.chartInstance.getDom();
+            const wrapper = dom?.firstElementChild as HTMLElement; // The inner wrapper div created by ECharts
+            if (wrapper) {
+              wrapper.style.transformOrigin = '0 0';
+              wrapper.style.transition = 'none'; // Ensure no CSS transition delays this
+              wrapper.style.transform = `scale(${scaleX}, ${scaleY})`;
+            }
+          }
+        }
+
+        // 2. Debounce Actual Redraw
         this.triggerResize();
       });
       this.resizeObserver.observe(el);
     }
 
-    // ALWAYS listen for window resize as well (not just as fallback)
-    // This ensures charts respond to window size changes even if container
-    // dimensions don't change immediately (e.g., CSS transitions)
+    // Window resize listener as fallback / ensuring global layout changes are caught
     this.ngZone.runOutsideAngular(() => {
-      this.windowResizeListener = () => this.triggerResize();
+      this.windowResizeListener = () => {
+        // Window resize explicitly triggers logic too, though RO usually catches the side effects
+        this.triggerResize();
+      };
       window.addEventListener('resize', this.windowResizeListener, {
         passive: true,
       });
     });
 
-    // Also listen for orientation changes on mobile
+    // Orientation change listener
     if (this.isBrowser && 'onorientationchange' in window) {
       this.ngZone.runOutsideAngular(() => {
         this.orientationListener = () => {
           this.updateDeviceType();
-          // Delay resize on orientation change to wait for layout to stabilize
+          // Orientation changes are abrupt, so we skip the scaling trick and just resize
           setTimeout(() => this.triggerResize(), 150);
         };
         window.addEventListener('orientationchange', this.orientationListener);
@@ -1238,15 +1373,17 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private triggerResize(): void {
-    if (this.resizeTimer)
-      cancelAnimationFrame(this.resizeTimer as unknown as number);
+    if (this.resizeTimer) clearTimeout(this.resizeTimer);
 
-    // Use requestAnimationFrame for smooth visual updates
+    // Debounce resize to prevent performance kill
     this.ngZone.runOutsideAngular(() => {
-      this.resizeTimer = requestAnimationFrame(() => {
-        this.updateDeviceType();
-        this.performResize();
-      }) as unknown as ReturnType<typeof setTimeout>;
+      this.resizeTimer = setTimeout(() => {
+        // Run actual resize in RAF to sync with render cycle
+        requestAnimationFrame(() => {
+          this.updateDeviceType();
+          this.performResize();
+        });
+      }, this.RESIZE_DEBOUNCE_MS);
     });
   }
 
@@ -1262,6 +1399,14 @@ export class ChartCardComponent implements AfterViewInit {
 
     const el = this.chartContainerRef()?.nativeElement;
     if (!el) return;
+
+    // Reset visual scaling before actual redraw
+    const dom = this.chartInstance.getDom();
+    const wrapper = dom?.firstElementChild as HTMLElement;
+    if (wrapper) {
+      wrapper.style.transform = '';
+      wrapper.style.transformOrigin = '';
+    }
 
     const currentWidth = el.clientWidth;
     const currentHeight = el.clientHeight;
@@ -1287,7 +1432,11 @@ export class ChartCardComponent implements AfterViewInit {
           // Still call resize after updateChart to ensure dimensions are correct
           this.ngZone.runOutsideAngular(() => {
             setTimeout(() => {
-              this.chartInstance?.resize({ width: 'auto', height: 'auto' });
+              this.chartInstance?.resize({
+                width: 'auto',
+                height: 'auto',
+                animation: { duration: 0 },
+              });
             }, 50);
           });
           return;
@@ -1299,13 +1448,14 @@ export class ChartCardComponent implements AfterViewInit {
         this.chartInstance?.resize({
           width: 'auto',
           height: 'auto',
-          animation: { duration: 150, easing: 'cubicOut' },
+          animation: { duration: 0 },
         });
       });
     }
   }
 
   private disposeChart(): void {
+    this.clearTooltipDismissTimer();
     if (this.chartInstance) {
       this.chartInstance.dispose();
       this.chartInstance = undefined;
@@ -1315,8 +1465,7 @@ export class ChartCardComponent implements AfterViewInit {
   }
 
   private cleanup(): void {
-    if (this.resizeTimer)
-      cancelAnimationFrame(this.resizeTimer as unknown as number);
+    if (this.resizeTimer) clearTimeout(this.resizeTimer);
     if (this.indicatorAnimationId)
       cancelAnimationFrame(this.indicatorAnimationId);
 
@@ -1335,6 +1484,7 @@ export class ChartCardComponent implements AfterViewInit {
       this.orientationListener = undefined;
     }
 
+    this.removeOutsideTapListener();
     this.disposeChart();
   }
 }

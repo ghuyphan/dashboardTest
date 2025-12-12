@@ -39,6 +39,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-lg);
+  flex: 1;
 
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -70,6 +71,7 @@
 /* --- Component Sizing (matching device-dashboard) --- */
 app-chart-card,
 app-table-card {
+  flex: 1;
   min-height: 400px;
   display: flex;
   flex-direction: column;
