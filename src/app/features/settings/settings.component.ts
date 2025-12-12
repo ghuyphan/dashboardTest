@@ -16,7 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ModalService } from '../../core/services/modal.service';
 import { ConfirmationModalComponent } from '../../shared/components/confirmation-modal/confirmation-modal.component';
-import { ThemeService } from '../../core/services/theme.service';
+import { ThemeService, ThemePreference } from '../../core/services/theme.service';
 import { VersionService } from '../../core/services/version.service';
 import { User } from '../../core/models/user.model';
 import { TooltipDirective } from '../../shared/directives/tooltip.directive';
@@ -126,11 +126,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   // Theme Switcher Logic
-  setTheme(isDark: boolean): void {
-    const current = this.themeService.isDarkTheme();
-    if (current !== isDark) {
-      this.themeService.toggleTheme();
-    }
+  setTheme(preference: ThemePreference): void {
+    this.themeService.setThemePreference(preference);
   }
 
   onVersionClick(): void {

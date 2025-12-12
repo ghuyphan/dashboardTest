@@ -433,6 +433,8 @@
   gap: 24px;
   padding: var(--spacing-sm) 0;
   margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  /* Allow wrapping on small screens */
 }
 
 .theme-option {
@@ -447,6 +449,14 @@
   position: relative;
   width: 160px;
   /* Fixed width to prevent stretching */
+
+  /* Mobile adjustment */
+  @media (max-width: 600px) {
+    width: 100%;
+    /* Full width on very small screens or flexible */
+    max-width: 140px;
+    /* But keep them somewhat small to fit 2 per row if possible */
+  }
 
   /* Hover effect on the whole option - only on devices with hover */
   @media (hover: hover) {
@@ -464,7 +474,7 @@
 
       .check-icon {
         opacity: 1;
-        transform: scale(1);
+        transform: translate(-50%, -50%) scale(1.2);
       }
     }
 
@@ -611,6 +621,156 @@
     background: #1e293b;
     border-color: #334155;
   }
+}
+
+/* System Theme Preview - Clean Diagonal Slice */
+/* System Theme Preview - Layered Split Design */
+.theme-option.system .theme-preview {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+
+  /* Reset layout for layers */
+  .preview-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+
+    .preview-header {
+      height: 14%;
+      width: 100%;
+      border-bottom: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .preview-body {
+      flex: 1;
+      display: flex;
+    }
+
+    .preview-sidebar {
+      width: 25%;
+      height: 100%;
+      border-right: 1px solid;
+    }
+
+    .preview-content {
+      flex: 1;
+      padding: 8%;
+      display: flex;
+      flex-direction: column;
+      gap: 8%;
+    }
+
+    .preview-row {
+      height: 8%;
+      border-radius: 4px;
+      width: 80%;
+    }
+
+    .preview-row.short {
+      width: 50%;
+    }
+
+    .preview-card {
+      margin-top: auto;
+      height: 45%;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid;
+    }
+  }
+
+  /* --- Light Layer Styles --- */
+  .preview-layer.light-layer {
+    background-color: #f8fafc;
+
+    .preview-header,
+    .preview-sidebar {
+      background: #fff;
+      border-color: #e2e8f0;
+    }
+
+    .preview-row {
+      background: #cbd5e1;
+    }
+
+    .preview-card {
+      background: #fff;
+      border-color: #e2e8f0;
+    }
+  }
+
+  /* --- Dark Layer Styles (Clipped to Right Half) --- */
+  .preview-layer.dark-layer {
+    background-color: #0f172a;
+    -webkit-clip-path: inset(0 0 0 50%);
+    clip-path: inset(0 0 0 50%);
+
+    /* Add a white separator line at the split point (left edge of clip) */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      /* Position relative to layer */
+      /* Since the layer itself is full width but clipped, we want the line at 50% */
+      width: 1px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.15);
+      z-index: 5;
+    }
+
+    .preview-header,
+    .preview-sidebar {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    .preview-row {
+      background: #475569;
+    }
+
+    .preview-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+  }
+
+  /* Inherit default centered check-icon styles */
+}
+
+.theme-option.system.active .theme-preview {
+  border-color: var(--primary);
+
+  .check-icon {
+    /* Just scale it up, position is already centered by default styles */
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+}
+
+.theme-option.system:hover .theme-preview {
+  /* No bg change needed, layers handle it */
+  box-shadow: var(--box-shadow-md);
+}
+
+.theme-option.system.active .theme-preview {
+  border-color: var(--primary);
+
+  .check-icon {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+.theme-option.system:hover .theme-preview {
+  /* Subtle hover split */
+  background: linear-gradient(90deg, #ffffff 50%, #1e293b 50%);
 }
 
 /* --- Version Display --- */

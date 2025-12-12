@@ -1,6 +1,8 @@
 import { Injectable, signal, effect, inject, Renderer2, RendererFactory2, PLATFORM_ID } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 
+export type ThemePreference = 'light' | 'dark' | 'system';
+
 export interface ThemePalette {
   // Core & Backgrounds
   white: string;
@@ -59,22 +61,36 @@ export class ThemeService {
   private rendererFactory = inject(RendererFactory2);
   private document = inject(DOCUMENT);
   private platformId = inject(PLATFORM_ID);
+  private mediaQuery: MediaQueryList | null = null;
+  private systemThemeListener: ((e: MediaQueryListEvent) => void) | null = null;
 
-  public isDarkTheme = signal<boolean>(this.getInitialTheme());
+  // User's theme preference: 'light', 'dark', or 'system'
+  public themePreference = signal<ThemePreference>(this.getStoredPreference());
+  // Actual dark/light state based on preference and system settings
+  public isDarkTheme = signal<boolean>(this.computeIsDark(this.getStoredPreference()));
   public currentPalette = signal<ThemePalette>(this.getColors());
 
   constructor() {
     this.renderer = this.rendererFactory.createRenderer(null, null);
+
+    // Setup system preference listener
+    if (isPlatformBrowser(this.platformId) && window.matchMedia) {
+      this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.systemThemeListener = (e: MediaQueryListEvent) => {
+        if (this.themePreference() === 'system') {
+          this.isDarkTheme.set(e.matches);
+        }
+      };
+      this.mediaQuery.addEventListener('change', this.systemThemeListener);
+    }
 
     effect(() => {
       const isDark = this.isDarkTheme();
 
       if (isDark) {
         this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
       } else {
         this.renderer.setAttribute(this.document.documentElement, 'data-theme', 'light');
-        localStorage.setItem('theme', 'light');
       }
 
       // Force recalculation of CSS variables
@@ -84,20 +100,53 @@ export class ThemeService {
     });
   }
 
-  public toggleTheme(): void {
-    this.isDarkTheme.update(d => !d);
+  /**
+   * Set the theme preference: 'light', 'dark', or 'system'
+   */
+  public setThemePreference(preference: ThemePreference): void {
+    this.themePreference.set(preference);
+    localStorage.setItem('themePreference', preference);
+    this.isDarkTheme.set(this.computeIsDark(preference));
   }
 
-  private getInitialTheme(): boolean {
-    if (!isPlatformBrowser(this.platformId)) return false;
+  public toggleTheme(): void {
+    // Toggle between light and dark (for backward compatibility)
+    const newPreference: ThemePreference = this.isDarkTheme() ? 'light' : 'dark';
+    this.setThemePreference(newPreference);
+  }
 
-    const stored = localStorage.getItem('theme');
-    if (stored) return stored === 'dark';
+  private getStoredPreference(): ThemePreference {
+    if (!isPlatformBrowser(this.platformId)) return 'light';
 
-    if (window.matchMedia) {
+    const stored = localStorage.getItem('themePreference') as ThemePreference | null;
+
+    // Migrate from old 'theme' key if exists
+    if (!stored) {
+      const oldTheme = localStorage.getItem('theme');
+      if (oldTheme === 'dark') {
+        localStorage.setItem('themePreference', 'dark');
+        return 'dark';
+      }
+      // Default to light mode
+      return 'light';
+    }
+
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      return stored;
+    }
+
+    return 'light'; // Default to light mode
+  }
+
+  private computeIsDark(preference: ThemePreference): boolean {
+    if (preference === 'dark') return true;
+    if (preference === 'light') return false;
+
+    // 'system' preference - check system settings
+    if (isPlatformBrowser(this.platformId) && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    return false;
+    return false; // Default to light if can't detect
   }
 
   public getCssVar(name: string, fallback: string = ''): string {

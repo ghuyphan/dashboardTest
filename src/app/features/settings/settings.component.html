@@ -45,8 +45,8 @@
         </h4>
         <div class="theme-selector-grid">
 
-          <button type="button" class="theme-option light" [class.active]="!themeService.isDarkTheme()"
-            (click)="setTheme(false)">
+          <button type="button" class="theme-option light" [class.active]="themeService.themePreference() === 'light'"
+            (click)="setTheme('light')">
             <div class="theme-preview">
               <div class="preview-header"></div>
               <div class="preview-body">
@@ -64,8 +64,8 @@
             <span class="theme-label">Chế độ Sáng</span>
           </button>
 
-          <button type="button" class="theme-option dark" [class.active]="themeService.isDarkTheme()"
-            (click)="setTheme(true)">
+          <button type="button" class="theme-option dark" [class.active]="themeService.themePreference() === 'dark'"
+            (click)="setTheme('dark')">
             <div class="theme-preview">
               <div class="preview-header"></div>
               <div class="preview-body">
@@ -81,6 +81,42 @@
               </div>
             </div>
             <span class="theme-label">Chế độ Tối</span>
+          </button>
+
+          <button type="button" class="theme-option system" [class.active]="themeService.themePreference() === 'system'"
+            (click)="setTheme('system')">
+            <div class="theme-preview system-preview">
+              <!-- Light Layer (Base) -->
+              <div class="preview-layer light-layer">
+                <div class="preview-header"></div>
+                <div class="preview-body">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-content">
+                    <div class="preview-row"></div>
+                    <div class="preview-row short"></div>
+                    <div class="preview-card"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dark Layer (Overlay with Clip) -->
+              <div class="preview-layer dark-layer">
+                <div class="preview-header"></div>
+                <div class="preview-body">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-content">
+                    <div class="preview-row"></div>
+                    <div class="preview-row short"></div>
+                    <div class="preview-card"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="check-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+            </div>
+            <span class="theme-label">Theo hệ thống</span>
           </button>
         </div>
 
@@ -160,7 +196,6 @@
               <input [type]="showNew() ? 'text' : 'password'" id="newPass" formControlName="NewPassword"
                 class="form-control"
                 [placeholder]="isOldPasswordFilled() ? 'Nhập mật khẩu mới' : 'Vui lòng nhập mật khẩu cũ trước'"
-                [disabled]="!isOldPasswordFilled()"
                 [class.is-invalid]="form.get('NewPassword')?.touched && form.get('NewPassword')?.invalid">
               <button type="button" class="toggle-btn" (click)="toggleVisibility('new')" tabindex="-1"
                 [disabled]="!isOldPasswordFilled()">
@@ -175,7 +210,6 @@
               <input [type]="showConfirm() ? 'text' : 'password'" id="confirmPass" formControlName="ConfirmPassword"
                 class="form-control"
                 [placeholder]="isNewPasswordFilled() ? 'Nhập lại mật khẩu mới' : 'Vui lòng nhập mật khẩu mới trước'"
-                [disabled]="!isNewPasswordFilled()"
                 [class.is-invalid]="form.hasError('mismatch') && form.get('ConfirmPassword')?.touched">
               <button type="button" class="toggle-btn" (click)="toggleVisibility('confirm')" tabindex="-1"
                 [disabled]="!isNewPasswordFilled()">
