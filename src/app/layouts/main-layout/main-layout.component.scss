@@ -6,7 +6,7 @@
   width: 100vw;
   background-color: var(--gray-100);
 
-  --header-height: 60px;
+  // Use global --header-height from styles.scss for consistency
   --sidebar-width: 250px;
   --sidebar-width-collapsed: 64px;
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
@@ -64,6 +64,7 @@
   padding-left: var(--sidebar-width);
   background-color: var(--surface-card);
   transition: padding-left var(--transition-duration) var(--transition-smooth);
+  position: relative;
 }
 
 .main-panel.collapsed {
@@ -83,10 +84,9 @@
 .dashboard-content {
   flex: 1;
   min-height: 0;
-  /* Container only - scrolling happens in .page-content */
-  overflow: hidden;
+  /* Enable scrolling in main content */
+  overflow: auto;
 
-  /* Removed global padding to support full-width pages. Each page manages its own padding. */
   padding: 0;
   position: relative;
   display: flex;
@@ -119,27 +119,31 @@
 @media (max-width: 992px) {
   .dashboard-content {
     padding: 0;
-    // padding: var(--spacing-sm) var(--spacing-md);
-    // padding-left: max(var(--spacing-md), var(--safe-area-left));
-    // padding-right: max(var(--spacing-md), var(--safe-area-right));
-    // padding-bottom: max(var(--spacing-md), var(--safe-area-bottom));
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-content {
     padding: 0;
-    // padding: var(--spacing-sm) var(--spacing-md);
-    // padding-left: max(var(--spacing-md), var(--safe-area-left));
-    // padding-right: max(var(--spacing-md), var(--safe-area-right));
-    // padding-bottom: max(var(--spacing-md), var(--safe-area-bottom));
   }
 }
 
 /* --- HEADER & FOOTER --- */
 app-header {
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
   z-index: 980;
+  transition: left var(--transition-duration) var(--transition-smooth);
+
+  .collapsed & {
+    left: var(--sidebar-width-collapsed);
+  }
+
+  @media (max-width: 992px) {
+    left: 0 !important;
+  }
 }
 
 app-action-footer {

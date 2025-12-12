@@ -75,7 +75,12 @@
     </div>
   </div>
 
-  <div class="sidebar-nav-content" #navContent>
+  <div
+    class="sidebar-nav-content"
+    #navContent
+    [class.can-scroll-top]="canScrollTop()"
+    [class.can-scroll-bottom]="canScrollBottom()"
+    (scroll)="onNavScroll()">
     <nav class="sidebar-nav" role="navigation">
       <ul>
         @defer (on viewport) {

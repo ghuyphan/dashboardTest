@@ -50,6 +50,10 @@ export class SidebarComponent implements AfterViewInit {
   // [FIX] Signal to gate animations until view is stable
   public transitionsEnabled = signal(false);
 
+  // Scroll state signals for gradient visibility
+  public canScrollTop = signal<boolean>(false);
+  public canScrollBottom = signal<boolean>(false);
+
   private openAccordionItems = new Set<NavItem>();
   private lastScrollTop: number = 0;
   public isMobileView: boolean = false;
@@ -73,6 +77,8 @@ export class SidebarComponent implements AfterViewInit {
         this.hideAllSubmenus();
         this.restoreAccordionState();
         this.restoreScrollPosition();
+        // Update scroll state when sidebar opens
+        setTimeout(() => this.updateScrollState(), 50);
       } else {
         this.saveScrollPosition();
         this.hideAllSubmenus();
@@ -84,7 +90,30 @@ export class SidebarComponent implements AfterViewInit {
     // [FIX] Enable transitions shortly after render to prevent initial "closing" animation glitch
     setTimeout(() => {
       this.transitionsEnabled.set(true);
+      // Check initial scroll state
+      this.updateScrollState();
     }, 300);
+  }
+
+  /** Handle scroll event on nav content */
+  onNavScroll(): void {
+    this.updateScrollState();
+  }
+
+  /** Update scroll state signals based on current scroll position */
+  private updateScrollState(): void {
+    if (!this.navContentEl?.nativeElement) return;
+
+    const el = this.navContentEl.nativeElement;
+    const scrollTop = el.scrollTop;
+    const scrollHeight = el.scrollHeight;
+    const clientHeight = el.clientHeight;
+
+    // Can scroll up if not at the top
+    this.canScrollTop.set(scrollTop > 2);
+
+    // Can scroll down if not at the bottom (with 2px threshold for rounding)
+    this.canScrollBottom.set(scrollTop + clientHeight < scrollHeight - 2);
   }
 
   hideAllSubmenus(): void {

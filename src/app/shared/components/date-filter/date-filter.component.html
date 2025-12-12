@@ -46,8 +46,14 @@
     </div>
   </div>
 
-  <div class="quick-actions-container">
-    <div class="quick-actions-scroll">
+  <div
+    class="quick-actions-container"
+    [class.can-scroll-left]="canScrollLeft()"
+    [class.can-scroll-right]="canScrollRight()">
+    <div
+      class="quick-actions-scroll"
+      #quickActionsScroll
+      (scroll)="onQuickActionsScroll()">
       @for (range of quickRanges; track range.key; let i = $index) {
         <button
           type="button"

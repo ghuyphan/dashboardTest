@@ -184,6 +184,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
       this.renderer.setStyle(menuEl, 'position', 'fixed');
       this.renderer.setStyle(menuEl, 'visibility', 'hidden');
       this.renderer.addClass(menuEl, 'open');
+      this.renderer.addClass(menuEl, 'flyout-mode');
     }
   }
 
@@ -265,6 +266,7 @@ export class FlyoutDirective implements OnInit, OnDestroy {
       stylesToRemove.forEach(style => {
         this.renderer.removeStyle(menuEl, style);
       });
+      this.renderer.removeClass(menuEl, 'flyout-mode');
     }
   }
 

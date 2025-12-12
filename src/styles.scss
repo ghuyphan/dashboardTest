@@ -169,7 +169,7 @@ $dark-tokens: (
   --font-weight-medium: 500;
   --font-weight-bold: 700;
 
-  --header-height: 60px;
+  --header-height: 52px;
   --sidebar-width: 250px;
   --sidebar-width-collapsed: 64px;
 
@@ -238,14 +238,17 @@ $dark-tokens: (
   --white: #ffffff;
 
   /* 4. Mobile Overrides */
+  @media (max-width: 992px) {
+    --header-height: 48px;
+  }
+
   @media (max-width: 768px) {
-    --header-height: 56px;
+    --header-height: 44px;
     --spacing-lg: 1rem;
   }
 
   @media (max-width: 480px) {
     --font-size-base: 0.875rem;
-    --header-height: 52px;
   }
 
   @media (max-width: 360px) {
@@ -1076,7 +1079,9 @@ body > ul.submenu.open {
   box-sizing: border-box;
   overflow-y: auto;
 
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-lg);
+  /* Add header-height to top padding to offset from fixed header */
+  padding: calc(var(--header-height) + var(--spacing-sm)) var(--spacing-md)
+    var(--spacing-lg);
   gap: var(--spacing-lg);
 
   /* Hide Scrollbar */
@@ -1088,13 +1093,13 @@ body > ul.submenu.open {
 
   /* Responsive Spacing */
   @media (max-width: 992px) {
-    padding: var(--spacing-mds) var(--spacing-md);
+    padding: calc(var(--header-height) + var(--spacing-mds)) var(--spacing-md);
     padding-bottom: var(--spacing-lg);
     gap: var(--spacing-md);
   }
 
   @media (max-width: 480px) {
-    padding: var(--spacing-mds) var(--spacing-md);
+    padding: calc(var(--header-height) + var(--spacing-mds)) var(--spacing-md);
     padding-bottom: var(--spacing-lg);
   }
 }

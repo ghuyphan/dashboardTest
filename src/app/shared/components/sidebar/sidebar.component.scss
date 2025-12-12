@@ -196,27 +196,61 @@
       background-color: var(--gray-300);
     }
   }
-}
 
-.sidebar-nav-content::after {
-  content: '';
-  position: absolute;
-  right: 2px;
-  top: 0;
-  width: 4px;
-  height: 0;
-  background-color: var(--gray-300);
-  border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-  z-index: 10;
+  // Top gradient - subtle fade for scroll indication
+  &::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    height: 20px;
+    margin-bottom: -20px;
+    background: linear-gradient(
+      to bottom,
+      var(--surface-background),
+      transparent
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+
+  // Bottom gradient - subtle fade to indicate more items below
+  &::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    height: 20px;
+    margin-top: -20px;
+    background: linear-gradient(to top, var(--surface-background), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+
+  // Show gradients based on scroll state
+  &.can-scroll-top::before {
+    opacity: 1;
+  }
+
+  &.can-scroll-bottom::after {
+    opacity: 1;
+  }
 }
 
 /* --- Sidebar Navigation --- */
 .sidebar-nav {
   overflow: visible;
   padding: 0 var(--sidebar-padding);
+  // Add left padding to accommodate the active indicator
+  padding-left: calc(var(--sidebar-padding) + var(--spacing-xs));
 }
 
 .sidebar-nav ul {
@@ -352,7 +386,8 @@
 .sidebar-nav ul li button.active::before {
   content: '';
   position: absolute;
-  left: 0;
+  // Position at sidebar edge (offset by button padding)
+  left: calc(-1 * var(--spacing-sm) - var(--spacing-xs));
   top: var(--spacing-xs);
   bottom: var(--spacing-xs);
   width: var(--spacing-xs);
@@ -433,26 +468,56 @@
     margin var(--transition-duration) var(--transition-smooth);
   opacity: 0;
   position: relative;
-  border-left: 2px solid var(--border-color);
-  margin-left: 0.5rem !important;
+  // Margin aligns with parent button padding (0.75rem = var(--spacing-sm))
+  // Plus icon center offset (~0.625rem for icon center)
+  margin-left: calc(var(--spacing-sm) + 0.625rem) !important;
+  padding-left: 1rem; // Space between thread line and content
+
+  // Reddit-style thread line - vertical connecting line
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0.25rem; // Account for margin-bottom on last item
+    width: 1px;
+    background-color: var(--gray-200);
+    border-radius: 1px;
+    transition: background-color var(--transition-fast) ease;
+  }
+
+  // Highlight thread line when submenu is hovered
+  @media (hover: hover) {
+    &:hover::before {
+      background-color: var(--gray-300);
+    }
+  }
 }
 
 .submenu.open {
   max-height: 500px;
   opacity: 1;
   margin-bottom: 0.25rem;
-  // margin-top: 0.25rem;
+  overflow: visible;
+}
+
+// Submenu li - no horizontal branches, just clean hierarchy
+.submenu li {
+  position: relative;
   overflow: visible;
 }
 
 .submenu li a {
-  padding: 0.75rem 0.625rem 0.75rem 1.25rem;
+  padding: 0.75rem 0.625rem 0.75rem 0.75rem;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin: 0 0 0.25rem 0;
+  // Add margin-left to separate from thread line
+  margin: 0 0.5rem 0.25rem 0.5rem;
   border-radius: 0.375rem;
   position: relative;
-  font-weight: var(--font-weight-normal);
+  font-weight: 500;
+  // Reset width to auto to respect margins
+  width: auto;
 }
 
 .submenu li a i {
@@ -463,10 +528,6 @@
   text-align: center;
   transform: scale(1);
   transition: transform var(--transition-fast) var(--transition-spring);
-}
-
-.submenu li a::before {
-  display: none;
 }
 
 @media (hover: hover) {
@@ -484,18 +545,10 @@
   color: var(--teal-blue);
   background-color: var(--gray-200);
   font-weight: 600;
-}
 
-.submenu li a.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: var(--spacing-xs);
-  bottom: var(--spacing-xs);
-  width: var(--spacing-xs);
-  background-color: var(--aqua-island);
-  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
-  display: block;
+  &::before {
+    display: none;
+  }
 }
 
 /* --- COLLAPSED STATE --- */
@@ -603,7 +656,7 @@
   width: auto !important;
   height: auto !important;
   white-space: nowrap !important;
-  padding: 0.75rem 0.625rem 0.75rem 1.25rem !important;
+  padding: 0.75rem 0.625rem 0.75rem 0.75rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
@@ -616,6 +669,11 @@
 
 .sidebar.collapsed .sidebar-nav ul li a.active::before,
 .sidebar.collapsed .sidebar-nav ul li button.active::before {
+  display: none;
+}
+
+// Hide thread line when submenu is in flyout mode (moved to document.body)
+.submenu.flyout-mode::before {
   display: none;
 }
 
@@ -635,6 +693,9 @@
     contain: none;
     width: min(85vw, 320px);
     /* Wider on mobile for better usability */
+
+    /* Safe area support for top (notch) */
+    padding-top: max(0px, var(--safe-area-top));
   }
 
   .sidebar.open {
@@ -650,6 +711,9 @@
     padding-right: 0.625rem;
     overflow-x: hidden;
     overflow-y: auto;
+
+    /* Safe area support for top (notch) */
+    padding-top: max(0px, var(--safe-area-top));
   }
 
   .sidebar-header {
@@ -658,22 +722,25 @@
 
   .sidebar-nav {
     padding: 0 var(--sidebar-padding);
-    padding-bottom: max(var(--spacing-lg), var(--safe-area-bottom));
+    /* Safe area support for bottom (home indicator) */
+    padding-bottom: max(
+      var(--spacing-lg),
+      calc(var(--spacing-lg) + var(--safe-area-bottom))
+    );
   }
 
   .sidebar.collapsed .sidebar-nav ul li .submenu {
     position: relative;
     left: auto;
     top: auto;
-    margin-left: 0.5rem !important;
+    margin-left: 1rem !important; // Match expanded thread margin
+    padding-left: 1rem;
     min-width: 0;
     box-shadow: none;
     border: none;
-    padding: 0;
     z-index: 1;
     max-height: 0 !important;
     overflow: hidden !important;
-    border-left: 2px solid var(--border-color) !important;
     opacity: 0;
     visibility: visible;
     transition:
@@ -756,7 +823,7 @@
   }
 
   .sidebar.collapsed .submenu li a {
-    padding: 0.75rem 0.625rem 0.75rem 1.25rem;
+    padding: 0.75rem 0.625rem 0.75rem 0.75rem;
   }
 }
 

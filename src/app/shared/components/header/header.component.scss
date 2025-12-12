@@ -5,8 +5,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  --header-height: 50px;
-  /* Standardized height */
+  // Uses global --header-height from styles.scss for consistency
 }
 
 .dashboard-header {
@@ -14,12 +13,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
-  background-color: var(--surface-card);
-  border-bottom: 1px solid transparent;
-
-  [data-theme='dark'] & {
-    border-bottom-color: var(--border-color);
-  }
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  // border-bottom: 1px solid transparent;
 
   height: var(--header-height);
   gap: 1rem;
@@ -31,6 +28,14 @@
     padding-left: max(var(--spacing-md), var(--safe-area-left));
     padding-right: max(var(--spacing-md), var(--safe-area-right));
     gap: 0.5rem;
+  }
+}
+
+// Dark mode override using :host-context for Angular view encapsulation
+:host-context([data-theme='dark']) {
+  .dashboard-header {
+    background-color: rgba(24, 24, 27, 0.4);
+    // border-bottom-color: var(--border-color);
   }
 }
 

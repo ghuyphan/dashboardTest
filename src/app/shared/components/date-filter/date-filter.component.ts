@@ -9,6 +9,8 @@ import {
   OnInit,
   OnDestroy,
   ViewChild,
+  ElementRef,
+  AfterViewInit,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -65,7 +67,7 @@ export type QuickRange =
   styleUrl: './date-filter.component.scss',
   encapsulation: ViewEncapsulation.Emulated,
 })
-export class DateFilterComponent implements OnInit, OnDestroy {
+export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   private datePipe = inject(DatePipe);
   private toastService = inject(ToastService);
   private breakpointObserver = inject(BreakpointObserver);
@@ -90,8 +92,16 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   // Signal to track if we are on mobile
   public isMobile = signal<boolean>(false);
 
+  // Scroll state signals for gradient visibility
+  public canScrollLeft = signal<boolean>(false);
+  public canScrollRight = signal<boolean>(false);
+
   // ViewChild for Datepicker
   @ViewChild('picker') private picker!: MatDatepicker<Date>;
+
+  // ViewChild for quick actions scroll container
+  @ViewChild('quickActionsScroll')
+  private quickActionsScroll!: ElementRef<HTMLDivElement>;
 
   public quickRanges: { key: QuickRange; label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
@@ -192,6 +202,32 @@ export class DateFilterComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  ngAfterViewInit(): void {
+    // Check initial scroll state after view is ready
+    setTimeout(() => this.updateScrollState(), 0);
+  }
+
+  /** Handle scroll event on quick actions container */
+  onQuickActionsScroll(): void {
+    this.updateScrollState();
+  }
+
+  /** Update scroll state signals based on current scroll position */
+  private updateScrollState(): void {
+    if (!this.quickActionsScroll?.nativeElement) return;
+
+    const el = this.quickActionsScroll.nativeElement;
+    const scrollLeft = el.scrollLeft;
+    const scrollWidth = el.scrollWidth;
+    const clientWidth = el.clientWidth;
+
+    // Can scroll left if not at the beginning
+    this.canScrollLeft.set(scrollLeft > 2);
+
+    // Can scroll right if not at the end (with 2px threshold for rounding)
+    this.canScrollRight.set(scrollLeft + clientWidth < scrollWidth - 2);
   }
 
   // --- Parsing & Formatting Logic ---

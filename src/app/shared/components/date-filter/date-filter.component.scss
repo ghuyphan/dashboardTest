@@ -25,14 +25,10 @@
     gap: var(--spacing-sm);
     border-radius: var(--border-radius-md);
 
-    // [NEW] Mobile Blur Effect (consistent with Modal)
-    background-color: rgba(255, 255, 255, 0.85); // Semi-transparent for blur
+    // Mobile Blur Effect - Light mode
+    background-color: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-
-    [data-theme='dark'] & {
-      background-color: rgba(24, 24, 27, 0.85); // Dark mode equivalent
-    }
   }
 
   @media (max-width: 480px) {
@@ -47,6 +43,15 @@
   @media (min-width: 992px) {
     flex-direction: row;
     align-items: flex-end;
+  }
+}
+
+// Dark mode mobile override using :host-context for Angular view encapsulation
+:host-context([data-theme='dark']) {
+  @media (max-width: 768px) {
+    .filter-card {
+      background-color: rgba(24, 24, 27, 0.85);
+    }
   }
 }
 
@@ -161,22 +166,102 @@
   // Ensure it doesn't overflow vertically
   height: var(--input-height);
 
+  // Left gradient (hidden by default)
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to left, transparent, var(--surface-card));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1;
+  }
+
+  // Right gradient (hidden by default)
   &::after {
     content: '';
     position: absolute;
     right: 0;
     top: 0;
     bottom: 0;
-    width: 20px;
+    width: 24px;
     background: linear-gradient(to right, transparent, var(--surface-card));
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s;
+    z-index: 1;
   }
 
-  @media (max-width: 992px) {
+  // Show gradients based on scroll state
+  &.can-scroll-left::before {
+    opacity: 1;
+  }
+
+  &.can-scroll-right::after {
+    opacity: 1;
+  }
+}
+
+// Dark mode gradient colors - use :host-context for Angular view encapsulation
+:host-context([data-theme='dark']) {
+  .quick-actions-container {
+    &::before {
+      background: linear-gradient(to left, transparent, rgba(24, 24, 27, 0.95));
+    }
+
     &::after {
-      opacity: 1;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(24, 24, 27, 0.95)
+      );
+    }
+  }
+}
+
+// Mobile: use semi-transparent background for blur effect
+@media (max-width: 768px) {
+  .quick-actions-container {
+    &::before {
+      background: linear-gradient(
+        to left,
+        transparent,
+        rgba(255, 255, 255, 0.85)
+      );
+    }
+
+    &::after {
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.85)
+      );
+    }
+  }
+}
+
+:host-context([data-theme='dark']) {
+  @media (max-width: 768px) {
+    .quick-actions-container {
+      &::before {
+        background: linear-gradient(
+          to left,
+          transparent,
+          rgba(24, 24, 27, 0.85)
+        );
+      }
+
+      &::after {
+        background: linear-gradient(
+          to right,
+          transparent,
+          rgba(24, 24, 27, 0.85)
+        );
+      }
     }
   }
 }
