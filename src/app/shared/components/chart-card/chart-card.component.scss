@@ -464,11 +464,20 @@
 .sk-pie-area {
   align-items: center;
   justify-content: center;
+
+  // Pie skeleton with legend at top - add spacing
+  &.sk-pie-with-legend-top {
+    padding-top: var(--spacing-md);
+
+    @media (max-width: 480px) {
+      padding-top: var(--spacing-sm);
+    }
+  }
 }
 
 .sk-pie {
   width: 50%;
-  max-width: 180px;
+  max-width: 160px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   position: relative;
@@ -486,7 +495,7 @@
   }
 
   @media (max-width: 480px) {
-    max-width: 140px;
+    max-width: 120px;
   }
 }
 

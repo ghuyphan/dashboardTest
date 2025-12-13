@@ -431,7 +431,14 @@ export class ChartCardComponent implements AfterViewInit {
       // Dynamic Import for tree-shaking
       const [
         echarts,
-        { BarChart, LineChart, PieChart, ScatterChart },
+        {
+          BarChart,
+          LineChart,
+          PieChart,
+          ScatterChart,
+          RadarChart,
+          TreemapChart,
+        },
         {
           TitleComponent,
           TooltipComponent,
@@ -439,6 +446,7 @@ export class ChartCardComponent implements AfterViewInit {
           LegendComponent,
           DataZoomComponent,
           TimelineComponent,
+          RadarComponent,
         },
         { CanvasRenderer },
       ] = await Promise.all([
@@ -453,12 +461,15 @@ export class ChartCardComponent implements AfterViewInit {
         LineChart,
         PieChart,
         ScatterChart,
+        RadarChart,
+        TreemapChart,
         TitleComponent,
         TooltipComponent,
         GridComponent,
         LegendComponent,
         DataZoomComponent,
         TimelineComponent,
+        RadarComponent,
         CanvasRenderer,
       ]);
 
@@ -704,7 +715,7 @@ export class ChartCardComponent implements AfterViewInit {
    */
   private detectChartType(
     option: EChartsCoreOption
-  ): 'cartesian' | 'horizontal-bar' | 'pie' {
+  ): 'cartesian' | 'horizontal-bar' | 'pie' | 'treemap' {
     const opt = option as any; // Cast for easier property access since EChartsCoreOption is strict
     if (!opt?.series) return 'cartesian';
 
@@ -724,6 +735,11 @@ export class ChartCardComponent implements AfterViewInit {
       return 'horizontal-bar';
     }
 
+    // Check for treemap
+    if (series.some((s: any) => s?.type === 'treemap')) {
+      return 'treemap';
+    }
+
     return 'cartesian';
   }
 
@@ -740,60 +756,77 @@ export class ChartCardComponent implements AfterViewInit {
     const mobile = this.isMobile();
     const tablet = this.isTablet();
 
-    // 1. Enforce Legend Position - different for pie vs other charts
+    // 1. Enforce Legend Position - UNIFIED: All charts have legend at top
     if (newOption.legend !== false) {
-      if (chartType === 'pie') {
-        const isCompact = mobile || this.isCompact;
-        // PIE CHART: Vertical legend on the right side if space allows, otherwise bottom
-        newOption.legend = {
-          ...(newOption.legend || {}),
-          type: 'scroll',
-          orient: isCompact ? 'horizontal' : 'vertical',
-          // Position: right side for desktop/wide, bottom for mobile/compact
-          top: isCompact ? 'auto' : 'middle',
-          bottom: isCompact ? 10 : undefined,
-          left: isCompact ? 'center' : undefined,
-          right: isCompact ? undefined : 20,
-          itemGap: isCompact ? 10 : 14,
-          padding: isCompact ? [5, 10] : [10, 0],
-          selectedMode: this.legendSelectedMode(),
-          textStyle: {
-            ...(newOption.legend?.textStyle || {}),
-            fontSize: mobile ? 10 : 12,
-          },
-          itemWidth: mobile ? 12 : 16,
-          itemHeight: mobile ? 10 : 12,
-          pageButtonPosition: 'end',
-        };
-      } else {
-        // OTHER CHARTS: Horizontal legend at top (current behavior)
-        newOption.legend = {
-          ...(newOption.legend || {}),
-          top: 0,
-          bottom: undefined,
-          left: 'center',
-          right: undefined,
-          orient: 'horizontal',
-          type: 'scroll',
-          pageButtonPosition: 'end',
-          selectedMode: this.legendSelectedMode(),
-          itemGap: mobile ? 12 : 20,
-          padding: [5, 10],
-          textStyle: {
-            ...(newOption.legend?.textStyle || {}),
-            fontSize: mobile ? 10 : 12,
-          },
-          itemWidth: mobile ? 14 : 20,
-          itemHeight: mobile ? 10 : 14,
-        };
+      // UNIFIED: Horizontal legend at top for ALL chart types (including pie)
+      newOption.legend = {
+        ...(newOption.legend || {}),
+        top: 0,
+        bottom: undefined,
+        left: 'center',
+        right: undefined,
+        orient: 'horizontal',
+        type: 'scroll',
+        pageButtonPosition: 'end',
+        selectedMode: this.legendSelectedMode(),
+        itemGap: mobile ? 12 : 20,
+        padding: [5, 10],
+        textStyle: {
+          ...(newOption.legend?.textStyle || {}),
+          fontSize: mobile ? 10 : 12,
+        },
+        itemWidth: mobile ? 14 : 20,
+        itemHeight: mobile ? 10 : 14,
+      };
+
+      // For pie charts: Adjust center to add spacing below legend
+      if (chartType === 'pie' && newOption.series) {
+        const series = Array.isArray(newOption.series)
+          ? newOption.series
+          : [newOption.series];
+        newOption.series = series.map((s: any) => {
+          if (s?.type === 'pie') {
+            // Only set center if not already defined - offset downward for legend spacing
+            // Use percentage (55%) instead of calc() as ECharts doesn't support CSS calc()
+            return {
+              ...s,
+              center: s.center || ['50%', '55%'],
+              // Reduce radius slightly to prevent overflow with top legend
+              radius: s.radius || (mobile ? ['25%', '55%'] : ['30%', '60%']),
+            };
+          }
+          return s;
+        });
       }
     }
 
-    // 2. Enforce Grid Layout - optimized for space efficiency (non-pie charts only)
+    // 2. Enforce Grid Layout or Series Layout
     const hasLegend = newOption.legend !== false;
     const baseTop = hasLegend ? (mobile ? 45 : tablet ? 38 : 35) : 10;
 
-    if (chartType !== 'pie') {
+    if (chartType === 'treemap') {
+      // For Treemap: Adjust series sizing to respect top legend
+      if (newOption.series) {
+        const series = Array.isArray(newOption.series)
+          ? newOption.series
+          : [newOption.series];
+
+        newOption.series = series.map((s: any) => {
+          if (s?.type === 'treemap') {
+            return {
+              ...s,
+              top: s.top || baseTop,
+              bottom: s.bottom || 0,
+              left: s.left || 0,
+              right: s.right || 0,
+              width: undefined, // Let left/right control width
+              height: undefined, // Let top/bottom control height
+            };
+          }
+          return s;
+        });
+      }
+    } else if (chartType !== 'pie') {
       newOption.grid = {
         ...(newOption.grid || {}),
         top: baseTop,

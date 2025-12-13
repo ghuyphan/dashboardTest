@@ -12,7 +12,7 @@ export class CustomRouteReuseStrategy implements RouteReuseStrategy {
   public static storedHandles = new Map<string, DetachedRouteHandle | null>();
 
   // Routes to cache
-  private routesToCache: string[] = ['equipment/catalog'];
+  private routesToCache: string[] = ['home', 'equipment/catalog'];
 
   public static clearCache(path: string): void {
     this.storedHandles.delete(path);

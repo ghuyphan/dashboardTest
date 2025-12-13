@@ -1,7 +1,170 @@
-<div class="under-development">
-  <div class="icon-wrapper">
-    <i class="fas fa-tools" aria-hidden="true"></i>
+<div class="page-container">
+  <div class="page-content" [class.animations-finished]="animationsFinished()">
+    <!-- KPI Grid -->
+    <div class="widget-section">
+      <div class="widget-grid">
+        @if (canViewPatientStats()) {
+          <app-widget-card
+            title="Tiếp đón hôm nay"
+            [value]="patientToday().value"
+            icon="fas fa-user-injured"
+            [accentColor]="themeService.currentPalette().primary"
+            [isLoading]="patientToday().loading">
+          </app-widget-card>
+        }
+
+        @if (canViewEmergency()) {
+          <app-widget-card
+            title="Cấp cứu"
+            [value]="emergencyCases().value"
+            icon="fas fa-ambulance"
+            [accentColor]="themeService.currentPalette().chart6"
+            [isLoading]="emergencyCases().loading">
+          </app-widget-card>
+        }
+
+        @if (canViewEquipment()) {
+          <app-widget-card
+            title="Thiết bị hoạt động"
+            [value]="activeDevices().value"
+            icon="fas fa-microscope"
+            [accentColor]="themeService.currentPalette().chart2"
+            [isLoading]="activeDevices().loading">
+          </app-widget-card>
+
+          <app-widget-card
+            title="Thiết bị hỏng"
+            [value]="brokenDevices().value"
+            icon="fas fa-tools"
+            [accentColor]="themeService.currentPalette().pastelCoral"
+            [isLoading]="brokenDevices().loading">
+          </app-widget-card>
+        }
+      </div>
+    </div>
+
+    <!-- Charts & AI Grid -->
+    <div class="dashboard-grid">
+      <!-- AI Briefing Card (matches chart-card style) -->
+      <div class="chart-card ai-briefing-card span-1">
+        <div class="card-header">
+          <div class="card-title-wrapper">
+            <h3 class="card-title">
+              <i class="fas fa-robot icon-info"></i>
+              Tóm tắt AI
+            </h3>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (isAiLoading()) {
+            <div class="typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
+          } @else {
+            <div
+              class="briefing-text"
+              [innerHTML]="aiBriefing() | markdown"></div>
+          }
+        </div>
+      </div>
+
+      @if (canViewPatientStats()) {
+        <app-chart-card
+          class="span-2"
+          title="Xu hướng tiếp đón (7 ngày)"
+          icon="fas fa-chart-line"
+          iconClass="icon-info"
+          [chartOptions]="patientTrendOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="line"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu tiếp đón.">
+        </app-chart-card>
+      }
+
+      @if (canViewEmergency()) {
+        <app-chart-card
+          class="span-2"
+          title="Cấp cứu & Nhập viện (7 ngày)"
+          icon="fas fa-ambulance"
+          iconClass="icon-danger"
+          [chartOptions]="emergencyTrendOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="bar"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu cấp cứu.">
+        </app-chart-card>
+      }
+
+      @if (canViewPatientStats()) {
+        <app-chart-card
+          class="span-1"
+          title="Đối tượng bệnh nhân"
+          icon="fas fa-id-card"
+          iconClass="icon-info"
+          [chartOptions]="insuranceChartOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="pie"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu đối tượng.">
+        </app-chart-card>
+      }
+
+      @if (canViewIcd()) {
+        <app-chart-card
+          class="span-1"
+          title="Top bệnh tật"
+          icon="fas fa-disease"
+          iconClass="icon-success"
+          [chartOptions]="topDiseasesOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="horizontal-bar"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu bệnh tật.">
+        </app-chart-card>
+      }
+
+      @if (canViewSurgery()) {
+        <app-chart-card
+          class="span-1"
+          title="Phẫu thuật theo CK"
+          icon="fas fa-user-md"
+          iconClass="icon-warning"
+          [chartOptions]="surgeryChartOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="scatter"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu phẫu thuật.">
+        </app-chart-card>
+      }
+
+      @if (canViewCls()) {
+        <app-chart-card
+          class="span-1"
+          title="Dịch vụ CLS"
+          icon="fas fa-flask"
+          iconClass="icon-info"
+          [chartOptions]="clsChartOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="bar"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu CLS.">
+        </app-chart-card>
+      }
+
+      @if (canViewPatientStats()) {
+        <app-chart-card
+          class="span-2"
+          title="Lượt khám theo chuyên khoa"
+          icon="fas fa-hospital"
+          iconClass="icon-success"
+          [chartOptions]="deptExamChartOptions()"
+          [isLoading]="isLoading()"
+          skeletonType="bar"
+          [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
+          emptyText="Chưa có dữ liệu chuyên khoa.">
+        </app-chart-card>
+      }
+    </div>
   </div>
-  <h2>Đang phát triển</h2>
-  <p>Trang này đang được phát triển. Vui lòng quay lại sau.</p>
 </div>

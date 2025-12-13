@@ -4,6 +4,7 @@
   [class.open]="llmService.isOpen()"
   [class.navigating-mode]="llmService.isNavigating()"
   [ngStyle]="getChatWindowStyle()">
+  <!-- Header -->
   <div class="ai-header">
     <div class="header-left">
       <div class="ai-avatar-wrapper">
@@ -19,7 +20,6 @@
               fill="currentColor" />
           </svg>
         </div>
-
         <div
           class="pulse-dot"
           [class.online]="llmService.modelLoaded()"
@@ -51,55 +51,72 @@
     </div>
   </div>
 
+  <!-- Chat Body -->
   <div
-    class="ai-body chat-view"
+    class="ai-body"
     #scrollContainer
     [class.loading-view]="
       !llmService.modelLoaded() && llmService.messages().length === 0
     ">
+    <!-- Error State -->
     @if (
       !llmService.modelLoaded() &&
       !llmService.isModelLoading() &&
       llmService.messages().length === 0
     ) {
-      <div class="scan-container">
-        <div class="scan-grid error"></div>
-        <div class="scan-radar error"></div>
-        <div class="scan-icon error-state">
-          <i class="fas fa-exclamation-triangle"></i>
+      <div class="loading-orb-wrapper">
+        <div class="scan-container">
+          <div class="scan-grid error"></div>
+          <div class="scan-radar error"></div>
+          <div class="scan-icon error-state">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
         </div>
       </div>
-      <div class="loading-text text-danger">Mất kết nối máy chủ</div>
+      <div class="loading-status-wrapper">
+        <div class="loading-text text-danger">Mất kết nối máy chủ</div>
+        <button
+          class="btn-retry"
+          (click)="llmService.loadModel(); $event.stopPropagation()">
+          <i class="fas fa-sync"></i> Thử lại
+        </button>
+      </div>
+    }
 
-      <button
-        class="btn-retry"
-        (click)="llmService.loadModel(); $event.stopPropagation()">
-        <i class="fas fa-sync"></i> Thử lại
-      </button>
-    } @else if (!llmService.modelLoaded() && llmService.isModelLoading()) {
-      <div class="scan-container">
-        <div class="scan-grid"></div>
-        <div class="scan-radar"></div>
-        <div class="scan-icon">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-              fill="currentColor" />
-          </svg>
+    <!-- Loading State -->
+    @else if (!llmService.modelLoaded() && llmService.isModelLoading()) {
+      <div class="loading-orb-wrapper">
+        <div class="scan-container">
+          <div class="scan-grid"></div>
+          <div class="scan-radar"></div>
+          <div class="scan-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+                fill="currentColor" />
+            </svg>
+          </div>
         </div>
       </div>
-      <div class="loading-text">
-        Đang kết nối
-        <span class="loading-dots"
-          ><span>.</span><span>.</span><span>.</span></span
-        >
+      <div class="loading-status-wrapper">
+        <div class="loading-text">
+          Đang kết nối
+          <span class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </div>
       </div>
-    } @else {
+    }
+
+    <!-- Chat Messages -->
+    @else {
       @for (msg of llmService.messages(); track trackByMessage($index, msg)) {
         @if (
           msg.role !== 'system' && (msg.role !== 'assistant' || msg.content)
@@ -108,8 +125,8 @@
             @if (msg.role === 'assistant') {
               <div class="msg-avatar">
                 <svg
-                  width="16"
-                  height="16"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -126,12 +143,13 @@
         }
       }
 
+      <!-- Thinking Indicator -->
       @if (shouldShowLoadingIndicator()) {
         <div class="message-row assistant">
           <div class="msg-avatar">
             <svg
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -155,6 +173,7 @@
     }
   </div>
 
+  <!-- Navigation Overlay -->
   @if (llmService.isNavigating()) {
     <div class="nav-overlay">
       <div class="warp-tunnel"></div>
@@ -167,6 +186,7 @@
     </div>
   }
 
+  <!-- Footer -->
   <div class="ai-footer">
     <div class="toolbar">
       @if (hasUserMessages()) {
