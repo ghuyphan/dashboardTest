@@ -136,7 +136,8 @@ table.mat-table {
   border-bottom: 1px solid var(--border-color-local);
   position: sticky;
   top: 0;
-  z-index: 100;
+  /* Increase global header z-index to be higher than sticky body columns (101) */
+  z-index: 200;
 
   /* GPU acceleration to fix sticky jitter on mobile */
   transform: translateZ(0);
@@ -241,7 +242,8 @@ table.mat-table {
   border-right: 1px solid var(--sticky-border-color) !important;
 
   &.mat-mdc-header-cell {
-    z-index: 102 !important;
+    /* Must be higher than header-row (200) */
+    z-index: 300 !important;
   }
 }
 
@@ -258,7 +260,8 @@ table.mat-table {
   box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.05);
 
   &.mat-mdc-header-cell {
-    z-index: 102 !important;
+    /* Must be higher than header-row (200) */
+    z-index: 300 !important;
   }
 
   overflow: visible !important;

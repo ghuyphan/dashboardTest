@@ -166,6 +166,11 @@
   // Ensure it doesn't overflow vertically
   height: var(--input-height);
 
+  // On desktop, ensure minimum space to show at least 1 pill before shrinking
+  @media (min-width: 992px) {
+    min-width: 100px;
+  }
+
   // Left gradient (hidden by default)
   &::before {
     content: '';

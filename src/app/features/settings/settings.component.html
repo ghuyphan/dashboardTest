@@ -214,9 +214,11 @@
               <input
                 [type]="showOld() ? 'text' : 'password'"
                 id="oldPass"
+                name="oldPass"
                 formControlName="OldPassword"
                 class="form-control"
                 placeholder="Nhập mật khẩu cũ"
+                autocomplete="current-password"
                 [class.is-invalid]="
                   form.get('OldPassword')?.invalid &&
                   form.get('OldPassword')?.touched
@@ -239,6 +241,7 @@
               <input
                 [type]="showNew() ? 'text' : 'password'"
                 id="newPass"
+                name="newPass"
                 formControlName="NewPassword"
                 class="form-control"
                 [placeholder]="
@@ -246,6 +249,7 @@
                     ? 'Nhập mật khẩu mới'
                     : 'Vui lòng nhập mật khẩu cũ trước'
                 "
+                autocomplete="new-password"
                 [class.is-invalid]="
                   form.get('NewPassword')?.touched &&
                   form.get('NewPassword')?.invalid
@@ -271,6 +275,7 @@
               <input
                 [type]="showConfirm() ? 'text' : 'password'"
                 id="confirmPass"
+                name="confirmPass"
                 formControlName="ConfirmPassword"
                 class="form-control"
                 [placeholder]="
@@ -278,6 +283,7 @@
                     ? 'Nhập lại mật khẩu mới'
                     : 'Vui lòng nhập mật khẩu mới trước'
                 "
+                autocomplete="new-password"
                 [class.is-invalid]="
                   form.hasError('mismatch') &&
                   form.get('ConfirmPassword')?.touched

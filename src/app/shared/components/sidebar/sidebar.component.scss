@@ -257,6 +257,9 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; // Replaces margin-bottom on items to eliminate dead spots
 }
 
 .sidebar-nav ul li {
@@ -316,7 +319,6 @@
   font-weight: var(--font-weight-normal);
   text-align: left;
   cursor: pointer;
-  margin-bottom: 0.25rem;
   justify-content: flex-start;
 }
 
@@ -497,7 +499,6 @@
 .submenu.open {
   max-height: 500px;
   opacity: 1;
-  margin-bottom: 0.25rem;
   overflow: visible;
 }
 
@@ -615,7 +616,7 @@
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  margin: 0 auto 0.25rem auto;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   border-radius: var(--border-radius-md);
@@ -819,7 +820,7 @@
     width: 100%;
     height: auto;
     padding: 0.75rem 0.625rem;
-    margin: 0 0 0.25rem 0;
+    margin: 0;
   }
 
   .sidebar.collapsed .sidebar-nav ul li a i:not(.toggle-icon),
