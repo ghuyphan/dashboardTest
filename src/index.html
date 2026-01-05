@@ -10,13 +10,19 @@
     <script>
       (function () {
         try {
-          var localTheme = localStorage.getItem('theme');
+          var localTheme =
+            localStorage.getItem('themePreference') ||
+            localStorage.getItem('theme');
           var supportDarkMode = window.matchMedia(
             '(prefers-color-scheme: dark)'
           ).matches;
 
           // Apply dark mode if explicitly set, or if no preference is set but system is dark
-          if (localTheme === 'dark' || (!localTheme && supportDarkMode)) {
+          if (
+            localTheme === 'dark' ||
+            (localTheme === 'system' && supportDarkMode) ||
+            (!localTheme && supportDarkMode)
+          ) {
             document.documentElement.setAttribute('data-theme', 'dark');
           } else {
             document.documentElement.setAttribute('data-theme', 'light');
@@ -40,8 +46,10 @@
 
       /* Dark Mode Override */
       [data-theme='dark'] body {
-        background-color: #0b1120; /* Matches --gray-50 in dark mode */
-        color: #e2e8f0; /* Matches --text-primary in dark mode */
+        background-color: #0b1120;
+        /* Matches --gray-50 in dark mode */
+        color: #e2e8f0;
+        /* Matches --text-primary in dark mode */
       }
     </style>
 

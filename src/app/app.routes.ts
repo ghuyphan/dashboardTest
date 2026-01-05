@@ -39,7 +39,7 @@ export const routes: Routes = [
             m => m.HomeComponent
           ),
         data: {
-          title: 'Trang chủ',
+          title: 'Tổng quan',
           keywords: ['dashboard', 'tong quan', 'main', 'home'],
         },
       },
@@ -206,6 +206,48 @@ export const routes: Routes = [
             'can lam sang',
             'can lam sang 6',
             't6',
+          ],
+          showSearchBar: false,
+        },
+      },
+      {
+        path: 'reports/cls-level12',
+        loadComponent: () =>
+          import('./features/reports/cls-level12-report/cls-level12-report.component').then(
+            m => m.ClsLevel12ReportComponent
+          ),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.KhamCLST12',
+          title: 'Tầng 1-2 Khám và CLS',
+          keywords: [
+            'cls',
+            'cls 12',
+            'tang 1 2',
+            'xet nghiem tang 1 2',
+            'can lam sang',
+            't12',
+          ],
+          showSearchBar: false,
+        },
+      },
+      {
+        path: 'reports/cls-level-b1',
+        loadComponent: () =>
+          import('./features/reports/cls-level-b1-report/cls-level-b1-report.component').then(
+            m => m.ClsLevelB1ReportComponent
+          ),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'BaoCao.KhamCLSB1',
+          title: 'Tầng B1 Khám và CLS',
+          keywords: [
+            'cls',
+            'cls b1',
+            'tang b1',
+            'xet nghiem tang b1',
+            'can lam sang',
+            'b1',
           ],
           showSearchBar: false,
         },

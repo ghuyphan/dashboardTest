@@ -68,13 +68,10 @@
 }
 
 /* --- Dashboard Grid Layout --- */
-/* --- Dashboard Grid Layout --- */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--spacing-lg);
-  flex: 1;
-  min-height: 0;
   align-content: start;
 
   @media (max-width: 1200px) {
@@ -252,7 +249,7 @@
   /* Inherit standard chart-card behavior */
   display: flex;
   flex-direction: column;
-  min-height: 400px;
+  min-height: 300px;
   position: relative;
   overflow: hidden;
 
@@ -274,11 +271,11 @@
   }
 
   @media (max-width: 768px) {
-    min-height: 350px;
+    min-height: 280px;
   }
 
   @media (max-width: 480px) {
-    min-height: 300px;
+    min-height: 280px;
   }
 
   .card-body {
@@ -370,15 +367,15 @@
 /* --- Chart Card Sizing --- */
 app-chart-card {
   flex: 1;
-  min-height: 400px;
+  min-height: 300px;
   display: flex;
   flex-direction: column;
 
   @media (max-width: 768px) {
-    min-height: 350px;
+    min-height: 280px;
   }
 
   @media (max-width: 480px) {
-    min-height: 300px;
+    min-height: 280px;
   }
 }

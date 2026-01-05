@@ -39,6 +39,11 @@ export class TooltipDirective implements OnDestroy {
       return;
     }
 
+    // Disable on touch devices (where hover is not supported or convenient)
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
+      return;
+    }
+
     this.showTimer = setTimeout(() => {
       this.createTooltip();
     }, this.SHOW_DELAY);

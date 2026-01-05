@@ -6,6 +6,8 @@ import { ExaminationStat } from '../../shared/models/examination-stat.model';
 import {
   ClsLevel6Stat,
   ClsLevel3Stat,
+  ClsLevel12Stat,
+  ClsLevelB1Stat,
 } from '../../shared/models/cls-stat.model';
 import { SpecialtyClsStat } from '../../shared/models/specialty-cls-stat.model';
 import { EmergencyStat } from '../../shared/models/emergency-stat';
@@ -100,6 +102,34 @@ export class ReportService {
       .set('DenNgay', toDate);
 
     return this.http.get<SpecialtyClsStat[]>(this.specialtyClsUrl, { params });
+  }
+
+  getClsLevel12Report(
+    fromDate: string,
+    toDate: string
+  ): Observable<ClsLevel12Stat[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+
+    // @ts-ignore - environment property assumed to exist based on user request
+    return this.http.get<ClsLevel12Stat[]>(environment.clsLevel12Url, {
+      params,
+    });
+  }
+
+  getClsLevelB1Report(
+    fromDate: string,
+    toDate: string
+  ): Observable<ClsLevelB1Stat[]> {
+    const params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+
+    // @ts-ignore - environment property assumed to exist based on user request
+    return this.http.get<ClsLevelB1Stat[]>(environment.clsLevelB1Url, {
+      params,
+    });
   }
 
   /**

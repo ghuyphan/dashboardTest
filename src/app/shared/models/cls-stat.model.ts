@@ -14,3 +14,5 @@ export interface ClsStat {
 // Keep these as type aliases for backwards compatibility
 export type ClsLevel3Stat = ClsStat;
 export type ClsLevel6Stat = ClsStat;
+export type ClsLevel12Stat = ClsStat;
+export type ClsLevelB1Stat = ClsStat;
