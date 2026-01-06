@@ -247,7 +247,7 @@ export class BedUsageComponent implements OnInit {
         value: format(totals.choXuatVien),
         caption: 'Awaiting Discharge',
         icon: 'fas fa-door-open',
-        accentColor: palette.chart8,
+        accentColor: palette.chart4,
       },
       {
         id: 'daBook',
@@ -263,7 +263,7 @@ export class BedUsageComponent implements OnInit {
         value: format(totals.chuaSanSang),
         caption: 'Not Ready',
         icon: 'fas fa-tools',
-        accentColor: palette.chart7,
+        accentColor: palette.textSecondary,
       },
       {
         id: 'choMuonGiuong',
@@ -329,23 +329,23 @@ export class BedUsageComponent implements OnInit {
       {
         name: 'Đang điều trị (In Treatment)',
         dataKey: 'dangDieuTri',
-        color: palette.chart1,
+        color: palette.chart1, // Teal
       },
       {
         name: 'Chờ xuất viện (Awaiting Discharge)',
         dataKey: 'choXuatVien',
-        color: palette.chart8,
+        color: palette.chart4, // Pastel Coral
       },
-      { name: 'Đã book (Booked)', dataKey: 'daBook', color: palette.chart6 },
+      { name: 'Đã book (Booked)', dataKey: 'daBook', color: palette.chart6 }, // Orange
       {
         name: 'Chưa sẵn sàng (Not Ready)',
         dataKey: 'chuaSanSang',
-        color: palette.chart7,
+        color: palette.textSecondary, // Gray
       },
       {
         name: 'Cho mượn giường (On Loan)',
         dataKey: 'choMuonGiuong',
-        color: palette.chart9,
+        color: palette.chart9, // Beige
       },
     ];
 

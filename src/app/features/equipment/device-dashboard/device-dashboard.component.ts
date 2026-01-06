@@ -490,8 +490,8 @@ export class DeviceDashboardComponent implements OnInit {
       series: [
         {
           type: 'pie',
-          radius: ['50%', '75%'],
-          center: ['65%', '50%'],
+          // radius: ['50%', '75%'],
+          // center: ['65%', '50%'],
           avoidLabelOverlap: true, // Prevent label overlap
           data: data.map(item => ({
             name: item.TenTrangThai,

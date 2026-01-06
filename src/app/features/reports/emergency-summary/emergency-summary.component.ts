@@ -642,8 +642,8 @@ export class EmergencySummaryComponent implements OnInit {
         {
           name: 'Kết quả điều trị',
           type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['50%', '45%'],
+          // radius: ['40%', '70%'],
+          // center: ['50%', '45%'],
           itemStyle: {
             borderRadius: 5,
             borderColor: this.palette.bgCard,
@@ -696,8 +696,8 @@ export class EmergencySummaryComponent implements OnInit {
         {
           name: 'Đối tượng',
           type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['50%', '45%'],
+          // radius: ['40%', '70%'],
+          // center: ['50%', '45%'],
           itemStyle: {
             borderRadius: 5,
             borderColor: this.palette.bgCard,

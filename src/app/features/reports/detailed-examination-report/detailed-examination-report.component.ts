@@ -600,8 +600,8 @@ export class DetailedExaminationReportComponent implements OnInit {
         {
           name: 'Loại khám',
           type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['50%', '45%'],
+          // radius: ['40%', '70%'],
+          // center: ['50%', '45%'],
           itemStyle: {
             borderRadius: 5,
             borderColor: this.palette.bgCard,

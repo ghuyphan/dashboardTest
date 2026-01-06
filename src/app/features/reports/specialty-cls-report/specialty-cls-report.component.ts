@@ -431,8 +431,8 @@ export class SpecialtyClsReportComponent implements OnInit {
         {
           name: 'Nhóm Dịch Vụ',
           type: 'pie',
-          radius: ['35%', '60%'],
-          center: ['50%', '50%'],
+          // radius: ['35%', '60%'],
+          // center: ['50%', '50%'],
           avoidLabelOverlap: true, // Added to prevent overlap
           itemStyle: {
             borderRadius: 4,

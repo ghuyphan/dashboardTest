@@ -70,6 +70,9 @@ $light-tokens: (
   'chart-1': map.get($base-palette, 'teal-blue'),
   'chart-2': map.get($base-palette, 'peacock-blue'),
   'chart-3': map.get($base-palette, 'aqua-island'),
+  'chart-4': map.get($base-palette, 'pastel-coral'),
+  'chart-5': #66a9c5,
+  // peacock-light
   'chart-6': #f89c5b,
   'chart-7': #4a4a4a,
   'chart-8': map.get($base-palette, 'teal-midtone'),
@@ -131,6 +134,10 @@ $dark-tokens: (
   // Blue 400 (Distinct from Teal, matches Peacock)
   'chart-3': #a5f3fc,
   // Cyan 200 (Very Light Aqua - matches Aqua Island)
+  'chart-4': #fb7185,
+  // Rose 400 (Matches Pastel Coral)
+  'chart-5': #7dd3fc,
+  // Sky 300 (Matches Peacock Light)
   'chart-6': #fb923c,
   // Orange 400 (Vibrant Orange)
   'chart-7': #94a3b8,

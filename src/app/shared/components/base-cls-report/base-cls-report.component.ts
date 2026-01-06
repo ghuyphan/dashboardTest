@@ -483,8 +483,8 @@ export abstract class BaseClsReportComponent {
         {
           name: 'Nhóm Dịch Vụ',
           type: 'pie',
-          radius: ['45%', '75%'],
-          center: ['50%', '45%'],
+          // radius: ['45%', '75%'],
+          // center: ['50%', '45%'],
           avoidLabelOverlap: true,
           itemStyle: {
             borderRadius: 5,

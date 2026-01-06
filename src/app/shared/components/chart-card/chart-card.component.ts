@@ -779,25 +779,7 @@ export class ChartCardComponent implements AfterViewInit {
         itemHeight: mobile ? 10 : 14,
       };
 
-      // For pie charts: Adjust center to add spacing below legend
-      if (chartType === 'pie' && newOption.series) {
-        const series = Array.isArray(newOption.series)
-          ? newOption.series
-          : [newOption.series];
-        newOption.series = series.map((s: any) => {
-          if (s?.type === 'pie') {
-            // Only set center if not already defined - offset downward for legend spacing
-            // Use percentage (55%) instead of calc() as ECharts doesn't support CSS calc()
-            return {
-              ...s,
-              center: s.center || ['50%', '55%'],
-              // Reduce radius slightly to prevent overflow with top legend
-              radius: s.radius || (mobile ? ['25%', '55%'] : ['30%', '60%']),
-            };
-          }
-          return s;
-        });
-      }
+      // (Duplicate logic removed: Pie chart layout is handled in step 4 below)
     }
 
     // 2. Enforce Grid Layout or Series Layout
@@ -892,14 +874,14 @@ export class ChartCardComponent implements AfterViewInit {
         : [newOption.series];
       newOption.series = seriesList.map((s: any) => {
         if (s.type === 'pie') {
-          // Desktop/Wide: Pie on left (35%), leaving room for legend on right
-          // Mobile/Compact: Pie centered at top, legend at bottom
-          const baseCenter = isCompact ? ['50%', '45%'] : ['35%', '50%'];
+          // Desktop/Wide: Pie centered (50%), pushed down (55%) to avoid top legend overlap
+          // Mobile/Compact: Pie centered at top, legend at bottom (managed via radius/center)
+          const baseCenter = isCompact ? ['50%', '55%'] : ['50%', '55%'];
           const defaultRadius: [string, string] = isCompact
             ? mobile
               ? ['25%', '50%']
-              : ['35%', '60%']
-            : ['35%', '60%'];
+              : ['35%', '65%']
+            : ['40%', '75%'];
 
           let finalRadius = s.radius || defaultRadius;
 

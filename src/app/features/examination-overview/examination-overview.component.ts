@@ -413,8 +413,8 @@ export class ExaminationOverviewComponent implements OnInit {
       series: [
         {
           type: 'pie',
-          radius: ['45%', '70%'],
-          center: ['50%', '45%'],
+          // radius: ['45%', '70%'],
+          // center: ['50%', '45%'],
           avoidLabelOverlap: true, // Prevent overlap for pie labels
           itemStyle: {
             borderRadius: 5,

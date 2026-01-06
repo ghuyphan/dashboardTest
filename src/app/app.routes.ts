@@ -219,7 +219,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'BaoCao.KhamCLST12',
-          title: 'Tầng 1-2 Khám và CLS',
+          title: 'Tầng 12 Khám và CLS',
           keywords: [
             'cls',
             'cls 12',
