@@ -20,6 +20,8 @@ import {
 } from '@angular/material/datepicker';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import {
   MatNativeDateModule,
   MAT_DATE_LOCALE,
@@ -35,6 +37,7 @@ import {
 } from '@core/services/keyboard-shortcut.service';
 import { TooltipDirective } from '../../directives/tooltip.directive';
 import { DATE_FILTER_SHORTCUTS } from '@core/config/keyboard-shortcuts.config';
+import { QmsService, QueueInfo } from '@core/services/qms.service';
 
 export interface DateRange {
   fromDate: string;
@@ -61,6 +64,8 @@ export type QuickRange =
     MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatSelectModule,
+    MatFormFieldModule,
     TooltipDirective,
   ],
   providers: [
@@ -77,6 +82,7 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   private toastService = inject(ToastService);
   private breakpointObserver = inject(BreakpointObserver);
   private shortcutService = inject(KeyboardShortcutService);
+  private qmsService = inject(QmsService);
   private destroy$ = new Subject<void>();
 
   // INPUTS
@@ -97,12 +103,14 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   public toDate = signal<string>('');
   public activeRange = signal<QuickRange>('thisWeek');
 
-  public selectedQueue = signal<number>(1);
+  public queues = signal<QueueInfo[]>([]);
+  public selectedQueue = signal<number | undefined>(undefined);
 
   public selectedQueueLabel = computed(() => {
-    return this.selectedQueue() === 1
-      ? 'Khu vực 1 (Queue 1)'
-      : 'Khu vực 2 (Queue 2)';
+    const selectedId = this.selectedQueue();
+    if (!selectedId) return 'Chọn hàng đợi';
+    const queue = this.queues().find(q => q.SCREEN_ID === selectedId);
+    return queue ? queue.NAME : `Queue ${selectedId}`;
   });
 
   // Signal to track if we are on mobile
@@ -165,6 +173,9 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    if (this.showQueueFilter()) {
+      this.loadQueues();
+    }
     this.setRange(this.defaultRange(), this.autoLoad());
 
     // [SHORTCUT] Alt + F to focus/open date picker (From Date)
@@ -277,6 +288,34 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
     this.activeRange.set('custom');
   }
 
+  private loadQueues(): void {
+    this.qmsService
+      .getQueues()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: queues => {
+          this.queues.set(queues);
+          if (queues.length > 0) {
+            // If no queue is selected, select the first one
+            if (!this.selectedQueue()) {
+              this.selectedQueue.set(queues[0].SCREEN_ID);
+            }
+
+            // If we defaulted to 1 (or nothing) and just loaded valid queues, usually we want to refresh
+            // But 'autoLoad' in ngOnInit handles the initial load.
+            // IF autoLoad was true, it might have fired with selectedQueue=undefined or 1.
+            // We should probably re-emit if autoLoad is ON.
+            if (this.autoLoad()) {
+              this.applyFilter();
+            }
+          }
+        },
+        error: err => {
+          console.error('Failed to load queues', err);
+        },
+      });
+  }
+
   onQueueChange(value: number) {
     this.selectedQueue.set(value);
   }
@@ -322,6 +361,11 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   applyFilter() {
+    // If showing queue filter but no queue selected, DO NOT emit
+    if (this.showQueueFilter() && !this.selectedQueue()) {
+      return;
+    }
+
     this.filterSubmit.emit({
       fromDate: this.fromDate(),
       toDate: this.toDate(),

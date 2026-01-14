@@ -46,7 +46,7 @@ export class QueueMonitorComponent implements OnInit {
   public pageSize = signal(50);
   public totalCount = signal(0);
   public lastFilter = signal<DateRange | null>(null);
-  public searchTerm = signal<string>('1');
+  public searchTerm = signal<string>('');
 
   // Mapped data for the table
   public tableData = computed(() => {
@@ -70,12 +70,7 @@ export class QueueMonitorComponent implements OnInit {
       sortable: true,
       width: '250px',
     },
-    {
-      key: 'MA_PHONG_BAN',
-      label: 'Mã phòng ban',
-      sortable: true,
-      width: '120px',
-    },
+
     { key: 'MA_YTE', label: 'Mã Y Tế', sortable: true, width: '150px' },
     {
       key: 'TEN_BENH_NHAN',
@@ -150,10 +145,10 @@ export class QueueMonitorComponent implements OnInit {
     return 'status-default'; // Gray for 'Đã xử lý' etc.
   }
 
-  ngOnInit(): void {
+  constructor() {
     // Subscribe to global search service
     toObservable(this.searchService.searchTerm)
-      .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(500), takeUntilDestroyed())
       .subscribe(term => {
         if (term !== this.searchTerm()) {
           this.searchTerm.set(term);
@@ -165,6 +160,8 @@ export class QueueMonitorComponent implements OnInit {
         }
       });
   }
+
+  ngOnInit(): void {}
 
   onFilterSubmit(range: DateRange) {
     this.lastFilter.set(range);
@@ -200,7 +197,6 @@ export class QueueMonitorComponent implements OnInit {
         range.fromDate,
         range.toDate,
         queueId,
-        1,
         currentSearch, // Use dynamic search term
         pageNumber,
         this.pageSize()

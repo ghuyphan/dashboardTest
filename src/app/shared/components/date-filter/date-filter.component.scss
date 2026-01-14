@@ -199,6 +199,169 @@
       }
     }
   }
+
+  // [NEW] Mat Select Overrides to match form-control-date
+  .custom-dropdown-wrapper {
+    width: 100%;
+    position: relative;
+    min-width: 120px;
+  }
+
+  .full-width-field {
+    width: 100%;
+  }
+
+  // FORCE MatFormField to look exactly like the input
+  // Using ::ng-deep because ViewEncapsulation is Emulated
+  .dense-form-field {
+    ::ng-deep .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+      padding: 0 12px !important; // Match form-control-date padding
+      height: var(--input-height) !important;
+      min-height: var(--input-height) !important;
+      display: flex;
+      align-items: center;
+      background-color: var(--input-bg) !important;
+
+      // Apply border and radius directly to wrapper, ignoring notch
+      border: 1px solid var(--border-color) !important;
+      border-radius: var(--border-radius-md) !important;
+      transition: all 0.2s ease;
+
+      @media (max-width: 768px) {
+        height: 38px !important;
+        min-height: 38px !important;
+        font-size: 0.8125rem;
+      }
+
+      .mat-mdc-form-field-infix {
+        padding: 0 !important;
+        min-height: var(--input-height) !important;
+        border: none !important;
+        display: flex;
+        align-items: center;
+        width: 100%;
+
+        @media (max-width: 768px) {
+          min-height: 38px !important;
+        }
+      }
+
+      .mat-mdc-select-value {
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    // Hide default notch outline completely
+    ::ng-deep .mdc-notched-outline {
+      display: none !important;
+    }
+
+    // Focus State - Apply to wrapper
+    &.mat-focused
+      ::ng-deep
+      .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px rgba(0, 131, 155, 0.15) !important;
+
+      [data-theme='dark'] & {
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+      }
+    }
+
+    // Hover State
+    @media (hover: hover) {
+      &:hover:not(.mat-focused)
+        ::ng-deep
+        .mat-mdc-text-field-wrapper.mdc-text-field--outlined {
+        border-color: var(--gray-400) !important;
+      }
+    }
+  }
+
+  .mat-mdc-form-field {
+    /* Text Colors matching form-control-date */
+    ::ng-deep .mat-mdc-select-value-text {
+      color: var(--text-primary) !important;
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.9rem !important; // Match form-control-date
+      font-weight: 500 !important; // Match form-control-date
+
+      @media (max-width: 768px) {
+        font-size: 0.8125rem !important;
+      }
+    }
+
+    ::ng-deep .mat-mdc-select-placeholder {
+      color: var(--text-disabled) !important;
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.9rem !important;
+      opacity: 1 !important;
+    }
+
+    ::ng-deep .mat-mdc-select-arrow {
+      color: var(--text-secondary) !important;
+    }
+
+    // Fix arrow positioning to match "padding-right: 36px" of inputs
+    // Mat select arrow wrapper usually adds some padding.
+    // We want the arrow to be roughly where the calendar icon is.
+    ::ng-deep .mat-mdc-select-arrow-wrapper {
+      padding-right: 0px !important; // Adjustment if needed
+    }
+  }
+}
+
+// Global (or view encapsulated bubbling) styles for panel
+::ng-deep .dynamic-form-select-panel.mat-mdc-select-panel {
+  background-color: var(--surface-card) !important;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow-md) !important;
+  border-radius: var(--border-radius-md) !important;
+  margin-top: 4px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--gray-300);
+    border-radius: 3px;
+  }
+
+  .mat-mdc-option {
+    font-family: var(--font-family-sans) !important;
+    font-size: 0.9rem !important;
+    color: var(--text-primary) !important;
+    min-height: 40px !important;
+
+    @media (hover: hover) {
+      &:hover:not(.mdc-list-item--disabled) {
+        background-color: var(--gray-100) !important;
+      }
+    }
+
+    &.mdc-list-item--selected {
+      background-color: var(--aqua-island-light) !important;
+
+      .mdc-list-item__primary-text {
+        color: var(--deep-sapphire) !important;
+        font-weight: 600 !important;
+      }
+
+      [data-theme='dark'] & {
+        background-color: rgba(45, 212, 191, 0.15) !important;
+
+        .mdc-list-item__primary-text {
+          color: var(--teal-blue) !important;
+        }
+      }
+    }
+  }
 }
 
 /* --- 2. Quick Actions (Pills) --- */

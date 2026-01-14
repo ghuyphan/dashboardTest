@@ -33,20 +33,28 @@ export interface PagedResult<T> {
   TotalCount: number;
 }
 
+export interface QueueInfo {
+  SCREEN_ID: number;
+  NAME: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class QmsService {
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl; // Assuming environment.apiUrl exists
+  private apiUrl = environment.apiUrl;
 
   constructor() {}
+
+  getQueues(): Observable<QueueInfo[]> {
+    return this.http.get<QueueInfo[]>(environment.qmsQueueUrl);
+  }
 
   getDanhSachSTT(
     fromDate: string,
     toDate: string,
     queueId: number = 1,
-    phongBan: number = 1,
     textSearch: string = '',
     pageNumber: number = 1,
     pageSize: number = 20
@@ -55,16 +63,12 @@ export class QmsService {
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate)
       .set('Queue', queueId.toString())
-      .set('PhongBan', phongBan.toString())
-      .set('TextSearch', textSearch)
+      .set('TextSearch', textSearch || '')
       .set('PageNumber', pageNumber.toString())
       .set('PageSize', pageSize.toString());
 
-    return this.http.get<PagedResult<QueueItem>>(
-      `${this.apiUrl}/QMS/DanhSachSTT`,
-      {
-        params,
-      }
-    );
+    return this.http.get<PagedResult<QueueItem>>(environment.qmsListUrl, {
+      params,
+    });
   }
 }

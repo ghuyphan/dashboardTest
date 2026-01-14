@@ -47,23 +47,24 @@
     @if (showQueueFilter()) {
       <div class="filter-group">
         <label for="queueSelect">Hàng đợi</label>
-        <div class="input-wrapper">
-          <button
-            type="button"
-            class="form-control-date text-left"
-            [disabled]="isLoading()"
-            [matMenuTriggerFor]="queueMenu">
-            {{ selectedQueueLabel() }}
-            <mat-icon class="suffix-icon">arrow_drop_down</mat-icon>
-          </button>
-          <mat-menu #queueMenu="matMenu">
-            <button mat-menu-item (click)="onQueueChange(1)">
-              Khu vực 1 (Queue 1)
-            </button>
-            <button mat-menu-item (click)="onQueueChange(2)">
-              Khu vực 2 (Queue 2)
-            </button>
-          </mat-menu>
+        <div class="input-wrapper custom-dropdown-wrapper">
+          <mat-form-field
+            appearance="outline"
+            class="full-width-field dense-form-field"
+            subscriptSizing="dynamic">
+            <mat-select
+              [value]="selectedQueue()"
+              (selectionChange)="onQueueChange($event.value)"
+              placeholder="Chọn hàng đợi"
+              panelClass="dynamic-form-select-panel"
+              [disabled]="isLoading()">
+              @for (queue of queues(); track queue.SCREEN_ID) {
+                <mat-option [value]="queue.SCREEN_ID">{{
+                  queue.NAME
+                }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         </div>
       </div>
     }
