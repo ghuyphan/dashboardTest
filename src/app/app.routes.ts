@@ -353,6 +353,18 @@ export const routes: Routes = [
           keywords: ['icd', 'benh tat', 'top benh', 'ngoai tru', 'noi tru'],
         },
       },
+      {
+        path: 'queue-monitor',
+        loadComponent: () =>
+          import('./features/queue-monitor/queue-monitor.component').then(
+            m => m.QueueMonitorComponent
+          ),
+        data: {
+          permission: 'KhamBenh.QMSDanhSachSTT',
+          title: 'Danh sách QMS',
+          keywords: ['queue', 'monitor', 'hang doi'],
+        },
+      },
 
       { path: '', redirectTo: 'home', pathMatch: 'full' },
     ],

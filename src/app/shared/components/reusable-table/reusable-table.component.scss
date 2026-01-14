@@ -327,6 +327,11 @@ table.mat-table {
     background-color: rgba(220, 53, 69, 0.1);
     color: var(--color-danger, #dc3545);
   }
+
+  &.status-success {
+    background-color: rgba(22, 163, 74, 0.1);
+    color: var(--color-success, #16a34a);
+  }
 }
 
 /* =========================================================

@@ -156,6 +156,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   // NEW: Option to toggle action column visibility on PC
   public showActionColumn = input(true);
 
+  // NEW: Option to disable row click events and styling
+  public disableRowClick = input(false);
+
   // Skeleton loading row count (configurable)
   public skeletonRowCount = input(20);
   public readonly skeletonRows = Array.from({ length: 20 });
@@ -284,6 +287,8 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   }
 
   public onRowClick(row: T): void {
+    if (this.disableRowClick()) return;
+
     if (this.enableMultiSelect()) {
       this.toggleRowSelection(row, null);
     } else {

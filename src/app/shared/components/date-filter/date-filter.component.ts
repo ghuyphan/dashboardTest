@@ -18,6 +18,8 @@ import {
   MatDatepickerModule,
   MatDatepicker,
 } from '@angular/material/datepicker';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
 import {
   MatNativeDateModule,
   MAT_DATE_LOCALE,
@@ -38,6 +40,7 @@ export interface DateRange {
   fromDate: string;
   toDate: string;
   rangeType?: QuickRange;
+  queueId?: number;
 }
 
 export type QuickRange =
@@ -54,6 +57,8 @@ export type QuickRange =
   imports: [
     CommonModule,
     FormsModule,
+    MatMenuModule,
+    MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
     TooltipDirective,
@@ -80,6 +85,9 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   public defaultRange = input<QuickRange>('thisWeek');
   public minDate = input<string>('');
   public maxDate = input<string>('');
+  public showQueueFilter = input<boolean>(false);
+  public showQuickRanges = input<boolean>(true);
+  public autoLoad = input<boolean>(false);
 
   // OUTPUTS
   public filterSubmit = output<DateRange>();
@@ -88,6 +96,14 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   public fromDate = signal<string>('');
   public toDate = signal<string>('');
   public activeRange = signal<QuickRange>('thisWeek');
+
+  public selectedQueue = signal<number>(1);
+
+  public selectedQueueLabel = computed(() => {
+    return this.selectedQueue() === 1
+      ? 'Khu vực 1 (Queue 1)'
+      : 'Khu vực 2 (Queue 2)';
+  });
 
   // Signal to track if we are on mobile
   public isMobile = signal<boolean>(false);
@@ -149,7 +165,7 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.setRange(this.defaultRange(), false);
+    this.setRange(this.defaultRange(), this.autoLoad());
 
     // [SHORTCUT] Alt + F to focus/open date picker (From Date)
     this.shortcutService
@@ -261,6 +277,10 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
     this.activeRange.set('custom');
   }
 
+  onQueueChange(value: number) {
+    this.selectedQueue.set(value);
+  }
+
   setRange(range: QuickRange, emit: boolean = false) {
     this.activeRange.set(range);
     const now = new Date();
@@ -306,6 +326,7 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
       fromDate: this.fromDate(),
       toDate: this.toDate(),
       rangeType: this.activeRange(),
+      queueId: this.showQueueFilter() ? this.selectedQueue() : undefined,
     });
   }
 

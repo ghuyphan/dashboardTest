@@ -1,0 +1,83 @@
+@use '../../../styles/mixins' as m;
+
+@mixin hidden-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* Scrolling handled by .page-content */
+  overflow: hidden;
+}
+
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin-top: var(--spacing-md); // Add spacing between filter and table
+
+  /* Match table-card styling */
+  background-color: var(--surface-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow-md);
+
+  /* Subtle border for dark mode definition - matching table-card */
+  border: 1px solid transparent;
+  overflow: hidden;
+
+  /* PERFORMANCE FIX: Helps browser optimize rendering */
+  contain: content;
+
+  [data-theme='dark'] & {
+    border-color: var(--border-color);
+  }
+
+  /* Responsive padding matching table-card */
+  @media (max-width: 768px) {
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+  }
+
+  @media (max-width: 480px) {
+    padding: var(--spacing-sm);
+  }
+
+  @media (max-width: 360px) {
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+  }
+}
+
+:host ::ng-deep app-reusable-table {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+
+  .reusable-table-wrapper {
+    /* Remove inner border/radius since the grid-container handles it */
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+  }
+
+  .table-container {
+    background-color: transparent !important;
+  }
+}
+
+.loading-indicator {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  color: var(--text-disabled);
+}

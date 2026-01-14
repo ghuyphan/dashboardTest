@@ -1,5 +1,5 @@
 <div class="filter-card" [class.is-loading]="isLoading()">
-  <div class="filter-inputs">
+  <div class="filter-inputs" [class.has-queue-filter]="showQueueFilter()">
     <div class="filter-group">
       <label for="fromDate">Từ ngày</label>
       <div class="input-wrapper">
@@ -44,29 +44,54 @@
         <mat-datepicker #pickerTo [touchUi]="isMobile()"></mat-datepicker>
       </div>
     </div>
+    @if (showQueueFilter()) {
+      <div class="filter-group">
+        <label for="queueSelect">Hàng đợi</label>
+        <div class="input-wrapper">
+          <button
+            type="button"
+            class="form-control-date text-left"
+            [disabled]="isLoading()"
+            [matMenuTriggerFor]="queueMenu">
+            {{ selectedQueueLabel() }}
+            <mat-icon class="suffix-icon">arrow_drop_down</mat-icon>
+          </button>
+          <mat-menu #queueMenu="matMenu">
+            <button mat-menu-item (click)="onQueueChange(1)">
+              Khu vực 1 (Queue 1)
+            </button>
+            <button mat-menu-item (click)="onQueueChange(2)">
+              Khu vực 2 (Queue 2)
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    }
   </div>
 
-  <div
-    class="quick-actions-container"
-    [class.can-scroll-left]="canScrollLeft()"
-    [class.can-scroll-right]="canScrollRight()">
+  @if (showQuickRanges()) {
     <div
-      class="quick-actions-scroll"
-      #quickActionsScroll
-      (scroll)="onQuickActionsScroll()">
-      @for (range of quickRanges; track range.key; let i = $index) {
-        <button
-          type="button"
-          class="btn-pill"
-          [class.active]="activeRange() === range.key"
-          (click)="setRange(range.key, true)"
-          [disabled]="isLoading()"
-          [appTooltip]="range.label + ' (Alt + ' + (i + 1) + ')'">
-          {{ range.label }}
-        </button>
-      }
+      class="quick-actions-container"
+      [class.can-scroll-left]="canScrollLeft()"
+      [class.can-scroll-right]="canScrollRight()">
+      <div
+        class="quick-actions-scroll"
+        #quickActionsScroll
+        (scroll)="onQuickActionsScroll()">
+        @for (range of quickRanges; track range.key; let i = $index) {
+          <button
+            type="button"
+            class="btn-pill"
+            [class.active]="activeRange() === range.key"
+            (click)="setRange(range.key, true)"
+            [disabled]="isLoading()"
+            [appTooltip]="range.label + ' (Alt + ' + (i + 1) + ')'">
+            {{ range.label }}
+          </button>
+        }
+      </div>
     </div>
-  </div>
+  }
 
   <div class="action-buttons">
     <button

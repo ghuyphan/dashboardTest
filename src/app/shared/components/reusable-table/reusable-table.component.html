@@ -163,7 +163,7 @@
           mat-row
           *matRowDef="let row; columns: displayedColumns"
           (click)="onRowClick(row)"
-          class="clickable-row"
+          [class.clickable-row]="!disableRowClick()"
           [ngClass]="{
             selected: row === selectedRow && !enableMultiSelect(),
             'multi-selected': selection.isSelected(row),

@@ -1,0 +1,33 @@
+<div class="page-container">
+  <div class="page-content">
+    <app-date-filter
+      [showQueueFilter]="true"
+      [defaultRange]="'today'"
+      [autoLoad]="true"
+      [showQuickRanges]="false"
+      [buttonLabel]="'Xem danh sách'"
+      (filterSubmit)="onFilterSubmit($event)">
+    </app-date-filter>
+
+    <div class="grid-container">
+      @defer (on immediate) {
+        <app-reusable-table
+          [data]="tableData()"
+          [columns]="columns"
+          [isLoading]="isLoading()"
+          [showPaginator]="true"
+          [clientSideSort]="true"
+          [disableRowClick]="true"
+          [pageSize]="50"
+          [emptyStateText]="
+            hasSearched()
+              ? 'Không tìm thấy dữ liệu cho bộ lọc này.'
+              : 'Vui lòng chọn bộ lọc để xem dữ liệu.'
+          ">
+        </app-reusable-table>
+      } @placeholder {
+        <div class="loading-indicator">Đang tải dữ liệu...</div>
+      }
+    </div>
+  </div>
+</div>

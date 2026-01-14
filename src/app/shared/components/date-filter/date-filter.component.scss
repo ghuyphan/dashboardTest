@@ -3,15 +3,36 @@
 :host {
   display: block;
   --input-height: 42px;
+
+  // Local variables for responsive/theme handling
+  --card-bg: var(--surface-card);
+  --gradient-color: var(--surface-card);
+}
+
+// Dark Mode Overrides
+:host-context([data-theme='dark']) {
+  --card-bg: var(--surface-card); // Or specific dark card color
+}
+
+// Mobile Overrides (Blur effect colors)
+@media (max-width: 768px) {
+  :host {
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --gradient-color: rgba(255, 255, 255, 0.85);
+  }
+
+  :host-context([data-theme='dark']) {
+    --card-bg: rgba(24, 24, 27, 0.85);
+    --gradient-color: rgba(24, 24, 27, 0.85);
+  }
 }
 
 .filter-card {
-  background-color: var(--surface-card);
+  background-color: var(--card-bg);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
   box-shadow: var(--box-shadow-md);
   border: 1px solid transparent;
-
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
@@ -20,13 +41,11 @@
     border-color: var(--border-color);
   }
 
+  // Mobile Styles
   @media (max-width: 768px) {
     padding: var(--spacing-sm);
     gap: var(--spacing-sm);
     border-radius: var(--border-radius-md);
-
-    // Mobile Blur Effect - Light mode
-    background-color: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
@@ -40,18 +59,10 @@
     border-radius: var(--border-radius-sm);
   }
 
+  // Desktop Layout
   @media (min-width: 992px) {
     flex-direction: row;
     align-items: flex-end;
-  }
-}
-
-// Dark mode mobile override using :host-context for Angular view encapsulation
-:host-context([data-theme='dark']) {
-  @media (max-width: 768px) {
-    .filter-card {
-      background-color: rgba(24, 24, 27, 0.85);
-    }
   }
 }
 
@@ -63,21 +74,30 @@
   flex-shrink: 0;
   width: 100%;
 
+  &.has-queue-filter {
+    grid-template-columns: 1fr 1fr 1fr;
+    max-width: 450px;
+  }
+
   @media (min-width: 992px) {
-    max-width: 300px;
+    &:not(.has-queue-filter) {
+      max-width: 300px;
+    }
   }
 
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
     max-width: none;
+
+    &.has-queue-filter {
+      grid-template-columns: 1fr;
+    }
   }
 }
 
 .filter-group {
-  // Assuming input-group-styles exists in your mixins based on your provided code
   @include m.input-group-styles;
 
-  // Override mixin slightly for this specific layout
   label {
     font-size: 0.75rem;
     font-weight: 700;
@@ -88,10 +108,8 @@
   }
 
   .input-wrapper {
-    // Mixin handles relative positioning
-
     .custom-toggle {
-      position: absolute; // Ensure absolute is set if mixin doesn't cover it specific to this context
+      position: absolute;
       right: 4px;
       top: 50%;
       transform: translateY(-50%) scale(0.9);
@@ -107,15 +125,12 @@
   }
 
   .form-control-date {
-    // Mixin handles most styles
     height: var(--input-height);
     width: 100%;
     min-width: 120px;
     padding: 0 36px 0 12px;
     cursor: pointer;
     font-weight: 500;
-
-    // Standard border/bg styles should come from mixin or global class
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     background-color: var(--input-bg);
@@ -125,8 +140,11 @@
     transition: all 0.2s ease;
     outline: none;
 
-    &:hover:not(:disabled) {
-      border-color: var(--gray-400);
+    // Mobile Hover Fix: Only apply hover on devices that support it
+    @media (hover: hover) {
+      &:hover:not(:disabled) {
+        border-color: var(--gray-400);
+      }
     }
 
     &:focus:not(:disabled) {
@@ -143,13 +161,29 @@
       background-color: var(--gray-100);
       color: var(--text-secondary);
       border-color: var(--gray-200);
-      border-color: var(--gray-200);
-      // opacity: 1; <-- [REMOVED] Allow native disabled opacity
 
       [data-theme='dark'] & {
         background-color: rgba(255, 255, 255, 0.05);
         color: var(--gray-400);
         border-color: var(--gray-700);
+      }
+    }
+
+    // Custom alignment for the button trigger
+    &.text-left {
+      text-align: left;
+      display: flex;
+      align-items: center;
+      position: relative;
+      padding-right: 36px; // Space for icon
+
+      .suffix-icon {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        pointer-events: none;
       }
     }
   }
@@ -162,46 +196,36 @@
   position: relative;
   display: flex;
   align-items: center;
-
-  // Ensure it doesn't overflow vertically
   height: var(--input-height);
 
-  // On desktop, ensure minimum space to show at least 1 pill before shrinking
   @media (min-width: 992px) {
     min-width: 100px;
   }
 
-  // Left gradient (hidden by default)
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 24px;
-    background: linear-gradient(to left, transparent, var(--surface-card));
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-    z-index: 1;
-  }
-
-  // Right gradient (hidden by default)
+  // Gradients for scroll indication
+  &::before,
   &::after {
     content: '';
     position: absolute;
-    right: 0;
     top: 0;
     bottom: 0;
     width: 24px;
-    background: linear-gradient(to right, transparent, var(--surface-card));
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s;
     z-index: 1;
   }
 
-  // Show gradients based on scroll state
+  &::before {
+    left: 0;
+    background: linear-gradient(to left, transparent, var(--gradient-color));
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to right, transparent, var(--gradient-color));
+  }
+
   &.can-scroll-left::before {
     opacity: 1;
   }
@@ -211,71 +235,11 @@
   }
 }
 
-// Dark mode gradient colors - use :host-context for Angular view encapsulation
-:host-context([data-theme='dark']) {
-  .quick-actions-container {
-    &::before {
-      background: linear-gradient(to left, transparent, rgba(24, 24, 27, 0.95));
-    }
-
-    &::after {
-      background: linear-gradient(
-        to right,
-        transparent,
-        rgba(24, 24, 27, 0.95)
-      );
-    }
-  }
-}
-
-// Mobile: use semi-transparent background for blur effect
-@media (max-width: 768px) {
-  .quick-actions-container {
-    &::before {
-      background: linear-gradient(
-        to left,
-        transparent,
-        rgba(255, 255, 255, 0.85)
-      );
-    }
-
-    &::after {
-      background: linear-gradient(
-        to right,
-        transparent,
-        rgba(255, 255, 255, 0.85)
-      );
-    }
-  }
-}
-
-:host-context([data-theme='dark']) {
-  @media (max-width: 768px) {
-    .quick-actions-container {
-      &::before {
-        background: linear-gradient(
-          to left,
-          transparent,
-          rgba(24, 24, 27, 0.85)
-        );
-      }
-
-      &::after {
-        background: linear-gradient(
-          to right,
-          transparent,
-          rgba(24, 24, 27, 0.85)
-        );
-      }
-    }
-  }
-}
-
 .quick-actions-scroll {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px; // Space for scrollbar if visible
+  padding-bottom: 4px;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -283,11 +247,10 @@
   }
 
   scroll-snap-type: x mandatory;
-  height: 100%; // Fill container
+  height: 100%;
   align-items: center;
 }
 
-/* [UPDATED] Now using global mixin for consistency */
 .btn-pill {
   appearance: none;
   background-color: transparent;
@@ -301,21 +264,18 @@
   white-space: nowrap;
   cursor: pointer;
   scroll-snap-align: start;
-
-  /* [FIX] Relative position needed for the ::after hit-area fix */
   position: relative;
-
-  // Include global interaction styles (Transition, Focus, Disabled state)
   @include m.btn-interactions;
 
-  // Specific hover colors for this component (overrides mixin default shadows if needed)
-  &:hover:not(:disabled) {
-    transform: none; // Disable hover lift
-    background-color: var(--gray-200);
-    color: var(--text-primary);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      transform: none;
+      background-color: var(--gray-200);
+      color: var(--text-primary);
 
-    [data-theme='dark'] & {
-      background-color: var(--gray-700);
+      [data-theme='dark'] & {
+        background-color: var(--gray-700);
+      }
     }
   }
 
@@ -334,6 +294,7 @@
 /* --- 3. Submit Button --- */
 .action-buttons {
   flex-shrink: 0;
+  margin-left: auto; // Ensures it stays on the right even if quick-actions is gone
 
   .btn-primary {
     height: var(--input-height);
