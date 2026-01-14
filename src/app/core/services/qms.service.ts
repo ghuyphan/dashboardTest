@@ -28,6 +28,11 @@ export interface QueueItem {
   DVYEUCAU_ID: number;
 }
 
+export interface PagedResult<T> {
+  Items: T[];
+  TotalCount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -40,15 +45,26 @@ export class QmsService {
   getDanhSachSTT(
     fromDate: string,
     toDate: string,
-    queueId: number = 1
-  ): Observable<QueueItem[]> {
+    queueId: number = 1,
+    phongBan: number = 1,
+    textSearch: string = '',
+    pageNumber: number = 1,
+    pageSize: number = 20
+  ): Observable<PagedResult<QueueItem>> {
     let params = new HttpParams()
       .set('TuNgay', fromDate)
       .set('DenNgay', toDate)
-      .set('Queue', queueId.toString());
+      .set('Queue', queueId.toString())
+      .set('PhongBan', phongBan.toString())
+      .set('TextSearch', textSearch)
+      .set('PageNumber', pageNumber.toString())
+      .set('PageSize', pageSize.toString());
 
-    return this.http.get<QueueItem[]>(`${this.apiUrl}/QMS/DanhSachSTT`, {
-      params,
-    });
+    return this.http.get<PagedResult<QueueItem>>(
+      `${this.apiUrl}/QMS/DanhSachSTT`,
+      {
+        params,
+      }
+    );
   }
 }

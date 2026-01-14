@@ -363,6 +363,7 @@ export const routes: Routes = [
           permission: 'KhamBenh.QMSDanhSachSTT',
           title: 'Danh sách QMS',
           keywords: ['queue', 'monitor', 'hang doi'],
+          showSearchBar: true,
         },
       },
 

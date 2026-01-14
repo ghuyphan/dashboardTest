@@ -43,8 +43,8 @@
 
   // Mobile Styles
   @media (max-width: 768px) {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
+    padding: var(--spacing-md); // Increased from sm
+    gap: var(--spacing-md); // Increased from sm
     border-radius: var(--border-radius-md);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -76,7 +76,7 @@
 
   &.has-queue-filter {
     grid-template-columns: 1fr 1fr 1fr;
-    max-width: 450px;
+    max-width: 600px;
   }
 
   @media (min-width: 992px) {
@@ -88,6 +88,9 @@
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
     max-width: none;
+    gap: var(
+      --spacing-sm
+    ); // Slightly tighter gap between inputs within the grid
 
     &.has-queue-filter {
       grid-template-columns: 1fr;
@@ -140,6 +143,11 @@
     transition: all 0.2s ease;
     outline: none;
 
+    @media (max-width: 768px) {
+      font-size: 0.8125rem; // Smaller text on mobile
+      height: 38px; // Slightly smaller height
+    }
+
     // Mobile Hover Fix: Only apply hover on devices that support it
     @media (hover: hover) {
       &:hover:not(:disabled) {
@@ -176,10 +184,14 @@
       align-items: center;
       position: relative;
       padding-right: 36px; // Space for icon
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      appearance: none; // Ensure it looks like input on all devices
 
       .suffix-icon {
         position: absolute;
-        right: 4px;
+        right: 12px; // Match input padding
         top: 50%;
         transform: translateY(-50%);
         color: var(--text-secondary);
@@ -294,7 +306,12 @@
 /* --- 3. Submit Button --- */
 .action-buttons {
   flex-shrink: 0;
-  margin-left: auto; // Ensures it stays on the right even if quick-actions is gone
+  width: 100%; // Mobile: Full width
+
+  @media (min-width: 992px) {
+    width: auto;
+    margin-left: auto; // Desktop: Push to right
+  }
 
   .btn-primary {
     height: var(--input-height);

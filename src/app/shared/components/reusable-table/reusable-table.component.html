@@ -1,13 +1,61 @@
 <div class="reusable-table-wrapper">
   @if (showSkeletonLoading() && isLoading()) {
     <!-- Skeleton Loading Mode -->
-    <div class="skeleton-container">
-      <div class="skeleton-header"></div>
-      @for (row of skeletonRows; track $index) {
-        <div
-          class="skeleton-row"
-          [style.animation-delay.ms]="$index * 50"></div>
-      }
+    <div class="table-container skeleton-mode" [class.overflow-hidden]="true">
+      <table class="mat-table skeleton-table">
+        <!-- Header -->
+        <thead>
+          <tr class="mat-mdc-header-row">
+            @if (enableMultiSelect()) {
+              <th class="mat-mdc-header-cell mat-column-select">
+                <div class="skeleton-box checkbox"></div>
+              </th>
+            }
+            @for (col of columns(); track col.key) {
+              @if (col.type !== 'actions' || showActionColumn()) {
+                <th
+                  class="mat-mdc-header-cell"
+                  [style.width]="col.width"
+                  [style.min-width]="col.width"
+                  [style.max-width]="col.width"
+                  [class.mat-column-actions]="col.type === 'actions'">
+                  <div class="skeleton-text header"></div>
+                </th>
+              }
+            }
+          </tr>
+        </thead>
+        <!-- Body -->
+        <tbody>
+          @for (row of skeletonRows; track $index) {
+            <tr class="mat-mdc-row">
+              @if (enableMultiSelect()) {
+                <td class="mat-mdc-cell mat-column-select">
+                  <div class="skeleton-box checkbox"></div>
+                </td>
+              }
+              @for (col of columns(); track col.key) {
+                @if (col.type !== 'actions' || showActionColumn()) {
+                  <td
+                    class="mat-mdc-cell"
+                    [style.width]="col.width"
+                    [style.min-width]="col.width"
+                    [style.max-width]="col.width"
+                    [class.mat-column-actions]="col.type === 'actions'">
+                    @if (col.type === 'actions') {
+                      <div class="skeleton-box circle"></div>
+                    } @else {
+                      <div
+                        class="skeleton-text"
+                        [style.width.%]="70 + ($index % 30)"></div>
+                    }
+                  </td>
+                }
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   } @else {
     <!-- Spinner Overlay Mode (default) -->

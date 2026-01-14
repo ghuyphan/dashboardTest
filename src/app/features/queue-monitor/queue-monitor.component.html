@@ -18,7 +18,12 @@
           [showPaginator]="true"
           [clientSideSort]="true"
           [disableRowClick]="true"
-          [pageSize]="50"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [totalDataLength]="totalCount()"
+          (pageChanged)="onPageChange($event)"
+          [searchTerm]="searchTerm()"
+          (searchCleared)="onSearchCleared()"
           [emptyStateText]="
             hasSearched()
               ? 'Không tìm thấy dữ liệu cho bộ lọc này.'

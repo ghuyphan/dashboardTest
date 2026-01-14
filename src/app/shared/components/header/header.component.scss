@@ -508,11 +508,20 @@
 
 @media (max-width: 992px) {
   .header-search-container {
+    /* Originally hidden, now we allow it to be shown implicitly if it exists in DOM */
+    /* Adjust styles for mobile fit if needed */
+    flex: 1;
+    max-width: none;
+  }
+
+  /* When search is active, hide the title to make room */
+  :host-context(.has-search) .header-title {
     display: none;
   }
 
-  .header-title {
-    display: block;
+  /* Alternatively, since we added the class to the header element itself: */
+  .dashboard-header.has-search .header-title {
+    display: none;
   }
 }
 
