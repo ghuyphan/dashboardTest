@@ -17,6 +17,7 @@ export interface QueueItem {
   SCREEN_ID: number;
   SEQUENCE: number;
   STATE: number;
+  STATE_NAME: string;
   PRIORITY: number;
   PREVIOUS: number;
   CREATEDATE: string;
@@ -59,16 +60,15 @@ export class QmsService {
     pageNumber: number = 1,
     pageSize: number = 20
   ): Observable<PagedResult<QueueItem>> {
-    let params = new HttpParams()
-      .set('TuNgay', fromDate)
-      .set('DenNgay', toDate)
-      .set('Queue', queueId.toString())
-      .set('TextSearch', textSearch || '')
-      .set('PageNumber', pageNumber.toString())
-      .set('PageSize', pageSize.toString());
+    const body = {
+      TuNgay: fromDate,
+      DenNgay: toDate,
+      Queue: queueId,
+      dieuKien: textSearch || '',
+      PageNumber: pageNumber,
+      PageSize: pageSize,
+    };
 
-    return this.http.get<PagedResult<QueueItem>>(environment.qmsListUrl, {
-      params,
-    });
+    return this.http.post<PagedResult<QueueItem>>(environment.qmsListUrl, body);
   }
 }

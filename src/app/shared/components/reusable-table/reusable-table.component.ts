@@ -200,10 +200,17 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
       const sortInstance = this.sort();
       const paginatorInstance = this.paginator();
       const isClientSort = this.clientSideSort();
+      const serverTotalCount = this.totalDataLength();
 
       if (isClientSort) {
         if (sortInstance) this.dataSource.sort = sortInstance;
-        if (paginatorInstance) this.dataSource.paginator = paginatorInstance;
+        // Only attach paginator to dataSource when doing pure client-side pagination
+        // (i.e., totalDataLength is 0 or not set). When totalDataLength > 0,
+        // it means server-side pagination is being used and we should NOT override
+        // the paginator's [length] binding with dataSource.data.length.
+        if (paginatorInstance && serverTotalCount === 0) {
+          this.dataSource.paginator = paginatorInstance;
+        }
       }
     });
   }

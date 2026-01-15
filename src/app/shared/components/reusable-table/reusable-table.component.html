@@ -57,6 +57,18 @@
         </tbody>
       </table>
     </div>
+    @if (showPaginator()) {
+      <mat-paginator
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
+        [length]="totalDataLength()"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+        aria-label="Select page of results"
+        class="compact-paginator">
+      </mat-paginator>
+    }
   } @else {
     <!-- Spinner Overlay Mode (default) -->
     <div class="loading-shade" [class.hidden]="!isLoading()" aria-hidden="true">

@@ -9,6 +9,71 @@
       (filterSubmit)="onFilterSubmit($event)">
     </app-date-filter>
 
+    <!-- Widget Stats Section -->
+    @if (hasSearched()) {
+      <div class="widget-section">
+        <div class="widget-grid">
+          @if (isLoading() && widgetData().length === 0) {
+            @for (i of [1, 2, 3, 4, 5]; track i) {
+              <app-widget-card
+                [isLoading]="true"
+                title="Loading"></app-widget-card>
+            }
+          } @else {
+            @for (
+              widget of widgetData();
+              track trackByWidgetId($index, widget)
+            ) {
+              <app-widget-card
+                [icon]="widget.icon"
+                [title]="widget.title"
+                [value]="widget.value"
+                [caption]="widget.caption"
+                [accentColor]="widget.accentColor"
+                [isLoading]="isLoading()">
+              </app-widget-card>
+            }
+          }
+        </div>
+
+        <!-- Refresh Controls -->
+        <div class="refresh-controls">
+          @if (currentDateTime()) {
+            <span class="refresh-text">
+              Cập nhật: {{ currentDateTime() }}
+            </span>
+          }
+
+          <button
+            class="btn-icon-action"
+            (click)="loadData()"
+            [disabled]="isLoading()"
+            [class.loading]="isLoading()"
+            title="Cập nhật dữ liệu mới nhất">
+            <i
+              class="fas"
+              [ngClass]="{
+                'fa-sync': !isLoading(),
+                'fa-spinner fa-spin': isLoading(),
+              }"></i>
+          </button>
+
+          <button
+            class="btn-auto-refresh"
+            [class.active]="autoRefreshEnabled()"
+            (click)="toggleAutoRefresh()"
+            [title]="
+              autoRefreshEnabled()
+                ? 'Tắt tự động cập nhật'
+                : 'Bật tự động cập nhật (60s)'
+            ">
+            <i class="fas fa-clock"></i>
+            {{ autoRefreshEnabled() ? 'Tự động: Bật' : 'Tự động: Tắt' }}
+          </button>
+        </div>
+      </div>
+    }
+
     <div class="grid-container">
       @defer (on immediate) {
         <app-reusable-table
@@ -21,6 +86,7 @@
           [pageSize]="pageSize()"
           [pageIndex]="pageIndex()"
           [totalDataLength]="totalCount()"
+          [trackByField]="'STT'"
           (pageChanged)="onPageChange($event)"
           [searchTerm]="searchTerm()"
           (searchCleared)="onSearchCleared()"
