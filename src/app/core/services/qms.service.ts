@@ -64,7 +64,7 @@ export class QmsService {
       TuNgay: fromDate,
       DenNgay: toDate,
       Queue: queueId,
-      dieuKien: textSearch || '',
+      TextSearch: textSearch || '', // Fixed: API expects 'TextSearch' not 'dieuKien'
       PageNumber: pageNumber,
       PageSize: pageSize,
     };

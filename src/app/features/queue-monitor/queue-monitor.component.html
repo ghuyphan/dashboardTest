@@ -35,12 +35,17 @@
             }
           }
         </div>
+      </div>
+    }
 
-        <!-- Refresh Controls -->
-        <div class="refresh-controls">
+    <div class="grid-container">
+      <!-- Header with refresh controls (like chart-card header-actions) -->
+      <div class="table-header">
+        <h3 class="table-title">Danh sách hàng đợi</h3>
+        <div class="header-actions">
           @if (currentDateTime()) {
             <span class="refresh-text">
-              Cập nhật: {{ currentDateTime() }}
+              {{ currentDateTime() }}
             </span>
           }
 
@@ -68,13 +73,11 @@
                 : 'Bật tự động cập nhật (60s)'
             ">
             <i class="fas fa-clock"></i>
-            {{ autoRefreshEnabled() ? 'Tự động: Bật' : 'Tự động: Tắt' }}
+            {{ autoRefreshEnabled() ? 'Bật' : 'Tắt' }}
           </button>
         </div>
       </div>
-    }
 
-    <div class="grid-container">
       @defer (on immediate) {
         <app-reusable-table
           [data]="tableData()"

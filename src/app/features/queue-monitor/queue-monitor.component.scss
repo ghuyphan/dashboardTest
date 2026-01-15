@@ -26,7 +26,6 @@
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--spacing-sm);
   max-width: 100%;
-  margin-bottom: var(--spacing-md);
 
   @media (max-width: 768px) {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -37,12 +36,27 @@
   }
 }
 
-/* --- Refresh Controls (matching bed-usage) --- */
-.refresh-controls {
+/* --- Table Header (matching chart-card header) --- */
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.table-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
 }
 
 .refresh-text {

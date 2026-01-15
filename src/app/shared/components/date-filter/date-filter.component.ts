@@ -318,6 +318,8 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onQueueChange(value: number) {
     this.selectedQueue.set(value);
+    // Auto-refresh when queue changes - better UX
+    this.applyFilter();
   }
 
   setRange(range: QuickRange, emit: boolean = false) {

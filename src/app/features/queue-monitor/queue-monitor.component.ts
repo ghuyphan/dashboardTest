@@ -256,7 +256,7 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
           this.searchTerm.set(term);
           if (this.hasSearched()) {
             this.pageIndex.set(0);
-            this.loadData();
+            this.loadData(true); // Force refresh to show loading and fetch new data
           }
         }
       });
@@ -321,17 +321,18 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
     this.searchService.setSearchTerm('');
   }
 
-  public loadData(): void {
+  public loadData(forceRefresh = false): void {
     const range = this.lastFilter();
     if (!range) return;
 
-    if (this.isRefreshing) return;
+    // Skip if already refreshing, unless forced (e.g., search changed)
+    if (this.isRefreshing && !forceRefresh) return;
 
-    if (this.queueItems().length === 0) {
+    // Show loading indicator for initial load or forced refresh
+    if (this.queueItems().length === 0 || forceRefresh) {
       this.isLoading.set(true);
-    } else {
-      this.isRefreshing = true;
     }
+    this.isRefreshing = true;
 
     this.hasSearched.set(true);
 
