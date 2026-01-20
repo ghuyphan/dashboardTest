@@ -12,7 +12,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* Scrolling handled by .page-content */
 }
 
 /* --- Widget Section (matching bed-usage) --- */
@@ -181,4 +181,38 @@
   justify-content: center;
   font-style: italic;
   color: var(--text-disabled);
+}
+
+/* --- Mobile Scroll Fix --- */
+@media (max-width: 768px) {
+  :host {
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .grid-container {
+    height: auto !important;
+    overflow: visible !important;
+    flex: none !important;
+    display: block !important;
+  }
+
+  /* Force reusable table to expand */
+  :host ::ng-deep app-reusable-table {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+
+    .reusable-table-wrapper {
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .table-container {
+      height: auto !important;
+      overflow-y: auto !important;
+      max-height: 60vh !important;
+    }
+  }
 }

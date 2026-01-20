@@ -77,25 +77,36 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
   private refreshSubscription: any = null;
 
   // Widget data computed from stats - colors match status chips
+  // SQL: STATE=1 (Đang chờ), STATE=2 (Gọi lại), STATE=3 (Gọi nhỡ), STATE=-1 (Đã khám xong), STATE=0 (Đang khám)
   public widgetData = computed<WidgetData[]>(() => {
     const items = this.queueItems();
     const palette = this.themeService.currentPalette();
 
-    const waiting = items.filter(
-      i => String(i.STATE) === '1' || String(i.STATE) === '0'
+    // Count by STATE_NAME from API
+    const waiting = items.filter(i =>
+      (i.STATE_NAME || '').toLowerCase().includes('đang chờ')
     ).length;
-    const examined = items.filter(i => String(i.STATE) === '2').length;
-    const called = items.filter(i => String(i.STATE) === '3').length;
-    const missed = items.filter(i => String(i.STATE) === '-1').length;
+    const examining = items.filter(i =>
+      (i.STATE_NAME || '').toLowerCase().includes('đang khám')
+    ).length;
+    const callback = items.filter(i =>
+      (i.STATE_NAME || '').toLowerCase().includes('gọi lại')
+    ).length;
+    const missed = items.filter(i =>
+      (i.STATE_NAME || '').toLowerCase().includes('gọi nhỡ')
+    ).length;
+    const finished = items.filter(i =>
+      (i.STATE_NAME || '').toLowerCase().includes('đã khám xong')
+    ).length;
     const total = this.totalCount();
 
     // Colors matching status-chip CSS classes
     const STATUS_COLORS = {
-      inUse: '#006e96', // status-in-use (Đang chờ) - Blue
-      success: '#16a34a', // status-success (Đã khám) - Green
-      warning: '#d97706', // status-warning (Đã gọi) - Amber
-      error: '#dc3545', // status-error (Gọi nhỡ) - Red
-      info: '#0891b2', // status-info - Cyan
+      waiting: '#006e96', // status-in-use (Đang chờ) - Blue
+      examining: '#0891b2', // status-info (Đang khám) - Cyan
+      callback: '#d97706', // status-warning (Gọi lại) - Amber
+      missed: '#dc3545', // status-error (Gọi nhỡ) - Red
+      finished: '#16a34a', // status-success (Đã khám xong) - Green
     };
 
     return [
@@ -104,7 +115,7 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         icon: 'fas fa-users',
         title: 'Tổng số',
         value: String(total),
-        caption: 'Total Patients',
+        caption: 'Total',
         accentColor: palette.widgetAccent,
       },
       {
@@ -113,61 +124,50 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         title: 'Đang chờ',
         value: String(waiting),
         caption: 'Waiting',
-        accentColor: STATUS_COLORS.inUse, // Blue - matches status-in-use
+        accentColor: STATUS_COLORS.waiting,
       },
       {
-        id: 'called',
-        icon: 'fas fa-bell',
-        title: 'Đã gọi',
-        value: String(called),
-        caption: 'Called',
-        accentColor: STATUS_COLORS.warning, // Amber - matches status-warning
+        id: 'examining',
+        icon: 'fas fa-stethoscope',
+        title: 'Đang khám',
+        value: String(examining),
+        caption: 'Examining',
+        accentColor: STATUS_COLORS.examining,
       },
       {
-        id: 'examined',
-        icon: 'fas fa-check-circle',
-        title: 'Đã khám',
-        value: String(examined),
-        caption: 'Examined',
-        accentColor: STATUS_COLORS.success, // Green - matches status-success
+        id: 'callback',
+        icon: 'fas fa-phone',
+        title: 'Gọi lại',
+        value: String(callback),
+        caption: 'Callback',
+        accentColor: STATUS_COLORS.callback,
       },
       {
         id: 'missed',
-        icon: 'fas fa-exclamation-triangle',
+        icon: 'fas fa-phone-slash',
         title: 'Gọi nhỡ',
         value: String(missed),
-        caption: 'Missed Calls',
-        accentColor: STATUS_COLORS.error, // Red - matches status-error
+        caption: 'Missed',
+        accentColor: STATUS_COLORS.missed,
+      },
+      {
+        id: 'finished',
+        icon: 'fas fa-check-circle',
+        title: 'Đã khám xong',
+        value: String(finished),
+        caption: 'Finished',
+        accentColor: STATUS_COLORS.finished,
       },
     ];
   });
 
-  // Computed status display from STATE value
+  // Use STATE_NAME directly from API for status display
   public tableData = computed(() => {
     return this.queueItems().map(item => ({
       ...item,
-      STATUS_DISPLAY: this.getStatusFromState(item.STATE),
+      STATUS_DISPLAY: item.STATE_NAME || 'Không xác định',
     }));
   });
-
-  // Map STATE value to status text (API returns STATE as string)
-  private getStatusFromState(state: number | string): string {
-    const stateNum = typeof state === 'string' ? parseInt(state, 10) : state;
-    switch (stateNum) {
-      case 1:
-        return 'Đang chờ';
-      case 2:
-        return 'Đã khám';
-      case 3:
-        return 'Đã gọi/ Chưa khám';
-      case -1:
-        return 'Gọi nhỡ';
-      case 0:
-        return 'Chờ gọi';
-      default:
-        return 'Không xác định';
-    }
-  }
 
   // Column order: STT, Status, Patient Info, Room Info, Times
   public columns: GridColumn[] = [
@@ -175,7 +175,7 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
       key: 'STT',
       label: 'STT',
       sortable: true,
-      width: '80px',
+      width: '50px',
       sticky: 'start',
     },
     {
@@ -231,12 +231,13 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
     if (!statusName) return 'status-default';
     const normalized = statusName.toLowerCase();
 
-    if (normalized.includes('đang chờ')) return 'status-in-use';
-    if (normalized.includes('đã khám')) return 'status-success';
-    if (normalized.includes('đã gọi') || normalized.includes('chưa khám'))
-      return 'status-warning';
-    if (normalized.includes('gọi nhỡ')) return 'status-error';
-    if (normalized.includes('chờ gọi')) return 'status-info';
+    // SQL STATE_NAME mapping:
+    // STATE=1 (Đang chờ), STATE=2 (Gọi lại), STATE=3 (Gọi nhỡ), STATE=-1 (Đã khám xong), STATE=0 (Đang khám)
+    if (normalized.includes('đang chờ')) return 'status-in-use'; // Waiting - Blue
+    if (normalized.includes('đang khám')) return 'status-info'; // Examining - Cyan
+    if (normalized.includes('gọi lại')) return 'status-warning'; // Callback - Amber
+    if (normalized.includes('gọi nhỡ')) return 'status-error'; // Missed - Red
+    if (normalized.includes('đã khám xong')) return 'status-success'; // Finished - Green
     return 'status-default';
   }
 
