@@ -256,7 +256,10 @@ export class AuthService {
 
       if (r) roles = JSON.parse(r);
       if (p) permissions = JSON.parse(p);
-      if (n) navItems = JSON.parse(n);
+      if (n) {
+        navItems = JSON.parse(n);
+        this.injectEmrMenuItem(navItems);
+      }
     } catch (e) {
       console.error('Auth data corrupted, clearing session.', e);
       this.clearLocalAuthData(false);
@@ -393,7 +396,44 @@ export class AuthService {
         children: childrenOfNode.length > 0 ? childrenOfNode : undefined,
       });
     }
+
+    if (parentId === '0') {
+      this.injectEmrMenuItem(tree);
+    }
+
     return tree;
+  }
+
+  private injectEmrMenuItem(items: NavItem[]): void {
+    for (const item of items) {
+      if (item.children && item.children.length > 0) {
+        const idx = item.children.findIndex(
+          child => child.link && child.link.includes('missing-medical-records')
+        );
+        if (idx !== -1) {
+          const hasEmr = item.children.some(
+            child => child.link && child.link.includes('emr-export')
+          );
+          if (!hasEmr) {
+            const missingRecordChild = item.children[idx];
+            const emrChild: NavItem = {
+              label: 'EMR - Xuất & In File',
+              icon: missingRecordChild.icon || 'fas fa-list-ul',
+              link: missingRecordChild.link
+                ? missingRecordChild.link.replace(
+                    'missing-medical-records',
+                    'emr-export'
+                  )
+                : '/app/reports/emr-export',
+              permissions: [...missingRecordChild.permissions],
+              isOpen: false,
+            };
+            item.children.splice(idx + 1, 0, emrChild);
+          }
+        }
+        this.injectEmrMenuItem(item.children);
+      }
+    }
   }
 
   private handleError(

@@ -133,7 +133,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'KHTH.ChuaTaoHSBANgoaiTru',
-          title: 'Xuất File EMR',
+          title: 'EMR - Xuất & In File',
           keywords: ['emr', 'xuat file', 'file emr', 'export emr', 'pdf emr'],
           showSearchBar: false,
         },

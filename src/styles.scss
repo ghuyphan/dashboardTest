@@ -603,6 +603,20 @@ select:-webkit-autofill {
   }
 }
 
+.btn-secondary-emr {
+  background-color: rgba(var(--primary-rgb), 0.08);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  color: var(--primary);
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background-color: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+  }
+}
+
 /* --- Animations --- */
 @keyframes slideDownFade {
   from {

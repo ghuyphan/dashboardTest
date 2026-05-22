@@ -225,7 +225,9 @@
           (click)="onRowClick(row)"
           [class.clickable-row]="!disableRowClick()"
           [ngClass]="{
-            selected: row === selectedRow && !enableMultiSelect(),
+            selected:
+              (row === selectedRow || row === activeRow()) &&
+              !enableMultiSelect(),
             'multi-selected': selection.isSelected(row),
           }"></tr>
 

@@ -63,6 +63,7 @@
   @media (min-width: 992px) {
     flex-direction: row;
     align-items: flex-end;
+    flex-wrap: wrap;
   }
 }
 
@@ -86,6 +87,10 @@
   }
 
   @media (min-width: 992px) {
+    width: auto;
+    flex: 1;
+    flex-shrink: 1;
+
     &:not(.has-queue-filter):not(:has([custom-filters])) {
       max-width: 300px;
     }

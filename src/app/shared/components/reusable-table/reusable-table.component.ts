@@ -159,6 +159,9 @@ export class ReusableTableComponent<T> implements OnInit, AfterViewInit {
   // NEW: Option to disable row click events and styling
   public disableRowClick = input(false);
 
+  // NEW: Active row to programmatically highlight row from parent component
+  public activeRow = input<T | null>(null);
+
   // Skeleton loading row count (configurable)
   public skeletonRowCount = input(20);
   public readonly skeletonRows = Array.from({ length: 20 });

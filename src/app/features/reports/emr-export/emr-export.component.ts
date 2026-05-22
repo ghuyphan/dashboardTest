@@ -1,9 +1,11 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   inject,
   signal,
   computed,
+  effect,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -26,7 +28,10 @@ import {
 } from '@shared/components/reusable-table/reusable-table.component';
 import { PdfService } from '@core/services/pdf.service';
 import { ToastService } from '@core/services/toast.service';
+import { FooterActionService } from '@core/services/footer-action.service';
 import { DateUtils } from '@shared/utils/date.utils';
+import { EmrService } from '@core/services/emr.service';
+import { environment } from '../../../../environments/environment';
 
 export interface EmrAdmission {
   STT: number;
@@ -49,6 +54,7 @@ export interface EmrSignedFile {
   thoiGianThucHien: string;
   fileName: string;
   fileId: string;
+  urlFile?: string;
 }
 
 @Component({
@@ -67,17 +73,18 @@ export interface EmrSignedFile {
   styleUrl: './emr-export.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmrExportComponent implements OnInit {
+export class EmrExportComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly pdfService = inject(PdfService);
   private readonly toastService = inject(ToastService);
   private readonly cd = inject(ChangeDetectorRef);
+  private readonly emrService = inject(EmrService);
+  private readonly footerService = inject(FooterActionService);
 
   // Filter States
   public fromDate = signal<string>('');
   public toDate = signal<string>('');
-  public searchPatientId = signal<string>('79071.140047048'); // Default matching the user's screenshot
-  public selectedSearchType = signal<string>('mayte');
+  public searchPatientId = signal<string>('260219667'); // Default matching the user's new API testing patient
 
   // Table columns definition
   public readonly admissionColumns: GridColumn[] = [
@@ -137,172 +144,6 @@ export class EmrExportComponent implements OnInit {
     },
   ];
 
-  // Raw mock database
-  private allAdmissions: EmrAdmission[] = [
-    {
-      STT: 1,
-      mayte: '79071.140047048',
-      tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-      soTiepNhan: 'TN260512.0000584',
-      soBenhAn: '26.011339/CC',
-      ngayTiepNhan: '2026-05-16',
-      thoiGianTiepNhan: '16/05/2026 10:46',
-    },
-    {
-      STT: 2,
-      mayte: '79071.140047048',
-      tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-      soTiepNhan: 'TN260512.0000584',
-      soBenhAn: '26.008782',
-      ngayTiepNhan: '2026-05-16',
-      thoiGianTiepNhan: '16/05/2026 10:46',
-    },
-    {
-      STT: 3,
-      mayte: '79071.140047048',
-      tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-      soTiepNhan: 'TN260512.0000584',
-      soBenhAn: '26.000123/NOI',
-      ngayTiepNhan: '2026-05-12',
-      thoiGianTiepNhan: '12/05/2026 07:57',
-    },
-    {
-      STT: 4,
-      mayte: '79071.123456789',
-      tenBenhNhan: 'NGUYỄN VĂN A',
-      soTiepNhan: 'TN260510.0000123',
-      soBenhAn: '26.007654/NGOAI',
-      ngayTiepNhan: '2026-05-10',
-      thoiGianTiepNhan: '10/05/2026 08:30',
-    },
-    {
-      STT: 5,
-      mayte: '79071.987654321',
-      tenBenhNhan: 'TRẦN THỊ B',
-      soTiepNhan: 'TN260511.0000456',
-      soBenhAn: '26.006543/CC',
-      ngayTiepNhan: '2026-05-11',
-      thoiGianTiepNhan: '11/05/2026 14:15',
-    },
-  ];
-
-  private allSignedFiles: Record<string, EmrSignedFile[]> = {
-    '79071.140047048': [
-      {
-        STT: 1,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'XN Sinh Hóa',
-        tenDichVu: 'Uric Acid [máu]',
-        thoiGianThucHien: '12/05/2026 09:25',
-        fileName: 'ĐỖ THỊ CẨM THÀNH_120526-358640_Ver1-signed.pdf',
-        fileId: '6a092680642998db5bf01dca', // pointing to actual download url ID
-      },
-      {
-        STT: 2,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'XN Sinh Hóa',
-        tenDichVu: 'Glucose [máu]',
-        thoiGianThucHien: '12/05/2026 09:25',
-        fileName: 'ĐỖ THỊ CẨM THÀNH_120526-358640_Ver1-signed.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-      {
-        STT: 3,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'XN Sinh Hóa',
-        tenDichVu: 'ION ĐỒ [máu]',
-        thoiGianThucHien: '12/05/2026 09:25',
-        fileName: 'ĐỖ THỊ CẨM THÀNH_120526-358640_Ver1-signed.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-      {
-        STT: 4,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'XÉT NGHIỆM',
-        tenDichVu: 'Tổng phân tích nước tiểu',
-        thoiGianThucHien: '12/05/2026 09:25',
-        fileName: 'ĐỖ THỊ CẨM THÀNH_120526-358640_Ver1-signed.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-      {
-        STT: 5,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'Điện Tim',
-        tenDichVu: 'ECG',
-        thoiGianThucHien: '12/05/2026 08:28',
-        fileName: 'HMSG.20260512.0000001978.01.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-      {
-        STT: 6,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'Nội Soi TMH',
-        tenDichVu: 'Soi đáy mắt',
-        thoiGianThucHien: '12/05/2026 09:30',
-        fileName: 'HMSG.20260512.0000002798.01.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-      {
-        STT: 7,
-        mayte: '79071.140047048',
-        tenBenhNhan: 'ĐỖ THỊ CẨM THÀNH',
-        soTiepNhan: 'TN260512.0000584',
-        soBenhAn: '26.011339/CC',
-        nhomDichVu: 'Siêu Âm',
-        tenDichVu: 'Siêu âm Doppler màu tim',
-        thoiGianThucHien: '12/05/2026 10:44',
-        fileName: 'HMSG.20260512.0000004004.01.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-    ],
-    '79071.123456789': [
-      {
-        STT: 1,
-        mayte: '79071.123456789',
-        tenBenhNhan: 'NGUYỄN VĂN A',
-        soTiepNhan: 'TN260510.0000123',
-        soBenhAn: '26.007654/NGOAI',
-        nhomDichVu: 'Khám bệnh',
-        tenDichVu: 'Khám chuyên khoa Nội tổng quát',
-        thoiGianThucHien: '10/05/2026 08:45',
-        fileName: 'NGUYEN VAN A_100526_KhamNoi.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-    ],
-    '79071.987654321': [
-      {
-        STT: 1,
-        mayte: '79071.987654321',
-        tenBenhNhan: 'TRẦN THỊ B',
-        soTiepNhan: 'TN260511.0000456',
-        soBenhAn: '26.006543/CC',
-        nhomDichVu: 'Xét nghiệm',
-        tenDichVu: 'Công thức máu 24 chỉ số',
-        thoiGianThucHien: '11/05/2026 14:30',
-        fileName: 'TRAN THI B_110526_CongThucMau.pdf',
-        fileId: '6a092680642998db5bf01dca',
-      },
-    ],
-  };
-
   // UI State Signals
   public admissions = signal<EmrAdmission[]>([]);
   public signedFiles = signal<EmrSignedFile[]>([]);
@@ -310,64 +151,123 @@ export class EmrExportComponent implements OnInit {
   public selectedFiles = signal<EmrSignedFile[]>([]);
 
   public isLoading = signal<boolean>(false);
+  public isFilesLoading = signal<boolean>(false);
   public isExporting = signal<boolean>(false);
   public isPrinting = signal<boolean>(false);
 
+  constructor() {
+    effect(() => {
+      this.updateFooterActions();
+    });
+  }
+
   ngOnInit(): void {
-    this.setDefaultDateRange();
-    this.onSearch(); // Load initial data
+    // Left empty since [autoLoad]="true" on DateFilterComponent will trigger initial load via (filterSubmit)
   }
 
-  private setDefaultDateRange(): void {
-    const range = DateUtils.getReportingWeekRange();
-    this.fromDate.set(range.fromDate);
-    this.toDate.set(range.toDate);
+  ngOnDestroy(): void {
+    this.footerService.clearActions();
   }
 
-  // Called when dates change in the DateFilterComponent
-  public onDateFilterChange(range: DateRange): void {
+  private updateFooterActions(): void {
+    const loading = this.isLoading();
+    const filesLoading = this.isFilesLoading();
+    const admission = this.selectedAdmission();
+    const exporting = this.isExporting();
+    const selected = this.selectedFiles();
+    const printing = this.isPrinting();
+
+    this.footerService.setActions([
+      {
+        label: 'Kết xuất file EMR',
+        icon: exporting ? 'fas fa-spinner fa-spin' : 'fas fa-file-medical',
+        action: () => this.onExportEMR(),
+        className: 'btn-secondary',
+        disabled: loading || filesLoading || !admission || exporting,
+      },
+      {
+        label: 'In',
+        icon: printing ? 'fas fa-spinner fa-spin' : 'fas fa-print',
+        action: () => this.onPrintSelectedFiles(),
+        className: 'btn-primary',
+        disabled: loading || filesLoading || selected.length === 0 || printing,
+      },
+    ]);
+  }
+
+  // Called when filter is submitted (including initial autoLoad)
+  public onFilterSubmit(range: DateRange): void {
     this.fromDate.set(range.fromDate);
     this.toDate.set(range.toDate);
+    this.onSearch();
   }
 
   // Trigger query/search for admissions
   public onSearch(): void {
+    const pid = this.searchPatientId().trim();
+    if (!pid) {
+      this.toastService.showWarning('Vui lòng nhập mã y tế để tìm kiếm.');
+      return;
+    }
+
     this.isLoading.set(true);
     this.selectedAdmission.set(null);
     this.signedFiles.set([]);
     this.selectedFiles.set([]);
     this.cd.markForCheck();
 
-    setTimeout(() => {
-      let filtered = [...this.allAdmissions];
+    const start = this.fromDate();
+    const end = this.toDate();
 
-      // Filter by Patient ID if entered
-      const pid = this.searchPatientId().trim();
-      if (pid) {
-        filtered = filtered.filter(item =>
-          item.mayte.toLowerCase().includes(pid.toLowerCase())
-        );
-      }
-
-      // Filter by date range (from/to dates based on ngayTiepNhan)
-      const start = this.fromDate();
-      const end = this.toDate();
-      if (start && end) {
-        filtered = filtered.filter(item => {
-          return item.ngayTiepNhan >= start && item.ngayTiepNhan <= end;
+    this.emrService.getEmrAdmissions(start, end, pid).subscribe({
+      next: res => {
+        const mapped = (res || []).map((item: any, index: number) => {
+          return {
+            STT: index + 1,
+            mayte: item.MaYTe || item.mayte || item.MAYTE || item.maYTe || pid,
+            tenBenhNhan:
+              item.TenBenhNhan || item.tenBenhNhan || item.TEN_BENH_NHAN || '',
+            soTiepNhan:
+              item.SoTiepNhan || item.soTiepNhan || item.SO_TIEP_NHAN || '',
+            soBenhAn: item.SoBenhAn || item.soBenhAn || item.SO_BENH_AN || '',
+            ngayTiepNhan:
+              item.NgayTiepNhan ||
+              item.ngayTiepNhan ||
+              item.NGAY_TIEP_NHAN ||
+              '',
+            thoiGianTiepNhan:
+              item.ThoiGianTiepNhan ||
+              item.thoiGianTiepNhan ||
+              item.THOI_GIAN_TIEP_NHAN ||
+              '',
+            tiepNhan_Id:
+              item.TiepNhan_Id ||
+              item.tiepNhan_Id ||
+              item.TIEPNHAN_ID ||
+              item.soTiepNhan ||
+              item.SoTiepNhan ||
+              '',
+          };
         });
-      }
 
-      this.admissions.set(filtered);
-      this.isLoading.set(false);
+        this.admissions.set(mapped);
+        this.isLoading.set(false);
 
-      // Auto-select first admission if available to enhance double-grid experience
-      if (filtered.length > 0) {
-        this.onAdmissionSelected(filtered[0]);
-      }
+        // Auto-select first admission if available to enhance double-grid experience
+        if (mapped.length > 0) {
+          this.onAdmissionSelected(mapped[0]);
+        }
 
-      this.cd.markForCheck();
-    }, 400);
+        this.cd.markForCheck();
+      },
+      error: err => {
+        console.error('Failed to load EMR admissions:', err);
+        this.toastService.showError('Không thể tải danh sách tiếp nhận.');
+        this.admissions.set([]);
+        this.isLoading.set(false);
+        this.cd.markForCheck();
+      },
+    });
   }
 
   // Handle Admission Click (Master selection)
@@ -382,28 +282,89 @@ export class EmrExportComponent implements OnInit {
 
     this.selectedAdmission.set(admission);
     this.selectedFiles.set([]);
-    this.isLoading.set(true);
+    this.isFilesLoading.set(true);
     this.cd.markForCheck();
 
-    // Fetch detail signed files based on Patient ID
-    setTimeout(() => {
-      const files = this.allSignedFiles[admission.mayte] || [];
-      this.signedFiles.set(files);
-      this.isLoading.set(false);
-      this.cd.markForCheck();
-    }, 300);
+    const tiepNhanId = (admission as any).tiepNhan_Id || admission.soTiepNhan;
+
+    this.emrService.getEmrSignedFiles(tiepNhanId).subscribe({
+      next: res => {
+        const files = (res || []).map((item: any, index: number) => {
+          return {
+            STT: index + 1,
+            mayte:
+              item.MaYTe ||
+              item.mayte ||
+              item.MAYTE ||
+              item.maYTe ||
+              admission.mayte ||
+              '',
+            tenBenhNhan:
+              item.TenBenhNhan ||
+              item.tenBenhNhan ||
+              item.TEN_BENH_NHAN ||
+              item.TENBENHNHAN ||
+              admission.tenBenhNhan ||
+              '',
+            soTiepNhan:
+              item.SoTiepNhan ||
+              item.soTiepNhan ||
+              item.SO_TIEP_NHAN ||
+              item.SOTIEPNHAN ||
+              admission.soTiepNhan ||
+              '',
+            soBenhAn:
+              item.SoBenhAn ||
+              item.soBenhAn ||
+              item.SO_BENH_AN ||
+              item.SOBENHAN ||
+              admission.soBenhAn ||
+              '',
+            nhomDichVu:
+              item.NhomDichVu || item.nhomDichVu || item.NHOM_DICH_VU || '',
+            tenDichVu:
+              item.TenDichVu || item.tenDichVu || item.TEN_DICH_VU || '',
+            thoiGianThucHien:
+              item.ThoiGianThucHien ||
+              item.thoiGianThucHien ||
+              item.THOI_GIAN_THUC_HIEN ||
+              item.THOI_GIAN_TH ||
+              '',
+            fileName: item.FileName || item.fileName || item.FILE_NAME || '',
+            fileId:
+              item.FileId ||
+              item.fileId ||
+              item.FILE_ID ||
+              (item.URL_FILE
+                ? item.URL_FILE.substring(item.URL_FILE.lastIndexOf('/') + 1)
+                : ''),
+            urlFile: item.URL_FILE || item.urlFile || '',
+          };
+        });
+        this.signedFiles.set(files);
+        this.isFilesLoading.set(false);
+        this.cd.markForCheck();
+      },
+      error: err => {
+        console.error('Failed to load EMR signed files:', err);
+        this.toastService.showError('Không thể tải danh sách file đã ký.');
+        this.signedFiles.set([]);
+        this.isFilesLoading.set(false);
+        this.cd.markForCheck();
+      },
+    });
   }
 
-  // Handle File Selection changed
+  // Handle Files multiple selection change
   public onFilesSelectionChanged(files: EmrSignedFile[]): void {
-    this.selectedFiles.set(files);
+    this.selectedFiles.set(files || []);
     this.cd.markForCheck();
   }
 
-  // Handle Print Action (Loop through all selected files)
+  // Handle Print Action for all selected files
   public async onPrintSelectedFiles(): Promise<void> {
-    const selected = this.selectedFiles();
-    if (selected.length === 0) {
+    const files = this.selectedFiles();
+    if (files.length === 0) {
       this.toastService.showWarning('Vui lòng chọn ít nhất một file để in.');
       return;
     }
@@ -412,17 +373,12 @@ export class EmrExportComponent implements OnInit {
     this.cd.markForCheck();
 
     try {
-      this.toastService.showInfo(`Đang chuẩn bị in ${selected.length} file...`);
-
-      for (let i = 0; i < selected.length; i++) {
-        const file = selected[i];
-        const downloadUrl = `http://42.113.122.51:6060/Files/api/File/download/${file.fileId}`;
-
-        // Print files sequentially with a short delay to allow iframe setup
+      this.toastService.showInfo(`Đang chuẩn bị in ${files.length} file...`);
+      for (const file of files) {
+        const downloadUrl =
+          file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`;
         await this.pdfService.printPdfFromApi(downloadUrl);
-        await new Promise(resolve => setTimeout(resolve, 800));
       }
-
       this.toastService.showSuccess('Hoàn thành lệnh in.');
     } catch (err) {
       console.error('Failed to print EMR files:', err);
@@ -458,7 +414,8 @@ export class EmrExportComponent implements OnInit {
   // Handle Inline Actions for specific rows in the Detail Files Grid
   public handleFileAction(event: RowActionEvent<EmrSignedFile>): void {
     const file = event.data;
-    const downloadUrl = `http://42.113.122.51:6060/Files/api/File/download/${file.fileId}`;
+    const downloadUrl =
+      file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`;
 
     if (event.action === 'print') {
       this.pdfService

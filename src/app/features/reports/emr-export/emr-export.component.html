@@ -1,98 +1,31 @@
 <div class="page-container">
   <div class="page-content">
-    <!-- HIS Mock Tab Header -->
-    <div class="mock-tab-header">
-      <div class="mock-tab active">
-        <i class="fas fa-file-export mock-tab-icon"></i>
-        <span>Xuất File EMR</span>
-        <button type="button" class="mock-tab-close" (click)="onClose()">
-          <i class="fas fa-times"></i>
-        </button>
+    <app-date-filter
+      [autoLoad]="true"
+      [showSubmitButton]="true"
+      buttonLabel="Lọc dữ liệu"
+      [defaultRange]="'thisMonth'"
+      [showQuickRanges]="false"
+      [isLoading]="isLoading()"
+      (filterSubmit)="onFilterSubmit($event)">
+      <!-- Custom Patient ID filter projected adjacent to Datepickers -->
+      <div custom-filters class="filter-group">
+        <label for="searchPatientId">Mã y tế</label>
+        <div class="input-wrapper">
+          <input
+            id="searchPatientId"
+            type="text"
+            class="form-control-date"
+            placeholder="Nhập mã y tế..."
+            [(ngModel)]="searchPatientId"
+            (keyup.enter)="onSearch()"
+            [disabled]="isLoading()" />
+          <span class="emr-input-icon-right"
+            ><i class="fas fa-id-card"></i
+          ></span>
+        </div>
       </div>
-    </div>
-
-    <!-- Filter Section using projected ng-content -->
-    <div class="filter-section-wrapper">
-      <div class="filter-section-title">Thông tin tìm kiếm</div>
-      <app-date-filter
-        [showSubmitButton]="false"
-        [defaultRange]="'thisMonth'"
-        [isLoading]="isLoading()"
-        (filterSubmit)="onDateFilterChange($event)">
-        <!-- Custom Patient ID filter projected adjacent to Datepickers -->
-        <div custom-filters class="custom-emr-filters">
-          <div class="radio-group-container">
-            <label class="radio-label-custom">
-              <input
-                type="radio"
-                name="searchType"
-                [value]="'mayte'"
-                [checked]="selectedSearchType() === 'mayte'"
-                (change)="selectedSearchType.set('mayte')" />
-              <span class="custom-radio-circle"></span>
-              <span class="radio-text">Mã y tế</span>
-            </label>
-          </div>
-          <div class="input-field-container">
-            <input
-              type="text"
-              class="emr-input-control"
-              placeholder="Nhập mã y tế..."
-              [(ngModel)]="searchPatientId"
-              (keyup.enter)="onSearch()"
-              [disabled]="isLoading()" />
-            <span class="emr-input-icon-right"
-              ><i class="fas fa-id-card"></i
-            ></span>
-          </div>
-        </div>
-
-        <!-- Custom Action Buttons projected to the right -->
-        <div custom-actions class="custom-emr-actions">
-          <button
-            type="button"
-            class="btn btn-outline-primary"
-            (click)="onSearch()"
-            [disabled]="isLoading()">
-            <i
-              class="fas"
-              [ngClass]="isLoading() ? 'fa-spinner fa-spin' : 'fa-search'"></i>
-            <span>Xem</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-secondary-emr"
-            (click)="onExportEMR()"
-            [disabled]="isLoading() || !selectedAdmission() || isExporting()">
-            <i
-              class="fas"
-              [ngClass]="
-                isExporting() ? 'fa-spinner fa-spin' : 'fa-file-medical'
-              "></i>
-            <span>Kết xuất file EMR</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            (click)="onPrintSelectedFiles()"
-            [disabled]="
-              isLoading() || selectedFiles().length === 0 || isPrinting()
-            ">
-            <i
-              class="fas"
-              [ngClass]="isPrinting() ? 'fa-spinner fa-spin' : 'fa-print'"></i>
-            <span>In ({{ selectedFiles().length }})</span>
-          </button>
-
-          <button type="button" class="btn btn-ghost" (click)="onClose()">
-            <i class="fas fa-times"></i>
-            <span>Đóng</span>
-          </button>
-        </div>
-      </app-date-filter>
-    </div>
+    </app-date-filter>
 
     <!-- Side-by-Side Panels Grid -->
     <div class="split-layout-grid">
@@ -103,9 +36,6 @@
             <i class="fas fa-hospital-user panel-icon text-primary"></i>
             <h3 class="panel-main-title">Danh sách tiếp nhận</h3>
           </div>
-          <span class="badge-count" *ngIf="admissions().length > 0">
-            {{ admissions().length }} lượt
-          </span>
         </div>
 
         <div class="panel-table-container">
@@ -117,6 +47,7 @@
             [showPaginator]="false"
             [trackByField]="'STT'"
             [emptyStateText]="'Không tìm thấy lượt tiếp nhận nào.'"
+            [activeRow]="selectedAdmission()"
             (rowClick)="onAdmissionSelected($event)">
           </app-reusable-table>
         </div>
@@ -129,19 +60,13 @@
             <i class="fas fa-file-signature panel-icon text-success"></i>
             <h3 class="panel-main-title">Danh sách file đã ký</h3>
           </div>
-          <div class="detail-info-wrapper" *ngIf="selectedAdmission()">
-            <span class="patient-name-badge">
-              <i class="fas fa-user-circle"></i>
-              {{ selectedAdmission()?.tenBenhNhan }}
-            </span>
-          </div>
         </div>
 
         <div class="panel-table-container">
           <app-reusable-table
             [data]="signedFiles()"
             [columns]="signedFileColumns"
-            [isLoading]="isLoading()"
+            [isLoading]="isFilesLoading()"
             [enableMultiSelect]="true"
             [showPaginator]="false"
             [rowActions]="fileRowActions"
@@ -151,8 +76,8 @@
                 ? 'Không tìm thấy file đã ký nào cho lượt tiếp nhận này.'
                 : 'Vui lòng chọn lượt tiếp nhận ở cột bên trái.'
             "
-            (rowAction)="handleFileAction($event)"
-            (selectionChanged)="onFilesSelectionChanged($event)">
+            (selectionChanged)="onFilesSelectionChanged($event)"
+            (rowAction)="handleFileAction($event)">
           </app-reusable-table>
         </div>
       </div>

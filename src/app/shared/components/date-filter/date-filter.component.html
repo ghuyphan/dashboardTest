@@ -86,8 +86,7 @@
             class="btn-pill"
             [class.active]="activeRange() === range.key"
             (click)="setRange(range.key, true)"
-            [disabled]="isLoading()"
-            [appTooltip]="range.label + ' (Alt + ' + (i + 1) + ')'">
+            [disabled]="isLoading()">
             {{ range.label }}
           </button>
         }

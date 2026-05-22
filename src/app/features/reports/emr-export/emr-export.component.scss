@@ -8,190 +8,15 @@
   overflow: hidden;
 }
 
-/* --- HIS Tab Mock --- */
-.mock-tab-header {
-  display: flex;
-  border-bottom: 2px solid var(--border-color);
-  background-color: var(--surface-ground);
-  padding-left: var(--spacing-sm);
-  flex-shrink: 0;
-  margin-bottom: var(--spacing-sm);
-}
+/* --- Custom Projected Filters --- */
+.filter-group {
+  @include m.input-group-styles;
 
-.mock-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 8px 16px;
-  background-color: var(--surface-card);
-  border: 1px solid var(--border-color);
-  border-bottom: none;
-  border-top-left-radius: var(--border-radius-sm);
-  border-top-right-radius: var(--border-radius-sm);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  position: relative;
-  top: 1px;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.03);
-
-  &.active {
-    background-color: var(--surface-card);
-    border-bottom: 2px solid var(--surface-card);
-    color: var(--primary);
-    font-weight: 600;
-
-    // Top border accent
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background-color: var(--primary);
-      border-top-left-radius: var(--border-radius-sm);
-      border-top-right-radius: var(--border-radius-sm);
-    }
-  }
-
-  .mock-tab-icon {
-    font-size: 0.9rem;
-    color: var(--primary);
-  }
-
-  .mock-tab-close {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 0.75rem;
-    color: var(--text-disabled);
-    padding: 2px;
+  .input-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: var(--gray-200);
-      color: var(--text-primary);
-    }
-  }
-}
-
-/* --- Search Title --- */
-.filter-section-wrapper {
-  margin-bottom: var(--spacing-md);
-  flex-shrink: 0;
-
-  .filter-section-title {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-disabled);
-    margin-bottom: var(--spacing-xs);
-    padding-left: var(--spacing-xs);
-  }
-}
-
-/* --- Custom Projected Filters --- */
-.custom-emr-filters {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
     width: 100%;
-  }
-}
-
-.radio-group-container {
-  display: flex;
-  align-items: center;
-}
-
-.radio-label-custom {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  cursor: pointer;
-  user-select: none;
-
-  input[type='radio'] {
-    display: none;
-  }
-
-  .custom-radio-circle {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--border-color);
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    background-color: var(--surface-card);
-  }
-
-  input[type='radio']:checked + .custom-radio-circle {
-    border-color: var(--primary);
-
-    &::after {
-      content: '';
-      width: 8px;
-      height: 8px;
-      background-color: var(--primary);
-      border-radius: 50%;
-      display: block;
-    }
-  }
-
-  .radio-text {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-}
-
-.input-field-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex: 1;
-  width: 200px;
-
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-
-  .emr-input-control {
-    width: 100%;
-    height: 40px;
-    padding: 8px 36px 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    background-color: var(--surface-card);
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    font-family: inherit;
-    transition: all 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
-    }
-
-    &:disabled {
-      background-color: var(--surface-ground);
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
   }
 
   .emr-input-icon-right {
@@ -200,47 +25,6 @@
     color: var(--text-disabled);
     font-size: 0.95rem;
     pointer-events: none;
-  }
-}
-
-/* --- Custom Projected Actions --- */
-.custom-emr-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  // Emr specific accent colors
-  .btn-secondary-emr {
-    background-color: rgba(var(--primary-rgb), 0.08);
-    border: 1px solid rgba(var(--primary-rgb), 0.2);
-    color: var(--primary);
-
-    @media (hover: hover) {
-      &:hover:not(:disabled) {
-        background-color: var(--primary);
-        color: #ffffff;
-        border-color: var(--primary);
-      }
-    }
-  }
-
-  .btn-outline-primary {
-    background-color: transparent;
-    border: 1px solid var(--primary);
-    color: var(--primary);
-
-    @media (hover: hover) {
-      &:hover:not(:disabled) {
-        background-color: var(--primary);
-        color: #ffffff;
-      }
-    }
   }
 }
 
@@ -316,33 +100,6 @@
   }
 }
 
-.badge-count {
-  font-size: 0.75rem;
-  font-weight: 600;
-  background-color: rgba(var(--primary-rgb), 0.1);
-  color: var(--primary);
-  padding: 4px 8px;
-  border-radius: var(--border-radius-full);
-}
-
-.detail-info-wrapper {
-  .patient-name-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--success);
-    background-color: rgba(74, 222, 128, 0.1);
-    padding: 4px 10px;
-    border-radius: var(--border-radius-sm);
-
-    i {
-      font-size: 0.85rem;
-    }
-  }
-}
-
 /* --- Inner Scroll Container --- */
 .panel-table-container {
   flex: 1;
@@ -372,18 +129,8 @@
     overflow-y: auto;
   }
 
-  // Row active selection styling for master table (left)
   .mat-mdc-row {
     transition: background-color 0.2s;
     cursor: pointer;
-
-    &.row-selected {
-      background-color: rgba(var(--primary-rgb), 0.08) !important;
-
-      .mat-mdc-cell {
-        color: var(--primary) !important;
-        font-weight: 600;
-      }
-    }
   }
 }
