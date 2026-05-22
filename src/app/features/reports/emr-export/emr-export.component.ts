@@ -184,6 +184,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         action: () => this.onExportEMR(),
         className: 'btn-secondary',
         disabled: loading || filesLoading || !admission || exporting,
+        permission: 'KHTH_EMRXuatFile.REXPORT',
       },
       {
         label: 'In',
@@ -191,6 +192,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         action: () => this.onPrintSelectedFiles(),
         className: 'btn-primary',
         disabled: loading || filesLoading || selected.length === 0 || printing,
+        permission: 'KHTH_EMRXuatFile.RPRINT',
       },
     ]);
   }
@@ -226,24 +228,40 @@ export class EmrExportComponent implements OnInit, OnDestroy {
             STT: index + 1,
             mayte: item.MaYTe || item.mayte || item.MAYTE || item.maYTe || pid,
             tenBenhNhan:
-              item.TenBenhNhan || item.tenBenhNhan || item.TEN_BENH_NHAN || '',
-            soTiepNhan:
-              item.SoTiepNhan || item.soTiepNhan || item.SO_TIEP_NHAN || '',
-            soBenhAn: item.SoBenhAn || item.soBenhAn || item.SO_BENH_AN || '',
-            ngayTiepNhan:
-              item.NgayTiepNhan ||
-              item.ngayTiepNhan ||
-              item.NGAY_TIEP_NHAN ||
+              item.TenBenhNhan ||
+              item.tenBenhNhan ||
+              item.TEN_BENH_NHAN ||
+              item.TENBENHNHAN ||
               '',
+            soTiepNhan:
+              item.SoTiepNhan ||
+              item.soTiepNhan ||
+              item.SO_TIEP_NHAN ||
+              item.SOTIEPNHAN ||
+              '',
+            soBenhAn:
+              item.SoBenhAn ||
+              item.soBenhAn ||
+              item.SO_BENH_AN ||
+              item.SOBENHAN ||
+              '',
+            ngayTiepNhan: DateUtils.formatToDisplay(
+              item.NgayTiepNhan ||
+                item.ngayTiepNhan ||
+                item.NGAY_TIEP_NHAN ||
+                item.NGAYTIEPNHAN
+            ),
             thoiGianTiepNhan:
               item.ThoiGianTiepNhan ||
               item.thoiGianTiepNhan ||
               item.THOI_GIAN_TIEP_NHAN ||
+              item.THOIGIANTIEPNHAN ||
               '',
             tiepNhan_Id:
               item.TiepNhan_Id ||
               item.tiepNhan_Id ||
               item.TIEPNHAN_ID ||
+              item.SOTIEPNHAN ||
               item.soTiepNhan ||
               item.SoTiepNhan ||
               '',
@@ -324,12 +342,12 @@ export class EmrExportComponent implements OnInit, OnDestroy {
               item.NhomDichVu || item.nhomDichVu || item.NHOM_DICH_VU || '',
             tenDichVu:
               item.TenDichVu || item.tenDichVu || item.TEN_DICH_VU || '',
-            thoiGianThucHien:
+            thoiGianThucHien: DateUtils.formatDateTimeToDisplay(
               item.ThoiGianThucHien ||
-              item.thoiGianThucHien ||
-              item.THOI_GIAN_THUC_HIEN ||
-              item.THOI_GIAN_TH ||
-              '',
+                item.thoiGianThucHien ||
+                item.THOI_GIAN_THUC_HIEN ||
+                item.THOI_GIAN_TH
+            ),
             fileName: item.FileName || item.fileName || item.FILE_NAME || '',
             fileId:
               item.FileId ||
@@ -361,7 +379,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     this.cd.markForCheck();
   }
 
-  // Handle Print Action for all selected files
+  // Handle Print Action for all selected files by merging them into a single PDF
   public async onPrintSelectedFiles(): Promise<void> {
     const files = this.selectedFiles();
     if (files.length === 0) {
@@ -373,16 +391,19 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     this.cd.markForCheck();
 
     try {
-      this.toastService.showInfo(`Đang chuẩn bị in ${files.length} file...`);
-      for (const file of files) {
-        const downloadUrl =
-          file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`;
-        await this.pdfService.printPdfFromApi(downloadUrl);
-      }
-      this.toastService.showSuccess('Hoàn thành lệnh in.');
+      this.toastService.showInfo(
+        `Đang tải và ghép ${files.length} file để in...`
+      );
+      const urls = files.map(
+        file => file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`
+      );
+      await this.pdfService.printMultiplePdfs(urls);
+      this.toastService.showSuccess('Đã gửi tài liệu in thành công.');
     } catch (err) {
       console.error('Failed to print EMR files:', err);
-      this.toastService.showError('Có lỗi xảy ra khi tải và in file EMR.');
+      this.toastService.showError(
+        'Có lỗi xảy ra khi tải, ghép hoặc in file EMR.'
+      );
     } finally {
       this.isPrinting.set(false);
       this.cd.markForCheck();

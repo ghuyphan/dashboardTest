@@ -80,10 +80,13 @@
     max-width: 600px;
   }
 
-  // Modern layout: when custom filters are projected, dynamically wrap and remove max-width
+  // Modern layout: when custom filters are projected, dynamically wrap and restrict max-width on desktop
   &:has([custom-filters]) {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    max-width: none !important;
+
+    @media (min-width: 992px) {
+      max-width: 600px;
+    }
   }
 
   @media (min-width: 992px) {

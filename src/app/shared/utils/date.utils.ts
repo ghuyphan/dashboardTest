@@ -17,15 +17,29 @@ export class DateUtils {
     }
 
     try {
-      // Handle dd/MM/yyyy (Flexible length)
-      // Regex matches d/m/yyyy or dd/mm/yyyy
-      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cleanStr)) {
-        const parts = cleanStr.split('/');
+      // Handle dd/MM/yyyy (Flexible length) with optional time (e.g. dd/MM/yyyy HH:mm)
+      const dateParts = cleanStr.split(/\s+/);
+      const datePart = dateParts[0];
+      const timePart = dateParts[1] || '';
+
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(datePart)) {
+        const parts = datePart.split('/');
         const day = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1;
         const year = parseInt(parts[2], 10);
 
-        const d = new Date(year, month, day);
+        let hour = 0;
+        let minute = 0;
+        let second = 0;
+
+        if (timePart) {
+          const tParts = timePart.split(':');
+          hour = parseInt(tParts[0], 10) || 0;
+          minute = parseInt(tParts[1], 10) || 0;
+          second = parseInt(tParts[2], 10) || 0;
+        }
+
+        const d = new Date(year, month, day, hour, minute, second);
         // Validate: Ensure numbers didn't rollover (e.g. 31/02 -> 03/03)
         if (
           d.getFullYear() === year &&
@@ -59,6 +73,22 @@ export class DateUtils {
     const d = this.parse(dateString);
     if (!d) return 'N/A';
     return this.dateFormatter.format(d);
+  }
+
+  /**
+   * Returns date and time in dd/MM/yyyy HH:mm format
+   */
+  static formatDateTimeToDisplay(
+    dateString: string | null | undefined
+  ): string {
+    const d = this.parse(dateString);
+    if (!d) return 'N/A';
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    const hour = d.getHours().toString().padStart(2, '0');
+    const minute = d.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month}/${year} ${hour}:${minute}`;
   }
 
   /**

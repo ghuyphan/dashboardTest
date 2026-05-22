@@ -90,6 +90,25 @@
 
   .panel-icon {
     font-size: 1.1rem;
+
+    &.icon-info {
+      color: var(--color-info);
+    }
+    &.icon-warning {
+      color: var(--color-warning);
+    }
+    &.icon-danger {
+      color: var(--color-danger);
+    }
+    &.icon-success {
+      color: var(--color-success);
+    }
+    &.text-teal {
+      color: var(--teal-blue);
+    }
+    &.text-primary {
+      color: var(--primary);
+    }
   }
 
   .panel-main-title {

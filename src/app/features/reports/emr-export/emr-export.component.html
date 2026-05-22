@@ -4,8 +4,8 @@
       [autoLoad]="true"
       [showSubmitButton]="true"
       buttonLabel="Lọc dữ liệu"
-      [defaultRange]="'thisMonth'"
-      [showQuickRanges]="false"
+      [defaultRange]="'thisWeek'"
+      [showQuickRanges]="true"
       [isLoading]="isLoading()"
       (filterSubmit)="onFilterSubmit($event)">
       <!-- Custom Patient ID filter projected adjacent to Datepickers -->
@@ -20,9 +20,6 @@
             [(ngModel)]="searchPatientId"
             (keyup.enter)="onSearch()"
             [disabled]="isLoading()" />
-          <span class="emr-input-icon-right"
-            ><i class="fas fa-id-card"></i
-          ></span>
         </div>
       </div>
     </app-date-filter>
@@ -33,7 +30,7 @@
       <div class="split-card split-left">
         <div class="panel-header-bar">
           <div class="panel-title-wrapper">
-            <i class="fas fa-hospital-user panel-icon text-primary"></i>
+            <i class="fas fa-hospital-user panel-icon icon-info"></i>
             <h3 class="panel-main-title">Danh sách tiếp nhận</h3>
           </div>
         </div>
@@ -57,7 +54,7 @@
       <div class="split-card split-right">
         <div class="panel-header-bar">
           <div class="panel-title-wrapper">
-            <i class="fas fa-file-signature panel-icon text-success"></i>
+            <i class="fas fa-file-signature panel-icon icon-success"></i>
             <h3 class="panel-main-title">Danh sách file đã ký</h3>
           </div>
         </div>
