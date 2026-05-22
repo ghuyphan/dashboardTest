@@ -79,18 +79,22 @@
     max-width: 600px;
   }
 
+  // Modern layout: when custom filters are projected, dynamically wrap and remove max-width
+  &:has([custom-filters]) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    max-width: none !important;
+  }
+
   @media (min-width: 992px) {
-    &:not(.has-queue-filter) {
+    &:not(.has-queue-filter):not(:has([custom-filters])) {
       max-width: 300px;
     }
   }
 
   @media (max-width: 480px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     max-width: none;
-    gap: var(
-      --spacing-sm
-    ); // Slightly tighter gap between inputs within the grid
+    gap: var(--spacing-sm);
 
     &.has-queue-filter {
       grid-template-columns: 1fr;
@@ -470,10 +474,15 @@
 .action-buttons {
   flex-shrink: 0;
   width: 100%; // Mobile: Full width
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 
   @media (min-width: 992px) {
     width: auto;
     margin-left: auto; // Desktop: Push to right
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .btn-primary {

@@ -94,6 +94,7 @@ export class DateFilterComponent implements OnInit, OnDestroy, AfterViewInit {
   public showQueueFilter = input<boolean>(false);
   public showQuickRanges = input<boolean>(true);
   public autoLoad = input<boolean>(false);
+  public showSubmitButton = input<boolean>(true);
 
   // OUTPUTS
   public filterSubmit = output<DateRange>();

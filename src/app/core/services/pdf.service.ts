@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { generate } from '@pdfme/generator';
 import { Template, BLANK_PDF } from '@pdfme/common';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { saveAs } from 'file-saver';
 
 @Injectable({
@@ -53,9 +53,66 @@ export class PdfService {
   }
 
   /**
-   * Creates an invisible iframe to trigger the browser print dialog
+   * Fetches a PDF from the given API endpoint and opens the browser print dialog.
+   * Supports GET and POST requests, request headers, query parameters, and request body.
+   *
+   * @param url The API endpoint URL to fetch the PDF from
+   * @param options Configuration for the HTTP request
    */
-  private printBlob(blob: Blob): void {
+  async printPdfFromApi(
+    url: string,
+    options: {
+      method?: 'GET' | 'POST';
+      body?: any;
+      headers?: Record<string, string>;
+      params?: Record<string, string>;
+    } = {}
+  ): Promise<void> {
+    const method = options.method || 'GET';
+    const requestHeaders = new HttpHeaders(options.headers || {});
+    let requestParams = new HttpParams();
+
+    if (options.params) {
+      Object.keys(options.params).forEach(key => {
+        requestParams = requestParams.set(key, options.params![key]);
+      });
+    }
+
+    try {
+      let request$: Observable<Blob>;
+      if (method === 'POST') {
+        request$ = this.http.post(url, options.body, {
+          headers: requestHeaders,
+          params: requestParams,
+          responseType: 'blob',
+        });
+      } else {
+        request$ = this.http.get(url, {
+          headers: requestHeaders,
+          params: requestParams,
+          responseType: 'blob',
+        });
+      }
+
+      const blob = await firstValueFrom(request$);
+
+      if (blob.type && blob.type !== 'application/pdf') {
+        console.warn(
+          `Expected 'application/pdf' response type, but received '${blob.type}'.`
+        );
+      }
+
+      this.printBlob(blob);
+    } catch (err) {
+      console.error('Failed to fetch and print PDF from API:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Creates an invisible iframe to trigger the browser print dialog for a Blob
+   */
+  public printBlob(blob: Blob): void {
     const blobUrl = URL.createObjectURL(blob);
     const iframe = document.createElement('iframe');
 
@@ -86,7 +143,7 @@ export class PdfService {
           setTimeout(() => {
             document.body.removeChild(iframe);
             URL.revokeObjectURL(blobUrl);
-          }, 600000);
+          }, 60000);
         }
       }, 500);
     };

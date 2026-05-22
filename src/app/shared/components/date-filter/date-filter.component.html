@@ -68,6 +68,7 @@
         </div>
       </div>
     }
+    <ng-content select="[custom-filters]"></ng-content>
   </div>
 
   @if (showQuickRanges()) {
@@ -95,18 +96,21 @@
   }
 
   <div class="action-buttons">
-    <button
-      type="button"
-      class="btn btn-primary"
-      (click)="applyFilter()"
-      [disabled]="isLoading()"
-      [appTooltip]="'Áp dụng bộ lọc (Alt + Enter)'">
-      @if (isLoading()) {
-        <i class="fas fa-spinner fa-spin"></i>
-      } @else {
-        <i class="fas fa-filter"></i>
-      }
-      <span>{{ buttonLabel() }}</span>
-    </button>
+    @if (showSubmitButton()) {
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="applyFilter()"
+        [disabled]="isLoading()"
+        [appTooltip]="'Áp dụng bộ lọc (Alt + Enter)'">
+        @if (isLoading()) {
+          <i class="fas fa-spinner fa-spin"></i>
+        } @else {
+          <i class="fas fa-filter"></i>
+        }
+        <span>{{ buttonLabel() }}</span>
+      </button>
+    }
+    <ng-content select="[custom-actions]"></ng-content>
   </div>
 </div>

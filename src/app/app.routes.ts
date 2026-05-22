@@ -124,7 +124,20 @@ export const routes: Routes = [
           showSearchBar: false,
         },
       },
-
+      {
+        path: 'reports/emr-export',
+        loadComponent: () =>
+          import('./features/reports/emr-export/emr-export.component').then(
+            m => m.EmrExportComponent
+          ),
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'KHTH.ChuaTaoHSBANgoaiTru',
+          title: 'Xuất File EMR',
+          keywords: ['emr', 'xuat file', 'file emr', 'export emr', 'pdf emr'],
+          showSearchBar: false,
+        },
+      },
       {
         path: 'reports/examination-overview',
         loadComponent: () =>
