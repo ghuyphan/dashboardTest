@@ -135,10 +135,10 @@ export class PdfService {
       iframe.src = `${blobUrl}#view=Fit`;
       document.body.appendChild(iframe);
 
-      let resolved = false;
-      const done = () => {
-        if (resolved) return;
-        resolved = true;
+      let cleanedUp = false;
+      const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
 
         // Cleanup after a short delay (allows time for print dialog interaction cleanup)
         setTimeout(() => {
@@ -147,11 +147,17 @@ export class PdfService {
           }
           URL.revokeObjectURL(blobUrl);
         }, 2000);
-
-        resolve();
       };
 
+      // Fallback if onload never fires (e.g. browser blocks iframe loading)
+      const loadTimeout = setTimeout(() => {
+        cleanup();
+        resolve();
+      }, 5000);
+
       iframe.onload = () => {
+        clearTimeout(loadTimeout);
+
         // Small delay to ensure rendering is finished
         setTimeout(() => {
           try {
@@ -159,23 +165,28 @@ export class PdfService {
             if (iframeWin) {
               iframeWin.focus();
 
-              // Listen to afterprint event to resolve when user closes the print dialog
+              // Listen to afterprint event to clean up resources when user closes the print dialog
               iframeWin.addEventListener('afterprint', () => {
-                done();
+                cleanup();
               });
 
               iframeWin.print();
 
-              // Fallback: Resolve after 5 minutes if afterprint doesn't fire (e.g. print blocked)
+              // Resolve the promise immediately since the print dialog has been triggered
+              resolve();
+
+              // Fallback cleanup after 30 seconds if afterprint doesn't fire (e.g. Chrome/Edge PDF iframe)
               setTimeout(() => {
-                done();
-              }, 300000);
+                cleanup();
+              }, 30000);
             } else {
-              done();
+              cleanup();
+              resolve();
             }
           } catch (e) {
             console.error('Print failed:', e);
-            done();
+            cleanup();
+            resolve();
           }
         }, 500);
       };
@@ -256,7 +267,7 @@ export class PdfService {
 
       // Save the merged PDF as bytes
       const mergedPdfBytes = await mergedPdf.save();
-      const mergedBlob = new Blob([mergedPdfBytes], {
+      const mergedBlob = new Blob([mergedPdfBytes as Uint8Array<ArrayBuffer>], {
         type: 'application/pdf',
       });
 

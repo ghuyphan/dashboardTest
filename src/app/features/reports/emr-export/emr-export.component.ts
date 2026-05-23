@@ -422,7 +422,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         file => file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`
       );
       await this.pdfService.printMultiplePdfs(urls);
-      this.toastService.showSuccess('Đã gửi tài liệu in thành công.');
+      this.toastService.showSuccess('Đã mở hộp thoại in tài liệu.');
     } catch (err) {
       console.error('Failed to print EMR files:', err);
       this.toastService.showError(
