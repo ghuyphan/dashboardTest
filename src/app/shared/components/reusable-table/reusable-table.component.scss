@@ -61,6 +61,8 @@ app-reusable-table {
   overflow: auto;
   position: relative;
   background-color: var(--surface-card, #ffffff);
+  display: flex;
+  flex-direction: column;
 
   /* Mobile smooth scrolling */
   -webkit-overflow-scrolling: touch;
@@ -123,6 +125,14 @@ table.mat-table {
   table-layout: auto;
   background-color: transparent;
 
+  &:has(tr.reusable-no-data-row) {
+    height: 100%;
+
+    tbody {
+      height: 100%;
+    }
+  }
+
   @media (max-width: 768px) {
     min-width: 800px;
   }
@@ -132,7 +142,7 @@ table.mat-table {
 .mat-mdc-header-row {
   height: var(--header-height) !important;
   min-height: var(--header-height) !important;
-  background-color: var(--header-bg-local) !important;
+  background-color: transparent !important;
   border-bottom: 1px solid var(--border-color-local);
   position: sticky;
   top: 0;
@@ -158,7 +168,15 @@ table.mat-table {
   overflow: hidden;
   text-overflow: ellipsis;
   border-right: none !important;
-  background-color: inherit;
+  background-color: var(--header-bg-local) !important;
+
+  &:first-child {
+    border-top-left-radius: var(--border-radius-md, 8px) !important;
+  }
+
+  &:last-child {
+    border-top-right-radius: var(--border-radius-md, 8px) !important;
+  }
 
   .mat-sort-header-arrow {
     color: currentColor !important;
@@ -255,6 +273,7 @@ table.mat-table {
     align-items: center;
     justify-content: center;
     vertical-align: middle;
+    width: 100% !important;
   }
 
   .mdc-checkbox {
@@ -693,12 +712,20 @@ table.mat-table {
 }
 
 .no-data-container {
+  position: absolute;
+  top: var(--header-height, 40px);
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
+  padding: 1rem;
   color: var(--text-secondary);
+  background: transparent !important;
+  background-color: transparent !important;
+  pointer-events: auto;
 
   .no-data-icon {
     font-size: 3rem;
@@ -741,11 +768,28 @@ table.mat-table {
   }
 }
 
-/* Mat No Data Row */
-.mat-no-data-row {
-  .mat-mdc-cell {
+tr.reusable-no-data-row,
+tr.reusable-no-data-row:nth-child(odd),
+tr.reusable-no-data-row:nth-child(even),
+tr.mat-mdc-no-data-row,
+tr.mat-mdc-no-data-row:nth-child(odd),
+tr.mat-mdc-no-data-row:nth-child(even),
+tr.mat-no-data-row,
+tr.mat-no-data-row:nth-child(odd),
+tr.mat-no-data-row:nth-child(even) {
+  background: transparent !important;
+  background-color: transparent !important;
+  height: 0 !important;
+
+  .mat-mdc-cell,
+  .mat-cell,
+  .no-data-cell,
+  td.no-data-cell {
     border-bottom: none !important;
     padding: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
   }
 }
 
