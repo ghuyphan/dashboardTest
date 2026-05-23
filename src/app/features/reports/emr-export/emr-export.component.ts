@@ -90,13 +90,20 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   // Table columns definition
   public readonly admissionColumns: GridColumn[] = [
     { key: 'STT', label: 'STT', sortable: true, width: '50px' },
-    { key: 'mayte', label: 'Mã Y Tế', sortable: true, width: '130px' },
+    { key: 'mayte', label: 'Mã Y Tế', sortable: true, width: '120px' },
     {
       key: 'tenBenhNhan',
       label: 'Tên Bệnh Nhân',
       sortable: true,
-      width: '180px',
+      width: '160px',
     },
+    {
+      key: 'soTiepNhan',
+      label: 'Số Tiếp Nhận',
+      sortable: true,
+      width: '150px',
+    },
+    { key: 'soBenhAn', label: 'Số Bệnh Án', sortable: true, width: '120px' },
     {
       key: 'ngayTiepNhan',
       label: 'Ngày Tiếp Nhận',
@@ -108,6 +115,13 @@ export class EmrExportComponent implements OnInit, OnDestroy {
 
   public readonly signedFileColumns: GridColumn[] = [
     { key: 'STT', label: 'STT', sortable: true, width: '50px' },
+    {
+      key: 'soTiepNhan',
+      label: 'Số Tiếp Nhận',
+      sortable: true,
+      width: '140px',
+    },
+    { key: 'soBenhAn', label: 'Số Bệnh Án', sortable: true, width: '120px' },
     { key: 'tenDichVu', label: 'Tên Dịch Vụ', sortable: true, width: '250px' },
     {
       key: 'thoiGianThucHien',
