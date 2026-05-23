@@ -245,6 +245,96 @@ table.mat-table {
     /* Must be higher than header-row (200) */
     z-index: 300 !important;
   }
+
+  /* Custom Checkbox Styling to match Reusable Table theme */
+  .mat-mdc-checkbox {
+    // Ripple layer size (Compact 28px instead of standard bulky 40px/48px)
+    --mat-checkbox-state-layer-size: 28px !important;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+  }
+
+  .mdc-checkbox {
+    padding: 6px !important;
+    margin: 0 !important;
+
+    .mdc-checkbox__background {
+      border-radius: 4px !important;
+      border-width: 1px !important;
+      transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+    }
+
+    .mdc-checkbox__checkmark-path {
+      stroke-width: 3px !important;
+    }
+  }
+
+  .mat-mdc-checkbox .mat-internal-form-field-action-target {
+    padding: 0 !important;
+  }
+
+  // --- Header Checkbox (Against Dark Teal Background) ---
+  &.mat-mdc-header-cell .mat-mdc-checkbox {
+    --mdc-checkbox-unselected-icon-color: rgba(255, 255, 255, 0.7) !important;
+    --mdc-checkbox-unselected-hover-icon-color: #ffffff !important;
+    --mdc-checkbox-unselected-focus-icon-color: #ffffff !important;
+
+    --mdc-checkbox-selected-icon-color: #ffffff !important;
+    --mdc-checkbox-selected-hover-icon-color: #ffffff !important;
+    --mdc-checkbox-selected-focus-icon-color: #ffffff !important;
+
+    --mdc-checkbox-selected-checkmark-color: var(--primary) !important;
+
+    // Ripple effects in header
+    --mdc-checkbox-selected-focus-state-layer-color: rgba(
+      255,
+      255,
+      255,
+      0.2
+    ) !important;
+    --mdc-checkbox-selected-hover-state-layer-color: rgba(
+      255,
+      255,
+      255,
+      0.15
+    ) !important;
+    --mdc-checkbox-unselected-hover-state-layer-color: rgba(
+      255,
+      255,
+      255,
+      0.15
+    ) !important;
+  }
+
+  // --- Body Checkbox (Against Light/Dark Row Backgrounds) ---
+  &.mat-mdc-cell .mat-mdc-checkbox {
+    --mdc-checkbox-unselected-icon-color: var(--gray-400) !important;
+    --mdc-checkbox-unselected-hover-icon-color: var(--primary) !important;
+    --mdc-checkbox-unselected-focus-icon-color: var(--primary) !important;
+
+    --mdc-checkbox-selected-icon-color: var(--primary) !important;
+    --mdc-checkbox-selected-hover-icon-color: var(--primary) !important;
+    --mdc-checkbox-selected-focus-icon-color: var(--primary) !important;
+
+    --mdc-checkbox-selected-checkmark-color: #ffffff !important;
+
+    // Ripple effects in body
+    --mdc-checkbox-selected-focus-state-layer-color: var(--primary) !important;
+    --mdc-checkbox-selected-hover-state-layer-color: var(--primary) !important;
+    --mdc-checkbox-unselected-hover-state-layer-color: var(
+      --primary
+    ) !important;
+
+    [data-theme='dark'] & {
+      --mdc-checkbox-unselected-icon-color: var(--gray-500) !important;
+      --mdc-checkbox-selected-checkmark-color: #0f172a !important;
+    }
+  }
 }
 
 .mat-column-actions {

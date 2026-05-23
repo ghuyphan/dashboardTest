@@ -166,10 +166,10 @@ export class PdfService {
 
               iframeWin.print();
 
-              // Fallback: Resolve after 10 seconds if afterprint doesn't fire (e.g. print blocked)
+              // Fallback: Resolve after 5 minutes if afterprint doesn't fire (e.g. print blocked)
               setTimeout(() => {
                 done();
-              }, 10000);
+              }, 300000);
             } else {
               done();
             }
@@ -180,6 +180,40 @@ export class PdfService {
         }, 500);
       };
     });
+  }
+
+  /**
+   * Fetches a PDF from a URL and triggers a local file download using saveAs.
+   *
+   * @param url The API endpoint or URL to fetch the PDF from
+   * @param filename Name of the file to save
+   */
+  async downloadPdf(url: string, filename: string): Promise<void> {
+    try {
+      const blob = await firstValueFrom(
+        this.http.get(url, { responseType: 'blob' })
+      );
+      saveAs(blob, filename);
+    } catch (err) {
+      console.error(`Failed to fetch and download PDF from ${url}:`, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Triggers the browser's native file download manager using a dynamic anchor element.
+   * This respects the browser's "Ask where to save each file before downloading" setting.
+   *
+   * @param url The file URL
+   * @param filename Name of the file to save
+   */
+  downloadPdfNatively(url: string, filename: string): void {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   /**

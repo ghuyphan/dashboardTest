@@ -226,6 +226,7 @@ $dark-tokens: (
 
   /* 2. Apply Light Tokens by default */
   @include create-theme-vars($light-tokens);
+  --primary-rgb: 0, 131, 155;
 
   /* 3. Aliases for Backward Compatibility */
   --teal-blue: var(--primary);
@@ -266,6 +267,7 @@ $dark-tokens: (
 /* --- Dark Theme Overrides --- */
 [data-theme='dark'] {
   @include create-theme-vars($dark-tokens);
+  --primary-rgb: 45, 212, 191;
 
   // Dark Mode Shadows: lighter, more subtle, relying on borders for depth
   --box-shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.05);

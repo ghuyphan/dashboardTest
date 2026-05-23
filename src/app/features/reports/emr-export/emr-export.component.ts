@@ -80,11 +80,12 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   private readonly cd = inject(ChangeDetectorRef);
   private readonly emrService = inject(EmrService);
   private readonly footerService = inject(FooterActionService);
+  private isInitialLoad = true;
 
   // Filter States
   public fromDate = signal<string>('');
   public toDate = signal<string>('');
-  public searchPatientId = signal<string>('260219667'); // Default matching the user's new API testing patient
+  public searchPatientId = signal<string>(''); // Clear mock patient ID filter by default
 
   // Table columns definition
   public readonly admissionColumns: GridColumn[] = [
@@ -105,20 +106,14 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   ];
 
   public readonly signedFileColumns: GridColumn[] = [
-    {
-      key: 'nhomDichVu',
-      label: 'Nhóm Dịch Vụ',
-      sortable: true,
-      width: '120px',
-    },
-    { key: 'tenDichVu', label: 'Tên Dịch Vụ', sortable: true, width: '180px' },
+    { key: 'tenDichVu', label: 'Tên Dịch Vụ', sortable: true, width: '250px' },
     {
       key: 'thoiGianThucHien',
       label: 'Thời Gian Thực Hiện',
       sortable: true,
       width: '160px',
     },
-    { key: 'fileName', label: 'File Name', sortable: true, width: '280px' },
+    { key: 'fileName', label: 'File Name', sortable: true, width: '210px' },
     {
       key: 'actions',
       label: '',
@@ -179,20 +174,25 @@ export class EmrExportComponent implements OnInit, OnDestroy {
 
     this.footerService.setActions([
       {
-        label: 'Kết xuất file EMR',
-        icon: exporting ? 'fas fa-spinner fa-spin' : 'fas fa-file-medical',
-        action: () => this.onExportEMR(),
-        className: 'btn-secondary',
-        disabled: loading || filesLoading || !admission || exporting,
-        permission: 'KHTH_EMRXuatFile.REXPORT',
-      },
-      {
         label: 'In',
         icon: printing ? 'fas fa-spinner fa-spin' : 'fas fa-print',
         action: () => this.onPrintSelectedFiles(),
-        className: 'btn-primary',
+        className: 'btn-secondary',
         disabled: loading || filesLoading || selected.length === 0 || printing,
         permission: 'KHTH_EMRXuatFile.RPRINT',
+      },
+      {
+        label: 'Kết xuất file EMR',
+        icon: exporting ? 'fas fa-spinner fa-spin' : 'fas fa-file-medical',
+        action: () => this.onExportEMR(),
+        className: 'btn-primary',
+        disabled:
+          loading ||
+          filesLoading ||
+          !admission ||
+          selected.length === 0 ||
+          exporting,
+        permission: 'KHTH_EMRXuatFile.REXPORT',
       },
     ]);
   }
@@ -201,6 +201,14 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   public onFilterSubmit(range: DateRange): void {
     this.fromDate.set(range.fromDate);
     this.toDate.set(range.toDate);
+
+    if (this.isInitialLoad) {
+      this.isInitialLoad = false;
+      // On initial auto-load, if patient ID is empty, skip search without displaying warning toast
+      if (!this.searchPatientId().trim()) {
+        return;
+      }
+    }
     this.onSearch();
   }
 
@@ -410,8 +418,8 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Handle Export EMR Mock action
-  public onExportEMR(): void {
+  // Handle Export EMR action by downloading each selected file individually as separate PDFs
+  public async onExportEMR(): Promise<void> {
     const admission = this.selectedAdmission();
     if (!admission) {
       this.toastService.showWarning(
@@ -420,16 +428,36 @@ export class EmrExportComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const files = this.selectedFiles();
+    if (files.length === 0) {
+      this.toastService.showWarning(
+        'Vui lòng chọn ít nhất một file để kết xuất.'
+      );
+      return;
+    }
+
     this.isExporting.set(true);
     this.cd.markForCheck();
 
-    setTimeout(() => {
-      this.isExporting.set(false);
-      this.toastService.showSuccess(
-        `Kết xuất file EMR thành công cho bệnh nhân: ${admission.tenBenhNhan}`
+    try {
+      this.toastService.showInfo(`Đang kết xuất ${files.length} file...`);
+      for (const file of files) {
+        const downloadUrl =
+          file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`;
+        await this.pdfService.downloadPdf(downloadUrl, file.fileName);
+        // Add a small delay between downloads to let the browser process multiple native download prompts
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+      this.toastService.showSuccess('Kết xuất các file EMR thành công.');
+    } catch (err) {
+      console.error('Failed to export EMR files:', err);
+      this.toastService.showError(
+        'Có lỗi xảy ra khi tải và kết xuất file EMR.'
       );
+    } finally {
+      this.isExporting.set(false);
       this.cd.markForCheck();
-    }, 1500);
+    }
   }
 
   // Handle Inline Actions for specific rows in the Detail Files Grid
@@ -452,15 +480,15 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         });
     } else if (event.action === 'download') {
       this.toastService.showInfo('Đang tải file...');
-      // Simple anchor download trigger
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = file.fileName;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      this.toastService.showSuccess(`Đang tải xuống file: ${file.fileName}`);
+      this.pdfService
+        .downloadPdf(downloadUrl, file.fileName)
+        .then(() =>
+          this.toastService.showSuccess(`Đang tải xuống file: ${file.fileName}`)
+        )
+        .catch(err => {
+          console.error(err);
+          this.toastService.showError('Không thể tải xuống file.');
+        });
     }
   }
 
