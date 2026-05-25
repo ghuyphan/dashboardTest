@@ -140,7 +140,11 @@ export class ChartCardComponent implements AfterViewInit {
   public showErrorState = computed(() => !!this.chartError());
 
   private effectiveTheme = computed(() => {
-    return this.theme() || (this.themeService.isDarkTheme() ? 'dark' : 'light');
+    const rawTheme = this.theme();
+    if (rawTheme === 'light') {
+      return undefined;
+    }
+    return rawTheme || (this.themeService.isDarkTheme() ? 'dark' : undefined);
   });
 
   // === INTERNAL STATE ===
@@ -702,11 +706,9 @@ export class ChartCardComponent implements AfterViewInit {
     renderer: 'canvas' | 'svg';
     useDirtyRect: boolean;
   } {
-    const isMobileDevice = this.isMobile() || this.isTablet();
-
     return {
       renderer: 'canvas', // Canvas is faster on mobile
-      useDirtyRect: !isMobileDevice, // Disable on mobile for stability
+      useDirtyRect: false, // Disable dirty rect rendering to prevent canvas trails/artifacts on repaint
     };
   }
 
@@ -755,6 +757,73 @@ export class ChartCardComponent implements AfterViewInit {
     const chartType = this.detectChartType(option);
     const mobile = this.isMobile();
     const tablet = this.isTablet();
+
+    const isDark = this.themeService.isDarkTheme();
+    const defaultShadowColor = isDark
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(0, 0, 0, 0.05)';
+    const defaultLineColor = isDark
+      ? 'rgba(255, 255, 255, 0.2)'
+      : 'rgba(0, 0, 0, 0.2)';
+
+    // Detect if chart has bar series to decide default axis pointer type (shadow vs line)
+    const seriesListForDetect = Array.isArray(newOption.series)
+      ? newOption.series
+      : newOption.series
+        ? [newOption.series]
+        : [];
+    const hasBar = seriesListForDetect.some((s: any) => s?.type === 'bar');
+    const defaultAxisPointerType = hasBar ? 'shadow' : 'line';
+
+    // Global axisPointer colors to prevent solid white hover masks
+    newOption.axisPointer = {
+      type: defaultAxisPointerType,
+      ...(newOption.axisPointer || {}),
+      shadowStyle: {
+        color: defaultShadowColor,
+        ...(newOption.axisPointer?.shadowStyle || {}),
+      },
+      lineStyle: {
+        color: defaultLineColor,
+        ...(newOption.axisPointer?.lineStyle || {}),
+      },
+    };
+
+    if (newOption.tooltip) {
+      if (Array.isArray(newOption.tooltip)) {
+        newOption.tooltip = newOption.tooltip.map((tip: any) => ({
+          ...tip,
+          axisPointer: {
+            type: tip.axisPointer?.type || defaultAxisPointerType,
+            ...(tip.axisPointer || {}),
+            shadowStyle: {
+              color: defaultShadowColor,
+              ...(tip.axisPointer?.shadowStyle || {}),
+            },
+            lineStyle: {
+              color: defaultLineColor,
+              ...(tip.axisPointer?.lineStyle || {}),
+            },
+          },
+        }));
+      } else {
+        newOption.tooltip = {
+          ...newOption.tooltip,
+          axisPointer: {
+            type: newOption.tooltip.axisPointer?.type || defaultAxisPointerType,
+            ...(newOption.tooltip.axisPointer || {}),
+            shadowStyle: {
+              color: defaultShadowColor,
+              ...(newOption.tooltip.axisPointer?.shadowStyle || {}),
+            },
+            lineStyle: {
+              color: defaultLineColor,
+              ...(newOption.tooltip.axisPointer?.lineStyle || {}),
+            },
+          },
+        };
+      }
+    }
 
     // 1. Enforce Legend Position - UNIFIED: All charts have legend at top
     if (newOption.legend !== false) {
@@ -912,6 +981,40 @@ export class ChartCardComponent implements AfterViewInit {
             },
           };
         }
+        return s;
+      });
+    }
+
+    // 5. Enforce safe emphasis defaults on all series to prevent columns/bars from turning white or disappearing on hover
+    if (newOption.series) {
+      const seriesList = Array.isArray(newOption.series)
+        ? newOption.series
+        : [newOption.series];
+      newOption.series = seriesList.map((s: any) => {
+        if (!s) return s;
+        const emphasis = s.emphasis || {};
+
+        if (s.type === 'bar' || s.type === 'line' || s.type === 'scatter') {
+          return {
+            ...s,
+            emphasis: {
+              ...emphasis,
+              disabled: true,
+              focus: 'none',
+            },
+          };
+        }
+
+        if (s.type === 'pie') {
+          return {
+            ...s,
+            emphasis: {
+              ...emphasis,
+              focus: 'none',
+            },
+          };
+        }
+
         return s;
       });
     }
@@ -1334,31 +1437,15 @@ export class ChartCardComponent implements AfterViewInit {
     // Use ResizeObserver for container-level changes
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(entries => {
-        // 1. Immediate Visual Update (Cheap Resize)
-        // Scale the existing canvas to fit the new container size immediately.
-        // This prevents white flashes and makes resizing feel instant/smooth.
-        if (this.chartInstance && this.lastWidth > 0 && this.lastHeight > 0) {
-          const entry = entries[0];
-          // Use contentRect or client dimensions
-          const newWidth = entry.contentRect.width;
-          const newHeight = entry.contentRect.height;
+        if (!entries || entries.length === 0) return;
+        const entry = entries[0];
+        const newWidth = Math.round(entry.contentRect.width);
+        const newHeight = Math.round(entry.contentRect.height);
 
-          if (newWidth > 0 && newHeight > 0) {
-            const scaleX = newWidth / this.lastWidth;
-            const scaleY = newHeight / this.lastHeight;
-
-            const dom = this.chartInstance.getDom();
-            const wrapper = dom?.firstElementChild as HTMLElement; // The inner wrapper div created by ECharts
-            if (wrapper) {
-              wrapper.style.transformOrigin = '0 0';
-              wrapper.style.transition = 'none'; // Ensure no CSS transition delays this
-              wrapper.style.transform = `scale(${scaleX}, ${scaleY})`;
-            }
-          }
+        // Only trigger resize if rounded client dimensions actually changed
+        if (newWidth !== this.lastWidth || newHeight !== this.lastHeight) {
+          this.triggerResize();
         }
-
-        // 2. Debounce Actual Redraw
-        this.triggerResize();
       });
       this.resizeObserver.observe(el);
     }
@@ -1414,14 +1501,6 @@ export class ChartCardComponent implements AfterViewInit {
 
     const el = this.chartContainerRef()?.nativeElement;
     if (!el) return;
-
-    // Reset visual scaling before actual redraw
-    const dom = this.chartInstance.getDom();
-    const wrapper = dom?.firstElementChild as HTMLElement;
-    if (wrapper) {
-      wrapper.style.transform = '';
-      wrapper.style.transformOrigin = '';
-    }
 
     const currentWidth = el.clientWidth;
     const currentHeight = el.clientHeight;
