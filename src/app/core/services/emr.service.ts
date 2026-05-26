@@ -19,7 +19,7 @@ export class EmrService {
     const body = {
       TuNgay: fromDate,
       DenNgay: toDate,
-      MaYTe: patientId,
+      TextSearch: patientId,
     };
     return this.http.post<any[]>(environment.emrExportUrl, body);
   }

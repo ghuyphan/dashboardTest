@@ -31,11 +31,9 @@ export class TooltipDirective implements OnDestroy {
   @HostListener('mouseenter')
   onMouseEnter(): void {
     // Check signal value and disabled state
-    if (
-      !this.tooltipText()?.trim() ||
-      this.tooltipDisabled() ||
-      this.tooltipElement
-    ) {
+    const val = this.tooltipText();
+    const textStr = typeof val === 'string' ? val : String(val ?? '');
+    if (!textStr.trim() || this.tooltipDisabled() || this.tooltipElement) {
       return;
     }
 
@@ -73,7 +71,10 @@ export class TooltipDirective implements OnDestroy {
 
     this.tooltipElement = this.renderer.createElement('div');
     // Use signal value
-    const text = this.tooltipText() || '';
+    const val = this.tooltipText();
+    let text = typeof val === 'string' ? val : String(val ?? '');
+    // Replace literal '\n' text with actual line-breaks
+    text = text.replace(/\\n/g, '\n');
     const shortcutRegex = /(.*?)\s*\(([^)]+)\)$/;
     const match = text.match(shortcutRegex);
 

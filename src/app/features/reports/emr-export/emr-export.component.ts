@@ -198,8 +198,8 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         permission: 'KHTH_EMRXuatFile.RPRINT',
       },
       {
-        label: 'Kết xuất file EMR',
-        icon: exporting ? 'fas fa-spinner fa-spin' : 'fas fa-file-medical',
+        label: 'Tải xuống file EMR',
+        icon: exporting ? 'fas fa-spinner fa-spin' : 'fas fa-download',
         action: () => this.onExportEMR(),
         className: 'btn-primary',
         disabled:
@@ -232,7 +232,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   public onSearch(): void {
     const pid = this.searchPatientId().trim();
     if (!pid) {
-      this.toastService.showWarning('Vui lòng nhập mã y tế để tìm kiếm.');
+      this.toastService.showWarning('Vui lòng nhập thông tin tìm kiếm.');
       return;
     }
 
@@ -439,7 +439,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     const admission = this.selectedAdmission();
     if (!admission) {
       this.toastService.showWarning(
-        'Vui lòng chọn một lượt tiếp nhận để kết xuất.'
+        'Vui lòng chọn một lượt tiếp nhận để tải xuống.'
       );
       return;
     }
@@ -447,7 +447,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     const files = this.selectedFiles();
     if (files.length === 0) {
       this.toastService.showWarning(
-        'Vui lòng chọn ít nhất một file để kết xuất.'
+        'Vui lòng chọn ít nhất một file để tải xuống.'
       );
       return;
     }
@@ -456,7 +456,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     this.cd.markForCheck();
 
     try {
-      this.toastService.showInfo(`Đang kết xuất ${files.length} file...`);
+      this.toastService.showInfo(`Đang tải xuống ${files.length} file...`);
       for (const file of files) {
         const downloadUrl =
           file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`;
@@ -464,12 +464,10 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         // Add a small delay between downloads to let the browser process multiple native download prompts
         await new Promise(resolve => setTimeout(resolve, 800));
       }
-      this.toastService.showSuccess('Kết xuất các file EMR thành công.');
+      this.toastService.showSuccess('Tải xuống các file EMR thành công.');
     } catch (err) {
       console.error('Failed to export EMR files:', err);
-      this.toastService.showError(
-        'Có lỗi xảy ra khi tải và kết xuất file EMR.'
-      );
+      this.toastService.showError('Có lỗi xảy ra khi tải xuống file EMR.');
     } finally {
       this.isExporting.set(false);
       this.cd.markForCheck();

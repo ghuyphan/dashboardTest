@@ -19,16 +19,14 @@ export const permissionGuard: CanActivateFn = (
   const requiredPermission = route.data['permission'] as string;
 
   if (!requiredPermission) {
-    router.navigate(['/app/home']);
-    return false;
+    return router.createUrlTree(['/app/home']);
   }
 
   // Read the signal value synchronously
   const user = authService.currentUser();
 
   if (!user || !user.permissions || user.permissions.length === 0) {
-    router.navigate(['/login']);
-    return false;
+    return router.createUrlTree(['/login']);
   }
 
   const hasPermission = user.permissions.some(userPerm =>
@@ -39,7 +37,6 @@ export const permissionGuard: CanActivateFn = (
     return true;
   } else {
     toastService.showWarning('Bạn không có quyền truy cập trang này');
-    router.navigate(['/app/home']);
-    return false;
+    return router.createUrlTree(['/app/home']);
   }
 };

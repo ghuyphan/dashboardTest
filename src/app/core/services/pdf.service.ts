@@ -5,6 +5,7 @@ import { Template, BLANK_PDF } from '@pdfme/common';
 import { firstValueFrom, Observable } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { PDFDocument } from 'pdf-lib';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -53,6 +54,38 @@ export class PdfService {
     }
   }
 
+  private getHost(url: string): string {
+    try {
+      return new URL(url).host;
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Helper to detect external URLs and proxy them via the backend FileProxy server to bypass CORS.
+   */
+  private getProxyUrl(url: string): string {
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      const targetHost = this.getHost(url);
+      const apiHost = this.getHost(environment.apiUrl);
+      const currentHost =
+        typeof window !== 'undefined' ? window.location.host : '';
+
+      // If the URL is for the internal Files server (contains '/Files/'), or matches
+      // the API/current host, fetch it directly (CORS-supported or same-origin).
+      const isInternal =
+        (apiHost && targetHost === apiHost) ||
+        (currentHost && targetHost === currentHost) ||
+        url.includes('/Files/');
+
+      if (!isInternal) {
+        return `${environment.fileProxyUrl}?url=${encodeURIComponent(url)}`;
+      }
+    }
+    return url;
+  }
+
   /**
    * Fetches a PDF from the given API endpoint and opens the browser print dialog.
    * Supports GET and POST requests, request headers, query parameters, and request body.
@@ -69,6 +102,7 @@ export class PdfService {
       params?: Record<string, string>;
     } = {}
   ): Promise<void> {
+    const finalUrl = this.getProxyUrl(url);
     const method = options.method || 'GET';
     const requestHeaders = new HttpHeaders(options.headers || {});
     let requestParams = new HttpParams();
@@ -82,13 +116,13 @@ export class PdfService {
     try {
       let request$: Observable<Blob>;
       if (method === 'POST') {
-        request$ = this.http.post(url, options.body, {
+        request$ = this.http.post(finalUrl, options.body, {
           headers: requestHeaders,
           params: requestParams,
           responseType: 'blob',
         });
       } else {
-        request$ = this.http.get(url, {
+        request$ = this.http.get(finalUrl, {
           headers: requestHeaders,
           params: requestParams,
           responseType: 'blob',
@@ -201,8 +235,9 @@ export class PdfService {
    */
   async downloadPdf(url: string, filename: string): Promise<void> {
     try {
+      const finalUrl = this.getProxyUrl(url);
       const blob = await firstValueFrom(
-        this.http.get(url, { responseType: 'blob' })
+        this.http.get(finalUrl, { responseType: 'blob' })
       );
       saveAs(blob, filename);
     } catch (err) {
@@ -244,9 +279,10 @@ export class PdfService {
       const mergedPdf = await PDFDocument.create();
 
       for (const url of urls) {
+        const finalUrl = this.getProxyUrl(url);
         // Fetch the PDF as a Blob
         const blob = await firstValueFrom(
-          this.http.get(url, { responseType: 'blob' })
+          this.http.get(finalUrl, { responseType: 'blob' })
         );
 
         // Convert Blob to ArrayBuffer

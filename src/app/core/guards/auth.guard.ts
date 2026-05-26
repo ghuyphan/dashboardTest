@@ -10,10 +10,9 @@ export const authGuard: CanActivateFn = (route, state) => {
   if (authService.isLoggedIn()) {
     return true;
   } else {
-    // Best Practice: Pass the returnUrl so we can redirect back after login
-    router.navigate(['/login'], {
+    // Best Practice: Return a UrlTree to redirect internally and avoid aborted transition warnings
+    return router.createUrlTree(['/login'], {
       queryParams: { returnUrl: state.url },
     });
-    return false;
   }
 };

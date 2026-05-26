@@ -697,6 +697,10 @@ select:-webkit-autofill {
   border-color: var(--gray-600);
   display: flex;
   align-items: center;
+  pointer-events: none;
+  max-width: 320px;
+  white-space: pre-wrap;
+  word-break: break-word;
 
   [data-theme='dark'] & {
     background: var(--gray-100);

@@ -266,6 +266,12 @@ table.mat-table {
 
   /* Custom Checkbox Styling to match Reusable Table theme */
   .mat-mdc-checkbox {
+    // Disable hover/focus/active state layer circles completely
+    --mdc-checkbox-selected-focus-state-layer-color: transparent !important;
+    --mdc-checkbox-selected-hover-state-layer-color: transparent !important;
+    --mdc-checkbox-unselected-hover-state-layer-color: transparent !important;
+    --mdc-checkbox-unselected-focus-state-layer-color: transparent !important;
+
     // Ripple layer size (Compact 28px instead of standard bulky 40px/48px)
     --mat-checkbox-state-layer-size: 28px !important;
 
@@ -274,6 +280,11 @@ table.mat-table {
     justify-content: center;
     vertical-align: middle;
     width: 100% !important;
+
+    .mat-mdc-checkbox-ripple,
+    .mdc-checkbox__ripple {
+      display: none !important;
+    }
   }
 
   .mdc-checkbox {

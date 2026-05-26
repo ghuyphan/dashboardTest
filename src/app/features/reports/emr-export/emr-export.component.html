@@ -10,13 +10,13 @@
       (filterSubmit)="onFilterSubmit($event)">
       <!-- Custom Patient ID filter projected adjacent to Datepickers -->
       <div custom-filters class="filter-group">
-        <label for="searchPatientId">Mã y tế</label>
+        <label for="searchPatientId">Tìm kiếm</label>
         <div class="input-wrapper">
           <input
             id="searchPatientId"
             type="text"
             class="form-control-date"
-            placeholder="Nhập mã y tế..."
+            placeholder="Nhập mã y tế, số tiếp nhận, số bệnh án"
             [(ngModel)]="searchPatientId"
             (keyup.enter)="onSearch()"
             [disabled]="isLoading()" />
