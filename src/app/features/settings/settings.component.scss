@@ -769,12 +769,19 @@
   background: linear-gradient(90deg, #ffffff 50%, #1e293b 50%);
 }
 
-/* --- Version Display --- */
-.version-info {
+/* --- Version & Team Credits Footer --- */
+.settings-footer {
   margin-top: auto;
   /* Push to bottom of card */
   padding-top: var(--spacing-lg);
   border-top: 1px dashed var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.version-info {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -798,6 +805,14 @@
     -webkit-text-fill-color: transparent;
     font-weight: 700;
   }
+}
+
+.team-credit {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 /* --- Shortcuts Manual Grid --- */

@@ -181,15 +181,20 @@
           </div>
         </div>
 
-        <div
-          class="version-info"
-          (click)="onVersionClick()"
-          [class.dev-active]="versionService.isDevMode()"
-          [appTooltip]="'Nhấn 5 lần để bật chế độ nhà phát triển'">
-          <span>Version: {{ versionService.appVersion() }}</span>
-          @if (versionService.isDevMode()) {
-            <i class="fas fa-code"></i>
-          }
+        <div class="settings-footer">
+          <div
+            class="version-info"
+            (click)="onVersionClick()"
+            [class.dev-active]="versionService.isDevMode()"
+            [appTooltip]="'Nhấn 5 lần để bật chế độ nhà phát triển'">
+            <span>Version: {{ versionService.appVersion() }}</span>
+            @if (versionService.isDevMode()) {
+              <i class="fas fa-code"></i>
+            }
+          </div>
+          <div class="team-credit">
+            <span>Designed & Developed by HMSG IT Team</span>
+          </div>
         </div>
       </div>
     </div>

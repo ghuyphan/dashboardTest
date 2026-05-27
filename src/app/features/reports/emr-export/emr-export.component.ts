@@ -8,6 +8,7 @@ import {
   effect,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -32,6 +33,7 @@ import { FooterActionService } from '@core/services/footer-action.service';
 import { DateUtils } from '@shared/utils/date.utils';
 import { EmrService } from '@core/services/emr.service';
 import { environment } from '../../../../environments/environment';
+import { Subscription } from 'rxjs';
 
 export interface EmrAdmission {
   STT: number;
@@ -74,6 +76,8 @@ export interface EmrSignedFile {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmrExportComponent implements OnInit, OnDestroy {
+  @ViewChild(DateFilterComponent) dateFilterComponent!: DateFilterComponent;
+
   private readonly router = inject(Router);
   private readonly pdfService = inject(PdfService);
   private readonly toastService = inject(ToastService);
@@ -82,10 +86,14 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   private readonly footerService = inject(FooterActionService);
   private isInitialLoad = true;
 
+  private admissionsSubscription?: Subscription;
+  private filesSubscription?: Subscription;
+  private isDestroyed = false;
+
   // Filter States
-  public fromDate = signal<string>('');
-  public toDate = signal<string>('');
-  public searchPatientId = signal<string>(''); // Clear mock patient ID filter by default
+  public fromDate = '';
+  public toDate = '';
+  public searchPatientId = ''; // Clear mock patient ID filter by default
 
   // Table columns definition
   public readonly admissionColumns: GridColumn[] = [
@@ -177,7 +185,14 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
     this.footerService.clearActions();
+    if (this.admissionsSubscription) {
+      this.admissionsSubscription.unsubscribe();
+    }
+    if (this.filesSubscription) {
+      this.filesSubscription.unsubscribe();
+    }
   }
 
   private updateFooterActions(): void {
@@ -215,13 +230,13 @@ export class EmrExportComponent implements OnInit, OnDestroy {
 
   // Called when filter is submitted (including initial autoLoad)
   public onFilterSubmit(range: DateRange): void {
-    this.fromDate.set(range.fromDate);
-    this.toDate.set(range.toDate);
+    this.fromDate = range.fromDate;
+    this.toDate = range.toDate;
 
     if (this.isInitialLoad) {
       this.isInitialLoad = false;
       // On initial auto-load, if patient ID is empty, skip search without displaying warning toast
-      if (!this.searchPatientId().trim()) {
+      if (!this.searchPatientId.trim()) {
         return;
       }
     }
@@ -230,94 +245,116 @@ export class EmrExportComponent implements OnInit, OnDestroy {
 
   // Trigger query/search for admissions
   public onSearch(): void {
-    const pid = this.searchPatientId().trim();
+    const pid = this.searchPatientId.trim();
     if (!pid) {
       this.toastService.showWarning('Vui lòng nhập thông tin tìm kiếm.');
       return;
     }
 
+    if (this.dateFilterComponent) {
+      this.fromDate = this.dateFilterComponent.fromDate();
+      this.toDate = this.dateFilterComponent.toDate();
+    }
+
+    if (this.admissionsSubscription) {
+      this.admissionsSubscription.unsubscribe();
+    }
+    if (this.filesSubscription) {
+      this.filesSubscription.unsubscribe();
+    }
+
     this.isLoading.set(true);
+    this.isFilesLoading.set(false);
     this.selectedAdmission.set(null);
+    this.admissions.set([]);
     this.signedFiles.set([]);
     this.selectedFiles.set([]);
     this.cd.markForCheck();
 
-    const start = this.fromDate();
-    const end = this.toDate();
+    const start = this.fromDate;
+    const end = this.toDate;
 
-    this.emrService.getEmrAdmissions(start, end, pid).subscribe({
-      next: res => {
-        const mapped = (res || []).map((item: any, index: number) => {
-          return {
-            STT: index + 1,
-            mayte: item.MaYTe || item.mayte || item.MAYTE || item.maYTe || pid,
-            tenBenhNhan:
-              item.TenBenhNhan ||
-              item.tenBenhNhan ||
-              item.TEN_BENH_NHAN ||
-              item.TENBENHNHAN ||
-              '',
-            soTiepNhan:
-              item.SoTiepNhan ||
-              item.soTiepNhan ||
-              item.SO_TIEP_NHAN ||
-              item.SOTIEPNHAN ||
-              '',
-            soBenhAn:
-              item.SoBenhAn ||
-              item.soBenhAn ||
-              item.SO_BENH_AN ||
-              item.SOBENHAN ||
-              '',
-            ngayTiepNhan: DateUtils.formatToDisplay(
-              item.NgayTiepNhan ||
-                item.ngayTiepNhan ||
-                item.NGAY_TIEP_NHAN ||
-                item.NGAYTIEPNHAN
-            ),
-            thoiGianTiepNhan:
-              item.ThoiGianTiepNhan ||
-              item.thoiGianTiepNhan ||
-              item.THOI_GIAN_TIEP_NHAN ||
-              item.THOIGIANTIEPNHAN ||
-              '',
-            tiepNhan_Id:
-              item.TiepNhan_Id ||
-              item.tiepNhan_Id ||
-              item.TIEPNHAN_ID ||
-              item.SOTIEPNHAN ||
-              item.soTiepNhan ||
-              item.SoTiepNhan ||
-              '',
-          };
-        });
+    this.admissionsSubscription = this.emrService
+      .getEmrAdmissions(start, end, pid)
+      .subscribe({
+        next: res => {
+          const mapped = (res || []).map((item: any, index: number) => {
+            return {
+              STT: index + 1,
+              mayte:
+                item.MaYTe || item.mayte || item.MAYTE || item.maYTe || pid,
+              tenBenhNhan:
+                item.TenBenhNhan ||
+                item.tenBenhNhan ||
+                item.TEN_BENH_NHAN ||
+                item.TENBENHNHAN ||
+                '',
+              soTiepNhan:
+                item.SoTiepNhan ||
+                item.soTiepNhan ||
+                item.SO_TIEP_NHAN ||
+                item.SOTIEPNHAN ||
+                '',
+              soBenhAn:
+                item.SoBenhAn ||
+                item.soBenhAn ||
+                item.SO_BENH_AN ||
+                item.SOBENHAN ||
+                '',
+              ngayTiepNhan: DateUtils.formatToDisplay(
+                item.NgayTiepNhan ||
+                  item.ngayTiepNhan ||
+                  item.NGAY_TIEP_NHAN ||
+                  item.NGAYTIEPNHAN
+              ),
+              thoiGianTiepNhan:
+                item.ThoiGianTiepNhan ||
+                item.thoiGianTiepNhan ||
+                item.THOI_GIAN_TIEP_NHAN ||
+                item.THOIGIANTIEPNHAN ||
+                '',
+              tiepNhan_Id:
+                item.TiepNhan_Id ||
+                item.tiepNhan_Id ||
+                item.TIEPNHAN_ID ||
+                item.SOTIEPNHAN ||
+                item.soTiepNhan ||
+                item.SoTiepNhan ||
+                '',
+            };
+          });
 
-        this.admissions.set(mapped);
-        this.isLoading.set(false);
+          this.admissions.set(mapped);
+          this.isLoading.set(false);
 
-        // Auto-select first admission if available to enhance double-grid experience
-        if (mapped.length > 0) {
-          this.onAdmissionSelected(mapped[0]);
-        }
+          // Auto-select first admission if available to enhance double-grid experience
+          if (mapped.length > 0) {
+            this.onAdmissionSelected(mapped[0]);
+          }
 
-        this.cd.markForCheck();
-      },
-      error: err => {
-        console.error('Failed to load EMR admissions:', err);
-        this.toastService.showError('Không thể tải danh sách tiếp nhận.');
-        this.admissions.set([]);
-        this.isLoading.set(false);
-        this.cd.markForCheck();
-      },
-    });
+          this.cd.markForCheck();
+        },
+        error: err => {
+          console.error('Failed to load EMR admissions:', err);
+          this.toastService.showError('Không thể tải danh sách tiếp nhận.');
+          this.admissions.set([]);
+          this.isLoading.set(false);
+          this.cd.markForCheck();
+        },
+      });
   }
 
   // Handle Admission Click (Master selection)
   public onAdmissionSelected(admission: EmrAdmission | undefined): void {
+    if (this.filesSubscription) {
+      this.filesSubscription.unsubscribe();
+    }
+
     if (!admission) {
       this.selectedAdmission.set(null);
       this.signedFiles.set([]);
       this.selectedFiles.set([]);
+      this.isFilesLoading.set(false);
       this.cd.markForCheck();
       return;
     }
@@ -329,72 +366,74 @@ export class EmrExportComponent implements OnInit, OnDestroy {
 
     const tiepNhanId = (admission as any).tiepNhan_Id || admission.soTiepNhan;
 
-    this.emrService.getEmrSignedFiles(tiepNhanId).subscribe({
-      next: res => {
-        const files = (res || []).map((item: any, index: number) => {
-          return {
-            STT: index + 1,
-            mayte:
-              item.MaYTe ||
-              item.mayte ||
-              item.MAYTE ||
-              item.maYTe ||
-              admission.mayte ||
-              '',
-            tenBenhNhan:
-              item.TenBenhNhan ||
-              item.tenBenhNhan ||
-              item.TEN_BENH_NHAN ||
-              item.TENBENHNHAN ||
-              admission.tenBenhNhan ||
-              '',
-            soTiepNhan:
-              item.SoTiepNhan ||
-              item.soTiepNhan ||
-              item.SO_TIEP_NHAN ||
-              item.SOTIEPNHAN ||
-              admission.soTiepNhan ||
-              '',
-            soBenhAn:
-              item.SoBenhAn ||
-              item.soBenhAn ||
-              item.SO_BENH_AN ||
-              item.SOBENHAN ||
-              admission.soBenhAn ||
-              '',
-            nhomDichVu:
-              item.NhomDichVu || item.nhomDichVu || item.NHOM_DICH_VU || '',
-            tenDichVu:
-              item.TenDichVu || item.tenDichVu || item.TEN_DICH_VU || '',
-            thoiGianThucHien: DateUtils.formatDateTimeToDisplay(
-              item.ThoiGianThucHien ||
-                item.thoiGianThucHien ||
-                item.THOI_GIAN_THUC_HIEN ||
-                item.THOI_GIAN_TH
-            ),
-            fileName: item.FileName || item.fileName || item.FILE_NAME || '',
-            fileId:
-              item.FileId ||
-              item.fileId ||
-              item.FILE_ID ||
-              (item.URL_FILE
-                ? item.URL_FILE.substring(item.URL_FILE.lastIndexOf('/') + 1)
-                : ''),
-            urlFile: item.URL_FILE || item.urlFile || '',
-          };
-        });
-        this.signedFiles.set(files);
-        this.isFilesLoading.set(false);
-        this.cd.markForCheck();
-      },
-      error: err => {
-        console.error('Failed to load EMR signed files:', err);
-        this.toastService.showError('Không thể tải danh sách file đã ký.');
-        this.signedFiles.set([]);
-        this.isFilesLoading.set(false);
-        this.cd.markForCheck();
-      },
-    });
+    this.filesSubscription = this.emrService
+      .getEmrSignedFiles(tiepNhanId)
+      .subscribe({
+        next: res => {
+          const files = (res || []).map((item: any, index: number) => {
+            return {
+              STT: index + 1,
+              mayte:
+                item.MaYTe ||
+                item.mayte ||
+                item.MAYTE ||
+                item.maYTe ||
+                admission.mayte ||
+                '',
+              tenBenhNhan:
+                item.TenBenhNhan ||
+                item.tenBenhNhan ||
+                item.TEN_BENH_NHAN ||
+                item.TENBENHNHAN ||
+                admission.tenBenhNhan ||
+                '',
+              soTiepNhan:
+                item.SoTiepNhan ||
+                item.soTiepNhan ||
+                item.SO_TIEP_NHAN ||
+                item.SOTIEPNHAN ||
+                admission.soTiepNhan ||
+                '',
+              soBenhAn:
+                item.SoBenhAn ||
+                item.soBenhAn ||
+                item.SO_BENH_AN ||
+                item.SOBENHAN ||
+                admission.soBenhAn ||
+                '',
+              nhomDichVu:
+                item.NhomDichVu || item.nhomDichVu || item.NHOM_DICH_VU || '',
+              tenDichVu:
+                item.TenDichVu || item.tenDichVu || item.TEN_DICH_VU || '',
+              thoiGianThucHien: DateUtils.formatDateTimeToDisplay(
+                item.ThoiGianThucHien ||
+                  item.thoiGianThucHien ||
+                  item.THOI_GIAN_THUC_HIEN ||
+                  item.THOI_GIAN_TH
+              ),
+              fileName: item.FileName || item.fileName || item.FILE_NAME || '',
+              fileId:
+                item.FileId ||
+                item.fileId ||
+                item.FILE_ID ||
+                (item.URL_FILE
+                  ? item.URL_FILE.substring(item.URL_FILE.lastIndexOf('/') + 1)
+                  : ''),
+              urlFile: item.URL_FILE || item.urlFile || '',
+            };
+          });
+          this.signedFiles.set(files);
+          this.isFilesLoading.set(false);
+          this.cd.markForCheck();
+        },
+        error: err => {
+          console.error('Failed to load EMR signed files:', err);
+          this.toastService.showError('Không thể tải danh sách file đã ký.');
+          this.signedFiles.set([]);
+          this.isFilesLoading.set(false);
+          this.cd.markForCheck();
+        },
+      });
   }
 
   // Handle Files multiple selection change
@@ -422,15 +461,21 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         file => file.urlFile || `${environment.fileDownloadUrl}/${file.fileId}`
       );
       await this.pdfService.printMultiplePdfs(urls);
-      this.toastService.showSuccess('Đã mở hộp thoại in tài liệu.');
+      if (!this.isDestroyed) {
+        this.toastService.showSuccess('Đã mở hộp thoại in tài liệu.');
+      }
     } catch (err) {
       console.error('Failed to print EMR files:', err);
-      this.toastService.showError(
-        'Có lỗi xảy ra khi tải, ghép hoặc in file EMR.'
-      );
+      if (!this.isDestroyed) {
+        this.toastService.showError(
+          'Có lỗi xảy ra khi tải, ghép hoặc in file EMR.'
+        );
+      }
     } finally {
-      this.isPrinting.set(false);
-      this.cd.markForCheck();
+      if (!this.isDestroyed) {
+        this.isPrinting.set(false);
+        this.cd.markForCheck();
+      }
     }
   }
 
@@ -464,13 +509,19 @@ export class EmrExportComponent implements OnInit, OnDestroy {
         // Add a small delay between downloads to let the browser process multiple native download prompts
         await new Promise(resolve => setTimeout(resolve, 800));
       }
-      this.toastService.showSuccess('Tải xuống các file EMR thành công.');
+      if (!this.isDestroyed) {
+        this.toastService.showSuccess('Tải xuống các file EMR thành công.');
+      }
     } catch (err) {
       console.error('Failed to export EMR files:', err);
-      this.toastService.showError('Có lỗi xảy ra khi tải xuống file EMR.');
+      if (!this.isDestroyed) {
+        this.toastService.showError('Có lỗi xảy ra khi tải xuống file EMR.');
+      }
     } finally {
-      this.isExporting.set(false);
-      this.cd.markForCheck();
+      if (!this.isDestroyed) {
+        this.isExporting.set(false);
+        this.cd.markForCheck();
+      }
     }
   }
 
@@ -483,25 +534,35 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     if (event.action === 'print') {
       this.pdfService
         .printPdfFromApi(downloadUrl)
-        .then(() =>
-          this.toastService.showSuccess(
-            `Đã mở hộp thoại in cho file: ${file.fileName}`
-          )
-        )
+        .then(() => {
+          if (!this.isDestroyed) {
+            this.toastService.showSuccess(
+              `Đã mở hộp thoại in cho file: ${file.fileName}`
+            );
+          }
+        })
         .catch(err => {
           console.error(err);
-          this.toastService.showError('Không thể in file.');
+          if (!this.isDestroyed) {
+            this.toastService.showError('Không thể in file.');
+          }
         });
     } else if (event.action === 'download') {
       this.toastService.showInfo('Đang tải file...');
       this.pdfService
         .downloadPdf(downloadUrl, file.fileName)
-        .then(() =>
-          this.toastService.showSuccess(`Đang tải xuống file: ${file.fileName}`)
-        )
+        .then(() => {
+          if (!this.isDestroyed) {
+            this.toastService.showSuccess(
+              `Đang tải xuống file: ${file.fileName}`
+            );
+          }
+        })
         .catch(err => {
           console.error(err);
-          this.toastService.showError('Không thể tải xuống file.');
+          if (!this.isDestroyed) {
+            this.toastService.showError('Không thể tải xuống file.');
+          }
         });
     }
   }
