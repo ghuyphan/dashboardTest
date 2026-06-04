@@ -68,7 +68,8 @@
             [enableMultiSelect]="true"
             [showPaginator]="false"
             [clientSideSort]="true"
-            [rowActions]="fileRowActions"
+            [rowActions]="fileRowActions()"
+            [showActionColumn]="fileRowActions().length > 0"
             [trackByField]="'STT'"
             [emptyStateText]="
               selectedAdmission()

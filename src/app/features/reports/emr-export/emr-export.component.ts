@@ -30,6 +30,7 @@ import {
 import { PdfService } from '@core/services/pdf.service';
 import { ToastService } from '@core/services/toast.service';
 import { FooterActionService } from '@core/services/footer-action.service';
+import { AuthService } from '@core/services/auth.service';
 import { DateUtils } from '@shared/utils/date.utils';
 import { EmrService } from '@core/services/emr.service';
 import { environment } from '../../../../environments/environment';
@@ -84,6 +85,7 @@ export class EmrExportComponent implements OnInit, OnDestroy {
   private readonly cd = inject(ChangeDetectorRef);
   private readonly emrService = inject(EmrService);
   private readonly footerService = inject(FooterActionService);
+  private readonly authService = inject(AuthService);
   private isInitialLoad = true;
 
   private admissionsSubscription?: Subscription;
@@ -147,21 +149,29 @@ export class EmrExportComponent implements OnInit, OnDestroy {
     },
   ];
 
-  // Actions for files
-  public readonly fileRowActions: TableAction<EmrSignedFile>[] = [
-    {
-      action: 'print',
-      label: 'In file này',
-      icon: 'print',
-      color: 'primary',
-    },
-    {
-      action: 'download',
-      label: 'Tải xuống',
-      icon: 'download',
-      color: 'accent',
-    },
-  ];
+  // Actions for files based on user permissions
+  public readonly fileRowActions = computed<TableAction<EmrSignedFile>[]>(
+    () => {
+      const actions: TableAction<EmrSignedFile>[] = [];
+      if (this.authService.hasPermission('KHTH_EMRXuatFile.RPRINT')) {
+        actions.push({
+          action: 'print',
+          label: 'In file này',
+          icon: 'print',
+          color: 'primary',
+        });
+      }
+      if (this.authService.hasPermission('KHTH_EMRXuatFile.REXPORT')) {
+        actions.push({
+          action: 'download',
+          label: 'Tải xuống',
+          icon: 'download',
+          color: 'accent',
+        });
+      }
+      return actions;
+    }
+  );
 
   // UI State Signals
   public admissions = signal<EmrAdmission[]>([]);
