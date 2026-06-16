@@ -14,6 +14,7 @@ export interface QueueItem {
   QMS_PHONG_KHAM: any;
   COMPUTER_NAME: any;
   QUEUE_NAME: string;
+  TEN_DICH_VU: string;
   SCREEN_ID: number;
   SEQUENCE: number;
   STATE: number;
@@ -64,7 +65,7 @@ export class QmsService {
       TuNgay: fromDate,
       DenNgay: toDate,
       Queue: queueId,
-      TextSearch: textSearch || '', // Fixed: API expects 'TextSearch' not 'dieuKien'
+      TextSearch: textSearch || '',
       PageNumber: pageNumber,
       PageSize: pageSize,
     };

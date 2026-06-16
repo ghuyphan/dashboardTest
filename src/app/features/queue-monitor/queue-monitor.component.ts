@@ -70,6 +70,13 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
   public lastFilter = signal<DateRange | null>(null);
   public searchTerm = signal<string>('');
 
+  // Count Signals from API Response
+  public dangChoCount = signal<number>(0);
+  public dangThucHienCount = signal<number>(0);
+  public goiLaiCount = signal<number>(0);
+  public goiNhoCount = signal<number>(0);
+  public daThucHienCount = signal<number>(0);
+
   // Auto-refresh
   public currentDateTime = signal<string>('');
   public autoRefreshEnabled = signal(true);
@@ -79,34 +86,16 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
   // Widget data computed from stats - colors match status chips
   // SQL: STATE=1 (Đang chờ), STATE=2 (Gọi lại), STATE=3 (Gọi nhỡ), STATE=-1 (Đã khám xong), STATE=0 (Đang khám)
   public widgetData = computed<WidgetData[]>(() => {
-    const items = this.queueItems();
     const palette = this.themeService.currentPalette();
-
-    // Count by STATE_NAME from API
-    const waiting = items.filter(i =>
-      (i.STATE_NAME || '').toLowerCase().includes('đang chờ')
-    ).length;
-    const examining = items.filter(i =>
-      (i.STATE_NAME || '').toLowerCase().includes('đang khám')
-    ).length;
-    const callback = items.filter(i =>
-      (i.STATE_NAME || '').toLowerCase().includes('gọi lại')
-    ).length;
-    const missed = items.filter(i =>
-      (i.STATE_NAME || '').toLowerCase().includes('gọi nhỡ')
-    ).length;
-    const finished = items.filter(i =>
-      (i.STATE_NAME || '').toLowerCase().includes('đã khám xong')
-    ).length;
     const total = this.totalCount();
 
     // Colors matching status-chip CSS classes
     const STATUS_COLORS = {
       waiting: '#006e96', // status-in-use (Đang chờ) - Blue
-      examining: '#0891b2', // status-info (Đang khám) - Cyan
+      examining: '#0891b2', // status-info (Đang thực hiện) - Cyan
       callback: '#d97706', // status-warning (Gọi lại) - Amber
       missed: '#dc3545', // status-error (Gọi nhỡ) - Red
-      finished: '#16a34a', // status-success (Đã khám xong) - Green
+      finished: '#16a34a', // status-success (Đã thực hiện) - Green
     };
 
     return [
@@ -122,15 +111,15 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         id: 'waiting',
         icon: 'fas fa-clock',
         title: 'Đang chờ',
-        value: String(waiting),
+        value: String(this.dangChoCount()),
         caption: 'Waiting',
         accentColor: STATUS_COLORS.waiting,
       },
       {
         id: 'examining',
         icon: 'fas fa-stethoscope',
-        title: 'Đang khám',
-        value: String(examining),
+        title: 'Đang thực hiện',
+        value: String(this.dangThucHienCount()),
         caption: 'Examining',
         accentColor: STATUS_COLORS.examining,
       },
@@ -138,7 +127,7 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         id: 'callback',
         icon: 'fas fa-phone',
         title: 'Gọi lại',
-        value: String(callback),
+        value: String(this.goiLaiCount()),
         caption: 'Callback',
         accentColor: STATUS_COLORS.callback,
       },
@@ -146,15 +135,15 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         id: 'missed',
         icon: 'fas fa-phone-slash',
         title: 'Gọi nhỡ',
-        value: String(missed),
+        value: String(this.goiNhoCount()),
         caption: 'Missed',
         accentColor: STATUS_COLORS.missed,
       },
       {
         id: 'finished',
         icon: 'fas fa-check-circle',
-        title: 'Đã khám xong',
-        value: String(finished),
+        title: 'Đã thực hiện',
+        value: String(this.daThucHienCount()),
         caption: 'Finished',
         accentColor: STATUS_COLORS.finished,
       },
@@ -163,10 +152,16 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
 
   // Use STATE_NAME directly from API for status display
   public tableData = computed(() => {
-    return this.queueItems().map(item => ({
-      ...item,
-      STATUS_DISPLAY: item.STATE_NAME || 'Không xác định',
-    }));
+    return this.queueItems().map(item => {
+      let statusDisplay = item.STATE_NAME || 'Không xác định';
+      if (statusDisplay.toLowerCase() === 'bỏ qua') {
+        statusDisplay = 'Gọi lại';
+      }
+      return {
+        ...item,
+        STATUS_DISPLAY: statusDisplay,
+      };
+    });
   });
 
   // Column order: STT, Status, Patient Info, Room Info, Times
@@ -201,7 +196,7 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
       sortable: true,
       type: 'status',
       statusClassFn: (value: string) => this.getDoiTuongClass(value),
-      width: '50px',
+      width: '100px',
     },
     // Room info
     {
@@ -210,12 +205,31 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
       sortable: true,
       width: '150px',
     },
+    {
+      key: 'QMS_PHONG_KHAM',
+      label: 'Phòng khám QMS',
+      sortable: true,
+      width: '120px',
+    },
+    {
+      key: 'QUEUE_NAME',
+      label: 'Tên hàng đợi',
+      sortable: true,
+      width: '200px',
+    },
+    {
+      key: 'TEN_DICH_VU',
+      label: 'Tên dịch vụ',
+      sortable: true,
+      width: '180px',
+    },
     // Time columns
     {
       key: 'NGAYTAO',
       label: 'Ngày tạo',
       sortable: true,
       type: 'date',
+      dateFormat: 'dd/MM/yyyy HH:mm',
       width: '160px',
     },
     {
@@ -223,6 +237,7 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
       label: 'Thời gian dự kiến',
       sortable: true,
       type: 'date',
+      dateFormat: 'dd/MM/yyyy HH:mm',
       width: '160px',
     },
   ];
@@ -234,10 +249,18 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
     // SQL STATE_NAME mapping:
     // STATE=1 (Đang chờ), STATE=2 (Gọi lại), STATE=3 (Gọi nhỡ), STATE=-1 (Đã khám xong), STATE=0 (Đang khám)
     if (normalized.includes('đang chờ')) return 'status-in-use'; // Waiting - Blue
-    if (normalized.includes('đang khám')) return 'status-info'; // Examining - Cyan
+    if (
+      normalized.includes('đang khám') ||
+      normalized.includes('đang thực hiện')
+    )
+      return 'status-info'; // Examining/In progress - Cyan
     if (normalized.includes('gọi lại')) return 'status-warning'; // Callback - Amber
     if (normalized.includes('gọi nhỡ')) return 'status-error'; // Missed - Red
-    if (normalized.includes('đã khám xong')) return 'status-success'; // Finished - Green
+    if (
+      normalized.includes('đã khám xong') ||
+      normalized.includes('đã thực hiện')
+    )
+      return 'status-success'; // Finished/Done - Green
     return 'status-default';
   }
 
@@ -313,9 +336,10 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: PageEvent): void {
+    console.log('=== Paging Event Triggered ===', event);
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
-    this.loadData();
+    this.loadData(true);
   }
 
   onSearchCleared(): void {
@@ -341,6 +365,14 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
     const pageNumber = this.pageIndex() + 1;
     const currentSearch = this.searchTerm();
 
+    console.log('=== loadData Called ===', {
+      pageIndex: this.pageIndex(),
+      pageSize: this.pageSize(),
+      pageNumber: pageNumber,
+      queueId,
+      currentSearch,
+    });
+
     this.qmsService
       .getDanhSachSTT(
         range.fromDate,
@@ -359,15 +391,74 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         finalize(() => this.handleRequestComplete())
       )
       .subscribe((data: any) => {
+        console.log('=== QMS API Response Received ===', data);
         if (Array.isArray(data)) {
           this.queueItems.set(data);
           this.totalCount.set(data.length);
+          this.dangChoCount.set(
+            data.filter(i =>
+              (i.STATE_NAME || '').toLowerCase().includes('đang chờ')
+            ).length
+          );
+          this.dangThucHienCount.set(
+            data.filter(
+              i =>
+                (i.STATE_NAME || '').toLowerCase().includes('đang thực hiện') ||
+                (i.STATE_NAME || '').toLowerCase().includes('đang khám')
+            ).length
+          );
+          this.goiLaiCount.set(
+            data.filter(
+              i =>
+                (i.STATE_NAME || '').toLowerCase().includes('gọi lại') ||
+                (i.STATE_NAME || '').toLowerCase().includes('bỏ qua')
+            ).length
+          );
+          this.goiNhoCount.set(
+            data.filter(i =>
+              (i.STATE_NAME || '').toLowerCase().includes('gọi nhỡ')
+            ).length
+          );
+          this.daThucHienCount.set(
+            data.filter(
+              i =>
+                (i.STATE_NAME || '').toLowerCase().includes('đã thực hiện') ||
+                (i.STATE_NAME || '').toLowerCase().includes('đã khám xong')
+            ).length
+          );
         } else if (data && data.Items) {
           this.queueItems.set(data.Items);
-          this.totalCount.set(data.TotalCount || 0);
+
+          // Protect totalCount from being set to 0 if TOTAL_COUNT/TotalCount is missing or 0 on pagination pages
+          const apiTotal = data.TOTAL_COUNT ?? data.TotalCount;
+          if (apiTotal !== undefined && apiTotal !== null && apiTotal > 0) {
+            console.log('Setting totalCount to:', apiTotal);
+            this.totalCount.set(apiTotal);
+          } else if (apiTotal === 0 && this.pageIndex() === 0) {
+            console.log('Setting totalCount to 0 (first page empty)');
+            this.totalCount.set(0);
+          } else {
+            console.log(
+              'API did not return valid total count, keeping current totalCount:',
+              this.totalCount()
+            );
+          }
+
+          this.dangChoCount.set(data.DANG_CHO ?? data.DangCho ?? 0);
+          this.dangThucHienCount.set(
+            data.DANG_THUC_HIEN ?? data.DangThucHien ?? 0
+          );
+          this.goiLaiCount.set(data.BO_QUA ?? data.BoQua ?? data.GoiLai ?? 0);
+          this.goiNhoCount.set(data.GOI_NHO ?? data.GoiNho ?? 0);
+          this.daThucHienCount.set(data.DA_THUC_HIEN ?? data.DaThucHien ?? 0);
         } else {
           this.queueItems.set([]);
           this.totalCount.set(0);
+          this.dangChoCount.set(0);
+          this.dangThucHienCount.set(0);
+          this.goiLaiCount.set(0);
+          this.goiNhoCount.set(0);
+          this.daThucHienCount.set(0);
         }
       });
   }

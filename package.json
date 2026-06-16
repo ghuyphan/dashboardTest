@@ -1,6 +1,6 @@
 {
   "name": "hoan-my-portal",
-  "version": "0.7.35",
+  "version": "0.7.37",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

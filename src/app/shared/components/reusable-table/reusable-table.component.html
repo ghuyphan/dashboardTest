@@ -196,7 +196,9 @@
 
                   @case ('date') {
                     @if (isDateValue(element[col.key])) {
-                      {{ element[col.key] | date: 'dd/MM/yyyy' }}
+                      {{
+                        element[col.key] | date: col.dateFormat || 'dd/MM/yyyy'
+                      }}
                     } @else {
                       {{ element[col.key] }}
                     }

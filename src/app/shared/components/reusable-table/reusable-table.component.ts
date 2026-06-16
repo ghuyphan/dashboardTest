@@ -49,6 +49,7 @@ export interface GridColumn {
   width?: string;
   sticky?: 'start' | 'end' | false;
   statusClassFn?: (value: string) => string;
+  dateFormat?: string;
 }
 
 export interface TableAction<T = unknown> {
