@@ -30,4 +30,12 @@ export class EmrService {
     };
     return this.http.post<any[]>(environment.emrDetailUrl, body);
   }
+
+  getEmrSummary(fromDate: string, toDate: string): Observable<any> {
+    const body = {
+      TuNgay: fromDate,
+      DenNgay: toDate,
+    };
+    return this.http.post<any>(environment.emrSummaryUrl, body);
+  }
 }

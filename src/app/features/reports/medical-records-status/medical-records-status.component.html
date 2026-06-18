@@ -14,6 +14,7 @@
           iconClass="icon-info"
           [isLoading]="isLoading"
           [chartOptions]="doctorChartOptions"
+          [zoomFocus]="'start'"
           skeletonType="bar"
           [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
           emptyText="Không có dữ liệu trong khoảng thời gian này."

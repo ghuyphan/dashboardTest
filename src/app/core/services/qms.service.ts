@@ -72,4 +72,11 @@ export class QmsService {
 
     return this.http.post<PagedResult<QueueItem>>(environment.qmsListUrl, body);
   }
+
+  getQmsSummary(fromDate: string, toDate: string): Observable<any> {
+    let params = new HttpParams()
+      .set('TuNgay', fromDate)
+      .set('DenNgay', toDate);
+    return this.http.get<any>(environment.qmsSummaryUrl, { params });
+  }
 }

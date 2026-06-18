@@ -122,9 +122,8 @@ export class MedicalRecordsStatusComponent implements OnInit {
       return;
     }
     const sorted = [...data].sort((a, b) => b.SO_LUONG - a.SO_LUONG);
-    const topList = sorted.slice(0, 15);
-    const names = topList.map(i => i.TEN_BS || 'N/A');
-    const values = topList.map(i => i.SO_LUONG);
+    const names = sorted.map(i => i.TEN_BS || 'N/A');
+    const values = sorted.map(i => i.SO_LUONG);
 
     this.doctorChartOptions = {
       backgroundColor: 'transparent',

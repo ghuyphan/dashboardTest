@@ -1,0 +1,299 @@
+# Tài liệu Thiết kế API cho các Màn hình Portal
+
+Tài liệu này định nghĩa chi tiết thiết kế API phía Backend cho từng màn hình của Portal. Tất cả các endpoint đều được thiết kế tối giản, tốc độ xử lý nhanh, nhận biết phân quyền và cung cấp dữ liệu dạng tóm tắt (at-a-glance).
+
+---
+
+## Danh mục các Màn hình
+1. [Màn hình Trang chủ (Dashboard)](#1-man-hinh-trang-chu-dashboard)
+2. [Giám sát Hàng đợi QMS](#2-giam-sat-hang-doi-qms)
+3. [Quản lý Thiết bị / Danh mục Thiết bị](#3-quan-ly-thiet-bi--danh-muc-thiet-bi)
+4. [Giám sát Công suất Giường bệnh](#4-giam-sat-cong-suat-giuong-benh)
+5. [Xuất & In File Bệnh án Điện tử (EMR)](#5-xuat--in-file-benh-an-dien-tu-emr)
+6. [Tổng quan Khám Chữa Bệnh](#6-tong-quan-kham-chua-benh)
+7. [Trạng thái Hồ sơ Bệnh án](#7-trang-thai-ho-so-benh-an)
+8. [Báo cáo Cận Lâm Sàng (CLS) theo Tầng](#8-bao-cao-can-lam-sang-cls-theo-tang)
+9. [Báo cáo CLS theo Chuyên Khoa](#9-bao-cao-cls-theo-chuyen-khoa)
+10. [Thống kê & Tỷ lệ Nhập viện Cấp cứu](#10-thong-ke--ty-le-nhap-vien-cap-cuu)
+11. [Báo cáo Phẫu thuật / Thủ thuật](#11-bao-cao-phau-thuat--thu-thuat)
+12. [Báo cáo Chi tiết Lượt khám](#12-bao-cao-chi-tiet-luot-kham)
+13. [Báo cáo Mô hình Bệnh tật (Mã ICD)](#13-bao-cao-mo-hinh-benh-tat-ma-icd)
+
+---
+
+## 1. Màn hình Trang chủ (Dashboard)
+
+- **Endpoint**: `GET /api/Dashboard/Summary`
+- **Quyền yêu cầu (Server-side check)**: `BaoCao.TongQuanKCB`, `QLThietBi`, `CapCuu.CapCuu01`
+- **Tham số Request**: *Không có (Server tự lấy ngày hiện tại)*
+- **Cấu trúc Response**:
+```json
+{
+  "patientsToday": {
+    "totalCount": 1420,
+    "trendData": [
+      { "hour": "07:00", "count": 120 },
+      { "hour": "08:00", "count": 280 }
+    ]
+  },
+  "emergencyToday": {
+    "totalCount": 42
+  },
+  "equipment": {
+    "totalCount": 158,
+    "brokenCount": 5
+  }
+}
+```
+
+---
+
+## 2. Giám sát Hàng đợi QMS
+
+- **Endpoint**: `GET /api/Qms/Summary`
+- **Quyền yêu cầu**: `Qms.View`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+  - `queueId` (integer, tùy chọn)
+- **Cấu trúc Response**:
+```json
+{
+  "totalCount": 185,
+  "dangChoCount": 45,
+  "dangThucHienCount": 15,
+  "goiLaiCount": 5,
+  "goiNhoCount": 10,
+  "daThucHienCount": 110,
+  "lastUpdated": "2026-06-18T12:00:00Z"
+}
+```
+
+---
+
+## 3. Quản lý Thiết bị / Danh mục Thiết bị
+
+- **Endpoint**: `GET /api/Equipment/Summary`
+- **Quyền yêu cầu**: `QLThietBi`
+- **Tham số Request**: *Không có*
+- **Cấu trúc Response**:
+```json
+{
+  "totalCount": 158,
+  "activeCount": 153,
+  "brokenCount": 5,
+  "underMaintenance": 2,
+  "statusPercentage": {
+    "active": 96.8,
+    "broken": 3.2
+  }
+}
+```
+
+---
+
+## 4. Giám sát Công suất Giường bệnh
+
+- **Endpoint**: `GET /api/BedUsage/Summary`
+- **Quyền yêu cầu**: `BaoCao.CongSuatGiuong`
+- **Tham số Request**: *Không có*
+- **Cấu trúc Response**:
+```json
+{
+  "occupancyRate": 85.7,
+  "totalBeds": 350,
+  "giuongTrong": 50,
+  "dangDieuTri": 280,
+  "choXuatVien": 15,
+  "daBook": 5,
+  "departmentSummaries": [
+    { "deptName": "Khoa Nội", "total": 100, "occupied": 90 },
+    { "deptName": "Khoa Ngoại", "total": 80, "occupied": 70 }
+  ]
+}
+```
+
+---
+
+## 5. Xuất & In File Bệnh án Điện tử (EMR)
+
+- **Endpoint**: `GET /api/Emr/Summary`
+- **Quyền yêu cầu**: `BaoCao.EMR`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalAdmissions": 250,
+  "signedFilesCount": 185,
+  "pendingSignatureCount": 65,
+  "signedPercentage": 74.0
+}
+```
+
+---
+
+## 6. Tổng quan Khám Chữa Bệnh
+
+- **Endpoint**: `GET /api/Reports/ExaminationOverview/Summary`
+- **Quyền yêu cầu**: `BaoCao.TongQuanKCB`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalReception": 4820,
+  "newPatients": 1280,
+  "returningPatients": 3540,
+  "insurancePaidCount": 3200,
+  "selfPaidCount": 1620,
+  "clinicVisits": 4500,
+  "emergencyVisits": 220,
+  "inpatientAdmissions": 100
+}
+```
+
+---
+
+## 7. Trạng thái Hồ sơ Bệnh án
+
+- **Endpoint**: `GET /api/Reports/MedicalRecords/Summary`
+- **Quyền yêu cầu**: `BaoCao.HoSoBenhAn`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalAdmissions": 350,
+  "recordsCreated": 320,
+  "missingRecords": 30,
+  "completionRate": 91.4
+}
+```
+
+---
+
+## 8. Báo cáo Cận Lâm Sàng (CLS) theo Tầng
+
+- **Endpoint**: `GET /api/Reports/ClsFloor/Summary`
+- **Quyền yêu cầu**: `BaoCao.CLS`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalTests": 2330,
+  "floorB1": 450,
+  "floor3": 780,
+  "floor6": 920,
+  "floor12": 180
+}
+```
+
+---
+
+## 9. Báo cáo CLS theo Chuyên Khoa
+
+- **Endpoint**: `GET /api/Reports/SpecialtyCls/Summary`
+- **Quyền yêu cầu**: `BaoCao.ChuyenKhoaCLS`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalSpecialtyVisits": 1250,
+  "specialties": [
+    { "name": "Tai Mũi Họng", "count": 450 },
+    { "name": "Răng Hàm Mặt", "count": 350 },
+    { "name": "Mắt", "count": 300 },
+    { "name": "Da Liễu", "count": 150 }
+  ]
+}
+```
+
+---
+
+## 10. Thống kê & Tỷ lệ Nhập viện Cấp cứu
+
+- **Endpoint**: `GET /api/Reports/Emergency/Summary`
+- **Quyền yêu cầu**: `CapCuu.CapCuu01`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalEmergency": 220,
+  "admittedToWard": 68,
+  "transferred": 12,
+  "dischargedHome": 140,
+  "admissionRate": 30.9
+}
+```
+
+---
+
+## 11. Báo cáo Phẫu thuật / Thủ thuật
+
+- **Endpoint**: `GET /api/Reports/Surgery/Summary`
+- **Quyền yêu cầu**: `PTTT.PhauThuat`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalProcedures": 145,
+  "surgeryCount": 35,
+  "minorProcedureCount": 110,
+  "emergencySurgeries": 12,
+  "electiveSurgeries": 23
+}
+```
+
+---
+
+## 12. Báo cáo Chi tiết Lượt khám
+
+- **Endpoint**: `GET /api/Reports/DetailedExam/Summary`
+- **Quyền yêu cầu**: `BaoCao.KCBChiTiet`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalVisits": 4500,
+  "departments": [
+    { "deptName": "Khoa Khám Bệnh", "count": 3000 },
+    { "deptName": "Khoa Nhi", "count": 1000 },
+    { "deptName": "Khoa Sản", "count": 500 }
+  ]
+}
+```
+
+---
+
+## 13. Báo cáo Mô hình Bệnh tật (Mã ICD)
+
+- **Endpoint**: `GET /api/Reports/Icd/Summary`
+- **Quyền yêu cầu**: `BaoCao.TQMoHinhBenhTat`
+- **Tham số Request**:
+  - `fromDate` (string, định dạng YYYY-MM-DD)
+  - `toDate` (string, định dạng YYYY-MM-DD)
+- **Cấu trúc Response**:
+```json
+{
+  "totalDiagnosedCases": 5400,
+  "topIcdCodes": [
+    { "code": "I10", "description": "Tăng huyết áp vô căn", "count": 1200 },
+    { "code": "E11", "description": "Đái tháo đường typ 2", "count": 850 },
+    { "code": "J06", "description": "Nhiễm khuẩn đường hô hấp trên cấp", "count": 600 }
+  ]
+}
+```

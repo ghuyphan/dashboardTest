@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { EChartsCoreOption } from 'echarts/core';
@@ -127,9 +127,45 @@ export class BedUsageComponent implements OnInit {
 
     // [OPTIMIZATION] Ensure UI renders loading state before fetching
     setTimeout(() => {
+      const url = environment.useSummaryApis.bedUsage
+        ? environment.bedUsageSummaryUrl
+        : environment.bedUsageUrl;
+
       this.http
-        .get<ApiResponseData[]>(environment.bedUsageUrl)
+        .get<any>(url)
         .pipe(
+          map(res => {
+            if (environment.useSummaryApis.bedUsage) {
+              if (
+                res.departmentSummaries &&
+                res.departmentSummaries.length > 0
+              ) {
+                return res.departmentSummaries.map((dept: any) => ({
+                  TenPhongBan: dept.deptName,
+                  Tong: dept.total,
+                  GiuongTrong: dept.total - dept.occupied,
+                  DangSuDung: dept.occupied,
+                  ChoXuatVien: 0,
+                  DaBook: 0,
+                  ChuaSanSang: 0,
+                  ChoMuonGiuong: 0,
+                }));
+              }
+              return [
+                {
+                  TenPhongBan: 'Tổng quan bệnh viện',
+                  Tong: res.totalBeds || 0,
+                  GiuongTrong: res.giuongTrong || 0,
+                  DangSuDung: res.dangDieuTri || 0,
+                  ChoXuatVien: res.choXuatVien || 0,
+                  DaBook: res.daBook || 0,
+                  ChuaSanSang: 0,
+                  ChoMuonGiuong: 0,
+                },
+              ];
+            }
+            return res as ApiResponseData[];
+          }),
           finalize(() => this.handleRequestComplete()),
           takeUntilDestroyed(this.destroyRef)
         )

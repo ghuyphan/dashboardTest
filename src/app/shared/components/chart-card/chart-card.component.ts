@@ -77,6 +77,7 @@ export class ChartCardComponent implements AfterViewInit {
   public theme = input<string | object | null>(null);
   public legendSelectedMode = input<'multiple' | 'single'>('multiple');
   public isolateLegend = input<boolean>(true);
+  public zoomFocus = input<'start' | 'end'>('end');
 
   // --- Export Inputs ---
   public enableExport = input<boolean>(false);
@@ -1294,11 +1295,20 @@ export class ChartCardComponent implements AfterViewInit {
         ? this.VERY_LARGE_DATA_THRESHOLD
         : this.LARGE_DATA_THRESHOLD;
 
-    const zoomEnd = 100;
-    const zoomStart = Math.max(
-      0,
-      100 - Math.floor((targetItems / dataLength) * 100)
-    );
+    const focus = this.zoomFocus();
+    let zoomStart = 0;
+    let zoomEnd = 100;
+
+    if (focus === 'start') {
+      zoomStart = 0;
+      zoomEnd = Math.min(100, Math.floor((targetItems / dataLength) * 100));
+    } else {
+      zoomEnd = 100;
+      zoomStart = Math.max(
+        0,
+        100 - Math.floor((targetItems / dataLength) * 100)
+      );
+    }
 
     const initialVisible = Math.round(
       ((zoomEnd - zoomStart) / 100) * dataLength

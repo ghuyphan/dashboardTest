@@ -26,6 +26,7 @@ import { NumberUtils } from '../../../shared/utils/number.utils';
 import { EChartsCoreOption } from 'echarts/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-home',
@@ -142,10 +143,89 @@ export class HomeComponent implements OnInit, OnDestroy {
     const today = new Date();
     const todayStr = this.formatDate(today);
 
-    // For trends (last 7 days)
-    const last7Days = new Date();
-    last7Days.setDate(today.getDate() - 6);
-    const last7DaysStr = this.formatDate(last7Days);
+    if (environment.useSummaryApis.dashboard) {
+      this.reportService
+        .getDashboardSummary()
+        .pipe(
+          finalize(() => this.isLoading.set(false)),
+          catchError(err => {
+            console.error('Error fetching dashboard summary:', err);
+            this.handleErrorState('patientsToday');
+            this.handleErrorState('activeDevices');
+            this.handleErrorState('brokenDevices');
+            this.handleErrorState('emergencyCases');
+            this.generateAiBriefing([]);
+            return of(null);
+          })
+        )
+        .subscribe(data => {
+          if (!data) return;
+
+          const aiData: any[] = [];
+
+          if (data.patientsToday && this.canViewPatientStats()) {
+            const count = data.patientsToday.totalCount;
+            this.patientToday.set({
+              value: NumberUtils.format(count),
+              loading: false,
+              error: false,
+            });
+            aiData.push({ type: 'patients', count });
+
+            if (data.patientsToday.trendData) {
+              const trendList = data.patientsToday.trendData.map(
+                (item: any) => ({
+                  NGAY_TIEP_NHAN: item.date || item.hour || todayStr,
+                  TONG_LUOT_TIEP_NHAN: item.count || 0,
+                })
+              );
+              this.cachedTrendData = trendList;
+              this.buildPatientTrendChart(trendList);
+              aiData.push({ type: 'trends', data: trendList });
+            }
+          } else {
+            this.handleErrorState('patientsToday');
+          }
+
+          if (data.equipment && this.canViewEquipment()) {
+            const activeCount = data.equipment.totalCount;
+            const brokenCount = data.equipment.brokenCount;
+            this.activeDevices.set({
+              value: NumberUtils.format(activeCount),
+              loading: false,
+              error: false,
+            });
+            this.brokenDevices.set({
+              value: NumberUtils.format(brokenCount),
+              loading: false,
+              error: false,
+            });
+            aiData.push({ type: 'devices', count: activeCount });
+            aiData.push({ type: 'broken', count: brokenCount });
+          } else {
+            this.handleErrorState('activeDevices');
+            this.handleErrorState('brokenDevices');
+          }
+
+          if (data.emergencyToday && this.canViewEmergency()) {
+            const count = data.emergencyToday.totalCount;
+            this.emergencyCases.set({
+              value: NumberUtils.format(count),
+              loading: false,
+              error: false,
+            });
+            aiData.push({ type: 'emergency', count });
+          } else {
+            this.handleErrorState('emergencyCases');
+          }
+
+          this.generateAiBriefing(aiData);
+        });
+      return;
+    }
+
+    // For trends (today only)
+    const last7DaysStr = todayStr;
 
     // Build observables array based on permissions
     const requests: any[] = [];
@@ -342,7 +422,7 @@ export class HomeComponent implements OnInit, OnDestroy {
               <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${
                 this.palette.primary
               };"></span>
-              <span style="color: ${this.palette.textSecondary}">Lượt tiếp đón:</span>
+              <span style="color: ${this.palette.textSecondary}">Lượt khám:</span>
               <span style="font-weight: 600; margin-left: auto;">${val}</span>
             </div>
           `;
@@ -368,16 +448,19 @@ export class HomeComponent implements OnInit, OnDestroy {
       },
       series: [
         {
-          name: 'Lượt tiếp đón',
+          name: 'Lượt khám',
           data: values,
-          type: 'line',
-          smooth: true,
-          areaStyle: {
-            opacity: 0.2,
+          type: 'bar',
+          barWidth: '40%',
+          itemStyle: {
             color: this.palette.primary,
+            borderRadius: [4, 4, 0, 0],
           },
-          itemStyle: { color: this.palette.primary },
-          lineStyle: { width: 3 },
+          label: {
+            show: true,
+            position: 'top',
+            color: this.palette.textPrimary,
+          },
         },
       ],
     });

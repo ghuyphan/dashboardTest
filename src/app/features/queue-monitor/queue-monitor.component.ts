@@ -19,6 +19,7 @@ import { QmsService, QueueItem } from '../../core/services/qms.service';
 import { PageEvent } from '@angular/material/paginator';
 import { catchError, finalize, debounceTime, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { ToastService } from '@core/services/toast.service';
 import { SearchService } from '../../core/services/search.service';
 import {
@@ -361,6 +362,28 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
 
     this.hasSearched.set(true);
 
+    if (environment.useSummaryApis.qms) {
+      this.qmsService
+        .getQmsSummary(range.fromDate, range.toDate)
+        .pipe(
+          catchError(err => {
+            console.error('Error fetching QMS summary:', err);
+            return of(null);
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(summaryData => {
+          if (summaryData) {
+            this.totalCount.set(summaryData.totalCount ?? 0);
+            this.dangChoCount.set(summaryData.dangChoCount ?? 0);
+            this.dangThucHienCount.set(summaryData.dangThucHienCount ?? 0);
+            this.goiLaiCount.set(summaryData.goiLaiCount ?? 0);
+            this.goiNhoCount.set(summaryData.goiNhoCount ?? 0);
+            this.daThucHienCount.set(summaryData.daThucHienCount ?? 0);
+          }
+        });
+    }
+
     const queueId = range.queueId ?? 1;
     const pageNumber = this.pageIndex() + 1;
     const currentSearch = this.searchTerm();
@@ -394,71 +417,79 @@ export class QueueMonitorComponent implements OnInit, OnDestroy {
         console.log('=== QMS API Response Received ===', data);
         if (Array.isArray(data)) {
           this.queueItems.set(data);
-          this.totalCount.set(data.length);
-          this.dangChoCount.set(
-            data.filter(i =>
-              (i.STATE_NAME || '').toLowerCase().includes('đang chờ')
-            ).length
-          );
-          this.dangThucHienCount.set(
-            data.filter(
-              i =>
-                (i.STATE_NAME || '').toLowerCase().includes('đang thực hiện') ||
-                (i.STATE_NAME || '').toLowerCase().includes('đang khám')
-            ).length
-          );
-          this.goiLaiCount.set(
-            data.filter(
-              i =>
-                (i.STATE_NAME || '').toLowerCase().includes('gọi lại') ||
-                (i.STATE_NAME || '').toLowerCase().includes('bỏ qua')
-            ).length
-          );
-          this.goiNhoCount.set(
-            data.filter(i =>
-              (i.STATE_NAME || '').toLowerCase().includes('gọi nhỡ')
-            ).length
-          );
-          this.daThucHienCount.set(
-            data.filter(
-              i =>
-                (i.STATE_NAME || '').toLowerCase().includes('đã thực hiện') ||
-                (i.STATE_NAME || '').toLowerCase().includes('đã khám xong')
-            ).length
-          );
+          if (!environment.useSummaryApis.qms) {
+            this.totalCount.set(data.length);
+            this.dangChoCount.set(
+              data.filter(i =>
+                (i.STATE_NAME || '').toLowerCase().includes('đang chờ')
+              ).length
+            );
+            this.dangThucHienCount.set(
+              data.filter(
+                i =>
+                  (i.STATE_NAME || '')
+                    .toLowerCase()
+                    .includes('đang thực hiện') ||
+                  (i.STATE_NAME || '').toLowerCase().includes('đang khám')
+              ).length
+            );
+            this.goiLaiCount.set(
+              data.filter(
+                i =>
+                  (i.STATE_NAME || '').toLowerCase().includes('gọi lại') ||
+                  (i.STATE_NAME || '').toLowerCase().includes('bỏ qua')
+              ).length
+            );
+            this.goiNhoCount.set(
+              data.filter(i =>
+                (i.STATE_NAME || '').toLowerCase().includes('gọi nhỡ')
+              ).length
+            );
+            this.daThucHienCount.set(
+              data.filter(
+                i =>
+                  (i.STATE_NAME || '').toLowerCase().includes('đã thực hiện') ||
+                  (i.STATE_NAME || '').toLowerCase().includes('đã khám xong')
+              ).length
+            );
+          }
         } else if (data && data.Items) {
           this.queueItems.set(data.Items);
 
-          // Protect totalCount from being set to 0 if TOTAL_COUNT/TotalCount is missing or 0 on pagination pages
-          const apiTotal = data.TOTAL_COUNT ?? data.TotalCount;
-          if (apiTotal !== undefined && apiTotal !== null && apiTotal > 0) {
-            console.log('Setting totalCount to:', apiTotal);
-            this.totalCount.set(apiTotal);
-          } else if (apiTotal === 0 && this.pageIndex() === 0) {
-            console.log('Setting totalCount to 0 (first page empty)');
-            this.totalCount.set(0);
-          } else {
-            console.log(
-              'API did not return valid total count, keeping current totalCount:',
-              this.totalCount()
-            );
-          }
+          if (!environment.useSummaryApis.qms) {
+            // Protect totalCount from being set to 0 if TOTAL_COUNT/TotalCount is missing or 0 on pagination pages
+            const apiTotal = data.TOTAL_COUNT ?? data.TotalCount;
+            if (apiTotal !== undefined && apiTotal !== null && apiTotal > 0) {
+              console.log('Setting totalCount to:', apiTotal);
+              this.totalCount.set(apiTotal);
+            } else if (apiTotal === 0 && this.pageIndex() === 0) {
+              console.log('Setting totalCount to 0 (first page empty)');
+              this.totalCount.set(0);
+            } else {
+              console.log(
+                'API did not return valid total count, keeping current totalCount:',
+                this.totalCount()
+              );
+            }
 
-          this.dangChoCount.set(data.DANG_CHO ?? data.DangCho ?? 0);
-          this.dangThucHienCount.set(
-            data.DANG_THUC_HIEN ?? data.DangThucHien ?? 0
-          );
-          this.goiLaiCount.set(data.BO_QUA ?? data.BoQua ?? data.GoiLai ?? 0);
-          this.goiNhoCount.set(data.GOI_NHO ?? data.GoiNho ?? 0);
-          this.daThucHienCount.set(data.DA_THUC_HIEN ?? data.DaThucHien ?? 0);
+            this.dangChoCount.set(data.DANG_CHO ?? data.DangCho ?? 0);
+            this.dangThucHienCount.set(
+              data.DANG_THUC_HIEN ?? data.DangThucHien ?? 0
+            );
+            this.goiLaiCount.set(data.BO_QUA ?? data.BoQua ?? data.GoiLai ?? 0);
+            this.goiNhoCount.set(data.GOI_NHO ?? data.GoiNho ?? 0);
+            this.daThucHienCount.set(data.DA_THUC_HIEN ?? data.DaThucHien ?? 0);
+          }
         } else {
           this.queueItems.set([]);
-          this.totalCount.set(0);
-          this.dangChoCount.set(0);
-          this.dangThucHienCount.set(0);
-          this.goiLaiCount.set(0);
-          this.goiNhoCount.set(0);
-          this.daThucHienCount.set(0);
+          if (!environment.useSummaryApis.qms) {
+            this.totalCount.set(0);
+            this.dangChoCount.set(0);
+            this.dangThucHienCount.set(0);
+            this.goiLaiCount.set(0);
+            this.goiNhoCount.set(0);
+            this.daThucHienCount.set(0);
+          }
         }
       });
   }

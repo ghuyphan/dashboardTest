@@ -120,4 +120,8 @@ export class DeviceService {
       NgayHetHanBH: DateUtils.formatToDisplay(device.NgayHetHanBH),
     };
   }
+
+  getEquipmentSummary(): Observable<any> {
+    return this.http.get<any>(environment.equipmentSummaryUrl);
+  }
 }

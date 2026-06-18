@@ -5,8 +5,9 @@
       <div class="widget-grid">
         @if (canViewPatientStats()) {
           <app-widget-card
-            title="Tiếp đón hôm nay"
+            title="Lượt khám hôm nay"
             [value]="patientToday().value"
+            caption=""
             icon="fas fa-user-injured"
             [accentColor]="themeService.currentPalette().primary"
             [isLoading]="patientToday().loading">
@@ -17,6 +18,7 @@
           <app-widget-card
             title="Cấp cứu"
             [value]="emergencyCases().value"
+            caption=""
             icon="fas fa-ambulance"
             [accentColor]="themeService.currentPalette().chart6"
             [isLoading]="emergencyCases().loading">
@@ -27,6 +29,7 @@
           <app-widget-card
             title="Thiết bị hoạt động"
             [value]="activeDevices().value"
+            caption=""
             icon="fas fa-microscope"
             [accentColor]="themeService.currentPalette().chart2"
             [isLoading]="activeDevices().loading">
@@ -35,6 +38,7 @@
           <app-widget-card
             title="Thiết bị hỏng"
             [value]="brokenDevices().value"
+            caption=""
             icon="fas fa-tools"
             [accentColor]="themeService.currentPalette().pastelCoral"
             [isLoading]="brokenDevices().loading">
@@ -50,7 +54,17 @@
         <div class="card-header">
           <div class="card-title-wrapper">
             <h3 class="card-title">
-              <i class="fas fa-robot icon-info"></i>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                class="ai-sparkle-icon">
+                <path
+                  d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+                  fill="currentColor" />
+              </svg>
               Tóm tắt AI
             </h3>
           </div>
@@ -71,12 +85,12 @@
       @if (canViewPatientStats()) {
         <app-chart-card
           class="span-2"
-          title="Xu hướng tiếp đón (7 ngày)"
-          icon="fas fa-chart-line"
+          title="Lượt khám hôm nay"
+          icon="fas fa-chart-bar"
           iconClass="icon-info"
           [chartOptions]="patientTrendOptions()"
           [isLoading]="isLoading()"
-          skeletonType="line"
+          skeletonType="bar"
           [theme]="themeService.isDarkTheme() ? 'dark' : 'light'"
           emptyText="Chưa có dữ liệu tiếp đón.">
         </app-chart-card>
